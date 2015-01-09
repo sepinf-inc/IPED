@@ -145,7 +145,7 @@
         	<groupId>com.sun.media</groupId>
         	<artifactId>jai_imageio</artifactId>
         	<version>1.1</version>
-        	<scope>runtime</scope>
+        	<type>jar</type>
         </dependency>
     </dependencies>
     <properties>
