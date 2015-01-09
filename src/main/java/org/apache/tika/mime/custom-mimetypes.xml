@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2011-2014, Luis Filipe da Cruz Nassif
+ 
+ This file is part of Indexador e Processador de Evidências Digitais (IPED).
+
+ IPED is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ IPED is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with IPED.  If not, see <http://www.gnu.org/licenses/>.
+-->
+ <mime-info>
+   <mime-type type="text/x-dbf">
+      <_comment>xBase Database File</_comment> 
+      <glob pattern="*.dbf"/>
+   </mime-type>
+   
+   <mime-type type="message/rfc822">
+    <magic priority="60">
+      <match value="Relay-Version:" type="stringignorecase" offset="0"/>
+      <match value="#!\ rnews" type="string" offset="0"/>
+      <match value="N#!\ rnews" type="string" offset="0"/>
+      <match value="Forward\ to" type="string" offset="0"/>
+      <match value="Pipe\ to" type="string" offset="0"/>
+      <match value="Subject:" type="string" offset="0"/>
+      <match value="From:" type="string" offset="0"/>
+      <match value="Date:" type="string" offset="0"/>
+      <match value="Return-Path:" type="stringignorecase" offset="0:1000"/>
+      <match value="X-Originating-IP:" type="stringignorecase" offset="0:1000"/>
+      <match value="Received:" type="stringignorecase" offset="0:1000"/>
+      <match value="Message-ID:" type="stringignorecase" offset="0:1000"/>
+      <match value="MIME-Version:" type="stringignorecase" offset="0"/>
+    </magic>
+    <sub-class-of type="text/plain"/>
+    <glob pattern="*.eml"/>
+    <glob pattern="*.mime"/>
+    <glob pattern="*.mht"/>
+    <glob pattern="*.mhtml"/>
+   </mime-type>
+    
+    <mime-type type="image/cdr">
+      <magic priority="60">
+        <match value="RIFF....CDR" type="string" offset="0"  mask="0xFFFFFFFF00000000FFFFFF"/>
+		<match value="RIFF....CDR" type="string" offset="50" mask="0xFFFFFFFF00000000FFFFFF"/>
+      </magic>
+      <glob pattern="*.cdr"/>
+      <sub-class-of type="application/zip"/>
+    </mime-type>
+    
+    <mime-type type="application/sqlite-skype">     
+		<sub-class-of type="application/x-sqlite3"/>
+		<glob pattern="main.db"/>
+    </mime-type>
+    
+    <mime-type type="application/skype"> 
+    	<magic priority="50">
+        	<match value="l33l" type="string" offset="0"/>
+      	</magic> 
+		<glob pattern="*.dbb"/>
+    </mime-type>
+
+    <mime-type type="application/irpf">
+    	<magic priority="50">
+        	<match value="IRPF" type="string" offset="0"/>
+      	</magic>
+		<glob pattern="*.dec"/>
+		<glob pattern="*.rec"/>
+	<sub-class-of type="text/plain"/>
+    </mime-type>
+
+    <mime-type type="message/outlook-pst">
+	<magic priority="70">
+        	<match value="!--PST Email Message Indexer Preview--" type="string" offset="7"/>
+      	</magic>
+	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/outlook-contact">
+		<sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/outlook-dbx">
+	<magic priority="60">
+        	<match value="0xCFAD12FEc5fd746f" type="string" offset="0"/>
+        	<match value="0xCFAD12FEc6fd746f" type="string" offset="0"/>
+        	<match value="0xCFAD12FE309dfe26" type="string" offset="0"/>
+      	</magic>  
+	<glob pattern="*.dbx"/>      	
+    </mime-type>
+    
+    <mime-type type="application/mbox">
+    	<magic priority="80">
+    	 	<match value="From " type="string" offset="0"/>
+    	</magic>
+    	<sub-class-of type="text/plain"/>
+    	<glob pattern="*.mbox"/>
+    </mime-type>
+    
+    <mime-type type="application/x-sqlite3">
+    	<magic priority="50">
+    	 	<match value="SQLite format 3\x00" type="string" offset="0"/>
+    	</magic> 
+    	<glob pattern="*.sqlite"/>
+    </mime-type>
+    
+    <mime-type type="application/windows-adress-book">
+    	<magic priority="50">
+    	 	<match value="0x9CCBCB8D1375D211915800C04F7956A4" type="string" offset="0"/>
+    	</magic> 
+    	<glob pattern="*.wab"/>
+    </mime-type>
+  	
+  	<mime-type type="application/messenger-chat">
+    	<magic priority="50">
+    	 	<match value="MessageLog.xsl......Log" type="string" offset="60:70" mask="0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000FFFFFF"/>
+    	</magic>
+    	<sub-class-of type="application/xml"/>
+  	</mime-type>
+  	
+  	<mime-type type="application/messenger-plus">
+    	<magic priority="50">
+    	 	<match value="Messenger Plus!" type="unicodeLE" offset="5624"/>
+    	</magic>
+    	<sub-class-of type="application/xhtml+xml"/>
+  	</mime-type>
+  	
+	<mime-type type="video/x-ms-wmv">
+    <sub-class-of type="video/x-ms-asf" />
+    <glob pattern="*.wmv"/>
+    <magic priority="60">
+       <match value="Windows Media Video" type="unicodeLE" offset="0:8192" />
+       <match value="VC-1 Advanced Profile" type="unicodeLE" offset="0:8192" />
+       <match value="wmv2" type="unicodeLE" offset="0:8192" />
+    </magic>
+  </mime-type>
+  
+  <mime-type type="application/x-windows-registry">
+    	<magic priority="50">
+    	 	<match value="regf" type="string" offset="0"/>
+    	 	<match value="CREG" type="string" offset="0"/>
+    	</magic> 
+    </mime-type>
+    
+    <mime-type type="application/x-incredimail">
+    	<sub-class-of type="message/rfc822"/>
+    	<glob pattern="*.imm"/>
+    </mime-type>
+    
+    <mime-type type="application/x-unallocated">
+    </mime-type>
+    
+    <mime-type type="application/xhtml+xml">
+    <sub-class-of type="text/html"/>
+    <magic priority="50">
+      <match value="&lt;html xmlns=" type="string" offset="0:8192"/>
+    </magic>
+    <root-XML namespaceURI="http://www.w3.org/1999/xhtml" localName="html"/>
+    <glob pattern="*.xhtml"/>
+    <glob pattern="*.xht"/>
+  	</mime-type>
+    
+    <mime-type type="application/x-pagefile">
+    	<glob pattern="pagefile.sys"/>
+    	<glob pattern="hiberfil.sys"/>
+    </mime-type>
+    
+    <mime-type type="application/x-volume-shadow">
+    	<glob pattern="*{3808876b-c176-4e48-b7ae-04046e6cc752}*"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vdi">
+    	<glob pattern="*.vdi"/>
+    </mime-type>
+    
+    <mime-type type="application/x-thumbcache">
+    	<glob pattern="thumbcache_*.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-thumbs">
+    	<sub-class-of type="application/x-tika-msoffice"/>
+    	<glob pattern="Thumbs.db"/>
+    	<glob pattern="thumbs.db"/>
+    </mime-type>
+    
+  
+  <mime-type type="application/x-dosexec;format=pe">
+    <magic priority="70">
+      <!-- Technically the header offset is stored at 0x3c, and isn't a -->
+      <!-- constant, but it's almost always set to start at 0x80 or 0xf0 -->
+      <match value="MZ" type="string" offset="0">
+      	<match value="PE\000\000" type="string" offset="128"/>
+      	<match value="PE\000\000" type="string" offset="240"/>
+      </match>
+    </magic>
+  </mime-type>
+    
+   
+ </mime-info>
