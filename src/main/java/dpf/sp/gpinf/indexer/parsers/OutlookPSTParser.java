@@ -55,6 +55,7 @@ import com.pff.PSTMessage;
 import com.pff.PSTObject;
 import com.pff.PSTRecipient;
 
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
@@ -238,7 +239,7 @@ public class OutlookPSTParser extends AbstractParser {
 				appContext.setId(Integer.valueOf(id));
 			*/
 			
-			processAttachs(email, path + ">>" + email.getSubject(), metadata.get(EmbeddedFileParser.TO_EXTRACT));
+			processAttachs(email, path + ">>" + email.getSubject(), metadata.get(ExpandContainerTask.TO_EXTRACT));
 
 			//appContext.setId(previousId);
 		}
@@ -248,13 +249,13 @@ public class OutlookPSTParser extends AbstractParser {
 	private Metadata processEmail(PSTMessage email, String path, String extract) {
 
 		Metadata metadata = new Metadata();
-		metadata.set(EmbeddedFileParser.TO_EXTRACT, extract);
+		metadata.set(ExpandContainerTask.TO_EXTRACT, extract);
 		try {
 			String subject = email.getSubject();
 			if (subject == null || subject.trim().isEmpty())
 				subject = "[Sem Assunto]";
 			metadata.set(TikaCoreProperties.TITLE, subject);
-			metadata.set(EmbeddedFileParser.COMPLETE_PATH, path);
+			metadata.set(ExpandContainerTask.COMPLETE_PATH, path);
 			metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
 			if(email.hasAttachments())
 				metadata.set(HAS_ATTACHS, "true");
@@ -375,9 +376,9 @@ public class OutlookPSTParser extends AbstractParser {
 					metadata.set(TikaCoreProperties.CREATED, attach.getCreationTime());
 					// metadata.set(TikaCoreProperties.MODIFIED,
 					// attach.getLastModificationTime());
-					metadata.set(EmbeddedFileParser.COMPLETE_PATH, path);
+					metadata.set(ExpandContainerTask.COMPLETE_PATH, path);
 					metadata.set(Metadata.CONTENT_TYPE, attach.getMimeTag());
-					metadata.set(EmbeddedFileParser.TO_EXTRACT, extract);
+					metadata.set(ExpandContainerTask.TO_EXTRACT, extract);
 
 					if (extractor.shouldParseEmbedded(metadata))
 						extractor.parseEmbedded(attachStream, xhtml, metadata, true);

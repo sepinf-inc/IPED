@@ -40,6 +40,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
@@ -121,7 +122,7 @@ public class MboxParser extends AbstractParser {
 
 		Metadata mailMetadata = new Metadata();
 		mailMetadata.set(Metadata.CONTENT_TYPE, "message/rfc822");
-		mailMetadata.set(EmbeddedFileParser.COMPLETE_PATH, path);
+		mailMetadata.set(ExpandContainerTask.COMPLETE_PATH, path);
 
 		try {
 			RFC822Parser parser = new RFC822Parser();

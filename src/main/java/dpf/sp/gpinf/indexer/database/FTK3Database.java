@@ -37,7 +37,7 @@ import java.util.Properties;
 
 import oracle.jdbc.pool.OracleDataSource;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
-import dpf.sp.gpinf.indexer.index.HashClass;
+import dpf.sp.gpinf.indexer.process.task.ComputeHashTask;
 import dpf.sp.gpinf.indexer.util.NtfsTimeConverter;
 
 /*
@@ -179,7 +179,7 @@ public class FTK3Database extends DataSource {
 					evidenceFile.setDeleted(true);
 				byte[] hash = rset.getBytes("md5hash");
 				if (hash != null)
-					evidenceFile.setHash(HashClass.getHashString(hash));
+					evidenceFile.setHash(ComputeHashTask.getHashString(hash));
 				long logicalSize = rset.getLong("LOGICALSIZE");
 				if (logicalSize > -1)
 					evidenceFile.setLength(logicalSize);

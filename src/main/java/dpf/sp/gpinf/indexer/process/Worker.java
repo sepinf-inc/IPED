@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -53,11 +53,17 @@ import org.apache.tika.parser.pdf.PDFParserConfig;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.index.HashClass.HashValue;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
-import dpf.sp.gpinf.indexer.parsers.EmbeddedFileParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
+import dpf.sp.gpinf.indexer.process.task.ComputeHashTask;
+import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
@@ -65,7 +71,7 @@ import dpf.sp.gpinf.indexer.util.IndexerContext;
  * Classe responsável pelo processamento de cada item, chamando as diversas etapas de processamento:
  * análise de assinatura, hash, expansão de itens, indexação, carving, etc.
  */
-public class IndexWorker extends Thread {
+public class Worker extends Thread {
 
 	LinkedBlockingDeque<EvidenceFile> evidences;
 
@@ -93,10 +99,10 @@ public class IndexWorker extends Thread {
 	private Detector detector;
 	public TikaConfig config;
 	private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-	public HashClass hasher;
-	private FilePropsLister fileLister;
-	private FileExtractor extractor;
-	private FileCarver carver;
+	public ComputeHashTask hasher;
+	private ExportCSVTask fileLister;
+	private ExportFileTask extractor;
+	private CarveTask carver;
 
 	public File output;
 	public CaseData caseData;
@@ -125,17 +131,17 @@ public class IndexWorker extends Thread {
 		hashMap = new HashMap<HashValue, HashValue>();
 		splitedIds = new HashSet<Integer>();
 		IndexerDefaultParser.parsingErrors = 0;
-		EmbeddedFileParser.subitensDiscovered = 0;
-		FileExtractor.subitensExtracted = 0;
-		FileExtractor.subDirCounter = 0;
-		FilePropsLister.headerWritten = false;
-		FileCarver.itensCarved = 0;
+		ExpandContainerTask.subitensDiscovered = 0;
+		ExportFileTask.subitensExtracted = 0;
+		ExportFileTask.subDirCounter = 0;
+		ExportCSVTask.headerWritten = false;
+		CarveTask.itensCarved = 0;
 		corruptCarveIgnored = 0;
 		duplicatesIgnored = 0;
 		ParsingReader.threadPool = Executors.newCachedThreadPool();
 	}
 
-	public IndexWorker(int k, CaseData caseData, IndexWriter writer, File output) throws Exception {
+	public Worker(int k, CaseData caseData, IndexWriter writer, File output) throws Exception {
 		super("Worker-" + k);
 		this.caseData = caseData;
 		this.evidences = caseData.getEvidenceFiles();
@@ -144,12 +150,12 @@ public class IndexWorker extends Thread {
 		this.output = output;
 		baseFilePath = output.getParentFile().getAbsolutePath();
 		if (Configuration.hashAlgorithm != null)
-			hasher = new HashClass(Configuration.hashAlgorithm, output);
+			hasher = new ComputeHashTask(Configuration.hashAlgorithm, output);
 		if (Configuration.exportFileProps)
-			fileLister = new FilePropsLister(output);
+			fileLister = new ExportCSVTask(output);
 		config = TikaConfig.getDefaultConfig();
 		detector = config.getDetector();
-		extractor = new FileExtractor(config, output, hasher, hashMap);
+		extractor = new ExportFileTask(config, output, hasher, hashMap);
 
 		autoParser = new IndexerDefaultParser();
 		autoParser.setFallback((Parser) Configuration.fallBackParser.newInstance());
@@ -206,7 +212,7 @@ public class IndexWorker extends Thread {
 	}
 
 	synchronized public static void incCorruptCarveIgnored() {
-		IndexWorker.corruptCarveIgnored++;
+		Worker.corruptCarveIgnored++;
 	}
 
 	synchronized public static int getDuplicatesIgnored() {
@@ -214,7 +220,7 @@ public class IndexWorker extends Thread {
 	}
 
 	synchronized public static void incDuplicatesIgnored() {
-		IndexWorker.duplicatesIgnored++;
+		Worker.duplicatesIgnored++;
 	}
 
 	synchronized private static void updateLastId(int id) {
@@ -325,7 +331,7 @@ public class IndexWorker extends Thread {
 			
 			// DEFINIÇÃO DO TIPO, CASO NÃO ESTEJA DEFINIDO
 			if (evidence.getType() == null) {
-				String ext = FileExtractor.getExtBySig(config, evidence);
+				String ext = ExportFileTask.getExtBySig(config, evidence);
 				if (!ext.isEmpty()){
 					if(ext.length() > 1 && evidence.isCarved() && evidence.getName().startsWith("Carved-")){
 						evidence.setName(evidence.getName() + ext);
@@ -338,8 +344,8 @@ public class IndexWorker extends Thread {
 
 			// DEFINIÇÃO DE CATEGORIA
 			if (evidence.getCategorySet().size() == 0)
-				if (!containsReport || FileExtractor.hasCategoryToExtract()) {
-					CategoryMapper.setCategories(evidence);
+				if (!containsReport || ExportFileTask.hasCategoryToExtract()) {
+					SetCategoryTask.setCategories(evidence);
 				} else
 					evidence.addCategory(Configuration.defaultCategory);
 			
@@ -350,7 +356,7 @@ public class IndexWorker extends Thread {
 			context.set(Parser.class, autoParser);
 			IndexerContext indexerContext = new IndexerContext(evidence);
 			context.set(IndexerContext.class, indexerContext);
-			context.set(EmbeddedDocumentExtractor.class, new EmbeddedFileParser(context, this));
+			context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context, this));
 			context.set(EvidenceFile.class, evidence);
 
 			// Tratamento p/ acentos de subitens de ZIP
@@ -375,8 +381,8 @@ public class IndexWorker extends Thread {
 			 */
 			StringReader textCacheReader = null;
 			long textLength = 0;
-			if ((EmbeddedFileParser.isToBeExpanded(evidence) && tis != null && !evidence.timeOut)
-			|| ((FileExtractor.hasCategoryToExtract() || !Configuration.indexFileContents) && FileCarver.ignoreCorrupted && evidence.isCarved())) {
+			if ((ExpandContainerTask.isToBeExpanded(evidence) && tis != null && !evidence.timeOut)
+			|| ((ExportFileTask.hasCategoryToExtract() || !Configuration.indexFileContents) && CarveTask.ignoreCorrupted && evidence.isCarved())) {
 
 				reader = new ParsingReader(autoParser, tis, metadata, context);
 				StringWriter writer;
@@ -408,7 +414,7 @@ public class IndexWorker extends Thread {
 							metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 
 						context.set(EvidenceFile.class, evidence);
-						context.set(EmbeddedDocumentExtractor.class, new EmbeddedFileParser(context) {
+						context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context) {
 							@Override
 							public boolean shouldParseEmbedded(Metadata arg0) {
 								return false;
@@ -421,12 +427,12 @@ public class IndexWorker extends Thread {
 			
 
 			// EXPORTA ARQUIVO CASO CONFIGURADO
-			if (FileExtractor.hasCategoryToExtract() || evidence.isToExtract()) {
-				if (!evidence.isSubItem() && !evidence.isExtracted() && (FileExtractor.isToBeExtracted(evidence) || evidence.isToExtract())) {
+			if (ExportFileTask.hasCategoryToExtract() || evidence.isToExtract()) {
+				if (!evidence.isSubItem() && !evidence.isExtracted() && (ExportFileTask.isToBeExtracted(evidence) || evidence.isToExtract())) {
 					evidence.setToExtract(true);
 					extractor.extractFile(evidence);
 					evidence.setExtracted(true);
-					FileExtractor.incSubitensExtracted();
+					ExportFileTask.incSubitensExtracted();
 				}
 				
 			}
@@ -436,7 +442,7 @@ public class IndexWorker extends Thread {
 
 				extractor.renameToHash(evidence);
 				evidence.setExtracted(true);
-				FileExtractor.incSubitensExtracted();
+				ExportFileTask.incSubitensExtracted();
 
 				if (Configuration.indexFileContents)
 					try {
@@ -448,12 +454,12 @@ public class IndexWorker extends Thread {
 			
 			
 			//DATA CARVING
-			new FileCarver(evidence, this).parse();
+			new CarveTask(evidence, this).parse();
 			
 			
 			//Ignora itens não exportados, caso habilitada exportação
 			boolean toIndex = true;
-			if (FileExtractor.hasCategoryToExtract() && !evidence.isToExtract()) {
+			if (ExportFileTask.hasCategoryToExtract() && !evidence.isToExtract()) {
 				toIndex = false;
 				IOUtil.closeQuietly(tis);
 				if (evidence.isSubItem()) {
@@ -480,7 +486,7 @@ public class IndexWorker extends Thread {
 
 				} else {
 					if (Configuration.indexFileContents && tis != null && 
-						(Configuration.indexUnallocated || !FileCarver.UNALLOCATED_MIMETYPE.equals(type)))
+						(Configuration.indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(type)))
 							reader = new ParsingReader(autoParser, tis, metadata, context);
 					else
 							reader = null;

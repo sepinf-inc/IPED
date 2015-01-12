@@ -32,7 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.LinkedList;
 
-import dpf.sp.gpinf.indexer.index.CategoryMapper;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class FolderTreeProcessor {
@@ -115,7 +115,7 @@ public class FolderTreeProcessor {
 						
 						if (attr.isDirectory()){
 							evidenceFile.setIsDir(true);
-							evidenceFile.setCategory(CategoryMapper.FOLDER_CATEGORY);
+							evidenceFile.setCategory(SetCategoryTask.FOLDER_CATEGORY);
 							parentIds.addFirst(Integer.toString(evidenceFile.getId()));
 						}
 							

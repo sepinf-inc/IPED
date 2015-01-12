@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
@@ -45,6 +45,7 @@ import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
@@ -52,7 +53,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  * a partir dos padrões a serem pesquisados. Assim, o algoritmo é independente do número de assinaturas pesquisadas,
  * sendo proporcional ao volume de dados de entrada e ao número de padrões descobertos.
  */
-public class FileCarver {
+public class CarveTask {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -71,7 +72,7 @@ public class FileCarver {
 	private static int largestPatternLen = 100;
 	
 	EvidenceFile evidence;
-	IndexWorker worker;
+	Worker worker;
 	MediaTypeRegistry registry;
 
 	
@@ -81,14 +82,14 @@ public class FileCarver {
 	byte[] cBuf;
 	
 	synchronized public static void incItensCarved() {
-		FileCarver.itensCarved++;
+		CarveTask.itensCarved++;
 	}
 
 	synchronized public static int getItensCarved() {
 		return itensCarved;
 	}
 
-	public FileCarver(EvidenceFile evidence, IndexWorker worker){
+	public CarveTask(EvidenceFile evidence, Worker worker){
 		this.evidence = evidence;
 		this.worker = worker;
 		this.registry = worker.config.getMediaTypeRegistry();
@@ -512,7 +513,7 @@ public class FileCarver {
 		
 		// se não há item na fila, enfileira para outro worker processar, caso o item pai não seja um subitem a ser excluído pelo filtro de exportação
 		if (worker.caseData.getEvidenceFiles().size() == 0 && 
-				!(FileExtractor.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract()))
+				!(ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract()))
 			worker.caseData.getEvidenceFiles().addFirst(evidence);
 		
 		// caso contrário processa o item no worker atual

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
@@ -32,7 +32,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 /*
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
-public class FilePropsLister {
+public class ExportCSVTask {
 
 	private File output;
 	private StringBuilder list = new StringBuilder();
@@ -41,7 +41,7 @@ public class FilePropsLister {
 	private static String csvName = "Lista de Arquivos.csv";
 	public static volatile boolean headerWritten = false;
 
-	public FilePropsLister(File output) throws NoSuchAlgorithmException, IOException {
+	public ExportCSVTask(File output) throws NoSuchAlgorithmException, IOException {
 		this.output = new File(output.getParentFile(), csvName);
 		if(this.output.exists())
 			this.output.delete();

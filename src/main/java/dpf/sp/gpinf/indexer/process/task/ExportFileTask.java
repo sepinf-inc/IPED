@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.UnknownFileType;
@@ -43,7 +43,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.index.HashClass.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
@@ -51,7 +50,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  * Também exporta itens ativos em casos de extração automática de dados ou
  * em casos de extração de itens selecionados após análise.
  */
-public class FileExtractor {
+public class ExportFileTask {
 
 	public static String EXTRACT_DIR = "Exportados";
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
@@ -63,10 +62,10 @@ public class FileExtractor {
 
 	private TikaConfig config;
 	private File extractDir, outputBase;
-	private HashClass hasher;
+	private ComputeHashTask hasher;
 	private HashMap<HashValue, HashValue> hashMap;
 
-	public FileExtractor(TikaConfig config, File outputBase, HashClass hasher, HashMap<HashValue, HashValue> hashMap) {
+	public ExportFileTask(TikaConfig config, File outputBase, ComputeHashTask hasher, HashMap<HashValue, HashValue> hashMap) {
 		this.config = config;
 		this.outputBase = outputBase;
 		this.hasher = hasher;

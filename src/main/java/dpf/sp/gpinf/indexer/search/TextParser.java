@@ -42,8 +42,8 @@ import org.apache.tika.parser.pdf.PDFParserConfig;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.EmbeddedFileParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
@@ -157,7 +157,7 @@ public class TextParser extends CancelableWorker {
 			ParseContext context = new ParseContext();
 			context.set(Parser.class, (Parser) App.get().autoParser);
 			context.set(IndexerContext.class, new IndexerContext(id, categorias, doc.get("caminho")));
-			context.set(EmbeddedDocumentExtractor.class, new EmbeddedFileParser(context));
+			context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context));
 
 			// Tratamento p/ acentos de subitens de ZIP
 			ArchiveStreamFactory factory = new ArchiveStreamFactory();

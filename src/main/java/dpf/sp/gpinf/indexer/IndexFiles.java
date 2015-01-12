@@ -31,9 +31,9 @@ import javax.swing.SwingWorker;
 import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
-import dpf.sp.gpinf.indexer.index.IndexManager;
-import dpf.sp.gpinf.indexer.index.ProgressFrame;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.ProgressFrame;
 
 /*
  * Ponto de entrada do programa ao processar evidências.
@@ -268,7 +268,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 			Configuration.getConfiguration(configPath);
 
-			IndexManager manager = new IndexManager(reports, caseNames, output, palavrasChave);
+			Manager manager = new Manager(reports, caseNames, output, palavrasChave);
 			manager.process();
 
 			if (fromCmdLine)

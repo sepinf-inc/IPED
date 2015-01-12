@@ -41,8 +41,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.index.CategoryMapper;
-import dpf.sp.gpinf.indexer.index.FileCarver;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
 
 public class SleuthkitProcessor {
 
@@ -51,7 +51,7 @@ public class SleuthkitProcessor {
 	//private static Object lock = new Object();
 	private static ConcurrentHashMap<File, Object[]> idRangeMap = new ConcurrentHashMap<File, Object[]>();
 	
-	public static MediaType UNALLOCATED_MIMETYPE = FileCarver.UNALLOCATED_MIMETYPE;
+	public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
 
 	private CaseData caseData;
 	private boolean listOnly;
@@ -232,7 +232,7 @@ public class SleuthkitProcessor {
 		
 		if(absFile.isDir()){
 			evidence.setIsDir(true);
-			evidence.setCategory(CategoryMapper.FOLDER_CATEGORY);
+			evidence.setCategory(SetCategoryTask.FOLDER_CATEGORY);
 		}
 		
 		evidence.setHasChildren(absFile.hasChildren());

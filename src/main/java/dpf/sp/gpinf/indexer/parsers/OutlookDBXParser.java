@@ -48,6 +48,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 import dpf.sp.gpinf.indexer.util.NtfsTimeConverter;
 
@@ -110,7 +111,7 @@ public class OutlookDBXParser extends AbstractParser {
 			Metadata mailMetadata = new Metadata();
 			mailMetadata.set(HttpHeaders.CONTENT_TYPE, "message/rfc822");
 			mailMetadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "[deletado]");
-			mailMetadata.set(EmbeddedFileParser.COMPLETE_PATH, path);
+			mailMetadata.set(ExpandContainerTask.COMPLETE_PATH, path);
 
 			ByteArrayInputStream stream = new ByteArrayInputStream(delMsg.bytes.toByteArray());
 
@@ -172,7 +173,7 @@ public class OutlookDBXParser extends AbstractParser {
 		if (subject == null || subject.trim().isEmpty())
 			subject = "[Sem Assunto]";
 		mailMetadata.set(TikaCoreProperties.TITLE, subject);
-		mailMetadata.set(EmbeddedFileParser.COMPLETE_PATH, path);
+		mailMetadata.set(ExpandContainerTask.COMPLETE_PATH, path);
 		if (messageInfo.createtime != null)
 			mailMetadata.set(TikaCoreProperties.CREATED, NtfsTimeConverter.ntfsTimeToDate(messageInfo.createtime));
 		// mailMetadata.set(TikaCoreProperties.MODIFIED,

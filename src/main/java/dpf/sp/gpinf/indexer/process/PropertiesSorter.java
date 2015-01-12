@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
 import java.io.FileOutputStream;

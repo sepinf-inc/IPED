@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
@@ -36,7 +36,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 /*
  * Classe para calcular e manipular hashes.
  */
-public class HashClass {
+public class ComputeHashTask {
 
 	private MessageDigest digest;
 	private String algorithm;
@@ -76,7 +76,7 @@ public class HashClass {
 
 	}
 
-	public HashClass(String algorithm, File output) throws NoSuchAlgorithmException, IOException {
+	public ComputeHashTask(String algorithm, File output) throws NoSuchAlgorithmException, IOException {
 		this.algorithm = algorithm.toUpperCase().replace("-", "");
 		this.digest = MessageDigest.getInstance(algorithm);
 		this.output = output;

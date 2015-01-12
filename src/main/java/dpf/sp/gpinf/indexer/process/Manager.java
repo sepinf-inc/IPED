@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -55,12 +55,15 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
-import dpf.sp.gpinf.indexer.index.HashClass.HashValue;
-import dpf.sp.gpinf.indexer.index.IndexWorker.IdLenPair;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.EmbeddedFileParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
@@ -73,7 +76,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
  * Classe responsável pela preparação do processamento, criação do produtor de itens e 
  * consumidores (processadores) dos itens, monitoramento do processamento e pelas etapas pós-processamento. 
  */
-public class IndexManager {
+public class Manager {
 
 	private static int QUEUE_SIZE = 100000;
 
@@ -84,13 +87,13 @@ public class IndexManager {
 	private File output, indexDir, indexTemp, palavrasChave;
 
 	private Thread contador, produtor;
-	private IndexWorker[] workers;
+	private Worker[] workers;
 	private IndexWriter writer;
 	private int previousIndexedFiles = 0;
 
 	public Exception exception;
 
-	public IndexManager(List<File> reports, List<String> caseNames, File output, File palavras) {
+	public Manager(List<File> reports, List<String> caseNames, File output, File palavras) {
 		this.indexTemp = Configuration.indexTemp;
 		this.caseNames = caseNames;
 		this.reports = reports;
@@ -101,7 +104,7 @@ public class IndexManager {
 		if (caseNames.size() > 0)
 			caseData.setContainsReport(true);
 
-		IndexWorker.resetStaticVariables();
+		Worker.resetStaticVariables();
 		EvidenceFile.setStartID(0);
 
 		indexDir = new File(output, "index");
@@ -192,12 +195,12 @@ public class IndexManager {
 		int[] textSizes = (int[]) in.readObject();
 		for (int i = 0; i < textSizes.length; i++)
 			if (textSizes[i] != 0)
-				IndexWorker.textSizes.add(new IdLenPair(i, textSizes[i] * 1000L));
+				Worker.textSizes.add(new IdLenPair(i, textSizes[i] * 1000L));
 	
 		in.close();
 		fileIn.close();
 
-		IndexWorker.setLastId(textSizes.length - 1);
+		Worker.setLastId(textSizes.length - 1);
 		EvidenceFile.setStartID(textSizes.length);
 
 		fileIn = new FileInputStream(new File(output, "data/splits.ids"));
@@ -205,7 +208,7 @@ public class IndexManager {
 
 		HashMap<Integer, Integer> splitedDocs = (HashMap<Integer, Integer>) in.readObject();
 		for (Integer id : splitedDocs.values())
-			IndexWorker.splitedIds.add(id);
+			Worker.splitedIds.add(id);
 
 		in.close();
 		fileIn.close();
@@ -213,13 +216,13 @@ public class IndexManager {
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 		previousIndexedFiles = reader.numDocs();
 
-		synchronized (IndexWorker.hashMap) {
+		synchronized (Worker.hashMap) {
 			for (int i = 0; i < reader.maxDoc(); i++) {
 				Document doc = reader.document(i);
 				String hash = doc.get("hash");
 				if (hash != null){
 					HashValue hValue = new HashValue(hash);
-					IndexWorker.hashMap.put(hValue, hValue);
+					Worker.hashMap.put(hValue, hValue);
 				}
 					
 			}
@@ -236,18 +239,18 @@ public class IndexManager {
 
 	public void logarEstatisticas() throws Exception {
 
-		int processed = IndexWorker.getProcessed();
-		int extracted = FileExtractor.getSubitensExtracted();
-		int activeFiles = IndexWorker.getActiveProcessed();
-		int carvedIgnored = IndexWorker.getCorruptCarveIgnored();
-		int duplicatesIgnored = IndexWorker.getDuplicatesIgnored();
+		int processed = Worker.getProcessed();
+		int extracted = ExportFileTask.getSubitensExtracted();
+		int activeFiles = Worker.getActiveProcessed();
+		int carvedIgnored = Worker.getCorruptCarveIgnored();
+		int duplicatesIgnored = Worker.getDuplicatesIgnored();
 		
-		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + IndexWorker.getSplits());
-		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + IndexWorker.getTimeouts());
+		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + Worker.getSplits());
+		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + Worker.getTimeouts());
 		System.out.println(new Date() + "\t[INFO]\t" + "Exceções de parsing: " + IndexerDefaultParser.parsingErrors);
-		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + EmbeddedFileParser.getSubitensDiscovered());
+		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ExpandContainerTask.getSubitensDiscovered());
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + FileCarver.getItensCarved());
+		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + CarveTask.getItensCarved());
 		System.out.println(new Date() + "\t[INFO]\t" + "Carvings corrompidos ignorados: " + carvedIgnored);
 		System.out.println(new Date() + "\t[INFO]\t" + "Duplicados descartados: " + duplicatesIgnored);
 
@@ -255,13 +258,13 @@ public class IndexManager {
 			System.out.println(new Date() + "\t[INFO]\t" + "Processadas " + caseData.getAlternativeFiles() + " versões de visualização dos itens ao invés das originais.");
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
-		int indexed = reader.numDocs() - IndexWorker.getSplits() - previousIndexedFiles;
+		int indexed = reader.numDocs() - Worker.getSplits() - previousIndexedFiles;
 		reader.close();
 
-		if (indexed != processed && FileExtractor.hasCategoryToExtract())
+		if (indexed != processed && ExportFileTask.hasCategoryToExtract())
 			System.out.println(new Date() + "\t[INFO]\t" + "Itens indexados: " + indexed);
 
-		long processedVolume = IndexWorker.getVolume() / (1024 * 1024);
+		long processedVolume = Worker.getVolume() / (1024 * 1024);
 		
 		if (activeFiles != processed)
 			System.out.println(new Date() + "\t[INFO]\t" + "Itens ativos processados: " + activeFiles);
@@ -272,7 +275,7 @@ public class IndexManager {
 		if (processed != discovered)
 			throw new Exception("Processados " + processed + " itens de " + discovered);
 
-		if(!FileExtractor.hasCategoryToExtract()){
+		if(!ExportFileTask.hasCategoryToExtract()){
 			if (indexed + carvedIgnored + duplicatesIgnored != discovered)
 				throw new Exception("Indexados " + indexed + " itens de " + discovered);
 		}/*else 
@@ -299,9 +302,9 @@ public class IndexManager {
 
 		writer = new IndexWriter(FSDirectory.open(indexTemp), conf);
 
-		workers = new IndexWorker[Configuration.numThreads];
+		workers = new Worker[Configuration.numThreads];
 		for (int k = 0; k < workers.length; k++) {
-			workers[k] = new IndexWorker(k, caseData, writer, output);
+			workers[k] = new Worker(k, caseData, writer, output);
 			// workers[k].setDaemon(false);
 			workers[k].start();
 		}
@@ -324,8 +327,8 @@ public class IndexManager {
 			}
 
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
-			IndexFiles.getInstance().firePropertyChange("processed", -1, IndexWorker.getProcessed());
-			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(IndexWorker.getVolume()/1000000));
+			IndexFiles.getInstance().firePropertyChange("processed", -1, Worker.getProcessed());
+			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(Worker.getVolume()/1000000));
 
 			someWorkerAlive = false;
 			for (int k = 0; k < workers.length; k++) {
@@ -385,7 +388,7 @@ public class IndexManager {
 			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
 		}
 
-		if (caseData.containsReport() || FileExtractor.hasCategoryToExtract())
+		if (caseData.containsReport() || ExportFileTask.hasCategoryToExtract())
 			new File(output, "data/containsReport.flag").createNewFile();
 
 	}
@@ -400,7 +403,7 @@ public class IndexManager {
 			categories.add(Configuration.defaultCategory);
 
 		} else
-			categories = CategoryMapper.getCategories();
+			categories = SetCategoryTask.getCategories();
 
 		// filtra categorias vazias
 		if (categories.size() != 0) {
@@ -437,7 +440,7 @@ public class IndexManager {
 			categories.add(Configuration.defaultCategory);
 
 		} else
-			categories = CategoryMapper.getCategories();
+			categories = SetCategoryTask.getCategories();
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
 		int maxDoc = reader.maxDoc();
@@ -530,7 +533,7 @@ public class IndexManager {
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
 			int id = Integer.parseInt(reader.document(i).get("id"));
-			if (IndexWorker.splitedIds.contains(id))
+			if (Worker.splitedIds.contains(id))
 				splitedDocs.put(i, id);
 		}
 		reader.close();
@@ -618,10 +621,10 @@ public class IndexManager {
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
 		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraídos...");
 
-		int[] textSizes = new int[IndexWorker.getLastId() + 1];
+		int[] textSizes = new int[Worker.getLastId() + 1];
 
-		for (int i = 0; i < IndexWorker.textSizes.size(); i++) {
-			IdLenPair pair = IndexWorker.textSizes.get(i);
+		for (int i = 0; i < Worker.textSizes.size(); i++) {
+			IdLenPair pair = Worker.textSizes.get(i);
 			textSizes[pair.id] = pair.length;
 		}
 
@@ -636,7 +639,7 @@ public class IndexManager {
 			IOUtil.deletarDiretorio(output);
 		}
 
-		File export = new File(output.getParentFile(), FileExtractor.EXTRACT_DIR);
+		File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
 		if (export.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + export.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + export.getAbsolutePath());

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.CaseData;
 
@@ -45,9 +45,9 @@ class ItemProducer implements Runnable {
 	private List<File> reports;
 	private List<String> caseNames;
 	private File output;
-	private IndexManager manager;
+	private Manager manager;
 
-	ItemProducer(IndexManager manager, CaseData caseData, boolean listOnly, List<File> reports, List<String> caseNames, File output) {
+	ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> reports, List<String> caseNames, File output) {
 		this.caseData = caseData;
 		this.listOnly = listOnly;
 		this.caseNames = caseNames;

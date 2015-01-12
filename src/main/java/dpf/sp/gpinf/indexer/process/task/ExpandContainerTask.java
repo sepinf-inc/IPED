@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.parsers;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -46,13 +46,13 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.index.CategoryMapper;
-import dpf.sp.gpinf.indexer.index.FileExtractor;
-import dpf.sp.gpinf.indexer.index.IndexWorker;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
-public class EmbeddedFileParser implements EmbeddedDocumentExtractor {
+public class ExpandContainerTask implements EmbeddedDocumentExtractor {
 
 	public static String COMPLETE_PATH = "INDEXER_COMPLETE_PATH";
 	//public static String INDEXER_ID = "INDEXER_ID";
@@ -64,7 +64,7 @@ public class EmbeddedFileParser implements EmbeddedDocumentExtractor {
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
 
-	private IndexWorker worker;
+	private Worker worker;
 	private File outputBase;
 	private CaseData caseData;
 	private ParseContext context;
@@ -73,7 +73,7 @@ public class EmbeddedFileParser implements EmbeddedDocumentExtractor {
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
 
-	public EmbeddedFileParser(ParseContext context) {
+	public ExpandContainerTask(ParseContext context) {
 		this.context = context;
 		this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
 
@@ -81,7 +81,7 @@ public class EmbeddedFileParser implements EmbeddedDocumentExtractor {
 		extractEmbedded = isToBeExpanded(appContext.getBookmarks());
 	}
 
-	public EmbeddedFileParser(ParseContext context, IndexWorker worker) {
+	public ExpandContainerTask(ParseContext context, Worker worker) {
 		this(context);
 		this.worker = worker;
 		this.outputBase = worker.output;
@@ -235,13 +235,13 @@ public class EmbeddedFileParser implements EmbeddedDocumentExtractor {
 				appContext.setEvidence(evidence);
 			}
 
-			FileExtractor extractor = new FileExtractor(config, outputBase, worker.hasher, worker.hashMap);
+			ExportFileTask extractor = new ExportFileTask(config, outputBase, worker.hasher, worker.hashMap);
 			extractor.extractFile(tis, evidence);
 
-			CategoryMapper.setCategories(evidence);
+			SetCategoryTask.setCategories(evidence);
 
 			// teste para extração de anexos de emails de PSTs
-			if (!FileExtractor.hasCategoryToExtract() || FileExtractor.isToBeExtracted(evidence) || metadata.get(TO_EXTRACT) != null) {
+			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(evidence) || metadata.get(TO_EXTRACT) != null) {
 				evidence.setToExtract(true);
 				metadata.set(TO_EXTRACT, "true");
 				//int id = evidence.getId();

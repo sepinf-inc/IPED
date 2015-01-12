@@ -43,7 +43,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.index.FileCarver;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
 /**
@@ -150,7 +150,7 @@ public class IndexerDefaultParser extends CompositeParser {
 			 * !contentType.equals("application/gzip")
 			 */
 			) {
-				if(evidence != null && evidence.isCarved() && FileCarver.ignoreCorrupted)
+				if(evidence != null && evidence.isCarved() && CarveTask.ignoreCorrupted)
 					throw e;
 				
 				String value;

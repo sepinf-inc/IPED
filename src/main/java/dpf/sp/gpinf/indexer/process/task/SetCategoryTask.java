@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
@@ -46,7 +46,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
  * Além disso utiliza regras javascript de definição de categorias baseadas nas propriedades dos itens.
  * Também é responsável por setar a categoria do item.
  */
-public class CategoryMapper {
+public class SetCategoryTask {
 
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
 	private static ArrayList<String[]> mimetypeToCategoryList = new ArrayList<String[]>();

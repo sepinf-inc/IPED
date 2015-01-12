@@ -26,15 +26,15 @@ import java.util.Properties;
 import org.apache.tika.parser.EmptyParser;
 
 import dpf.sp.gpinf.indexer.analysis.LowerCaseLetterDigitTokenizer;
-import dpf.sp.gpinf.indexer.index.CategoryMapper;
-import dpf.sp.gpinf.indexer.index.FileCarver;
-import dpf.sp.gpinf.indexer.index.FileExtractor;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.EmbeddedFileParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -98,21 +98,21 @@ public class Configuration {
 			System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
 		if (new File(configPath + "/conf/" + CATEGORIES_BY_TYPE).exists())
-			CategoryMapper.load(new File(configPath + "/conf/" + CATEGORIES_BY_TYPE));
+			SetCategoryTask.load(new File(configPath + "/conf/" + CATEGORIES_BY_TYPE));
 
 		if (new File(configPath + "/conf/" + CATEGORIES_BY_PROPS).exists())
-			CategoryMapper.loadScript(new File(configPath + "/conf/" + CATEGORIES_BY_PROPS));
+			SetCategoryTask.loadScript(new File(configPath + "/conf/" + CATEGORIES_BY_PROPS));
 
 		if (new File(configPath + "/conf/" + EXTRACT_CONFIG).exists())
-			FileExtractor.load(new File(configPath + "/conf/" + EXTRACT_CONFIG));
+			ExportFileTask.load(new File(configPath + "/conf/" + EXTRACT_CONFIG));
 
 		if (new File(configPath + "/conf/" + CARVE_CONFIG).exists())
-			FileCarver.loadConfigFile(new File(configPath + "/conf/" + CARVE_CONFIG));
+			CarveTask.loadConfigFile(new File(configPath + "/conf/" + CARVE_CONFIG));
 
 		if (new File(configPath + "/conf/" + EXPAND_CONFIG).exists())
-			EmbeddedFileParser.load(new File(configPath + "/conf/" + EXPAND_CONFIG));
+			ExpandContainerTask.load(new File(configPath + "/conf/" + EXPAND_CONFIG));
 		else
-			EmbeddedFileParser.load(new File(configPath + "/" + EXPAND_CONFIG));
+			ExpandContainerTask.load(new File(configPath + "/" + EXPAND_CONFIG));
 
 		properties.load(new FileInputStream(new File(configPath + "/" + CONFIG_FILE)));
 

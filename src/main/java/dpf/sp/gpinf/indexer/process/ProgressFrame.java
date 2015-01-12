@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.index;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.EvidenceFile;
 
@@ -53,7 +53,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	private SwingWorker task;
 	private Date indexStart;
 	private HashMap<Integer, String> itens = new HashMap<Integer, String>();
-	private IndexWorker[] workers;
+	private Worker[] workers;
 	private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
 
 	public ProgressFrame(SwingWorker task) {
@@ -128,7 +128,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			rate = (long)volume * 1000000L * 3600L / (1024L * 1024L * 1024L * interval);
 			
 		} else if ("workers".equals(evt.getPropertyName())) {
-			workers = (IndexWorker[]) evt.getNewValue();
+			workers = (Worker[]) evt.getNewValue();
 		}
 
 	}
