@@ -1,0 +1,98 @@
+################################################################################################
+# Configuração de CARVING
+################################################################################################
+
+
+# TODO: Ainda não implementado. Permitirá avançar vários bytes entre cada tentativa de carving,
+# realizando o carving apenas no início dos clusters não alocados. Mais rápido, porém com menos resultados.
+# bytesToSkip = 4096
+
+
+# Tipos de arquivo nos quais será efetuado o carving.
+# Comentado por padrão para efetuar carving em todos os itens, exceto aqueles listados em 'typesToNotProcess'
+#typesToProcess = application/x-unallocated;
+#typesToProcess = application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow
+#typesToProcess = application/x-iso9660-image; application/x-vmdk; application/x-vhd; application/x-vdi
+#typesToProcess = application/x-thumbs; application/x-thumbcache
+#Desconhecidos:
+#typesToProcess = application/octet-stream;  
+
+
+# Tipos de arquivo nos quais não será efetuado o carving. Subtipos também não são processados.
+# Estão configurados por padrão todos os tipos que são expandidos, para não serem recuperados itens repetidos.
+# Comente caso não queira excluir itens do carving.
+typesToNotProcess = video; text/html; application/pdf
+typesToNotProcess = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;
+typesToNotProcess = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
+typesToNotProcess = application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;
+typesToNotProcess = application/rtf; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;
+typesToNotProcess = application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc;
+typesToNotProcess = application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;
+
+
+# Descarta arquivos recuperados corrompidos. Tais arquivos tb podem ser filtrados posteriormente,
+# pois recebem o metadado "ParserException: true"
+ignoreCorrupted = true
+
+
+# Definições de assinatura para carving, uma por linha, com os atributos separados por vírgula, abaixo descritos:
+#
+# Name, MediaType, MinSize, MaxSize, Header, Footer, SizeOffset, SizeBytes, Bigendian
+#
+# Name		Nome do tipo de arquivo
+# MediaType	Media type do tipo.
+# MinSize	Tamanho mínimo
+# MaxSize	Tamanho máximo
+# Header	Cabeçalho do arquivo. Utilize \ para indicar valor hexadecimal e ? como coringa (deve ser evitado sempre que possível)
+# Footer	Rodapé do arquivo. Caso não exista, preencha com null
+# SizeOffset	Offset no cabeçalho para a informação de tamanho do arquivo (opcional)
+# SizeBytes	Número de bytes que a info de tamanho do arquivo ocupa (opcional)
+# Bigendian	Indica se a info de tamanho do arquivo está em bigendian ou não (opcional)
+
+
+# Atenção: deve-se usar ? apenas caso os padrões por ele separados sejam incomuns
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\01\00, null, 2, 4, false
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\04\00, null, 2, 4, false
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\08\00, null, 2, 4, false
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\10\00, null, 2, 4, false
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\18\00, null, 2, 4, false
+BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\20\00, null, 2, 4, false
+
+JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\DB, \ff\d9
+JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\E0, \ff\d9
+JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\EE, \ff\d9
+JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\E1, \ff\d9
+JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\FE, \ff\d9
+
+GIF, image/gif, 1000, 10000000, GIF87a, \00\3b
+GIF, image/gif, 1000, 10000000, GIF89a, \00\3b
+
+PNG, image/png, 1000, 10000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
+
+# OLE e derivados. Não altere o nome OLE, pois é realizado tratamento específico para esse formato
+OLE, application/x-tika-msoffice, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
+
+# ZIP e derivados (docx, odt, etc). Não altere o nome ZIP, pois é realizado tratamento específico para esse formato
+ZIP, application/zip, 1000, 10000000, PK\03\04, PK\05\06??????????????????
+
+PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF
+
+HTM, text/html, 1000, 10000000, <html, </html>
+HTM, text/html, 1000, 10000000, <HTML, </HTML>
+
+# Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
+#TIF, image/tiff, 1000, 1000000, MM\00\2a, null
+#TIF, image/tiff, 1000, 1000000, II\2a\00, null
+#MPG, video/mpeg, 100000, 100000000, \00\00\01\ba, \00\00\01\b9
+#MPG, video/mpeg, 100000, 100000000, \00\00\01\b3, \00\00\01\b7
+#AVI, video/x-msvideo, 100000, 10000000, RIFF????AVI, null
+#ASF, video/x-ms-asf, 100000, 10000000, \30\26\B2\75, null
+#FLV, video/x-flv, 100000, 10000000, FLV, null
+#MP4, video/mp4, 100000, 10000000, ????ftypmp41, null
+#MP4, video/mp4, 100000, 10000000, ????ftypmp42, null
+#MP4, video/mp4, 100000, 10000000, ????ftypM4V, null
+#3GP, video/3gpp, 100000, 10000000, ????ftyp3g??, null
+#MOV, video/quicktime, 100000, 10000000, ????moov, null
+#MOV, video/quicktime, 100000, 10000000, ????mdat, null
+#MOV, video/quicktime, 100000, 10000000, ????ftyp, null
+

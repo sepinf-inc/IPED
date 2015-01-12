@@ -1,0 +1,18 @@
+########################################################################
+# Descomente as Categorias que deverão ser expandidas durante a idexação
+# Os subitens serão extraídos para a pasta 'indexador/../Exportados'
+# A expansão é recursiva, logo pode consumir espaço considerável
+########################################################################
+
+Caixas de Emails
+Arquivos Compactados
+Emails
+
+#Documentos de Texto
+#Planilhas
+#Apresentações
+#Documentos RTF
+#Documentos PDF
+
+# Para expandir arquivos jar, comente a linha <mime>application/java-archive</mime> em ParserConfig.xml
+#Programas e Bibliotecas
