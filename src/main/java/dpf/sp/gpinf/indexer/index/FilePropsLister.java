@@ -55,7 +55,7 @@ public class FilePropsLister {
 		list.append("\"" + value.replace("\"", "\"\"") + "\";");
 		
 		value = evidence.getFileToIndex();
-		if (!value.isEmpty())
+		if (!value.isEmpty() && evidence.getFileOffset() == -1)
 			value = "=HIPERLINK(\"\"" + value + "\"\";\"\"Abrir\"\")";
 		list.append("\"" + value + "\";");
 		
