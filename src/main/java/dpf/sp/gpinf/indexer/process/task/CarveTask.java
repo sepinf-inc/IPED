@@ -53,7 +53,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  * a partir dos padrões a serem pesquisados. Assim, o algoritmo é independente do número de assinaturas pesquisadas,
  * sendo proporcional ao volume de dados de entrada e ao número de padrões descobertos.
  */
-public class CarveTask {
+public class CarveTask extends AbstractTask{
 
 	private static final long serialVersionUID = 1L;
 	
@@ -72,13 +72,12 @@ public class CarveTask {
 	private static int largestPatternLen = 100;
 	
 	EvidenceFile evidence;
-	Worker worker;
 	MediaTypeRegistry registry;
 
 	
 	long prevLen = 0;
 	int len = 0, k = 0;
-	byte[] buf = new byte[1024*1024];
+	byte[] buf = new byte[1024 * 1024];
 	byte[] cBuf;
 	
 	synchronized public static void incItensCarved() {
@@ -89,9 +88,8 @@ public class CarveTask {
 		return itensCarved;
 	}
 
-	public CarveTask(EvidenceFile evidence, Worker worker){
-		this.evidence = evidence;
-		this.worker = worker;
+	public CarveTask(Worker worker){
+		super(worker);
 		this.registry = worker.config.getMediaTypeRegistry();
 	}
 
@@ -148,16 +146,20 @@ public class CarveTask {
 		}
 		tree.prepare();
 	}
+	
+	public void process(EvidenceFile evidence) {
+		//Nova instancia pois o mesmo objeto é reusado e nao é imutável
+		new CarveTask(worker).safeProcess(evidence);
+	}
 
-	public void parse() {
+	private void safeProcess(EvidenceFile evidence) {
 		
+		this.evidence = evidence;
 		MediaType type = evidence.getMediaType();
 		
 		if (!Configuration.enableCarving || evidence.isCarved() || evidence.isSubmittedToCarving() ||
 			(TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type)))
 			return;
-		
-		evidence.setSubmittedToCarving(true);
 		
 		InputStream tis = null;
 		try{
@@ -450,29 +452,6 @@ public class CarveTask {
 		return len;
 	}
 	
-
-	private boolean isEmpty(InputStream stream, long length) throws IOException {
-
-		stream.mark((int) length);
-
-		byte[] buf = new byte[(int) length];
-		int i = 0, j = 0;
-		while (j != -1 && i < length) {
-			j = stream.read(buf, i, (int) length - i);
-			i += j;
-		}
-
-		int empty = 0;
-		for (i = 0; i < length; i++)
-			if (buf[i] != 0) {
-				empty++;
-				break;
-			}
-
-		stream.reset();
-
-		return empty == 0;
-	}
 	
 	private void addCarvedFile(long off, long len, int sig) throws Exception{
 		

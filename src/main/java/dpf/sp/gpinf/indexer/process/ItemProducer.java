@@ -35,7 +35,7 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
 /*
  * Responsável por instanciar e chamar o produtor específico do caso.
  */
-class ItemProducer implements Runnable {
+public class ItemProducer implements Runnable {
 	
 	public static volatile boolean indexerReport = false;
 	public static volatile Object sleuthkitLock = new Object(); 

@@ -30,8 +30,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -59,9 +61,9 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
 import dpf.sp.gpinf.indexer.search.App;
@@ -73,8 +75,26 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 /*
- * Classe responsável pela preparação do processamento, criação do produtor de itens e 
- * consumidores (processadores) dos itens, monitoramento do processamento e pelas etapas pós-processamento. 
+ * Classe responsável pela preparação do processamento, inicialização do contador, produtor e 
+ * consumidores (processadores) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
+ * 
+ * O contador apenas enumera e soma o tamanho dos itens que serão processados,
+ * permitindo que seja estimado o progresso e término do processamento.
+ * 
+ * O produtor obtém os itens a partir de uma fonte de dados específica (relatório do FTK, diretório, imagem),
+ * inserindo-os numa fila de processamento com tamanho limitado (para limitar o uso de memória).
+ * 
+ * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo seu processamento.
+ * Cada worker executa em uma thread diferente, permitindo o processamento em paralelo dos itens.
+ * Por padrão, o número de consumidores é igual ao número de processadores disponíveis.
+ * 
+ * Após inicializar o processamento, o manager realiza o monitoramento, verificando se alguma exceção ocorreu,
+ * informando a interface sobre o estado do processamento e verificando se os workers processaram todos os itens.
+ * 
+ * O pós-processamento inclui a pré-ordenação das propriedades dos itens, o armazenamento do volume de texto 
+ * indexado de cada item, do mapeamento indexId->id, dos ids dos itens fragmentados, a filtragem de categorias
+ * e palavras-chave e o log de estatísticas do processamento.
+ * 
  */
 public class Manager {
 
@@ -92,6 +112,19 @@ public class Manager {
 	private int previousIndexedFiles = 0;
 
 	public Exception exception;
+	
+	//Estatísticas
+	private int splits = 0;
+	private int timeouts = 0;
+	private int processed = 0;
+	private int activeProcessed = 0;
+	private long volumeIndexed = 0;
+	private int lastId = -1;
+	private int corruptCarveIgnored = 0;
+	private int duplicatesIgnored = 0;
+	public List<IdLenPair> textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
+	public HashMap<HashValue, HashValue> hashMap = new HashMap<HashValue, HashValue>();
+	private HashSet<Integer> splitedIds = new HashSet<Integer>();
 
 	public Manager(List<File> reports, List<String> caseNames, File output, File palavras) {
 		this.indexTemp = Configuration.indexTemp;
@@ -113,6 +146,79 @@ public class Manager {
 
 		OCRParser.OUTPUT_BASE = output;
 
+	}
+	
+	synchronized public int getSplits() {
+		return splits;
+	}
+
+	synchronized public void incSplits() {
+		splits++;
+	}
+
+	synchronized public void remindSplitedDoc(int id) {
+		splitedIds.add(id);
+	}
+
+	synchronized public int getTimeouts() {
+		return timeouts;
+	}
+
+	synchronized public void incTimeouts() {
+		timeouts++;
+	}
+
+	synchronized public void incProcessed() {
+		processed++;
+	}
+
+	synchronized public int getProcessed() {
+		return processed;
+	}
+
+	synchronized public void incActiveProcessed() {
+		activeProcessed++;
+	}
+
+	synchronized public int getActiveProcessed() {
+		return activeProcessed;
+	}
+
+	synchronized public void addVolume(long volume) {
+		volumeIndexed += volume;
+	}
+
+	synchronized public long getVolume() {
+		return volumeIndexed;
+	}
+
+	synchronized public int getCorruptCarveIgnored() {
+		return corruptCarveIgnored;
+	}
+
+	synchronized public void incCorruptCarveIgnored() {
+		corruptCarveIgnored++;
+	}
+
+	synchronized public int getDuplicatesIgnored() {
+		return duplicatesIgnored;
+	}
+
+	synchronized public void incDuplicatesIgnored() {
+		duplicatesIgnored++;
+	}
+
+	synchronized public void updateLastId(int id) {
+		if (id > lastId)
+			lastId = id;
+	}
+
+	synchronized public int getLastId() {
+		return lastId;
+	}
+	
+	synchronized public void setLastId(int id) {
+		lastId = id;
 	}
 
 	public void process() throws Exception {
@@ -192,23 +298,23 @@ public class Manager {
 		FileInputStream fileIn = new FileInputStream(new File(output, "data/texts.size"));
 		ObjectInputStream in = new ObjectInputStream(fileIn);
 
-		int[] textSizes = (int[]) in.readObject();
-		for (int i = 0; i < textSizes.length; i++)
-			if (textSizes[i] != 0)
-				Worker.textSizes.add(new IdLenPair(i, textSizes[i] * 1000L));
+		int[] textSizesArray = (int[]) in.readObject();
+		for (int i = 0; i < textSizesArray.length; i++)
+			if (textSizesArray[i] != 0)
+				textSizes.add(new IdLenPair(i, textSizesArray[i] * 1000L));
 	
 		in.close();
 		fileIn.close();
 
-		Worker.setLastId(textSizes.length - 1);
-		EvidenceFile.setStartID(textSizes.length);
+		setLastId(textSizesArray.length - 1);
+		EvidenceFile.setStartID(textSizesArray.length);
 
 		fileIn = new FileInputStream(new File(output, "data/splits.ids"));
 		in = new ObjectInputStream(fileIn);
 
 		HashMap<Integer, Integer> splitedDocs = (HashMap<Integer, Integer>) in.readObject();
 		for (Integer id : splitedDocs.values())
-			Worker.splitedIds.add(id);
+			splitedIds.add(id);
 
 		in.close();
 		fileIn.close();
@@ -216,13 +322,13 @@ public class Manager {
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 		previousIndexedFiles = reader.numDocs();
 
-		synchronized (Worker.hashMap) {
+		synchronized (hashMap) {
 			for (int i = 0; i < reader.maxDoc(); i++) {
 				Document doc = reader.document(i);
 				String hash = doc.get("hash");
 				if (hash != null){
 					HashValue hValue = new HashValue(hash);
-					Worker.hashMap.put(hValue, hValue);
+					hashMap.put(hValue, hValue);
 				}
 					
 			}
@@ -239,14 +345,14 @@ public class Manager {
 
 	public void logarEstatisticas() throws Exception {
 
-		int processed = Worker.getProcessed();
+		int processed = getProcessed();
 		int extracted = ExportFileTask.getSubitensExtracted();
-		int activeFiles = Worker.getActiveProcessed();
-		int carvedIgnored = Worker.getCorruptCarveIgnored();
-		int duplicatesIgnored = Worker.getDuplicatesIgnored();
+		int activeFiles = getActiveProcessed();
+		int carvedIgnored = getCorruptCarveIgnored();
+		int duplicatesIgnored = getDuplicatesIgnored();
 		
-		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + Worker.getSplits());
-		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + Worker.getTimeouts());
+		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + getSplits());
+		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + getTimeouts());
 		System.out.println(new Date() + "\t[INFO]\t" + "Exceções de parsing: " + IndexerDefaultParser.parsingErrors);
 		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ExpandContainerTask.getSubitensDiscovered());
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
@@ -258,13 +364,13 @@ public class Manager {
 			System.out.println(new Date() + "\t[INFO]\t" + "Processadas " + caseData.getAlternativeFiles() + " versões de visualização dos itens ao invés das originais.");
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
-		int indexed = reader.numDocs() - Worker.getSplits() - previousIndexedFiles;
+		int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
 		reader.close();
 
 		if (indexed != processed && ExportFileTask.hasCategoryToExtract())
 			System.out.println(new Date() + "\t[INFO]\t" + "Itens indexados: " + indexed);
 
-		long processedVolume = Worker.getVolume() / (1024 * 1024);
+		long processedVolume = getVolume() / (1024 * 1024);
 		
 		if (activeFiles != processed)
 			System.out.println(new Date() + "\t[INFO]\t" + "Itens ativos processados: " + activeFiles);
@@ -304,7 +410,7 @@ public class Manager {
 
 		workers = new Worker[Configuration.numThreads];
 		for (int k = 0; k < workers.length; k++) {
-			workers[k] = new Worker(k, caseData, writer, output);
+			workers[k] = new Worker(k, caseData, writer, output, this);
 			// workers[k].setDaemon(false);
 			workers[k].start();
 		}
@@ -327,8 +433,8 @@ public class Manager {
 			}
 
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
-			IndexFiles.getInstance().firePropertyChange("processed", -1, Worker.getProcessed());
-			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(Worker.getVolume()/1000000));
+			IndexFiles.getInstance().firePropertyChange("processed", -1, getProcessed());
+			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(getVolume()/1000000));
 
 			someWorkerAlive = false;
 			for (int k = 0; k < workers.length; k++) {
@@ -533,7 +639,7 @@ public class Manager {
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
 			int id = Integer.parseInt(reader.document(i).get("id"));
-			if (Worker.splitedIds.contains(id))
+			if (splitedIds.contains(id))
 				splitedDocs.put(i, id);
 		}
 		reader.close();
@@ -621,14 +727,14 @@ public class Manager {
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
 		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraídos...");
 
-		int[] textSizes = new int[Worker.getLastId() + 1];
+		int[] textSizesArray = new int[getLastId() + 1];
 
-		for (int i = 0; i < Worker.textSizes.size(); i++) {
-			IdLenPair pair = Worker.textSizes.get(i);
-			textSizes[pair.id] = pair.length;
+		for (int i = 0; i < textSizes.size(); i++) {
+			IdLenPair pair = textSizes.get(i);
+			textSizesArray[pair.id] = pair.length;
 		}
 
-		IOUtil.writeObject(textSizes, output.getAbsolutePath() + "/data/texts.size");
+		IOUtil.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
 	}
 	
 

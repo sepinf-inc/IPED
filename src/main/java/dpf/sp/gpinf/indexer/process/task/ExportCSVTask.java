@@ -27,28 +27,31 @@ import java.io.OutputStreamWriter;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.Worker;
 
 /*
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
-public class ExportCSVTask {
+public class ExportCSVTask extends AbstractTask{
 
 	private File output;
 	private StringBuilder list = new StringBuilder();
 
 	private static int MAX_MEM_SIZE = 1000000;
-	private static String csvName = "Lista de Arquivos.csv";
+	private static String csvName = "FileListing.csv";
 	public static volatile boolean headerWritten = false;
 
-	public ExportCSVTask(File output) throws NoSuchAlgorithmException, IOException {
-		this.output = new File(output.getParentFile(), csvName);
-		if(this.output.exists())
-			this.output.delete();
+	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
+		this.output = new File(worker.output, csvName);
 	}
 
-	public void save(EvidenceFile evidence) throws IOException {
+	public void process(EvidenceFile evidence) {
 		
+		if (!Configuration.exportFileProps)
+			return;
+
 		String value = evidence.getName();
 		if (value == null)
 			value = "";
@@ -124,19 +127,28 @@ public class ExportCSVTask {
 
 	}
 
-	public void flush() throws IOException {
-		flush(list, output);
+	public void flush() {
+		try {
+			flush(list, output);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		list = new StringBuilder();
 	}
 
 	private static synchronized void flush(StringBuilder list, File output) throws IOException {
 		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
 		if (!headerWritten) {
-			writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Tipo\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
+			writer.write("\"Nome\";\"Tamanho\";\"Ext\";\"Categoria\";\"Hash\";\"Deletado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\"Export\"\r\n");
 			headerWritten = true;
 		}
 		writer.write(list.toString());
 		writer.close();
+	}
+	
+	public void finish(){
+		if (Configuration.exportFileProps)
+			flush();
 	}
 
 }

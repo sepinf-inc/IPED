@@ -126,7 +126,7 @@ public class IndexTask extends AbstractTask{
 		IndexerContext indexerContext = new IndexerContext(evidence);
 		context.set(IndexerContext.class, indexerContext);
 		context.set(EvidenceFile.class, evidence);
-		context.set(EmbeddedDocumentExtractor.class, new ExportFileTask(context) {
+		context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context) {
 			@Override
 			public boolean shouldParseEmbedded(Metadata arg0) {
 				return !parsed;

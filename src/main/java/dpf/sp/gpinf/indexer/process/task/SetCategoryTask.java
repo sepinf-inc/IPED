@@ -41,12 +41,19 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.process.Worker;
+
 /*
  * Classe que carrega o mapeamento de mimeTypes->Categoria da aplicação.
  * Além disso utiliza regras javascript de definição de categorias baseadas nas propriedades dos itens.
- * Também é responsável por setar a categoria do item.
+ * Também é responsável por definir a categoria do item.
  */
-public class SetCategoryTask {
+public class SetCategoryTask extends AbstractTask{
+
+	public SetCategoryTask(Worker worker) {
+		super(worker);
+	}
 
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
 	private static ArrayList<String[]> mimetypeToCategoryList = new ArrayList<String[]>();
@@ -142,7 +149,16 @@ public class SetCategoryTask {
 	static Invocable inv;
 	static boolean refineCategories = false;
 
-	public static void setCategories(EvidenceFile e) throws NoSuchMethodException, ScriptException {
+	public void process(EvidenceFile e) throws Exception{
+		
+		if (e.getCategorySet().size() != 0)
+			return;
+		
+		if (worker.containsReport && !ExportFileTask.hasCategoryToExtract()){
+			//Categoria para itens exportados p/ report do FTK sem categoria, ex: anexos
+			e.addCategory(Configuration.defaultCategory);
+			return;
+		}
 
 		String category = get(e.getMediaType());
 		e.addCategory(category);

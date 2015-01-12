@@ -31,20 +31,17 @@ import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
 
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
  * Classe para calcular e manipular hashes.
  */
-public class ComputeHashTask {
+public class ComputeHashTask extends AbstractTask{
 
 	private MessageDigest digest;
 	private String algorithm;
-	private File hashOutput, output;
-	private StringBuilder hashes = new StringBuilder();
-
-	private static int MAX_MEM_SIZE = 100000;
-	private static boolean headerWritten = false;
 
 	public static class HashValue {
 
@@ -76,16 +73,19 @@ public class ComputeHashTask {
 
 	}
 
-	public ComputeHashTask(String algorithm, File output) throws NoSuchAlgorithmException, IOException {
-		this.algorithm = algorithm.toUpperCase().replace("-", "");
-		this.digest = MessageDigest.getInstance(algorithm);
-		this.output = output;
-		this.hashOutput = new File(output, "hashes.txt");
+	public ComputeHashTask(Worker worker) throws NoSuchAlgorithmException, IOException {
+		super(worker);
+		String algorithm = Configuration.hashAlgorithm;
+		if(algorithm != null){
+			this.algorithm = algorithm.toUpperCase().replace("-", "");
+			this.digest = MessageDigest.getInstance(algorithm);
+		}
+		
 	}
 
-	public void compute(EvidenceFile evidence) {
+	public void process(EvidenceFile evidence) {
 
-		if (evidence.getHash() == null) {
+		if (digest != null && evidence.getHash() == null) {
 			
 			InputStream in = null;
 			try {
@@ -105,13 +105,14 @@ public class ComputeHashTask {
 				IOUtil.closeQuietly(in);
 			}
 		}
+		
 
 	}
 	
-	byte[] buf = new byte[1024*1024];
+	
 
 	public byte[] compute(InputStream in) throws IOException {
-		
+		byte[] buf = new byte[1024 * 1024];
 		int len;
 		while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted())
 			digest.update(buf, 0, len);
@@ -132,41 +133,6 @@ public class ComputeHashTask {
 		return DatatypeConverter.parseHexBinary(hash);
 	}
 
-	public void save(String hash, String filePath) throws IOException {
-		hashes.append(hash);
-		hashes.append(" ?" + algorithm + "*");
-		hashes.append(filePath);
-		hashes.append("\r\n");
-		if (hashes.length() > MAX_MEM_SIZE)
-			flush();
 
-	}
-
-	public void flush() throws IOException {
-		flush(algorithm, hashes, hashOutput);
-		hashes = new StringBuilder();
-	}
-
-	private static synchronized void flush(String algorithm, StringBuilder hashes, File output) throws IOException {
-		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
-		/*
-		 * if(!headerWritten){ writer.write(";" + algorithm +
-		 * "\t\tArquivo\r\n"); headerWritten = true; }
-		 */
-		writer.write(hashes.toString());
-		writer.close();
-	}
-
-	// Teste
-	/*
-	 * static public void main(String[] args){ File file = new
-	 * File("e:/Mestrado.zip"); String hash = ""; try { hash = new
-	 * HashClass("md5").compute(new FileInputStream(file)); } catch
-	 * (NoSuchAlgorithmException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); } catch (FileNotFoundException e) { // TODO
-	 * Auto-generated catch block e.printStackTrace(); } catch (IOException e) {
-	 * // TODO Auto-generated catch block e.printStackTrace(); }
-	 * System.out.println(hash); }
-	 */
 
 }

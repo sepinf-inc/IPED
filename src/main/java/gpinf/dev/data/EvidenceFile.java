@@ -129,11 +129,13 @@ public class EvidenceFile implements Serializable {
 
 	// public boolean isQueueEnd = false;
 
-	private boolean isSubItem = false, isToExtract = false, extracted = false, hasChildren = false;
+	private boolean isSubItem = false, isToExtract = false, extracted = false, parsed = false, hasChildren = false;
 	
-	private boolean isDir = false, isRoot = false;
+	private boolean isDir = false, isRoot = false, toIgnore = false, toIndex = true;
 	
 	private boolean carved = false, submittedToCarving = false, encrypted = false;
+	
+	private String parsedTextCache;
 
 	public boolean isSubmittedToCarving() {
 		return submittedToCarving;
@@ -737,6 +739,38 @@ public class EvidenceFile implements Serializable {
 	public void addParentIds(List<String> parentIds){
 		for (String id : parentIds)
 			this.parentIds.add(id);
+	}
+
+	public String getParsedTextCache() {
+		return parsedTextCache;
+	}
+
+	public void setParsedTextCache(String parsedTextCache) {
+		this.parsedTextCache = parsedTextCache;
+	}
+
+	public boolean isToIndex() {
+		return toIndex;
+	}
+
+	public void setToIndex(boolean toIndex) {
+		this.toIndex = toIndex;
+	}
+
+	public boolean isToIgnore() {
+		return toIgnore;
+	}
+
+	public void setToIgnore(boolean toIgnore) {
+		this.toIgnore = toIgnore;
+	}
+
+	public boolean isParsed() {
+		return parsed;
+	}
+
+	public void setParsed(boolean parsed) {
+		this.parsed = parsed;
 	}
 
 }

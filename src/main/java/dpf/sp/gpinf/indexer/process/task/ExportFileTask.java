@@ -43,33 +43,29 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
- * Responsável por extrair/exportar subitens de containers.
+ * Responsável por extrair subitens de containers.
  * Também exporta itens ativos em casos de extração automática de dados ou
  * em casos de extração de itens selecionados após análise.
  */
-public class ExportFileTask {
+public class ExportFileTask extends AbstractTask{
 
 	public static String EXTRACT_DIR = "Exportados";
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
 	public static int subDirCounter = 0, subitensExtracted = 0;
 	private static File subDir;
 	
-	//lock para evitar problemas ao extrair arquivos com mesmo hash simultaneamente
-	private static Object hashLock = new Object();
-
-	private TikaConfig config;
 	private File extractDir, outputBase;
-	private ComputeHashTask hasher;
 	private HashMap<HashValue, HashValue> hashMap;
 
-	public ExportFileTask(TikaConfig config, File outputBase, ComputeHashTask hasher, HashMap<HashValue, HashValue> hashMap) {
-		this.config = config;
-		this.outputBase = outputBase;
-		this.hasher = hasher;
-		this.hashMap = hashMap;
+	public ExportFileTask(Worker worker) {
+		super(worker);
+		this.outputBase = worker.output;
+		this.hashMap = worker.manager.hashMap;
 		if (outputBase != null) {
 			this.extractDir = new File(outputBase.getParentFile(), EXTRACT_DIR);
 		}
@@ -79,11 +75,6 @@ public class ExportFileTask {
 	public static synchronized void incSubitensExtracted() {
 		subitensExtracted++;
 	}
-
-	/*
-	 * public static synchronized void decSubitensExtracted(){
-	 * subitensExtracted--; }
-	 */
 
 	public static int getSubitensExtracted() {
 		return subitensExtracted;
@@ -128,44 +119,36 @@ public class ExportFileTask {
 		return result;
 	}
 
-	public static String getExtBySig(TikaConfig config, EvidenceFile evidence) {
-
-		String ext = "";
-		String ext1 = "." + evidence.getExt();
-		MediaType mediaType = evidence.getMediaType();
-		if (!mediaType.equals(MediaType.OCTET_STREAM))
-			try {
-				do {
-					boolean first = true;
-					for (String ext2 : config.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
-						if (first) {
-							ext = ext2;
-							first = false;
-						}
-						if (ext2.equals(ext1)) {
-							ext = ext1;
-							break;
-						}
-					}
-
-				} while (ext.isEmpty() && !MediaType.OCTET_STREAM.equals((mediaType = config.getMediaTypeRegistry().getSupertype(mediaType))));
-			} catch (MimeTypeException e) {
+	public void process(EvidenceFile evidence) {
+		
+		// EXPORTA ARQUIVO CASO CONFIGURADO
+		if (ExportFileTask.hasCategoryToExtract() || evidence.isToExtract()) {
+			if (!evidence.isSubItem() && !evidence.isExtracted() && (isToBeExtracted(evidence) || evidence.isToExtract())) {
+				evidence.setToExtract(true);
+				extract(evidence);
+				evidence.setExtracted(true);
+				incSubitensExtracted();
 			}
-
-		if (ext.isEmpty())
-			ext = ext1;
-
-		return ext;
-
+			
+		}
+		
+		//Renomeia subitem caso deva ser exportado
+		if (evidence.isSubItem() && evidence.isToExtract() && !evidence.isExtracted()) {
+			renameToHash(evidence);
+			evidence.setExtracted(true);
+			incSubitensExtracted();
+		}
+		
+		if (ExportFileTask.hasCategoryToExtract() && !evidence.isToExtract())
+			evidence.setToIndex(false);
+		
 	}
-
-	public void extractFile(EvidenceFile evidence) {
+	
+	public void extract(EvidenceFile evidence) {
 		InputStream is = null;
 		try {
-
 			is = evidence.getBufferedStream();
 			extractFile(is, evidence);
-			//if(evidence.isCarved())
 			evidence.setFileOffset(-1);
 
 		} catch (IOException e) {
@@ -175,6 +158,7 @@ public class ExportFileTask {
 			IOUtil.closeQuietly(is);
 		}
 	}
+	
 
 	private File getHashFile(String hash, String ext) {
 		String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ext;
@@ -245,7 +229,7 @@ public class ExportFileTask {
 
 	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
 
-		String ext = getExtBySig(config, evidence);
+		String ext = new SetTypeTask(worker).getExtBySig(evidence);
 		String type = ext;
 		ext = IOUtil.getValidFilename(ext);
 		if (ext.equals("."))
@@ -255,7 +239,7 @@ public class ExportFileTask {
 		File outputFile = null;
 		Object hashLock = new Object();
 		
-		if (hasher == null)
+		if (Configuration.hashAlgorithm != null)
 			outputFile = new File(getSubDir(extractDir), Integer.toString(evidence.getId()) + ext);
 
 		else if ((hash = evidence.getHash()) != null){
@@ -277,7 +261,8 @@ public class ExportFileTask {
 				BufferedOutputStream bos = null;
 				try {
 					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
-					IOUtil.copiaArquivo(inputStream, bos);
+					BufferedInputStream bis = new BufferedInputStream(inputStream);
+					IOUtil.copiaArquivo(bis, bos);
 
 				} catch (IOException e) {
 					//e.printStackTrace();
