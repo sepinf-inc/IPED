@@ -86,15 +86,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		System.out.println(doc.get("caminho"));
 
 		RowComparator.dispose();
-		
-		if (listSubItens) {
-			// listRelatedItens();
-			App.get().subItemModel.listSubItens(doc);
-			if (Thread.currentThread().isInterrupted())
-				return;
-			App.get().parentItemModel.listParents(doc);
-		}
-		
 
 		File file = null;
 		String export = doc.get("export");
@@ -139,6 +130,13 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 		App.get().compositeViewer.loadFile(doc, file, contentType, App.get().highlightTerms);
 
+		if (listSubItens) {
+			// listRelatedItens();
+			App.get().subItemModel.listSubItens(doc);
+			if (Thread.currentThread().isInterrupted())
+				return;
+			App.get().parentItemModel.listParents(doc);
+		}
 	}
 
 	private Thread listTask;

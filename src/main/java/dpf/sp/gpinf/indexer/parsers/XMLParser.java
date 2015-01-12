@@ -30,7 +30,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.parser.xml.DcXMLParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -40,8 +40,7 @@ public class XMLParser extends AbstractParser {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private org.apache.tika.parser.xml.XMLParser xmlParser = new org.apache.tika.parser.xml.XMLParser();
-	private HtmlParser htmlParser = new HtmlParser();
+	private DcXMLParser xmlParser = new DcXMLParser();
 	private RawStringParser rawParser = new RawStringParser();
 
 	@Override
@@ -57,7 +56,7 @@ public class XMLParser extends AbstractParser {
 			TikaInputStream tis = TikaInputStream.get(stream, tmp);
 			File file = tis.getFile();
 
-			htmlParser.parse(tis, handler, metadata, context);
+			xmlParser.parse(tis, handler, metadata, context);
 
 			tis = TikaInputStream.get(file);
 			try {

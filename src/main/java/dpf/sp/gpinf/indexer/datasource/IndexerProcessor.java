@@ -179,9 +179,6 @@ public class IndexerProcessor {
 			value = doc.get("deletado");
 			evidence.setDeleted(Boolean.parseBoolean(value));
 			
-			value = doc.get("isDir");
-			evidence.setIsDir(Boolean.parseBoolean(value));
-			
 			value = doc.get("carved");
 			evidence.setCarved(Boolean.parseBoolean(value));
 			

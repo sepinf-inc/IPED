@@ -182,11 +182,8 @@ public class IcePDFViewer extends AbstractViewer {
 			search.clearAllSearchHighlight();
 			if (highlightTerms.size() == 0)
 				return;
-			
-			//Workaround to rendering problem whith the first page with hits
-			Thread.sleep(1000);
 
-			boolean caseSensitive = false, wholeWord = true;
+			boolean caseSensitive = false, wholeWord = false;
 			for (String term : highlightTerms)
 				search.addSearchTerm(term, caseSensitive, wholeWord);
 
@@ -200,7 +197,7 @@ public class IcePDFViewer extends AbstractViewer {
 					hitPages.add(i);
 					if (totalHits == 1) {
 						pdfController.getDocumentViewController().setCurrentPageIndex(i);
-						//pdfController.updateDocumentView();
+						// pdfController.updateDocumentView();
 						currentHit = 0;
 					}
 				}

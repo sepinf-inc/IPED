@@ -35,7 +35,6 @@ import org.im4java.core.IMOperation;
 import org.im4java.core.Stream2BufferedImage;
 import org.im4java.process.Pipe;
 import org.im4java.process.ProcessStarter;
-import org.im4java.process.ProcessTask;
 
 import dpf.sp.gpinf.indexer.search.App;
 
@@ -73,53 +72,53 @@ public class GraphicsMagicConverter {
 		if(!errorDisplayed)
 			{
 				final Stream2BufferedImage s2b = new Stream2BufferedImage();
+	
+				FutureTask<Integer> convertTask = new FutureTask<Integer>(new Callable<Integer>() {
+					public Integer call() throws Exception {
+						
+						IMOperation op = new IMOperation();
+						op.addImage("-");
+						if(resolution > 0)
+							op.resize(resolution);
+						op.addImage("bmp:-");
 				
-				IMOperation op = new IMOperation();
-				op.addImage("-");
-				if(resolution > 0)
-					op.resize(resolution);
-				op.addImage("bmp:-");
-		
-				Pipe pipeIn  = new Pipe(in, null);
+						Pipe pipeIn  = new Pipe(in, null);
+						
+						
+						ConvertCmd convert = new ConvertCmd(USE_GM);
+						convert.setInputProvider(pipeIn);
+						convert.setOutputConsumer(s2b);
+						convert.run(op);
+						
+						return 1;
+					}
+				});
 				
-				ConvertCmd convert = new ConvertCmd(USE_GM);
-				convert.setInputProvider(pipeIn);
-				convert.setOutputConsumer(s2b);
-
-				ProcessTask convertTask = null;
-				try {
-					convertTask = convert.getProcessTask(op);
-					
-					Thread convertThread = new Thread(convertTask);
-					convertThread.start();
-					 
-					convertTask.get(TIMEOUT, TimeUnit.SECONDS);
-					
-					
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					
-				} catch (IM4JavaException e1) {
-					e1.printStackTrace();
-					
-				} catch (InterruptedException e) {
-		        	 convertTask.cancel(true);
-		           	
-		         } catch (ExecutionException e) {
-		        	 
-		        	 synchronized(ERROR_MSG){
-							if(!errorDisplayed  && e.toString().contains(ERROR_MSG)){
-								e.printStackTrace();
-								JOptionPane.showMessageDialog(null, "Não foi possível executar GraphicsMagick. Verifique se está instalado!");
-								errorDisplayed = true;
+				 Thread convertThread = new Thread(convertTask);
+				 convertThread.start();
+				           
+				 try {
+					 convertTask.get(TIMEOUT, TimeUnit.SECONDS);
+			               
+			         } catch (InterruptedException e) {
+			        	 convertThread.interrupt();
+			           	
+			         } catch (ExecutionException e) {
+			        	 
+			        	 synchronized(ERROR_MSG){
+								if(!errorDisplayed  && e.toString().contains(ERROR_MSG)){
+									e.printStackTrace();
+									JOptionPane.showMessageDialog(null, "Não foi possível executar GraphicsMagick. Verifique se está instalado!");
+									errorDisplayed = true;
+								}
 							}
-						}
-		 				
-		 		} catch (TimeoutException e) {
-		 			System.out.println("Timeout running GM.");
-		 			convertTask.cancel(true);
-		 			
-		 		}
+			 				
+			 		} catch (TimeoutException e) {
+			 			System.out.println("Timeout running GM.");
+			 			convertThread.interrupt();
+			 			
+			 		}
+				//System.out.println("GM running");
 				
 				return s2b.getImage();
 				

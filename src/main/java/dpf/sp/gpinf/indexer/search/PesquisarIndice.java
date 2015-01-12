@@ -300,7 +300,8 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 			String filtro = App.get().filtro.getSelectedItem().toString();
 			
-			if(App.get().filtro.getSelectedIndex() != 0 && !filtro.equals(Marcadores.CATEGORIES_DIV))
+			if(App.get().filtro.getSelectedIndex() != 0 && App.get().filtro.getSelectedIndex() != 
+					App.get().marcadores.labelNames.size() + Marcadores.BOOKMARKS_DIV_INDEX + 1)
 				numFilters++;
 			
 			if (filtro.equals(App.FILTRO_SELECTED))
