@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,8 +47,16 @@ public class EmptyVideoParser extends AbstractParser {
 	private static Set<MediaType> getTypes() {
 		HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
 		for (MediaType type : MediaTypeRegistry.getDefaultRegistry().getTypes()) {
+			type = type.getBaseType();
 			String typeStr = type.toString();
-			if (typeStr.startsWith("video") && !typeStr.equals("video/x-flv"))
+			if (	typeStr.startsWith("video") && 
+					!type.equals(MediaType.video("x-flv")) &&
+					!type.equals(MediaType.video("3gpp")) &&
+					!type.equals(MediaType.video("3gpp2")) &&
+					!type.equals(MediaType.video("mp4")) &&
+					!type.equals(MediaType.video("x-m4v")) &&
+					!type.equals(MediaType.video("quicktime")))
+				
 				supportedTypes.add(type);
 
 		}

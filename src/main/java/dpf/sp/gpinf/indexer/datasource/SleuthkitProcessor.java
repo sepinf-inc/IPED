@@ -69,7 +69,8 @@ public class SleuthkitProcessor {
 
 	public static boolean isSupported(File report) {
 		String name = report.getName().toLowerCase();
-		return 	name.endsWith(".001") || 
+		return 	name.endsWith(".000") ||
+				name.endsWith(".001") || 
 				name.endsWith(".e01") || 
 				name.endsWith(".aff") || 
 				name.endsWith(".l01") ||

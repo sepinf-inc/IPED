@@ -50,7 +50,7 @@ public class GalleryModel extends AbstractTableModel {
 	public static int GALLERY_THREADS;
 
 	public Map<Integer, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<Integer, GalleryValue>());
-	private int maxCacheSize = 500;
+	private int maxCacheSize = 1000;
 	private ErrorIcon errorIcon = new ErrorIcon();
 	private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
 	private ExecutorService executor;
