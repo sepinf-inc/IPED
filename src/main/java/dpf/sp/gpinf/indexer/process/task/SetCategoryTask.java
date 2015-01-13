@@ -50,20 +50,38 @@ import dpf.sp.gpinf.indexer.process.Worker;
  * Também é responsável por definir a categoria do item.
  */
 public class SetCategoryTask extends AbstractTask{
+	
+	public static String FOLDER_CATEGORY = "Pastas";
+	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
+	private static TreeSet<String> categories;
+	private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+	private static ScriptEngine engine;
+	private static Invocable inv;
+	private static boolean refineCategories = false;
 
 	public SetCategoryTask(Worker worker) {
 		super(worker);
 	}
-
-	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
-	private static ArrayList<String[]> mimetypeToCategoryList = new ArrayList<String[]>();
-	private static TreeSet<String> categories = new TreeSet<String>(Collator.getInstance());
-	private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 	
-	public static String FOLDER_CATEGORY = "Pastas";
+	//TODO inserir parametro no init referente a arquivo e diretorio de configuração	
+	@Override
+	public void init() throws Exception {
+		//load(new File("conf"));
+		//loadScript(new File("conf"));
+	}
 
-	public static void load(File file) throws FileNotFoundException, IOException {
+	@Override
+	public void finish() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 
+	public static synchronized void load(File file) throws FileNotFoundException, IOException {
+		
+		if(categories != null)
+			return;
+
+		categories = new TreeSet<String>(Collator.getInstance());
 		categories.add(FOLDER_CATEGORY);
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));
@@ -79,18 +97,31 @@ public class SetCategoryTask extends AbstractTask{
 				String mimeTypes = keyValuePair[1].trim();
 				for (String mimeType : mimeTypes.split(";")) {
 					mimeType = mimeType.trim();
-					//if (!mimeType.endsWith("*"))
-						mimetypeToCategoryMap.put(mimeType, category);
-					/*else {
-						mimeType = mimeType.substring(0, mimeType.length() - 1);
-						String[] pair = { mimeType, category };
-						mimetypeToCategoryList.add(pair);
-					}*/
+					mimetypeToCategoryMap.put(mimeType, category);
 				}
 			}
 		}
 
 		reader.close();
+
+	}
+	
+	public static synchronized void loadScript(File file) throws FileNotFoundException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
+
+		if(engine != null)
+			return;
+		
+		InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "windows-1252");
+
+		ScriptEngineManager manager = new ScriptEngineManager();
+		engine = manager.getEngineByName("javascript");
+		engine.eval(reader);
+		inv = (Invocable) engine;
+
+		int size = categories.size();
+		inv.invokeFunction("addNewCategories", categories);
+		if (categories.size() > size)
+			refineCategories = true;
 
 	}
 	
@@ -111,43 +142,10 @@ public class SetCategoryTask extends AbstractTask{
 		return "";
 	}
 
-	private static String get(String mimeType) {
-
-		String category = mimetypeToCategoryMap.get(mimeType);
-		if (category != null)
-			return category;
-
-		for (String[] pair : mimetypeToCategoryList)
-			if (mimeType.startsWith(pair[0]))
-				return pair[1];
-		
-
-		return "";
-	}
-
 	public static TreeSet<String> getCategories() {
 		return categories;
 	}
-
-	public static void loadScript(File file) throws FileNotFoundException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
-
-		InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "windows-1252");
-
-		ScriptEngineManager manager = new ScriptEngineManager();
-		engine = manager.getEngineByName("javascript");
-		engine.eval(reader);
-		inv = (Invocable) engine;
-
-		int size = categories.size();
-		inv.invokeFunction("addNewCategories", categories);
-		if (categories.size() > size)
-			refineCategories = true;
-
-	}
-
-	static ScriptEngine engine;
-	static Invocable inv;
-	static boolean refineCategories = false;
+	
 
 	public void process(EvidenceFile e) throws Exception{
 		
@@ -165,18 +163,6 @@ public class SetCategoryTask extends AbstractTask{
 
 		if (refineCategories)
 			inv.invokeFunction("addCategory", e);
-	}
-
-	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void finish() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
+	}	
 
 }
