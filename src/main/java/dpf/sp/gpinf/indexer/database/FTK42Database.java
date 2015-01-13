@@ -184,7 +184,20 @@ public class FTK42Database extends DataSource {
 				+ schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
 				+ ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")"; // ALTERADO
 
-		ResultSet rset = stmt.executeQuery(sql);
+		ResultSet rset;
+		String PATH_COL_NAME = "filepath";
+		try{
+			rset = stmt.executeQuery(sql);
+			
+		//Tratamento p/ FTK 5.6
+		}catch(SQLException e){
+			sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, a.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
+					+ schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
+					+ ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
+			PATH_COL_NAME = "objectpath";
+			rset = stmt.executeQuery(sql);
+		}
+		
 		rset.setFetchSize(1000);
 
 		int addedEvidences = 0;
@@ -198,7 +211,7 @@ public class FTK42Database extends DataSource {
 				evidenceFile.setParentId(caso + "-" + parentId);
 				evidenceFile.setName(rset.getString("OBJECTNAME"));
 				evidenceFile.setExportedFile(path);
-				evidenceFile.setPath(rset.getString("FILEPATH")); // Alterado
+				evidenceFile.setPath(rset.getString(PATH_COL_NAME)); // Alterado
 				if(rset.getBoolean("ISDELETED") || rset.getBoolean("ISFROMFREESPACE"))
 					evidenceFile.setDeleted(true);
 				String hash = rset.getString("md5");

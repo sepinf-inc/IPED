@@ -130,6 +130,8 @@ public abstract class DataSource {
 	}
 
 	private static String translateFTKToDBVersion(String ftkVersion) {
+		if (ftkVersion.startsWith("5.6"))
+			return "ADG510";
 		if (ftkVersion.startsWith("5.1"))
 			return "ADG55";
 		if (ftkVersion.startsWith("5.0"))
