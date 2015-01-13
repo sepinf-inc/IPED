@@ -69,9 +69,7 @@ public class ExportCSVTask extends AbstractTask{
 			value = length.toString();
 		list.append("\"" + value.replace("\"", "\"\"") + "\";");
 		
-		value = evidence.getType().getLongDescr();
-		if (value == null)
-			value = evidence.getExt();
+		value = evidence.getExt();
 		if(value == null)
 			value = "";
 		list.append("\"" + value.replace("\"", "\"\"") + "\";");
