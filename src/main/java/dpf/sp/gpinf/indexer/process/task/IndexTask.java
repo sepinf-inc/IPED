@@ -25,7 +25,6 @@ import gpinf.dev.data.EvidenceFile;
 
 public class IndexTask extends AbstractTask{
 
-	Worker worker;
 	Manager manager;
 	
 	public IndexTask(Worker worker){
@@ -144,6 +143,18 @@ public class IndexTask extends AbstractTask{
 		*/
 		
 		return context;
+	}
+
+	@Override
+	public void init() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finish() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

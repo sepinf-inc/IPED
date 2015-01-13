@@ -149,4 +149,10 @@ public class ExportCSVTask extends AbstractTask{
 			flush();
 	}
 
+	@Override
+	public void init() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

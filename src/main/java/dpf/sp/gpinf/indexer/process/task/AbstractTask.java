@@ -14,15 +14,10 @@ public abstract class AbstractTask {
 		this.worker = worker;
 	}
 	
-	public void init(){
-		
-	}
+	abstract public void init() throws Exception;
 	
 	abstract public void process(EvidenceFile evidence) throws Exception;
 	
-	
-	public void finish(){
-		
-	}
+	abstract public void finish() throws Exception;
 
 }

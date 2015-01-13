@@ -19,8 +19,6 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class ComputeSignatureTask extends AbstractTask {
 	
-	private Worker worker;
-	
 	public ComputeSignatureTask(Worker worker){
 		this.worker = worker;
 	}
@@ -59,5 +57,17 @@ public class ComputeSignatureTask extends AbstractTask {
 			}
 			evidence.setMediaType(type);
 		}
+	}
+
+	@Override
+	public void init() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finish() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }

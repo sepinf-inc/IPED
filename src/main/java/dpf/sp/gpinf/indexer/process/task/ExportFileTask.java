@@ -289,6 +289,18 @@ public class ExportFileTask extends AbstractTask{
 			evidence.setLength(outputFile.length());
 
 	}
+
+	@Override
+	public void init() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finish() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }
