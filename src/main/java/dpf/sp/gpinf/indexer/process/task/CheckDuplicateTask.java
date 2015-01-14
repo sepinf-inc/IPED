@@ -1,5 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.util.Date;
+
 import gpinf.dev.data.EvidenceFile;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
@@ -38,6 +40,10 @@ public class CheckDuplicateTask extends AbstractTask{
 		
 		if(Configuration.ignoreDuplicates && !evidence.isPrimaryHash() && !evidence.isDir() && !ItemProducer.indexerReport){
 			evidence.setToIgnore(true);
+			if (evidence.isSubItem()) {
+				if (!evidence.getFile().delete())
+					System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + evidence.getFile().getAbsolutePath());
+			}
 		}
 		
 	}
