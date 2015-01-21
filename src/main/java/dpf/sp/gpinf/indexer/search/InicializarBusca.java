@@ -35,6 +35,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.tika.parser.Parser;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -107,33 +108,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().resultsModel.fireTableDataChanged();
 						
 			
-			File sleuthFile = new File(App.get().codePath + "/../../sleuth.db"); 
-			if (sleuthFile.exists()) {
-				// IOUtil.loadNatLibs(App.get().codePath + "/../lib/sleuth");
-				App.get().sleuthCase = SleuthkitCase.openCase(App.get().codePath + "/../../sleuth.db");
-				if(sleuthFile.canWrite()){
-					char letter = App.get().codePath.charAt(0);
-					Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
-					for(Long id : imgPaths.keySet()){
-						List<String> paths = imgPaths.get(id);
-						ArrayList<String> newPaths = new ArrayList<String>(); 
-						for(String path : paths){
-							if(new File(path).exists())
-								break;
-							else{
-								String newPath = letter + path.substring(1);
-								if(new File(newPath).exists())
-									newPaths.add(newPath);
-								
-							}
-						}
-						if(newPaths.size() > 0)
-							App.get().sleuthCase.setImagePaths(id, newPaths);
-						
-					}
-				}
-				
-			}
+			updateImagePaths();
 
 		} catch (Throwable e) {
 			e.printStackTrace();
@@ -154,6 +129,49 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().tree.setModel(new TreeViewModel());
 			App.get().tree.setLargeModel(true);
 			App.get().tree.setCellRenderer(new TreeCellRenderer());
+		}
+	}
+	
+	private void updateImagePaths() throws TskCoreException{
+		File sleuthFile = new File(App.get().codePath + "/../../sleuth.db"); 
+		if (sleuthFile.exists()) {
+			// IOUtil.loadNatLibs(App.get().codePath + "/../lib/sleuth");
+			App.get().sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+			if(sleuthFile.canWrite()){
+				char letter = App.get().codePath.charAt(0);
+				Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
+				for(Long id : imgPaths.keySet()){
+					List<String> paths = imgPaths.get(id);
+					ArrayList<String> newPaths = new ArrayList<String>(); 
+					for(String path : paths){
+						if(new File(path).exists())
+							break;
+						else{
+							String newPath = letter + path.substring(1);
+							if(new File(newPath).exists())
+								newPaths.add(newPath);
+							
+							else{
+								File file = new File(path);
+								String relPath = "";
+								do{
+									relPath = File.separator + file.getName() + relPath;
+									newPath = sleuthFile.getParent() + relPath;
+									file = file.getParentFile();
+									
+								}while(file != null && !new File(newPath).exists());
+								
+								if(new File(newPath).exists())
+									newPaths.add(newPath);
+							}
+						}
+					}
+					if(newPaths.size() > 0)
+						App.get().sleuthCase.setImagePaths(id, newPaths);
+					
+				}
+			}
+			
 		}
 	}
 
