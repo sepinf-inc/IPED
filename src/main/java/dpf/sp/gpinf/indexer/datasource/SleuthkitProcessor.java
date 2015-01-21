@@ -296,6 +296,8 @@ public class SleuthkitProcessor {
 		
 		if(content instanceof Image)
 			evidence.setRoot(true);
+		else
+			evidence.setIsDir(true);
 		
 		evidence.setHasChildren(content.hasChildren());
 		Content parent = content.getParent();

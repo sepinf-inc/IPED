@@ -38,7 +38,7 @@ public class CheckDuplicateTask extends AbstractTask{
 			}
 		}
 		
-		if(Configuration.ignoreDuplicates && !evidence.isPrimaryHash() && !evidence.isDir() && !ItemProducer.indexerReport){
+		if(Configuration.ignoreDuplicates && !evidence.isPrimaryHash() && !evidence.isDir() && !evidence.isRoot() && !ItemProducer.indexerReport){
 			evidence.setToIgnore(true);
 			if (evidence.isSubItem()) {
 				if (!evidence.getFile().delete())
