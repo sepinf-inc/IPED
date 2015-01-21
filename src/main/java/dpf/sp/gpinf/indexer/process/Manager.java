@@ -57,6 +57,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
+import dpf.sp.gpinf.indexer.index.CategoryMapper;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -499,65 +500,20 @@ public class Manager {
 
 	}
 
-	private void configurarCategorias1() throws Exception {
-		System.out.println(new Date() + "\t[INFO]\t" + "Configurando categorias...");
-		TreeSet<String> categories = IOUtil.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
-
-		if (caseData.containsReport() && caseData.getBookmarks().size() > 0) {
-			for (FileGroup bookmark : caseData.getBookmarks())
-				categories.add(bookmark.getName().replaceAll("\"", "\\\""));
-			categories.add(Configuration.defaultCategory);
-
-		} else
-			categories = SetCategoryTask.getCategories();
-
-		// filtra categorias vazias
-		if (categories.size() != 0) {
-			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
-			ArrayList<String> palavrasFinais = new ArrayList<String>();
-			for (String categoria : categories) {
-				if (Thread.interrupted()) {
-					App.get().destroy();
-					throw new InterruptedException("Indexação cancelada!");
-				}
-
-				String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
-				PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
-				if (pesquisa.pesquisarTodos().length > 0)
-					palavrasFinais.add(categoria);
-			}
-			// fecha o índice
-			App.get().destroy();
-			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
-			int filtradas = categories.size() - palavrasFinais.size();
-			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " categorias.");
-		} else
-			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma categoria detectada.");
-
-	}
-
 	private void configurarCategorias() throws Exception {
 		System.out.println(new Date() + "\t[INFO]\t" + "Configurando categorias...");
 		TreeSet<String> categories = IOUtil.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 
-		if (caseData.containsReport() && caseData.getBookmarks().size() > 0) {
+		if (caseData.getBookmarks().size() > 0) {
 			for (FileGroup bookmark : caseData.getBookmarks())
 				categories.add(bookmark.getName().replaceAll("\"", "\\\""));
-			categories.add(Configuration.defaultCategory);
-
-		} else
-			categories = SetCategoryTask.getCategories();
-
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
-		int maxDoc = reader.maxDoc();
-		reader.close();
-		int[] categoryMap = new int[maxDoc];
+		}
+		categories.addAll(SetCategoryTask.getCategories());
 
 		// filtra categorias vazias
 		if (categories.size() != 0) {
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
 			ArrayList<String> palavrasFinais = new ArrayList<String>();
-			int catNum = 0;
 			for (String categoria : categories) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
@@ -568,24 +524,13 @@ public class Manager {
 				PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
 				SearchResult result = pesquisa.pesquisarTodos();
 
-				for (int doc : result.docs)
-					categoryMap[doc] = catNum;
-
-				if (result.length > 0) {
+				if (result.length > 0)
 					palavrasFinais.add(categoria);
-					catNum++;
-				}
 
 			}
 			// fecha o índice
 			App.get().destroy();
 
-			/*
-			 * FileOutputStream fileOut = new FileOutputStream(new File(output,
-			 * "data/category.map")); ObjectOutputStream out = new
-			 * ObjectOutputStream(fileOut); out.writeObject(categoryMap);
-			 * out.close(); fileOut.close();
-			 */
 			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 			int filtradas = categories.size() - palavrasFinais.size();
 			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " categorias.");

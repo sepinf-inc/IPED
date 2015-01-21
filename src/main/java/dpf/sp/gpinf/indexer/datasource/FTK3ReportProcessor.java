@@ -55,6 +55,9 @@ public class FTK3ReportProcessor {
 	}
 
 	public int process(File report, String caseName) throws Exception {
+		
+		caseData.setContainsReport(true);
+		
 		String relativePath = IOUtil.getRelativePath(baseFile, report);
 		if (!relativePath.isEmpty())
 			relativePath += "/";

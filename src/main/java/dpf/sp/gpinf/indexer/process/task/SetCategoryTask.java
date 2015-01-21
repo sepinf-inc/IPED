@@ -152,11 +152,11 @@ public class SetCategoryTask extends AbstractTask{
 		if (e.getCategorySet().size() != 0)
 			return;
 		
-		if (worker.containsReport && !ExportFileTask.hasCategoryToExtract()){
+		/*if (worker.containsReport && !ExportFileTask.hasCategoryToExtract()){
 			//Categoria para itens exportados p/ report do FTK sem categoria, ex: anexos
 			e.addCategory(Configuration.defaultCategory);
 			return;
-		}
+		}*/
 
 		String category = get(e.getMediaType());
 		e.addCategory(category);

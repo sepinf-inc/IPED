@@ -32,6 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.LinkedList;
 
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -52,7 +53,7 @@ public class FolderTreeProcessor {
 
 		rootFile = file;
 		
-		if (!listOnly && caseData.containsReport()) {
+		if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
 			category = file.getName();
 			caseData.addBookmark(new FileGroup(category, "", ""));
 		}
@@ -79,7 +80,7 @@ public class FolderTreeProcessor {
 			evidenceFile.setPath(relativePath);
 			// evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
 
-			if (caseData.containsReport())
+			if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport())
 				evidenceFile.addCategory(category);
 
 			return evidenceFile;
