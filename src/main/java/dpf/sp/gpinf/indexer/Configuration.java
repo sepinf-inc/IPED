@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de Evidências Digitais (IPED).
+ * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,27 +31,18 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.PDFToImage;
 
 /*
- * Classe principal de carregamento e acesso às configuraçõs da aplicação.
+ * Classe principal de carregamento e acesso Ã s configuraÃ§Ãµs da aplicaÃ§Ã£o.
  */
 public class Configuration {
 
 	public static String CONFIG_FILE = "IndexerConfig.txt";
 	public static String PARSER_CONFIG = "ParserConfig.xml";
-	public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
-	public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
-	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
-	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
-	public static String CARVE_CONFIG = "CarvingConfig.txt";
 
 	public static Properties properties = new Properties();
 	public static File indexTemp, indexerTemp;
@@ -64,22 +55,14 @@ public class Configuration {
 	public static Class<?> errorParser = RawStringParser.class;
 	public static Class<?> fallBackParser = RawStringParser.class;
 	public static boolean embutirLibreOffice = true;
-	public static String hashAlgorithm;
 	public static String defaultCategory = "";
 	public static boolean sortPDFChars = false;
-	public static boolean exportFileProps = false;
-	public static boolean indexFileContents = true;
-	public static boolean processFileSignatures = true;
 	public static boolean addUnallocated = true;
-	public static boolean indexUnallocated = false;
-	public static boolean ignoreDuplicates = false;
 	public static long unallocatedFragSize = 100 * 1024 * 1024;
 	public static String javaTmpDir = System.getProperty("java.io.tmpdir");
-	public static boolean expandContainers = false;
-	public static boolean enableCarving = false;
 
 	/*
-	 * Lê as configurações a partir do caminho informado.
+	 * LÃª as configuraÃ§Ãµes a partir do caminho informado.
 	 */
 	public static void getConfiguration(String configPathStr) throws Exception {
 
@@ -97,23 +80,6 @@ public class Configuration {
 		else
 			System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
-		if (new File(configPath + "/conf/" + CATEGORIES_BY_TYPE).exists())
-			SetCategoryTask.load(new File(configPath + "/conf/" + CATEGORIES_BY_TYPE));
-
-		if (new File(configPath + "/conf/" + CATEGORIES_BY_PROPS).exists())
-			SetCategoryTask.loadScript(new File(configPath + "/conf/" + CATEGORIES_BY_PROPS));
-
-		if (new File(configPath + "/conf/" + EXTRACT_CONFIG).exists())
-			ExportFileTask.load(new File(configPath + "/conf/" + EXTRACT_CONFIG));
-
-		if (new File(configPath + "/conf/" + CARVE_CONFIG).exists())
-			CarveTask.loadConfigFile(new File(configPath + "/conf/" + CARVE_CONFIG));
-
-		if (new File(configPath + "/conf/" + EXPAND_CONFIG).exists())
-			ExpandContainerTask.load(new File(configPath + "/conf/" + EXPAND_CONFIG));
-		else
-			ExpandContainerTask.load(new File(configPath + "/" + EXPAND_CONFIG));
-
 		properties.load(new FileInputStream(new File(configPath + "/" + CONFIG_FILE)));
 
 		String value;
@@ -127,7 +93,7 @@ public class Configuration {
 			if (value != null && !value.equalsIgnoreCase("default")) {
 				newTmp = new File(value);
 				if (!newTmp.exists() && !newTmp.mkdirs())
-					System.out.println(new Date() + "\t[INFO]\t" + "Não foi possível criar diretório temporário " + newTmp.getAbsolutePath());
+					System.out.println(new Date() + "\t[INFO]\t" + "NÃ£o foi possÃ­vel criar diretÃ³rio temporÃ¡rio " + newTmp.getAbsolutePath());
 				else
 					tmp = newTmp;
 			}
@@ -267,30 +233,6 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			sortPDFChars = Boolean.valueOf(value);
 
-		value = properties.getProperty("hash");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			hashAlgorithm = value;
-
-		value = properties.getProperty("exportFileProps");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			exportFileProps = Boolean.valueOf(value);
-
-		value = properties.getProperty("indexFileContents");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			indexFileContents = Boolean.valueOf(value);
-
-		value = properties.getProperty("processFileSignatures");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			processFileSignatures = Boolean.valueOf(value);
-
 		value = properties.getProperty("extraCharsToIndex");
 		if (value != null)
 			value = value.trim();
@@ -303,23 +245,11 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			addUnallocated = Boolean.valueOf(value);
 
-		value = properties.getProperty("indexUnallocated");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			indexUnallocated = Boolean.valueOf(value);
-
 		value = properties.getProperty("unallocatedFragSize");
 		if (value != null)
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			unallocatedFragSize = Long.valueOf(value);
-
-		value = properties.getProperty("ignoreDuplicates");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			ignoreDuplicates = Boolean.valueOf(value);
 
 		value = properties.getProperty("useGM");
 		if (value != null)
@@ -341,18 +271,6 @@ public class Configuration {
 			GalleryModel.GALLERY_THREADS = Integer.valueOf(value);
 		else
 			GalleryModel.GALLERY_THREADS = Runtime.getRuntime().availableProcessors();
-		
-		value = properties.getProperty("enableCarving");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			enableCarving = Boolean.valueOf(value);
-		
-		value = properties.getProperty("expandContainers");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			expandContainers = Boolean.valueOf(value);
 		
 
 	}

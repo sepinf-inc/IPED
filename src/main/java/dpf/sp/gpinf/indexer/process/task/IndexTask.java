@@ -1,8 +1,12 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import gpinf.dev.data.EvidenceFile;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Date;
+import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
@@ -12,7 +16,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -21,10 +24,12 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
-import gpinf.dev.data.EvidenceFile;
 
 public class IndexTask extends AbstractTask{
 
+	public static boolean indexFileContents = true;
+	public static boolean indexUnallocated = false;
+	
 	Manager manager;
 	
 	public IndexTask(Worker worker){
@@ -48,7 +53,7 @@ public class IndexTask extends AbstractTask{
 
 		if (textCache != null) {
 			Document doc;
-			if (Configuration.indexFileContents)
+			if (indexFileContents)
 				doc = FileDocument.Document(evidence, new StringReader(textCache), worker.df);
 			else
 				doc = FileDocument.Document(evidence, null, worker.df);
@@ -69,8 +74,8 @@ public class IndexTask extends AbstractTask{
 			}
 			
 			ParsingReader reader;
-			if (Configuration.indexFileContents && tis != null && 
-				(Configuration.indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType())))
+			if (indexFileContents && tis != null && 
+				(indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType())))
 					reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 			else
 					reader = null;
@@ -146,8 +151,19 @@ public class IndexTask extends AbstractTask{
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
+	public void init(Properties properties, File confDir) throws Exception {
+
+		String value = properties.getProperty("indexFileContents");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			indexFileContents = Boolean.valueOf(value);
+		
+		value = properties.getProperty("indexUnallocated");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			indexUnallocated = Boolean.valueOf(value);
 		
 	}
 

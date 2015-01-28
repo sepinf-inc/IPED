@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de Evidências Digitais (IPED).
+ * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,14 +28,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -59,20 +57,22 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
 /*
- * EXTRAÇÂO DE SUBITENS DE CONTAINERS USANDO PARSINGREADER PARA MONITORAR TIMEOUTS
- * ARMAZENA O TEXTO EXTRAÍDO, CASO PEQUENO, PARA REUTILIZAR DURANTE INDEXAÇÃO,
- * ASSIM O ARQUIVO NÃO É DECODIFICADO NOVAMENTE.
+ * EXTRAÃ‡Ã‚O DE SUBITENS DE CONTAINERS USANDO PARSINGREADER PARA MONITORAR TIMEOUTS
+ * ARMAZENA O TEXTO EXTRAÃ�DO, CASO PEQUENO, PARA REUTILIZAR DURANTE INDEXAÃ‡ÃƒO,
+ * ASSIM O ARQUIVO NÃƒO Ã‰ DECODIFICADO NOVAMENTE.
  * 
- * TAMBÉM REALIZA O PARSING DE ITENS DE CARVING PARA IGNORAR CORROMPIDOS, CASO
- * A INDEXAÇÃO (QUE TB FAZ O PARSING) ESTEJA DESABILITADA.
+ * TAMBÃ‰M REALIZA O PARSING DE ITENS DE CARVING PARA IGNORAR CORROMPIDOS, CASO
+ * A INDEXAÃ‡ÃƒO (QUE TB FAZ O PARSING) ESTEJA DESABILITADA.
  */
 public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
 	public static String COMPLETE_PATH = "INDEXER_COMPLETE_PATH";
 	//public static String INDEXER_ID = "INDEXER_ID";
 	public static String TO_EXTRACT = "Indexer-To-Extract";
+	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
+	public static boolean expandContainers = false;
 	
-	// Utilizado para restringir tamanho máximo do nome de subitens de zips corrompidos
+	// Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
 	private static int NAME_MAX_LEN = 1024;
 
 	public static int subitensDiscovered = 0;
@@ -151,7 +151,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 	private static boolean isToBeExpanded(HashSet<String> categories) {
 		
-		if(!Configuration.expandContainers)
+		if(!expandContainers)
 			return false;
 		
 		boolean result = false;
@@ -179,7 +179,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	public void process(EvidenceFile evidence) throws IOException{
 		if (!((isToBeExpanded(evidence) && !evidence.timeOut) ||
 			(CarveTask.ignoreCorrupted && evidence.isCarved() &&
-			(ExportFileTask.hasCategoryToExtract() || !Configuration.indexFileContents) )))
+			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) )))
 				return;
 		
 		new ExpandContainerTask(worker).safeProcess(evidence);
@@ -295,7 +295,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
 			if(contentTypeStr == null)
 				try {
-					if(Configuration.processFileSignatures)
+					if(ComputeSignatureTask.processFileSignatures)
 						contentType = detector.detect(tis, metadata).getBaseType();
 					else
 						contentType = detector.detect(null, metadata).getBaseType();
@@ -337,7 +337,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 			new SetCategoryTask(worker).process(evidence);
 
-			// teste para extração de anexos de emails de PSTs
+			// teste para extraÃ§Ã£o de anexos de emails de PSTs
 			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(evidence) || metadata.get(TO_EXTRACT) != null) {
 				evidence.setToExtract(true);
 				metadata.set(TO_EXTRACT, "true");
@@ -348,11 +348,11 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			caseData.incDiscoveredEvidences(1);
 			//caseData.incDiscoveredVolume(evidence.getLength());
 
-			// se não há item na fila, enfileira para outro worker processar
+			// se nÃ£o hÃ¡ item na fila, enfileira para outro worker processar
 			if (caseData.getEvidenceFiles().size() == 0)
 				caseData.getEvidenceFiles().addFirst(evidence);
 
-			// caso contrário processa o item no worker atual
+			// caso contrÃ¡rio processa o item no worker atual
 			else {
 				// pausa contagem de timeout enquanto processa subitem
 				FastPipedReader pipedReader = context.get(FastPipedReader.class);
@@ -383,8 +383,15 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
+	public void init(Properties confProps, File confDir) throws Exception {
+		
+		load(new File(confDir, EXPAND_CONFIG));
+		
+		String value = confProps.getProperty("expandContainers");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			expandContainers = Boolean.valueOf(value);
 		
 	}
 

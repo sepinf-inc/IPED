@@ -22,7 +22,6 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
 
 import java.io.Reader;
-import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 

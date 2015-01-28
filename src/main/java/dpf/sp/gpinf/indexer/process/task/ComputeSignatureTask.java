@@ -2,22 +2,23 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Properties;
 
-import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /*
  * ANALISE DE ASSINATURA
  */
 public class ComputeSignatureTask extends AbstractTask {
+	
+	public static boolean processFileSignatures = true;
 	
 	public ComputeSignatureTask(Worker worker){
 		this.worker = worker;
@@ -30,7 +31,7 @@ public class ComputeSignatureTask extends AbstractTask {
 			Metadata metadata = new Metadata();
 			metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
 			try {
-				if(Configuration.processFileSignatures){
+				if(processFileSignatures){
 					TikaInputStream tis = null;
 					try {
 						tis = evidence.getTikaStream();
@@ -60,9 +61,12 @@ public class ComputeSignatureTask extends AbstractTask {
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
-		
+	public void init(Properties confProps, File confDir) throws Exception {
+		String value = confProps.getProperty("processFileSignatures");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			processFileSignatures = Boolean.valueOf(value);
 	}
 
 	@Override
@@ -70,4 +74,5 @@ public class ComputeSignatureTask extends AbstractTask {
 		// TODO Auto-generated method stub
 		
 	}
+
 }

@@ -21,17 +21,14 @@ package dpf.sp.gpinf.indexer.process.task;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -42,6 +39,28 @@ public class ComputeHashTask extends AbstractTask{
 
 	private MessageDigest digest;
 	private String algorithm;
+	
+	public ComputeHashTask(Worker worker){
+		this.worker = worker;
+	}
+	
+	@Override
+	public void init(Properties confProps, File confDir) throws Exception {
+		String value = confProps.getProperty("hash");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty()){
+			this.algorithm = value.toUpperCase().replace("-", "");
+			this.digest = MessageDigest.getInstance(algorithm);
+		}
+		
+	}
+
+	@Override
+	public void finish() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 
 	public static class HashValue {
 
@@ -71,16 +90,6 @@ public class ComputeHashTask extends AbstractTask{
 			return bytes[3] & 0xFF | (bytes[2] & 0xFF) << 8 | (bytes[1] & 0xFF) << 16 | (bytes[0] & 0xFF) << 24;
 		}
 
-	}
-
-	public ComputeHashTask(Worker worker) throws NoSuchAlgorithmException, IOException {
-		super(worker);
-		String algorithm = Configuration.hashAlgorithm;
-		if(algorithm != null){
-			this.algorithm = algorithm.toUpperCase().replace("-", "");
-			this.digest = MessageDigest.getInstance(algorithm);
-		}
-		
 	}
 
 	public void process(EvidenceFile evidence) {
@@ -131,18 +140,6 @@ public class ComputeHashTask extends AbstractTask{
 
 	public static final byte[] getHashBytes(String hash) {
 		return DatatypeConverter.parseHexBinary(hash);
-	}
-
-	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void finish() throws Exception {
-		// TODO Auto-generated method stub
-		
 	}
 
 

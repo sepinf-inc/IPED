@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.Properties;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
 
@@ -36,6 +36,8 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class ExportCSVTask extends AbstractTask{
 
+	public static boolean exportFileProps = false;
+	
 	private File output;
 	private StringBuilder list = new StringBuilder();
 
@@ -49,7 +51,7 @@ public class ExportCSVTask extends AbstractTask{
 
 	public void process(EvidenceFile evidence) {
 		
-		if (!Configuration.exportFileProps)
+		if (!exportFileProps)
 			return;
 
 		String value = evidence.getName();
@@ -145,13 +147,19 @@ public class ExportCSVTask extends AbstractTask{
 	}
 	
 	public void finish(){
-		if (Configuration.exportFileProps)
+		if (exportFileProps)
 			flush();
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
+	public void init(Properties confProps, File confDir) throws Exception {
+		
+		String value = confProps.getProperty("exportFileProps");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			exportFileProps = Boolean.valueOf(value);
+
 		
 	}
 

@@ -1,12 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.filetypes.UnknownFileType;
+
+import java.io.File;
+import java.util.Properties;
+
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
 
 public class SetTypeTask extends AbstractTask {
 	
@@ -66,7 +70,7 @@ public class SetTypeTask extends AbstractTask {
 	}
 
 	@Override
-	public void init() throws Exception {
+	public void init(Properties confProps, File confDir) throws Exception {
 		// TODO Auto-generated method stub
 		
 	}

@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de Evidências Digitais (IPED).
+ * This file is part of Indexador e Processador de EvidÃªncias Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 import java.util.TreeSet;
 
 import javax.script.Invocable;
@@ -41,17 +41,19 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /*
- * Classe que carrega o mapeamento de mimeTypes->Categoria da aplicação.
- * Além disso utiliza regras javascript de definição de categorias baseadas nas propriedades dos itens.
- * Também é responsável por definir a categoria do item.
+ * Classe que carrega o mapeamento de mimeTypes->Categoria da aplicaÃ§Ã£o.
+ * AlÃ©m disso utiliza regras javascript de definiÃ§Ã£o de categorias baseadas nas propriedades dos itens.
+ * TambÃ©m Ã© responsÃ¡vel por definir a categoria do item.
  */
 public class SetCategoryTask extends AbstractTask{
 	
+	public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
+	public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
 	public static String FOLDER_CATEGORY = "Pastas";
+	
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
 	private static TreeSet<String> categories;
 	private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
@@ -63,11 +65,11 @@ public class SetCategoryTask extends AbstractTask{
 		super(worker);
 	}
 	
-	//TODO inserir parametro no init referente a arquivo e diretorio de configuração	
+	//TODO inserir parametro no init referente a arquivo e diretorio de configuraÃ§Ã£o	
 	@Override
-	public void init() throws Exception {
-		//load(new File("conf"));
-		//loadScript(new File("conf"));
+	public void init(Properties confProps, File configPath) throws Exception {
+		load(new File(configPath, CATEGORIES_BY_TYPE));
+		loadScript(new File(configPath, CATEGORIES_BY_PROPS));
 	}
 
 	@Override

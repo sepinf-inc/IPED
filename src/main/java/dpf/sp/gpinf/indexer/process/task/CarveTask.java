@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -44,7 +45,6 @@ import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -57,10 +57,13 @@ public class CarveTask extends AbstractTask{
 
 	private static final long serialVersionUID = 1L;
 	
+	public static String CARVE_CONFIG = "CarvingConfig.txt";
 	public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated");
 	private static HashSet<MediaType> TYPES_TO_PROCESS;
 	private static HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
-	private static HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>(); 
+	private static HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();	
+	public static boolean enableCarving = false;
+
 	
 	public static boolean ignoreCorrupted = true;
 	private static int CLUSTER_SIZE = 1;
@@ -157,7 +160,7 @@ public class CarveTask extends AbstractTask{
 		this.evidence = evidence;
 		MediaType type = evidence.getMediaType();
 		
-		if (!Configuration.enableCarving || evidence.isCarved() || evidence.isSubmittedToCarving() ||
+		if (!enableCarving || evidence.isCarved() || evidence.isSubmittedToCarving() ||
 			(TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type)))
 			return;
 		
@@ -501,9 +504,14 @@ public class CarveTask extends AbstractTask{
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
+	public void init(Properties confProps, File confDir) throws Exception {
+		String value = confProps.getProperty("enableCarving");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			enableCarving = Boolean.valueOf(value);
 		
+		loadConfigFile(new File(confDir, CARVE_CONFIG));
 	}
 
 	@Override

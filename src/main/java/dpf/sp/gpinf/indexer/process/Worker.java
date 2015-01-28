@@ -20,36 +20,21 @@ package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.pdf.PDFParserConfig;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
@@ -58,18 +43,10 @@ import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.process.task.CheckDuplicateTask;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
-import dpf.sp.gpinf.indexer.process.task.ComputeHashTask;
-import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
-import dpf.sp.gpinf.indexer.process.task.ComputeSignatureTask;
-import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
+import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IndexerContext;
 
 /*
  * Classe responsável pelo processamento de cada item, chamando as diversas etapas de processamento:
@@ -135,15 +112,16 @@ public class Worker extends Thread {
 		autoParser.setErrorParser((Parser) Configuration.errorParser.newInstance());
 		
 		new TaskInstaller().installProcessingTasks(this);
+		initTasks();
 
 	}
 	
-	public void initTasks(){
+	private void initTasks() throws Exception{
 		for(AbstractTask task : tasks)
-			task.init();
+			task.init(null, null);
 	}
 	
-	public void finishTasks(){
+	private void finishTasks() throws Exception{
 		for(AbstractTask task : tasks)
 			task.finish();
 	}
@@ -230,14 +208,17 @@ public class Worker extends Thread {
 		this.evidence = prevEvidence;
 
 	}
+	
+	public void finish() throws Exception{
+		this.interrupt();
+		finishTasks();
+	}
 
 	@Override
 	public void run() {
 
 		System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " iniciada.");
 		
-		initTasks();
-
 		while (!this.isInterrupted() && exception == null) {
 
 			try {
@@ -249,8 +230,6 @@ public class Worker extends Thread {
 				break;
 			}
 		}
-		
-		finishTasks();
 
 		if (evidence == null)
 			System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " finalizada.");

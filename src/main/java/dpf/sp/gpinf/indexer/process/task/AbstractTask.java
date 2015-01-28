@@ -1,7 +1,11 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
+
+import java.io.File;
+import java.util.Properties;
+
+import dpf.sp.gpinf.indexer.process.Worker;
 
 public abstract class AbstractTask {
 	
@@ -14,7 +18,7 @@ public abstract class AbstractTask {
 		this.worker = worker;
 	}
 	
-	abstract public void init() throws Exception;
+	abstract public void init(Properties confProps, File confDir) throws Exception;
 	
 	abstract public void process(EvidenceFile evidence) throws Exception;
 	

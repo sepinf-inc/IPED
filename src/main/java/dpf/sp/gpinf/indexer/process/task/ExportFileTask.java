@@ -31,18 +31,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Properties;
 
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypeException;
-
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -54,11 +47,12 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  */
 public class ExportFileTask extends AbstractTask{
 
+	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
 	public static String EXTRACT_DIR = "Exportados";
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
 	public static int subDirCounter = 0, subitensExtracted = 0;
 	private static File subDir;
-	
+	private boolean computeHash = false;
 	private File extractDir, outputBase;
 	private HashMap<HashValue, HashValue> hashMap;
 
@@ -239,7 +233,7 @@ public class ExportFileTask extends AbstractTask{
 		File outputFile = null;
 		Object hashLock = new Object();
 		
-		if (Configuration.hashAlgorithm != null)
+		if (!computeHash)
 			outputFile = new File(getSubDir(extractDir), Integer.toString(evidence.getId()) + ext);
 
 		else if ((hash = evidence.getHash()) != null){
@@ -291,8 +285,14 @@ public class ExportFileTask extends AbstractTask{
 	}
 
 	@Override
-	public void init() throws Exception {
-		// TODO Auto-generated method stub
+	public void init(Properties confProps, File confDir) throws Exception {
+		load(new File(confDir, EXTRACT_CONFIG));
+		
+		String value = confProps.getProperty("hash");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			computeHash = true;
 		
 	}
 
