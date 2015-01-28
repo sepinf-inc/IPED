@@ -17,7 +17,6 @@
 package dpf.sp.gpinf.indexer.io;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;

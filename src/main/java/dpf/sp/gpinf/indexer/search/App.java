@@ -22,7 +22,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Frame;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;

@@ -47,7 +47,6 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.document.Document;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.ToTextContentHandler;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;

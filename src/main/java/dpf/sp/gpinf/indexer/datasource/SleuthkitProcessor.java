@@ -23,7 +23,6 @@ import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,8 +40,8 @@ import org.sleuthkit.datamodel.VolumeSystem;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 
 public class SleuthkitProcessor {
 

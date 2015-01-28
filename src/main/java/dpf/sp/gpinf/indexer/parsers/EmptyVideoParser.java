@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 

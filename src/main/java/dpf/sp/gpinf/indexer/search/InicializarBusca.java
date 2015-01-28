@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.SwingWorker;
-import javax.swing.tree.DefaultTreeModel;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.BooleanQuery;

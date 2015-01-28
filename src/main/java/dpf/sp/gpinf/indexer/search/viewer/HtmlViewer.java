@@ -25,22 +25,13 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Set;
 
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
+import javax.swing.event.ChangeListener;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import com.sun.javafx.application.PlatformImpl;
-
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class HtmlViewer extends AbstractViewer {

@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -28,10 +26,8 @@ import javax.swing.tree.TreePath;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
