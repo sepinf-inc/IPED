@@ -219,6 +219,7 @@ public class Marcadores implements Serializable {
 	
 	private void updateFilter(){
 		updatingCombo = true;
+		Object prevSelected = App.get().filtro.getSelectedItem();
 		
 		App.get().filtro.removeAllItems();
 		App.get().filtro.addItem(App.FILTRO_TODOS);
@@ -233,6 +234,9 @@ public class Marcadores implements Serializable {
 			App.get().filtro.addItem(CATEGORIES_DIV);
 		for(String categoria : App.get().categorias)
 			App.get().filtro.addItem(CATEGORIES_PREFIX + categoria);
+		
+		App.get().filtro.setSelectedItem(prevSelected);
+		
 		updatingCombo = false;
 	}
 
