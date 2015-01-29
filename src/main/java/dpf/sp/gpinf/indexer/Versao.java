@@ -27,7 +27,7 @@ public class Versao {
 	
 	public static Version current = Version.LUCENE_4_9;
 	public static String TIKA_VERSION = "tika-app-1.7.jar";
-	public static String APP_VERSION = "3.2.3";
+	public static String APP_VERSION = "3.3";
 	public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION;
 	public static String APP_EXT = "IPED";
 }
