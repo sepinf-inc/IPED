@@ -38,6 +38,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 
 /*
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos itens sendo processados.
@@ -141,10 +142,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		for (int i = 0; i < workers.length; i++) {
 			EvidenceFile evidence = workers[i].evidence;
 			if (evidence != null){
+				AbstractTask task = workers[i].runningTask;
+				String taskName = "";
+				if(task != null)
+					taskName = task.getClass().getSimpleName() + ": ";
 				String len = "";
 				if(evidence.getLength() != null)
 					len = " (" + sizeFormat.format(evidence.getLength()) + " bytes)";
-				msg += workers[i].getName() + ": " + evidence.getPath() +  len  + "<br>";
+				msg += workers[i].getName() + " - " + taskName + evidence.getPath() +  len  + "<br>";
 			}
 				
 		}
