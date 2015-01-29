@@ -128,8 +128,11 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	
 	private Metadata getMetadata(EvidenceFile evidence) {
 		Metadata metadata = new Metadata();
+		Long len = evidence.getLength();
+		if(len == null)
+			len = 0L;
+		metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 		metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
-		metadata.set(Metadata.CONTENT_LENGTH, evidence.getLength().toString());
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
 		if (evidence.timeOut)
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");

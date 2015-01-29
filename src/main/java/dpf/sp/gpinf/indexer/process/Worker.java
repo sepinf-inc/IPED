@@ -58,14 +58,14 @@ public class Worker extends Thread {
 
 	public IndexWriter writer;
 	String baseFilePath;
-	public boolean containsReport;
+	public boolean containsReport, paused = false;
 
 	public IndexerDefaultParser autoParser;
 	public Detector detector;
 	public TikaConfig config;
 	public SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
-	public AbstractTask runningTask;
+	public volatile AbstractTask runningTask;
 	public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
 
 	public Manager manager;
@@ -157,7 +157,10 @@ public class Worker extends Thread {
 			manager.stats.incProcessed();
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
 				manager.stats.incActiveProcessed();
-				manager.stats.addVolume(evidence.getLength());
+				Long len = evidence.getLength();
+				if(len == null)
+					len = 0L;
+				manager.stats.addVolume(len);
 			}
 			
 			

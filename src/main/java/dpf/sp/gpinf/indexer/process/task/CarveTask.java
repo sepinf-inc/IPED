@@ -186,6 +186,7 @@ public class CarveTask extends AbstractTask{
 			for(int i = 0; i < signatures.length; i++)
 				sigsFound.put(signatures[i].name, new ArrayDeque<Hit>());
 			
+			map = new TreeMap[signatures.length * 2];
 			for(int i = 0; i < signatures.length * 2; i++)
 				map[i] = new TreeMap<Long, Integer>();
 		
@@ -194,6 +195,7 @@ public class CarveTask extends AbstractTask{
 			
 		}catch(Throwable t){
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro no Carving de " + evidence.getPath() + " " + t.toString());
+			t.printStackTrace();
 			
 		}finally{
 			IOUtil.closeQuietly(tis);
@@ -314,9 +316,7 @@ public class CarveTask extends AbstractTask{
 	//private ArrayDeque<Hit>[] sigsFound = new ArrayDeque[signatures.length];
 	private HashMap<String, ArrayDeque<Hit>> sigsFound = new HashMap<String, ArrayDeque<Hit>>();
 	static AhoCorasick tree = null;
-	
-	@SuppressWarnings("unchecked")
-	TreeMap<Long, Integer>[] map = new TreeMap[signatures.length * 2];
+	TreeMap<Long, Integer>[] map;
 	
 	private Hit findSig(InputStream in) throws Exception{
 		
