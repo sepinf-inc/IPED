@@ -109,19 +109,11 @@ public class Manager {
 	private Thread contador, produtor;
 	private Worker[] workers;
 	private IndexWriter writer;
-	private int previousIndexedFiles = 0;
 
+	public Statistics stats;
 	public Exception exception;
 	
-	//Estatísticas
-	private int splits = 0;
-	private int timeouts = 0;
-	private int processed = 0;
-	private int activeProcessed = 0;
-	private long volumeIndexed = 0;
-	private int lastId = -1;
-	private int corruptCarveIgnored = 0;
-	private int duplicatesIgnored = 0;
+
 	public List<IdLenPair> textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
 	public HashMap<HashValue, HashValue> hashMap = new HashMap<HashValue, HashValue>();
 	private HashSet<Integer> splitedIds = new HashSet<Integer>();
@@ -144,81 +136,14 @@ public class Manager {
 		if (indexTemp == null || IndexFiles.getInstance().appendIndex)
 			indexTemp = indexDir;
 
+		stats = new Statistics(caseData, indexDir);
+		
 		OCRParser.OUTPUT_BASE = output;
 
 	}
 	
-	synchronized public int getSplits() {
-		return splits;
-	}
-
-	synchronized public void incSplits() {
-		splits++;
-	}
-
 	synchronized public void remindSplitedDoc(int id) {
 		splitedIds.add(id);
-	}
-
-	synchronized public int getTimeouts() {
-		return timeouts;
-	}
-
-	synchronized public void incTimeouts() {
-		timeouts++;
-	}
-
-	synchronized public void incProcessed() {
-		processed++;
-	}
-
-	synchronized public int getProcessed() {
-		return processed;
-	}
-
-	synchronized public void incActiveProcessed() {
-		activeProcessed++;
-	}
-
-	synchronized public int getActiveProcessed() {
-		return activeProcessed;
-	}
-
-	synchronized public void addVolume(long volume) {
-		volumeIndexed += volume;
-	}
-
-	synchronized public long getVolume() {
-		return volumeIndexed;
-	}
-
-	synchronized public int getCorruptCarveIgnored() {
-		return corruptCarveIgnored;
-	}
-
-	synchronized public void incCorruptCarveIgnored() {
-		corruptCarveIgnored++;
-	}
-
-	synchronized public int getDuplicatesIgnored() {
-		return duplicatesIgnored;
-	}
-
-	synchronized public void incDuplicatesIgnored() {
-		duplicatesIgnored++;
-	}
-
-	synchronized public void updateLastId(int id) {
-		if (id > lastId)
-			lastId = id;
-	}
-
-	synchronized public int getLastId() {
-		return lastId;
-	}
-	
-	synchronized public void setLastId(int id) {
-		lastId = id;
 	}
 
 	public void process() throws Exception {
@@ -306,7 +231,7 @@ public class Manager {
 		in.close();
 		fileIn.close();
 
-		setLastId(textSizesArray.length - 1);
+		stats.setLastId(textSizesArray.length - 1);
 		EvidenceFile.setStartID(textSizesArray.length);
 
 		fileIn = new FileInputStream(new File(output, "data/splits.ids"));
@@ -320,7 +245,7 @@ public class Manager {
 		fileIn.close();
 
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
-		previousIndexedFiles = reader.numDocs();
+		stats.previousIndexedFiles = reader.numDocs();
 
 		synchronized (hashMap) {
 			for (int i = 0; i < reader.maxDoc(); i++) {
@@ -340,54 +265,6 @@ public class Manager {
 		if (new File(output, "data/containsReport.flag").exists())
 			caseData.setContainsReport(true);
 
-	}
-	
-
-	public void logarEstatisticas() throws Exception {
-
-		int processed = getProcessed();
-		int extracted = ExportFileTask.getSubitensExtracted();
-		int activeFiles = getActiveProcessed();
-		int carvedIgnored = getCorruptCarveIgnored();
-		int duplicatesIgnored = getDuplicatesIgnored();
-		
-		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + getSplits());
-		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + getTimeouts());
-		System.out.println(new Date() + "\t[INFO]\t" + "Exceções de parsing: " + IndexerDefaultParser.parsingErrors);
-		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ExpandContainerTask.getSubitensDiscovered());
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + CarveTask.getItensCarved());
-		System.out.println(new Date() + "\t[INFO]\t" + "Carvings corrompidos ignorados: " + carvedIgnored);
-		System.out.println(new Date() + "\t[INFO]\t" + "Duplicados descartados: " + duplicatesIgnored);
-
-		if (caseData.getAlternativeFiles() > 0)
-			System.out.println(new Date() + "\t[INFO]\t" + "Processadas " + caseData.getAlternativeFiles() + " versões de visualização dos itens ao invés das originais.");
-
-		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
-		int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
-		reader.close();
-
-		if (indexed != processed && ExportFileTask.hasCategoryToExtract())
-			System.out.println(new Date() + "\t[INFO]\t" + "Itens indexados: " + indexed);
-
-		long processedVolume = getVolume() / (1024 * 1024);
-		
-		if (activeFiles != processed)
-			System.out.println(new Date() + "\t[INFO]\t" + "Itens ativos processados: " + activeFiles);
-
-		System.out.println(new Date() + "\t[INFO]\t" + "Total processado: " + processed + " itens em " + ((new Date()).getTime() - start.getTime()) / 1000 + " segundos (" + processedVolume + " MB)");
-
-		int discovered = caseData.getDiscoveredEvidences();
-		if (processed != discovered)
-			throw new Exception("Processados " + processed + " itens de " + discovered);
-
-		if(!ExportFileTask.hasCategoryToExtract()){
-			if (indexed + carvedIgnored + duplicatesIgnored != discovered)
-				throw new Exception("Indexados " + indexed + " itens de " + discovered);
-		}/*else 
-			if (indexed != extracted)
-				throw new Exception("Indexados " + indexed + " itens de " + extracted);
-		*/
 	}
 
 	private void iniciarIndexacao() throws Exception {
@@ -424,17 +301,17 @@ public class Manager {
 
 		while (someWorkerAlive) {
 			if (IndexFiles.getInstance().isCancelled())
-				exception = new InterruptedException("Indexação cancelada!");
+				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				exception = new InterruptedException("Indexação cancelada!");
+				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
 			}
 
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
-			IndexFiles.getInstance().firePropertyChange("processed", -1, getProcessed());
-			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(getVolume()/1000000));
+			IndexFiles.getInstance().firePropertyChange("processed", -1, stats.getProcessed());
+			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(stats.getVolume()/1000000));
 
 			someWorkerAlive = false;
 			for (int k = 0; k < workers.length; k++) {
@@ -442,14 +319,14 @@ public class Manager {
 					exception = workers[k].exception;
 
 				/*
-				 *  TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
-				 *  Não é demasiado grave pois será detectado o problema no log de estatísticas e o usuário será informado do erro. 
+				 *  TODO sincronizar teste, pois pode ocorrer condiÃ§Ã£o de corrida e o teste nÃ£o detectar um Ãºltimo item sendo processado
+				 *  NÃ£o Ã© demasiado grave pois serÃ¡ detectado o problema no log de estatÃ­sticas e o usuÃ¡rio serÃ¡ informado do erro. 
 				 */
 				if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive() ) {
 					someWorkerAlive = true;
 				}
 
-				// TODO verificar se algum worker morreu e reiniciá-lo? (Nao deve ocorrer...)
+				// TODO verificar se algum worker morreu e reiniciÃ¡-lo? (Nao deve ocorrer...)
 			}
 
 			if (exception != null)
@@ -468,30 +345,30 @@ public class Manager {
 	private void finalizarIndexacao() throws IOException {
 
 		if (Configuration.forceMerge) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando índice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Otimizando índice...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Ã­ndice...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Otimizando Ã­ndice...");
 			try {
 				writer.forceMerge(1);
 			} catch (Throwable e) {
-				System.out.println(new Date() + "\t[ALERTA]\t" + "Erro durante otimização: " + e);
+				System.out.println(new Date() + "\t[ALERTA]\t" + "Erro durante otimizaÃ§Ã£o: " + e);
 			}
 
 		}
 
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando índice...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Fechando índice...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando Ã­ndice...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Fechando Ã­ndice...");
 		writer.close();
 
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando índice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Copiando índice...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Ã­ndice...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Ã­ndice...");
 			IOUtil.copiaDiretorio(indexTemp, indexDir);			
 		}
 		
 		try {
 			IOUtil.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
+			System.out.println(new Date() + "\t[AVISO]\t" + "NÃ£o foi possÃ­vel apagar " + Configuration.indexerTemp.getPath());
 		}
 
 		if (caseData.containsReport() || ExportFileTask.hasCategoryToExtract())
@@ -516,7 +393,7 @@ public class Manager {
 			for (String categoria : categories) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("Indexação cancelada!");
+					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 				}
 
 				String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
@@ -527,7 +404,7 @@ public class Manager {
 					palavrasFinais.add(categoria);
 
 			}
-			// fecha o índice
+			// fecha o Ã­ndice
 			App.get().destroy();
 
 			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
@@ -549,20 +426,20 @@ public class Manager {
 			for (String palavra : palavras) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("Indexação cancelada!");
+					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 				}
 
 				PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(palavra));
 				if (pesquisa.pesquisarTodos().length > 0)
 					palavrasFinais.add(palavra);
 			}
-			// fecha o índice
+			// fecha o Ã­ndice
 			App.get().destroy();
 			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
 			int filtradas = palavras.size() - palavrasFinais.size();
 			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " palavras-chave.");
 		} else
-			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma palavra-chave pré-configurada para filtrar.");
+			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma palavra-chave prÃ©-configurada para filtrar.");
 
 	}
 
@@ -578,7 +455,7 @@ public class Manager {
 		for (int i = 0; i < reader.maxDoc(); i++) {
 			if (Thread.interrupted()) {
 				reader.close();
-				throw new InterruptedException("Indexação cancelada!");
+				throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 			}
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
@@ -599,8 +476,8 @@ public class Manager {
 		VersionsMap viewToRaw = new VersionsMap(0);
 
 		if (FTK3ReportProcessor.wasInstantiated) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versões de visualização para originais...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versões de visualização -> originais...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versÃµes de visualizaÃ§Ã£o para originais...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versÃµes de visualizaÃ§Ã£o -> originais...");
 
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
 			String query = "export:(files && (\"AD html\" \"AD rtf\"))";
@@ -611,7 +488,7 @@ public class Manager {
 			for (int i = 0; i < alternatives.length; i++) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("Indexação cancelada!");
+					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 				}
 				Document doc = App.get().searcher.doc(alternatives[i].doc);
 				String ftkId = doc.get("ftkId");
@@ -639,7 +516,7 @@ public class Manager {
 			}
 			reader.close();
 
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtidos " + viewToRaw.getMappings() + " mapeamentos de versões de visualização para originais.");
+			System.out.println(new Date() + "\t[INFO]\t" + "Obtidos " + viewToRaw.getMappings() + " mapeamentos de versÃµes de visualizaÃ§Ã£o para originais.");
 		}
 
 		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/alternativeToOriginals.ids"));
@@ -668,8 +545,8 @@ public class Manager {
 
 	private void salvarTamanhoTextosExtraidos() throws Exception {
 
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraídos...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraÃ­dos...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraÃ­dos...");
 
 		int[] textSizesArray = new int[getLastId() + 1];
 
@@ -705,7 +582,7 @@ public class Manager {
 		Thread.sleep(1000);
 
 		if (!output.exists() && !output.mkdir())
-			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
+			throw new IOException("NÃ£o foi possÃ­vel criar diretÃ³rio " + output.getAbsolutePath());
 
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), false);
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/lib"), new File(output, "lib/lib"));
@@ -727,32 +604,32 @@ public class Manager {
 		File dataDir = new File(output, "data");
 		if (!dataDir.exists())
 			if (!dataDir.mkdir())
-				throw new IOException("Não foi possível criar diretório " + dataDir.getAbsolutePath());
+				throw new IOException("NÃ£o foi possÃ­vel criar diretÃ³rio " + dataDir.getAbsolutePath());
 
 	}
 
 	private void printSystemInfo() throws Exception {
 
 		System.out.println(new Date() + "\t[INFO]\t" + "Sistema Operacional: " + System.getProperty("os.name"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Versão Java: " + System.getProperty("java.version"));
+		System.out.println(new Date() + "\t[INFO]\t" + "VersÃ£o Java: " + System.getProperty("java.version"));
 		System.out.println(new Date() + "\t[INFO]\t" + "Arquitetura: " + System.getProperty("os.arch"));
 		System.out.println(new Date() + "\t[INFO]\t" + "Processadores: " + Runtime.getRuntime().availableProcessors());
 		System.out.println(new Date() + "\t[INFO]\t" + "numThreads: " + Configuration.numThreads);
 
 		int minMemPerThread = 200;
 		long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
-		System.out.println(new Date() + "\t[INFO]\t" + "Memória disponível: " + maxMemory + " MB");
+		System.out.println(new Date() + "\t[INFO]\t" + "MemÃ³ria disponÃ­vel: " + maxMemory + " MB");
 
 		/*
-		 * System.out.println(new Date() + "\t[INFO]\t" + "Configurações:");
+		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
 		 * for(Entry<Object, Object> entry :
 		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
 		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
 		 */
 		if (maxMemory / Configuration.numThreads < minMemPerThread) {
-			String memoryAlert = "Pouca memória disponível: menos de " + minMemPerThread + "MB por thread de indexação." + "\nIsso pode causar lentidão e erros de parsing de arquivos complexos."
-					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memória da JVM via parâmetro -Xmx " + "\n\tou diminua o parâmetro numThreads em IndexerConfig.txt";
-			JOptionPane.showMessageDialog(App.get(), memoryAlert, "Alerta de Memória", JOptionPane.WARNING_MESSAGE);
+			String memoryAlert = "Pouca memÃ³ria disponÃ­vel: menos de " + minMemPerThread + "MB por thread de indexaÃ§Ã£o." + "\nIsso pode causar lentidÃ£o e erros de parsing de arquivos complexos."
+					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memÃ³ria da JVM via parÃ¢metro -Xmx " + "\n\tou diminua o parÃ¢metro numThreads em IndexerConfig.txt";
+			JOptionPane.showMessageDialog(App.get(), memoryAlert, "Alerta de MemÃ³ria", JOptionPane.WARNING_MESSAGE);
 			throw new Exception(memoryAlert);
 		}
 

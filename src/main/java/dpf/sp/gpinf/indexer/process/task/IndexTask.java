@@ -47,7 +47,7 @@ public class IndexTask extends AbstractTask{
 			return;
 		}
 			
-		manager.updateLastId(evidence.getId());
+		manager.stats.updateLastId(evidence.getId());
 		
 		String textCache = evidence.getParsedTextCache();
 
@@ -84,10 +84,10 @@ public class IndexTask extends AbstractTask{
 			int fragments = 0;
 			
 			//Indexa os arquivos dividindo-os em fragmentos devido
-			//a alto uso de RAM pela lib de indexação com docs gigantes
+			//a alto uso de RAM pela lib de indexaÃ§Ã£o com docs gigantes
 			do {
 				if (++fragments > 1) {
-					manager.incSplits();
+					manager.stats.incSplits();
 					if (fragments == 2)
 						manager.remindSplitedDoc(evidence.getId());
 

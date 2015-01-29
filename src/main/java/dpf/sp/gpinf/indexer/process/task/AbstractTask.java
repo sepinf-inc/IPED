@@ -18,7 +18,7 @@ public abstract class AbstractTask {
 		this.worker = worker;
 	}
 	
-	abstract public void init(Properties confProps, File confDir) throws Exception;
+	abstract public void init(final Properties confProps, File confDir) throws Exception;
 	
 	abstract public void process(EvidenceFile evidence) throws Exception;
 	

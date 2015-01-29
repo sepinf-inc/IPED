@@ -118,7 +118,7 @@ public class Worker extends Thread {
 	
 	private void initTasks() throws Exception{
 		for(AbstractTask task : tasks)
-			task.init(null, null);
+			task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
 	}
 	
 	private void finishTasks() throws Exception{
@@ -154,17 +154,17 @@ public class Worker extends Thread {
 			runningTask = prevTask;
 			
 			// ESTATISTICAS
-			manager.incProcessed();
+			manager.stats.incProcessed();
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
-				manager.incActiveProcessed();
-				manager.addVolume(evidence.getLength());
+				manager.stats.incActiveProcessed();
+				manager.stats.addVolume(evidence.getLength());
 			}
 			
 			
 
 		} catch (TimeoutException e) {
 			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
-			manager.incTimeouts();
+			manager.stats.incTimeouts();
 			//if (reader != null)
 			//	reader.closeAndInterruptParsingTask();
 
@@ -185,8 +185,8 @@ public class Worker extends Thread {
 			
 			//Ignora arquivos recuperados e corrompidos
 			if(t.getCause() instanceof TikaException && evidence.isCarved()){
-				manager.incProcessed();
-				manager.incCorruptCarveIgnored();
+				manager.stats.incProcessed();
+				manager.stats.incCorruptCarveIgnored();
 				//System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
 				if(evidence.isSubItem()){
 					evidence.getFile().delete();
