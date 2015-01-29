@@ -22,7 +22,14 @@ import java.awt.GridLayout;
 import java.io.File;
 import java.util.Set;
 
-import javax.print.attribute.standard.Media;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
+
+import com.sun.javafx.application.PlatformImpl;
 
 public class VideoViewer extends AbstractViewer {
 
