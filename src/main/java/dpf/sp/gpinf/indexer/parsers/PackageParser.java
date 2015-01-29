@@ -173,7 +173,14 @@ public class PackageParser extends AbstractParser {
             if (zfe.getFeature() == Feature.ENCRYPTION) {
                 throw new EncryptedDocumentException(zfe);
             }
-            // Otherwise fall through to raise the exception as normal
+            throw zfe;
+        }catch (IOException ie) {
+            // Is this a password protection error?
+            // (COMPRESS-298 should give a nicer way when implemented, see TIKA-1525)
+            if ("Cannot read encrypted files without a password".equals(ie.getMessage())) {
+                throw new EncryptedDocumentException();
+            }
+            throw ie;
         } finally {
             IOUtil.closeQuietly(ais);
             tmp.close();
