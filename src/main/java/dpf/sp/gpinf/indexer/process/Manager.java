@@ -194,7 +194,7 @@ public class Manager {
 
 		configurarCategorias();
 
-		logarEstatisticas();
+		stats.logarEstatisticas();
 
 	}
 
@@ -549,7 +549,7 @@ public class Manager {
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraÃ­dos...");
 		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraÃ­dos...");
 
-		int[] textSizesArray = new int[getLastId() + 1];
+		int[] textSizesArray = new int[stats.getLastId() + 1];
 
 		for (int i = 0; i < textSizes.size(); i++) {
 			IdLenPair pair = textSizes.get(i);
