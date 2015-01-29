@@ -32,6 +32,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -72,8 +74,8 @@ public class IndexerProcessor {
 		caseData.setContainsReport(true);
 		
 		// Configuração para não expandir containers
-		Configuration.expandContainers = false;
-		Configuration.enableCarving = false;
+		ExpandContainerTask.expandContainers = false;
+		CarveTask.enableCarving = false;
 
 		Marcadores state = (Marcadores) IOUtil.readObject(file.getAbsolutePath());
 		File indexDir = state.getIndexDir().getCanonicalFile();
