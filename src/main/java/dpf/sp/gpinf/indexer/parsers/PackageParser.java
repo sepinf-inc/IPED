@@ -34,6 +34,8 @@ import org.apache.commons.compress.archivers.dump.DumpArchiveInputStream;
 import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException;
+import org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -72,9 +74,12 @@ public class PackageParser extends AbstractParser {
     private static final MediaType DUMP = MediaType.application("x-tika-unix-dump");
     private static final MediaType TAR = MediaType.application("x-tar");
     private static final MediaType SEVENZ = MediaType.application("x-7z-compressed");
+    private static final MediaType XPS = MediaType.application("vnd.ms-xpsdocument");
+    private static final MediaType OOXML = MediaType.application("x-tika-ooxml");
+
 
     private static final Set<MediaType> SUPPORTED_TYPES =
-            MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ);
+            MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ, XPS, OOXML);
 
     static MediaType getMediaType(ArchiveInputStream stream) {
         if (stream instanceof JarArchiveInputStream) {
@@ -159,10 +164,16 @@ public class PackageParser extends AbstractParser {
             ArchiveEntry entry = ais.getNextEntry();
             while (entry != null) {
                 if (!entry.isDirectory()) {
-                    parseEntry(ais, entry, extractor, xhtml);
+                	parseEntry(ais, entry, extractor, xhtml);
                 }
                 entry = ais.getNextEntry();
             }
+        } catch (UnsupportedZipFeatureException zfe) {
+            // If it's an encrypted document of unknown password, report as such
+            if (zfe.getFeature() == Feature.ENCRYPTION) {
+                throw new EncryptedDocumentException(zfe);
+            }
+            // Otherwise fall through to raise the exception as normal
         } finally {
             IOUtil.closeQuietly(ais);
             tmp.close();
@@ -202,7 +213,6 @@ public class PackageParser extends AbstractParser {
                 }
             }
         } else if (name != null && name.length() > 0) {
-            //xhtml.element("p", name);
         	throw new EncryptedDocumentException();
         }
     }
