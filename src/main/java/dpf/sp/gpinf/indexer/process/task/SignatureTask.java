@@ -16,11 +16,11 @@ import dpf.sp.gpinf.indexer.process.Worker;
 /*
  * ANALISE DE ASSINATURA
  */
-public class ComputeSignatureTask extends AbstractTask {
+public class SignatureTask extends AbstractTask {
 	
 	public static boolean processFileSignatures = true;
 	
-	public ComputeSignatureTask(Worker worker){
+	public SignatureTask(Worker worker){
 		this.worker = worker;
 	}
 

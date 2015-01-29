@@ -9,15 +9,15 @@ import java.util.Properties;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
+import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 
-public class CheckDuplicateTask extends AbstractTask{
+public class DuplicateTask extends AbstractTask{
 	
 	public static boolean ignoreDuplicates = false;
 	
 	private Manager manager;
 	
-	public CheckDuplicateTask(Worker worker){
+	public DuplicateTask(Worker worker){
 		super(worker);
 		this.manager = worker.manager;
 	}

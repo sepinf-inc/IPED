@@ -298,7 +298,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
 			if(contentTypeStr == null)
 				try {
-					if(ComputeSignatureTask.processFileSignatures)
+					if(SignatureTask.processFileSignatures)
 						contentType = detector.detect(tis, metadata).getBaseType();
 					else
 						contentType = detector.detect(null, metadata).getBaseType();

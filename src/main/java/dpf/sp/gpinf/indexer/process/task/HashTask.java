@@ -35,12 +35,12 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 /*
  * Classe para calcular e manipular hashes.
  */
-public class ComputeHashTask extends AbstractTask{
+public class HashTask extends AbstractTask{
 
 	private MessageDigest digest;
 	private String algorithm;
 	
-	public ComputeHashTask(Worker worker){
+	public HashTask(Worker worker){
 		this.worker = worker;
 	}
 	
