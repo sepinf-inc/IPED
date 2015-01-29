@@ -276,7 +276,8 @@ public class Manager {
 		conf.setMaxThreadStates(Configuration.numThreads);
 		conf.setSimilarity(new IndexerSimilarity());
 		ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-		mergeScheduler.setMaxMergesAndThreads(4, 2);
+		//Merges concorrentes degradam mto em discos rotacionais
+		//mergeScheduler.setMaxMergesAndThreads(4, 2);
 		conf.setMergeScheduler(mergeScheduler);
 		conf.setRAMBufferSizeMB(32);
 		TieredMergePolicy tieredPolicy = new TieredMergePolicy();
