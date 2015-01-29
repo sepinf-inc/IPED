@@ -256,7 +256,7 @@ public class SleuthkitProcessor {
 		time = absFile.getMtime();
 		if (time != 0)
 			evidence.setModificationDate(new Date(time * 1000));
-		time = absFile.getCtime();
+		time = absFile.getCrtime();
 		if (time != 0)
 			evidence.setCreationDate(new Date(time * 1000));
 
