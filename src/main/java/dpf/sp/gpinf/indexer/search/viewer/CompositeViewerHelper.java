@@ -114,14 +114,13 @@ public class CompositeViewerHelper {
 							if (javaFX) {
 								App.get().compositeViewer.addViewer(new HtmlViewer());
 								App.get().compositeViewer.addViewer(new EmailViewer());
+								App.get().compositeViewer.addViewer(new TikaHtmlViewer());
+								//App.get().compositeViewer.addViewer(new VideoViewer());
 							} else
 								App.get().compositeViewer.addViewer(new NoJavaFXViewer());
 
 							App.get().compositeViewer.addViewer(new IcePDFViewer());
-
 							App.get().compositeViewer.addViewer(new TiffViewer());
-
-							//App.get().compositeViewer.addViewer(new VideoViewer());
 
 						}
 					});
