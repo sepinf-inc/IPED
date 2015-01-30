@@ -35,6 +35,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.search.ResultTableModel;
 
 /*
  * Realiza a pré-ordenação das propriedades, agilizando as ordenações no aplicativo de análise,
@@ -42,7 +44,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
  */
 public class PropertiesSorter {
 
-	String[] fields = { "nome", "tipo", "tamanho", "categoria", "criacao", "modificacao", "acesso", "hash", "deletado", "caminho" };
+	String[] fields = ResultTableModel.fields;
 
 	private File output;
 	private int numThreads;
@@ -116,7 +118,7 @@ public class PropertiesSorter {
 		private Comparator<Field> getComparator(final String field) {
 
 			Comparator<Field> comparator = null;
-			if (field.equalsIgnoreCase("tamanho")) {
+			if (field.equalsIgnoreCase(FileDocument.LENGTH)) {
 				comparator = new Comparator<Field>() {
 					String s1 = "", s2 = "";
 
@@ -151,7 +153,7 @@ public class PropertiesSorter {
 
 					}
 				};
-			} else if (field.equalsIgnoreCase("criacao") || field.equalsIgnoreCase("acesso") || field.equalsIgnoreCase("modificacao")) {
+			} else if (field.equalsIgnoreCase(FileDocument.CREATED) || field.equalsIgnoreCase(FileDocument.ACCESSED) || field.equalsIgnoreCase(FileDocument.MODIFIED)) {
 				comparator = new Comparator<Field>() {
 					DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 					String s1 = "", s2 = "";

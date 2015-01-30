@@ -51,6 +51,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 
 public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
@@ -71,7 +72,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 					if (clause.getQuery() instanceof PhraseQuery && ((PhraseQuery) clause.getQuery()).getSlop() == 0) {
 						String queryStr = clause.getQuery().toString();
 						// System.out.println("phrase: " + queryStr);
-						String field = "conteudo" + ":\"";
+						String field = FileDocument.CONTENT + ":\"";
 						if (queryStr.startsWith(field)) {
 							String term = queryStr.substring(queryStr.indexOf(field) + field.length(), queryStr.lastIndexOf("\""));
 							result.add(term.toLowerCase());
@@ -89,7 +90,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				TreeSet<Term> termSet = new TreeSet<Term>();
 				query.extractTerms(termSet);
 				for (Term term : termSet)
-					if (term.field().equalsIgnoreCase("conteudo")) {
+					if (term.field().equalsIgnoreCase(FileDocument.CONTENT)) {
 						result.add(term.text().toLowerCase());
 						// System.out.println(term.text());
 					}
@@ -140,7 +141,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		if (!filtro.equals(App.FILTRO_TODOS) && !filtro.equals(App.FILTRO_SELECTED) && 
 			App.get().filtro.getSelectedIndex() >= App.get().filtro.getItemCount() - App.get().categorias.size()) {
 			
-			filtro = "categoria:\"" + filtro.substring(Marcadores.CATEGORIES_PREFIX.length()).replace("\"", "\\\"") + "\"";
+			filtro = FileDocument.CATEGORY + ":\"" + filtro.substring(Marcadores.CATEGORIES_PREFIX.length()).replace("\"", "\\\"") + "\"";
 			if (texto.trim().isEmpty())
 				texto = filtro;
 			else
@@ -149,9 +150,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		
 		if (App.get().filtrarDuplicados.isSelected())
 			if (texto.trim().isEmpty())
-				texto = "primary:true";
+				texto = FileDocument.PRIMARY + ":true";
 			else
-				texto = "primary:true" + " && (" + texto + ")";
+				texto = FileDocument.PRIMARY + ":true" + " && (" + texto + ")";
 		
 		
 		Query result = getQuery(texto, App.get().analyzer);
@@ -187,7 +188,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			return new MatchAllDocsQuery();
 
 		} else {
-			String[] fields = { "nome", "conteudo" };
+			String[] fields = { FileDocument.NAME, FileDocument.CONTENT };
 
 			BooleanQuery result = new BooleanQuery();
 			for (int i = 0; i < fields.length; i++) {
@@ -362,7 +363,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				IndexReader reader = App.get().reader;
 				for (int doc : result.docs) {
 					try {
-						String len = reader.document(doc).get("tamanho");
+						String len = reader.document(doc).get(FileDocument.LENGTH);
 						if (!len.isEmpty())
 							volume += Long.valueOf(len);
 

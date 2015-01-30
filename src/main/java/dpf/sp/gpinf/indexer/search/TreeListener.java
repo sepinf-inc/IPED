@@ -31,6 +31,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
 public class TreeListener implements  TreeSelectionListener{
@@ -43,23 +44,23 @@ public class TreeListener implements  TreeSelectionListener{
 		Node selectedNode = (Node)evt.getPath().getLastPathComponent();
 		
 		if(selectedNode.docId == -1){
-			treeQuery = new TermQuery(new Term("isRoot", "true"));
+			treeQuery = new TermQuery(new Term(FileDocument.ISROOT, "true"));
 			recursiveTreeQuery = null;
 			
 		}else{
 			Document doc = selectedNode.getDoc();
 			
-			String parentId = doc.get("ftkId");
+			String parentId = doc.get(FileDocument.FTKID);
 			if (parentId == null)
-				parentId = doc.get("id");
+				parentId = doc.get(FileDocument.ID);
 			
-			treeQuery = new TermQuery(new Term("parentId", parentId));
+			treeQuery = new TermQuery(new Term(FileDocument.PARENTID, parentId));
 			
-			String parentSleuthId = doc.get("sleuthId");
+			String parentSleuthId = doc.get(FileDocument.SLEUTHID);
 			if(parentSleuthId != null){
 				BooleanQuery boolQuery = new BooleanQuery();
 				boolQuery.add(treeQuery, Occur.SHOULD);
-				boolQuery.add(new TermQuery(new Term("parentSleuthId", parentSleuthId)), Occur.SHOULD);
+				boolQuery.add(new TermQuery(new Term(FileDocument.PARENTSLEUTHID, parentSleuthId)), Occur.SHOULD);
 				treeQuery = boolQuery;
 			}
 			
@@ -73,9 +74,9 @@ public class TreeListener implements  TreeSelectionListener{
 			boolQuery.add(new PrefixQuery(new Term("fullPath", path + "\\")), Occur.SHOULD);
 			boolQuery.add(new TermQuery(new Term("id", doc.get("id"))), Occur.MUST_NOT);*/
 			
-			boolQuery.add(new TermQuery(new Term("parentIds", parentId)), Occur.SHOULD);
+			boolQuery.add(new TermQuery(new Term(FileDocument.PARENTIDs, parentId)), Occur.SHOULD);
 			if(parentSleuthId != null)
-				boolQuery.add(new TermQuery(new Term("parentIds", "s"+parentSleuthId)), Occur.SHOULD);
+				boolQuery.add(new TermQuery(new Term(FileDocument.PARENTIDs, "s" + parentSleuthId)), Occur.SHOULD);
 			
 			recursiveTreeQuery =  boolQuery;
 			
@@ -95,17 +96,17 @@ public class TreeListener implements  TreeSelectionListener{
 				Document doc = App.get().reader.document(docId);
 				
 				textQuery = null;
-				String parentId = doc.get("parentId");
+				String parentId = doc.get(FileDocument.PARENTID);
 				if(parentId != null)
-					textQuery = "id:" + parentId;
+					textQuery = FileDocument.ID + ":" + parentId;
 
-				String ftkId = doc.get("ftkId");
+				String ftkId = doc.get(FileDocument.FTKID);
 				if (ftkId != null)
-					textQuery = "ftkId:" + parentId;
+					textQuery = FileDocument.FTKID + ":" + parentId;
 				
-				String parentSleuthId = doc.get("parentSleuthId");
+				String parentSleuthId = doc.get(FileDocument.PARENTSLEUTHID);
 				if(parentSleuthId != null)
-					textQuery = "sleuthId:" + parentSleuthId;
+					textQuery = FileDocument.SLEUTHID + ":" + parentSleuthId;
 				
 				if(textQuery != null){
 					PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));

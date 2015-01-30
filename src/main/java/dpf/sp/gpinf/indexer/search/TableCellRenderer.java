@@ -28,6 +28,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.lucene.document.Document;
 
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
+
 public class TableCellRenderer extends DefaultTableCellRenderer{
 	
 	/**
@@ -35,9 +37,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer{
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
-	Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
-	Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+	private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
+	private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
+	private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
 
 	@Override
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -50,10 +52,10 @@ public class TableCellRenderer extends DefaultTableCellRenderer{
 			try {
 				int docId = App.get().results.docs[idx];
 				Document doc = App.get().searcher.doc(docId);
-				if(Boolean.valueOf(doc.get("isDir")))
+				if(Boolean.valueOf(doc.get(FileDocument.ISDIR)))
 					result.setIcon(folderIcon);
 				
-				else if(Boolean.valueOf(doc.get("isRoot")))
+				else if(Boolean.valueOf(doc.get(FileDocument.ISROOT)))
 					result.setIcon(diskIcon);
 				else
 					result.setIcon(fileIcon);

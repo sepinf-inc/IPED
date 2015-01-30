@@ -32,6 +32,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class SubitemTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener {
@@ -61,7 +62,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
 		else {
 			try {
 				Document doc = App.get().searcher.doc(results.docs[row]);
-				return doc.get("nome");
+				return doc.get(FileDocument.NAME);
 			} catch (Exception e) {
 				// e.printStackTrace();
 			}
@@ -96,7 +97,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
 					try {
 						Document doc = App.get().searcher.doc(docId);
 
-						String export = doc.get("export");
+						String export = doc.get(FileDocument.EXPORT);
 						if (export != null && !export.isEmpty()) {
 							file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
 							file = IOUtil.getReadOnlyFile(file, doc);
@@ -146,15 +147,15 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
 
 	public void listSubItens(Document doc) {
 
-		String parentId = doc.get("ftkId");
+		String parentId = doc.get(FileDocument.FTKID);
 		if (parentId == null)
-			parentId = doc.get("id");
+			parentId = doc.get(FileDocument.ID);
 		
-		String textQuery = "parentId:" + parentId;
+		String textQuery = FileDocument.PARENTID + ":" + parentId;
 		
-		String parentSleuthId = doc.get("sleuthId");
+		String parentSleuthId = doc.get(FileDocument.SLEUTHID);
 		if(parentSleuthId != null)
-			textQuery += " parentSleuthId:" + parentSleuthId;
+			textQuery += " " + FileDocument.PARENTSLEUTHID + ":" + parentSleuthId;
 
 		try {
 			PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));

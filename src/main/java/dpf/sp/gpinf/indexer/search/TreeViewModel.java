@@ -30,6 +30,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
+
 public class TreeViewModel implements TreeModel{
 	
 	private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
@@ -65,7 +67,7 @@ public class TreeViewModel implements TreeModel{
 				return FIRST_STRING;
 			}
 			
-			return getDoc().get("nome");
+			return getDoc().get(FileDocument.NAME);
 		}
 		
 		public SearchResult getChildren(){
@@ -77,17 +79,17 @@ public class TreeViewModel implements TreeModel{
 		
 		private void listSubItens(Document doc) {
 			
-			String parentId = doc.get("ftkId");
+			String parentId = doc.get(FileDocument.FTKID);
 			if (parentId == null)
-				parentId = doc.get("id");
+				parentId = doc.get(FileDocument.ID);
 			
-			String textQuery = "parentId:" + parentId;
+			String textQuery = FileDocument.PARENTID + ":" + parentId;
 			
-			String parentSleuthId = doc.get("sleuthId");
+			String parentSleuthId = doc.get(FileDocument.SLEUTHID);
 			if(parentSleuthId != null)
-				textQuery += " parentSleuthId:" + parentSleuthId;
+				textQuery += " " + FileDocument.PARENTSLEUTHID+ ":" + parentSleuthId;
 			
-			textQuery = "(" + textQuery + ") && (isDir:true || hasChildren:true)";
+			textQuery = "(" + textQuery + ") && (" + FileDocument.ISDIR + ":true || " + FileDocument.HASCHILD + ":true)";
 
 			try {
 				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
@@ -108,10 +110,10 @@ public class TreeViewModel implements TreeModel{
 	public TreeViewModel(){
 		root = new Node(-1);
 		root.doc = new Document();
-		root.doc.add(new StoredField("nome", "Evidências"));
+		root.doc.add(new StoredField(FileDocument.NAME, "Evidências"));
 		PesquisarIndice pesquisa;
 		try {
-			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery("isRoot:true"));
+			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(FileDocument.ISROOT + ":true"));
 			root.children = pesquisa.pesquisar();
 			Integer[] array = ArrayUtils.toObject(root.children.docs);
 			Arrays.sort(array, comparator);

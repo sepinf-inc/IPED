@@ -65,6 +65,7 @@ import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
@@ -250,7 +251,7 @@ public class Manager {
 		synchronized (hashMap) {
 			for (int i = 0; i < reader.maxDoc(); i++) {
 				Document doc = reader.document(i);
-				String hash = doc.get("hash");
+				String hash = doc.get(FileDocument.HASH);
 				if (hash != null){
 					HashValue hValue = new HashValue(hash);
 					hashMap.put(hValue, hValue);
@@ -302,12 +303,12 @@ public class Manager {
 
 		while (someWorkerAlive) {
 			if (IndexFiles.getInstance().isCancelled())
-				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
+				exception = new InterruptedException("Indexação cancelada!");
 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
+				exception = new InterruptedException("Indexação cancelada!");
 			}
 
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
@@ -460,7 +461,7 @@ public class Manager {
 			}
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
-			int id = Integer.parseInt(reader.document(i).get("id"));
+			int id = Integer.parseInt(reader.document(i).get(FileDocument.ID));
 			if (splitedIds.contains(id))
 				splitedDocs.put(i, id);
 		}
@@ -481,7 +482,7 @@ public class Manager {
 			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versÃµes de visualizaÃ§Ã£o -> originais...");
 
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
-			String query = "export:(files && (\"AD html\" \"AD rtf\"))";
+			String query = FileDocument.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
 			PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
 			ScoreDoc[] alternatives = pesquisa.filtrarFragmentos1(pesquisa.pesquisarTodos1());
 
@@ -492,7 +493,7 @@ public class Manager {
 					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 				}
 				Document doc = App.get().searcher.doc(alternatives[i].doc);
-				String ftkId = doc.get("ftkId");
+				String ftkId = doc.get(FileDocument.FTKID);
 				viewMap.put(ftkId, alternatives[i].doc);
 			}
 			alternatives = null;
@@ -507,8 +508,8 @@ public class Manager {
 					continue;
 
 				Document doc = reader.document(i);
-				String ftkId = doc.get("ftkId");
-				String export = doc.get("export");
+				String ftkId = doc.get(FileDocument.FTKID);
+				String export = doc.get(FileDocument.EXPORT);
 
 				Integer viewDocId = viewMap.get(ftkId);
 				if (viewDocId != null && viewDocId != i && !viewToRaw.isView(viewDocId) && !export.contains(".[AD]."))
@@ -537,7 +538,7 @@ public class Manager {
 		int[] ids = new int[reader.maxDoc()];
 		for (int i = 0; i < reader.maxDoc(); i++) {
 			Document doc = reader.document(i);
-			ids[i] = Integer.parseInt(doc.get("id"));
+			ids[i] = Integer.parseInt(doc.get(FileDocument.ID));
 		}
 		
 		reader.close();

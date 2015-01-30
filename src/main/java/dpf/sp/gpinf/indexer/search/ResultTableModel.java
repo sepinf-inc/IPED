@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -26,12 +27,35 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.task.FileDocument;
 
 public class ResultTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
+	
+	public static String[] fields = {
+		FileDocument.NAME, 
+		FileDocument.TYPE, 
+		FileDocument.LENGTH, 
+		FileDocument.DELETED, 
+		FileDocument.CATEGORY,
+		FileDocument.CREATED,
+		FileDocument.MODIFIED,
+		FileDocument.ACCESSED,
+		FileDocument.HASH,
+		FileDocument.PATH
+	};
 
-	public static String[] columnNames = { "", "", "%", "Marcador", "Nome", "Tipo", "Tamanho", "Deletado", "Categoria", "Criação", "Modificação", "Acesso", "Hash", "Caminho" };
+	public static String[] columnNames = { "", "", "%", "Marcador"};
+	
+	static{
+		ArrayList<String> cols = new ArrayList<String>();
+		for(String col : columnNames)
+			cols.add(col);
+		for(String col : fields)
+			cols.add(col);
+		columnNames = cols.toArray(new String[0]);
+	}
 
 	/*
 	 * private static DateFormat df = new
@@ -84,8 +108,6 @@ public class ResultTableModel extends AbstractTableModel {
 			return String.class;
 	}
 
-	public static String[] fields = { "nome", "tipo", "tamanho", "deletado", "categoria", "criacao", "modificacao", "acesso", "hash", "caminho" };
-
 	private Document doc;
 	private int lastDocRead = -1;
 
@@ -121,7 +143,7 @@ public class ResultTableModel extends AbstractTableModel {
 				String field = fields[fCol];
 				value = doc.get(field);
 				
-				boolean read = App.get().marcadores.read[App.get().results.docs[row]];
+				//boolean read = App.get().marcadores.read[App.get().results.docs[row]];
 
 				/*
 				 * if(!value.equals("") && col == 8) value =

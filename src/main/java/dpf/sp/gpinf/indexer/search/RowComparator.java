@@ -25,7 +25,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 public class RowComparator implements Comparator<Integer> {
 
 	static String[] fields = ResultTableModel.fields;
-	//{ "nome", "tipo", "tamanho", "categoria", "criacao", "modificacao", "acesso", "hash", "marcador", "deletado", "caminho" };
 	
 	private int col;
 	static private int[][] order = new int[fields.length + 4][];
