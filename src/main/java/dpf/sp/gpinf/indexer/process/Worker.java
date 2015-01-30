@@ -174,16 +174,6 @@ public class Worker extends Thread {
 			evidence.timeOut = true;
 			process(evidence);
 
-			// Processamento de subitem pode ser interrompido por TIMEOUT no
-			// processamento do pai, no bloco acima (em outra Thread), devendo ser
-			// reprocessado
-		} catch (InterruptedIOException e1) {
-			System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Interrompido processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e1);
-			//if (reader != null)
-			//	reader.closeAndInterruptParsingTask();
-			process(evidence);
-
-			
 		} catch (Throwable t) {
 			
 			//Ignora arquivos recuperados e corrompidos
