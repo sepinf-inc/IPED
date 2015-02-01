@@ -85,6 +85,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	private ParseContext context;
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
+	private ParsingReader reader;
 
 	public ExpandContainerTask(ParseContext context) {
 		setContext(context);
@@ -204,7 +205,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		
 		Metadata metadata = getMetadata(evidence);
 		
-		ParsingReader reader = new ParsingReader(worker.autoParser, tis, metadata, context);
+		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 		try{
 			StringWriter writer;
 			char[] cbuf = new char[128*1024];
@@ -362,12 +363,9 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			// caso contrÃ¡rio processa o item no worker atual
 			else {
 				// pausa contagem de timeout enquanto processa subitem
-				FastPipedReader pipedReader = context.get(FastPipedReader.class);
-				if(pipedReader != null)
-					pipedReader.setTimeoutPaused(true);
+				reader.setTimeoutPaused(true);
 				worker.process(evidence);
-				if(pipedReader != null)
-					pipedReader.setTimeoutPaused(false);
+				reader.setTimeoutPaused(false);
 			}
 
 		} catch (SAXException e) {

@@ -340,5 +340,9 @@ public class ParsingReader extends Reader {
 			return 0;
 		}
 	}
+	
+	public void setTimeoutPaused(boolean paused){
+		pipedReader.setTimeoutPaused(paused);
+	}
 
 }
