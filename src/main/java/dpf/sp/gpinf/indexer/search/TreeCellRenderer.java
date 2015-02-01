@@ -25,7 +25,7 @@ import javax.swing.JTree;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
 public class TreeCellRenderer extends DefaultTreeCellRenderer{
@@ -37,10 +37,10 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer{
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus){
 		
 		Node node = (Node)value;
-		boolean notDir = !Boolean.valueOf(node.getDoc().get(FileDocument.ISDIR));
+		boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR));
 		DefaultTreeCellRenderer result = (DefaultTreeCellRenderer)super.getTreeCellRendererComponent(tree, value, selected, expanded, notDir, row, hasFocus);
 		
-		if(notDir && Boolean.valueOf(node.getDoc().get(FileDocument.ISROOT)))
+		if(notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT)))
 			result.setIcon(diskIcon);
 			
 		return result;

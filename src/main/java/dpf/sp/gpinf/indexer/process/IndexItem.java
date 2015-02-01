@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.process.task;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
@@ -36,7 +36,7 @@ import org.apache.tika.mime.MediaType;
 /*
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens, para ser adicionado ao índice.
  */
-public class FileDocument {
+public class IndexItem {
 	
 	public static final String ID = "id";
 	public static final String FTKID = "ftkId";

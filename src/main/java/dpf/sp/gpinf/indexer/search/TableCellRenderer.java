@@ -28,7 +28,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import org.apache.lucene.document.Document;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class TableCellRenderer extends DefaultTableCellRenderer{
 	
@@ -52,10 +52,10 @@ public class TableCellRenderer extends DefaultTableCellRenderer{
 			try {
 				int docId = App.get().results.docs[idx];
 				Document doc = App.get().searcher.doc(docId);
-				if(Boolean.valueOf(doc.get(FileDocument.ISDIR)))
+				if(Boolean.valueOf(doc.get(IndexItem.ISDIR)))
 					result.setIcon(folderIcon);
 				
-				else if(Boolean.valueOf(doc.get(FileDocument.ISROOT)))
+				else if(Boolean.valueOf(doc.get(IndexItem.ISROOT)))
 					result.setIcon(diskIcon);
 				else
 					result.setIcon(fileIcon);

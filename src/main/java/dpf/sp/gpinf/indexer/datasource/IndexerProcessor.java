@@ -32,9 +32,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -103,7 +103,7 @@ public class IndexerProcessor {
 
 			Document doc = App.get().reader.document(docID);
 
-			String value = doc.get(FileDocument.LENGTH);
+			String value = doc.get(IndexItem.LENGTH);
 			Long len = null;
 			if (value != null && !value.isEmpty())
 				len = Long.valueOf(value);
@@ -115,11 +115,11 @@ public class IndexerProcessor {
 			}
 			
 			EvidenceFile evidence = new EvidenceFile();
-			evidence.setName(doc.get(FileDocument.NAME));
+			evidence.setName(doc.get(IndexItem.NAME));
 			
 			evidence.setLength(len);
 			
-			int id = Integer.valueOf(doc.get(FileDocument.ID));
+			int id = Integer.valueOf(doc.get(IndexItem.ID));
 			evidence.setId(id);
 			
 			for(int labelId : state.getLabelIds(id))
@@ -127,66 +127,66 @@ public class IndexerProcessor {
 			
 			evidence.setLabels(state.getLabels(id));
 
-			value = doc.get(FileDocument.PARENTID);
+			value = doc.get(IndexItem.PARENTID);
 			if (value != null)
 				evidence.setParentId(value);
 
-			value = doc.get(FileDocument.TYPE);
+			value = doc.get(IndexItem.TYPE);
 			if (value != null)
 				evidence.setType(new UnknownFileType(value));
 
-			value = doc.get(FileDocument.CATEGORY);
+			value = doc.get(IndexItem.CATEGORY);
 			for(String category : value.split(CategoryTokenizer.SEPARATOR + ""))
 				evidence.addCategory(category);
 			
 
-			value = doc.get(FileDocument.ACCESSED);
+			value = doc.get(IndexItem.ACCESSED);
 			if (!value.isEmpty())
 				evidence.setAccessDate(df.parse(value));
 
-			value = doc.get(FileDocument.CREATED);
+			value = doc.get(IndexItem.CREATED);
 			if (!value.isEmpty())
 				evidence.setCreationDate(df.parse(value));
 
-			value = doc.get(FileDocument.MODIFIED);
+			value = doc.get(IndexItem.MODIFIED);
 			if (!value.isEmpty())
 				evidence.setModificationDate(df.parse(value));
 
-			evidence.setPath(doc.get(FileDocument.PATH));
+			evidence.setPath(doc.get(IndexItem.PATH));
 
-			value = doc.get(FileDocument.EXPORT);
+			value = doc.get(IndexItem.EXPORT);
 			if (value != null && !value.isEmpty())
 				evidence.setFile(IOUtil.getRelativeFile(basePath, value));
 
 			else {
-				value = doc.get(FileDocument.SLEUTHID);
+				value = doc.get(IndexItem.SLEUTHID);
 				if (value != null && !value.isEmpty()) {
 					evidence.setSleuthId(value);
 					evidence.setSleuthFile(sleuthCase.getAbstractFileById(Long.valueOf(value)));
 				}
 			}
 
-			value = doc.get(FileDocument.CONTENTTYPE);
+			value = doc.get(IndexItem.CONTENTTYPE);
 			if (value != null)
 				evidence.setMediaType(MediaType.parse(value));
 
 			//provoca problema ao extrair item com timeout, pois hash não é encontrado no mapa de hashes
 			//evidence.timeOut = Boolean.parseBoolean(doc.get("timeout"));
 
-			value = doc.get(FileDocument.HASH);
+			value = doc.get(IndexItem.HASH);
 			if (value != null)
 				evidence.setHash(value);
 			
-			value = doc.get(FileDocument.DELETED);
+			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));
 			
-			value = doc.get(FileDocument.ISDIR);
+			value = doc.get(IndexItem.ISDIR);
 			evidence.setIsDir(Boolean.parseBoolean(value));
 			
-			value = doc.get(FileDocument.CARVED);
+			value = doc.get(IndexItem.CARVED);
 			evidence.setCarved(Boolean.parseBoolean(value));
 			
-			value = doc.get(FileDocument.OFFSET);
+			value = doc.get(IndexItem.OFFSET);
 			if(value != null)
 				evidence.setFileOffset(Long.parseLong(value));
 

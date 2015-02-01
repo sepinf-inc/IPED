@@ -32,7 +32,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class ParentTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener {
@@ -62,7 +62,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 		else {
 			try {
 				Document doc = App.get().searcher.doc(results.docs[row]);
-				return doc.get(FileDocument.NAME);
+				return doc.get(IndexItem.NAME);
 			} catch (Exception e) {
 				// e.printStackTrace();
 			}
@@ -97,7 +97,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 					try {
 						Document doc = App.get().searcher.doc(docId);
 
-						String export = doc.get(FileDocument.EXPORT);
+						String export = doc.get(IndexItem.EXPORT);
 						if (export != null && !export.isEmpty()) {
 							file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
 							file = IOUtil.getReadOnlyFile(file, doc);
@@ -150,17 +150,17 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 	public void listParents(final Document doc) {
 
 		String textQuery = null;
-		String parentId = doc.get(FileDocument.PARENTID);
+		String parentId = doc.get(IndexItem.PARENTID);
 		if(parentId != null)
-			textQuery = FileDocument.ID + ":" + parentId;
+			textQuery = IndexItem.ID + ":" + parentId;
 
-		String ftkId = doc.get(FileDocument.FTKID);
+		String ftkId = doc.get(IndexItem.FTKID);
 		if (ftkId != null)
-			textQuery = FileDocument.FTKID + ":" + parentId;
+			textQuery = IndexItem.FTKID + ":" + parentId;
 		
-		String parentSleuthId = doc.get(FileDocument.PARENTSLEUTHID);
+		String parentSleuthId = doc.get(IndexItem.PARENTSLEUTHID);
 		if(parentSleuthId != null)
-			textQuery = FileDocument.SLEUTHID + ":" + parentSleuthId;
+			textQuery = IndexItem.SLEUTHID + ":" + parentSleuthId;
 			
 		results = new SearchResult(0);
 		

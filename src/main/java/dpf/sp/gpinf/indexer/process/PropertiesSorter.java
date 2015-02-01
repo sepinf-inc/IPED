@@ -35,7 +35,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
 import dpf.sp.gpinf.indexer.search.ResultTableModel;
 
 /*
@@ -118,7 +117,7 @@ public class PropertiesSorter {
 		private Comparator<Field> getComparator(final String field) {
 
 			Comparator<Field> comparator = null;
-			if (field.equalsIgnoreCase(FileDocument.LENGTH)) {
+			if (field.equalsIgnoreCase(IndexItem.LENGTH)) {
 				comparator = new Comparator<Field>() {
 					String s1 = "", s2 = "";
 
@@ -153,7 +152,7 @@ public class PropertiesSorter {
 
 					}
 				};
-			} else if (field.equalsIgnoreCase(FileDocument.CREATED) || field.equalsIgnoreCase(FileDocument.ACCESSED) || field.equalsIgnoreCase(FileDocument.MODIFIED)) {
+			} else if (field.equalsIgnoreCase(IndexItem.CREATED) || field.equalsIgnoreCase(IndexItem.ACCESSED) || field.equalsIgnoreCase(IndexItem.MODIFIED)) {
 				comparator = new Comparator<Field>() {
 					DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 					String s1 = "", s2 = "";

@@ -26,6 +26,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 
 /*
  * Define analizadores, tokenizadores implicitamente, de indexação específicos para cada propriedade, 
@@ -34,10 +35,10 @@ public class AppAnalyzer {
 
 	public static Analyzer get() {
 		Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
-		analyzerPerField.put("categoria", new StandardASCIIAnalyzer(Versao.current, true));
-		analyzerPerField.put("id", new KeywordAnalyzer());
-		analyzerPerField.put("ftkId", new KeywordAnalyzer());
-		analyzerPerField.put("parentId", new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
+		analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
 		return new PerFieldAnalyzerWrapper(new StandardASCIIAnalyzer(Versao.current, false), analyzerPerField);
 	}
 

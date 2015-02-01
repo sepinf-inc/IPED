@@ -32,7 +32,7 @@ import javax.swing.SwingWorker;
 
 import org.apache.lucene.document.Document;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
@@ -74,13 +74,13 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 				}
 
 				Document doc = App.get().searcher.doc(docId);
-				String dstName = IOUtil.getValidFilename(doc.get(FileDocument.NAME));
-				String export = doc.get(FileDocument.EXPORT);
+				String dstName = IOUtil.getValidFilename(doc.get(IndexItem.NAME));
+				String export = doc.get(IndexItem.EXPORT);
 
 				InputStream in;
 				if (export != null && !export.isEmpty()) {
 					File src = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
-					if(doc.get(FileDocument.OFFSET) == null)
+					if(doc.get(IndexItem.OFFSET) == null)
 						dstName = addExtension(src.getName(), dstName);
 					in = IOUtil.getStream(src, doc);
 				} else

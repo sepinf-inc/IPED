@@ -37,7 +37,7 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -96,9 +96,9 @@ public class GalleryModel extends AbstractTableModel {
 			return new GalleryValue("", errorIcon, docId);
 		}
 
-		final String mediaType = doc.get(FileDocument.CONTENTTYPE);
+		final String mediaType = doc.get(IndexItem.CONTENTTYPE);
 		if (!mediaType.startsWith("image") && !mediaType.endsWith("msmetafile") && !mediaType.endsWith("x-emf"))
-			return new GalleryValue(doc.get(FileDocument.NAME), unsupportedIcon, docId);
+			return new GalleryValue(doc.get(IndexItem.NAME), unsupportedIcon, docId);
 		
 		if(executor == null)
 			executor = Executors.newFixedThreadPool(GALLERY_THREADS);
@@ -108,7 +108,7 @@ public class GalleryModel extends AbstractTableModel {
 
 				BufferedImage image = null;
 				InputStream stream = null;
-				GalleryValue value = new GalleryValue(doc.get(FileDocument.NAME), null, docId);
+				GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, docId);
 				try {
 					if (cache.containsKey(docId))
 						return;
@@ -116,7 +116,7 @@ public class GalleryModel extends AbstractTableModel {
 					if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false)))
 						return;
 
-					String export = doc.get(FileDocument.EXPORT);
+					String export = doc.get(IndexItem.EXPORT);
 					if (export != null && !export.isEmpty()) {
 
 						image = getThumbFromReport(export);
@@ -142,7 +142,7 @@ public class GalleryModel extends AbstractTableModel {
 						stream.mark(1000000);
 					
 						
-					if (image == null && doc.get(FileDocument.CONTENTTYPE).equals("image/jpeg")) {
+					if (image == null && doc.get(IndexItem.CONTENTTYPE).equals("image/jpeg")) {
 						image = ImageUtil.getThumb(new CloseShieldInputStream(stream), value);
 						stream.reset();
 					}
@@ -202,7 +202,7 @@ public class GalleryModel extends AbstractTableModel {
 			}
 		});
 
-		return new GalleryValue(doc.get(FileDocument.NAME), null, docId);
+		return new GalleryValue(doc.get(IndexItem.NAME), null, docId);
 	}
 
 	private BufferedImage getThumbFromReport(String export) {

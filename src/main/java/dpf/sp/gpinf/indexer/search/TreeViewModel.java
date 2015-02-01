@@ -30,7 +30,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class TreeViewModel implements TreeModel{
 	
@@ -67,7 +67,7 @@ public class TreeViewModel implements TreeModel{
 				return FIRST_STRING;
 			}
 			
-			return getDoc().get(FileDocument.NAME);
+			return getDoc().get(IndexItem.NAME);
 		}
 		
 		public SearchResult getChildren(){
@@ -79,17 +79,17 @@ public class TreeViewModel implements TreeModel{
 		
 		private void listSubItens(Document doc) {
 			
-			String parentId = doc.get(FileDocument.FTKID);
+			String parentId = doc.get(IndexItem.FTKID);
 			if (parentId == null)
-				parentId = doc.get(FileDocument.ID);
+				parentId = doc.get(IndexItem.ID);
 			
-			String textQuery = FileDocument.PARENTID + ":" + parentId;
+			String textQuery = IndexItem.PARENTID + ":" + parentId;
 			
-			String parentSleuthId = doc.get(FileDocument.SLEUTHID);
+			String parentSleuthId = doc.get(IndexItem.SLEUTHID);
 			if(parentSleuthId != null)
-				textQuery += " " + FileDocument.PARENTSLEUTHID+ ":" + parentSleuthId;
+				textQuery += " " + IndexItem.PARENTSLEUTHID+ ":" + parentSleuthId;
 			
-			textQuery = "(" + textQuery + ") && (" + FileDocument.ISDIR + ":true || " + FileDocument.HASCHILD + ":true)";
+			textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
 
 			try {
 				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
@@ -110,10 +110,10 @@ public class TreeViewModel implements TreeModel{
 	public TreeViewModel(){
 		root = new Node(-1);
 		root.doc = new Document();
-		root.doc.add(new StoredField(FileDocument.NAME, "Evidências"));
+		root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
 		PesquisarIndice pesquisa;
 		try {
-			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(FileDocument.ISROOT + ":true"));
+			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"));
 			root.children = pesquisa.pesquisar();
 			Integer[] array = ArrayUtils.toObject(root.children.docs);
 			Arrays.sort(array, comparator);

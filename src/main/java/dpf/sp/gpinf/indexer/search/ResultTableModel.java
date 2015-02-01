@@ -27,23 +27,23 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.process.task.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class ResultTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
 	
 	public static String[] fields = {
-		FileDocument.NAME, 
-		FileDocument.TYPE, 
-		FileDocument.LENGTH, 
-		FileDocument.DELETED, 
-		FileDocument.CATEGORY,
-		FileDocument.CREATED,
-		FileDocument.MODIFIED,
-		FileDocument.ACCESSED,
-		FileDocument.HASH,
-		FileDocument.PATH
+		IndexItem.NAME, 
+		IndexItem.TYPE, 
+		IndexItem.LENGTH, 
+		IndexItem.DELETED, 
+		IndexItem.CATEGORY,
+		IndexItem.CREATED,
+		IndexItem.MODIFIED,
+		IndexItem.ACCESSED,
+		IndexItem.HASH,
+		IndexItem.PATH
 	};
 
 	public static String[] columnNames = { "", "", "%", "Marcador"};

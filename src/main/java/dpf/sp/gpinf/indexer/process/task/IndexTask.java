@@ -20,7 +20,7 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.FileDocument;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
@@ -56,9 +56,9 @@ public class IndexTask extends AbstractTask{
 		if (textCache != null) {
 			Document doc;
 			if (indexFileContents)
-				doc = FileDocument.Document(evidence, new StringReader(textCache), dateFormat);
+				doc = IndexItem.Document(evidence, new StringReader(textCache), dateFormat);
 			else
-				doc = FileDocument.Document(evidence, null, dateFormat);
+				doc = IndexItem.Document(evidence, null, dateFormat);
 			
 			worker.writer.addDocument(doc);
 			manager.textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
@@ -80,7 +80,7 @@ public class IndexTask extends AbstractTask{
 				(indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType())))
 					reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 			
-			Document doc = FileDocument.Document(evidence, reader, dateFormat);
+			Document doc = IndexItem.Document(evidence, reader, dateFormat);
 			int fragments = 0;
 			try{
 				/* Indexa os arquivos dividindo-os em fragmentos, pois a lib de
