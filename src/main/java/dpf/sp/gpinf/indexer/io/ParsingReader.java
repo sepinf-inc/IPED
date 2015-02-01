@@ -167,16 +167,9 @@ public class ParsingReader extends Reader {
 		 * forkParser.setPoolSize(8); } this.parser = forkParser;
 		 */
 
-		/*String name = Thread.currentThread().getName() + "-Task";
-		parsingTask = new Thread(new ParsingTask(), name);
-		parsingTask.setDaemon(true);
-		parsingTask.start();
-		*/
 		future = threadPool.submit(new ParsingTask());
 
 	}
-
-	//private Thread parsingTask;
 	
 	public static ExecutorService threadPool = Executors.newCachedThreadPool();
 	private Future future;
@@ -188,17 +181,9 @@ public class ParsingReader extends Reader {
 
 	public void closeAndInterruptParsingTask() {
 		future.cancel(true);
-		//parsingTask.interrupt();
 		try {
-			// possível que parsing não termine, eg. doc corrompido ou bug na
-			// biblioteca de parsing
-			// parsingTask.join();
-			reader.close();
 			writer.close();
-
-		} catch (Exception e) {
-			// e.printStackTrace();
-		}
+		} catch (Exception e) {}
 		// comentado pois provoca problema de concorrência com tracked resources
 		// stream.close();
 	}
@@ -338,8 +323,10 @@ public class ParsingReader extends Reader {
 		// nao implementado para indexWriter nao fechar o reader antes da hora
 	}
 
-	public void close2() throws IOException {
+	public void reallyClose() throws IOException {
 		reader.close();
+		if(!future.isDone())
+			closeAndInterruptParsingTask();
 	}
 
 	/**

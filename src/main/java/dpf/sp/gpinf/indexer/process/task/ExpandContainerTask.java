@@ -223,7 +223,9 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			}
 
 		}finally{
-			reader.close2();
+			//do nothing
+			reader.close();
+			reader.reallyClose();
 		}
 		
 		evidence.setParsed(true);
@@ -233,6 +235,25 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	@Override
 	public boolean shouldParseEmbedded(Metadata arg0) {
 		return true;
+	}
+	
+	private String getName(Metadata metadata, int child, Boolean hasTitle){
+		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
+		if (name == null || name.isEmpty()) {
+			name = metadata.get(TikaCoreProperties.TITLE);
+			if(name != null)
+				hasTitle = true;
+		}
+		if (name == null || name.isEmpty())
+			name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
+		
+		if (name == null || name.isEmpty())
+			name = "[Sem Nome]-" + child;
+		
+		if(name.length() > NAME_MAX_LEN)
+			name = name.substring(0, NAME_MAX_LEN);
+		
+		return name;
 	}
 
 	@Override
@@ -247,25 +268,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			IndexerContext appContext = context.get(IndexerContext.class);
 			appContext.incChild();
 
-			String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
-			boolean hasTitle = false;
-			if (name == null || name.isEmpty()) {
-				name = metadata.get(TikaCoreProperties.TITLE);
-				if(name != null){
-					//Workaround para permitir listagem recursiva por caminho, devido a emails com mesmo assunto
-					//name += " [Msg" + appContext.getChild() + "]";
-					hasTitle = true;
-				}
-			}
-			if (name == null || name.isEmpty())
-				name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
-			
-			if (name == null || name.isEmpty())
-				name = "[Sem Nome]-" + appContext.getChild();
-			
-			if(name.length() > NAME_MAX_LEN)
-				name = name.substring(0, NAME_MAX_LEN);
-			
+			Boolean hasTitle = false;
+			String name = getName(metadata, appContext.getChild(), hasTitle);
 
 			filePath = metadata.get(COMPLETE_PATH);
 			String parentPath = appContext.getPath();

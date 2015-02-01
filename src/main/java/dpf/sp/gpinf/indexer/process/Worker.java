@@ -58,12 +58,11 @@ public class Worker extends Thread {
 
 	public IndexWriter writer;
 	String baseFilePath;
-	public boolean containsReport, paused = false;
+	public boolean containsReport;
 
 	public IndexerDefaultParser autoParser;
 	public Detector detector;
 	public TikaConfig config;
-	public SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	public volatile AbstractTask runningTask;
 	public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
@@ -145,6 +144,7 @@ public class Worker extends Thread {
 				evidence.setLength(file.length());
 			}
 			
+			//Loop principal que executa cada tarefa de processamento
 			AbstractTask prevTask = runningTask;
 			for(AbstractTask task : tasks)
 				if(!evidence.isToIgnore()){
@@ -162,20 +162,14 @@ public class Worker extends Thread {
 					len = 0L;
 				manager.stats.addVolume(len);
 			}
-			
-			
 
 		} catch (TimeoutException e) {
 			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
 			manager.stats.incTimeouts();
-			//if (reader != null)
-			//	reader.closeAndInterruptParsingTask();
-
 			evidence.timeOut = true;
 			process(evidence);
 
 		} catch (Throwable t) {
-			
 			//Ignora arquivos recuperados e corrompidos
 			if(t.getCause() instanceof TikaException && evidence.isCarved()){
 				manager.stats.incProcessed();
@@ -187,13 +181,10 @@ public class Worker extends Thread {
 				
 			//ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
 			}else{
-				// t.printStackTrace();
 				if (exception == null) {
 					exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
 					exception.initCause(t);
 				}
-				//if (reader != null)
-				//	reader.closeAndInterruptParsingTask();
 			}
 
 		}

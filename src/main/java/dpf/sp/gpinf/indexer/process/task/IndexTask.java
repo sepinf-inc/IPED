@@ -5,6 +5,7 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
@@ -19,6 +20,7 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.process.FileDocument;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
@@ -31,6 +33,7 @@ public class IndexTask extends AbstractTask{
 	public static boolean indexUnallocated = false;
 	
 	Manager manager;
+	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	public IndexTask(Worker worker){
 		this.worker = worker;
@@ -50,13 +53,12 @@ public class IndexTask extends AbstractTask{
 		manager.stats.updateLastId(evidence.getId());
 		
 		String textCache = evidence.getParsedTextCache();
-
 		if (textCache != null) {
 			Document doc;
 			if (indexFileContents)
-				doc = FileDocument.Document(evidence, new StringReader(textCache), worker.df);
+				doc = FileDocument.Document(evidence, new StringReader(textCache), dateFormat);
 			else
-				doc = FileDocument.Document(evidence, null, worker.df);
+				doc = FileDocument.Document(evidence, null, dateFormat);
 			
 			worker.writer.addDocument(doc);
 			manager.textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
@@ -73,40 +75,41 @@ public class IndexTask extends AbstractTask{
 				System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao abrir: " + evidence.getPath() + " " + e.toString());
 			}
 			
-			ParsingReader reader;
-			if (indexFileContents && tis != null && 
+			ParsingReader reader = null;
+			if ( indexFileContents && tis != null && 
 				(indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType())))
 					reader = new ParsingReader(worker.autoParser, tis, metadata, context);
-			else
-					reader = null;
-
-			Document doc = FileDocument.Document(evidence, reader, worker.df);
-			int fragments = 0;
 			
-			//Indexa os arquivos dividindo-os em fragmentos devido
-			//a alto uso de RAM pela lib de indexaÃ§Ã£o com docs gigantes
-			do {
-				if (++fragments > 1) {
-					manager.stats.incSplits();
-					if (fragments == 2)
-						manager.remindSplitedDoc(evidence.getId());
+			Document doc = FileDocument.Document(evidence, reader, dateFormat);
+			int fragments = 0;
+			try{
+				/* Indexa os arquivos dividindo-os em fragmentos, pois a lib de
+				 * indexação consome mta memória com documentos grandes
+				 */
+				do {
+					if (++fragments > 1) {
+						manager.stats.incSplits();
+						if (fragments == 2)
+							manager.remindSplitedDoc(evidence.getId());
 
-					if (IndexFiles.getInstance().verbose)
-						System.out.println(new Date() + "\t[INFO]\t" + Thread.currentThread().getName() + "  Dividindo texto de " + evidence.getPath());
-				}
+						if (IndexFiles.getInstance().verbose)
+							System.out.println(new Date() + "\t[INFO]\t" + Thread.currentThread().getName() + "  Dividindo texto de " + evidence.getPath());
+					}
 
-				worker.writer.addDocument(doc);
+					worker.writer.addDocument(doc);
 
-			} while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
-
-			if (reader != null) {
-				manager.textSizes.add(new IdLenPair(evidence.getId(), reader.getTotalTextSize()));
-				reader.close2();
-
-			} else {
-				manager.textSizes.add(new IdLenPair(evidence.getId(), 0));
+				} while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
+				
+			}finally{
+				if (reader != null)
+					reader.reallyClose();
 				IOUtil.closeQuietly(tis);
 			}
+			
+			if (reader != null)
+				manager.textSizes.add(new IdLenPair(evidence.getId(), reader.getTotalTextSize()));
+			else
+				manager.textSizes.add(new IdLenPair(evidence.getId(), 0));
 
 		}
 
