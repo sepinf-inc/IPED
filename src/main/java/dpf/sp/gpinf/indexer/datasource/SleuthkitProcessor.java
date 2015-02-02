@@ -22,6 +22,7 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +50,7 @@ public class SleuthkitProcessor {
 	private Long firstId , lastId;
 	//private static Object lock = new Object();
 	private static ConcurrentHashMap<File, Object[]> idRangeMap = new ConcurrentHashMap<File, Object[]>();
+	private ArrayList<Integer> sleuthIdToId = new ArrayList<Integer>();
 	
 	public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
 
@@ -236,14 +238,19 @@ public class SleuthkitProcessor {
 		
 		evidence.setHasChildren(absFile.hasChildren());
 		Content parent = absFile.getParent();
-		evidence.setParentSleuthId(Long.toString(parent.getId()));
+		/*evidence.setParentSleuthId(Long.toString(parent.getId()));
 		do{
 			evidence.addParentId("s" + parent.getId());
 		}while((parent = parent.getParent()) != null);
-		
+		*/
 		
 		evidence.setSleuthFile(absFile);
 		evidence.setSleuthId(Long.toString(absFile.getId()));
+		sleuthIdToId.add(absFile.getId() - firstId, evidence.getId());
+		evidence.setParentId(sleuthIdToId.get(parent.getId() - firstId));
+		do{
+			evidence.addParentId(sleuthIdToId.get(parent.getId() - firstId));
+		}while((parent = parent.getParent()) != null);
 		
 		if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC) || 
 				absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC) || 
@@ -299,19 +306,23 @@ public class SleuthkitProcessor {
 			evidence.setIsDir(true);
 		
 		evidence.setHasChildren(content.hasChildren());
-		Content parent = content.getParent();
-		if(parent != null){
-			evidence.setParentSleuthId(Long.toString(parent.getId()));
-			do{
-				evidence.addParentId("s" + parent.getId());
-			}while((parent = parent.getParent()) != null);
-		}
-		
 		
 		//evidence.setSleuthFile(absFile);
 		evidence.setSleuthId(Long.toString(content.getId()));
+		sleuthIdToId.add(content.getId() - firstId, evidence.getId());
 		
-
+		Content parent = content.getParent();
+		if(parent != null){
+			/*evidence.setParentSleuthId(Long.toString(parent.getId()));
+			do{
+				evidence.addParentId("s" + parent.getId());
+			}while((parent = parent.getParent()) != null);*/
+			evidence.setParentId(sleuthIdToId.get(parent.getId() - firstId));
+			do{
+				evidence.addParentId(sleuthIdToId.get(parent.getId() - firstId));
+			}while((parent = parent.getParent()) != null);
+		}
+		
 		caseData.addEvidenceFile(evidence);
 		
 	}
