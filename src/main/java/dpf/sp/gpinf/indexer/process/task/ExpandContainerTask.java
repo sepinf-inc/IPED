@@ -201,8 +201,9 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			return;
 		}
 		
-		configureTikaContext(evidence);
+		evidence.setParsed(true);
 		
+		configureTikaContext(evidence);
 		Metadata metadata = getMetadata(evidence);
 		
 		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
@@ -228,8 +229,6 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			reader.close();
 			reader.reallyClose();
 		}
-		
-		evidence.setParsed(true);
 		
 	}
 	
