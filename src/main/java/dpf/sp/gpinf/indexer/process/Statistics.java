@@ -5,14 +5,18 @@ import gpinf.dev.data.CaseData;
 import java.io.File;
 import java.util.Date;
 
+import javax.swing.JOptionPane;
+
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.FSDirectory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.search.App;
 
 public class Statistics {
 
@@ -151,6 +155,33 @@ public class Statistics {
 			if (indexed != extracted)
 				throw new Exception("Indexados " + indexed + " itens de " + extracted);
 		*/
+	}
+	
+	public void printSystemInfo() throws Exception {
+
+		System.out.println(new Date() + "\t[INFO]\t" + "Sistema Operacional: " + System.getProperty("os.name"));
+		System.out.println(new Date() + "\t[INFO]\t" + "VersÃ£o Java: " + System.getProperty("java.version"));
+		System.out.println(new Date() + "\t[INFO]\t" + "Arquitetura: " + System.getProperty("os.arch"));
+		System.out.println(new Date() + "\t[INFO]\t" + "Processadores: " + Runtime.getRuntime().availableProcessors());
+		System.out.println(new Date() + "\t[INFO]\t" + "numThreads: " + Configuration.numThreads);
+
+		int minMemPerThread = 200;
+		long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
+		System.out.println(new Date() + "\t[INFO]\t" + "MemÃ³ria disponÃ­vel: " + maxMemory + " MB");
+
+		/*
+		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
+		 * for(Entry<Object, Object> entry :
+		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
+		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
+		 */
+		if (maxMemory / Configuration.numThreads < minMemPerThread) {
+			String memoryAlert = "Pouca memÃ³ria disponÃ­vel: menos de " + minMemPerThread + "MB por thread de indexaÃ§Ã£o." + "\nIsso pode causar lentidÃ£o e erros de parsing de arquivos complexos."
+					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memÃ³ria da JVM via parÃ¢metro -Xmx " + "\n\tou diminua o parÃ¢metro numThreads em IndexerConfig.txt";
+			JOptionPane.showMessageDialog(App.get(), memoryAlert, "Alerta de MemÃ³ria", JOptionPane.WARNING_MESSAGE);
+			throw new Exception(memoryAlert);
+		}
+
 	}
 	
 }
