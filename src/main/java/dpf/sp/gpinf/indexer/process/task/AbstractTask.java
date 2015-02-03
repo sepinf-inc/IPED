@@ -7,6 +7,7 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 
+
 public abstract class AbstractTask {
 	
 	protected Worker worker;

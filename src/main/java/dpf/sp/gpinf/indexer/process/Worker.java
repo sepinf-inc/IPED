@@ -153,6 +153,7 @@ public class Worker extends Thread {
 				}
 			runningTask = prevTask;
 			
+			
 			// ESTATISTICAS
 			manager.stats.incProcessed();
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
