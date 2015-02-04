@@ -60,7 +60,7 @@ public class IndexItem {
 	public static final String HASCHILD = "hasChildren";
 	public static final String CARVED = "carved";
 	public static final String OFFSET = "offset";
-	public static final String PRIMARY = "primary";
+	public static final String DUPLICATE = "duplicate";
 	public static final String TIMEOUT = "timeout";
 	public static final String CONTENTTYPE = "contentType";
 	public static final String CONTENT = "conteudo";
@@ -182,8 +182,8 @@ public class IndexItem {
 		if (value != null)
 			doc.add(new StringField(HASH, value.toLowerCase(), Field.Store.YES));
 
-		value = Boolean.toString(evidence.isPrimaryHash());
-		doc.add(new StringField(PRIMARY, value, Field.Store.YES));
+		value = Boolean.toString(evidence.isDuplicate());
+		doc.add(new StringField(DUPLICATE, value, Field.Store.YES));
 
 		value = Boolean.toString(evidence.isDeleted());
 		doc.add(new StringField(DELETED, value, Field.Store.YES));

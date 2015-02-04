@@ -124,7 +124,7 @@ public class EvidenceFile implements Serializable {
 
 	private boolean timeOut = false;
 
-	private boolean primaryHash = false;
+	private boolean duplicate = false;
 
 	// public boolean isQueueEnd = false;
 
@@ -652,14 +652,6 @@ public class EvidenceFile implements Serializable {
 		this.extracted = extracted;
 	}
 
-	public boolean isPrimaryHash() {
-		return primaryHash;
-	}
-
-	public void setPrimaryHash(boolean primaryHash) {
-		this.primaryHash = primaryHash;
-	}
-
 	public void setCarved(boolean carved) {
 		this.carved = carved;
 	}
@@ -775,6 +767,14 @@ public class EvidenceFile implements Serializable {
 
 	public void setTimeOut(boolean timeOut) {
 		this.timeOut = timeOut;
+	}
+
+	public boolean isDuplicate() {
+		return duplicate;
+	}
+
+	public void setDuplicate(boolean duplicate) {
+		this.duplicate = duplicate;
 	}
 
 }

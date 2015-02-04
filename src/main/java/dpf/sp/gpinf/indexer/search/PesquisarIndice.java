@@ -150,9 +150,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		
 		if (App.get().filtrarDuplicados.isSelected())
 			if (texto.trim().isEmpty())
-				texto = IndexItem.PRIMARY + ":true";
+				texto = IndexItem.DUPLICATE + ":false";
 			else
-				texto = IndexItem.PRIMARY + ":true" + " && (" + texto + ")";
+				texto = IndexItem.DUPLICATE + ":false" + " && (" + texto + ")";
 		
 		
 		Query result = getQuery(texto, App.get().analyzer);
