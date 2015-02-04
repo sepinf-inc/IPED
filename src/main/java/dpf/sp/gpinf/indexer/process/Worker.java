@@ -49,7 +49,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
- * Classe responsável pelo processamento de cada item, chamando as diversas etapas de processamento:
+ * Classe responsável pelo processamento de cada item, chamando as diversas tarefas de processamento:
  * análise de assinatura, hash, expansão de itens, indexação, carving, etc.
  */
 public class Worker extends Thread {
@@ -125,6 +125,16 @@ public class Worker extends Thread {
 			task.finish();
 	}
 	
+	//Alguns itens ainda não tem um File setado, como report do FTK1
+	private void checkFile(EvidenceFile evidence){
+		String filePath = evidence.getFileToIndex();
+		if (evidence.getFile() == null && !filePath.isEmpty()) {
+			File file = IOUtil.getRelativeFile(baseFilePath, filePath);
+			evidence.setFile(file);
+			evidence.setLength(file.length());
+		}
+	}
+	
 
 	public void process(EvidenceFile evidence) {
 		
@@ -136,22 +146,13 @@ public class Worker extends Thread {
 			if (IndexFiles.getInstance().verbose)
 				System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " Indexando " + evidence.getPath());
 
-			//Alguns itens ainda não tem um File setado, como report do FTK1
-			String filePath = evidence.getFileToIndex();
-			if (evidence.getFile() == null && !filePath.isEmpty()) {
-				File file = IOUtil.getRelativeFile(baseFilePath, filePath);
-				evidence.setFile(file);
-				evidence.setLength(file.length());
-			}
+			checkFile(evidence);
 			
 			//Loop principal que executa cada tarefa de processamento
-			AbstractTask prevTask = runningTask;
 			for(AbstractTask task : tasks)
 				if(!evidence.isToIgnore()){
-					runningTask = task;
-					task.process(evidence);
+					processTask(evidence, task);
 				}
-			runningTask = prevTask;
 			
 			
 			// ESTATISTICAS
@@ -164,13 +165,32 @@ public class Worker extends Thread {
 				manager.stats.addVolume(len);
 			}
 
+		} catch (Throwable t) {	
+			//ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
+			if (exception == null) {
+				exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
+				exception.initCause(t);
+			}
+
+		}
+
+		this.evidence = prevEvidence;
+
+	}
+	
+	private void processTask(EvidenceFile evidence, AbstractTask task) throws Exception{
+		AbstractTask prevTask = runningTask;
+		runningTask = task;
+		try {
+			task.process(evidence);
+			
 		} catch (TimeoutException e) {
 			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
 			manager.stats.incTimeouts();
-			evidence.timeOut = true;
-			process(evidence);
+			evidence.setTimeOut(true);
+			processTask(evidence, task);
 
-		} catch (Throwable t) {
+		}catch (Throwable t) {
 			//Ignora arquivos recuperados e corrompidos
 			if(t.getCause() instanceof TikaException && evidence.isCarved()){
 				manager.stats.incProcessed();
@@ -180,18 +200,11 @@ public class Worker extends Thread {
 					evidence.getFile().delete();
 				}
 				
-			//ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
-			}else{
-				if (exception == null) {
-					exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
-					exception.initCause(t);
-				}
-			}
-
+			}else
+				throw t;
+			
 		}
-
-		this.evidence = prevEvidence;
-
+		runningTask = prevTask;
 	}
 	
 	public void finish() throws Exception{

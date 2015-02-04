@@ -160,7 +160,7 @@ public class CarveTask extends AbstractTask{
 		this.evidence = evidence;
 		MediaType type = evidence.getMediaType();
 		
-		if (!enableCarving || evidence.isCarved() || evidence.isSubmittedToCarving() ||
+		if (!enableCarving || evidence.isCarved() ||
 			(TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type)))
 			return;
 		

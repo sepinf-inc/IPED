@@ -176,7 +176,7 @@ public class IndexItem {
 			value = "";
 		doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
 
-		doc.add(new StoredField(TIMEOUT, Boolean.toString(evidence.timeOut)));
+		doc.add(new StoredField(TIMEOUT, Boolean.toString(evidence.isTimedOut())));
 
 		value = evidence.getHash();
 		if (value != null)

@@ -135,7 +135,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 		metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
-		if (evidence.timeOut)
+		if (evidence.isTimedOut())
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 		
 		return metadata;
@@ -181,7 +181,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!((isToBeExpanded(evidence) && !evidence.timeOut) ||
+		if (!((isToBeExpanded(evidence) && !evidence.isTimedOut()) ||
 			(CarveTask.ignoreCorrupted && evidence.isCarved() &&
 			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) )))
 				return;
@@ -200,8 +200,6 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao abrir: " + evidence.getPath() + " " + e.toString());
 			return;
 		}
-		
-		evidence.setParsed(true);
 		
 		configureTikaContext(evidence);
 		Metadata metadata = getMetadata(evidence);
@@ -223,6 +221,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			if (numFrags == 1){
 				evidence.setParsedTextCache(writer.toString());
 			}
+			evidence.setParsed(true);
 
 		}finally{
 			//do nothing

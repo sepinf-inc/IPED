@@ -26,19 +26,17 @@ public class DuplicateTask extends AbstractTask{
 		
 		// Verificação de duplicados
 		String hash = evidence.getHash();
-		if(!evidence.timeOut){
-			if (hash == null)
-				evidence.setPrimaryHash(true);
-			else{
-				HashValue hashValue = new HashValue(hash);
-				synchronized (manager.hashMap) {
-					if(!manager.hashMap.containsKey(hashValue)){
-						manager.hashMap.put(hashValue, hashValue);
-						evidence.setPrimaryHash(true);
-					}else
-						evidence.setPrimaryHash(false);
-						
-				}
+		if (hash == null)
+			evidence.setPrimaryHash(true);
+		else{
+			HashValue hashValue = new HashValue(hash);
+			synchronized (manager.hashMap) {
+				if(!manager.hashMap.containsKey(hashValue)){
+					manager.hashMap.put(hashValue, hashValue);
+					evidence.setPrimaryHash(true);
+				}else
+					evidence.setPrimaryHash(false);
+					
 			}
 		}
 		
