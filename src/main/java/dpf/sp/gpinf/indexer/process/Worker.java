@@ -193,9 +193,9 @@ public class Worker extends Thread {
 		}catch (Throwable t) {
 			//Ignora arquivos recuperados e corrompidos
 			if(t.getCause() instanceof TikaException && evidence.isCarved()){
-				manager.stats.incProcessed();
 				manager.stats.incCorruptCarveIgnored();
 				//System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
+				evidence.setToIgnore(true);
 				if(evidence.isSubItem()){
 					evidence.getFile().delete();
 				}
