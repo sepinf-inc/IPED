@@ -76,7 +76,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 /*
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e 
- * consumidores (processadores) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
+ * consumidores (workers) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
  * 
  * O contador apenas enumera e soma o tamanho dos itens que serão processados,
  * permitindo que seja estimado o progresso e término do processamento.
@@ -86,7 +86,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
  * 
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo seu processamento.
  * Cada worker executa em uma thread diferente, permitindo o processamento em paralelo dos itens.
- * Por padrão, o número de consumidores é igual ao número de processadores disponíveis.
+ * Por padrão, o número de workers é igual ao número de processadores disponíveis.
  * 
  * Após inicializar o processamento, o manager realiza o monitoramento, verificando se alguma exceção ocorreu,
  * informando a interface sobre o estado do processamento e verificando se os workers processaram todos os itens.

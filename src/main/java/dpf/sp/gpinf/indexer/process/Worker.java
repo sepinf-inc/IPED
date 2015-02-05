@@ -43,8 +43,13 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
- * Classe responsável pelo processamento de cada item, chamando as diversas tarefas de processamento instaladas:
+ * Responsável por retirar um item da fila e enviá-lo para cada tarefa de processamento instalada:
  * análise de assinatura, hash, expansão de itens, indexação, carving, etc.
+ * 
+ * São executados vários Workers paralelamente. Cada Worker possui instâncias próprias das tarefas,
+ * para evitar problemas de concorrência.
+ * 
+ * Caso haja uma exceção não esperada, ela é armazenada para que possa ser detectada pelo manager.
  */
 public class Worker extends Thread {
 

@@ -14,6 +14,13 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
 
+/*
+ * Instancia e instala as tarefas de processamento em um Worker.
+ * A ordem de execução das tarefas pelo Worker é definida pela sua ordem
+ * de instalação.
+ * A ordem de execução das tarefas é um parâmetro muito sensível que tem
+ * direto impacto na corretude do processamento, por isso não deve ser alterada.
+ */
 public class TaskInstaller {
 
 	public void installProcessingTasks(Worker worker) throws Exception{
