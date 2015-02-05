@@ -489,18 +489,14 @@ public class CarveTask extends AbstractTask{
 		
 		this.evidence.setHasChildren(true);
 		
-		worker.caseData.incDiscoveredEvidences(1);
-		//worker.caseData.incDiscoveredVolume(evidence.getLength());
 		incItensCarved();
 		
-		// se não há item na fila, enfileira para outro worker processar, caso o item pai não seja um subitem a ser excluído pelo filtro de exportação
-		if (worker.caseData.getEvidenceFiles().size() == 0 && 
-				!(ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract()))
-			worker.caseData.getEvidenceFiles().addFirst(evidence);
-		
-		// caso contrário processa o item no worker atual
-		else
+		// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
+		if (ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract())
 			worker.process(evidence);
+		else
+			worker.processNewItem(evidence);
+			
 	}
 
 	@Override

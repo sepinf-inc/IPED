@@ -48,8 +48,6 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -351,20 +349,10 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 				//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
 			}
 			
-			caseData.incDiscoveredEvidences(1);
-			//caseData.incDiscoveredVolume(evidence.getLength());
-
-			// se nÃ£o hÃ¡ item na fila, enfileira para outro worker processar
-			if (caseData.getEvidenceFiles().size() == 0)
-				caseData.getEvidenceFiles().addFirst(evidence);
-
-			// caso contrÃ¡rio processa o item no worker atual
-			else {
-				// pausa contagem de timeout enquanto processa subitem
-				reader.setTimeoutPaused(true);
-				worker.process(evidence);
-				reader.setTimeoutPaused(false);
-			}
+			// pausa contagem de timeout enquanto processa subitem
+			reader.setTimeoutPaused(true);
+			worker.processNewItem(evidence);
+			reader.setTimeoutPaused(false);
 
 		} catch (SAXException e) {
 			// TODO Provavelmente PipedReader foi interrompido, interrompemos

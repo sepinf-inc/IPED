@@ -22,8 +22,6 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.io.InterruptedIOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -42,14 +40,10 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
- * Classe responsável pelo processamento de cada item, chamando as diversas tarefas de processamento:
+ * Classe responsável pelo processamento de cada item, chamando as diversas tarefas de processamento instaladas:
  * análise de assinatura, hash, expansão de itens, indexação, carving, etc.
  */
 public class Worker extends Thread {
@@ -68,6 +62,7 @@ public class Worker extends Thread {
 	public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
 
 	public Manager manager;
+	public Statistics stats;
 	public File output;
 	public CaseData caseData;
 	public volatile Exception exception;
@@ -96,6 +91,7 @@ public class Worker extends Thread {
 		this.writer = writer;
 		this.output = output;
 		this.manager = manager;
+		this.stats = manager.stats;
 		baseFilePath = output.getParentFile().getAbsolutePath();
 		
 		config = TikaConfig.getDefaultConfig();
@@ -118,6 +114,11 @@ public class Worker extends Thread {
 	private void finishTasks() throws Exception{
 		for(AbstractTask task : tasks)
 			task.finish();
+	}
+	
+	public void finish() throws Exception{
+		this.interrupt();
+		finishTasks();
 	}
 	
 	//Alguns itens ainda não tem um File setado, como report do FTK1
@@ -151,13 +152,13 @@ public class Worker extends Thread {
 			
 			
 			// ESTATISTICAS
-			manager.stats.incProcessed();
+			stats.incProcessed();
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
-				manager.stats.incActiveProcessed();
+				stats.incActiveProcessed();
 				Long len = evidence.getLength();
 				if(len == null)
 					len = 0L;
-				manager.stats.addVolume(len);
+				stats.addVolume(len);
 			}
 
 		} catch (Throwable t) {	
@@ -181,14 +182,14 @@ public class Worker extends Thread {
 			
 		} catch (TimeoutException e) {
 			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
-			manager.stats.incTimeouts();
+			stats.incTimeouts();
 			evidence.setTimeOut(true);
 			processTask(evidence, task);
 
 		}catch (Throwable t) {
 			//Ignora arquivos recuperados e corrompidos
 			if(t.getCause() instanceof TikaException && evidence.isCarved()){
-				manager.stats.incCorruptCarveIgnored();
+				stats.incCorruptCarveIgnored();
 				//System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
 				evidence.setToIgnore(true);
 				if(evidence.isSubItem()){
@@ -202,9 +203,15 @@ public class Worker extends Thread {
 		runningTask = prevTask;
 	}
 	
-	public void finish() throws Exception{
-		this.interrupt();
-		finishTasks();
+	
+	public void processNewItem(EvidenceFile evidence){
+		caseData.incDiscoveredEvidences(1);
+		// Se não há item na fila, enfileira para outro worker processar
+		if (caseData.getEvidenceFiles().size() == 0)
+			caseData.getEvidenceFiles().addFirst(evidence);
+		// caso contrário processa o item no worker atual
+		else
+			process(evidence);
 	}
 
 	@Override

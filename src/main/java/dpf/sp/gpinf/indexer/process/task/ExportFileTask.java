@@ -118,7 +118,7 @@ public class ExportFileTask extends AbstractTask{
 	public void process(EvidenceFile evidence) {
 		
 		// EXPORTA ARQUIVO CASO CONFIGURADO
-		if (ExportFileTask.hasCategoryToExtract() || evidence.isToExtract()) {
+		if (hasCategoryToExtract() || evidence.isToExtract()) {
 			if (!evidence.isSubItem() && !evidence.isExtracted() && (isToBeExtracted(evidence) || evidence.isToExtract())) {
 				evidence.setToExtract(true);
 				extract(evidence);

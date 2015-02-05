@@ -22,6 +22,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -33,11 +34,13 @@ public class IndexTask extends AbstractTask{
 	public static boolean indexUnallocated = false;
 	
 	Manager manager;
+	private Statistics stats;
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	public IndexTask(Worker worker){
 		this.worker = worker;
 		this.manager = worker.manager;
+		this.stats = worker.stats;
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
@@ -50,7 +53,7 @@ public class IndexTask extends AbstractTask{
 			return;
 		}
 			
-		manager.stats.updateLastId(evidence.getId());
+		stats.updateLastId(evidence.getId());
 		
 		String textCache = evidence.getParsedTextCache();
 		if (textCache != null) {
@@ -88,7 +91,7 @@ public class IndexTask extends AbstractTask{
 				 */
 				do {
 					if (++fragments > 1) {
-						manager.stats.incSplits();
+						stats.incSplits();
 						if (fragments == 2)
 							manager.remindSplitedDoc(evidence.getId());
 
