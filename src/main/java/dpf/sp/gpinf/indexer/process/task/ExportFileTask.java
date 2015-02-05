@@ -49,9 +49,11 @@ public class ExportFileTask extends AbstractTask{
 
 	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
 	public static String EXTRACT_DIR = "Exportados";
+	
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
 	public static int subDirCounter = 0, subitensExtracted = 0;
 	private static File subDir;
+	
 	private boolean computeHash = false;
 	private File extractDir, outputBase;
 	private HashMap<HashValue, HashValue> hashMap;
@@ -293,6 +295,9 @@ public class ExportFileTask extends AbstractTask{
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			computeHash = true;
+		
+		subitensExtracted = 0;
+		subDirCounter = 0;
 		
 	}
 

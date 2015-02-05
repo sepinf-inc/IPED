@@ -85,11 +85,6 @@ public class Worker extends Thread {
 
 	public static void resetStaticVariables() {
 		IndexerDefaultParser.parsingErrors = 0;
-		ExpandContainerTask.subitensDiscovered = 0;
-		ExportFileTask.subitensExtracted = 0;
-		ExportFileTask.subDirCounter = 0;
-		ExportCSVTask.headerWritten = false;
-		CarveTask.itensCarved = 0;
 		ParsingReader.threadPool = Executors.newCachedThreadPool();
 	}
 

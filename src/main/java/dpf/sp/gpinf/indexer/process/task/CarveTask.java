@@ -512,6 +512,8 @@ public class CarveTask extends AbstractTask{
 			enableCarving = Boolean.valueOf(value);
 		
 		loadConfigFile(new File(confDir, CARVE_CONFIG));
+		
+		itensCarved = 0;
 	}
 
 	@Override

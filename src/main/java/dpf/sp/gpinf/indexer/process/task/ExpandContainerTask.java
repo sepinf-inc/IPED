@@ -396,6 +396,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		if (value != null && !value.isEmpty())
 			expandContainers = Boolean.valueOf(value);
 		
+		subitensDiscovered = 0;
+		
 	}
 
 	@Override

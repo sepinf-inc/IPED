@@ -281,17 +281,23 @@ public class Manager {
 		conf.setMergeScheduler(mergeScheduler);
 		conf.setRAMBufferSizeMB(32);
 		TieredMergePolicy tieredPolicy = new TieredMergePolicy();
+		/*
+		 * Seta tamanho máximo dos subíndices. Padrão é 5GB.
+		 * Poucos subíndices grandes impactam processamento devido a merges parciais demorados.
+		 * Muitos subíndices pequenos aumentam tempo e memória necessários p/ pesquisas.
+		 */
 		//tieredPolicy.setMaxMergedSegmentMB(1024);
 		conf.setMergePolicy(tieredPolicy);
 
 		writer = new IndexWriter(FSDirectory.open(indexTemp), conf);
 
 		workers = new Worker[Configuration.numThreads];
-		for (int k = 0; k < workers.length; k++) {
+		for (int k = 0; k < workers.length; k++)
 			workers[k] = new Worker(k, caseData, writer, output, this);
-			// workers[k].setDaemon(false);
+
+		//Execução dos workers após todos terem sido instanciados e terem inicializado suas tarefas
+		for (int k = 0; k < workers.length; k++)
 			workers[k].start();
-		}
 
 		IndexFiles.getInstance().firePropertyChange("workers", 0, workers);
 	}
