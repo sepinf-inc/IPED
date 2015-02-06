@@ -72,8 +72,8 @@ public class Marcadores implements Serializable {
 	private static SearchStateFilter filtro;
 
 	public Marcadores(final String basePath) {
-		selected = new boolean[App.get().reader.maxDoc()];
-		read = new boolean[App.get().reader.maxDoc()];
+		selected = new boolean[App.get().lastId + 1];
+		read = new boolean[App.get().lastId + 1];
 		labels = new ArrayList<byte[]>();
 		indexDir = new File(basePath, "index");
 		long date = indexDir.lastModified();
@@ -386,11 +386,11 @@ public class Marcadores implements Serializable {
 
 	}
 
-	public void setValueAtDoc(Object value, int doc, int col, boolean changeCount) {
+	public void setValueAtId(Object value, int id, int col, boolean changeCount) {
 		boolean[] array;
 		if (col == 1) {
 			array = selected;
-			if ((Boolean) value != selected[doc] && changeCount) {
+			if ((Boolean) value != selected[id] && changeCount) {
 				if ((Boolean) value)
 					selectedItens++;
 				else
@@ -401,17 +401,8 @@ public class Marcadores implements Serializable {
 
 		// seta valor nos outros fragmentos
 		try {
-			Integer id = App.get().splitedDocs.get(doc);
-			if (id != null) {
-				for (Entry<Integer, Integer> entry : App.get().splitedDocs.entrySet())
-					if (entry.getValue().compareTo(id) == 0) {
-						array[entry.getKey()] = (Boolean) value;
-						setValueAtOtherVersion(value, entry.getKey(), col, array);
-					}
-			} else
-				array[doc] = (Boolean) value;
-
-			setValueAtOtherVersion(value, doc, col, array);
+			array[id] = (Boolean) value;
+			setValueAtOtherVersion(value, id, col, array);
 
 			if (!multiSetting) {
 				if (col == 1)
@@ -428,10 +419,10 @@ public class Marcadores implements Serializable {
 	private void setValueAtOtherVersion(Object value, int doc, int col, boolean[] array) {
 		Integer doc2 = App.get().viewToRawMap.getRaw(doc);
 		if (doc2 != null && array[doc2] != (Boolean) value)
-			setValueAtDoc(value, doc2, col, false);
+			setValueAtId(value, doc2, col, false);
 		doc2 = App.get().viewToRawMap.getView(doc);
 		if (doc2 != null && array[doc2] != (Boolean) value)
-			setValueAtDoc(value, doc2, col, false);
+			setValueAtId(value, doc2, col, false);
 	}
 
 }

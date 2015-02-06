@@ -131,42 +131,22 @@ public class GerenciadorMarcadores implements ActionListener {
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 
 			if (checked.isSelected()) {
-				for (int docId = 0; docId < App.get().marcadores.selected.length; docId++)
-					if (App.get().marcadores.selected[docId])
-						uniqueSelectedIds.add(app.ids[docId]);
+				for (int id = 0; id < App.get().marcadores.selected.length; id++)
+					if (App.get().marcadores.selected[id])
+						uniqueSelectedIds.add(id);
 				
 			} else if (highlighted.isSelected()){
 				for (Integer row : App.get().resultsTable.getSelectedRows()) {
 					int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
 					int docId = App.get().results.docs[rowModel];
-
-					Integer id = App.get().splitedDocs.get(docId);
-					if (id != null) {
-						for (Entry<Integer, Integer> entry : App.get().splitedDocs.entrySet())
-							if (entry.getValue().compareTo(id) == 0) {
-								uniqueSelectedIds.add(app.ids[entry.getKey()]);
-								if (docId > entry.getKey())
-									docId = entry.getKey();
-							}
-					} else
-						uniqueSelectedIds.add(app.ids[docId]);
+					uniqueSelectedIds.add(app.ids[docId]);
 
 					Integer docId2 = App.get().viewToRawMap.getRaw(docId);
 					if (docId2 == null)
 						docId2 = App.get().viewToRawMap.getView(docId);
 
-					if (docId2 != null) {
-						id = App.get().splitedDocs.get(docId2);
-						if (id != null) {
-							for (Entry<Integer, Integer> entry : App.get().splitedDocs.entrySet())
-								if (entry.getValue().compareTo(id) == 0) {
-									uniqueSelectedIds.add(app.ids[entry.getKey()]);
-									if (docId2 > entry.getKey())
-										docId2 = entry.getKey();
-								}
-						} else
-							uniqueSelectedIds.add(app.ids[docId2]);
-					}
+					if (docId2 != null)
+						uniqueSelectedIds.add(app.ids[docId2]);
 
 				}
 

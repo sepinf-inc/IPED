@@ -249,9 +249,7 @@ public class IndexTask extends AbstractTask{
 				FileInputStream fileIn = new FileInputStream(prevFile);
 				ObjectInputStream in = new ObjectInputStream(fileIn);
 
-				HashMap<Integer, Integer> splitedDocs = (HashMap<Integer, Integer>) in.readObject();
-				for (Integer id : splitedDocs.values())
-					splitedIds.add(id);
+				splitedIds = (Set<Integer>) in.readObject();
 
 				in.close();
 				fileIn.close();
@@ -294,28 +292,8 @@ public class IndexTask extends AbstractTask{
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
 		System.out.println(new Date() + "\t[INFO]\t" + "Salvando IDs dos itens fragmentados...");
 
-		File indexDir = new File(output, "index");
-		Directory directory = FSDirectory.open(indexDir);
-		IndexReader reader = DirectoryReader.open(directory);
-		HashMap<Integer, Integer> splitedDocs = new HashMap<Integer, Integer>();
-		Bits liveDocs = MultiFields.getLiveDocs(reader);
-		for (int i = 0; i < reader.maxDoc(); i++) {
-			if (Thread.interrupted()) {
-				reader.close();
-				throw new InterruptedException("Indexação cancelada!");
-			}
-			if (liveDocs != null && !liveDocs.get(i))
-				continue;
-			int id = Integer.parseInt(reader.document(i).get(IndexItem.ID));
-			if (splitedIds.contains(id))
-				splitedDocs.put(i, id);
-		}
-		reader.close();
-		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/splits.ids"));
-		ObjectOutputStream out = new ObjectOutputStream(fileOut);
-		out.writeObject(splitedDocs);
-		out.close();
-		fileOut.close();
+		Util.writeObject(splitedIds, output.getAbsolutePath() + "/data/splits.ids");
+
 	}
 	
 }

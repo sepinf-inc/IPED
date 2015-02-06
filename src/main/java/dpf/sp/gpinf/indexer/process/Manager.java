@@ -405,7 +405,7 @@ public class Manager {
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
 			String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
 			PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
-			ScoreDoc[] alternatives = pesquisa.filtrarFragmentos1(pesquisa.pesquisarTodos1());
+			SearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.pesquisarTodos());
 
 			HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
 			for (int i = 0; i < alternatives.length; i++) {
@@ -413,9 +413,10 @@ public class Manager {
 					App.get().destroy();
 					throw new InterruptedException("Indexação cancelada!");
 				}
-				Document doc = App.get().searcher.doc(alternatives[i].doc);
+				Document doc = App.get().searcher.doc(alternatives.docs[i]);
 				String ftkId = doc.get(IndexItem.FTKID);
-				viewMap.put(ftkId, alternatives[i].doc);
+				int id = Integer.valueOf(doc.get(IndexItem.ID));
+				viewMap.put(ftkId, id);
 			}
 			alternatives = null;
 			App.get().destroy();
@@ -430,11 +431,12 @@ public class Manager {
 
 				Document doc = reader.document(i);
 				String ftkId = doc.get(IndexItem.FTKID);
+				int id = Integer.valueOf(doc.get(IndexItem.ID));
 				String export = doc.get(IndexItem.EXPORT);
 
-				Integer viewDocId = viewMap.get(ftkId);
-				if (viewDocId != null && viewDocId != i && !viewToRaw.isView(viewDocId) && !export.contains(".[AD]."))
-					viewToRaw.put(viewDocId, i);
+				Integer viewId = viewMap.get(ftkId);
+				if (viewId != null && viewId != id && !viewToRaw.isView(viewId) && !export.contains(".[AD]."))
+					viewToRaw.put(viewId, i);
 
 			}
 			reader.close();

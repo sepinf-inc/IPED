@@ -123,13 +123,6 @@ public class MenuListener implements ActionListener {
 					int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(row)];
 					selectedIds.add(docId);
 					// exporta versão nao selecionada caso exista
-					Integer id = App.get().splitedDocs.get(docId);
-					if (id != null) {
-						for (Entry<Integer, Integer> entry : App.get().splitedDocs.entrySet())
-							if (entry.getValue().compareTo(id) == 0)
-								if (docId > entry.getKey())
-									docId = entry.getKey();
-					}
 					Integer docId2 = App.get().viewToRawMap.getRaw(docId);
 					if (docId2 == null)
 						docId2 = App.get().viewToRawMap.getView(docId);
@@ -156,15 +149,9 @@ public class MenuListener implements ActionListener {
 			}
 
 		} else if (e.getSource() == menu.copiarMarcados) {
-			HashMap<Integer, Boolean> duplicates = new HashMap<Integer, Boolean>();
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-			for (int docId = 0; docId < App.get().marcadores.selected.length; docId++) {
-				Integer id = App.get().splitedDocs.get(docId);
-				if (id != null) {
-					if (duplicates.get(id) == null && App.get().marcadores.selected[docId] && !App.get().viewToRawMap.isView(docId))
-						uniqueSelectedIds.add(docId);
-					duplicates.put(id, true);
-				} else if (App.get().marcadores.selected[docId] && !App.get().viewToRawMap.isView(docId))
+			for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
+				if (App.get().marcadores.selected[App.get().ids[docId]] && !App.get().viewToRawMap.isView(docId))
 					uniqueSelectedIds.add(docId);
 
 			}
@@ -178,15 +165,9 @@ public class MenuListener implements ActionListener {
 			}
 
 		} else if (e.getSource() == menu.exportarMarcados) {
-			HashMap<Integer, Boolean> duplicates = new HashMap<Integer, Boolean>();
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-			for (int docId = 0; docId < App.get().marcadores.selected.length; docId++) {
-				Integer id = App.get().splitedDocs.get(docId);
-				if (id != null) {
-					if (duplicates.get(id) == null && App.get().marcadores.selected[docId])
-						uniqueSelectedIds.add(docId);
-					duplicates.put(id, true);
-				} else if (App.get().marcadores.selected[docId])
+			for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
+				if (App.get().marcadores.selected[App.get().ids[docId]])
 					uniqueSelectedIds.add(docId);
 			}
 			fileChooser.setFileFilter(defaultFilter);

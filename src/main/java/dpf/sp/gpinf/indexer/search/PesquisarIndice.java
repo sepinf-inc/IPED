@@ -418,12 +418,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		return filtrarVersoes(filtrarFragmentos(pesquisarTodos()));
 	}
 
-
-
-	public ScoreDoc[] pesquisarTodos1() throws IOException {
-		return App.get().searcher.search(query, Integer.MAX_VALUE).scoreDocs;
-	}
-
 	public SearchResult pesquisarTodos() throws IOException {
 
 		int maxResults = 1000000;
@@ -443,84 +437,16 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		return searchResult;
 	}
 
-	public class ScoreDocComparator implements Comparator<ScoreDoc> {
-		int mul = 1;
-
-		public ScoreDocComparator(int mul) {
-			this.mul = mul;
-		}
-
-		@Override
-		public int compare(ScoreDoc o1, ScoreDoc o2) {
-			int result;
-			if (o1.score == o2.score) {
-				if (o1.doc == o2.doc)
-					result = 0;
-				else if (o1.doc > o2.doc)
-					result = 1;
-				else
-					result = -1;
-			} else if (o1.score > o2.score)
-				result = 1;
-			else
-				result = -1;
-			return result * mul;
-		}
-
-	}
-
-	public ScoreDoc[] filtrarFragmentos1(ScoreDoc[] scoreDocs) throws Exception {
-		HashMap<Integer, ScoreDoc> duplicates = new HashMap<Integer, ScoreDoc>();
-		TreeSet<ScoreDoc> uniqueResults = new TreeSet<ScoreDoc>(new ScoreDocComparator(1));
-		for (int i = 0; i < scoreDocs.length; i++) {
-			Integer id = App.get().splitedDocs.get(scoreDocs[i].doc);
-			if (id != null) {
-				ScoreDoc prevDoc = duplicates.get(id);
-				if (prevDoc == null) {
-					uniqueResults.add(scoreDocs[i]);
-					duplicates.put(id, scoreDocs[i]);
-				} else {
-					// retorna primeiro fragmento
-					if (prevDoc.doc > scoreDocs[i].doc) {
-						uniqueResults.remove(prevDoc);
-						uniqueResults.add(scoreDocs[i]);
-						duplicates.put(id, scoreDocs[i]);
-					}
-				}
-			} else
-				uniqueResults.add(scoreDocs[i]);
-		}
-		return uniqueResults.descendingSet().toArray(new ScoreDoc[0]);
-
-	}
-
-	/*
-	 * public ScoreDoc[] filtrarFragmentos2(ScoreDoc[] scoreDocs)throws
-	 * Exception{ HashMap<Integer,ScoreDoc> duplicates = new
-	 * HashMap<Integer,ScoreDoc>(); int frags = 0; for (int i = 0; i <
-	 * scoreDocs.length; i++) { Integer id =
-	 * App.get().splitedDocs.get(scoreDocs[i].doc); if(id != null){ ScoreDoc
-	 * prevDoc = duplicates.get(id); if(prevDoc == null){ duplicates.put(id,
-	 * scoreDocs[i]); }else{ scoreDocs[i] = null; frags++; } } }
-	 * 
-	 * ScoreDoc[] result = new ScoreDoc[scoreDocs.length - frags]; int j = 0;
-	 * for(int i = 0; i < scoreDocs.length; i++) if(scoreDocs[i] != null)
-	 * result[i - j] = scoreDocs[i]; else j++;
-	 * 
-	 * return result;
-	 * 
-	 * }
-	 */
-
 	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {
-		HashMap<Integer, Integer> duplicates = new HashMap<Integer, Integer>();
+		HashSet<Integer> duplicates = new HashSet<Integer>();
 		int frags = 0;
+		int[] ids = App.get().ids;
+		HashSet<Integer> splitedIds = App.get().splitedDocs;
 		for (int i = 0; i < prevResult.length; i++) {
-			Integer id = App.get().splitedDocs.get(prevResult.docs[i]);
-			if (id != null) {
-				Integer prevDoc = duplicates.get(id);
-				if (prevDoc == null) {
-					duplicates.put(id, prevResult.docs[i]);
+			int id = ids[prevResult.docs[i]];
+			if (splitedIds.contains(id)) {
+				if (!duplicates.contains(id)) {
+					duplicates.add(id);
 				} else {
 					prevResult.docs[i] = -1;
 					frags++;
@@ -531,54 +457,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		return clearResults(prevResult, frags);
 
 	}
-
-	/*
-	 * public ScoreDoc[] filtrarFragmentos(ScoreDoc[] scoreDocs)throws
-	 * Exception{ HashMap<Integer,Boolean> duplicates = new
-	 * HashMap<Integer,Boolean>(); ArrayList<ScoreDoc> uniqueResults = new
-	 * ArrayList<ScoreDoc>(); for (int i = 0; i < scoreDocs.length; i++) {
-	 * Integer id = App.get().splitedDocs.get(scoreDocs[i].doc); if(id != null){
-	 * if(duplicates.get(id) == null) uniqueResults.add(scoreDocs[i]);
-	 * duplicates.put(id, true); }else uniqueResults.add(scoreDocs[i]); } return
-	 * uniqueResults.toArray(new ScoreDoc[0]);
-	 * 
-	 * }
-	 * 
-	 * 
-	 * public ScoreDoc[] filtrarVersoes1(ScoreDoc[] scoreDocs)throws Exception{
-	 * if(App.get().viewToRawFileMap.size() == 0) return scoreDocs;
-	 * HashSet<Integer> originals = new HashSet<Integer>(); TreeMap<Integer,
-	 * ScoreDoc> uniqueResults = new TreeMap<Integer, ScoreDoc>(); for (int i =
-	 * 0; i < scoreDocs.length; i++) { Integer original =
-	 * App.get().viewToRawFileMap.get(scoreDocs[i].doc); if(original == null){
-	 * if(!originals.contains(scoreDocs[i].doc))
-	 * uniqueResults.put(scoreDocs[i].doc, scoreDocs[i]); }else{
-	 * if(uniqueResults.remove(original) == null) originals.add(original);
-	 * uniqueResults.put(scoreDocs[i].doc, scoreDocs[i]); } } ScoreDoc[] result
-	 * = uniqueResults.values().toArray(new ScoreDoc[0]); Arrays.sort(result,
-	 * new ScoreDocComparator(-1)); return result;
-	 * 
-	 * }
-	 * 
-	 * public ScoreDoc[] filtrarVersoes2(ScoreDoc[] scoreDocs)throws Exception{
-	 * //if(App.get().viewToRawFileMap.size() == 0) // return scoreDocs;
-	 * TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
-	 * ArrayList<ScoreDoc> results = new ArrayList<ScoreDoc>(); for (int i = 0;
-	 * i < scoreDocs.length; i++) { Integer original =
-	 * App.get().viewToRawFileMap.get(scoreDocs[i].doc); if(original == null){
-	 * if(App.get().rawToViewFileMap.containsKey(scoreDocs[i].doc)){
-	 * if(!addedMap.containsKey(scoreDocs[i].doc)){ results.add(scoreDocs[i]);
-	 * addedMap.put(scoreDocs[i].doc, results.size() - 1); }else
-	 * addedMap.remove(scoreDocs[i].doc); }else results.add(scoreDocs[i]);
-	 * }else{ Integer pos = addedMap.get(original); if(pos != null){
-	 * results.set(pos, scoreDocs[i]); addedMap.remove(original); }else{
-	 * results.add(scoreDocs[i]); addedMap.put(original, null); } } }
-	 * 
-	 * ScoreDoc[] result = results.toArray(new ScoreDoc[results.size()]);
-	 * //Arrays.sort(result, new ScoreDocComparator(-1)); return result;
-	 * 
-	 * }
-	 */
 
 	public SearchResult filtrarVersoes(SearchResult prevResult) throws Exception {
 		if (App.get().viewToRawMap.getMappings() == 0)

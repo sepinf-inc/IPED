@@ -85,22 +85,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
 			OCRParser.EXECTESS = false;
 
-
 			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
 			App.get().ids = (int[]) Util.readObject(App.get().codePath + "/../data/ids.map");
 			App.get().lastId = App.get().textSizes.length - 1;
 
-			HashSet<Integer> splitedIds = new HashSet<Integer>();
-			for (Integer id : App.get().splitedDocs.values())
-				splitedIds.add(id);
-			App.get().totalItens = App.get().reader.numDocs() - App.get().splitedDocs.size() + splitedIds.size() - App.get().viewToRawMap.getMappings();
-
-			new CompositeViewerHelper().addViewers();
-
 			// lista todos os itens
 			App.get().query = PesquisarIndice.getQuery("");
 			PesquisarIndice pesquisa = new PesquisarIndice(App.get().query);
-			// pesquisa.execute();
+			App.get().totalItens = App.get().results.length;
 			App.get().results = pesquisa.pesquisar();
 			pesquisa.countVolume(App.get().results);
 			App.get().resultsModel.fireTableDataChanged();
@@ -180,9 +172,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().reader = DirectoryReader.open(directory);
 			App.get().searcher = new IndexSearcher(App.get().reader);
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
-			App.get().analyzer = AppAnalyzer.get();// new
-													// StandardASCIIAnalyzer(Versao.current);
-			App.get().splitedDocs = (HashMap<Integer, Integer>) Util.readObject(index + "/../data/splits.ids");
+			App.get().analyzer = AppAnalyzer.get();
+			App.get().splitedDocs = (HashSet<Integer>) Util.readObject(index + "/../data/splits.ids");
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
 				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
 			App.get().marcadores = new Marcadores(index + "/..");
