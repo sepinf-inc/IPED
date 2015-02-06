@@ -87,7 +87,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
 			tokenizer = new LowerCaseLetterDigitTokenizer(matchVersion, reader);
 
 		// src.setMaxTokenLength(maxTokenLength);
-		TokenStream tok = new ASCIIFoldingFilter(tokenizer);
+		TokenStream tok = new FastASCIIFoldingFilter(tokenizer);
 
 		// tok = new StopFilter(matchVersion, tok, stopwords);
 		return new TokenStreamComponents(tokenizer, tok) {

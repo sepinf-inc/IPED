@@ -25,7 +25,6 @@ public class ResultTableSortModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 
 	private String[] columnNames = ResultTableModel.columnNames;
-	//{ "", "", "", "Marcador", "Nome", "Tipo", "Tamanho", "Categoria", "Criação", "Modificação", "Acesso", "Hash", "Marcador","Deletado","Caminho" };
 
 	@Override
 	public int getColumnCount() {

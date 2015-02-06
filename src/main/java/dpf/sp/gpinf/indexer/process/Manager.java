@@ -62,7 +62,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.ComputeHashTask.HashValue;
+import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
@@ -76,7 +76,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 /*
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e 
- * consumidores (processadores) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
+ * consumidores (workers) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
  * 
  * O contador apenas enumera e soma o tamanho dos itens que serão processados,
  * permitindo que seja estimado o progresso e término do processamento.
@@ -86,7 +86,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
  * 
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo seu processamento.
  * Cada worker executa em uma thread diferente, permitindo o processamento em paralelo dos itens.
- * Por padrão, o número de consumidores é igual ao número de processadores disponíveis.
+ * Por padrão, o número de workers é igual ao número de processadores disponíveis.
  * 
  * Após inicializar o processamento, o manager realiza o monitoramento, verificando se alguma exceção ocorreu,
  * informando a interface sobre o estado do processamento e verificando se os workers processaram todos os itens.
@@ -149,7 +149,7 @@ public class Manager {
 	public void process() throws Exception {
 
 		start = new Date();
-		printSystemInfo();
+		stats.printSystemInfo();
 
 		output = output.getCanonicalFile();
 
@@ -250,7 +250,7 @@ public class Manager {
 		synchronized (hashMap) {
 			for (int i = 0; i < reader.maxDoc(); i++) {
 				Document doc = reader.document(i);
-				String hash = doc.get("hash");
+				String hash = doc.get(IndexItem.HASH);
 				if (hash != null){
 					HashValue hValue = new HashValue(hash);
 					hashMap.put(hValue, hValue);
@@ -281,17 +281,23 @@ public class Manager {
 		conf.setMergeScheduler(mergeScheduler);
 		conf.setRAMBufferSizeMB(32);
 		TieredMergePolicy tieredPolicy = new TieredMergePolicy();
+		/*
+		 * Seta tamanho máximo dos subíndices. Padrão é 5GB.
+		 * Poucos subíndices grandes impactam processamento devido a merges parciais demorados.
+		 * Muitos subíndices pequenos aumentam tempo e memória necessários p/ pesquisas.
+		 */
 		//tieredPolicy.setMaxMergedSegmentMB(1024);
 		conf.setMergePolicy(tieredPolicy);
 
 		writer = new IndexWriter(FSDirectory.open(indexTemp), conf);
 
 		workers = new Worker[Configuration.numThreads];
-		for (int k = 0; k < workers.length; k++) {
+		for (int k = 0; k < workers.length; k++)
 			workers[k] = new Worker(k, caseData, writer, output, this);
-			// workers[k].setDaemon(false);
+
+		//Execução dos workers após todos terem sido instanciados e terem inicializado suas tarefas
+		for (int k = 0; k < workers.length; k++)
 			workers[k].start();
-		}
 
 		IndexFiles.getInstance().firePropertyChange("workers", 0, workers);
 	}
@@ -302,12 +308,12 @@ public class Manager {
 
 		while (someWorkerAlive) {
 			if (IndexFiles.getInstance().isCancelled())
-				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
+				exception = new InterruptedException("Indexação cancelada!");
 
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
-				exception = new InterruptedException("IndexaÃ§Ã£o cancelada!");
+				exception = new InterruptedException("Indexação cancelada!");
 			}
 
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
@@ -460,7 +466,7 @@ public class Manager {
 			}
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
-			int id = Integer.parseInt(reader.document(i).get("id"));
+			int id = Integer.parseInt(reader.document(i).get(IndexItem.ID));
 			if (splitedIds.contains(id))
 				splitedDocs.put(i, id);
 		}
@@ -481,7 +487,7 @@ public class Manager {
 			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versÃµes de visualizaÃ§Ã£o -> originais...");
 
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
-			String query = "export:(files && (\"AD html\" \"AD rtf\"))";
+			String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
 			PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
 			ScoreDoc[] alternatives = pesquisa.filtrarFragmentos1(pesquisa.pesquisarTodos1());
 
@@ -492,7 +498,7 @@ public class Manager {
 					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
 				}
 				Document doc = App.get().searcher.doc(alternatives[i].doc);
-				String ftkId = doc.get("ftkId");
+				String ftkId = doc.get(IndexItem.FTKID);
 				viewMap.put(ftkId, alternatives[i].doc);
 			}
 			alternatives = null;
@@ -507,8 +513,8 @@ public class Manager {
 					continue;
 
 				Document doc = reader.document(i);
-				String ftkId = doc.get("ftkId");
-				String export = doc.get("export");
+				String ftkId = doc.get(IndexItem.FTKID);
+				String export = doc.get(IndexItem.EXPORT);
 
 				Integer viewDocId = viewMap.get(ftkId);
 				if (viewDocId != null && viewDocId != i && !viewToRaw.isView(viewDocId) && !export.contains(".[AD]."))
@@ -537,7 +543,7 @@ public class Manager {
 		int[] ids = new int[reader.maxDoc()];
 		for (int i = 0; i < reader.maxDoc(); i++) {
 			Document doc = reader.document(i);
-			ids[i] = Integer.parseInt(doc.get("id"));
+			ids[i] = Integer.parseInt(doc.get(IndexItem.ID));
 		}
 		
 		reader.close();
@@ -606,33 +612,6 @@ public class Manager {
 		if (!dataDir.exists())
 			if (!dataDir.mkdir())
 				throw new IOException("NÃ£o foi possÃ­vel criar diretÃ³rio " + dataDir.getAbsolutePath());
-
-	}
-
-	private void printSystemInfo() throws Exception {
-
-		System.out.println(new Date() + "\t[INFO]\t" + "Sistema Operacional: " + System.getProperty("os.name"));
-		System.out.println(new Date() + "\t[INFO]\t" + "VersÃ£o Java: " + System.getProperty("java.version"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Arquitetura: " + System.getProperty("os.arch"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Processadores: " + Runtime.getRuntime().availableProcessors());
-		System.out.println(new Date() + "\t[INFO]\t" + "numThreads: " + Configuration.numThreads);
-
-		int minMemPerThread = 200;
-		long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
-		System.out.println(new Date() + "\t[INFO]\t" + "MemÃ³ria disponÃ­vel: " + maxMemory + " MB");
-
-		/*
-		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
-		 * for(Entry<Object, Object> entry :
-		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
-		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
-		 */
-		if (maxMemory / Configuration.numThreads < minMemPerThread) {
-			String memoryAlert = "Pouca memÃ³ria disponÃ­vel: menos de " + minMemPerThread + "MB por thread de indexaÃ§Ã£o." + "\nIsso pode causar lentidÃ£o e erros de parsing de arquivos complexos."
-					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memÃ³ria da JVM via parÃ¢metro -Xmx " + "\n\tou diminua o parÃ¢metro numThreads em IndexerConfig.txt";
-			JOptionPane.showMessageDialog(App.get(), memoryAlert, "Alerta de MemÃ³ria", JOptionPane.WARNING_MESSAGE);
-			throw new Exception(memoryAlert);
-		}
 
 	}
 

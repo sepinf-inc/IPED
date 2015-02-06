@@ -83,8 +83,8 @@ public class EvidenceFile implements Serializable {
 	private String ftkID;
 
 	private String parentId, parentSleuthId;
-	
-	private List<String> parentIds = new ArrayList<String>(); 
+
+	private List<String> parentIds = new ArrayList<String>();
 
 	/** Data de criação do arquivo. */
 	private Date creationDate;
@@ -119,30 +119,24 @@ public class EvidenceFile implements Serializable {
 	private List<EvidenceFile> attachments = new ArrayList<EvidenceFile>();
 
 	private HashSet<String> categories = new HashSet<String>();
-	
+
 	private String labels;
 
-	public boolean timeOut = false;
+	private boolean timeOut = false;
 
-	private boolean primaryHash = false;
+	private boolean duplicate = false;
 
 	// public boolean isQueueEnd = false;
 
-	private boolean isSubItem = false, isToExtract = false, extracted = false, parsed = false, hasChildren = false;
-	
-	private boolean isDir = false, isRoot = false, toIgnore = false, toIndex = true;
-	
-	private boolean carved = false, submittedToCarving = false, encrypted = false;
-	
+	private boolean isSubItem = false, isToExtract = false, extracted = false,
+			parsed = false, hasChildren = false;
+
+	private boolean isDir = false, isRoot = false, toIgnore = false,
+			toIndex = true;
+
+	private boolean carved = false, encrypted = false;
+
 	private String parsedTextCache;
-
-	public boolean isSubmittedToCarving() {
-		return submittedToCarving;
-	}
-
-	public void setSubmittedToCarving(boolean submittedToCarving) {
-		this.submittedToCarving = submittedToCarving;
-	}
 
 	private String hash;
 
@@ -208,7 +202,7 @@ public class EvidenceFile implements Serializable {
 	public void removeCategory(String category) {
 		categories.remove(category);
 	}
-	
+
 	public void setLabels(String labels) {
 		this.labels = labels;
 	}
@@ -216,7 +210,6 @@ public class EvidenceFile implements Serializable {
 	public String getLabels() {
 		return labels;
 	}
-
 
 	public String getFileToIndex() {
 		if (alternativeFile != null)
@@ -239,7 +232,7 @@ public class EvidenceFile implements Serializable {
 	public EvidenceFile getEmailPai() {
 		return emailPai;
 	}
-	
+
 	public void addAttachment(EvidenceFile attachment) {
 		this.attachments.add(attachment);
 	}
@@ -521,13 +514,17 @@ public class EvidenceFile implements Serializable {
 		sb.append("Arquivo: " + name);
 		sb.append("\n\t\tCaminho: ").append(getFolder());
 		if (type != null)
-			sb.append("\n\t\t").append("Tipo de Arquivo: ").append(type.getLongDescr());
+			sb.append("\n\t\t").append("Tipo de Arquivo: ")
+					.append(type.getLongDescr());
 		if (creationDate != null)
-			sb.append("\n\t\tData de Criação: ").append(FormatUtil.format(creationDate));
+			sb.append("\n\t\tData de Criação: ").append(
+					FormatUtil.format(creationDate));
 		if (modificationDate != null)
-			sb.append("\n\t\tData de Modificação: ").append(FormatUtil.format(modificationDate));
+			sb.append("\n\t\tData de Modificação: ").append(
+					FormatUtil.format(modificationDate));
 		if (accessDate != null)
-			sb.append("\n\t\tData de Último Acesso: ").append(FormatUtil.format(accessDate));
+			sb.append("\n\t\tData de Último Acesso: ").append(
+					FormatUtil.format(accessDate));
 		if (length != null)
 			sb.append("\n\t\tTamanho do Arquivo: ").append(length);
 		for (int i = 0; i < properties.size(); i++) {
@@ -567,46 +564,46 @@ public class EvidenceFile implements Serializable {
 	public void setSleuthFile(AbstractFile sleuthFile) {
 		this.sleuthFile = sleuthFile;
 	}
-	
+
 	public AbstractFile getSleuthFile() {
 		return sleuthFile;
 	}
-	
-	static final int BUF_LEN = 8*1024*1024;
+
+	static final int BUF_LEN = 8 * 1024 * 1024;
 
 	public InputStream getBufferedStream() throws IOException {
 
 		int len = 8192;
-		if(length != null && length > len)
-			if(length < BUF_LEN)
+		if (length != null && length > len)
+			if (length < BUF_LEN)
 				len = length.intValue();
 			else
 				len = BUF_LEN;
-		
+
 		return new BufferedInputStream(getStream(), len);
 	}
-	
+
 	/*
 	 * OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
 	 * TODO implementar skip para File usando RandomAccessFile
 	 */
 	private InputStream getStream() throws IOException {
 		InputStream stream;
-		if(file != null && !this.isDir)
+		if (file != null && !this.isDir)
 			stream = new FileInputStream(file);
-		
+
 		else if (sleuthFile != null)
 			stream = new ReadContentInputStream(sleuthFile);
-		
+
 		else
 			stream = new ByteArrayInputStream(new byte[0]);
-		
-		if(startOffset != -1){
+
+		if (startOffset != -1) {
 			long skiped = 0;
-			do{
+			do {
 				skiped += stream.skip(startOffset - skiped);
-			}while(skiped < startOffset);
-			
+			} while (skiped < startOffset);
+
 			stream = new LimitedInputStream(stream, length);
 		}
 		return stream;
@@ -653,14 +650,6 @@ public class EvidenceFile implements Serializable {
 
 	public void setExtracted(boolean extracted) {
 		this.extracted = extracted;
-	}
-
-	public boolean isPrimaryHash() {
-		return primaryHash;
-	}
-
-	public void setPrimaryHash(boolean primaryHash) {
-		this.primaryHash = primaryHash;
 	}
 
 	public void setCarved(boolean carved) {
@@ -723,19 +712,19 @@ public class EvidenceFile implements Serializable {
 		String parents = "";
 		for (String id : parentIds)
 			parents += id + " ";
-		
+
 		return parents;
 	}
 
 	public void addParentId(String parentId) {
 		this.parentIds.add(parentId);
 	}
-	
-	public List<String> getParentIds(){
+
+	public List<String> getParentIds() {
 		return parentIds;
 	}
-	
-	public void addParentIds(List<String> parentIds){
+
+	public void addParentIds(List<String> parentIds) {
 		for (String id : parentIds)
 			this.parentIds.add(id);
 	}
@@ -770,6 +759,22 @@ public class EvidenceFile implements Serializable {
 
 	public void setParsed(boolean parsed) {
 		this.parsed = parsed;
+	}
+
+	public boolean isTimedOut() {
+		return timeOut;
+	}
+
+	public void setTimeOut(boolean timeOut) {
+		this.timeOut = timeOut;
+	}
+
+	public boolean isDuplicate() {
+		return duplicate;
+	}
+
+	public void setDuplicate(boolean duplicate) {
+		this.duplicate = duplicate;
 	}
 
 }

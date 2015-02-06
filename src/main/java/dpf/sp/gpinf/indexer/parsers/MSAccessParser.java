@@ -19,11 +19,13 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -32,6 +34,8 @@ import java.util.Date;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
@@ -45,13 +49,22 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import com.healthmarketscience.jackcess.Column;
+import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Database;
 import com.healthmarketscience.jackcess.DatabaseBuilder;
 import com.healthmarketscience.jackcess.PropertyMap.Property;
 import com.healthmarketscience.jackcess.Row;
 import com.healthmarketscience.jackcess.Table;
+import com.healthmarketscience.jackcess.impl.OleUtil;
+import com.healthmarketscience.jackcess.util.OleBlob;
+import com.healthmarketscience.jackcess.util.OleBlob.Content;
+import com.healthmarketscience.jackcess.util.OleBlob.EmbeddedContent;
+import com.healthmarketscience.jackcess.util.OleBlob.PackageContent;
+
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Parser para arquivos MS Access
@@ -113,41 +126,93 @@ public class MSAccessParser extends AbstractParser {
 
 			XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 			xhtml.startDocument();
-
+			
+			xhtml.startElement("head");
+			xhtml.startElement("style");
+			xhtml.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+			xhtml.endElement("style");
+			xhtml.endElement("head");
+			
 			// consome input para TIKA nao reclamar ????
 			int skip = 0;
-			while ((skip += stream.skip(file.length() - skip)) != file.length())
-				;
+			//while ((skip += stream.skip(file.length() - skip)) != file.length());
 
 			DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+			EmbeddedDocumentExtractor embeddedParser = context.get(EmbeddedDocumentExtractor.class, 
+					new ParsingEmbeddedDocumentExtractor(context));  
 
 			Set<String> tableNames = database.getTableNames();
 			for (String tableName : tableNames) {
+				
 				Table table = database.getTable(tableName);
-				xhtml.characters("Tabela: " + tableName);
-				xhtml.characters("\r\n");
-
+				xhtml.startElement("div");
+				xhtml.characters("Tabela: " + tableName + "\r\n");
+				AttributesImpl attr = new AttributesImpl();
+				//attr.addAttribute("", "border", "CDATA", "CDATA", "1");
+				//attr.addAttribute("", "border-collapse", "border-collapse", "CDATA", "collapse");
+				xhtml.startElement("table", attr);
+				
+				xhtml.startElement("tr");
 				for (Column col : table.getColumns()) {
-					xhtml.characters(col.getName() + "\t");
+					xhtml.startElement("td");
+					xhtml.characters(col.getName());
+					xhtml.endElement("td");
 				}
-				xhtml.characters("\r\n");
+				xhtml.endElement("tr");
 
 				for (Row row : table) {
-					for (Object value : row.values()) {
+					xhtml.startElement("tr");
+					for(Column column : table.getColumns()) {
+						String columnName = column.getName();
+					    Object value = row.get(columnName);
+					    
+					    xhtml.startElement("td");
 						if (value != null)
-							if (Date.class.isInstance(value))
-								xhtml.characters(df.format(value) + "\t");
-							else
-								xhtml.characters(value.toString().trim() + "\t");// replaceAll("\n",
-																					// " "));
-						else
-							xhtml.characters("\t");
+							if (value instanceof Date)
+								xhtml.characters(df.format(value));
+						
+							else if(column.getType().equals(DataType.OLE)){
+								OleBlob oleBlob = OleUtil.parseBlob((byte[])value);
+								Content content = oleBlob.getContent();
+								InputStream blobStream = null;
+								Metadata meta = new Metadata();
+								
+								try{
+									if(content instanceof OleBlob.EmbeddedContent) {
+										blobStream = ((EmbeddedContent)content).getStream();
+									}else
+										blobStream = oleBlob.getBinaryStream();
+									
+									if(content instanceof OleBlob.PackageContent){
+										metadata.set(Metadata.RESOURCE_NAME_KEY, ((PackageContent)content).getPrettyName());
+									}
+									
+									embeddedParser.parseEmbedded(blobStream, xhtml, meta, true);
+									
+								} catch (SQLException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+									
+								}finally{
+									if(blobStream != null)
+										IOUtil.closeQuietly(blobStream);
+								}
+							
+							}else if(column.getType().equals(DataType.BINARY)){
+								embeddedParser.parseEmbedded(new ByteArrayInputStream((byte[])value), xhtml, new Metadata(), true);
+
+							}else
+								xhtml.characters(value.toString().trim());	
+						
+						xhtml.endElement("td");
 					}
-					xhtml.characters("\r\n");
+					xhtml.endElement("tr");
 				}
 
-				// xhtml.characters(table.display());
-				xhtml.characters("\r\n");
+				xhtml.endElement("table");
+				xhtml.endElement("div");
+				xhtml.startElement("br");
+				xhtml.endElement("br");
 			}
 			xhtml.endDocument();
 

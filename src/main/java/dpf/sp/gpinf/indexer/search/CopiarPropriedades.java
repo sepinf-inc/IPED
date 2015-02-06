@@ -31,6 +31,7 @@ import javax.swing.SwingWorker;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -54,11 +55,11 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "windows-1252");
 
 		ArrayList<String> fields = new ArrayList<String>();
-		fields.add("id");
+		fields.add(IndexItem.ID);
 		fields.add("marcador");
 		for (String field : ((ResultTableModel) App.get().resultsTable.getModel()).fields)
 			fields.add(field);
-		fields.add("export");
+		fields.add(IndexItem.EXPORT);
 		
 
 		for (int col = 0; col < fields.size(); col++)
@@ -79,7 +80,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 						value = App.get().marcadores.getLabels(app.ids[docId]);
 					if (value == null)
 						value = "";
-					if (field.equals("categoria"))
+					if (field.equals(IndexItem.CATEGORY))
 						value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
 					writer.write("\"" + value.replace("\"", "\"\"") + "\";");
 				}

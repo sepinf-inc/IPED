@@ -35,6 +35,7 @@ import javax.swing.event.ListSelectionListener;
 
 import org.apache.lucene.document.Document;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -106,7 +107,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 					try {
 						Document doc = App.get().searcher.doc(docId);
 
-						String export = doc.get("export");
+						String export = doc.get(IndexItem.EXPORT);
 						if (export != null && !export.isEmpty()) {
 							file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
 							file = IOUtil.getReadOnlyFile(file, doc);

@@ -25,6 +25,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -51,7 +52,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			try {
 				doc = App.get().searcher.doc(docId);
 
-				String status = doc.get("caminho");
+				String status = doc.get(IndexItem.PATH);
 				if (status.length() > STATUS_LENGTH)
 					status = "..." + status.substring(status.length() - STATUS_LENGTH);
 				App.get().status.setText(status);
@@ -61,9 +62,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			}
 		} else {
 			doc = new Document();
-			doc.add(new Field("export", App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
-			doc.add(new Field("content_type", MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-			doc.add(new Field("caminho", App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+			doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+			doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
+			doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
 		}
 	}
 
@@ -83,7 +84,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 	private void process() {
 
-		System.out.println(doc.get("caminho"));
+		System.out.println(doc.get(IndexItem.PATH));
 
 		RowComparator.dispose();
 		
@@ -97,7 +98,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		
 
 		File file = null;
-		String export = doc.get("export");
+		String export = doc.get(IndexItem.EXPORT);
 		if (export != null && !export.isEmpty()){
 			file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
 			file = IOUtil.getFile(file, doc);
@@ -111,7 +112,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			}
 			
 		}else {
-			if (doc.get("tamanho").isEmpty() || Long.valueOf(doc.get("tamanho")) > 10000000)
+			if (doc.get(IndexItem.LENGTH).isEmpty() || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
 				App.get().compositeViewer.clear();
 
 			file = IOUtil.extractSleuthFile(App.get().sleuthCase, doc);
@@ -135,7 +136,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 		}
 
-		String contentType = doc.get("content_type");
+		String contentType = doc.get(IndexItem.CONTENTTYPE);
 
 		App.get().compositeViewer.loadFile(doc, file, contentType, App.get().highlightTerms);
 

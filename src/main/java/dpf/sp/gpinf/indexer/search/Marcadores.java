@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -219,6 +220,7 @@ public class Marcadores implements Serializable {
 	
 	private void updateFilter(){
 		updatingCombo = true;
+		Object prevSelected = App.get().filtro.getSelectedItem();
 		
 		App.get().filtro.removeAllItems();
 		App.get().filtro.addItem(App.FILTRO_TODOS);
@@ -226,13 +228,19 @@ public class Marcadores implements Serializable {
 		
 		if(labelNames.size() > 0)
 			App.get().filtro.addItem(BOOKMARKS_DIV);
-		for (String word : labelNames.values())
+		
+		String[] labels = labelNames.values().toArray(new String[0]); 
+		Arrays.sort(labels);
+		for (String word : labels)
 			App.get().filtro.addItem(BOOKMARKS_PREFIX + word);
 		
 		if(App.get().categorias.size() > 0)
 			App.get().filtro.addItem(CATEGORIES_DIV);
 		for(String categoria : App.get().categorias)
 			App.get().filtro.addItem(CATEGORIES_PREFIX + categoria);
+		
+		App.get().filtro.setSelectedItem(prevSelected);
+		
 		updatingCombo = false;
 	}
 

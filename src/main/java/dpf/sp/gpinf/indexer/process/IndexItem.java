@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.process.task;
+package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
@@ -36,9 +36,35 @@ import org.apache.tika.mime.MediaType;
 /*
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens, para ser adicionado ao índice.
  */
-public class FileDocument {
-
-	//public static String[] field = { "Nome", "Tipo", "Tamanho", "Categoria", "Criação", "Modificação", "Acesso", "Caminho" };
+public class IndexItem {
+	
+	public static final String ID = "id";
+	public static final String FTKID = "ftkId";
+	public static final String PARENTID = "parentId";
+	public static final String PARENTIDs = "parentIds";
+	public static final String SLEUTHID = "sleuthId";
+	public static final String PARENTSLEUTHID = "parentSleuthId";
+	public static final String NAME = "nome";
+	public static final String TYPE = "tipo";
+	public static final String LENGTH = "tamanho";
+	public static final String CREATED = "criacao";
+	public static final String ACCESSED = "acesso";
+	public static final String MODIFIED = "modificacao";
+	public static final String PATH = "caminho";
+	public static final String EXPORT = "export";
+	public static final String CATEGORY = "categoria";
+	public static final String HASH = "hash";
+	public static final String ISDIR = "isDir";
+	public static final String ISROOT = "isRoot";
+	public static final String DELETED = "deletado";
+	public static final String HASCHILD = "hasChildren";
+	public static final String CARVED = "carved";
+	public static final String OFFSET = "offset";
+	public static final String DUPLICATE = "duplicate";
+	public static final String TIMEOUT = "timeout";
+	public static final String CONTENTTYPE = "contentType";
+	public static final String CONTENT = "conteudo";
+	
 
 	private static FieldType contentField = new FieldType();
 	private static FieldType storedTokenizedNoNormsField = new FieldType();
@@ -46,7 +72,6 @@ public class FileDocument {
 	static {
 		contentField.setIndexed(true);
 		contentField.setOmitNorms(true);
-		
 		storedTokenizedNoNormsField.setIndexed(true);
 		storedTokenizedNoNormsField.setOmitNorms(true);
 		storedTokenizedNoNormsField.setStored(true);
@@ -56,32 +81,34 @@ public class FileDocument {
 		Document doc = new Document();
 
 		String value = String.valueOf(evidence.getId());
-		doc.add(new StringField("id", value, Field.Store.YES));
+		doc.add(new StringField(ID, value, Field.Store.YES));
 
 		value = evidence.getFtkID();
 		if (value != null)
-			doc.add(new StringField("ftkId", value, Field.Store.YES));
+			doc.add(new StringField(FTKID, value, Field.Store.YES));
 
 		value = evidence.getSleuthId();
 		if (value != null)
-			doc.add(new StringField("sleuthId", value, Field.Store.YES));
+			doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
 
 		value = evidence.getParentSleuthId();
 		if (value != null)
-			doc.add(new StringField("parentSleuthId", value, Field.Store.YES));
+			doc.add(new StringField(PARENTSLEUTHID, value, Field.Store.YES));
 		
 		value = evidence.getParentId();
 		if (value == null)
 			if (evidence.getEmailPai() != null)
 				value = String.valueOf(evidence.getEmailPai().getId());
 		if (value != null)
-			doc.add(new StringField("parentId", value, Field.Store.YES));
+			doc.add(new StringField(PARENTID, value, Field.Store.YES));
+		
+		doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
 
 		
 		value = evidence.getName();
 		if (value == null)
 			value = "";
-		Field nameField = new TextField("nome", value, Field.Store.YES);
+		Field nameField = new TextField(NAME, value, Field.Store.YES);
 		nameField.setBoost(1000.0f);
 		doc.add(nameField);
 
@@ -91,7 +118,7 @@ public class FileDocument {
 			value = fileType.getLongDescr();
 		else
 			value = "";
-		doc.add(new Field("tipo", value, storedTokenizedNoNormsField));
+		doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
 
 		
 		Long length = evidence.getLength();
@@ -99,7 +126,7 @@ public class FileDocument {
 			value = length.toString();
 		else
 			value = "";
-		doc.add(new StoredField("tamanho", value));
+		doc.add(new StoredField(LENGTH, value));
 
 		/*
 		 * long length = -1; if(evidence.getLength() != null) length =
@@ -117,72 +144,68 @@ public class FileDocument {
 			value = df.format(date);
 		else
 			value = "";
-		doc.add(new StoredField("criacao", value));
+		doc.add(new StoredField(CREATED, value));
 
 		date = evidence.getAccessDate();
 		if (date != null)
 			value = df.format(date);
 		else
 			value = "";
-		doc.add(new StoredField("acesso", value));
+		doc.add(new StoredField(ACCESSED, value));
 
 		date = evidence.getModDate();
 		if (date != null)
 			value = df.format(date);
 		else
 			value = "";
-		doc.add(new StoredField("modificacao", value));
+		doc.add(new StoredField(MODIFIED, value));
 
 		value = evidence.getPath();
 		if (value == null)
 			value = "";
-		doc.add(new Field("caminho", value, storedTokenizedNoNormsField));
-		
-		
-		doc.add(new Field("parentIds", evidence.getParentIdsString(), storedTokenizedNoNormsField));
+		doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
 
-		doc.add(new Field("export", evidence.getFileToIndex(), storedTokenizedNoNormsField));
-
+		doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
 		
-		doc.add(new Field("categoria", evidence.getCategories(), storedTokenizedNoNormsField));
+		doc.add(new Field(CATEGORY, evidence.getCategories(), storedTokenizedNoNormsField));
 
 		MediaType type = evidence.getMediaType();
 		if (type != null)
 			value = type.toString();
 		else
 			value = "";
-		doc.add(new Field("content_type", value, storedTokenizedNoNormsField));
+		doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
 
-		doc.add(new StoredField("timeout", Boolean.toString(evidence.timeOut)));
+		doc.add(new StoredField(TIMEOUT, Boolean.toString(evidence.isTimedOut())));
 
 		value = evidence.getHash();
 		if (value != null)
-			doc.add(new StringField("hash", value.toLowerCase(), Field.Store.YES));
+			doc.add(new StringField(HASH, value.toLowerCase(), Field.Store.YES));
 
-		value = Boolean.toString(evidence.isPrimaryHash());
-		doc.add(new StringField("primary", value, Field.Store.YES));
+		value = Boolean.toString(evidence.isDuplicate());
+		doc.add(new StringField(DUPLICATE, value, Field.Store.YES));
 
 		value = Boolean.toString(evidence.isDeleted());
-		doc.add(new StringField("deletado", value, Field.Store.YES));
+		doc.add(new StringField(DELETED, value, Field.Store.YES));
 		
 		value = Boolean.toString(evidence.hasChildren());
-		doc.add(new StringField("hasChildren", value, Field.Store.YES));
+		doc.add(new StringField(HASCHILD, value, Field.Store.YES));
 		
 		value = Boolean.toString(evidence.isDir());
-		doc.add(new StringField("isDir", value, Field.Store.YES));
+		doc.add(new StringField(ISDIR, value, Field.Store.YES));
 		
 		if(evidence.isRoot())
-			doc.add(new StringField("isRoot", "true", Field.Store.YES));
+			doc.add(new StringField(ISROOT, "true", Field.Store.YES));
 		
 		value = Boolean.toString(evidence.isCarved());
-		doc.add(new StringField("carved", value, Field.Store.YES));
+		doc.add(new StringField(CARVED, value, Field.Store.YES));
 		
 		long off = evidence.getFileOffset();
 		if(off != -1)
-			doc.add(new StoredField("offset", Long.toString(off)));
+			doc.add(new StoredField(OFFSET, Long.toString(off)));
 
 		if (reader != null)
-			doc.add(new Field("conteudo", reader, contentField));
+			doc.add(new Field(CONTENT, reader, contentField));
 
 		return doc;
 	}

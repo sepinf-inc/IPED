@@ -48,8 +48,6 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -85,6 +83,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	private ParseContext context;
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
+	private ParsingReader reader;
 
 	public ExpandContainerTask(ParseContext context) {
 		setContext(context);
@@ -134,7 +133,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 		metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
-		if (evidence.timeOut)
+		if (evidence.isTimedOut())
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 		
 		return metadata;
@@ -180,7 +179,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!((isToBeExpanded(evidence) && !evidence.timeOut) ||
+		if (!((isToBeExpanded(evidence) && !evidence.isTimedOut()) ||
 			(CarveTask.ignoreCorrupted && evidence.isCarved() &&
 			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) )))
 				return;
@@ -201,10 +200,9 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		}
 		
 		configureTikaContext(evidence);
-		
 		Metadata metadata = getMetadata(evidence);
 		
-		ParsingReader reader = new ParsingReader(worker.autoParser, tis, metadata, context);
+		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 		try{
 			StringWriter writer;
 			char[] cbuf = new char[128*1024];
@@ -221,18 +219,38 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			if (numFrags == 1){
 				evidence.setParsedTextCache(writer.toString());
 			}
+			evidence.setParsed(true);
 
 		}finally{
-			reader.close2();
+			//do nothing
+			reader.close();
+			reader.reallyClose();
 		}
-		
-		evidence.setParsed(true);
 		
 	}
 	
 	@Override
 	public boolean shouldParseEmbedded(Metadata arg0) {
 		return true;
+	}
+	
+	private String getName(Metadata metadata, int child, Boolean hasTitle){
+		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
+		if (name == null || name.isEmpty()) {
+			name = metadata.get(TikaCoreProperties.TITLE);
+			if(name != null)
+				hasTitle = true;
+		}
+		if (name == null || name.isEmpty())
+			name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
+		
+		if (name == null || name.isEmpty())
+			name = "[Sem Nome]-" + child;
+		
+		if(name.length() > NAME_MAX_LEN)
+			name = name.substring(0, NAME_MAX_LEN);
+		
+		return name;
 	}
 
 	@Override
@@ -247,25 +265,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			IndexerContext appContext = context.get(IndexerContext.class);
 			appContext.incChild();
 
-			String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
-			boolean hasTitle = false;
-			if (name == null || name.isEmpty()) {
-				name = metadata.get(TikaCoreProperties.TITLE);
-				if(name != null){
-					//Workaround para permitir listagem recursiva por caminho, devido a emails com mesmo assunto
-					//name += " [Msg" + appContext.getChild() + "]";
-					hasTitle = true;
-				}
-			}
-			if (name == null || name.isEmpty())
-				name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
-			
-			if (name == null || name.isEmpty())
-				name = "[Sem Nome]-" + appContext.getChild();
-			
-			if(name.length() > NAME_MAX_LEN)
-				name = name.substring(0, NAME_MAX_LEN);
-			
+			Boolean hasTitle = false;
+			String name = getName(metadata, appContext.getChild(), hasTitle);
 
 			filePath = metadata.get(COMPLETE_PATH);
 			String parentPath = appContext.getPath();
@@ -298,7 +299,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
 			if(contentTypeStr == null)
 				try {
-					if(ComputeSignatureTask.processFileSignatures)
+					if(SignatureTask.processFileSignatures)
 						contentType = detector.detect(tis, metadata).getBaseType();
 					else
 						contentType = detector.detect(null, metadata).getBaseType();
@@ -348,23 +349,10 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 				//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
 			}
 			
-			caseData.incDiscoveredEvidences(1);
-			//caseData.incDiscoveredVolume(evidence.getLength());
-
-			// se nÃ£o hÃ¡ item na fila, enfileira para outro worker processar
-			if (caseData.getEvidenceFiles().size() == 0)
-				caseData.getEvidenceFiles().addFirst(evidence);
-
-			// caso contrÃ¡rio processa o item no worker atual
-			else {
-				// pausa contagem de timeout enquanto processa subitem
-				FastPipedReader pipedReader = context.get(FastPipedReader.class);
-				if(pipedReader != null)
-					pipedReader.setTimeoutPaused(true);
-				worker.process(evidence);
-				if(pipedReader != null)
-					pipedReader.setTimeoutPaused(false);
-			}
+			// pausa contagem de timeout enquanto processa subitem
+			reader.setTimeoutPaused(true);
+			worker.processNewItem(evidence);
+			reader.setTimeoutPaused(false);
 
 		} catch (SAXException e) {
 			// TODO Provavelmente PipedReader foi interrompido, interrompemos
@@ -395,6 +383,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			expandContainers = Boolean.valueOf(value);
+		
+		subitensDiscovered = 0;
 		
 	}
 

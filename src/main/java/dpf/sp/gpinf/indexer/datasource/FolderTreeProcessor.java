@@ -109,7 +109,7 @@ public class FolderTreeProcessor {
 						evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
 						evidenceFile.setLength(attr.size());
 						if(!parentIds.isEmpty()){
-							evidenceFile.setParentId(parentIds.getFirst());
+							evidenceFile.setParentId(parentIds.getLast());
 							evidenceFile.addParentIds(parentIds);
 						}else
 							evidenceFile.setRoot(true);
@@ -117,7 +117,7 @@ public class FolderTreeProcessor {
 						if (attr.isDirectory()){
 							evidenceFile.setIsDir(true);
 							evidenceFile.setCategory(SetCategoryTask.FOLDER_CATEGORY);
-							parentIds.addFirst(Integer.toString(evidenceFile.getId()));
+							parentIds.addLast(Integer.toString(evidenceFile.getId()));
 						}
 							
 						caseData.addEvidenceFile(evidenceFile);
@@ -148,7 +148,7 @@ public class FolderTreeProcessor {
 		@Override
 		public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-			parentIds.pollFirst();
+			parentIds.pollLast();
 			
 			if (exception != null)
 				System.err.println(new Date() + "\t[ALERTA]\t" + "Indexação ignorada: " + path.toFile().getAbsolutePath() + " " + exception.toString());

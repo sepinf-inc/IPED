@@ -36,17 +36,17 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class ExportCSVTask extends AbstractTask{
 
+	private static int MAX_MEM_SIZE = 1000000;
+	private static String CSV_NAME = "FileListing.csv";
+	
 	public static boolean exportFileProps = false;
+	public static volatile boolean headerWritten = false;
 	
 	private File output;
 	private StringBuilder list = new StringBuilder();
 
-	private static int MAX_MEM_SIZE = 1000000;
-	private static String csvName = "FileListing.csv";
-	public static volatile boolean headerWritten = false;
-
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
-		this.output = new File(worker.output, csvName);
+		this.output = new File(worker.output, CSV_NAME);
 	}
 
 	public void process(EvidenceFile evidence) {
@@ -159,7 +159,8 @@ public class ExportCSVTask extends AbstractTask{
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			exportFileProps = Boolean.valueOf(value);
-
+		
+		headerWritten = false;
 		
 	}
 
