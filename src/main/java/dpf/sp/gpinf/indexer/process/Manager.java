@@ -74,7 +74,7 @@ import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
-/*
+/**
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e 
  * consumidores (workers) dos itens, monitoramento do processamento e pelas etapas pós-processamento.
  * 

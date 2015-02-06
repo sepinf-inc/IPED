@@ -42,7 +42,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
-/*
+/**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de processamento instalada:
  * análise de assinatura, hash, expansão de itens, indexação, carving, etc.
  * 
