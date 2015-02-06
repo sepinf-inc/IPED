@@ -21,7 +21,7 @@ package dpf.sp.gpinf.indexer;
 import org.apache.lucene.util.Version;
 
 /*
- * Classe que contém as constantes da aplicação.
+ * Classe que contém as constantes da aplicação
  */
 public class Versao {
 	
