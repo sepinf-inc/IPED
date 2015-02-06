@@ -43,7 +43,7 @@ class State {
   // strategy.
   private static final int THRESHOLD_TO_USE_SPARSE = Integer.MAX_VALUE;
 
-  private final int depth;
+  private int depth;
   public DenseEdgeList edgeList;
   public State fail;
   public Set<Object> outputs;
@@ -116,7 +116,7 @@ class State {
 
   public void addOutput(Object o) {
 	  if(outputs == null)
-		  this.outputs = new HashSet<>();
+		  this.outputs = new HashSet<Object>();
 	  this.outputs.add(o);
   }
 
