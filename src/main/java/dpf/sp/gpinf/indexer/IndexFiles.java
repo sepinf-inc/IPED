@@ -277,7 +277,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			this.firePropertyChange("mensagem", "", "Finalizado");
 			System.out.println(new Date() + "\t[INFO]\t" + Versao.APP_EXT + " finalizado com sucesso.");
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			System.err.print(new Date() + "\t[ERRO]\t");
 			e.printStackTrace();
 			if (!nologfile)
