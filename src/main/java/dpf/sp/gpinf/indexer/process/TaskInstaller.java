@@ -14,7 +14,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
 
-/*
+/**
  * Instancia e instala as tarefas de processamento em um Worker.
  * A ordem de execução das tarefas pelo Worker é definida pela sua ordem
  * de instalação.
@@ -39,6 +39,10 @@ public class TaskInstaller {
 		//e antes da indexação (pois pode setar propriedade hasChildren no pai)
 		tasks.add(new CarveTask(worker));
 		tasks.add(new IndexTask(worker));
+		
+		worker.firstTask = tasks.get(0);
+		for(int i = 0; i < tasks.size() - 1; i ++)
+			tasks.get(i).nextTask = tasks.get(i + 1);
 		
 	}
 	

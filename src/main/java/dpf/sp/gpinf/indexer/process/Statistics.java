@@ -29,7 +29,7 @@ public class Statistics {
 	File indexDir;
 	
 	//EstatÃ­sticas
-	Date start;
+	Date start = new Date();
 	int splits = 0;
 	int timeouts = 0;
 	int processed = 0;

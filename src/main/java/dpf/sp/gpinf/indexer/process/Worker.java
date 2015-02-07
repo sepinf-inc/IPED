@@ -65,6 +65,7 @@ public class Worker extends Thread {
 	
 	public volatile AbstractTask runningTask;
 	public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
+	AbstractTask firstTask;
 
 	public Manager manager;
 	public Statistics stats;
@@ -126,7 +127,11 @@ public class Worker extends Thread {
 		finishTasks();
 	}
 	
-	//Alguns itens ainda não tem um File setado, como report do FTK1
+	/**
+	 * Alguns itens ainda nÃ£o tem um File setado, como report do FTK1.
+	 * 
+	 * @param evidence
+	 */
 	private void checkFile(EvidenceFile evidence){
 		String filePath = evidence.getFileToIndex();
 		if (evidence.getFile() == null && !filePath.isEmpty()) {
@@ -137,6 +142,12 @@ public class Worker extends Thread {
 	}
 	
 
+	/**
+	 * Processa o item em todas as tarefas instaladas. Caso ocorra exceÃ§Ã£o nÃ£o
+	 * esperada, armazena exceÃ§Ã£o para abortar processamento.
+	 * 
+	 * @param evidence Item a ser processado
+	 */
 	public void process(EvidenceFile evidence) {
 		
 		EvidenceFile prevEvidence = this.evidence;
@@ -150,10 +161,12 @@ public class Worker extends Thread {
 			checkFile(evidence);
 			
 			//Loop principal que executa cada tarefa de processamento
-			for(AbstractTask task : tasks)
+			/*for(AbstractTask task : tasks)
 				if(!evidence.isToIgnore()){
 					processTask(evidence, task);
 				}
+			*/
+			processTask(evidence, firstTask);
 			
 			
 			// ESTATISTICAS
@@ -179,11 +192,19 @@ public class Worker extends Thread {
 
 	}
 	
+	/**
+	 * Processa o item em determinada tarefa. Caso ocorra timeout, o item Ã© reprocessado
+	 * na tarefa com um parser seguro, sem risco de novo timeout.
+	 * 
+	 * @param evidence Item a ser procesado
+	 * @param task Tarefa que serÃ¡ executada sobre o item.
+	 * @throws Exception Se ocorrer erro inesperado.
+	 */
 	private void processTask(EvidenceFile evidence, AbstractTask task) throws Exception{
 		AbstractTask prevTask = runningTask;
 		runningTask = task;
 		try {
-			task.process(evidence);
+			task.processAndSendToNextTask(evidence);
 			
 		} catch (TimeoutException e) {
 			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
@@ -208,13 +229,17 @@ public class Worker extends Thread {
 		runningTask = prevTask;
 	}
 	
-	
+	/**
+	 * Processa ou enfileira novo item criado (subitem de zip, pst, carving, etc).
+	 * 
+	 * @param evidence novo item a ser processado.
+	 */
 	public void processNewItem(EvidenceFile evidence){
 		caseData.incDiscoveredEvidences(1);
-		// Se não há item na fila, enfileira para outro worker processar
+		// Se nÃ£o hÃ¡ item na fila, enfileira para outro worker processar
 		if (caseData.getEvidenceFiles().size() == 0)
 			caseData.getEvidenceFiles().addFirst(evidence);
-		// caso contrário processa o item no worker atual
+		// caso contrÃ¡rio processa o item no worker atual
 		else
 			process(evidence);
 	}

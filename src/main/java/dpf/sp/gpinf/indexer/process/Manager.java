@@ -148,7 +148,6 @@ public class Manager {
 
 	public void process() throws Exception {
 
-		start = new Date();
 		stats.printSystemInfo();
 
 		output = output.getCanonicalFile();
