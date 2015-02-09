@@ -33,8 +33,9 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.tika.mime.MediaType;
 
-/*
- * Cria um org.apache.lucene.document.Document a partir das propriedades do itens, para ser adicionado ao índice.
+/**
+ * Cria um org.apache.lucene.document.Document a partir das propriedades do itens
+ * que será adicionado ao índice.
  */
 public class IndexItem {
 	

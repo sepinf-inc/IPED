@@ -32,7 +32,7 @@ import javax.xml.bind.DatatypeConverter;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
-/*
+/**
  * Classe para calcular e manipular hashes.
  */
 public class HashTask extends AbstractTask{

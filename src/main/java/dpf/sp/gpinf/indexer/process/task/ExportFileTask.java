@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
-/*
+/**
  * Responsável por extrair subitens de containers.
  * Também exporta itens ativos em casos de extração automática de dados ou
  * em casos de extração de itens selecionados após análise.

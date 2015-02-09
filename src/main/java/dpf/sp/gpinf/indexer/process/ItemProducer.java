@@ -33,9 +33,12 @@ import dpf.sp.gpinf.indexer.datasource.FolderTreeProcessor;
 import dpf.sp.gpinf.indexer.datasource.IndexerProcessor;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
 
-/*
- * Responsável por instanciar e chamar o produtor específico do caso.
- */
+/**
+ *  Responsável por instanciar e executar o contador e o produtor de itens do caso
+ *  que adiciona os itens a fila de processamento. Podem obter os itens de diversas
+ *  fontes de dados: pastas, relatórios do FTK, imagens forenses ou casos do IPED.
+ *  
+ */  
 public class ItemProducer implements Runnable {
 	
 	public static volatile boolean indexerReport = false;

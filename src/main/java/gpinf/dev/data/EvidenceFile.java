@@ -126,8 +126,6 @@ public class EvidenceFile implements Serializable {
 
 	private boolean duplicate = false;
 
-	// public boolean isQueueEnd = false;
-
 	private boolean isSubItem = false, isToExtract = false, extracted = false,
 			parsed = false, hasChildren = false;
 

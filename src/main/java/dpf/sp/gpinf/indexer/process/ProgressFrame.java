@@ -40,7 +40,7 @@ import javax.swing.SwingWorker;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 
-/*
+/**
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos itens sendo processados.
  */
 public class ProgressFrame extends JFrame implements PropertyChangeListener, WindowListener {

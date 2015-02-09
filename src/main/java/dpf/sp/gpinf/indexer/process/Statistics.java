@@ -18,7 +18,7 @@ import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.App;
 
-/*
+/**
  * Classe que armazena estatísticas diversas, como número de itens processados, volume processado,
  * número de timeouts, duplicados ignorados, etc.
  * Contém métodos para enviar as estatísticas para arquivo de log.

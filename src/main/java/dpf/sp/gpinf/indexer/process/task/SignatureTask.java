@@ -13,8 +13,8 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 
-/*
- * ANALISE DE ASSINATURA
+/**
+ * Análise de assinatura utilizando biblioteca Apache Tika.
  */
 public class SignatureTask extends AbstractTask {
 	

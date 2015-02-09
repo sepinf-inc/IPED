@@ -37,7 +37,7 @@ import org.apache.lucene.store.FSDirectory;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.search.ResultTableModel;
 
-/*
+/**
  * Realiza a pré-ordenação das propriedades, agilizando as ordenações no aplicativo de análise,
  * muito lentas caso as strings sejam ordenadas considerando o idioma local.
  */

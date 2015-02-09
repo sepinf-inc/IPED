@@ -48,7 +48,7 @@ import org.arabidopsis.ahocorasick.Searcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
-/*
+/**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o qual gera uma máquina de estados
  * a partir dos padrões a serem pesquisados. Assim, o algoritmo é independente do número de assinaturas pesquisadas,
  * sendo proporcional ao volume de dados de entrada e ao número de padrões descobertos.

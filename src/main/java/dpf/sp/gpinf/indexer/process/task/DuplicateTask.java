@@ -11,6 +11,10 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 
+/**
+ * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso configurado.
+ *
+ */
 public class DuplicateTask extends AbstractTask{
 	
 	public static boolean ignoreDuplicates = false;

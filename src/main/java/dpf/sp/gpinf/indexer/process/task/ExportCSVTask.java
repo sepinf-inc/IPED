@@ -31,7 +31,7 @@ import java.util.Properties;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
 
-/*
+/**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
 public class ExportCSVTask extends AbstractTask{

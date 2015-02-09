@@ -68,6 +68,14 @@ public abstract class AbstractTask {
 	abstract public void init(final Properties confParams, File confDir) throws Exception;
 	
 	/**
+	 * Método chamado ao final do processamento em cada tarefa instanciada.
+	 * Pode conter código de finalização da tarefa e liberação de recursos.
+	 * 
+	 * @throws Exception Caso ocorra erro inesperado.
+	 */
+	abstract public void finish() throws Exception;
+	
+	/**
 	 * Realiza o processamento do item pela tarefa.
 	 * @param evidence Item a ser processado.
 	 * @throws Exception Caso ocorra erro inesperado.
@@ -144,13 +152,5 @@ public abstract class AbstractTask {
 			
 		}
 	}
-	
-	/**
-	 * Método chamado ao final do processamento em cada tarefa instanciada.
-	 * Pode conter código de finalização da tarefa e liberação de recursos.
-	 * 
-	 * @throws Exception Caso ocorra erro inesperado.
-	 */
-	abstract public void finish() throws Exception;
 
 }

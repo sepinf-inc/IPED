@@ -43,10 +43,10 @@ import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 
-/*
- * Classe que carrega o mapeamento de mimeTypes->Categoria da aplicaÃ§Ã£o.
- * AlÃ©m disso utiliza regras javascript de definiÃ§Ã£o de categorias baseadas nas propriedades dos itens.
- * TambÃ©m Ã© responsÃ¡vel por definir a categoria do item.
+/**
+ * Classe que carrega o mapeamento de mimeTypes PARA Categoria da aplicação.
+ * Além disso utiliza regras javascript de definição de categorias baseadas nas propriedades dos itens.
+ * Também é responsável por definir a categoria do item.
  */
 public class SetCategoryTask extends AbstractTask{
 	

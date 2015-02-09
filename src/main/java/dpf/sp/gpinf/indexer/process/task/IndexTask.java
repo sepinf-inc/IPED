@@ -28,6 +28,15 @@ import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
+/**
+ * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a indexação
+ * do conteúdo esteja desabilitada. Reaproveita o texto dos itens caso tenha sido
+ * extraído por tarefas anteriores.
+ * 
+ * Indexa itens grandes dividindo-os em fragmentos, pois a lib de indexação consome
+ * mta memória com documentos grandes.
+ * 
+ */
 public class IndexTask extends AbstractTask{
 
 	public static boolean indexFileContents = true;

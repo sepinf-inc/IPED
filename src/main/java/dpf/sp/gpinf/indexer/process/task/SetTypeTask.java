@@ -12,6 +12,10 @@ import org.apache.tika.mime.MimeTypeException;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 
+/**
+ * Seta o tipo (extensão correta) dos itens com base no seu mediaType reconhecido.
+ *
+ */
 public class SetTypeTask extends AbstractTask {
 	
 	TikaConfig config;
