@@ -74,16 +74,6 @@ public class Worker extends Thread {
 	public volatile Exception exception;
 	public volatile EvidenceFile evidence;
 
-	public static class IdLenPair {
-		int id, length;
-
-		public IdLenPair(int id, long len) {
-			this.id = id;
-			this.length = (int) (len / 1000);
-		}
-
-	}
-
 	public static void resetStaticVariables() {
 		IndexerDefaultParser.parsingErrors = 0;
 		ParsingReader.threadPool = Executors.newCachedThreadPool();

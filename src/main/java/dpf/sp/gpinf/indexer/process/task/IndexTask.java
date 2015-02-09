@@ -3,14 +3,30 @@ package dpf.sp.gpinf.indexer.process.task;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Bits;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -24,7 +40,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
+import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IndexerContext;
 
@@ -38,6 +54,9 @@ import dpf.sp.gpinf.indexer.util.IndexerContext;
  * 
  */
 public class IndexTask extends AbstractTask{
+	
+	private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES";
+	private static String SPLITED_IDS = IndexTask.class.getSimpleName() + "SPLITED_IDS";
 
 	public static boolean indexFileContents = true;
 	public static boolean indexUnallocated = false;
@@ -46,10 +65,23 @@ public class IndexTask extends AbstractTask{
 	private Statistics stats;
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
+	private List<IdLenPair> textSizes;
+	private Set<Integer> splitedIds;
+	
 	public IndexTask(Worker worker){
 		super(worker);
 		this.manager = worker.manager;
 		this.stats = worker.stats;
+	}
+	
+	public static class IdLenPair {
+		int id, length;
+
+		public IdLenPair(int id, long len) {
+			this.id = id;
+			this.length = (int) (len / 1000);
+		}
+
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
@@ -73,7 +105,7 @@ public class IndexTask extends AbstractTask{
 				doc = IndexItem.Document(evidence, null, dateFormat);
 			
 			worker.writer.addDocument(doc);
-			manager.textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
+			textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
 
 		} else {
 			
@@ -102,7 +134,7 @@ public class IndexTask extends AbstractTask{
 					if (++fragments > 1) {
 						stats.incSplits();
 						if (fragments == 2)
-							manager.remindSplitedDoc(evidence.getId());
+							splitedIds.add(evidence.getId());
 
 						if (IndexFiles.getInstance().verbose)
 							System.out.println(new Date() + "\t[INFO]\t" + Thread.currentThread().getName() + "  Dividindo texto de " + evidence.getPath());
@@ -119,9 +151,9 @@ public class IndexTask extends AbstractTask{
 			}
 			
 			if (reader != null)
-				manager.textSizes.add(new IdLenPair(evidence.getId(), reader.getTotalTextSize()));
+				textSizes.add(new IdLenPair(evidence.getId(), reader.getTotalTextSize()));
 			else
-				manager.textSizes.add(new IdLenPair(evidence.getId(), 0));
+				textSizes.add(new IdLenPair(evidence.getId(), 0));
 
 		}
 
@@ -183,12 +215,106 @@ public class IndexTask extends AbstractTask{
 		if (value != null && !value.isEmpty())
 			indexUnallocated = Boolean.valueOf(value);
 		
+		textSizes = (List<IdLenPair>) worker.caseData.getObjectMap().get(TEXT_SIZES);
+		if(textSizes == null){
+			textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
+			worker.caseData.getObjectMap().put(TEXT_SIZES, textSizes);
+			
+			File prevFile = new File(worker.output, "data/texts.size");
+			if(prevFile.exists()){
+				FileInputStream fileIn = new FileInputStream(prevFile);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+
+				int[] textSizesArray = (int[]) in.readObject();
+				for (int i = 0; i < textSizesArray.length; i++)
+					if (textSizesArray[i] != 0)
+						textSizes.add(new IdLenPair(i, textSizesArray[i] * 1000L));
+			
+				in.close();
+				fileIn.close();
+
+				stats.setLastId(textSizesArray.length - 1);
+				EvidenceFile.setStartID(textSizesArray.length);
+
+				
+			}
+		}
+		
+		splitedIds = (Set<Integer>) worker.caseData.getObjectMap().get(SPLITED_IDS);
+		if(splitedIds == null){
+			splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
+			worker.caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
+			
+			File prevFile = new File(worker.output, "data/splits.ids");
+			if(prevFile.exists()){
+				FileInputStream fileIn = new FileInputStream(prevFile);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+
+				HashMap<Integer, Integer> splitedDocs = (HashMap<Integer, Integer>) in.readObject();
+				for (Integer id : splitedDocs.values())
+					splitedIds.add(id);
+
+				in.close();
+				fileIn.close();
+			}
+		}
+		
 	}
 
 	@Override
 	public void finish() throws Exception {
-		// TODO Auto-generated method stub
 		
+		if(textSizes != null)
+			salvarTamanhoTextosExtraidos();
+		textSizes = null;
+		
+		if(splitedIds != null)
+			salvarDocsFragmentados();
+		splitedIds = null;
+		
+	}
+	
+	private void salvarTamanhoTextosExtraidos() throws Exception {
+
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraÃ­dos...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraÃ­dos...");
+
+		int[] textSizesArray = new int[stats.getLastId() + 1];
+
+		for (int i = 0; i < textSizes.size(); i++) {
+			IdLenPair pair = textSizes.get(i);
+			textSizesArray[pair.id] = pair.length;
+		}
+
+		IOUtil.writeObject(textSizesArray, worker.output.getAbsolutePath() + "/data/texts.size");
+	}
+	
+	private void salvarDocsFragmentados() throws Exception {
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Salvando IDs dos itens fragmentados...");
+
+		File indexDir = new File(worker.output, "index");
+		Directory directory = FSDirectory.open(indexDir);
+		IndexReader reader = DirectoryReader.open(directory);
+		HashMap<Integer, Integer> splitedDocs = new HashMap<Integer, Integer>();
+		Bits liveDocs = MultiFields.getLiveDocs(reader);
+		for (int i = 0; i < reader.maxDoc(); i++) {
+			if (Thread.interrupted()) {
+				reader.close();
+				throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
+			}
+			if (liveDocs != null && !liveDocs.get(i))
+				continue;
+			int id = Integer.parseInt(reader.document(i).get(IndexItem.ID));
+			if (splitedIds.contains(id))
+				splitedDocs.put(i, id);
+		}
+		reader.close();
+		FileOutputStream fileOut = new FileOutputStream(new File(worker.output, "data/splits.ids"));
+		ObjectOutputStream out = new ObjectOutputStream(fileOut);
+		out.writeObject(splitedDocs);
+		out.close();
+		fileOut.close();
 	}
 	
 }

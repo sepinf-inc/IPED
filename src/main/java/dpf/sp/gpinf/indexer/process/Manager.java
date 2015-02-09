@@ -60,7 +60,6 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.process.Worker.IdLenPair;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
@@ -100,7 +99,6 @@ public class Manager {
 
 	private static int QUEUE_SIZE = 100000;
 
-	private Date start;
 	private CaseData caseData;
 	private List<File> reports;
 	private List<String> caseNames;
@@ -112,10 +110,6 @@ public class Manager {
 
 	public Statistics stats;
 	public Exception exception;
-	
-
-	public List<IdLenPair> textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
-	private HashSet<Integer> splitedIds = new HashSet<Integer>();
 
 	public Manager(List<File> reports, List<String> caseNames, File output, File palavras) {
 		this.indexTemp = Configuration.indexTemp;
@@ -140,10 +134,6 @@ public class Manager {
 		OCRParser.OUTPUT_BASE = output;
 
 	}
-	
-	synchronized public void remindSplitedDoc(int id) {
-		splitedIds.add(id);
-	}
 
 	public void process() throws Exception {
 
@@ -159,16 +149,17 @@ public class Manager {
 		for (File report : reports)
 			System.out.println(new Date() + "\t[INFO]\t" + "Adicionando '" + report.getAbsolutePath() + "'");
 
-		// apenas conta o número de arquivos a indexar
-		contador = new Thread(new ItemProducer(this, caseData, true, reports, caseNames, output));
-		contador.start();
-
-		// produz lista de arquivos e propriedades a indexar
-		produtor = new Thread(new ItemProducer(this, caseData, false, reports, caseNames, output));
-		produtor.start();
-
 		try {
 			iniciarIndexacao();
+
+			// apenas conta o número de arquivos a indexar
+			contador = new Thread(new ItemProducer(this, caseData, true, reports, caseNames, output));
+			contador.start();
+
+			// produz lista de arquivos e propriedades a indexar
+			produtor = new Thread(new ItemProducer(this, caseData, false, reports, caseNames, output));
+			produtor.start();
+			
 			monitorarIndexacao();
 			finalizarIndexacao();
 
@@ -178,10 +169,6 @@ public class Manager {
 		}
 		
 		salvarDocIdToIdMap();
-
-		salvarTamanhoTextosExtraidos();
-
-		salvarDocsFragmentados();
 
 		PropertiesSorter sorter = new PropertiesSorter(output, Configuration.numThreads);
 		sorter.sort();
@@ -217,30 +204,6 @@ public class Manager {
 	}
 
 	private void loadExistingData() throws Exception {
-
-		FileInputStream fileIn = new FileInputStream(new File(output, "data/texts.size"));
-		ObjectInputStream in = new ObjectInputStream(fileIn);
-
-		int[] textSizesArray = (int[]) in.readObject();
-		for (int i = 0; i < textSizesArray.length; i++)
-			if (textSizesArray[i] != 0)
-				textSizes.add(new IdLenPair(i, textSizesArray[i] * 1000L));
-	
-		in.close();
-		fileIn.close();
-
-		stats.setLastId(textSizesArray.length - 1);
-		EvidenceFile.setStartID(textSizesArray.length);
-
-		fileIn = new FileInputStream(new File(output, "data/splits.ids"));
-		in = new ObjectInputStream(fileIn);
-
-		HashMap<Integer, Integer> splitedDocs = (HashMap<Integer, Integer>) in.readObject();
-		for (Integer id : splitedDocs.values())
-			splitedIds.add(id);
-
-		in.close();
-		fileIn.close();
 
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 		stats.previousIndexedFiles = reader.numDocs();
@@ -325,10 +288,6 @@ public class Manager {
 
 		}
 
-		for (int k = 0; k < workers.length; k++) {
-			workers[k].finish();
-			//workers[k].join(5);
-		}
 		ParsingReader.shutdownTasks();
 
 	}
@@ -342,7 +301,7 @@ public class Manager {
 		return num;
 	}
 
-	private void finalizarIndexacao() throws IOException {
+	private void finalizarIndexacao() throws Exception {
 
 		if (Configuration.forceMerge) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Ã­ndice...");
@@ -363,6 +322,10 @@ public class Manager {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Ã­ndice...");
 			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Ã­ndice...");
 			IOUtil.copiaDiretorio(indexTemp, indexDir);			
+		}
+		
+		for (int k = 0; k < workers.length; k++) {
+			workers[k].finish();
 		}
 		
 		try {
@@ -443,34 +406,6 @@ public class Manager {
 
 	}
 
-	private void salvarDocsFragmentados() throws Exception {
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando IDs dos itens fragmentados...");
-
-		File indexDir = new File(output, "index");
-		Directory directory = FSDirectory.open(indexDir);
-		IndexReader reader = DirectoryReader.open(directory);
-		HashMap<Integer, Integer> splitedDocs = new HashMap<Integer, Integer>();
-		Bits liveDocs = MultiFields.getLiveDocs(reader);
-		for (int i = 0; i < reader.maxDoc(); i++) {
-			if (Thread.interrupted()) {
-				reader.close();
-				throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
-			}
-			if (liveDocs != null && !liveDocs.get(i))
-				continue;
-			int id = Integer.parseInt(reader.document(i).get(IndexItem.ID));
-			if (splitedIds.contains(id))
-				splitedDocs.put(i, id);
-		}
-		reader.close();
-		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/splits.ids"));
-		ObjectOutputStream out = new ObjectOutputStream(fileOut);
-		out.writeObject(splitedDocs);
-		out.close();
-		fileOut.close();
-	}
-
 	private void saveViewToOriginalFileMap() throws Exception {
 
 		VersionsMap viewToRaw = new VersionsMap(0);
@@ -542,22 +477,6 @@ public class Manager {
 		reader.close();
 		IOUtil.writeObject(ids, output.getAbsolutePath() + "/data/ids.map");
 	}
-
-	private void salvarTamanhoTextosExtraidos() throws Exception {
-
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraÃ­dos...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraÃ­dos...");
-
-		int[] textSizesArray = new int[stats.getLastId() + 1];
-
-		for (int i = 0; i < textSizes.size(); i++) {
-			IdLenPair pair = textSizes.get(i);
-			textSizesArray[pair.id] = pair.length;
-		}
-
-		IOUtil.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
-	}
-	
 
 	private void prepararReport() throws Exception {
 		if (output.exists() && !IndexFiles.getInstance().appendIndex) {
