@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
@@ -37,6 +38,18 @@ public abstract class AbstractTask {
 	protected Statistics stats;
 	
 	/**
+	 * Diretório de saída do processamento. A tarefa pode criar um subdiretório
+	 * contendo dados resultantes do seu processamento.
+	 */
+	protected File output;
+	
+	/**
+	 * Representa o caso atual. As diferentes instâncias das tarefas podem
+	 * armazenar objetos compartilhados no mapa objectMap do caso.
+	 */
+	protected CaseData caseData;
+	
+	/**
 	 * Próxima tarefa que será executada no pipeline.
 	 */
 	protected AbstractTask nextTask;
@@ -56,8 +69,11 @@ public abstract class AbstractTask {
 	 */
 	public AbstractTask(Worker worker){
 		this.worker = worker;
-		if(worker != null)
+		if(worker != null){
 			this.stats = worker.stats;
+			this.caseData = worker.caseData;
+			this.output = worker.output;
+		}
 	}
 	
 	/**

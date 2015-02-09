@@ -61,8 +61,6 @@ public class IndexTask extends AbstractTask{
 	public static boolean indexFileContents = true;
 	public static boolean indexUnallocated = false;
 	
-	Manager manager;
-	private Statistics stats;
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	private List<IdLenPair> textSizes;
@@ -70,8 +68,6 @@ public class IndexTask extends AbstractTask{
 	
 	public IndexTask(Worker worker){
 		super(worker);
-		this.manager = worker.manager;
-		this.stats = worker.stats;
 	}
 	
 	public static class IdLenPair {
@@ -215,12 +211,12 @@ public class IndexTask extends AbstractTask{
 		if (value != null && !value.isEmpty())
 			indexUnallocated = Boolean.valueOf(value);
 		
-		textSizes = (List<IdLenPair>) worker.caseData.getObjectMap().get(TEXT_SIZES);
+		textSizes = (List<IdLenPair>) caseData.getObjectMap().get(TEXT_SIZES);
 		if(textSizes == null){
 			textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
 			worker.caseData.getObjectMap().put(TEXT_SIZES, textSizes);
 			
-			File prevFile = new File(worker.output, "data/texts.size");
+			File prevFile = new File(output, "data/texts.size");
 			if(prevFile.exists()){
 				FileInputStream fileIn = new FileInputStream(prevFile);
 				ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -240,12 +236,12 @@ public class IndexTask extends AbstractTask{
 			}
 		}
 		
-		splitedIds = (Set<Integer>) worker.caseData.getObjectMap().get(SPLITED_IDS);
+		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
 		if(splitedIds == null){
 			splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
 			worker.caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
 			
-			File prevFile = new File(worker.output, "data/splits.ids");
+			File prevFile = new File(output, "data/splits.ids");
 			if(prevFile.exists()){
 				FileInputStream fileIn = new FileInputStream(prevFile);
 				ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -286,14 +282,14 @@ public class IndexTask extends AbstractTask{
 			textSizesArray[pair.id] = pair.length;
 		}
 
-		IOUtil.writeObject(textSizesArray, worker.output.getAbsolutePath() + "/data/texts.size");
+		IOUtil.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
 	}
 	
 	private void salvarDocsFragmentados() throws Exception {
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
 		System.out.println(new Date() + "\t[INFO]\t" + "Salvando IDs dos itens fragmentados...");
 
-		File indexDir = new File(worker.output, "index");
+		File indexDir = new File(output, "index");
 		Directory directory = FSDirectory.open(indexDir);
 		IndexReader reader = DirectoryReader.open(directory);
 		HashMap<Integer, Integer> splitedDocs = new HashMap<Integer, Integer>();
@@ -310,7 +306,7 @@ public class IndexTask extends AbstractTask{
 				splitedDocs.put(i, id);
 		}
 		reader.close();
-		FileOutputStream fileOut = new FileOutputStream(new File(worker.output, "data/splits.ids"));
+		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/splits.ids"));
 		ObjectOutputStream out = new ObjectOutputStream(fileOut);
 		out.writeObject(splitedDocs);
 		out.close();

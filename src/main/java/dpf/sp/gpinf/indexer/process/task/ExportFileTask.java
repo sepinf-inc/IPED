@@ -55,14 +55,13 @@ public class ExportFileTask extends AbstractTask{
 	private static File subDir;
 	
 	private boolean computeHash = false;
-	private File extractDir, outputBase;
+	private File extractDir;
 	private HashMap<HashValue, HashValue> hashMap;
 
 	public ExportFileTask(Worker worker) {
 		super(worker);
-		this.outputBase = worker.output;
-		if (outputBase != null) {
-			this.extractDir = new File(outputBase.getParentFile(), EXTRACT_DIR);
+		if (output != null) {
+			this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
 		}
 
 	}
@@ -214,7 +213,7 @@ public class ExportFileTask extends AbstractTask{
 	private void changeTargetFile(EvidenceFile evidence, File file) {
 		String relativePath;
 		try {
-			relativePath = IOUtil.getRelativePath(outputBase, file);
+			relativePath = IOUtil.getRelativePath(output, file);
 			evidence.setExportedFile(relativePath);
 			evidence.setFile(file);
 		} catch (IOException e) {
@@ -277,7 +276,7 @@ public class ExportFileTask extends AbstractTask{
 			type = type.substring(1);
 		evidence.setType(new UnknownFileType(type));
 
-		String relativePath = IOUtil.getRelativePath(outputBase, outputFile);
+		String relativePath = IOUtil.getRelativePath(output, outputFile);
 		evidence.setExportedFile(relativePath);
 		evidence.setFile(outputFile);
 		if (evidence.isSubItem())

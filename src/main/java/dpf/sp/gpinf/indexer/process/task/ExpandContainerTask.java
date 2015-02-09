@@ -76,8 +76,6 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
 
-	private File outputBase;
-	private CaseData caseData;
 	private Detector detector;
 	
 	private ParseContext context;
@@ -92,8 +90,6 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 	public ExpandContainerTask(Worker worker) {
 		super(worker);
-		this.outputBase = worker.output;
-		this.caseData = worker.caseData;
 		this.detector = worker.detector;
 	}
 	
@@ -284,7 +280,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			
 			incSubitensDiscovered();
 			
-			if (extractEmbedded && outputBase == null)
+			if (extractEmbedded && output == null)
 				return;
 
 			if (!extractEmbedded) {

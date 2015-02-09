@@ -37,24 +37,23 @@ import dpf.sp.gpinf.indexer.process.Worker;
 public class ExportCSVTask extends AbstractTask{
 
 	private static int MAX_MEM_SIZE = 1000000;
-	private static String CSV_NAME = "FileListing.csv";
+	private static String CSV_NAME = "Lista de Arquivos.csv";
 	
 	public static boolean exportFileProps = false;
 	public static volatile boolean headerWritten = false;
 	
-	private File output;
 	private StringBuilder list = new StringBuilder();
 
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
 		super(worker);
-		this.output = new File(worker.output, CSV_NAME);
+		this.output = new File(output.getParentFile(), CSV_NAME);
+		if(this.output.exists())
+			this.output.delete();
 	}
 
-	public void process(EvidenceFile evidence) {
+	@Override
+	protected  void process(EvidenceFile evidence) throws IOException {
 		
-		if (!exportFileProps)
-			return;
-
 		String value = evidence.getName();
 		if (value == null)
 			value = "";
@@ -128,26 +127,22 @@ public class ExportCSVTask extends AbstractTask{
 
 	}
 
-	public void flush() {
-		try {
-			flush(list, output);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	public void flush() throws IOException {
+		flush(list, output);
 		list = new StringBuilder();
 	}
 
 	private static synchronized void flush(StringBuilder list, File output) throws IOException {
 		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
 		if (!headerWritten) {
-			writer.write("\"Nome\";\"Tamanho\";\"Ext\";\"Categoria\";\"Hash\";\"Deletado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\"Export\"\r\n");
+			writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
 			headerWritten = true;
 		}
 		writer.write(list.toString());
 		writer.close();
 	}
 	
-	public void finish(){
+	public void finish() throws IOException{
 		if (exportFileProps)
 			flush();
 	}

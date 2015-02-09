@@ -29,11 +29,8 @@ public class DuplicateTask extends AbstractTask{
 	
 	public static boolean ignoreDuplicates = false;
 	
-	private Manager manager;
-	
 	public DuplicateTask(Worker worker){
 		super(worker);
-		this.manager = worker.manager;
 	}
 
 	public void process(EvidenceFile evidence){
