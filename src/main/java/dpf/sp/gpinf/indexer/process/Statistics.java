@@ -154,8 +154,8 @@ public class Statistics {
 			throw new Exception("Processados " + processed + " itens de " + discovered);
 
 		if(!ExportFileTask.hasCategoryToExtract()){
-			if (indexed + carvedIgnored + duplicatesIgnored != discovered)
-				throw new Exception("Indexados " + indexed + " itens de " + discovered);
+			if (indexed != discovered - carvedIgnored - duplicatesIgnored)
+				throw new Exception("Indexados " + indexed + " itens de " + (discovered - carvedIgnored - duplicatesIgnored));
 		}/*else 
 			if (indexed != extracted)
 				throw new Exception("Indexados " + indexed + " itens de " + extracted);

@@ -15,8 +15,10 @@ import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving, indexação, etc).
- * Cada Worker cria, inicializa e usa suas instâncias das tarefas, assim normalmente há várias
+ * 
+ * Cada Worker possui suas próprias instâncias das tarefas, assim normalmente há várias
  * instancias de uma mesma tarefa.
+ * 
  * Caso a tarefa produza um novo item (subitem de zip ou carving), ele deve ser processado pelo
  * Worker {processNewItem()}
  * A tarefa recebe 01 item por vez para processar.
@@ -90,8 +92,10 @@ public abstract class AbstractTask {
 	 */
 	public final void processAndSendToNextTask(EvidenceFile evidence) throws Exception{
 		if(!evidence.isToIgnore()){
+			AbstractTask prevTask = worker.runningTask; 
 			worker.runningTask = this;
 			processMonitorTimeout(evidence);
+			worker.runningTask = prevTask;
 		}
 		
 		sendToNextTask(evidence);

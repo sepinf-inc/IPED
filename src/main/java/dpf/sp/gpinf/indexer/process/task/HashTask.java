@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
@@ -38,7 +39,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 public class HashTask extends AbstractTask{
 
 	private MessageDigest digest;
-	private String algorithm;
+	private String algorithm;	
 	
 	public HashTask(Worker worker){
 		super(worker);
