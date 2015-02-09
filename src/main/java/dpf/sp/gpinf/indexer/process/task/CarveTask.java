@@ -463,8 +463,8 @@ public class CarveTask extends AbstractTask{
 		evidence.setPath(this.evidence.getPath() + ">>" + evidence.getName());
 		evidence.setLength(len);
 		
-		String parentId = String.valueOf(this.evidence.getId());
-		evidence.setParentId(parentId);
+		int parentId = this.evidence.getId();
+		evidence.setParentId(Integer.toString(parentId));
 		evidence.addParentIds(this.evidence.getParentIds());
 		evidence.addParentId(parentId);
 		

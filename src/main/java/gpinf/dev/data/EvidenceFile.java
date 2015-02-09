@@ -82,9 +82,9 @@ public class EvidenceFile implements Serializable {
 
 	private String ftkID;
 
-	private String parentId, parentSleuthId;
+	private String parentId;
 
-	private List<String> parentIds = new ArrayList<String>();
+	private List<Integer> parentIds = new ArrayList<Integer>();
 
 	/** Data de criação do arquivo. */
 	private Date creationDate;
@@ -684,14 +684,6 @@ public class EvidenceFile implements Serializable {
 		this.hasChildren = hasChildren;
 	}
 
-	public String getParentSleuthId() {
-		return parentSleuthId;
-	}
-
-	public void setParentSleuthId(String parentSleuthId) {
-		this.parentSleuthId = parentSleuthId;
-	}
-
 	public boolean isDir() {
 		return isDir;
 	}
@@ -710,23 +702,22 @@ public class EvidenceFile implements Serializable {
 
 	public String getParentIdsString() {
 		String parents = "";
-		for (String id : parentIds)
+		for (Integer id : parentIds)
 			parents += id + " ";
 
 		return parents;
 	}
 
-	public void addParentId(String parentId) {
+	public void addParentId(int parentId) {
 		this.parentIds.add(parentId);
 	}
 
-	public List<String> getParentIds() {
+	public List<Integer> getParentIds() {
 		return parentIds;
 	}
 
-	public void addParentIds(List<String> parentIds) {
-		for (String id : parentIds)
-			this.parentIds.add(id);
+	public void addParentIds(List<Integer> parentIds) {
+		this.parentIds.addAll(parentIds);
 	}
 
 	public String getParsedTextCache() {

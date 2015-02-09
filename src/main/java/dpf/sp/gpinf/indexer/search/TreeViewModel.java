@@ -85,10 +85,6 @@ public class TreeViewModel implements TreeModel{
 			
 			String textQuery = IndexItem.PARENTID + ":" + parentId;
 			
-			String parentSleuthId = doc.get(IndexItem.SLEUTHID);
-			if(parentSleuthId != null)
-				textQuery += " " + IndexItem.PARENTSLEUTHID+ ":" + parentSleuthId;
-			
 			textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
 
 			try {

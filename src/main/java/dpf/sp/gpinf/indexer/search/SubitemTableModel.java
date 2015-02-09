@@ -152,10 +152,6 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
 			parentId = doc.get(IndexItem.ID);
 		
 		String textQuery = IndexItem.PARENTID + ":" + parentId;
-		
-		String parentSleuthId = doc.get(IndexItem.SLEUTHID);
-		if(parentSleuthId != null)
-			textQuery += " " + IndexItem.PARENTSLEUTHID + ":" + parentSleuthId;
 
 		try {
 			PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));

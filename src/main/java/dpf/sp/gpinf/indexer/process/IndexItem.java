@@ -44,7 +44,6 @@ public class IndexItem {
 	public static final String PARENTID = "parentId";
 	public static final String PARENTIDs = "parentIds";
 	public static final String SLEUTHID = "sleuthId";
-	public static final String PARENTSLEUTHID = "parentSleuthId";
 	public static final String NAME = "nome";
 	public static final String TYPE = "tipo";
 	public static final String LENGTH = "tamanho";
@@ -91,10 +90,6 @@ public class IndexItem {
 		value = evidence.getSleuthId();
 		if (value != null)
 			doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
-
-		value = evidence.getParentSleuthId();
-		if (value != null)
-			doc.add(new StringField(PARENTSLEUTHID, value, Field.Store.YES));
 		
 		value = evidence.getParentId();
 		if (value == null)

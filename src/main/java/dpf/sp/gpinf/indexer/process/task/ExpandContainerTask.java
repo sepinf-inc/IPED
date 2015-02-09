@@ -318,8 +318,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			evidence.setPath(filePath);
 			evidence.setMediaType(contentType);
 			
-			String parentId = String.valueOf(appContext.getEvidence().getId());
-			evidence.setParentId(parentId);
+			int parentId = appContext.getEvidence().getId();
+			evidence.setParentId(Integer.toString(parentId));
 			evidence.addParentIds(appContext.getEvidence().getParentIds());
 			evidence.addParentId(parentId);
 			appContext.getEvidence().setHasChildren(true);

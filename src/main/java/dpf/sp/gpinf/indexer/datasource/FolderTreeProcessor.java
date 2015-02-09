@@ -89,7 +89,7 @@ public class FolderTreeProcessor {
 
 	class FolderVisitor implements FileVisitor<Path> {
 		
-		private LinkedList<String> parentIds = new LinkedList<String>(); 
+		private LinkedList<Integer> parentIds = new LinkedList<Integer>(); 
 
 		public void walk(File file) throws IOException {
 			Path startingDir = file.toPath();
@@ -109,7 +109,7 @@ public class FolderTreeProcessor {
 						evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
 						evidenceFile.setLength(attr.size());
 						if(!parentIds.isEmpty()){
-							evidenceFile.setParentId(parentIds.getLast());
+							evidenceFile.setParentId(parentIds.getLast().toString());
 							evidenceFile.addParentIds(parentIds);
 						}else
 							evidenceFile.setRoot(true);
@@ -117,7 +117,7 @@ public class FolderTreeProcessor {
 						if (attr.isDirectory()){
 							evidenceFile.setIsDir(true);
 							evidenceFile.setCategory(SetCategoryTask.FOLDER_CATEGORY);
-							parentIds.addLast(Integer.toString(evidenceFile.getId()));
+							parentIds.addLast(evidenceFile.getId());
 						}
 							
 						caseData.addEvidenceFile(evidenceFile);

@@ -56,29 +56,7 @@ public class TreeListener implements  TreeSelectionListener{
 			
 			treeQuery = new TermQuery(new Term(IndexItem.PARENTID, parentId));
 			
-			String parentSleuthId = doc.get(IndexItem.SLEUTHID);
-			if(parentSleuthId != null){
-				BooleanQuery boolQuery = new BooleanQuery();
-				boolQuery.add(treeQuery, Occur.SHOULD);
-				boolQuery.add(new TermQuery(new Term(IndexItem.PARENTSLEUTHID, parentSleuthId)), Occur.SHOULD);
-				treeQuery = boolQuery;
-			}
-			
-			BooleanQuery boolQuery = new BooleanQuery();
-			/*String path = doc.get("caminho");
-			if(path.endsWith("/"))
-				boolQuery.add(new PrefixQuery(new Term("fullPath", path)), Occur.SHOULD);
-			else
-				boolQuery.add(new PrefixQuery(new Term("fullPath", path + "/")), Occur.SHOULD);
-			boolQuery.add(new PrefixQuery(new Term("fullPath", path + ">>")), Occur.SHOULD);
-			boolQuery.add(new PrefixQuery(new Term("fullPath", path + "\\")), Occur.SHOULD);
-			boolQuery.add(new TermQuery(new Term("id", doc.get("id"))), Occur.MUST_NOT);*/
-			
-			boolQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
-			if(parentSleuthId != null)
-				boolQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, "s" + parentSleuthId)), Occur.SHOULD);
-			
-			recursiveTreeQuery =  boolQuery;
+			recursiveTreeQuery = new TermQuery(new Term(IndexItem.PARENTIDs, parentId));
 			
 		}
 		
@@ -103,10 +81,6 @@ public class TreeListener implements  TreeSelectionListener{
 				String ftkId = doc.get(IndexItem.FTKID);
 				if (ftkId != null)
 					textQuery = IndexItem.FTKID + ":" + parentId;
-				
-				String parentSleuthId = doc.get(IndexItem.PARENTSLEUTHID);
-				if(parentSleuthId != null)
-					textQuery = IndexItem.SLEUTHID + ":" + parentSleuthId;
 				
 				if(textQuery != null){
 					PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));

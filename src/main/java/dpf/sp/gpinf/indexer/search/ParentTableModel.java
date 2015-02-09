@@ -157,10 +157,6 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 		String ftkId = doc.get(IndexItem.FTKID);
 		if (ftkId != null)
 			textQuery = IndexItem.FTKID + ":" + parentId;
-		
-		String parentSleuthId = doc.get(IndexItem.PARENTSLEUTHID);
-		if(parentSleuthId != null)
-			textQuery = IndexItem.SLEUTHID + ":" + parentSleuthId;
 			
 		results = new SearchResult(0);
 		
