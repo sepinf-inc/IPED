@@ -135,6 +135,8 @@ public class EvidenceFile implements Serializable {
 			toIndex = true;
 
 	private boolean carved = false, encrypted = false;
+	
+	private boolean isQueueEnd = false;
 
 	private String parsedTextCache;
 
@@ -775,6 +777,14 @@ public class EvidenceFile implements Serializable {
 
 	public void setDuplicate(boolean duplicate) {
 		this.duplicate = duplicate;
+	}
+
+	public boolean isQueueEnd() {
+		return isQueueEnd;
+	}
+
+	public void setQueueEnd(boolean isQueueEnd) {
+		this.isQueueEnd = isQueueEnd;
 	}
 
 }

@@ -38,14 +38,14 @@ public class IndexTask extends AbstractTask{
 	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	public IndexTask(Worker worker){
-		this.worker = worker;
+		super(worker);
 		this.manager = worker.manager;
 		this.stats = worker.stats;
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
 		
-		if(!evidence.isToIndex()){
+		if(!evidence.isToIndex() || evidence.isQueueEnd()){
 			if (evidence.isSubItem()) {
 				if (!evidence.getFile().delete())
 					System.out.println(new Date() + "\t[AVISO]\t" + worker.getName() + " Falha ao deletar " + evidence.getFile().getAbsolutePath());

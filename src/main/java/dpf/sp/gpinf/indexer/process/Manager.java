@@ -328,9 +328,9 @@ public class Manager {
 				 *  TODO sincronizar teste, pois pode ocorrer condiÃ§Ã£o de corrida e o teste nÃ£o detectar um Ãºltimo item sendo processado
 				 *  NÃ£o Ã© demasiado grave pois serÃ¡ detectado o problema no log de estatÃ­sticas e o usuÃ¡rio serÃ¡ informado do erro. 
 				 */
-				if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive() ) {
+				//if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || || produtor.isAlive())
+				if(workers[k].isAlive())
 					someWorkerAlive = true;
-				}
 
 				// TODO verificar se algum worker morreu e reiniciÃ¡-lo? (Nao deve ocorrer...)
 			}
@@ -346,6 +346,15 @@ public class Manager {
 		}
 		ParsingReader.shutdownTasks();
 
+	}
+	
+	public int numItensBeingProcessed(){
+		int num = 0;
+		for (int k = 0; k < workers.length; k++)
+			if(workers[k].evidence != null)
+				num++;
+		
+		return num;
 	}
 
 	private void finalizarIndexacao() throws IOException {

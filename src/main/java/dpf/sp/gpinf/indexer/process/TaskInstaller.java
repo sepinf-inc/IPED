@@ -42,7 +42,7 @@ public class TaskInstaller {
 		
 		worker.firstTask = tasks.get(0);
 		for(int i = 0; i < tasks.size() - 1; i ++)
-			tasks.get(i).nextTask = tasks.get(i + 1);
+			tasks.get(i).setNextTask(tasks.get(i + 1));
 		
 	}
 	

@@ -41,7 +41,7 @@ public class HashTask extends AbstractTask{
 	private String algorithm;
 	
 	public HashTask(Worker worker){
-		this.worker = worker;
+		super(worker);
 	}
 	
 	@Override
@@ -94,7 +94,7 @@ public class HashTask extends AbstractTask{
 
 	public void process(EvidenceFile evidence) {
 
-		if (digest != null && evidence.getHash() == null) {
+		if (digest != null && evidence.getHash() == null && !evidence.isQueueEnd()) {
 			
 			InputStream in = null;
 			try {

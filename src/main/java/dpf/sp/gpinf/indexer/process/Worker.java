@@ -128,7 +128,7 @@ public class Worker extends Thread {
 	}
 	
 	/**
-	 * Alguns itens ainda nÃ£o tem um File setado, como report do FTK1.
+	 * Alguns itens ainda não tem um File setado, como report do FTK1.
 	 * 
 	 * @param evidence
 	 */
@@ -143,8 +143,8 @@ public class Worker extends Thread {
 	
 
 	/**
-	 * Processa o item em todas as tarefas instaladas. Caso ocorra exceÃ§Ã£o nÃ£o
-	 * esperada, armazena exceÃ§Ã£o para abortar processamento.
+	 * Processa o item em todas as tarefas instaladas. Caso ocorra exceção não
+	 * esperada, armazena exceção para abortar processamento.
 	 * 
 	 * @param evidence Item a ser processado
 	 */
@@ -166,18 +166,7 @@ public class Worker extends Thread {
 					processTask(evidence, task);
 				}
 			*/
-			processTask(evidence, firstTask);
-			
-			
-			// ESTATISTICAS
-			stats.incProcessed();
-			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
-				stats.incActiveProcessed();
-				Long len = evidence.getLength();
-				if(len == null)
-					len = 0L;
-				stats.addVolume(len);
-			}
+			firstTask.processAndSendToNextTask(evidence);
 
 		} catch (Throwable t) {	
 			//ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
@@ -193,11 +182,11 @@ public class Worker extends Thread {
 	}
 	
 	/**
-	 * Processa o item em determinada tarefa. Caso ocorra timeout, o item Ã© reprocessado
+	 * Processa o item em determinada tarefa. Caso ocorra timeout, o item é reprocessado
 	 * na tarefa com um parser seguro, sem risco de novo timeout.
 	 * 
 	 * @param evidence Item a ser procesado
-	 * @param task Tarefa que serÃ¡ executada sobre o item.
+	 * @param task Tarefa que será executada sobre o item.
 	 * @throws Exception Se ocorrer erro inesperado.
 	 */
 	private void processTask(EvidenceFile evidence, AbstractTask task) throws Exception{
@@ -236,10 +225,10 @@ public class Worker extends Thread {
 	 */
 	public void processNewItem(EvidenceFile evidence){
 		caseData.incDiscoveredEvidences(1);
-		// Se nÃ£o hÃ¡ item na fila, enfileira para outro worker processar
-		if (caseData.getEvidenceFiles().size() == 0)
-			caseData.getEvidenceFiles().addFirst(evidence);
-		// caso contrÃ¡rio processa o item no worker atual
+		// Se não há item na fila, enfileira para outro worker processar
+		if (evidences.size() == 0)
+			evidences.addFirst(evidence);
+		// caso contrário processa o item no worker atual
 		else
 			process(evidence);
 	}
@@ -254,7 +243,21 @@ public class Worker extends Thread {
 			try {
 				evidence = null;
 				evidence = evidences.takeFirst();
-				process(evidence);
+				
+				if(!evidence.isQueueEnd())
+					process(evidence);
+				else{
+					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 1){
+						process(evidence);
+						evidences.addLast(evidence);
+						evidence = null;
+						break;
+					}else{
+						evidences.addLast(evidence);
+						evidence = null;
+						Thread.sleep(1000);
+					}
+				}
 
 			} catch (InterruptedException e) {
 				break;

@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
 import java.util.Date;
@@ -98,11 +99,11 @@ public class ItemProducer implements Runnable {
 				caseData.incAlternativeFiles(alternativeFiles);
 			}
 			if (!listOnly) {
-				/*
-				 * EvidenceFile evidence = new EvidenceFile();
-				 * evidence.isQueueEnd = true;
-				 * caseData.addEvidenceFile(evidence);
-				 */
+			
+				 EvidenceFile evidence = new EvidenceFile();
+				 evidence.setQueueEnd(true);
+				 caseData.addEvidenceFile(evidence);
+				 
 			} else {
 				IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int)(caseData.getDiscoveredVolume()/1000000));
 				System.out.println(new Date() + "\t[INFO]\t" + "Localizados " + caseData.getDiscoveredEvidences() + " itens");

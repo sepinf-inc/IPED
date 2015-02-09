@@ -46,6 +46,7 @@ public class ExportCSVTask extends AbstractTask{
 	private StringBuilder list = new StringBuilder();
 
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
+		super(worker);
 		this.output = new File(worker.output, CSV_NAME);
 	}
 

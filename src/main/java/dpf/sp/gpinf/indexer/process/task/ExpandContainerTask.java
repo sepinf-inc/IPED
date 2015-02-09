@@ -86,11 +86,12 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	private ParsingReader reader;
 
 	public ExpandContainerTask(ParseContext context) {
+		super(null);
 		setContext(context);
 	}
 
 	public ExpandContainerTask(Worker worker) {
-		this.worker = worker;
+		super(worker);
 		this.outputBase = worker.output;
 		this.caseData = worker.caseData;
 		this.detector = worker.detector;
