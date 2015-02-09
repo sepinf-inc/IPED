@@ -115,7 +115,6 @@ public class Manager {
 	
 
 	public List<IdLenPair> textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
-	public HashMap<HashValue, HashValue> hashMap = new HashMap<HashValue, HashValue>();
 	private HashSet<Integer> splitedIds = new HashSet<Integer>();
 
 	public Manager(List<File> reports, List<String> caseNames, File output, File palavras) {
@@ -245,20 +244,6 @@ public class Manager {
 
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 		stats.previousIndexedFiles = reader.numDocs();
-
-		synchronized (hashMap) {
-			for (int i = 0; i < reader.maxDoc(); i++) {
-				Document doc = reader.document(i);
-				String hash = doc.get(IndexItem.HASH);
-				if (hash != null){
-					HashValue hValue = new HashValue(hash);
-					hashMap.put(hValue, hValue);
-				}
-					
-			}
-
-		}
-
 		reader.close();
 
 		if (new File(output, "data/containsReport.flag").exists())

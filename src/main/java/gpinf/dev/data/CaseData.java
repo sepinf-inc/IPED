@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
@@ -34,6 +35,13 @@ public class CaseData implements Serializable {
 
 	/** Arquivos de Evidência do caso. */
 	private LinkedBlockingDeque<EvidenceFile> evidenceFiles;
+	
+	/**
+	 * Mapa genérico de objetos do caso.
+	 * Pode ser utilizado como área de compartilhamento de objetos entre as
+	 * instâncias das tarefas.
+	 */
+	private HashMap<String, Object> objectMap = new HashMap<String, Object>();
 
 	private int discoveredEvidences = 0;
 
@@ -220,5 +228,13 @@ public class CaseData implements Serializable {
 
 	public void setContainsReport(boolean containsReport) {
 		this.containsReport = containsReport;
+	}
+
+	public HashMap<String, Object> getObjectMap() {
+		return objectMap;
+	}
+
+	public void setObjectMap(HashMap<String, Object> objectMap) {
+		this.objectMap = objectMap;
 	}
 }

@@ -61,7 +61,6 @@ public class ExportFileTask extends AbstractTask{
 	public ExportFileTask(Worker worker) {
 		super(worker);
 		this.outputBase = worker.output;
-		this.hashMap = worker.manager.hashMap;
 		if (outputBase != null) {
 			this.extractDir = new File(outputBase.getParentFile(), EXTRACT_DIR);
 		}
@@ -298,6 +297,8 @@ public class ExportFileTask extends AbstractTask{
 		
 		subitensExtracted = 0;
 		subDirCounter = 0;
+		
+		hashMap = (HashMap<HashValue, HashValue>) worker.caseData.getObjectMap().get(DuplicateTask.HASH_MAP);
 		
 	}
 
