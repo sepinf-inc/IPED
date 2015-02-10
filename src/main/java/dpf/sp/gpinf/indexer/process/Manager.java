@@ -503,14 +503,15 @@ public class Manager {
 		if (!output.exists() && !output.mkdir())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
 
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), false);
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/lib"), new File(output, "lib/lib"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/sleuth"), new File(output, "lib/sleuth"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/gm"), new File(output, "lib/gm"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libLO3"), new File(output, "lib/libLO3"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libLO4"), new File(output, "lib/libLO4"));
-		if (Configuration.embutirLibreOffice)
-			IOUtil.copiaArquivo(new File(Configuration.configPath, "lib/LO4/libreoffice.zip"), new File(output, "lib/libreoffice.zip"));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
+		//IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/lib"), new File(output, "lib/lib"));
+		//IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/sleuth"), new File(output, "lib/sleuth"));
+		//IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/gm"), new File(output, "lib/gm"));
+		//IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libLO3"), new File(output, "lib/libLO3"));
+		//IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libLO4"), new File(output, "lib/libLO4"));
+		if (!Configuration.embutirLibreOffice)
+			//IOUtil.copiaArquivo(new File(Configuration.configPath, "lib/LO4/libreoffice.zip"), new File(output, "lib/libreoffice.zip"));
+			new File(output, "lib/libreoffice.zip").delete();
 
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
