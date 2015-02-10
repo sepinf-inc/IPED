@@ -273,14 +273,14 @@ public class Manager {
 					exception = workers[k].exception;
 
 				/*
-				 *  TODO sincronizar teste, pois pode ocorrer condiÃ§Ã£o de corrida e o teste nÃ£o detectar um Ãºltimo item sendo processado
-				 *  NÃ£o Ã© demasiado grave pois serÃ¡ detectado o problema no log de estatÃ­sticas e o usuÃ¡rio serÃ¡ informado do erro. 
+				 *  TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
+				 *  não é demasiado grave pois será detectado o problema no log de estatísticas e o usuario sera informado do erro. 
 				 */
 				//if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || || produtor.isAlive())
 				if(workers[k].isAlive())
 					someWorkerAlive = true;
 
-				// TODO verificar se algum worker morreu e reiniciÃ¡-lo? (Nao deve ocorrer...)
+				// TODO verificar se algum worker morreu e reinicia-lo? (Nao deve ocorrer...)
 			}
 
 			if (exception != null)
@@ -304,23 +304,23 @@ public class Manager {
 	private void finalizarIndexacao() throws Exception {
 
 		if (Configuration.forceMerge) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Ã­ndice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Otimizando Ã­ndice...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Índice...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Otimizando Índice...");
 			try {
 				writer.forceMerge(1);
 			} catch (Throwable e) {
-				System.out.println(new Date() + "\t[ALERTA]\t" + "Erro durante otimizaÃ§Ã£o: " + e);
+				System.out.println(new Date() + "\t[ALERTA]\t" + "Erro durante otimização: " + e);
 			}
 
 		}
 
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando Ã­ndice...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Fechando Ã­ndice...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando Índice...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Fechando Índice...");
 		writer.close();
 
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Ã­ndice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Ã­ndice...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Índice...");
 			IOUtil.copiaDiretorio(indexTemp, indexDir);			
 		}
 		
@@ -331,7 +331,7 @@ public class Manager {
 		try {
 			IOUtil.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + "NÃ£o foi possÃ­vel apagar " + Configuration.indexerTemp.getPath());
+			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
 		}
 
 		if (caseData.containsReport() || ExportFileTask.hasCategoryToExtract())
@@ -356,7 +356,7 @@ public class Manager {
 			for (String categoria : categories) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
+					throw new InterruptedException("Indexação cancelada!");
 				}
 
 				String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
@@ -389,7 +389,7 @@ public class Manager {
 			for (String palavra : palavras) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
+					throw new InterruptedException("Indexação cancelada!");
 				}
 
 				PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(palavra));
@@ -402,7 +402,7 @@ public class Manager {
 			int filtradas = palavras.size() - palavrasFinais.size();
 			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " palavras-chave.");
 		} else
-			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma palavra-chave prÃ©-configurada para filtrar.");
+			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma palavra-chave pré-configurada para filtrar.");
 
 	}
 
@@ -411,8 +411,8 @@ public class Manager {
 		VersionsMap viewToRaw = new VersionsMap(0);
 
 		if (FTK3ReportProcessor.wasInstantiated) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versÃµes de visualizaÃ§Ã£o para originais...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versÃµes de visualizaÃ§Ã£o -> originais...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versções de visualização para originais...");
+			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versões de visualização -> originais...");
 
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
 			String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
@@ -423,7 +423,7 @@ public class Manager {
 			for (int i = 0; i < alternatives.length; i++) {
 				if (Thread.interrupted()) {
 					App.get().destroy();
-					throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
+					throw new InterruptedException("Indexação cancelada!");
 				}
 				Document doc = App.get().searcher.doc(alternatives[i].doc);
 				String ftkId = doc.get(IndexItem.FTKID);
@@ -451,7 +451,7 @@ public class Manager {
 			}
 			reader.close();
 
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtidos " + viewToRaw.getMappings() + " mapeamentos de versÃµes de visualizaÃ§Ã£o para originais.");
+			System.out.println(new Date() + "\t[INFO]\t" + "Obtidos " + viewToRaw.getMappings() + " mapeamentos de versões de visualização para originais.");
 		}
 
 		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/alternativeToOriginals.ids"));
@@ -501,7 +501,7 @@ public class Manager {
 		Thread.sleep(1000);
 
 		if (!output.exists() && !output.mkdir())
-			throw new IOException("NÃ£o foi possÃ­vel criar diretÃ³rio " + output.getAbsolutePath());
+			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
 
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), false);
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/lib"), new File(output, "lib/lib"));
@@ -523,7 +523,7 @@ public class Manager {
 		File dataDir = new File(output, "data");
 		if (!dataDir.exists())
 			if (!dataDir.mkdir())
-				throw new IOException("NÃ£o foi possÃ­vel criar diretÃ³rio " + dataDir.getAbsolutePath());
+				throw new IOException("Não foi possível criar diretório " + dataDir.getAbsolutePath());
 
 	}
 

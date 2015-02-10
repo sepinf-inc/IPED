@@ -21,7 +21,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  * instancias de uma mesma tarefa.
  * 
  * Caso a tarefa produza um novo item (subitem de zip ou carving), ele deve ser processado pelo
- * Worker {processNewItem()}
+ * Worker @see dpf.sp.gpinf.indexer.process.Worker#processNewItem()
  * A tarefa recebe 01 item por vez para processar.
  * 
  */
