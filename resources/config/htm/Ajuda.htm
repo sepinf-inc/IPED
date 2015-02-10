@@ -1,0 +1,41 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Departamento de Polícia Federal</title>
+</head>
+<body>
+<p style=\"color:black;font-size:24px;\"><b>Ajuda</b></p>
+<b>Busca por Palavras-chave:</b><br />
+<br />
+Para realizar buscas por palavras-chave, <b>execute a aplicação "Ferramenta de Pesquisa" na raiz da mídia óptica</b> ou, em um terminal, execute o comando "java -Xms512M -jar indexador/lib/search.jar". É necessário possuir instalado o Java JRE, preferencialmente de 64bits, disponível em <a href="http://www.java.com">www.java.com</a>. Ao realizar a busca diretamente a partir do disco óptico, as buscas podem ficar lentas. Para torná-las mais rápidas, copie todo o conteúdo do CD/DVD para uma pasta local do computador, a partir da qual o relatório deve ser acessado.<br>
+<br>
+A busca por palavras-chave pesquisa termos no nome e em todo o conteúdo de arquivos textuais, como Word, Excel, PDF, Emails, Páginas de Internet, Chats, etc. Caso habilitada na geração do relatório, é utilizada tecnologia OCR (<i>Optical Character Recognition</i>) para pesquisa de texto em imagens. Entretanto, alguns resultados podem não ser encontrados, dependendo da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.<br>
+<br>
+A busca por palavras-chave não diferencia maiúsculas e minúsculas. <b>Recomenda-se pesquisar com os acentos, para que as ocorrências sejam destacadas corretamente na "Pré-visualização"</b>. Não é recomendado pesquisar por expressões comuns ou pequenas, como <b>PF</b>. A seguir são apresentados alguns exemplos de busca:
+<br>
+<ul>
+<li>1. <b>suspeito</b><br/>Busca arquivos que contenham exatamente a palavra <b>suspeito</b>. Não serão encontrados arquivos com a palavra <b>suspeitos</b>.
+<br><br /></li>
+<li>2. <b>suspeit?</b><br/>Busca arquivos com palavras que iniciem com <b>suspeit</b> e tenham uma última letra qualquer, como <b>suspeito</b> e <b>suspeita</b>.
+<br><br /></li>
+<li>3. <b>suspei*</b><br/>Busca arquivos com palavras que iniciem com <b>suspei</b>, como <b>suspeito</b>, <b>suspeitas</b> e <b>suspeição</b>.
+<br><br /></li>
+<li>4. <b>Sicrano~</b><br>Busca arquivos que contenham palavras iguais ou parecidas com <b>sicrano</b>, como <b>siclano</b>, <b>cicrano</b>, <b>ciclano</b> e <b>sicrana</b>. Apesar de lenta, seu uso é recomendado para pesquisar palavras em digitalizações.
+<br /><br /></li>
+<li>5. <b>"Fulano Tal"</b><br>Busca arquivos que contenham a expressão <b>Fulano Tal</b>. Não é possível usar * ? ~ dentro da expressão.<br>
+<br /></li>
+<li>6. <b>Fulano Tal</b><br>Busca arquivos que contenham quaisquer das palavras <b>Fulano</b> OU <b>Tal</b>.
+<br/><br /></li>
+<li>7. <b>agência AND conta</b><br>Busca arquivos que contenham ambas as palavras <b>agência</b> E <b>conta</b>.
+<br><br /></li>
+<li>8. <b>propina -pagamento</b><br>Busca arquivos que contenham <b>propina</b>, mas não contenham <b>pagamento</b>.
+<br /><br /></li>
+<li>9. <b>(Fulano Beltrano) && pagamento</b><br>Busca arquivos que contenham <b>pagamento</b> E quaisquer das palavras <b>Fulano</b> OU <b>Beltrano</b>.
+<br /><br /></li>
+<li>10. <b>"Fulano Tal"~5</b><br>Busca arquivos que contenham a palavra <b>Tal</b> até 5 palavras da palavra <b>Fulano</b>.
+<br><br /></li>
+<li>11. <b>nome:comprovante</b><br>Lista arquivos com a palavra <b>comprovante</b> no atributo <b>nome</b>. Podem ser usados os atributos <b>"nome:"</b>, <b>"tipo:"</b>, <b>"caminho:"</b>, <b>"categoria:"</b> e <b>"conteudo:"</b>.
+<br><br /></li>
+</ul>
+</body>
+</html>
