@@ -40,15 +40,6 @@ public class EvidenceFile implements Serializable {
 	/** Identificador utilizado para serialização da classe. */
 	private static final long serialVersionUID = 98653214753695125L;
 
-	/** Lista de propriedades básicas do arquivo. */
-	private List<Property> properties = new ArrayList<Property>();
-
-	/**
-	 * Mapa com lista de propriedades adicionais do arquivo. As propriedades
-	 * adicionais são agrupadas em categorias.
-	 */
-	private Map<String, List<Property>> extraProperties = new HashMap<String, List<Property>>();
-
 	/** Nome do arquivo. */
 	private String name;
 
@@ -85,6 +76,8 @@ public class EvidenceFile implements Serializable {
 	private String parentId;
 
 	private List<Integer> parentIds = new ArrayList<Integer>();
+	
+	private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
 
 	/** Data de criação do arquivo. */
 	private Date creationDate;
@@ -100,9 +93,6 @@ public class EvidenceFile implements Serializable {
 
 	/** Nome e caminho relativo que o arquivo foi exportado. */
 	private String exportedFile;
-
-	/** Stream associada a evidencia */
-	private InputStream stream;
 
 	/**
 	 * Nome e caminho relativo do arquivo alternativo. Este arquivo é utilizado
@@ -427,68 +417,6 @@ public class EvidenceFile implements Serializable {
 	}
 
 	/**
-	 * Adiciona propriedade.
-	 * 
-	 * @param property
-	 *            propriedade a ser adicionada
-	 */
-	public void addProperty(Property property) {
-		properties.add(property);
-	}
-
-	/**
-	 * Adiciona propriedade adicional.
-	 * 
-	 * @param category
-	 *            categoria da propriedade
-	 * @param property
-	 *            propriedade a ser adicionada
-	 */
-	public void addExtraProperty(String category, Property property) {
-		List<Property> prop = extraProperties.get(category);
-		if (prop == null) {
-			prop = new ArrayList<Property>();
-			extraProperties.put(category, prop);
-		}
-		prop.add(property);
-	}
-
-	/**
-	 * Obtém lista de propriedades.
-	 * 
-	 * @return lista não modificável de propriedades.
-	 */
-	public List<Property> getProperties() {
-		return Collections.unmodifiableList(properties);
-	}
-
-	/**
-	 * Obtém valor de uma propriedade a partir do nome.
-	 * 
-	 * @param name
-	 *            Nome da propriedade (não há diferenciação entre maiúsculas e
-	 *            minúsculas).
-	 * @return Valor da propriedade. <code>null</code> se não existir
-	 *         propriedade com este nome.
-	 */
-	public String getPropertyByName(String name) {
-		for (Property p : properties) {
-			if (p.getName().equalsIgnoreCase(name))
-				return p.getValue();
-		}
-		return null;
-	}
-
-	/**
-	 * Obtém mapa de lista de propriedades adicionais.
-	 * 
-	 * @return mapa não modificável de listas de propriedades.
-	 */
-	public Map<String, List<Property>> getExtraProperties() {
-		return Collections.unmodifiableMap(extraProperties);
-	}
-
-	/**
 	 * @return Pasta de armazenamento do arquivo, sem repetir o próprio nome do
 	 *         arquivo, convertido para String.
 	 */
@@ -527,9 +455,6 @@ public class EvidenceFile implements Serializable {
 					FormatUtil.format(accessDate));
 		if (length != null)
 			sb.append("\n\t\tTamanho do Arquivo: ").append(length);
-		for (int i = 0; i < properties.size(); i++) {
-			sb.append("\n\t\t").append(properties.get(i));
-		}
 		return sb.toString();
 	}
 
@@ -587,7 +512,7 @@ public class EvidenceFile implements Serializable {
 	 * OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
 	 * TODO implementar skip para File usando RandomAccessFile
 	 */
-	private InputStream getStream() throws IOException {
+	public InputStream getStream() throws IOException {
 		InputStream stream;
 		if (file != null && !this.isDir)
 			stream = new FileInputStream(file);
@@ -614,10 +539,6 @@ public class EvidenceFile implements Serializable {
 			return TikaInputStream.get(file);
 		else
 			return TikaInputStream.get(getBufferedStream());
-	}
-
-	public void setStream(InputStream stream) {
-		this.stream = stream;
 	}
 
 	public boolean isSubItem() {
@@ -774,6 +695,18 @@ public class EvidenceFile implements Serializable {
 
 	public void setQueueEnd(boolean isQueueEnd) {
 		this.isQueueEnd = isQueueEnd;
+	}
+
+	public Object getExtraAttribute(String key) {
+		return extraAttributes.get(key);
+	}
+
+	public void setExtraAttribute(String key, Object value) {
+		this.extraAttributes.put(key, value);
+	}
+	
+	public Map<String, Object> getExtraAttributeMap(){
+		return this.extraAttributes;
 	}
 
 }

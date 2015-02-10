@@ -20,7 +20,7 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -133,7 +133,7 @@ public class IndexerProcessor {
 
 			value = doc.get(IndexItem.TYPE);
 			if (value != null)
-				evidence.setType(new UnknownFileType(value));
+				evidence.setType(new GenericFileType(value));
 
 			value = doc.get(IndexItem.CATEGORY);
 			for(String category : value.split(CategoryTokenizer.SEPARATOR + ""))

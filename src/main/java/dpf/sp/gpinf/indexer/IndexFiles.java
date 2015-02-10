@@ -35,7 +35,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 
-/*
+/**
  * Ponto de entrada do programa ao processar evidências.
  * Nome IndexFiles mantém compatibilidade com o AsAP.
  * TODO Manter apenas métodos utilizados pelo AsAP e separar demais funções em outra 
@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.process.ProgressFrame;
  */
 public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
-	/*
+	/**
 	 * command line parameters
 	 */
 	public boolean fromCmdLine = false;
@@ -59,7 +59,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	public String configPath;
 
 	
-	/*
+	/**
 	 * Nome dos casos fo FTK3+, necessário apenas em processamento de relatórios
 	 */
 	public List<String> caseNames;
@@ -67,26 +67,26 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	private PrintStream log, out, err;
 	private ProgressFrame progressFrame;
 
-	/*
+	/**
 	 * Última instância criada deta classe.
 	 */
 	private static IndexFiles lastInstance;
 
-	/*
+	/**
 	 * Construtor utilizado pelo AsAP
 	 */
 	public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList) {
 		this(reports, output, configPath, logFile, keywordList, null, null);
 	}
 
-	/*
+	/**
 	 * Construtor utilizado pelo AsAP
 	 */
 	public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList, List<String> bookmarksToOCR) {
 		this(reports, output, configPath, logFile, keywordList, null, bookmarksToOCR);
 	}
 
-	/*
+	/**
 	 * Construtor utilizado pelo AsAP
 	 */
 	public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList, Boolean ignore, List<String> bookmarksToOCR) {
@@ -102,7 +102,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		lastInstance = this;
 	}
 
-	/*
+	/**
 	 * Contrutor utilizado pela execução via linha de comando
 	 */
 	public IndexFiles(String[] args) {
@@ -113,14 +113,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		lastInstance = this;
 	}
 
-	/*
+	/**
 	 * Obtém a última instância criada
 	 */
 	public static IndexFiles getInstance() {
 		return lastInstance;
 	}
 
-	/*
+	/**
 	 * Define o caminho onde será encontrado o arquivo de configuração principal.
 	 */
 	private void setConfigPath() throws Exception {
@@ -131,7 +131,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			configPath = configPath.substring(1);
 	}
 
-	/*
+	/**
 	 * Redireciona saída padrão e de erro para o arquivo de log informado.
 	 * TODO Utilizar biblioteca de logging permitirá isolar saídas indesejadas de bibliotecas de terceiros,
 	 * bem como definir o nível de log desejado.
@@ -150,7 +150,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.setErr(log);
 	}
 
-	/*
+	/**
 	 * Fecha o arquivo de log, realizando flush automaticamente.
 	 */
 	private void closeLogFile() {
@@ -159,7 +159,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.setErr(err);
 	}
 
-	/*
+	/**
 	 * Imprime ajuda e aborta execução.
 	 */
 	private static void printUsageExit() {
@@ -181,7 +181,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.exit(1);
 	}
 
-	/*
+	/**
 	 * Interpreta parâmetros informados via linha de comando.
 	 */
 	private void takeArgs(String[] args) {
@@ -245,7 +245,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 	}
 
-	/*
+	/**
 	 * Realiza o processamento numa worker thread.
 	 * 
 	 * @see javax.swing.SwingWorker#doInBackground()
@@ -295,7 +295,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		return true;
 	}
 
-	/*
+	/**
 	 * Chamado após processamento para liberar recursos.
 	 * 
 	 * @see javax.swing.SwingWorker#done()
@@ -308,7 +308,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 	volatile boolean done = false, success = false;
 
-	/*
+	/**
 	 * Executa o processamento com janela de progresso.
 	 */
 	public boolean executeWithProgressBar() {
@@ -318,7 +318,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		return executar();
 	}
 
-	/*
+	/**
 	 * Executa o processamento sem janela de progresso.
 	 * Chamado pelo AsAP.
 	 */
@@ -335,7 +335,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 	}
 
-	/*
+	/**
 	 * Entrada principal da aplicação para processamento de evidências
 	 */
 	public static void main(String[] args) {

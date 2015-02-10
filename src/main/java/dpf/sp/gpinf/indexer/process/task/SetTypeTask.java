@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
 import java.util.Properties;
@@ -37,7 +37,7 @@ public class SetTypeTask extends AbstractTask {
 				}
 				ext = ext.substring(1);
 			}
-			evidence.setType(new UnknownFileType(ext));
+			evidence.setType(new GenericFileType(ext));
 		}
 
 	}
