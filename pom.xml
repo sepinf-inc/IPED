@@ -3,22 +3,87 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.3-SNAPSHOT</version>
+    <version>3.3-SNAPSHOT</version>    
+    
     <repositories>
-        <repository>
-            <id>central</id>
-            <name>MAVEN Central</name>
-            <url>http://repo.maven.apache.org/maven2/</url>
-        </repository>
         <repository>
             <id>internal</id>
             <name>Archiva SEPINF</name>
-            <url>http://sepinfserver.dpf.gov.br:9090/archiva/repository/internal/</url>
+            <url>http://10.61.242.12:8081/repository/internal/</url>
         </repository>
     </repositories>
-    
-    <packaging>jar</packaging>
+        
     <dependencies>
+        <!-- INICIO: DEPENDÊNCIAS INTERNAS -->
+        <dependency>
+            <groupId>autopsy</groupId>
+            <artifactId>datamodel</artifactId>
+            <version>1.0.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>sqlserver</groupId>
+            <artifactId>sqlserver-jdbc4</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>oracle</groupId>
+            <artifactId>ojdbc</artifactId>
+            <version>10.2.0.5</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>icepdf</groupId>
+            <artifactId>icepdf-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>icepdf</groupId>
+            <artifactId>icepdf-viewer</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>noa-libre</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>javax-media</groupId>
+            <artifactId>jai-codec</artifactId>
+            <version>1.1.3</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>javax-media</groupId>
+            <artifactId>jai-imageio</artifactId>
+            <version>1.1.3</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>javax-media</groupId>
+            <artifactId>jai-core</artifactId>
+            <version>1.1.3</version>
+            <type>jar</type>
+        </dependency>
+        <!-- INICIO: LIBRE OFFICE 4 -->
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>unoil</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>ridl</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>jurt</artifactId>
+            <version>1.0.4</version>
+        </dependency>
+        <!-- FIM: LIBRE OFFICE 4 -->
+        <!-- FIM DEPENDÊNCIAS INTERNAS -->
+        <!-- INICIO: EXTERNAS -->
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
@@ -32,21 +97,9 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>autopsy</groupId>
-            <artifactId>datamodel</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
             <version>4.9.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>oracle.jdbc</groupId>
-            <artifactId>jdbc</artifactId>
-            <version>10.2.0.5</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -58,7 +111,7 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.9</version>
+            <version>1.10</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -87,42 +140,7 @@
             <groupId>com.github.junrar</groupId>
             <artifactId>junrar</artifactId>
             <version>0.7</version>
-        </dependency>
-        <dependency>
-            <groupId>sqlserver</groupId>
-            <artifactId>sqlserver-jdbc4</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>icepdf</groupId>
-            <artifactId>icepdf-core</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>icepdf</groupId>
-            <artifactId>icepdf-viewer</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>noa-libre</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>unoil</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>ridl</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>jurt</artifactId>
-            <version>1.0.0</version>
-        </dependency>
+        </dependency>        
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
@@ -130,26 +148,171 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>javax-media</groupId>
-            <artifactId>jai-codec</artifactId>
-            <version>1.1.3</version>
-            <type>jar</type>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.8.7</version>
         </dependency>
-        <dependency>
-            <groupId>javax-media</groupId>
-            <artifactId>jai-core</artifactId>
-            <version>1.1.3</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-        	<groupId>org.xerial</groupId>
-        	<artifactId>sqlite-jdbc</artifactId>
-        	<version>3.8.7</version>
-        </dependency>
+        <!-- FIM: EXTERNAS -->
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <configLocation>asap-checker.xml</configLocation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+            </plugin>
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+                <configuration>
+                    <outputEncoding>UTF-8</outputEncoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <showDeprecation>true</showDeprecation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>.</directory>
+                                    <filtering>true</filtering>
+                                    <includes>
+                                        <include>COPYING</include>
+                                        <include>COPYING.LESSER</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <aggregate>true</aggregate>
+                    <linkXRef>true</linkXRef>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jxr-plugin</artifactId>
+                <version>2.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.8</version>
+                <configuration>
+                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                </configuration>                
+            </plugin>
+        </plugins>
+    </reporting>
+    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 </project>
