@@ -704,5 +704,9 @@ public class EvidenceFile implements Serializable {
 	public void setExtraAttribute(String key, Object value) {
 		this.extraAttributes.put(key, value);
 	}
+	
+	public Map<String, Object> getExtraAttributeMap(){
+		return this.extraAttributes;
+	}
 
 }

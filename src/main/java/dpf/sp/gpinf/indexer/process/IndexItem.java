@@ -24,6 +24,7 @@ import gpinf.dev.filetypes.EvidenceFileType;
 import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map.Entry;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -202,6 +203,15 @@ public class IndexItem {
 
 		if (reader != null)
 			doc.add(new Field(CONTENT, reader, contentField));
+		
+		for(Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()){
+			Object eValue = entry.getValue();
+			if(eValue instanceof Date){
+				doc.add(new StoredField(entry.getKey(), df.format((Date)eValue)));
+			}else{
+				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));
+			}
+		}
 
 		return doc;
 	}
