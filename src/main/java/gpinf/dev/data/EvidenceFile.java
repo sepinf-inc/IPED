@@ -512,7 +512,7 @@ public class EvidenceFile implements Serializable {
 	 * OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
 	 * TODO implementar skip para File usando RandomAccessFile
 	 */
-	private InputStream getStream() throws IOException {
+	public InputStream getStream() throws IOException {
 		InputStream stream;
 		if (file != null && !this.isDir)
 			stream = new FileInputStream(file);
