@@ -20,7 +20,7 @@ package dpf.sp.gpinf.indexer.database;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
 import java.sql.Connection;
@@ -222,7 +222,7 @@ public class FTK42Database extends DataSource {
 					evidenceFile.setLength(logicalSize);
 				String fileType = FTK42FileTypes.getTypeDesc(rset.getInt("FILECATEGORY"));
 				if (fileType != null)
-					evidenceFile.setType(new UnknownFileType(fileType)); // Alterado
+					evidenceFile.setType(new GenericFileType(fileType)); // Alterado
 				long createdDate = rset.getLong("CREATIONDATEFT"); // Alterado
 				if (createdDate > 0)
 					evidenceFile.setCreationDate(NtfsTimeConverter.ntfsTimeToDate(createdDate));

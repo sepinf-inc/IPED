@@ -19,7 +19,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.UnknownFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -274,7 +274,7 @@ public class ExportFileTask extends AbstractTask{
 			type = "";
 		if (!type.isEmpty())
 			type = type.substring(1);
-		evidence.setType(new UnknownFileType(type));
+		evidence.setType(new GenericFileType(type));
 
 		String relativePath = IOUtil.getRelativePath(output, outputFile);
 		evidence.setExportedFile(relativePath);

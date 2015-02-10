@@ -7,25 +7,8 @@ import gpinf.dev.data.FileGroup;
 import gpinf.dev.data.PathNode;
 import gpinf.dev.data.Property;
 import gpinf.dev.filetypes.AttachmentFileType;
-import gpinf.dev.filetypes.BitmapFileType;
-import gpinf.dev.filetypes.EmailFileType;
-import gpinf.dev.filetypes.Excel97FileType;
-import gpinf.dev.filetypes.HtmlFileType;
-import gpinf.dev.filetypes.JpegExifFileType;
-import gpinf.dev.filetypes.JpegJfifFileType;
-import gpinf.dev.filetypes.MozillaHistoryFileType;
-import gpinf.dev.filetypes.MsieHistoryFileType;
 import gpinf.dev.filetypes.OriginalEmailFileType;
-import gpinf.dev.filetypes.PlainTextFileType;
-import gpinf.dev.filetypes.PngFileType;
-import gpinf.dev.filetypes.RichTextDocumentFileType;
-import gpinf.dev.filetypes.ShortcutFileType;
-import gpinf.dev.filetypes.StickyNoteFileType;
-import gpinf.dev.filetypes.UnknownFileType;
-import gpinf.dev.filetypes.Word2000DocumentFileType;
-import gpinf.dev.filetypes.Word97DocumentFileType;
-import gpinf.dev.filetypes.WordXpDocumentFileType;
-import gpinf.dev.filetypes.XmlFileType;
+import gpinf.dev.filetypes.GenericFileType;
 import gpinf.util.DateFormatException;
 import gpinf.util.FileUtil;
 import gpinf.util.HtmlUtil;
@@ -428,51 +411,11 @@ public class AsapReportParser extends ReportParser {
 								}
 							}
 						} else if (name.equalsIgnoreCase("Tipo de arquivo")) {
-							// Tratamentos dos diversos tipos de arquivo
-							if (value.equalsIgnoreCase("JPEG/Exif file"))
-								evidenceFile.setType(new JpegExifFileType());
-							else if (value.equalsIgnoreCase("JPEG/JFIF File"))
-								evidenceFile.setType(new JpegJfifFileType());
-							else if (value.equalsIgnoreCase("JPEG File Interchange Format"))
-								evidenceFile.setType(new JpegJfifFileType());
-							else if (value.equalsIgnoreCase("Microsoft Word 97 Document"))
-								evidenceFile.setType(new Word97DocumentFileType());
-							else if (value.equalsIgnoreCase("Microsoft Word 2000 Document"))
-								evidenceFile.setType(new Word2000DocumentFileType());
-							else if (value.equalsIgnoreCase("Microsoft Word XP Document"))
-								evidenceFile.setType(new WordXpDocumentFileType());
-							else if (value.equalsIgnoreCase("Rich Text Format"))
-								evidenceFile.setType(new RichTextDocumentFileType());
-							else if (value.equalsIgnoreCase("Plain Text Document"))
-								evidenceFile.setType(new PlainTextFileType());
-							else if (value.equalsIgnoreCase("PiNG File (Portable Network Graphics)"))
-								evidenceFile.setType(new PngFileType());
-							else if (value.equalsIgnoreCase("Bitmap File"))
-								evidenceFile.setType(new BitmapFileType());
-							else if (value.equalsIgnoreCase("E-mail Message"))
-								evidenceFile.setType(new EmailFileType());
-							else if (value.equalsIgnoreCase("MSIE History File"))
-								evidenceFile.setType(new MsieHistoryFileType());
-							else if (value.equalsIgnoreCase("Netscape History File"))
-								evidenceFile.setType(new MozillaHistoryFileType());
-							else if (value.equalsIgnoreCase("Shortcut File"))
-								evidenceFile.setType(new ShortcutFileType());
-							else if (value.equalsIgnoreCase("Sticky Note"))
-								evidenceFile.setType(new StickyNoteFileType());
-							else if (value.equalsIgnoreCase("Hypertext Document"))
-								evidenceFile.setType(new HtmlFileType());
-							else if (value.equalsIgnoreCase("XML"))
-								evidenceFile.setType(new XmlFileType());
-							else if (value.equalsIgnoreCase("Microsoft Excel 97 Worksheet"))
-								evidenceFile.setType(new Excel97FileType());
-
-							// TODO: Implementar o tratamento para os "outros"
-							// tipos de arquivo.
-							else
-								evidenceFile.setType(new UnknownFileType(value));
+							evidenceFile.setType(new GenericFileType(value));
+							
 						} else {
 							// Tratamento do restante das propriedades
-							evidenceFile.addProperty(new Property(name, value));
+							//evidenceFile.addProperty(new Property(name, value));
 						}
 					} catch (DateFormatException dfe) {
 						throw new ReportFormatException(dfe.getMessage());

@@ -13,7 +13,7 @@ import java.util.List;
  * 
  * @author Wladimir Leite (GPINF/SP)
  */
-public class UnknownFileType extends EvidenceFileType {
+public class GenericFileType extends EvidenceFileType {
 	/** Identificador para serialização. */
 	private static final long serialVersionUID = 17897987897L;
 
@@ -46,7 +46,7 @@ public class UnknownFileType extends EvidenceFileType {
 	 *            Descrição a ser utilizada pélo método de obtenção da
 	 *            descrição.
 	 */
-	public UnknownFileType(String descr) {
+	public GenericFileType(String descr) {
 		this.descr = descr;
 	}
 
@@ -77,7 +77,7 @@ public class UnknownFileType extends EvidenceFileType {
 			// Se houver uma visualização alternativa em PDF utilizar
 			String alt = evidenceFile.getAlternativeFile();
 			if (alt != null && alt.toLowerCase().endsWith(".pdf")) {
-				UnknownFileType ft = (UnknownFileType) evidenceFile.getType();
+				GenericFileType ft = (GenericFileType) evidenceFile.getType();
 				evidenceFile.setViewFile(alt);
 				// ft.setViewType(ViewType.PDF);
 				continue;
@@ -104,7 +104,7 @@ public class UnknownFileType extends EvidenceFileType {
 					}
 				}
 				if (isPlainText) {
-					UnknownFileType ft = (UnknownFileType) evidenceFile.getType();
+					GenericFileType ft = (GenericFileType) evidenceFile.getType();
 					// ft.setViewType(ViewType.TEXT);
 				}
 			} catch (IOException e) {
