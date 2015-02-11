@@ -347,9 +347,11 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			}
 			
 			// pausa contagem de timeout enquanto processa subitem
-			reader.setTimeoutPaused(true);
+			if(reader != null)
+				reader.setTimeoutPaused(true);
 			worker.processNewItem(evidence);
-			reader.setTimeoutPaused(false);
+			if(reader != null)
+				reader.setTimeoutPaused(false);
 
 		} catch (SAXException e) {
 			// TODO Provavelmente PipedReader foi interrompido, interrompemos
@@ -362,7 +364,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 		} catch (Exception e) {
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
-			//e.printStackTrace();
+			e.printStackTrace();
 
 		} finally {
 			tmp.close();

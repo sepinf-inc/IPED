@@ -140,8 +140,8 @@ public class Worker extends Thread {
 	 */
 	public void process(EvidenceFile evidence) {
 		
-		EvidenceFile prevEvidence = this.evidence;
-		this.evidence = evidence;
+		//EvidenceFile prevEvidence = this.evidence;
+		//this.evidence = evidence;
 		
 		try {
 
@@ -167,7 +167,7 @@ public class Worker extends Thread {
 
 		}
 
-		this.evidence = prevEvidence;
+		//this.evidence = prevEvidence;
 
 	}
 	
@@ -216,11 +216,11 @@ public class Worker extends Thread {
 	public void processNewItem(EvidenceFile evidence){
 		caseData.incDiscoveredEvidences(1);
 		// Se não há item na fila, enfileira para outro worker processar
-		if (evidences.size() == 0)
+		//if (evidences.size() == 0)
 			evidences.addFirst(evidence);
 		// caso contrário processa o item no worker atual
-		else
-			process(evidence);
+		//else
+		//	process(evidence);
 	}
 
 	@Override
@@ -231,7 +231,7 @@ public class Worker extends Thread {
 		while (!this.isInterrupted() && exception == null) {
 
 			try {
-				evidence = null;
+				//evidence = null;
 				evidence = evidences.takeFirst();
 				
 				if(!evidence.isQueueEnd())
@@ -239,12 +239,17 @@ public class Worker extends Thread {
 				else{
 					EvidenceFile queueEnd = evidence;
 					evidence = null;
+					//System.out.println(manager.numItensBeingProcessed() + "\t[INFO]\t" + this.getName() + " "+evidences.size());
 					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 0){
 						evidences.addLast(queueEnd);
 						process(queueEnd);
+						//System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " break.");
 						break;
 					}else{
 						evidences.addLast(queueEnd);
+						
+						process(queueEnd);
+						//System.out.println(manager.numItensBeingProcessed() + "\t[INFO]\t" + this.getName() + " continue "+evidences.size());
 						Thread.sleep(1000);
 					}
 				}

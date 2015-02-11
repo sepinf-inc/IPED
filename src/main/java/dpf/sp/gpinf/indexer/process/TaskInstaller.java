@@ -30,7 +30,7 @@ public class TaskInstaller {
 		
 		List<AbstractTask> tasks = worker.tasks;
 	
-                tasks.add(new KFFQueryTask(worker));
+        tasks.add(new KFFQueryTask(worker));
                 
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));

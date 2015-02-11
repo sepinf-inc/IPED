@@ -7,6 +7,8 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
+
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +16,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
 import org.apache.commons.codec.binary.Hex;
 
 
@@ -45,14 +48,23 @@ public class KFFQueryTask extends AbstractTask{
 
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
-        String[] partialHashes = partialMd5Digest(evidence.getStream());       
-        evidence.setExtraAttribute("MD5_512", partialHashes[0]);
-        evidence.setExtraAttribute("MD5_64K", partialHashes[1]);
+    	InputStream in = evidence.getStream();
+    	try{
+    		String[] partialHashes = partialMd5Digest(in);       
+            evidence.setExtraAttribute("MD5_512", partialHashes[0]);
+            evidence.setExtraAttribute("MD5_64K", partialHashes[1]);
+            
+            //System.out.println(evidence.getPath()+ " " + partialHashes[0]);
+            
+    	}finally{
+    		in.close();
+    	}
+        
         listEvidenceFile.add(evidence);
         
-        if ((listEvidenceFile.size()==LIST_SIZE)||(evidence.isQueueEnd())){
+        if ((listEvidenceFile.size()==LIST_SIZE) || (evidence.isQueueEnd())){
             //criar arquivo txt
-        
+       
             //zipar
             //enviar 
             //receber
@@ -67,23 +79,22 @@ public class KFFQueryTask extends AbstractTask{
         
     }
     
-/*
+
     @Override
     protected void sendToNextTask(EvidenceFile evidence) throws Exception {
         
-        if ((listEvidenceFile.size()<LIST_SIZE)&&(!evidence.isQueueEnd())){
+        if ((listEvidenceFile.size()<LIST_SIZE) && (!evidence.isQueueEnd())){
             return;
         }
-        System.out.println("Worker " + worker.getName() + " Lista: " + listEvidenceFile.size());
+        //System.out.println("Worker " + worker.getName() + " Lista: " + listEvidenceFile.size());
         for (EvidenceFile item : listEvidenceFile){
-           // System.out.println("VOU mandar tarefa: " + evidence.getId());
-            super.sendToNextTask(item); //To change body of generated methods, choose Tools | Templates.
+            //System.out.println(worker.getName() + " Enviando item: " + item.getId());
+            super.sendToNextTask(item);
         }
         listEvidenceFile.clear(); 
         
     }
     
-  */  
     
     
     

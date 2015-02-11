@@ -276,7 +276,7 @@ public class Manager {
 				 *  TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
 				 *  não é demasiado grave pois será detectado o problema no log de estatísticas e o usuario sera informado do erro. 
 				 */
-				//if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || || produtor.isAlive())
+				//if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive())
 				if(workers[k].isAlive())
 					someWorkerAlive = true;
 

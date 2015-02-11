@@ -110,13 +110,14 @@ public abstract class AbstractTask {
 		if(!evidence.isToIgnore()){
 			AbstractTask prevTask = worker.runningTask; 
 			worker.runningTask = this;
-			EvidenceFile prevEvidence = worker.evidence;
-			worker.evidence = evidence;
+			//EvidenceFile prevEvidence = worker.evidence;
+			if(!evidence.isQueueEnd())
+				worker.evidence = evidence;
 			
 			processMonitorTimeout(evidence);
 			
 			worker.runningTask = prevTask;
-			worker.evidence = prevEvidence;
+			//worker.evidence = prevEvidence;
 		}
 		
 		sendToNextTask(evidence);
@@ -131,6 +132,7 @@ public abstract class AbstractTask {
 					len = 0L;
 				stats.addVolume(len);
 			}
+			worker.evidence = null;
 		}
 	}
 	
