@@ -110,8 +110,13 @@ public abstract class AbstractTask {
 		if(!evidence.isToIgnore()){
 			AbstractTask prevTask = worker.runningTask; 
 			worker.runningTask = this;
+			EvidenceFile prevEvidence = worker.evidence;
+			worker.evidence = evidence;
+			
 			processMonitorTimeout(evidence);
+			
 			worker.runningTask = prevTask;
+			worker.evidence = prevEvidence;
 		}
 		
 		sendToNextTask(evidence);

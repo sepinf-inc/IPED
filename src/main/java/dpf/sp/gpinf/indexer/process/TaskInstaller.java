@@ -11,6 +11,7 @@ import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.process.task.KFFQueryTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
 
@@ -29,6 +30,8 @@ public class TaskInstaller {
 		
 		List<AbstractTask> tasks = worker.tasks;
 	
+                tasks.add(new KFFQueryTask(worker));
+                
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));
 		tasks.add(new SetCategoryTask(worker));
