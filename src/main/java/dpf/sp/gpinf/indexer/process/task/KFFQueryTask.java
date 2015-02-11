@@ -101,27 +101,24 @@ public class KFFQueryTask extends AbstractTask{
     
     
     
-    
-    
-    
     private String[] partialMd5Digest(final InputStream is) throws IOException {
         digestMD5_512.reset();
         digestMD5_64k.reset();
              
-        byte[] buffer = new byte[512];
+        byte[] buffer = new byte[65536];
         int read = 0;               
-        long lsize = 0L;        
-        while ((read = is.read(buffer)) > 0){              
-            lsize+=read;
-            if (lsize<=512L){
-               digestMD5_512.update(buffer,0,read);                                       
-            }
-            if (lsize<=65536L){  
-                digestMD5_64k.update(buffer,0, read);
-            }else{
-                break;
-            }                    
+        int lsize=0;
+        while(read!=-1&&(lsize+=read)<buffer.length){
+            read = is.read(buffer, lsize, buffer.length-lsize);
         }
+        if (lsize<512){
+            digestMD5_512.update(buffer,0,lsize);            
+        }else{
+            digestMD5_512.update(buffer,0,512);            
+        }        
+        digestMD5_64k.update(buffer,0,lsize);
+        
+        
         byte[] d_512 = digestMD5_512.digest();
         byte[] d_64k = digestMD5_64k.digest();
         
@@ -129,6 +126,8 @@ public class KFFQueryTask extends AbstractTask{
         String md5_64k= new String(Hex.encodeHex(d_64k));                
         
         return new String[]{ md5_512, md5_64k};
-    }
+    }    
+    
+    
     
 }
