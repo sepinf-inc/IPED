@@ -237,14 +237,14 @@ public class Worker extends Thread {
 				if(!evidence.isQueueEnd())
 					process(evidence);
 				else{
-					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 1){
-						process(evidence);
-						evidences.addLast(evidence);
-						evidence = null;
+					EvidenceFile queueEnd = evidence;
+					evidence = null;
+					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 0){
+						evidences.addLast(queueEnd);
+						process(queueEnd);
 						break;
 					}else{
-						evidences.addLast(evidence);
-						evidence = null;
+						evidences.addLast(queueEnd);
 						Thread.sleep(1000);
 					}
 				}
