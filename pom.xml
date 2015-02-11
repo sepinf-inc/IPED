@@ -43,11 +43,6 @@
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
             <groupId>javax-media</groupId>
             <artifactId>jai-codec</artifactId>
             <version>1.1.3</version>
@@ -68,18 +63,33 @@
         <!-- INICIO: LIBRE OFFICE 4 -->
         <dependency>
             <groupId>libre-office</groupId>
+            <artifactId>noa-libre</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>libreoffice</artifactId>
+            <version>1.0.4</version>
+            <type>zip</type>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
             <artifactId>unoil</artifactId>
             <version>1.0.4</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>ridl</artifactId>
             <version>1.0.4</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>jurt</artifactId>
             <version>1.0.4</version>
+            <scope>provided</scope>
         </dependency>
         <!-- FIM: LIBRE OFFICE 4 -->
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
@@ -157,6 +167,94 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                    <execution>
+                        <id>unpack-libreoffice-libs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>libre-office-lib</artifactId>
+                                    <version>1.0.4</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <destFileName>libre-office-lib.zip</destFileName>
+                                    <!--<includes>**/*.class,**/*.xml</includes>
+                                    <excludes>**/*test.class</excludes>-->
+                                </artifactItem>
+                            </artifactItems>
+                            <!--<includes>**/*.java</includes>
+                            <excludes>**/*.properties</excludes>
+                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>-->
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-sleuthkit-dlls</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>autopsy</groupId>
+                                    <artifactId>sleuth</artifactId>
+                                    <version>1.0.0</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <destFileName>sleuthkit.zip</destFileName>
+                                    <!--<includes>**/*.class,**/*.xml</includes>
+                                    <excludes>**/*test.class</excludes>-->
+                                </artifactItem>
+                            </artifactItems>
+                            <!--<includes>**/*.java</includes>
+                            <excludes>**/*.properties</excludes>
+                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>-->
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-graphicsmagick</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>graphicsmagick</groupId>
+                                    <artifactId>graphicsmagick-zip</artifactId>
+                                    <version>1.0.0</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <destFileName>graphicsmagick.zip</destFileName>
+                                    <!--<includes>**/*.class,**/*.xml</includes>
+                                    <excludes>**/*test.class</excludes>-->
+                                </artifactItem>
+                            </artifactItems>
+                            <!--<includes>**/*.java</includes>
+                            <excludes>**/*.properties</excludes>
+                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>-->
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>
@@ -182,7 +280,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.13</version>
                 <configuration>
-                    <configLocation>asap-checker.xml</configLocation>
+                    <configLocation>${basedir}/resources/asap-checker.xml</configLocation>
                 </configuration>
             </plugin>
             <plugin>
@@ -190,12 +288,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -218,15 +310,49 @@
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.5</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>create-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                    <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>mimetypes-jar</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <classesDirectory>${basedir}/resources/tika/</classesDirectory>
+                            <outputDirectory>${basedir}/target/conf</outputDirectory>
+                            <finalName>CustomSignatures</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -244,6 +370,25 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeTypes>jar</includeTypes>
+                            <excludeTypes>zip</excludeTypes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-libreoffice</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <type>zip</type>
+                            <outputDirectory>${project.build.directory}/lib/libreoffice</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <stripVersion>true</stripVersion>
+                            <includeTypes>zip</includeTypes>
+                            <excludeTypes>jar</excludeTypes>
                         </configuration>
                     </execution>
                 </executions>
@@ -272,6 +417,40 @@
                                         <include>COPYING</include>
                                         <include>COPYING.LESSER</include>
                                     </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY CONFIG -->
+                    <execution>
+                        <id>copy-config</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${basedir}/resources/config</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY CONFIG -->
+                    <execution>
+                        <id>copy-sleuth</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/lib/sleuth</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${basedir}/resources/sleuth</directory>
                                 </resource>
                             </resources>
                         </configuration>
