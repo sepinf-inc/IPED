@@ -295,9 +295,7 @@ public class Manager {
 	public int numItensBeingProcessed(){
 		int num = 0;
 		for (int k = 0; k < workers.length; k++)
-			if(workers[k].evidence != null)
-				num++;
-		
+			num += workers[k].itensBeingProcessed;
 		return num;
 	}
 

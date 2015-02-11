@@ -107,17 +107,21 @@ public abstract class AbstractTask {
 	 * @throws Exception Caso ocorra erro inesperado.
 	 */
 	public final void processAndSendToNextTask(EvidenceFile evidence) throws Exception{
+		
+		if(this == worker.firstTask && !evidence.isQueueEnd())
+			worker.itensBeingProcessed++;
+		
 		if(!evidence.isToIgnore()){
 			AbstractTask prevTask = worker.runningTask; 
 			worker.runningTask = this;
-			//EvidenceFile prevEvidence = worker.evidence;
+			EvidenceFile prevEvidence = worker.evidence;
 			if(!evidence.isQueueEnd())
 				worker.evidence = evidence;
 			
 			processMonitorTimeout(evidence);
 			
 			worker.runningTask = prevTask;
-			//worker.evidence = prevEvidence;
+			worker.evidence = prevEvidence;
 		}
 		
 		sendToNextTask(evidence);
@@ -125,6 +129,7 @@ public abstract class AbstractTask {
 		// ESTATISTICAS
 		if((nextTask == null) && !evidence.isQueueEnd()){
 			stats.incProcessed();
+			
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
 				stats.incActiveProcessed();
 				Long len = evidence.getLength();
@@ -132,7 +137,7 @@ public abstract class AbstractTask {
 					len = 0L;
 				stats.addVolume(len);
 			}
-			worker.evidence = null;
+			worker.itensBeingProcessed--;
 		}
 	}
 	

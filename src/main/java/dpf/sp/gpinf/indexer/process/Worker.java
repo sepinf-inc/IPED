@@ -65,7 +65,8 @@ public class Worker extends Thread {
 	
 	public volatile AbstractTask runningTask;
 	public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
-	AbstractTask firstTask;
+	public AbstractTask firstTask;
+	public volatile int itensBeingProcessed = 0;
 
 	public Manager manager;
 	public Statistics stats;
@@ -231,7 +232,7 @@ public class Worker extends Thread {
 		while (!this.isInterrupted() && exception == null) {
 
 			try {
-				//evidence = null;
+				evidence = null;
 				evidence = evidences.takeFirst();
 				
 				if(!evidence.isQueueEnd())
@@ -239,15 +240,12 @@ public class Worker extends Thread {
 				else{
 					EvidenceFile queueEnd = evidence;
 					evidence = null;
-					//System.out.println(manager.numItensBeingProcessed() + "\t[INFO]\t" + this.getName() + " "+evidences.size());
 					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 0){
 						evidences.addLast(queueEnd);
 						process(queueEnd);
-						//System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " break.");
 						break;
 					}else{
 						evidences.addLast(queueEnd);
-						
 						process(queueEnd);
 						//System.out.println(manager.numItensBeingProcessed() + "\t[INFO]\t" + this.getName() + " continue "+evidences.size());
 						Thread.sleep(1000);
