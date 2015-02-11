@@ -5,11 +5,27 @@
     <artifactId>iped</artifactId>
     <version>3.3-SNAPSHOT</version>    
     
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <resources.dir>${basedir}/resources</resources.dir>
+        <release.dir>${project.build.directory}/release</release.dir>  
+        <lib.dir>${release.dir}/lib</lib.dir>
+        <tools.dir>${release.dir}/tools</tools.dir>
+        <conf.dir>${release.dir}/conf</conf.dir>
+    </properties>
+    
     <repositories>
         <repository>
             <id>internal</id>
-            <name>Archiva SEPINF</name>
+            <name>Archiva SEPINF - Internal</name>
             <url>http://10.61.242.12:8081/repository/internal/</url>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <name>Archiva SEPINF - Snapshot</name>
+            <url>http://10.61.242.12:8081/repository/snapshots/</url>
         </repository>
     </repositories>
         
@@ -25,6 +41,7 @@
             <groupId>sqlserver</groupId>
             <artifactId>sqlserver-jdbc4</artifactId>
             <version>1.0.0</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>oracle</groupId>
@@ -36,11 +53,13 @@
             <groupId>icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>1.0.0</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
             <version>1.0.0</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>javax-media</groupId>
@@ -65,30 +84,27 @@
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
             <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>libreoffice</artifactId>
-            <version>1.0.4</version>
-            <type>zip</type>
-            <scope>provided</scope>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>unoil</artifactId>
             <version>1.0.4</version>
+            <type>jar</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>ridl</artifactId>
             <version>1.0.4</version>
+            <type>jar</type>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>jurt</artifactId>
             <version>1.0.4</version>
+            <type>jar</type>
             <scope>provided</scope>
         </dependency>
         <!-- FIM: LIBRE OFFICE 4 -->
@@ -140,16 +156,19 @@
             <groupId>org.im4java</groupId>
             <artifactId>im4java</artifactId>
             <version>1.4.0</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.healthmarketscience.jackcess</groupId>
             <artifactId>jackcess</artifactId>
             <version>2.0.8</version>
+            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.github.junrar</groupId>
             <artifactId>junrar</artifactId>
             <version>0.7</version>
+            <type>jar</type>
         </dependency>        
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -161,11 +180,17 @@
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.8.7</version>
+            <type>jar</type>
         </dependency>
         <!-- FIM: EXTERNAS -->
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -185,17 +210,10 @@
                                     <version>1.0.4</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <outputDirectory>${lib.dir}</outputDirectory>
                                     <destFileName>libre-office-lib.zip</destFileName>
-                                    <!--<includes>**/*.class,**/*.xml</includes>
-                                    <excludes>**/*test.class</excludes>-->
                                 </artifactItem>
                             </artifactItems>
-                            <!--<includes>**/*.java</includes>
-                            <excludes>**/*.properties</excludes>
-                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -212,17 +230,10 @@
                                     <version>1.0.0</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
                                     <destFileName>sleuthkit.zip</destFileName>
-                                    <!--<includes>**/*.class,**/*.xml</includes>
-                                    <excludes>**/*test.class</excludes>-->
                                 </artifactItem>
                             </artifactItems>
-                            <!--<includes>**/*.java</includes>
-                            <excludes>**/*.properties</excludes>
-                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>-->
                         </configuration>
                     </execution>
                     <execution>
@@ -239,52 +250,112 @@
                                     <version>1.0.0</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
                                     <destFileName>graphicsmagick.zip</destFileName>
-                                    <!--<includes>**/*.class,**/*.xml</includes>
-                                    <excludes>**/*test.class</excludes>-->
                                 </artifactItem>
                             </artifactItems>
-                            <!--<includes>**/*.java</includes>
-                            <excludes>**/*.properties</excludes>
-                            <outputDirectory>${project.build.directory}/wars</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-tesseract</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>tesseract</groupId>
+                                    <artifactId>tesseract-zip</artifactId>
+                                    <version>1.0.0</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <destFileName>graphicsmagick.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-libreoffice</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>libreoffice</artifactId>
+                                    <version>1.0.4</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <destFileName>libreoffice.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-nativeview</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>nativeview-dll</artifactId>
+                                    <version>1.0.0</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-noalibre-lib</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>noalibre-lib</artifactId>
+                                    <version>1.0.4</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${lib.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${lib.dir}</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>-->
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <excludeScope>provided</excludeScope>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.10.1</version>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.13</version>
-                <configuration>
-                    <configLocation>${basedir}/resources/asap-checker.xml</configLocation>
-                </configuration>
-            </plugin>
-            <plugin>
-                <inherited>true</inherited>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
@@ -313,17 +384,26 @@
                 <executions>
                     <execution>
                         <id>create-jar</id>
-                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <archive>
+                            <excludes>
+                                <exclude>*.netbeans_automatic_build*</exclude>
+                            </excludes>
+                            <finalName>indexer</finalName>
+                            <outputDirectory>${release.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>                                
+                                <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
                                     <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <Build-By>MACEE</Build-By>
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -334,8 +414,8 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <classesDirectory>${basedir}/resources/tika/</classesDirectory>
-                            <outputDirectory>${basedir}/target/conf</outputDirectory>
+                            <classesDirectory>${resources.dir}/tika/</classesDirectory>
+                            <outputDirectory>${conf.dir}</outputDirectory>
                             <finalName>CustomSignatures</finalName>
                         </configuration>
                     </execution>
@@ -351,44 +431,9 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
                         <configuration>
-                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeTypes>jar</includeTypes>
-                            <excludeTypes>zip</excludeTypes>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-libreoffice</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <type>zip</type>
-                            <outputDirectory>${project.build.directory}/lib/libreoffice</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <stripVersion>true</stripVersion>
-                            <includeTypes>zip</includeTypes>
-                            <excludeTypes>jar</excludeTypes>
+                            <outputDirectory>${release.dir}</outputDirectory>
+                            <finalName>indexer</finalName>
                         </configuration>
                     </execution>
                 </executions>
@@ -401,6 +446,7 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
                 <executions>
+                    <!-- COPY LICENSE/README/RELEASE NOTES -->
                     <execution>
                         <id>copy-resources</id>
                         <phase>validate</phase>
@@ -408,15 +454,11 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <outputDirectory>${release.dir}</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>.</directory>
-                                    <filtering>true</filtering>
-                                    <includes>
-                                        <include>COPYING</include>
-                                        <include>COPYING.LESSER</include>
-                                    </includes>
+                                    <directory>${resources.dir}/root</directory>
+                                    <filtering>false</filtering>
                                 </resource>
                             </resources>
                         </configuration>
@@ -429,28 +471,11 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <outputDirectory>${release.dir}</outputDirectory>
                             <resources>
                                 <resource>
                                     <filtering>false</filtering>
-                                    <directory>${basedir}/resources/config</directory>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <!-- COPY CONFIG -->
-                    <execution>
-                        <id>copy-sleuth</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/target/lib/sleuth</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <filtering>false</filtering>
-                                    <directory>${basedir}/resources/sleuth</directory>
+                                    <directory>${resources.dir}/config</directory>
                                 </resource>
                             </resources>
                         </configuration>
@@ -485,13 +510,27 @@
                     <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
                 </configuration>                
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.13</version>
+                <configuration>
+                    <configLocation>${resources.dir}/checkstyle/asap-checker.xml</configLocation>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.1</version>
+                <configuration>
+                    <failOnError>false</failOnError>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
         </plugins>
     </reporting>
-    
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
 </project>

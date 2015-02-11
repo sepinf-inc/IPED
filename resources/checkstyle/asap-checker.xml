@@ -239,9 +239,5 @@
     <property name="onCommentFormat" value="END GENERATED CODE"/>
 </module>
 
-<module name="SuppressionFilter">
-    <property name="file" value="suppressions.xml"/>
-</module>
-
 </module>
 
