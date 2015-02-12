@@ -74,7 +74,7 @@ public class DuplicateTask extends AbstractTask{
 			worker.caseData.getObjectMap().put(HASH_MAP, hashMap);
 			
 			File indexDir = new File(worker.output, "index");
-			if(indexDir.exists()){
+			if(indexDir.exists() && indexDir.list().length > 10){
 				IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 				for (int i = 0; i < reader.maxDoc(); i++) {
 					Document doc = reader.document(i);
