@@ -214,7 +214,7 @@ public class IndexTask extends AbstractTask{
 		textSizes = (List<IdLenPair>) caseData.getObjectMap().get(TEXT_SIZES);
 		if(textSizes == null){
 			textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
-			worker.caseData.getObjectMap().put(TEXT_SIZES, textSizes);
+			caseData.getObjectMap().put(TEXT_SIZES, textSizes);
 			
 			File prevFile = new File(output, "data/texts.size");
 			if(prevFile.exists()){
@@ -239,7 +239,7 @@ public class IndexTask extends AbstractTask{
 		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
 		if(splitedIds == null){
 			splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
-			worker.caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
+			caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
 			
 			File prevFile = new File(output, "data/splits.ids");
 			if(prevFile.exists()){
@@ -260,20 +260,22 @@ public class IndexTask extends AbstractTask{
 	@Override
 	public void finish() throws Exception {
 		
+		textSizes = (List<IdLenPair>) caseData.getObjectMap().get(TEXT_SIZES);
 		if(textSizes != null)
 			salvarTamanhoTextosExtraidos();
-		textSizes = null;
+		caseData.getObjectMap().remove(TEXT_SIZES);
 		
+		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
 		if(splitedIds != null)
 			salvarDocsFragmentados();
-		splitedIds = null;
+		caseData.getObjectMap().remove(SPLITED_IDS);
 		
 	}
 	
 	private void salvarTamanhoTextosExtraidos() throws Exception {
 
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraÃ­dos...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraÃ­dos...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraídos...");
 
 		int[] textSizesArray = new int[stats.getLastId() + 1];
 
@@ -297,7 +299,7 @@ public class IndexTask extends AbstractTask{
 		for (int i = 0; i < reader.maxDoc(); i++) {
 			if (Thread.interrupted()) {
 				reader.close();
-				throw new InterruptedException("IndexaÃ§Ã£o cancelada!");
+				throw new InterruptedException("Indexação cancelada!");
 			}
 			if (liveDocs != null && !liveDocs.get(i))
 				continue;
