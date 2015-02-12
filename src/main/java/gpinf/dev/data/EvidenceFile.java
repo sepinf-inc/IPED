@@ -25,6 +25,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.LimitedInputStream;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -36,7 +37,7 @@ import dpf.sp.gpinf.indexer.util.LimitedInputStream;
  * 
  * @author Wladimir Leite (GPINF/SP)
  */
-public class EvidenceFile implements Serializable {
+public class EvidenceFile implements Serializable, StreamSource {
 	/** Identificador utilizado para serialização da classe. */
 	private static final long serialVersionUID = 98653214753695125L;
 

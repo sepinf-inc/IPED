@@ -107,6 +107,16 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+        	<groupId>iped</groupId>
+        	<artifactId>iped-carver</artifactId>
+        	<version>3.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+        	<groupId>gpinf.iped</groupId>
+    		<artifactId>iped-parsers-impl</artifactId>
+    		<version>3.3-SNAPSHOT</version>
+        </dependency>
         <!-- FIM: LIBRE OFFICE 4 -->
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->

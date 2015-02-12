@@ -30,23 +30,29 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.IOUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaMetadataKeys;
+import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.search.ProgressDialog;
+import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
+/**
+ * 
+ * Classe para descompactar o aplicativo LibreOffice
+ *
+ */
 public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExtractor {
 
+	private Parser parser = new AutoDetectParser();
 	private File output, input;
 	private CancelableWorker worker;
 	private ProgressDialog progressMonitor;
-	private int progress = 0, numSubitens = /* 9165; */6419;// TODO obter número
-															// de itens
-															// automaticamente
+	private int progress = 0, numSubitens = 6419;// TODO obter número de itens automaticamente
 	private volatile boolean completed = false;
 
 	public LOExtractor(String input, String output) {
@@ -55,21 +61,21 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 		this.worker = this;
 	}
 
-	public boolean decompressLO(Parser parser) {
+	public boolean decompressLO() {
 
 		try {
 			if (output.exists()) {
-				if (IOUtil.countSubFiles(output) >= numSubitens)
+				if (Util.countSubFiles(output) >= numSubitens)
 					return true;
 				else
-					IOUtil.deletarDiretorio(output);
+					Util.deletarDiretorio(output);
 			}
 
 			if (input.exists()) {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						progressMonitor = new ProgressDialog(App.get(), worker);
+						progressMonitor = new ProgressDialog(null, worker);
 						progressMonitor.setMaximum(numSubitens);
 						progressMonitor.setNote("Descompactando LibreOffice...");
 					}
@@ -77,8 +83,6 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 
 				ParseContext context = new ParseContext();
 				context.set(EmbeddedDocumentExtractor.class, this);
-				IndexerContext indexerContext = new IndexerContext(0, null, "");
-				context.set(IndexerContext.class, indexerContext);
 				parser.parse(new FileInputStream(input), new ToTextContentHandler(), new Metadata(), context);
 
 				if (!progressMonitor.isCanceled())
@@ -87,7 +91,7 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 				if (isCompleted())
 					return true;
 				else
-					IOUtil.deletarDiretorio(output);
+					Util.deletarDiretorio(output);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

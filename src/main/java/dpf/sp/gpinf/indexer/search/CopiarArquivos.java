@@ -33,7 +33,7 @@ import javax.swing.SwingWorker;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -74,26 +74,26 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 				}
 
 				Document doc = App.get().searcher.doc(docId);
-				String dstName = IOUtil.getValidFilename(doc.get(IndexItem.NAME));
+				String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
 				String export = doc.get(IndexItem.EXPORT);
 
 				InputStream in;
 				if (export != null && !export.isEmpty()) {
-					File src = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
+					File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
 					if(doc.get(IndexItem.OFFSET) == null)
 						dstName = addExtension(src.getName(), dstName);
-					in = IOUtil.getStream(src, doc);
+					in = Util.getStream(src, doc);
 				} else
-					in = IOUtil.getSleuthStream(App.get().sleuthCase, doc);
+					in = Util.getSleuthStream(App.get().sleuthCase, doc);
 
 				File dst = new File(subdir, dstName);
 				int num = 1;
 				while (dst.exists())
-					dst = new File(subdir, IOUtil.concat(dstName, num++));
+					dst = new File(subdir, Util.concat(dstName, num++));
 
 				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
 
-				IOUtil.copiaArquivo(in, out);
+				Util.copiaArquivo(in, out);
 
 				in.close();
 				out.close();

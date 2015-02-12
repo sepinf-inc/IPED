@@ -69,7 +69,7 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewer;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 import dpf.sp.gpinf.indexer.search.viewer.TextViewer;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 public class App extends JFrame implements WindowListener {
@@ -186,7 +186,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "D:/teste2/indexador/lib/search.jar";
+			codePath = "D:/teste2/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 			if (codePath.charAt(0) == '/' && codePath.charAt(2) == ':')
@@ -247,7 +247,7 @@ public class App extends JFrame implements WindowListener {
 		}
 
 		try {
-			palavrasChave = IOUtil.loadKeywords(codePath + "/../palavras-chave.txt", "UTF-8");
+			palavrasChave = Util.loadKeywords(codePath + "/../palavras-chave.txt", "UTF-8");
 		} catch (IOException e) {
 			palavrasChave = new ArrayList<String>();
 		}
@@ -269,7 +269,7 @@ public class App extends JFrame implements WindowListener {
 		// checkBox.setEnabled(false);
 
 		try {
-			categorias = IOUtil.loadKeywords(codePath + "/../categorias.txt", "UTF-8");
+			categorias = Util.loadKeywords(codePath + "/../categorias.txt", "UTF-8");
 		} catch (IOException e) {
 			categorias = new ArrayList<String>();
 		}

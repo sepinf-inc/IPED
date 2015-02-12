@@ -29,7 +29,7 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
 
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
 
@@ -49,7 +49,7 @@ public class TextHighlighter {
 			fragmentNumber += text.length() / fragmentSize;
 		} else
 			fragmenter = new NullFragmenter();
-		Encoder encoder = new SimpleHTMLEncoder();
+		Encoder encoder = new LuceneSimpleHTMLEncoder();
 		// Encoder encoder = new DefaultEncoder();
 		Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
 		highlighter.setTextFragmenter(fragmenter);

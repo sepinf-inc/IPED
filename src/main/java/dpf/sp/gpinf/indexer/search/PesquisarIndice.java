@@ -53,6 +53,7 @@ import org.apache.lucene.store.FSDirectory;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 

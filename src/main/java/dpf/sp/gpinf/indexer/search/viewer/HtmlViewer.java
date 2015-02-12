@@ -42,7 +42,7 @@ import org.w3c.dom.Node;
 
 import com.sun.javafx.application.PlatformImpl;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class HtmlViewer extends AbstractViewer {
 
@@ -115,7 +115,7 @@ public class HtmlViewer extends AbstractViewer {
 								try {
 									tmpFile = File.createTempFile("indexador", ".html");
 									tmpFile.deleteOnExit();
-									IOUtil.copiaArquivo(file, tmpFile);
+									Util.copiaArquivo(file, tmpFile);
 									file = tmpFile;
 								} catch (IOException e) {
 									e.printStackTrace();

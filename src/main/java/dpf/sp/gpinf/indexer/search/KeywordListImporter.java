@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class KeywordListImporter extends CancelableWorker{
 	
@@ -19,7 +20,7 @@ public class KeywordListImporter extends CancelableWorker{
 		
 		
 		try {
-			keywords = IOUtil.loadKeywords(file.getAbsolutePath(), Charset.defaultCharset().displayName());
+			keywords = Util.loadKeywords(file.getAbsolutePath(), Charset.defaultCharset().displayName());
 			
 			progress = new ProgressDialog(App.get(), this, false);
 			progress.setMaximum(keywords.size());

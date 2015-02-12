@@ -27,7 +27,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class FileProcessor extends CancelableWorker<Void, Void> {
 
@@ -100,8 +100,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		File file = null;
 		String export = doc.get(IndexItem.EXPORT);
 		if (export != null && !export.isEmpty()){
-			file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
-			file = IOUtil.getFile(file, doc);
+			file = Util.getRelativeFile(App.get().codePath + "/../..", export);
+			file = Util.getFile(file, doc);
 			if(file.isDirectory()){
 				if(dirFile == null)
 					try {
@@ -115,7 +115,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			if (doc.get(IndexItem.LENGTH).isEmpty() || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
 				App.get().compositeViewer.clear();
 
-			file = IOUtil.extractSleuthFile(App.get().sleuthCase, doc);
+			file = Util.extractSleuthFile(App.get().sleuthCase, doc);
 
 			final File fileToDelete = lastFile;
 			if (fileToDelete != null)

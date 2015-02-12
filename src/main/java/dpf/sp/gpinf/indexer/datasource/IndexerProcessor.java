@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
@@ -78,7 +78,7 @@ public class IndexerProcessor {
 		ExpandContainerTask.expandContainers = false;
 		CarveTask.enableCarving = false;
 
-		Marcadores state = (Marcadores) IOUtil.readObject(file.getAbsolutePath());
+		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
 		File indexDir = state.getIndexDir().getCanonicalFile();
 		String basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
 		String dbPath = basePath + File.separator + SleuthkitProcessor.DB_NAME;
@@ -156,7 +156,7 @@ public class IndexerProcessor {
 
 			value = doc.get(IndexItem.EXPORT);
 			if (value != null && !value.isEmpty())
-				evidence.setFile(IOUtil.getRelativeFile(basePath, value));
+				evidence.setFile(Util.getRelativeFile(basePath, value));
 
 			else {
 				value = doc.get(IndexItem.SLEUTHID);

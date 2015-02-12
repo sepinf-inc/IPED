@@ -20,7 +20,7 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.util.Comparator;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -46,7 +46,7 @@ public class RowComparator implements Comparator<Integer> {
 		order[loadedCol[1]] = null;
 		loadedCol[1] = loadedCol[0];
 		try {
-			order[col] = (int[]) IOUtil.readObject(App.get().codePath + "/../data/" + fields[col - 4] + ".sort");
+			order[col] = (int[]) Util.readObject(App.get().codePath + "/../data/" + fields[col - 4] + ".sort");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

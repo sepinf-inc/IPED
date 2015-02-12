@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
@@ -69,7 +69,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			//Policy.setPolicy(new BlockInternetPolicy());
 			System.setSecurityManager(new AppSecurityManager());
 
-			IOUtil.readFile(new File(App.get().codePath + "/../lib/" + Versao.TIKA_VERSION));
+			//IOUtil.readFile(new File(App.get().codePath + "/../lib/" + Versao.TIKA_VERSION));
 
 			inicializar(App.get().codePath + "/../index");
 
@@ -87,8 +87,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			OCRParser.EXECTESS = false;
 
 
-			App.get().textSizes = (int[]) IOUtil.readObject(App.get().codePath + "/../data/texts.size");
-			App.get().ids = (int[]) IOUtil.readObject(App.get().codePath + "/../data/ids.map");
+			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
+			App.get().ids = (int[]) Util.readObject(App.get().codePath + "/../data/ids.map");
 			App.get().lastId = App.get().textSizes.length - 1;
 
 			HashSet<Integer> splitedIds = new HashSet<Integer>();
@@ -183,9 +183,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();// new
 													// StandardASCIIAnalyzer(Versao.current);
-			App.get().splitedDocs = (HashMap<Integer, Integer>) IOUtil.readObject(index + "/../data/splits.ids");
+			App.get().splitedDocs = (HashMap<Integer, Integer>) Util.readObject(index + "/../data/splits.ids");
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
-				App.get().viewToRawMap = (VersionsMap) IOUtil.readObject(index + "/../data/alternativeToOriginals.ids");
+				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
 			App.get().marcadores = new Marcadores(index + "/..");
 
 			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);

@@ -38,7 +38,7 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Responsável por extrair subitens de containers.
@@ -149,7 +149,7 @@ public class ExportFileTask extends AbstractTask{
 			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao extrair " + evidence.getPath() + "\t\t" + e.toString());
 
 		} finally {
-			IOUtil.closeQuietly(is);
+			Util.closeQuietly(is);
 		}
 	}
 	
@@ -213,7 +213,7 @@ public class ExportFileTask extends AbstractTask{
 	private void changeTargetFile(EvidenceFile evidence, File file) {
 		String relativePath;
 		try {
-			relativePath = IOUtil.getRelativePath(output, file);
+			relativePath = Util.getRelativePath(output, file);
 			evidence.setExportedFile(relativePath);
 			evidence.setFile(file);
 		} catch (IOException e) {
@@ -225,7 +225,7 @@ public class ExportFileTask extends AbstractTask{
 
 		String ext = new SetTypeTask(worker).getExtBySig(evidence);
 		String type = ext;
-		ext = IOUtil.getValidFilename(ext);
+		ext = Util.getValidFilename(ext);
 		if (ext.equals("."))
 			ext = "";
 
@@ -256,7 +256,7 @@ public class ExportFileTask extends AbstractTask{
 				try {
 					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
 					BufferedInputStream bis = new BufferedInputStream(inputStream);
-					IOUtil.copiaArquivo(bis, bos);
+					Util.copiaArquivo(bis, bos);
 
 				} catch (IOException e) {
 					//e.printStackTrace();
@@ -276,7 +276,7 @@ public class ExportFileTask extends AbstractTask{
 			type = type.substring(1);
 		evidence.setType(new GenericFileType(type));
 
-		String relativePath = IOUtil.getRelativePath(output, outputFile);
+		String relativePath = Util.getRelativePath(output, outputFile);
 		evidence.setExportedFile(relativePath);
 		evidence.setFile(outputFile);
 		if (evidence.isSubItem())

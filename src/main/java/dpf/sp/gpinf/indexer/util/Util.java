@@ -53,9 +53,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.search.ProgressDialog;
 
-public class IOUtil {
+public class Util {
 	
 	public static void closeQuietly(InputStream in){
 		try {
@@ -478,7 +477,7 @@ public class IOUtil {
 		if (file.canWrite()) {
 			File tmp = File.createTempFile("tmp_", file.getName());
 			tmp.deleteOnExit();
-			IOUtil.copiaArquivo(file, tmp);
+			Util.copiaArquivo(file, tmp);
 			file = tmp;
 		}
 		return file;
@@ -492,7 +491,7 @@ public class IOUtil {
 			long len = Long.parseLong(lenS);
 			String ext = doc.get("tipo");
 			if (!ext.isEmpty())
-				ext = "." + IOUtil.getValidFilename(ext);
+				ext = "." + Util.getValidFilename(ext);
 			try {
 				return getSubFile(file, offset, len, ext);
 			} catch (IOException e) {
@@ -518,7 +517,7 @@ public class IOUtil {
 		tmp.deleteOnExit();
 		InputStream in = getSubStream(file, offset, len);
 		BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
-		IOUtil.copiaArquivo(in, out);
+		Util.copiaArquivo(in, out);
 		in.close();
 		out.close();
 		return tmp;
@@ -587,7 +586,7 @@ public class IOUtil {
 				try {
 					String ext = doc.get("tipo");
 					if (!ext.isEmpty())
-						ext = "." + IOUtil.getValidFilename(ext);
+						ext = "." + Util.getValidFilename(ext);
 					file = File.createTempFile("indexador", ext);
 					file.deleteOnExit();
 

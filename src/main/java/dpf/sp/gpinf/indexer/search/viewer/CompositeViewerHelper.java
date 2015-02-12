@@ -163,8 +163,8 @@ public class CompositeViewerHelper {
 					if (result == JOptionPane.YES_OPTION) {
 						if (systemLO == null) {
 							LOExtractor extractor = new LOExtractor(compressedLO, pathLO);
-							useLO = extractor.decompressLO((Parser) App.get().autoParser);
-							loadJarDir(new File(App.get().codePath + "/../lib/libLO4"));
+							useLO = extractor.decompressLO();
+							loadJarDir(new File(App.get().codePath + "/libLO4"));
 						} else
 							useLO = true;
 					}

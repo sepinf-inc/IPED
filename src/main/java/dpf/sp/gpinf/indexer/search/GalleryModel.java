@@ -40,7 +40,7 @@ import org.apache.tika.io.CloseShieldInputStream;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UnsupportedIcon;
 
@@ -122,7 +122,7 @@ public class GalleryModel extends AbstractTableModel {
 						image = getThumbFromReport(export);
 
 						if (image == null) {
-							File file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
+							File file = Util.getRelativeFile(App.get().codePath + "/../..", export);
 							/*if(mediaType.equals("application/pdf")){
 								PDFToImage pdfConverter = new PDFToImage();
 								pdfConverter.load(file);
@@ -131,11 +131,11 @@ public class GalleryModel extends AbstractTableModel {
 								pdfConverter.convert(0, file);
 								pdfConverter.close();
 							}*/
-							stream = IOUtil.getStream(file, doc);
+							stream = Util.getStream(file, doc);
 						}
 
 					} else
-						stream = IOUtil.getSleuthStream(App.get().sleuthCase, doc);
+						stream = Util.getSleuthStream(App.get().sleuthCase, doc);
 
 					
 					if (stream != null)
@@ -221,7 +221,7 @@ public class GalleryModel extends AbstractTableModel {
 			File file = null;
 			if (i1 > -1) {
 				String thumbPath = export.substring(0, i1) + "thumbnails/" + nome;
-				file = IOUtil.getRelativeFile(App.get().codePath + "/../..", thumbPath);
+				file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath);
 
 				// Report FTK 1.8
 			} else if ((i1 = export.indexOf("Export/")) > -1) {
@@ -236,7 +236,7 @@ public class GalleryModel extends AbstractTableModel {
 								}
 							});
 							String thumbPath = export.substring(0, i1) + "Thumbnails";
-							file = IOUtil.getRelativeFile(App.get().codePath + "/../..", thumbPath).getCanonicalFile();
+							file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath).getCanonicalFile();
 							if (file.exists())
 								loadThumbPaths(file);
 							thumbPathCached = true;

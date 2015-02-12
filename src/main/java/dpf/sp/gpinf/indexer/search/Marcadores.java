@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.SearchStateFilter;
 
 public class Marcadores implements Serializable {
@@ -279,7 +279,7 @@ public class Marcadores implements Serializable {
 	}
 
 	public void saveState(File file) throws IOException {
-		IOUtil.writeObject(this, file.getAbsolutePath());
+		Util.writeObject(this, file.getAbsolutePath());
 	}
 
 	public void askAndSaveState() {
@@ -330,7 +330,7 @@ public class Marcadores implements Serializable {
 
 	public void loadState(File file) throws IOException, ClassNotFoundException {
 
-		Marcadores state = (Marcadores) IOUtil.readObject(file.getAbsolutePath());
+		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
 		if (state == null || (state.selected != null && state.selected.length != this.selected.length))
 			throw new IOException("Arquivo de marcadores incorreto ou incompatível com número de itens");
 

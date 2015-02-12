@@ -45,7 +45,7 @@ import org.apache.tika.io.TemporaryResources;
 
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.TextParser;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextViewer extends AbstractViewer implements KeyListener, MouseListener {
 
@@ -250,7 +250,7 @@ public class TextViewer extends AbstractViewer implements KeyListener, MouseList
 				String value = textViewerModel.getValueAt(row, 0).toString();
 				value = value.replaceAll("<html><pre>", "").replaceAll("</pre></html>", "");
 				value = value.replaceAll(App.HIGHLIGHT_START_TAG, "").replaceAll(App.HIGHLIGHT_END_TAG, "");
-				value = SimpleHTMLEncoder.htmlDecode(value);
+				value = LuceneSimpleHTMLEncoder.htmlDecode(value);
 				copy.append(value + "\r\n");
 			}
 			StringSelection stringSelection = new StringSelection(copy.toString());

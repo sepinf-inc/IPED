@@ -32,7 +32,7 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -100,11 +100,11 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
 						String export = doc.get(IndexItem.EXPORT);
 						if (export != null && !export.isEmpty()) {
-							file = IOUtil.getRelativeFile(App.get().codePath + "/../..", export);
-							file = IOUtil.getReadOnlyFile(file, doc);
+							file = Util.getRelativeFile(App.get().codePath + "/../..", export);
+							file = Util.getReadOnlyFile(file, doc);
 
 						} else
-							file = IOUtil.extractSleuthFile(App.get().sleuthCase, doc);
+							file = Util.extractSleuthFile(App.get().sleuthCase, doc);
 
 						if (file != null)
 							Desktop.getDesktop().open(file.getCanonicalFile());

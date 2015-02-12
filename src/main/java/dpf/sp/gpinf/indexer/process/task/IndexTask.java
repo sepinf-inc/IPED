@@ -36,13 +36,16 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IndexerContext;
+import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a indexação
@@ -143,7 +146,7 @@ public class IndexTask extends AbstractTask{
 			}finally{
 				if (reader != null)
 					reader.reallyClose();
-				IOUtil.closeQuietly(tis);
+				Util.closeQuietly(tis);
 			}
 			
 			if (reader != null)
@@ -173,9 +176,11 @@ public class IndexTask extends AbstractTask{
 		// DEFINE CONTEXTO: PARSING RECURSIVO, ETC
 		ParseContext context = new ParseContext();
 		context.set(Parser.class, worker.autoParser);
-		IndexerContext indexerContext = new IndexerContext(evidence);
-		context.set(IndexerContext.class, indexerContext);
-		context.set(EvidenceFile.class, evidence);
+		ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
+		context.set(ItemInfo.class, itemInfo);
+		context.set(StreamSource.class, evidence);
+		if(CarveTask.ignoreCorrupted)
+			context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
 		context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context) {
 			@Override
 			public boolean shouldParseEmbedded(Metadata arg0) {
@@ -284,7 +289,7 @@ public class IndexTask extends AbstractTask{
 			textSizesArray[pair.id] = pair.length;
 		}
 
-		IOUtil.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
+		Util.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
 	}
 	
 	private void salvarDocsFragmentados() throws Exception {

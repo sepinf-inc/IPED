@@ -22,8 +22,8 @@ import org.apache.lucene.search.highlight.Encoder;
  * Simple {@link Encoder} implementation to escape text for HTML output
  * 
  */
-public class SimpleHTMLEncoder implements Encoder {
-	public SimpleHTMLEncoder() {
+public class LuceneSimpleHTMLEncoder implements Encoder {
+	public LuceneSimpleHTMLEncoder() {
 	}
 
 	@Override

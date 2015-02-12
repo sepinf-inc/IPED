@@ -72,8 +72,8 @@ import org.apache.tika.parser.ParseContext;
 
 import com.sun.javafx.application.PlatformImpl;
 
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class EmailViewer extends HtmlViewer {
 
@@ -278,7 +278,7 @@ public class EmailViewer extends HtmlViewer {
 					if (!name[0].equals(TikaCoreProperties.CREATED.getName())) {
 						String[] values = metadata.getValues(name[0]);
 						for (int i = 0; i < values.length; i++) {
-							text += SimpleHTMLEncoder.htmlEncode(decodeIfUtf8(values[i]));
+							text += LuceneSimpleHTMLEncoder.htmlEncode(decodeIfUtf8(values[i]));
 							if (i < values.length - 1)
 								text += ", ";
 						}
@@ -362,7 +362,7 @@ public class EmailViewer extends HtmlViewer {
 				while ((len = is.read(buf)) >= 0) {
 					String text = new String(buf, 0, len, charset);
 					if (type.equalsIgnoreCase("text/plain")) {
-						text = SimpleHTMLEncoder.htmlEncode(text);
+						text = LuceneSimpleHTMLEncoder.htmlEncode(text);
 						text = text.replaceAll("\n", "<br>");
 					} else
 						text = text.replaceAll("cid:", "");
@@ -370,7 +370,7 @@ public class EmailViewer extends HtmlViewer {
 					outStream.write(text.getBytes(charset));
 				}
 			} else
-				IOUtil.copiaArquivo(is, outStream);
+				Util.copiaArquivo(is, outStream);
 
 			outStream.close();
 
@@ -411,7 +411,7 @@ public class EmailViewer extends HtmlViewer {
 				createHeader(outStream);
 				if (bodyFile != null) {
 					InputStream bodyStream = new FileInputStream(bodyFile);
-					IOUtil.copiaArquivo(bodyStream, outStream);
+					Util.copiaArquivo(bodyStream, outStream);
 					bodyStream.close();
 					bodyFile.delete();
 				}
@@ -440,7 +440,7 @@ public class EmailViewer extends HtmlViewer {
 
 						writer.flush();
 						InputStream stream = new FileInputStream(attFile);
-						IOUtil.copiaArquivo(stream, outStream);
+						Util.copiaArquivo(stream, outStream);
 						stream.close();
 					}
 				}

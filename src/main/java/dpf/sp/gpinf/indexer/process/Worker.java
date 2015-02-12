@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de processamento instalada:
@@ -126,7 +126,7 @@ public class Worker extends Thread {
 	private void checkFile(EvidenceFile evidence){
 		String filePath = evidence.getFileToIndex();
 		if (evidence.getFile() == null && !filePath.isEmpty()) {
-			File file = IOUtil.getRelativeFile(baseFilePath, filePath);
+			File file = Util.getRelativeFile(baseFilePath, filePath);
 			evidence.setFile(file);
 			evidence.setLength(file.length());
 		}

@@ -38,7 +38,7 @@ import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.util.IndexerContext;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 
 /**
  * Reader for the text content from a given binary stream. This class uses a
@@ -215,8 +215,8 @@ public class ParsingReader extends Reader {
 				// Não loga SAXException pois provavelmente foi devido a
 				// timeout, já logado
 				if (!(t instanceof SAXException)) {
-					IndexerContext appContext = context.get(IndexerContext.class);
-					String filePath = appContext.getPath();
+					ItemInfo itemInfo = context.get(ItemInfo.class);
+					String filePath = itemInfo.getPath();
 
 					System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao processar '" + filePath + "' (" + length + " bytes)\t" + t.toString());
 				}

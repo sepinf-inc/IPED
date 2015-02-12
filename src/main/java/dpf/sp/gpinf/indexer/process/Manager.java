@@ -70,7 +70,7 @@ import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 /**
@@ -319,7 +319,7 @@ public class Manager {
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
 			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Índice...");
-			IOUtil.copiaDiretorio(indexTemp, indexDir);			
+			Util.copiaDiretorio(indexTemp, indexDir);			
 		}
 		
 		for (int k = 0; k < workers.length; k++) {
@@ -327,7 +327,7 @@ public class Manager {
 		}
 		
 		try {
-			IOUtil.deletarDiretorio(Configuration.indexerTemp);
+			Util.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
 			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
 		}
@@ -339,7 +339,7 @@ public class Manager {
 
 	private void configurarCategorias() throws Exception {
 		System.out.println(new Date() + "\t[INFO]\t" + "Configurando categorias...");
-		TreeSet<String> categories = IOUtil.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
+		TreeSet<String> categories = Util.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 
 		if (caseData.getBookmarks().size() > 0) {
 			for (FileGroup bookmark : caseData.getBookmarks())
@@ -368,7 +368,7 @@ public class Manager {
 			// fecha o Ã­ndice
 			App.get().destroy();
 
-			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
+			Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 			int filtradas = categories.size() - palavrasFinais.size();
 			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " categorias.");
 		} else
@@ -379,7 +379,7 @@ public class Manager {
 	private void filtrarPalavrasChave() throws Exception {
 		System.out.println(new Date() + "\t[INFO]\t" + "Filtrando palavras-chave...");
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Filtrando palavras-chave...");
-		ArrayList<String> palavras = IOUtil.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
+		ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
 
 		if (palavras.size() != 0) {
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
@@ -396,7 +396,7 @@ public class Manager {
 			}
 			// fecha o Ã­ndice
 			App.get().destroy();
-			IOUtil.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
+			Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
 			int filtradas = palavras.size() - palavrasFinais.size();
 			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " palavras-chave.");
 		} else
@@ -473,27 +473,27 @@ public class Manager {
 		}
 		
 		reader.close();
-		IOUtil.writeObject(ids, output.getAbsolutePath() + "/data/ids.map");
+		Util.writeObject(ids, output.getAbsolutePath() + "/data/ids.map");
 	}
 
 	private void prepararReport() throws Exception {
 		if (output.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + output.getAbsolutePath());
-			IOUtil.deletarDiretorio(output);
+			Util.deletarDiretorio(output);
 		}
 
 		File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
 		if (export.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + export.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + export.getAbsolutePath());
-			IOUtil.deletarDiretorio(export);
+			Util.deletarDiretorio(export);
 		}
 
 		if (indexTemp.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + indexTemp.getAbsolutePath());
-			IOUtil.deletarDiretorio(indexTemp);
+			Util.deletarDiretorio(indexTemp);
 		}
 
 		Thread.sleep(1000);
@@ -501,20 +501,20 @@ public class Manager {
 		if (!output.exists() && !output.mkdir())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
 
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/gm"), new File(output, "tools/gm"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/nativeview"), new File(output, "tools/nativeview"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/sleuth"), new File(output, "tools/sleuth"));
+		Util.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
+		Util.copiaDiretorio(new File(Configuration.configPath, "tools/gm"), new File(output, "tools/gm"));
+		Util.copiaDiretorio(new File(Configuration.configPath, "tools/nativeview"), new File(output, "tools/nativeview"));
+		Util.copiaDiretorio(new File(Configuration.configPath, "tools/sleuth"), new File(output, "tools/sleuth"));
 		if (Configuration.embutirLibreOffice)
-			IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
+			Util.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
 
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
-		IOUtil.copiaArquivo(new File(Configuration.configPath + "/" + Configuration.CONFIG_FILE), new File(output, "conf/" + Configuration.CONFIG_FILE));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
+		Util.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
+		Util.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
+		Util.copiaArquivo(new File(Configuration.configPath + "/" + Configuration.CONFIG_FILE), new File(output, "conf/" + Configuration.CONFIG_FILE));
+		Util.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
 
 		if (palavrasChave != null)
-			IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt"));
+			Util.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt"));
 
 		File dataDir = new File(output, "data");
 		if (!dataDir.exists())

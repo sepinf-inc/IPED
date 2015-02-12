@@ -34,7 +34,7 @@ import java.util.LinkedList;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class FolderTreeProcessor {
 
@@ -75,7 +75,7 @@ public class FolderTreeProcessor {
 			String name = file.getName();
 			evidenceFile.setName(name);
 
-			String relativePath = IOUtil.getRelativePath(baseFile, file);
+			String relativePath = Util.getRelativePath(baseFile, file);
 			evidenceFile.setExportedFile(relativePath);
 			evidenceFile.setPath(relativePath);
 			// evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));

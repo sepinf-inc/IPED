@@ -12,7 +12,6 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToHTMLContentHandler;
 
 import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.util.IndexerContext;
 
 /*
  * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.
@@ -47,7 +46,6 @@ public class TikaHtmlViewer extends HtmlViewer{
 			Metadata metadata = new Metadata();
 			TikaInputStream tis = TikaInputStream.get(file);
 			ParseContext context = new ParseContext();
-			context.set(IndexerContext.class, new IndexerContext(0, null, file.getAbsolutePath()));
 			File outFile = File.createTempFile("tmp", ".html");
 			outFile.deleteOnExit();
 			BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outFile));

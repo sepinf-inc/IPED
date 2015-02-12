@@ -31,12 +31,12 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.PDFToImage;
+import dpf.sp.gpinf.indexer.util.Util;
 
-/*
+/**
  * Classe principal de carregamento e acesso Ã s configuraÃ§Ãµs da aplicaÃ§Ã£o.
  */
 public class Configuration {
@@ -61,7 +61,7 @@ public class Configuration {
 	public static long unallocatedFragSize = 100 * 1024 * 1024;
 	public static String javaTmpDir = System.getProperty("java.io.tmpdir");
 
-	/*
+	/**
 	 * LÃª as configuraÃ§Ãµes a partir do caminho informado.
 	 */
 	public static void getConfiguration(String configPathStr) throws Exception {
@@ -71,9 +71,9 @@ public class Configuration {
 		configPath = configPathStr;
 
 		if (new File(configPath + "/tools/sleuth").exists())
-			IOUtil.loadNatLibs(configPath + "/tools/sleuth");
+			Util.loadNatLibs(configPath + "/tools/sleuth");
 		else
-			IOUtil.loadNatLibs(configPath + "/../tools/sleuth");
+			Util.loadNatLibs(configPath + "/../tools/sleuth");
 
 		if (new File(configPath + "/" + PARSER_CONFIG).exists())
 			System.setProperty("tika.config", configPath + "/" + PARSER_CONFIG);

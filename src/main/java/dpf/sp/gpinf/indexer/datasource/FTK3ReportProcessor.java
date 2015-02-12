@@ -35,7 +35,7 @@ import java.util.Set;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.database.DataSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class FTK3ReportProcessor {
 
@@ -58,7 +58,7 @@ public class FTK3ReportProcessor {
 		
 		caseData.setContainsReport(true);
 		
-		String relativePath = IOUtil.getRelativePath(baseFile, report);
+		String relativePath = Util.getRelativePath(baseFile, report);
 		if (!relativePath.isEmpty())
 			relativePath += "/";
 

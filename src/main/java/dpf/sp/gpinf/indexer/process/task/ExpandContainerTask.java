@@ -51,8 +51,12 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.IndexerContext;
+import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 
 /**
  * EXTRAÇÃO DE SUBITENS DE CONTAINERS USANDO PARSINGREADER PARA MONITORAR TIMEOUTS
@@ -64,9 +68,6 @@ import dpf.sp.gpinf.indexer.util.IndexerContext;
  */
 public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
-	public static String COMPLETE_PATH = "INDEXER_COMPLETE_PATH";
-	//public static String INDEXER_ID = "INDEXER_ID";
-	public static String TO_EXTRACT = "Indexer-To-Extract";
 	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
 	public static boolean expandContainers = false;
 	
@@ -78,6 +79,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 	private Detector detector;
 	
+	private EvidenceFile evidence;
 	private ParseContext context;
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
@@ -96,7 +98,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	private void setContext(ParseContext context){
 		this.context = context;
 		this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
-		IndexerContext appContext = context.get(IndexerContext.class);
+		ItemInfo appContext = context.get(ItemInfo.class);
 		extractEmbedded = isToBeExpanded(appContext.getBookmarks());
 	}
 	
@@ -104,10 +106,12 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		// DEFINE CONTEXTO: PARSING RECURSIVO, ETC
 		context = new ParseContext();
 		context.set(Parser.class, worker.autoParser);
-		IndexerContext indexerContext = new IndexerContext(evidence);
-		context.set(IndexerContext.class, indexerContext);
+		ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
+		context.set(ItemInfo.class, itemInfo);
 		context.set(EmbeddedDocumentExtractor.class, this);
-		context.set(EvidenceFile.class, evidence);
+		context.set(StreamSource.class, evidence);
+		if(CarveTask.ignoreCorrupted)
+			context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
 
 		// Tratamento p/ acentos de subitens de ZIP
 		ArchiveStreamFactory factory = new ArchiveStreamFactory();
@@ -187,6 +191,8 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	
 	private void safeProcess(EvidenceFile evidence) throws IOException{	
 		
+		this.evidence = evidence;
+		
 		TikaInputStream tis = null;
 		try {
 			tis = evidence.getTikaStream();
@@ -259,21 +265,22 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		TemporaryResources tmp = new TemporaryResources();
 		String filePath = null;
 		try {
-			IndexerContext appContext = context.get(IndexerContext.class);
-			appContext.incChild();
+			ItemInfo itemInfo = context.get(ItemInfo.class);
+			itemInfo.incChild();
 
 			Boolean hasTitle = false;
-			String name = getName(metadata, appContext.getChild(), hasTitle);
+			String name = getName(metadata, itemInfo.getChild(), hasTitle);
 
-			filePath = metadata.get(COMPLETE_PATH);
-			String parentPath = appContext.getPath();
-			if (filePath == null) {
+			filePath = metadata.get(ExtraProperties.EMBEDDED_PATH);
+			String parentPath = itemInfo.getPath();
+			if (filePath == null)
 				filePath = parentPath + ">>" + name;
-				int i = name.lastIndexOf('/');
-				if (i != -1)
-					name = name.substring(i + 1);
-			} else
-				filePath += ">>" + name;
+			else
+				filePath = parentPath + ">>" + filePath + ">>" + name;
+			
+			int i = name.lastIndexOf('/');
+			if (i != -1)
+				name = name.substring(i + 1);
 
 			char[] nameChars = (name + "\n\n").toCharArray();
 			handler.characters(nameChars, 0, nameChars.length);
@@ -282,11 +289,13 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			
 			if (extractEmbedded && output == null)
 				return;
+			
+			System.out.println(extractEmbedded+"subitem"+output);
 
 			if (!extractEmbedded) {
-				appContext.setPath(filePath);
+				itemInfo.setPath(filePath);
 				embeddedParser.parseEmbedded(inputStream, handler, metadata, false);
-				appContext.setPath(parentPath);
+				itemInfo.setPath(parentPath);
 				return;
 			}
 			
@@ -307,51 +316,53 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			else
 				contentType = MediaType.parse(contentTypeStr);
 
-			EvidenceFile evidence = new EvidenceFile();
-			evidence.setName(name);
+			EvidenceFile subItem = new EvidenceFile();
+			subItem.setName(name);
 			if (hasTitle)
-				evidence.setExtension("");
-			evidence.setPath(filePath);
-			evidence.setMediaType(contentType);
+				subItem.setExtension("");
+			subItem.setPath(filePath);
+			subItem.setMediaType(contentType);
 			
-			int parentId = appContext.getEvidence().getId();
-			evidence.setParentId(Integer.toString(parentId));
-			evidence.addParentIds(appContext.getEvidence().getParentIds());
-			evidence.addParentId(parentId);
-			appContext.getEvidence().setHasChildren(true);
+			EvidenceFile parent = evidence;
+			if(itemInfo.getEvidence() != null)
+				parent = (EvidenceFile)itemInfo.getEvidence();
+			
+			String parentId = String.valueOf(parent.getId());
+			subItem.setParentId(parentId);
+			subItem.addParentIds(parent.getParentIds());
+			subItem.addParentId(parent.getId());
+			parent.setHasChildren(true);
 			
 			Date created = metadata.getDate(TikaCoreProperties.CREATED);
 			Date modified = metadata.getDate(TikaCoreProperties.MODIFIED);
-			evidence.setCreationDate(created);
-			evidence.setModificationDate(modified);
-			evidence.setDeleted(appContext.getEvidence().isDeleted());
-			evidence.setCarved(appContext.getEvidence().isCarved());
-			evidence.setSubItem(true);
+			subItem.setCreationDate(created);
+			subItem.setModificationDate(modified);
+			subItem.setDeleted(parent.isDeleted());
+			subItem.setCarved(parent.isCarved());
+			subItem.setSubItem(true);
 			
 			if(metadata.get(OutlookPSTParser.HAS_ATTACHS) != null && OutlookPSTParser.OUTLOOK_MSG_MIME.equals(contentTypeStr)){
-				evidence.setHasChildren(true);
-				appContext.setEvidence(evidence);
+				//subItem.setHasChildren(true);
+				itemInfo.setEvidence(subItem);
 			}
 
 			ExportFileTask extractor = new ExportFileTask(worker);
-			extractor.extractFile(tis, evidence);
+			extractor.extractFile(tis, subItem);
 
-			new SetCategoryTask(worker).process(evidence);
+			new SetCategoryTask(worker).process(subItem);
 
 			// teste para extraÃ§Ã£o de anexos de emails de PSTs
-			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(evidence) || metadata.get(TO_EXTRACT) != null) {
-				evidence.setToExtract(true);
-				metadata.set(TO_EXTRACT, "true");
+			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
+				subItem.setToExtract(true);
+				metadata.set(ExtraProperties.TO_EXTRACT, "true");
 				//int id = evidence.getId();
 				//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
 			}
-			
+
 			// pausa contagem de timeout enquanto processa subitem
-			if(reader != null)
-				reader.setTimeoutPaused(true);
-			worker.processNewItem(evidence);
-			if(reader != null)
-				reader.setTimeoutPaused(false);
+			reader.setTimeoutPaused(true);
+			worker.processNewItem(subItem);
+			reader.setTimeoutPaused(false);
 
 		} catch (SAXException e) {
 			// TODO Provavelmente PipedReader foi interrompido, interrompemos
@@ -364,7 +375,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 		} catch (Exception e) {
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
-			e.printStackTrace();
+			//e.printStackTrace();
 
 		} finally {
 			tmp.close();
