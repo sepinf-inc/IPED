@@ -39,13 +39,11 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.Manager;
-import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a indexação
@@ -146,7 +144,7 @@ public class IndexTask extends AbstractTask{
 			}finally{
 				if (reader != null)
 					reader.reallyClose();
-				Util.closeQuietly(tis);
+				IOUtil.closeQuietly(tis);
 			}
 			
 			if (reader != null)

@@ -19,9 +19,7 @@
 package dpf.sp.gpinf.indexer.search.viewer;
 
 import java.awt.GridLayout;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -36,13 +34,14 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import com.sun.javafx.application.PlatformImpl;
 
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class HtmlViewer extends AbstractViewer {
 
@@ -115,7 +114,7 @@ public class HtmlViewer extends AbstractViewer {
 								try {
 									tmpFile = File.createTempFile("indexador", ".html");
 									tmpFile.deleteOnExit();
-									Util.copiaArquivo(file, tmpFile);
+									IOUtil.copiaArquivo(file, tmpFile);
 									file = tmpFile;
 								} catch (IOException e) {
 									e.printStackTrace();

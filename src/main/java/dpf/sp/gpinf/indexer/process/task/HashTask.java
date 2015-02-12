@@ -25,13 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Classe para calcular e manipular hashes.
@@ -112,7 +111,7 @@ public class HashTask extends AbstractTask{
 				//e.printStackTrace();
 				
 			} finally {
-				Util.closeQuietly(in);
+				IOUtil.closeQuietly(in);
 			}
 		}
 		

@@ -13,7 +13,6 @@ import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
-import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 

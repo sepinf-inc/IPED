@@ -5,11 +5,8 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
-import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +15,11 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Hex;
+
+import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
+import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
  *

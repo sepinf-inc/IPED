@@ -46,7 +46,7 @@ import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o qual gera uma máquina de estados
@@ -198,7 +198,7 @@ public class CarveTask extends AbstractTask{
 			t.printStackTrace();
 			
 		}finally{
-			Util.closeQuietly(tis);
+			IOUtil.closeQuietly(tis);
 		}
 
 

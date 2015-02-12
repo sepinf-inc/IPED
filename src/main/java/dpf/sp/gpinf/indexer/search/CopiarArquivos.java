@@ -33,6 +33,7 @@ import javax.swing.SwingWorker;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
@@ -93,7 +94,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
 				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
 
-				Util.copiaArquivo(in, out);
+				IOUtil.copiaArquivo(in, out);
 
 				in.close();
 				out.close();

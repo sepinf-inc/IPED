@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class KeywordListImporter extends CancelableWorker{
 	

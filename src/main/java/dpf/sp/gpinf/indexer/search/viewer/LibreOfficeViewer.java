@@ -85,7 +85,7 @@ import com.sun.star.view.DocumentZoomType;
 import com.sun.star.view.XSelectionSupplier;
 
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
 
 public class LibreOfficeViewer extends AbstractViewer {
@@ -447,7 +447,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 					tempFile.delete();
 				tempFile = File.createTempFile("indexador-", ext);
 				tempFile.deleteOnExit();
-				Util.copiaArquivo(lastFile, tempFile);
+				IOUtil.copiaArquivo(lastFile, tempFile);
 				lastFile = tempFile;
 
 			} catch (IOException e) {

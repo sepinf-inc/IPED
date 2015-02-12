@@ -33,8 +33,8 @@ import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.SearchStateFilter;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
 

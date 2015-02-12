@@ -72,7 +72,7 @@ import org.apache.tika.parser.ParseContext;
 
 import com.sun.javafx.application.PlatformImpl;
 
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class EmailViewer extends HtmlViewer {
@@ -370,7 +370,7 @@ public class EmailViewer extends HtmlViewer {
 					outStream.write(text.getBytes(charset));
 				}
 			} else
-				Util.copiaArquivo(is, outStream);
+				IOUtil.copiaArquivo(is, outStream);
 
 			outStream.close();
 
@@ -411,7 +411,7 @@ public class EmailViewer extends HtmlViewer {
 				createHeader(outStream);
 				if (bodyFile != null) {
 					InputStream bodyStream = new FileInputStream(bodyFile);
-					Util.copiaArquivo(bodyStream, outStream);
+					IOUtil.copiaArquivo(bodyStream, outStream);
 					bodyStream.close();
 					bodyFile.delete();
 				}
@@ -440,7 +440,7 @@ public class EmailViewer extends HtmlViewer {
 
 						writer.flush();
 						InputStream stream = new FileInputStream(attFile);
-						Util.copiaArquivo(stream, outStream);
+						IOUtil.copiaArquivo(stream, outStream);
 						stream.close();
 					}
 				}

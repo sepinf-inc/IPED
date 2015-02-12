@@ -26,8 +26,6 @@ import java.net.URLClassLoader;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import org.apache.tika.parser.Parser;
-
 import ag.ion.bion.officelayer.application.IApplicationAssistant;
 import ag.ion.bion.officelayer.application.ILazyApplicationInfo;
 import ag.ion.bion.officelayer.application.OfficeApplicationException;

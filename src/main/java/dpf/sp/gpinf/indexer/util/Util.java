@@ -31,12 +31,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -55,15 +53,6 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.App;
 
 public class Util {
-	
-	public static void closeQuietly(InputStream in){
-		try {
-			if(in != null)
-				in.close();
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}
-	}
 
 	public static File getRelativeFile(String basePath, String export) {
 		File file;
@@ -150,49 +139,6 @@ public class Util {
 		return filename;
 	}
 
-	public static void lerListaDeArquivos(File file, List<File> lista) {
-
-		String[] subFileName = file.list();
-		if (subFileName != null)
-			for (int i = 0; i < subFileName.length; i++) {
-				File subFile = new File(file, subFileName[i]);
-
-				if (subFile.isDirectory())
-					lerListaDeArquivos(subFile, lista);
-				else
-					lista.add(subFile);
-			}
-	}
-
-	public static int countSubFiles(File file) {
-		int result = 0;
-		String[] subFileName = file.list();
-		if (subFileName != null)
-			for (int i = 0; i < subFileName.length; i++) {
-				File subFile = new File(file, subFileName[i]);
-				if (subFile.isDirectory())
-					result += countSubFiles(subFile);
-				else
-					result++;
-			}
-		return result;
-	}
-
-	public static void deletarDiretorio(File file) throws IOException {
-		if (file.isDirectory()) {
-			String[] names = file.list();
-			if (names != null)
-				for (int i = 0; i < names.length; i++) {
-					File subFile = new File(file, names[i]);
-					deletarDiretorio(subFile);
-				}
-		}
-		if (!file.delete()) {
-			throw new IOException("Não foi possível apagar " + file.getPath() + ". Verifique se está sendo acessado");
-		}
-
-	}
-
 	public static void changeEncoding(File file) throws IOException {
 		if (file.isDirectory()) {
 			String[] names = file.list();
@@ -216,27 +162,6 @@ public class Util {
 
 	}
 
-	public static void copiaArquivo(File origem, File destino) throws IOException {
-		copiaArquivo(origem, destino, false);
-	}
-
-	public static void copiaArquivo(File origem, File destino, boolean append) throws IOException {
-		InputStream in = new BufferedInputStream(new FileInputStream(origem));
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(destino, append));
-		if (append)
-			out.write(0x0A);
-		byte[] buf = new byte[1024*1024];
-		int len;
-		while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
-			out.write(buf, 0, len);
-		}
-		in.close();
-		out.close();
-		if (len != -1)
-			if (!destino.delete())
-				throw new IOException("Não foi possível apagar " + destino.getPath());
-	}
-
 	public static void readFile(File origem) throws IOException {
 		InputStream in = new BufferedInputStream(new FileInputStream(origem));
 		byte[] buf = new byte[1024*1024];
@@ -245,52 +170,7 @@ public class Util {
 		in.close();
 	}
 
-	public static void copiaArquivo(InputStream in, OutputStream out) throws IOException {
-		byte[] buf = new byte[1024*1024];
-		int len;
-		while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
-			out.write(buf, 0, len);
-		}
-	}
-
-	public static void copiaDiretorio(File origem, File destino, boolean recursive) throws IOException {
-		if (!destino.exists())
-			if (!destino.mkdirs())
-				throw new IOException("Não foi possível criar diretório " + destino.getAbsolutePath());
-		String[] subdir = origem.list();
-		for (int i = 0; i < subdir.length; i++) {
-			File subFile = new File(origem, subdir[i]);
-			if (subFile.isDirectory()) {
-				if (recursive)
-					copiaDiretorio(subFile, new File(destino, subdir[i]));
-			} else {
-				File subDestino = new File(destino, subdir[i]);
-				copiaArquivo(subFile, subDestino);
-			}
-		}
-	}
-
-	public static void copiaDiretorio(File origem, File destino) throws IOException {
-		copiaDiretorio(origem, destino, true);
-	}
-
-	/*
-	 * public static void espelharDiretorios(File export, File text) throws
-	 * Exception{ String[] subdir = export.list(); for (int i = 0; i <
-	 * subdir.length; i++) { File subFile = new File(export, subdir[i]); if
-	 * (subFile.isDirectory()){ File subText = new File(text, subdir[i]);
-	 * subText.mkdir(); espelharDiretorios(subFile, subText); } } }
-	 * 
-	 * public static void criarDiretorioText(File report) throws Exception{ File
-	 * exportDir = new File(report, "files"); if(!exportDir.exists()) exportDir
-	 * = new File(report, "Export"); if(!exportDir.exists()) throw new
-	 * Exception(report.getAbsolutePath() + " não contém um relatório válido!");
-	 * 
-	 * File textDir = new File(report, "Text"); textDir.mkdir();
-	 * 
-	 * espelharDiretorios(exportDir, textDir); }
-	 */
-
+	
 	public static ArrayList<String> loadKeywords(String filePath, String encoding) throws IOException {
 		ArrayList<String> array = new ArrayList<String>();
 		File file = new File(filePath);
@@ -477,7 +357,7 @@ public class Util {
 		if (file.canWrite()) {
 			File tmp = File.createTempFile("tmp_", file.getName());
 			tmp.deleteOnExit();
-			Util.copiaArquivo(file, tmp);
+			IOUtil.copiaArquivo(file, tmp);
 			file = tmp;
 		}
 		return file;
@@ -517,7 +397,7 @@ public class Util {
 		tmp.deleteOnExit();
 		InputStream in = getSubStream(file, offset, len);
 		BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(tmp));
-		Util.copiaArquivo(in, out);
+		IOUtil.copiaArquivo(in, out);
 		in.close();
 		out.close();
 		return tmp;

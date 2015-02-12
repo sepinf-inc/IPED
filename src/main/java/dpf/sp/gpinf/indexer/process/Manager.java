@@ -23,21 +23,15 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.data.FileGroup;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.TreeSet;
-
-import javax.swing.JOptionPane;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
@@ -48,7 +42,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
@@ -58,11 +51,7 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.search.App;
@@ -70,6 +59,7 @@ import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
@@ -319,7 +309,7 @@ public class Manager {
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
 			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Índice...");
-			Util.copiaDiretorio(indexTemp, indexDir);			
+			IOUtil.copiaDiretorio(indexTemp, indexDir);			
 		}
 		
 		for (int k = 0; k < workers.length; k++) {
@@ -327,7 +317,7 @@ public class Manager {
 		}
 		
 		try {
-			Util.deletarDiretorio(Configuration.indexerTemp);
+			IOUtil.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
 			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
 		}
@@ -480,20 +470,20 @@ public class Manager {
 		if (output.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + output.getAbsolutePath());
-			Util.deletarDiretorio(output);
+			IOUtil.deletarDiretorio(output);
 		}
 
 		File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
 		if (export.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + export.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + export.getAbsolutePath());
-			Util.deletarDiretorio(export);
+			IOUtil.deletarDiretorio(export);
 		}
 
 		if (indexTemp.exists() && !IndexFiles.getInstance().appendIndex) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
 			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + indexTemp.getAbsolutePath());
-			Util.deletarDiretorio(indexTemp);
+			IOUtil.deletarDiretorio(indexTemp);
 		}
 
 		Thread.sleep(1000);
@@ -501,20 +491,20 @@ public class Manager {
 		if (!output.exists() && !output.mkdir())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
 
-		Util.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
-		Util.copiaDiretorio(new File(Configuration.configPath, "tools/gm"), new File(output, "tools/gm"));
-		Util.copiaDiretorio(new File(Configuration.configPath, "tools/nativeview"), new File(output, "tools/nativeview"));
-		Util.copiaDiretorio(new File(Configuration.configPath, "tools/sleuth"), new File(output, "tools/sleuth"));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/gm"), new File(output, "tools/gm"));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/nativeview"), new File(output, "tools/nativeview"));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/sleuth"), new File(output, "tools/sleuth"));
 		if (Configuration.embutirLibreOffice)
-			Util.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
+			IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
 
-		Util.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
-		Util.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
-		Util.copiaArquivo(new File(Configuration.configPath + "/" + Configuration.CONFIG_FILE), new File(output, "conf/" + Configuration.CONFIG_FILE));
-		Util.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
+		IOUtil.copiaArquivo(new File(Configuration.configPath + "/" + Configuration.CONFIG_FILE), new File(output, "conf/" + Configuration.CONFIG_FILE));
+		IOUtil.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
 
 		if (palavrasChave != null)
-			Util.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt"));
+			IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt"));
 
 		File dataDir = new File(output, "data");
 		if (!dataDir.exists())

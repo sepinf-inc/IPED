@@ -37,10 +37,6 @@ import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
-
 /**
  * 
  * Classe para descompactar o aplicativo LibreOffice
@@ -65,10 +61,10 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 
 		try {
 			if (output.exists()) {
-				if (Util.countSubFiles(output) >= numSubitens)
+				if (IOUtil.countSubFiles(output) >= numSubitens)
 					return true;
 				else
-					Util.deletarDiretorio(output);
+					IOUtil.deletarDiretorio(output);
 			}
 
 			if (input.exists()) {
@@ -91,7 +87,7 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 				if (isCompleted())
 					return true;
 				else
-					Util.deletarDiretorio(output);
+					IOUtil.deletarDiretorio(output);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

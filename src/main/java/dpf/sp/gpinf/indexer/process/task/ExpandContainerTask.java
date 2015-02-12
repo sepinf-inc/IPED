@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.BufferedReader;

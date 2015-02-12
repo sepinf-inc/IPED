@@ -40,9 +40,9 @@ import org.apache.tika.io.CloseShieldInputStream;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
-import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UnsupportedIcon;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryModel extends AbstractTableModel {
 

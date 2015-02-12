@@ -38,6 +38,7 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -149,7 +150,7 @@ public class ExportFileTask extends AbstractTask{
 			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao extrair " + evidence.getPath() + "\t\t" + e.toString());
 
 		} finally {
-			Util.closeQuietly(is);
+			IOUtil.closeQuietly(is);
 		}
 	}
 	
@@ -256,7 +257,7 @@ public class ExportFileTask extends AbstractTask{
 				try {
 					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
 					BufferedInputStream bis = new BufferedInputStream(inputStream);
-					Util.copiaArquivo(bis, bos);
+					IOUtil.copiaArquivo(bis, bos);
 
 				} catch (IOException e) {
 					//e.printStackTrace();
