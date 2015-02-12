@@ -170,7 +170,7 @@ public class ResultTableModel extends AbstractTableModel {
 					else
 						value = "";
 
-				if (col == 4)
+				if (fCol == 4)
 					value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
 
 				//if(!App.get().marcadores.read[docId])
