@@ -64,7 +64,7 @@ processFileSignatures = true
 
 # Expande containers, como arquivos compactados, caixas de e-mails, emails e documentos office.
 # Os tipos de arquivo a expandir podem ser alterados no arquivo conf/CategoriesToExpand.txt
-expandContainers = false
+expandContainers = true
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
@@ -74,14 +74,14 @@ indexFileContents = true
 extraCharsToIndex =
 
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
-addUnallocated = true
+addUnallocated = false
 
 # Indexa o espaço não alocado adicionado
 indexUnallocated = true
 
 # Habilita ou não o carving. Opções avançadas de carving, como tipos de arquivo a processar e a recuperar,
 # devem ser configuradas no arquivo conf/CarvingConfig.txt
-enableCarving = false
+enableCarving = true
 
 # Tamanho em bytes de divisão do espaço não alocado
 unallocatedFragSize = 104857600
