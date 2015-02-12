@@ -40,7 +40,7 @@ public class CompositeViewerHelper {
 
 	boolean useLO = false;
 	String pathLO = System.getProperty("user.home") + "/.indexador/libreoffice4";
-	String compressedLO = App.get().codePath + "/../lib/libreoffice.zip";
+	String compressedLO = App.get().codePath + "/../tools/libreoffice.zip";
 	String useLOMsg = "Deseja ativar o visualizador de formatos Office?";
 	String systemLO = null;
 	public static LibreOfficeViewer officeViewer;
@@ -135,7 +135,7 @@ public class CompositeViewerHelper {
 
 				if (System.getProperty("os.name").startsWith("Linux"))
 					try {
-						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../lib/lib");
+						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../tools/nativeview");
 						ILazyApplicationInfo[] ila = ass.getLocalApplications();
 						if (ila.length != 0) {
 							systemLO = ila[0].getHome();
@@ -179,7 +179,7 @@ public class CompositeViewerHelper {
 						SwingUtilities.invokeAndWait(new Runnable() {
 							@Override
 							public void run() {
-								officeViewer = new LibreOfficeViewer(App.get().codePath + "/../lib", pathLO);
+								officeViewer = new LibreOfficeViewer(App.get().codePath + "/../tools/nativeview", pathLO);
 								App.get().compositeViewer.addViewer(officeViewer);
 							}
 						});

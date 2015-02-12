@@ -256,7 +256,7 @@ public class IOUtil {
 
 	public static void copiaDiretorio(File origem, File destino, boolean recursive) throws IOException {
 		if (!destino.exists())
-			if (!destino.mkdir())
+			if (!destino.mkdirs())
 				throw new IOException("Não foi possível criar diretório " + destino.getAbsolutePath());
 		String[] subdir = origem.list();
 		for (int i = 0; i < subdir.length; i++) {

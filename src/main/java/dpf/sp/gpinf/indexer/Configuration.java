@@ -70,10 +70,10 @@ public class Configuration {
 
 		configPath = configPathStr;
 
-		if (new File(configPath + "/lib/sleuth").exists())
-			IOUtil.loadNatLibs(configPath + "/lib/sleuth");
+		if (new File(configPath + "/tools/sleuth").exists())
+			IOUtil.loadNatLibs(configPath + "/tools/sleuth");
 		else
-			IOUtil.loadNatLibs(configPath + "/../lib/sleuth");
+			IOUtil.loadNatLibs(configPath + "/../tools/sleuth");
 
 		if (new File(configPath + "/" + PARSER_CONFIG).exists())
 			System.setProperty("tika.config", configPath + "/" + PARSER_CONFIG);

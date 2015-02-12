@@ -114,7 +114,7 @@ enableOCR = false
 
 # Caminho relativo ou completo para OCR Tesseract
 # Comente caso já esteja no PATH
-TesseractPath = Tesseract-OCR
+TesseractPath = tools/tesseract
 
 # Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng
 OCRLanguage = por

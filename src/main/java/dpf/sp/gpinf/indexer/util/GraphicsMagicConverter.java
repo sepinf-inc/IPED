@@ -50,7 +50,7 @@ public class GraphicsMagicConverter {
 	static{
 		try{
 			if(System.getProperty("os.name").startsWith("Windows")){
-				String path = App.get().codePath + "/gm";
+				String path = App.get().codePath + "/../tools/gm";
 				ProcessStarter.setGlobalSearchPath(path);
 			}
 			

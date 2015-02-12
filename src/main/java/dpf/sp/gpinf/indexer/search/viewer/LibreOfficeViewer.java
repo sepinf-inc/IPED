@@ -98,7 +98,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 	private NativeView nat;
 	private volatile IFrame officeFrame;
 	private JPanel noaPanel;
-	private String libPath, pathLO;
+	private String nativelib, pathLO;
 
 	private static String userProfile = "$SYSUSERCONFIG/.indexador/" + Versao.APP_VERSION + "/libreoffice";
 	private static String RESTART_MSG = "Reiniciando visualizador...";
@@ -150,9 +150,9 @@ public class LibreOfficeViewer extends AbstractViewer {
 		return "Office";
 	}
 
-	public LibreOfficeViewer(String libPath, String pathLO) {
+	public LibreOfficeViewer(String nativelib, String pathLO) {
 		super(new GridLayout());
-		this.libPath = libPath;
+		this.nativelib = nativelib;
 		this.pathLO = pathLO;
 		this.noaPanel = new JPanel();
 		this.getPanel().add(noaPanel);
@@ -225,7 +225,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 				@Override
 				public void run() {
 					System.out.println("Constructing LibreOffice frame...");
-					nat = new NativeView(libPath + "/lib");
+					nat = new NativeView(nativelib);
 					noaPanel.removeAll();
 					noaPanel.add(nat);
 					noaPanel.addComponentListener(new ComponentAdapter() {
