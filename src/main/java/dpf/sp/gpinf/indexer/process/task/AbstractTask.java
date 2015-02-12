@@ -111,20 +111,19 @@ public abstract class AbstractTask {
 		if(this == worker.firstTask && !evidence.isQueueEnd())
 			worker.itensBeingProcessed++;
 		
-		if(!evidence.isToIgnore()){
-			AbstractTask prevTask = worker.runningTask; 
-			worker.runningTask = this;
-			EvidenceFile prevEvidence = worker.evidence;
-			if(!evidence.isQueueEnd())
-				worker.evidence = evidence;
-			
-			processMonitorTimeout(evidence);
-			
-			worker.runningTask = prevTask;
-			worker.evidence = prevEvidence;
-		}
+		AbstractTask prevTask = worker.runningTask; 
+		worker.runningTask = this;
+		EvidenceFile prevEvidence = worker.evidence;
+		if(!evidence.isQueueEnd())
+			worker.evidence = evidence;
 		
+		if(!evidence.isToIgnore()){
+			processMonitorTimeout(evidence);
+		}
 		sendToNextTask(evidence);
+		
+		worker.runningTask = prevTask;
+		worker.evidence = prevEvidence;
 		
 		// ESTATISTICAS
 		if((nextTask == null) && !evidence.isQueueEnd()){

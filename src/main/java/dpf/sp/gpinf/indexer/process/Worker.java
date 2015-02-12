@@ -240,15 +240,16 @@ public class Worker extends Thread {
 				else{
 					EvidenceFile queueEnd = evidence;
 					evidence = null;
-					if(evidences.size() == 0 && manager.numItensBeingProcessed() == 0){
+					if(manager.numItensBeingProcessed() == 0){
 						evidences.addLast(queueEnd);
 						process(queueEnd);
 						break;
 					}else{
 						evidences.addLast(queueEnd);
-						process(queueEnd);
-						//System.out.println(manager.numItensBeingProcessed() + "\t[INFO]\t" + this.getName() + " continue "+evidences.size());
-						Thread.sleep(1000);
+						if(itensBeingProcessed > 0)
+							process(queueEnd);
+						else
+							Thread.sleep(1000);
 					}
 				}
 
