@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.SwingWorker;
 
@@ -69,6 +70,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			System.setSecurityManager(new AppSecurityManager());
 
 			//IOUtil.readFile(new File(App.get().codePath + "/../lib/" + Versao.TIKA_VERSION));
+			
+			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
+            App.get().ids = (int[]) Util.readObject(App.get().codePath + "/../data/ids.map");
+            App.get().lastId = App.get().textSizes.length - 1;
 
 			inicializar(App.get().codePath + "/../index");
 
@@ -84,10 +89,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
 			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
 			OCRParser.EXECTESS = false;
-
-			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
-			App.get().ids = (int[]) Util.readObject(App.get().codePath + "/../data/ids.map");
-			App.get().lastId = App.get().textSizes.length - 1;
+			
+			new CompositeViewerHelper().addViewers();
 
 			// lista todos os itens
 			App.get().query = PesquisarIndice.getQuery("");
@@ -173,7 +176,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().searcher = new IndexSearcher(App.get().reader);
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();
-			App.get().splitedDocs = (HashSet<Integer>) Util.readObject(index + "/../data/splits.ids");
+			App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
 				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
 			App.get().marcadores = new Marcadores(index + "/..");

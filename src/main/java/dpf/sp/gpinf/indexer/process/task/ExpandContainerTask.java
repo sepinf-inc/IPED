@@ -288,8 +288,6 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 			
 			if (extractEmbedded && output == null)
 				return;
-			
-			System.out.println(extractEmbedded+"subitem"+output);
 
 			if (!extractEmbedded) {
 				itemInfo.setPath(filePath);

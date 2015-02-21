@@ -89,7 +89,7 @@ public class App extends JFrame implements WindowListener {
 	HashSet<String> keywordSet = new HashSet<String>();
 	Set<String> highlightTerms = new HashSet<String>();
 
-	HashSet<Integer> splitedDocs;
+	Set<Integer> splitedDocs;
 	// HashMap<Integer,Integer> viewToRawFileMap;
 	// HashMap<Integer,Integer> rawToViewFileMap;
 	VersionsMap viewToRawMap;

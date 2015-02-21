@@ -441,7 +441,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
 		int frags = 0;
 		int[] ids = App.get().ids;
-		HashSet<Integer> splitedIds = App.get().splitedDocs;
+		Set<Integer> splitedIds = App.get().splitedDocs;
 		for (int i = 0; i < prevResult.length; i++) {
 			int id = ids[prevResult.docs[i]];
 			if (splitedIds.contains(id)) {
