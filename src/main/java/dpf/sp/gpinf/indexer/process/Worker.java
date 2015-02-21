@@ -217,11 +217,11 @@ public class Worker extends Thread {
 	public void processNewItem(EvidenceFile evidence){
 		caseData.incDiscoveredEvidences(1);
 		// Se não há item na fila, enfileira para outro worker processar
-		//if (evidences.size() == 0)
+		if (evidences.size() == 0)
 			evidences.addFirst(evidence);
 		// caso contrário processa o item no worker atual
-		//else
-		//	process(evidence);
+		else
+			process(evidence);
 	}
 
 	@Override
