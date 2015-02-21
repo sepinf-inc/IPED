@@ -89,12 +89,10 @@ public class ResultTableModel extends AbstractTableModel {
 		else
 			return false;
 	}
-	
-	App app = App.get();
 
 	@Override
 	public void setValueAt(Object value, int row, int col) {
-		App.get().marcadores.setValueAtId(value, app.ids[app.results.docs[row]], col, true);
+		App.get().marcadores.setValueAtId(value, App.get().ids[App.get().results.docs[row]], col, true);
 
 	}
 
