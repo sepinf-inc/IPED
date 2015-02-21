@@ -41,7 +41,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.TieredMergePolicy;
-import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
@@ -469,8 +468,12 @@ public class Manager {
 	}
 
 	private void prepararReport() throws Exception {
-		if (output.getParentFile().exists() && !IndexFiles.getInstance().appendIndex)
-		    throw new IOException("Diretório já existente: " + output.getParentFile().getAbsolutePath());
+		if (output.exists() && !IndexFiles.getInstance().appendIndex)
+		    throw new IOException("Diretório já existente: " + output.getAbsolutePath());
+
+		File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
+		if (export.exists() && !IndexFiles.getInstance().appendIndex)
+		    throw new IOException("Diretório já existente: " + export.getAbsolutePath());
 
 		if (!output.exists() && !output.mkdir())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
