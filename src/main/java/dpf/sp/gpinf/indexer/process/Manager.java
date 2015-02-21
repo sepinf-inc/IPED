@@ -469,26 +469,8 @@ public class Manager {
 	}
 
 	private void prepararReport() throws Exception {
-		if (output.exists() && !IndexFiles.getInstance().appendIndex) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
-			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + output.getAbsolutePath());
-			IOUtil.deletarDiretorio(output);
-		}
-
-		File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
-		if (export.exists() && !IndexFiles.getInstance().appendIndex) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + export.getAbsolutePath());
-			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + export.getAbsolutePath());
-			IOUtil.deletarDiretorio(export);
-		}
-
-		if (indexTemp.exists() && !IndexFiles.getInstance().appendIndex) {
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Apagando " + output.getAbsolutePath());
-			System.out.println(new Date() + "\t[INFO]\t" + "Apagando " + indexTemp.getAbsolutePath());
-			IOUtil.deletarDiretorio(indexTemp);
-		}
-
-		Thread.sleep(1000);
+		if (output.getParentFile().exists() && !IndexFiles.getInstance().appendIndex)
+		    throw new IOException("Diretório já existente: " + output.getParentFile().getAbsolutePath());
 
 		if (!output.exists() && !output.mkdir())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
