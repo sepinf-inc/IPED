@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Properties;
 
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
 
@@ -47,6 +48,8 @@ public class ExportCSVTask extends AbstractTask{
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
 		super(worker);
 		this.output = new File(output.getParentFile(), CSV_NAME);
+		if(this.output.exists() && !IndexFiles.getInstance().appendIndex)
+			this.output.delete();
 	}
 
 	@Override
