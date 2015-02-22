@@ -127,8 +127,8 @@ public abstract class AbstractTask {
 		
 		// ESTATISTICAS
 		if((nextTask == null) && !evidence.isQueueEnd()){
+		    evidence.dispose();
 			stats.incProcessed();
-			
 			if ((!evidence.isSubItem() && !evidence.isCarved()) || ItemProducer.indexerReport) {
 				stats.incActiveProcessed();
 				Long len = evidence.getLength();

@@ -41,9 +41,6 @@ public class SignatureTask extends AbstractTask {
 						System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Detecção do tipo abortada: "
 								+ evidence.getPath() + " (" + evidence.getLength() + " bytes)\t\t" + e.toString());
 						
-					}finally{
-						if(tis != null)
-							tis.close();
 					}
 				}
 				

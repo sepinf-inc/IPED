@@ -17,6 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -94,7 +96,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 	/** Nome e caminho relativo que o arquivo foi exportado. */
 	private String exportedFile;
 
-	/**
+	/**r
 	 * Nome e caminho relativo do arquivo alternativo. Este arquivo é utilizado
 	 * por exemplo quando no próprio relatório há uma outra forma de
 	 * visualização do arquivo de evidência.
@@ -130,7 +132,9 @@ public class EvidenceFile implements Serializable, StreamSource {
 
 	private String hash;
 
-	private File file;
+	private File file, tmpFile;
+	
+	private TemporaryResources tmpSrc = new TemporaryResources();
 
 	public void setId(int id) {
 		ID = id;
@@ -485,6 +489,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 	private AbstractFile sleuthFile;
 	private long startOffset = -1;
 	private String sleuthId;
+	private TikaInputStream tis;
 
 	public void setSleuthFile(AbstractFile sleuthFile) {
 		this.sleuthFile = sleuthFile;
@@ -513,6 +518,11 @@ public class EvidenceFile implements Serializable, StreamSource {
 	 * TODO implementar skip para File usando RandomAccessFile
 	 */
 	public InputStream getStream() throws IOException {
+		if(tmpFile == null && tis != null && tis.hasFile())
+            tmpFile = tis.getFile();
+		if(tmpFile != null)
+		    return new FileInputStream(tmpFile);
+		
 		InputStream stream;
 		if (file != null && !this.isDir)
 			stream = new FileInputStream(file);
@@ -535,10 +545,36 @@ public class EvidenceFile implements Serializable, StreamSource {
 	}
 
 	public TikaInputStream getTikaStream() throws IOException {
-		if (startOffset == -1 && file != null && !this.isDir)
-			return TikaInputStream.get(file);
+	    if(tmpFile == null && tis != null && tis.hasFile())
+            tmpFile = tis.getFile();
+		if(tmpFile != null)
+		    tis = TikaInputStream.get(tmpFile);
+		else if (startOffset == -1 && file != null && !this.isDir)
+			tis = TikaInputStream.get(file);
 		else
-			return TikaInputStream.get(getBufferedStream());
+			tis = TikaInputStream.get(getBufferedStream());
+		
+		tmpSrc.addResource(tis);
+		return tis;
+	}
+	
+	public File getTempFile() throws IOException{
+	    if(startOffset == -1 && file != null)
+	        return file;
+	    if(tmpFile != null)
+	        return tmpFile;
+	    
+	    if(tis != null && tis.hasFile())
+	        tmpFile = tis.getFile();
+	    
+	    if(tmpFile == null)
+	        tmpFile = getTikaStream().getFile();
+	    
+	    return tmpFile;
+	}
+	
+	public void dispose() throws IOException{
+	    tmpSrc.close();
 	}
 
 	public boolean isSubItem() {
