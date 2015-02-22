@@ -475,7 +475,7 @@ public class Manager {
 		if (export.exists() && !IndexFiles.getInstance().appendIndex)
 		    throw new IOException("Diretório já existente: " + export.getAbsolutePath());
 
-		if (!output.exists() && !output.mkdir())
+		if (!output.exists() && !output.mkdirs())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
 
 		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
