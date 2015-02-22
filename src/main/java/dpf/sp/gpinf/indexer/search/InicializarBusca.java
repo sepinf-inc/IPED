@@ -95,8 +95,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			// lista todos os itens
 			App.get().query = PesquisarIndice.getQuery("");
 			PesquisarIndice pesquisa = new PesquisarIndice(App.get().query);
-			App.get().totalItens = App.get().results.length;
 			App.get().results = pesquisa.pesquisar();
+			App.get().totalItens = App.get().results.length;
 			pesquisa.countVolume(App.get().results);
 			App.get().resultsModel.fireTableDataChanged();
 						

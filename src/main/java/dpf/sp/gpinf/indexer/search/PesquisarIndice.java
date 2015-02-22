@@ -241,9 +241,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		  	Marcadores marcadores = App.get().marcadores;
 		  	int labelId = marcadores.getLabelId(labelName.substring(Marcadores.BOOKMARKS_PREFIX.length()));
 			int removed = 0;
-			App app = App.get();
+			int[] ids = App.get().ids;
 			for (int i = 0; i < result.length; i++)
-				if (!marcadores.hasLabel(app.ids[result.docs[i]], labelId)) {
+				if (!marcadores.hasLabel(ids[result.docs[i]], labelId)) {
 					result.docs[i] = -1;
 					removed++;
 				}
@@ -254,9 +254,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarMarcadores(SearchResult result){
 		  	Marcadores marcadores = App.get().marcadores;
 			int removed = 0;
-			App app = App.get();
+			int[] ids = App.get().ids;
 			for (int i = 0; i < result.length; i++)
-				if (!marcadores.hasLabel(app.ids[result.docs[i]])) {
+				if (!marcadores.hasLabel(ids[result.docs[i]])) {
 					result.docs[i] = -1;
 					removed++;
 				}
@@ -268,9 +268,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarSelecionados(SearchResult result) throws Exception {
 
 			Marcadores marcadores = App.get().marcadores;
+			int[] ids = App.get().ids;
 			int removed = 0;
 			for (int i = 0; i < result.length; i++)
-				if (!marcadores.selected[result.docs[i]]) {
+				if (!marcadores.selected[ids[result.docs[i]]]) {
 					result.docs[i] = -1;
 					removed++;
 				}

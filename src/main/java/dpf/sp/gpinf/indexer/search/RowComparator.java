@@ -56,9 +56,9 @@ public class RowComparator implements Comparator<Integer> {
 	@Override
 	public int compare(Integer a, Integer b) {
 		if (col == 1) {
-			if (App.get().marcadores.selected[a] == App.get().marcadores.selected[b])
+			if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
 				return 0;
-			else if (App.get().marcadores.selected[a] == true)
+			else if (app.marcadores.selected[app.ids[a]] == true)
 				return -1;
 			else
 				return 1;

@@ -89,10 +89,12 @@ public class ResultTableModel extends AbstractTableModel {
 		else
 			return false;
 	}
+	
+	App app = App.get();
 
 	@Override
 	public void setValueAt(Object value, int row, int col) {
-		App.get().marcadores.setValueAtId(value, App.get().ids[App.get().results.docs[row]], col, true);
+		app.marcadores.setValueAtId(value, app.ids[app.results.docs[row]], col, true);
 
 	}
 
@@ -118,10 +120,10 @@ public class ResultTableModel extends AbstractTableModel {
 			value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
 		else if (col == 1)
-			return App.get().marcadores.selected[App.get().results.docs[row]];
+			return app.marcadores.selected[app.ids[app.results.docs[row]]];
 
 		else if (col == 2)
-			return App.get().results.scores[row];
+			return app.results.scores[row];
 
 		/*else if (col == 3)
 			if (!App.get().marcadores.read[App.get().results.docs[row]])
@@ -130,7 +132,7 @@ public class ResultTableModel extends AbstractTableModel {
 				return null;
 		*/
 		else if (col == 3)
-			return App.get().marcadores.getLabels(App.get().ids[App.get().results.docs[row]]);
+			return app.marcadores.getLabels(app.ids[app.results.docs[row]]);
 		
 		else
 			try {
