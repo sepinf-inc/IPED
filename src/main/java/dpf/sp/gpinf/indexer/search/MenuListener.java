@@ -123,12 +123,12 @@ public class MenuListener implements ActionListener {
 					int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(row)];
 					selectedIds.add(docId);
 					// exporta versão nao selecionada caso exista
-					Integer docId2 = App.get().viewToRawMap.getRaw(docId);
+					/*Integer docId2 = App.get().viewToRawMap.getRaw(docId);
 					if (docId2 == null)
 						docId2 = App.get().viewToRawMap.getView(docId);
 					if (docId2 != null)
 						selectedIds.add(docId2);
-
+                    */
 				}
 
 				(new CopiarArquivos(dir, selectedIds)).execute();
@@ -151,7 +151,8 @@ public class MenuListener implements ActionListener {
 		} else if (e.getSource() == menu.copiarMarcados) {
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 			for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-				if (App.get().marcadores.selected[App.get().ids[docId]] && !App.get().viewToRawMap.isView(docId))
+				if (App.get().marcadores.selected[App.get().ids[docId]] && 
+				        !App.get().viewToRawMap.isView(App.get().ids[docId]))
 					uniqueSelectedIds.add(docId);
 
 			}

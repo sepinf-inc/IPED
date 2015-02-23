@@ -138,15 +138,15 @@ public class GerenciadorMarcadores implements ActionListener {
 			} else if (highlighted.isSelected()){
 				for (Integer row : App.get().resultsTable.getSelectedRows()) {
 					int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-					int docId = App.get().results.docs[rowModel];
-					uniqueSelectedIds.add(app.ids[docId]);
+					int id = app.ids[app.results.docs[rowModel]];
+					uniqueSelectedIds.add(id);
 
-					Integer docId2 = App.get().viewToRawMap.getRaw(docId);
-					if (docId2 == null)
-						docId2 = App.get().viewToRawMap.getView(docId);
+					Integer id2 = app.viewToRawMap.getRaw(id);
+					if (id2 == null)
+						id2 = app.viewToRawMap.getView(id);
 
-					if (docId2 != null)
-						uniqueSelectedIds.add(app.ids[docId2]);
+					if (id2 != null)
+						uniqueSelectedIds.add(id2);
 
 				}
 

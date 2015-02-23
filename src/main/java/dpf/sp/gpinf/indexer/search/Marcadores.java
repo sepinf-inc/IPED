@@ -417,12 +417,12 @@ public class Marcadores implements Serializable {
 
 	// seta valor na outra versao
 	private void setValueAtOtherVersion(Object value, int doc, int col, boolean[] array) {
-		Integer doc2 = App.get().viewToRawMap.getRaw(doc);
-		if (doc2 != null && array[doc2] != (Boolean) value)
-			setValueAtId(value, doc2, col, false);
-		doc2 = App.get().viewToRawMap.getView(doc);
-		if (doc2 != null && array[doc2] != (Boolean) value)
-			setValueAtId(value, doc2, col, false);
+		Integer id2 = App.get().viewToRawMap.getRaw(doc);
+		if (id2 != null && array[id2] != (Boolean) value)
+			setValueAtId(value, id2, col, false);
+		id2 = App.get().viewToRawMap.getView(doc);
+		if (id2 != null && array[id2] != (Boolean) value)
+			setValueAtId(value, id2, col, false);
 	}
 
 }

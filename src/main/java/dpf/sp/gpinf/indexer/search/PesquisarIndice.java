@@ -465,14 +465,16 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 		TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
 		int versions = 0;
+		App app = App.get();
 		for (int i = 0; i < prevResult.length; i++) {
-			Integer original = App.get().viewToRawMap.getRaw(prevResult.docs[i]);
+		    int id = app.ids[prevResult.docs[i]];
+			Integer original = app.viewToRawMap.getRaw(id);
 			if (original == null) {
-				if (App.get().viewToRawMap.isRaw(prevResult.docs[i])) {
-					if (!addedMap.containsKey(prevResult.docs[i])) {
-						addedMap.put(prevResult.docs[i], i);
+				if (app.viewToRawMap.isRaw(id)) {
+					if (!addedMap.containsKey(id)) {
+						addedMap.put(id, i);
 					} else {
-						addedMap.remove(prevResult.docs[i]);
+						addedMap.remove(id);
 						prevResult.docs[i] = -1;
 						versions++;
 					}

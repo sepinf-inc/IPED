@@ -422,7 +422,7 @@ public class Manager {
 
 			IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index")));
 			Bits liveDocs = MultiFields.getLiveDocs(reader);
-			viewToRaw = new VersionsMap(reader.maxDoc());
+			viewToRaw = new VersionsMap(stats.getLastId() + 1);
 
 			for (int i = 0; i < reader.maxDoc(); i++) {
 				if (liveDocs != null && !liveDocs.get(i))
@@ -431,11 +431,11 @@ public class Manager {
 				Document doc = reader.document(i);
 				String ftkId = doc.get(IndexItem.FTKID);
 				int id = Integer.valueOf(doc.get(IndexItem.ID));
-				String export = doc.get(IndexItem.EXPORT);
+				//String export = doc.get(IndexItem.EXPORT);
 
 				Integer viewId = viewMap.get(ftkId);
-				if (viewId != null && viewId != id && !viewToRaw.isView(viewId) && !export.contains(".[AD]."))
-					viewToRaw.put(viewId, i);
+				if (viewId != null && viewId != id /*&& !viewToRaw.isView(viewId) && !export.contains(".[AD].")*/)
+					viewToRaw.put(viewId, id);
 
 			}
 			reader.close();
