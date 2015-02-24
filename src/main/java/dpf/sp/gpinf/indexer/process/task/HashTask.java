@@ -62,7 +62,7 @@ public class HashTask extends AbstractTask{
 		
 	}
 
-	public static class HashValue {
+	public static class HashValue implements Comparable<HashValue>{
 
 		byte[] bytes;
 
@@ -70,6 +70,7 @@ public class HashTask extends AbstractTask{
 			bytes = DatatypeConverter.parseHexBinary(hash);
 		}
 
+		@Override
 		public int compareTo(HashValue hash) {
 			for (int i = 0; i < bytes.length; i++) {
 				if ((bytes[i] & 0xFF) < (hash.bytes[i] & 0xFF))
@@ -89,7 +90,7 @@ public class HashTask extends AbstractTask{
 		public int hashCode() {
 			return bytes[3] & 0xFF | (bytes[2] & 0xFF) << 8 | (bytes[1] & 0xFF) << 16 | (bytes[0] & 0xFF) << 24;
 		}
-
+		
 	}
 
 	public void process(EvidenceFile evidence) {

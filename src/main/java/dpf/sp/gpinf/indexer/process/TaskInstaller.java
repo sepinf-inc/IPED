@@ -11,6 +11,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.KFFQueryTask;
+import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
 import dpf.sp.gpinf.indexer.process.task.SignatureTask;
@@ -36,6 +37,7 @@ public class TaskInstaller {
 		tasks.add(new SetTypeTask(worker));
 		tasks.add(new SetCategoryTask(worker));
 		tasks.add(new HashTask(worker));
+		tasks.add(new LedKFFTask(worker));
 		tasks.add(new ExportCSVTask(worker));
 		tasks.add(new DuplicateTask(worker));
 		tasks.add(new ExpandContainerTask(worker));

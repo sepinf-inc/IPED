@@ -8,6 +8,10 @@
 # Configurar indexTemp em outro disco pode aumentar consideravelmente o desempenho, principalmente em um SSD.
 indexTemp = default
 
+# Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
+# existentes na base são adicionados a uma categoria "Alerta de hash"
+ledWkffPath = D:/LED/V1.17.00/pedo/wkff
+
 # Número de threads de processamento: "default" utiliza o número de processadores.
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
 numThreads = default
