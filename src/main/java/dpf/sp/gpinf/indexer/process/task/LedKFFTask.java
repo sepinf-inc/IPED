@@ -13,11 +13,17 @@ import java.util.Properties;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 
+/**
+ * Tarefa de consulta a base de hashes do LED.
+ * 
+ * @author Nassif
+ *
+ */
 public class LedKFFTask extends AbstractTask{
     
     private static String ledCategory = "Alerta de Hash";
-    
-    private static HashValue[] hashArray = new HashValue[0];
+    private static Object lock = new Object();
+    private static HashValue[] hashArray;
 
     public LedKFFTask(Worker worker) {
         super(worker);
@@ -25,8 +31,9 @@ public class LedKFFTask extends AbstractTask{
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        synchronized(hashArray){
-            if(hashArray.length != 0)
+        
+        synchronized(lock){
+            if(hashArray != null)
                 return;
             
             this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
@@ -66,7 +73,7 @@ public class LedKFFTask extends AbstractTask{
     protected void process(EvidenceFile evidence) throws Exception {
         
         String hash = evidence.getHash();
-        if(hash != null){
+        if(hash != null && hashArray != null){
             if(Arrays.binarySearch(hashArray, new HashValue(hash)) >= 0)
                 evidence.addCategory(ledCategory);
                 
