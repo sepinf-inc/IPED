@@ -153,7 +153,7 @@ public abstract class AbstractTask {
 	
 	/**
 	 * Processa o item monitorando timeout durante parsing. Caso ocorra timeout, 
-	 * o item é reprocessado na tarefa com um parser seguro, sem risco timeout.
+	 * o item é reprocessado na tarefa com um parser seguro, sem risco de timeout.
 	 * 
 	 * @param evidence Item a ser procesado
 	 * @throws Exception Se ocorrer erro inesperado.

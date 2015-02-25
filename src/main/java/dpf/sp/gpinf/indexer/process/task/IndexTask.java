@@ -83,7 +83,7 @@ public class IndexTask extends AbstractTask{
 	
 	public void process(EvidenceFile evidence) throws IOException{
 		
-		if(!evidence.isToIndex() || evidence.isQueueEnd()){
+		if(!evidence.isToAddToCase() || evidence.isQueueEnd()){
 			if (evidence.isSubItem()) {
 				if (!evidence.getFile().delete())
 					System.out.println(new Date() + "\t[AVISO]\t" + worker.getName() + " Falha ao deletar " + evidence.getFile().getAbsolutePath());

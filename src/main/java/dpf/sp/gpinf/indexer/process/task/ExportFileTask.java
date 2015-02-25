@@ -116,26 +116,24 @@ public class ExportFileTask extends AbstractTask{
 
 	public void process(EvidenceFile evidence) {
 		
-		// EXPORTA ARQUIVO CASO CONFIGURADO
+		// Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
 		if (hasCategoryToExtract() || evidence.isToExtract()) {
-			if (!evidence.isSubItem() && !evidence.isExtracted() && (isToBeExtracted(evidence) || evidence.isToExtract())) {
+			if (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract())) {
 				evidence.setToExtract(true);
 				extract(evidence);
-				evidence.setExtracted(true);
 				incSubitensExtracted();
 			}
 			
 		}
 		
 		//Renomeia subitem caso deva ser exportado
-		if (evidence.isSubItem() && evidence.isToExtract() && !evidence.isExtracted()) {
+		if (evidence.isSubItem() && evidence.isToExtract()) {
 			renameToHash(evidence);
-			evidence.setExtracted(true);
 			incSubitensExtracted();
 		}
 		
 		if (ExportFileTask.hasCategoryToExtract() && !evidence.isToExtract())
-			evidence.setToIndex(false);
+			evidence.setAddToCase(false);
 		
 	}
 	

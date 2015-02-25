@@ -380,10 +380,10 @@ public class AsapReportParser extends ReportParser {
 						// Tratamento das propreidades "básicas"
 						if (name.equalsIgnoreCase("Caminho completo")) {
 							if (!countOnly)
-								evidenceFile.setPath(root.addNewPath(value));
+								evidenceFile.setPathNode(root.addNewPath(value));
 						} else if (name.equalsIgnoreCase("Caminho")) {
 							if (!countOnly)
-								evidenceFile.setPath(root.addNewPath(value + File.separatorChar + evidenceFile.getName()));
+								evidenceFile.setPathNode(root.addNewPath(value + File.separatorChar + evidenceFile.getName()));
 						} else if (name.equalsIgnoreCase("Arquivo"))
 							evidenceFile.setName(value);
 						else if (name.equalsIgnoreCase("Data da última modificação"))
@@ -455,7 +455,7 @@ public class AsapReportParser extends ReportParser {
 		anexo.setName(HtmlUtil.getAttachName(line));
 		if (evidenceFile.getPath() != null)
 			if (!countOnly)
-				anexo.setPath(root.addNewPath(evidenceFile.getPath() + ">>" + anexo.getName()));
+				anexo.setPathNode(root.addNewPath(evidenceFile.getPath() + ">>" + anexo.getName()));
 		anexo.setType(new AttachmentFileType());
 		anexo.setAccessDate(evidenceFile.getAccessDate());
 		anexo.setCreationDate(evidenceFile.getCreationDate());
@@ -487,7 +487,7 @@ public class AsapReportParser extends ReportParser {
 		if (index != -1)
 			emailPai.setName(pathEmailPai.substring(index + 2));
 		if (!countOnly)
-			emailPai.setPath(root.addNewPath(pathEmailPai));
+			emailPai.setPathNode(root.addNewPath(pathEmailPai));
 		emailPai.setType(new OriginalEmailFileType());
 		emailPai.setAccessDate(evidenceFile.getAccessDate());
 		emailPai.setCreationDate(evidenceFile.getCreationDate());
@@ -519,7 +519,7 @@ public class AsapReportParser extends ReportParser {
 			if (evidenceFile.getName() != null)
 				knownFile.setName(evidenceFile.getName());
 			if (evidenceFile.getPathNode() != null)
-				knownFile.setPath(evidenceFile.getPathNode());
+				knownFile.setPathNode(evidenceFile.getPathNode());
 			if (evidenceFile.getType() != null)
 				knownFile.setType(evidenceFile.getType());
 			if (evidenceFile.getAccessDate() != null)

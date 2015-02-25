@@ -37,712 +37,1015 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
  * propriedades.
  * 
  * @author Wladimir Leite (GPINF/SP)
+ * @author Nassif (GPINF/SP)
  */
 public class EvidenceFile implements Serializable, StreamSource {
-	/** Identificador utilizado para serialização da classe. */
-	private static final long serialVersionUID = 98653214753695125L;
+    
+    private static class Counter {
 
-	/** Nome do arquivo. */
-	private String name;
+        public static synchronized int getNextId() {
+            return nextId++;
+        }
 
-	/** Extensão arquivo. */
-	private String extension;
+        public static int nextId = 0;
 
-	/**
-	 * Caminho completo do arquivo, armazenado em um nó de uma estrutura
-	 * navegável de arquivos e pastas do caso.
-	 */
-	private PathNode path;
+    }
 
-	private String pathString;
+    /**
+     * @param start id inicial para itens adicionados após o processamento inicial
+     */
+    public static void setStartID(int start) {
+        Counter.nextId = start;
+    }
 
-	/** Tipo do arquivo. */
-	private EvidenceFileType type;
+    /** Identificador utilizado para serialização da classe. */
+    private static final long serialVersionUID = 98653214753695125L;
 
-	private MediaType mediaType;
+    /** Nome do arquivo. */
+    private String name;
 
-	public MediaType getMediaType() {
-		return mediaType;
-	}
+    /** Extensão arquivo. */
+    private String extension;
 
-	public void setMediaType(MediaType mediaType) {
-		this.mediaType = mediaType;
-	}
+    /**
+     * Caminho completo do arquivo, armazenado em um nó de uma estrutura
+     * navegável de arquivos e pastas do caso.
+     */
+    private PathNode path;
 
-	private boolean deleted = false;
+    private String pathString;
 
-	private int ID = -1;
+    /** Tipo do arquivo. */
+    private EvidenceFileType type;
 
-	private String ftkID;
+    private MediaType mediaType;
 
-	private String parentId;
+    private boolean deleted = false;
 
-	private List<Integer> parentIds = new ArrayList<Integer>();
-	
-	private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
+    private int id = -1;
 
-	/** Data de criação do arquivo. */
-	private Date creationDate;
+    private String ftkID;
 
-	/** Data da última alteração do arquivo. */
-	private Date modificationDate;
+    private String parentId;
 
-	/** Data do último acesso do arquivo. */
-	private Date accessDate;
+    private List<Integer> parentIds = new ArrayList<Integer>();
 
-	/** Tamanho do arquivo em bytes. */
-	private Long length;
+    private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
 
-	/** Nome e caminho relativo que o arquivo foi exportado. */
-	private String exportedFile;
+    /** Data de criação do arquivo. */
+    private Date creationDate;
 
-	/**r
-	 * Nome e caminho relativo do arquivo alternativo. Este arquivo é utilizado
-	 * por exemplo quando no próprio relatório há uma outra forma de
-	 * visualização do arquivo de evidência.
-	 */
-	private String alternativeFile;
+    /** Data da última alteração do arquivo. */
+    private Date modificationDate;
 
-	/** Nome e caminho relativo que o arquivo para visualização. */
-	private String viewFile;
+    /** Data do último acesso do arquivo. */
+    private Date accessDate;
 
-	private EvidenceFile emailPai;
+    /** Tamanho do arquivo em bytes. */
+    private Long length;
 
-	private List<EvidenceFile> attachments = new ArrayList<EvidenceFile>();
+    /** Nome e caminho relativo que o arquivo foi exportado. */
+    private String exportedFile;
 
-	private HashSet<String> categories = new HashSet<String>();
+    /**
+     * Nome e caminho relativo do arquivo alternativo. Este arquivo é
+     * utilizado por exemplo quando no próprio relatório há uma outra forma de
+     * visualização do arquivo de evidência.
+     */
+    private String alternativeFile;
 
-	private String labels;
+    /** Nome e caminho relativo que o arquivo para visualização. */
+    private String viewFile;
 
-	private boolean timeOut = false;
+    private EvidenceFile emailPai;
 
-	private boolean duplicate = false;
+    private List<EvidenceFile> attachments = new ArrayList<EvidenceFile>();
 
-	private boolean isSubItem = false, isToExtract = false, extracted = false,
-			parsed = false, hasChildren = false;
+    private HashSet<String> categories = new HashSet<String>();
 
-	private boolean isDir = false, isRoot = false, toIgnore = false,
-			toIndex = true;
+    private String labels;
 
-	private boolean carved = false, encrypted = false;
-	
-	private boolean isQueueEnd = false;
+    private boolean timeOut = false;
 
-	private String parsedTextCache;
+    private boolean duplicate = false;
 
-	private String hash;
+    private boolean isSubItem = false, hasChildren = false;
 
-	private File file, tmpFile;
-	
-	private TemporaryResources tmpSrc = new TemporaryResources();
+    private boolean isDir = false, isRoot = false;
+    
+    private boolean toIgnore = false, addToCase = true, isToExtract = false;
 
-	public void setId(int id) {
-		ID = id;
-	}
+    private boolean carved = false, encrypted = false;
 
-	public int getId() {
-		if (ID == -1)
-			ID = Counter.getNextId();
-
-		return ID;
-	}
-
-	public static void setStartID(int start) {
-		Counter.nextId = start;
-	}
-
-	private static class Counter {
-
-		public static int nextId = 0;
-
-		public static synchronized int getNextId() {
-			return nextId++;
-		}
-
-	}
-
-	public String getHash() {
-		return hash;
-	}
-
-	public void setHash(String hash) {
-		this.hash = hash;
-	}
-
-	public void addCategory(String category) {
-		this.categories.add(category);
-	}
-
-	public void setCategory(String category) {
-		categories = new HashSet<String>();
-		categories.add(category);
-	}
-
-	public String getCategories() {
-		String names = "";
-		int i = 0;
-		for (String bookmark : categories) {
-			names += bookmark;
-			if (++i < categories.size())
-				names += CategoryTokenizer.SEPARATOR;
-		}
-		return names;
-	}
-
-	public HashSet<String> getCategorySet() {
-		return categories;
-	}
-
-	public void removeCategory(String category) {
-		categories.remove(category);
-	}
-
-	public void setLabels(String labels) {
-		this.labels = labels;
-	}
-
-	public String getLabels() {
-		return labels;
-	}
-
-	public String getFileToIndex() {
-		if (alternativeFile != null)
-			return alternativeFile.trim();
-		else if (exportedFile != null)
-			return exportedFile.trim();
-		else
-			return "";
-	}
-
-	@Override
-	public EvidenceFile clone() {
-		return this.clone();
-	}
-
-	public void setEmailPai(EvidenceFile pai) {
-		emailPai = pai;
-	}
-
-	public EvidenceFile getEmailPai() {
-		return emailPai;
-	}
-
-	public void addAttachment(EvidenceFile attachment) {
-		this.attachments.add(attachment);
-	}
-
-	public List<EvidenceFile> getAttachments() {
-		return this.attachments;
-	}
-
-	/**
-	 * @return data do último acesso
-	 */
-	public Date getAccessDate() {
-		return accessDate;
-	}
-
-	/**
-	 * @param accessDate
-	 *            nova data de último acesso
-	 */
-	public void setAccessDate(Date accessDate) {
-		this.accessDate = accessDate;
-	}
-
-	/**
-	 * @return data de criação do arquivo
-	 */
-	public Date getCreationDate() {
-		return creationDate;
-	}
-
-	/**
-	 * @param creationDate
-	 *            nova data de criação do arquivo
-	 */
-	public void setCreationDate(Date creationDate) {
-		this.creationDate = creationDate;
-	}
-
-	/**
-	 * @return nome e caminho relativo ao caso com que o arquivo de evidência em
-	 *         si foi exportado
-	 */
-	public String getExportedFile() {
-		return exportedFile;
-	}
-
-	/**
-	 * @param exportedFile
-	 *            nome e caminho que o arquivo de evidência foi exportado
-	 */
-	public void setExportedFile(String exportedFile) {
-		this.exportedFile = exportedFile;
-	}
-
-	/**
-	 * @return nome e caminho do arquivo alternativo
-	 */
-	public String getAlternativeFile() {
-		return alternativeFile;
-	}
-
-	/**
-	 * @param alternativeFile
-	 *            nome e caminho do arquivo alternativo
-	 */
-	public void setAlternativeFile(String alternativeFile) {
-		this.alternativeFile = alternativeFile;
-	}
-
-	/**
-	 * Obtém o arquivo de visualização. Se for nulo, retorna o arquivo
-	 * exportado.
-	 * 
-	 * @return nome e caminho relativo ao caso do arquivo de para visualização
-	 */
-	public String getViewFile() {
-		return (viewFile == null) ? exportedFile : viewFile;
-	}
-
-	/**
-	 * @param viewFile
-	 *            nome e caminho do arquivo para visualização
-	 */
-	public void setViewFile(String viewFile) {
-		this.viewFile = viewFile;
-	}
-
-	/**
-	 * @return data da última modificação do arquivo
-	 */
-	public Date getModDate() {
-		return modificationDate;
-	}
-
-	/**
-	 * @param modificationDate
-	 *            nova data da última modificação do arquivo
-	 */
-	public void setModificationDate(Date modificationDate) {
-		this.modificationDate = modificationDate;
-	}
-
-	/**
-	 * @return nome do arquivo
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @param name
-	 *            nome do arquivo
-	 */
-	public void setName(String name) {
-		this.name = name;
-		int p = name.lastIndexOf(".");
-		extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase();
-	}
-
-	public void setExtension(String ext) {
-		extension = ext;
-	}
-
-	public void setDeleted(boolean deleted) {
-		this.deleted = deleted;
-	}
-
-	public boolean isDeleted() {
-		return deleted;
-	}
-
-	/**
-	 * @return caminho do arquivo, obtido na estrutura de árvore de arquivos do
-	 *         caso
-	 */
-	public PathNode getPathNode() {
-		return path;
-	}
-
-	/**
-	 * @return String com o caminho completo do
-	 */
-	public String getPath() {
-		if (pathString != null)
-			return pathString;
-		else if (path != null)
-			return path.getFullPath();
-		else
-			return null;
-	}
-
-	/**
-	 * @param path
-	 *            novo caminho do arquivo
-	 */
-	public void setPath(PathNode path) {
-		this.path = path;
-	}
-
-	public void setPath(String path) {
-		this.pathString = path;
-	}
-
-	/**
-	 * @return tamanho do arquivo em bytes
-	 */
-	public Long getLength() {
-		return length;
-	}
-
-	/**
-	 * @param length
-	 *            novo tamanho do arquivo
-	 */
-	public void setLength(Long length) {
-		this.length = length;
-	}
-
-	/**
-	 * @return o tipo de arquivo
-	 */
-	public EvidenceFileType getType() {
-		return type;
-	}
-
-	/**
-	 * @param type
-	 *            o novo tipo de arquivo
-	 */
-	public void setType(EvidenceFileType type) {
-		this.type = type;
-	}
-
-	/**
-	 * @return Pasta de armazenamento do arquivo, sem repetir o próprio nome do
-	 *         arquivo, convertido para String.
-	 */
-	public String getFolder() {
-		if (path == null)
-			return "";
-		PathNode parent = path.getParent();
-		return parent == null ? "" : parent.getFullPath();
-	}
-
-	public String getExt() {
-		return extension;
-	}
-
-	/**
-	 * Retorna String com os dados contidos no objeto.
-	 * 
-	 * @return String listando as propriedades do arquivo.
-	 */
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Arquivo: " + name);
-		sb.append("\n\t\tCaminho: ").append(getFolder());
-		if (type != null)
-			sb.append("\n\t\t").append("Tipo de Arquivo: ")
-					.append(type.getLongDescr());
-		if (creationDate != null)
-			sb.append("\n\t\tData de Criação: ").append(
-					FormatUtil.format(creationDate));
-		if (modificationDate != null)
-			sb.append("\n\t\tData de Modificação: ").append(
-					FormatUtil.format(modificationDate));
-		if (accessDate != null)
-			sb.append("\n\t\tData de Último Acesso: ").append(
-					FormatUtil.format(accessDate));
-		if (length != null)
-			sb.append("\n\t\tTamanho do Arquivo: ").append(length);
-		return sb.toString();
-	}
-
-	public String getFtkID() {
-		return ftkID;
-	}
-
-	public void setFtkID(String ftkID) {
-		this.ftkID = ftkID;
-	}
-
-	public String getParentId() {
-		return parentId;
-	}
-
-	public void setParentId(String parentId) {
-		this.parentId = parentId;
-	}
-
-	public void setFile(File file) {
-		this.file = file;
-	}
-
-	public File getFile() {
-		return file;
-	}
-
-	private AbstractFile sleuthFile;
-	private long startOffset = -1;
-	private String sleuthId;
-	private TikaInputStream tis;
-
-	public void setSleuthFile(AbstractFile sleuthFile) {
-		this.sleuthFile = sleuthFile;
-	}
-
-	public AbstractFile getSleuthFile() {
-		return sleuthFile;
-	}
-
-	static final int BUF_LEN = 8 * 1024 * 1024;
-
-	public InputStream getBufferedStream() throws IOException {
-
-		int len = 8192;
-		if (length != null && length > len)
-			if (length < BUF_LEN)
-				len = length.intValue();
-			else
-				len = BUF_LEN;
-
-		return new BufferedInputStream(getStream(), len);
-	}
-
-	/*
-	 * OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
-	 * TODO implementar skip para File usando RandomAccessFile
-	 */
-	public InputStream getStream() throws IOException {
-		if(tmpFile == null && tis != null && tis.hasFile())
+    private boolean isQueueEnd = false, parsed = false;
+
+    private String parsedTextCache;
+
+    private String hash;
+
+    private File file, tmpFile;
+
+    private TemporaryResources tmpResources = new TemporaryResources();
+
+    private AbstractFile sleuthFile;
+
+    private long startOffset = -1;
+
+    private String sleuthId;
+
+    private TikaInputStream tis;
+
+    static final int BUF_LEN = 8 * 1024 * 1024;
+
+    /**
+     * Adiciona um anexo. Utilizado apenas em reports do FTK1.
+     * 
+     * @param attachment anexo do item/email atual
+     */
+    public void addAttachment(EvidenceFile attachment) {
+        this.attachments.add(attachment);
+    }
+
+    /**
+     * Adiciona o item a uma categoria.
+     * 
+     * @param category categoria a qual o item será adicionado
+     */
+    public void addCategory(String category) {
+        this.categories.add(category);
+    }
+
+    /**
+     * Adiciona o id de um dos pais do item numa estrutura hierárquica
+     * 
+     * @param parentId id de um dos pais
+     */
+    public void addParentId(int parentId) {
+        this.parentIds.add(parentId);
+    }
+
+    /**
+     * Adiciona uma lista de ids dos pais do item numa estrutura hierárquica
+     * 
+     * @param parentIds lista de ids dos pais do item
+     */
+    public void addParentIds(List<Integer> parentIds) {
+        this.parentIds.addAll(parentIds);
+    }
+
+    @Override
+    public EvidenceFile clone() {
+        return this.clone();
+    }
+
+    /**
+     * Libera recursos utilizados, como arquivos temporários e handles
+     * 
+     * @throws IOException caso ocorra erro de IO
+     */
+    public void dispose() throws IOException {
+        tmpResources.close();
+    }
+
+    /**
+     * @return data do último acesso
+     */
+    public Date getAccessDate() {
+        return accessDate;
+    }
+
+    /**
+     * @return nome e caminho do arquivo alternativo
+     */
+    public String getAlternativeFile() {
+        return alternativeFile;
+    }
+
+    /**
+     * @return lista de anexos do item. Funciona apenas com reports do FTK1
+     */
+    public List<EvidenceFile> getAttachments() {
+        return this.attachments;
+    }
+
+    /**
+     * @return um BufferedInputStream com o conteúdo do item
+     * @throws IOException
+     */
+    public BufferedInputStream getBufferedStream() throws IOException {
+
+        int len = 8192;
+        if (length != null && length > len)
+            if (length < BUF_LEN)
+                len = length.intValue();
+            else
+                len = BUF_LEN;
+
+        return new BufferedInputStream(getStream(), len);
+    }
+
+    /**
+     *
+     * @return o nome das categorias do item concatenadas
+     */
+    public String getCategories() {
+        String names = "";
+        int i = 0;
+        for (String bookmark : categories) {
+            names += bookmark;
+            if (++i < categories.size())
+                names += CategoryTokenizer.SEPARATOR;
+        }
+        return names;
+    }
+
+    /**
+     * 
+     * @return o conjunto de categorias do item
+     */
+    public HashSet<String> getCategorySet() {
+        return categories;
+    }
+
+    /**
+     * @return data de criação do arquivo
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * 
+     * @return o item pai. Funciona apenas com reports do FTK1.
+     */
+    public EvidenceFile getEmailPai() {
+        return emailPai;
+    }
+
+    /**
+     * @return nome e caminho relativo ao caso com que o arquivo de evidência em
+     *         si foi exportado
+     */
+    public String getExportedFile() {
+        return exportedFile;
+    }
+
+    /**
+     * 
+     * @return a extensão original do item
+     */
+    public String getExt() {
+        return extension;
+    }
+
+    /**
+     * Módulos de processamento podem
+     * setar atributos extras no item para armazenar o resultado do processamento
+     * 
+     * @param key o nome do atributo extra
+     * @return o valor do atributo extra
+     */
+    public Object getExtraAttribute(String key) {
+        return extraAttributes.get(key);
+    }
+
+    /**
+     * 
+     * @return o mapa de atributos extras do item. Módulos de processamento podem
+     * setar atributos extras no item para armazenar o resultado do processamento
+     */
+    public Map<String, Object> getExtraAttributeMap() {
+        return this.extraAttributes;
+    }
+
+    /**
+     * 
+     * @return o arquivo com o conteúdo do item. Retorna não
+     * nulo apenas em processamentos de pastas, reports e no caso
+     * de subitens de containers. Consulte {@link #getTempFile()}}
+     * e {@link #getStream()}
+     */
+    public File getFile() {
+        return file;
+    }
+
+    /**
+     * 
+     * @return o offset no item pai da onde o item foi recuperado (carving).
+     * Retorna -1 se o item não é proveniente de carving.
+     */
+    public long getFileOffset() {
+        return startOffset;
+    }
+
+    /**
+     * 
+     * @return o caminho para o arquivo do item. Diferente de vazio
+     * apenas em reports e processamentos de pastas.
+     */
+    public String getFileToIndex() {
+        if (alternativeFile != null)
+            return alternativeFile.trim();
+        else if (exportedFile != null)
+            return exportedFile.trim();
+        else
+            return "";
+    }
+
+    /**
+     * 
+     * @return o id do item no FTK3+ no caso de reports
+     */
+    public String getFtkID() {
+        return ftkID;
+    }
+
+    /**
+     * 
+     * @return o hash do arquivo, caso existente.
+     */
+    public String getHash() {
+        return hash;
+    }
+
+    /**
+     * 
+     * @return o id do item
+     */
+    public int getId() {
+        if (id == -1)
+            id = Counter.getNextId();
+
+        return id;
+    }
+
+    /**
+     * 
+     * @return os marcadores do item concatenados
+     */
+    public String getLabels() {
+        return labels;
+    }
+
+    /**
+     * @return tamanho do arquivo em bytes
+     */
+    public Long getLength() {
+        return length;
+    }
+
+    /**
+     * 
+     * @return o mediaType do arquivo, resultado da análise de assinatura
+     */
+    public MediaType getMediaType() {
+        return mediaType;
+    }
+
+    /**
+     * @return data da última modificação do arquivo
+     */
+    public Date getModDate() {
+        return modificationDate;
+    }
+
+    /**
+     * @return nome do arquivo
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * 
+     * @return o id do item pai. Tem o nome do caso prefixado
+     * no caso de reports do FTK3+
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * 
+     * @return lista contendo os ids dos itens pai
+     */
+    public List<Integer> getParentIds() {
+        return parentIds;
+    }
+
+    /**
+     * 
+     * @return ids dos itens pai concatenados com espaço
+     */
+    public String getParentIdsString() {
+        String parents = "";
+        for (Integer id : parentIds)
+            parents += id + " ";
+
+        return parents;
+    }
+
+    /**
+     * 
+     * @return o texto extraído do item armazenado pela tarefa de expansão
+     * para alguns containers com texto (eml, ppt, etc)
+     */
+    public String getParsedTextCache() {
+        return parsedTextCache;
+    }
+
+    /**
+     * @return String com o caminho completo do item
+     */
+    public String getPath() {
+        if (pathString != null)
+            return pathString;
+        else if (path != null)
+            return path.getFullPath();
+        else
+            return null;
+    }
+
+    /**
+     * @return caminho do arquivo, obtido na estrutura de árvore de arquivos do
+     *         caso. (apenas para reports do FTK1)
+     */
+    public PathNode getPathNode() {
+        return path;
+    }
+
+    /**
+     * 
+     * @return o objeto do Sleuthkit que representa o item
+     */
+    public AbstractFile getSleuthFile() {
+        return sleuthFile;
+    }
+
+    /**
+     * 
+     * @return o id do item no Sleuthkit
+     */
+    public String getSleuthId() {
+        return sleuthId;
+    }
+
+    /**
+     * @return InputStream com o conteúdo do arquivo.
+     */
+    public InputStream getStream() throws IOException {
+        if (tmpFile == null && tis != null && tis.hasFile())
             tmpFile = tis.getFile();
-		if(tmpFile != null)
-		    return new FileInputStream(tmpFile);
-		
-		InputStream stream;
-		if (file != null && !this.isDir)
-			stream = new FileInputStream(file);
+        if (tmpFile != null)
+            return new FileInputStream(tmpFile);
 
-		else if (sleuthFile != null)
-			stream = new ReadContentInputStream(sleuthFile);
+        InputStream stream;
+        if (file != null && !this.isDir)
+            stream = new FileInputStream(file);
 
-		else
-			stream = new ByteArrayInputStream(new byte[0]);
+        else if (sleuthFile != null)
+            stream = new ReadContentInputStream(sleuthFile);
 
-		if (startOffset != -1) {
-			long skiped = 0;
-			do {
-				skiped += stream.skip(startOffset - skiped);
-			} while (skiped < startOffset);
+        else
+            stream = new ByteArrayInputStream(new byte[0]);
 
-			stream = new LimitedInputStream(stream, length);
-		}
-		return stream;
-	}
+        if (startOffset != -1) {
+            long skiped = 0;
+            do {
+                //OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
+                //TODO implementar skip para File usando RandomAccessFile
+                skiped += stream.skip(startOffset - skiped);
+            } while (skiped < startOffset);
 
-	public TikaInputStream getTikaStream() throws IOException {
-	    if(tmpFile == null && tis != null && tis.hasFile())
+            stream = new LimitedInputStream(stream, length);
+        }
+        return stream;
+    }
+
+    /**
+     * Usado em módulos que só possam processar um File e não um InputStream.
+     * Pode impactar performance pois gera arquivo temporário.
+     * 
+     * @return um arquivo temporário com o conteúdo do item.
+     * @throws IOException
+     */
+    public File getTempFile() throws IOException {
+        if (startOffset == -1 && file != null)
+            return file;
+        if (tmpFile != null)
+            return tmpFile;
+
+        if (tis != null && tis.hasFile())
             tmpFile = tis.getFile();
-		if(tmpFile != null)
-		    tis = TikaInputStream.get(tmpFile);
-		else if (startOffset == -1 && file != null && !this.isDir)
-			tis = TikaInputStream.get(file);
-		else
-			tis = TikaInputStream.get(getBufferedStream());
-		
-		tmpSrc.addResource(tis);
-		return tis;
-	}
-	
-	public File getTempFile() throws IOException{
-	    if(startOffset == -1 && file != null)
-	        return file;
-	    if(tmpFile != null)
-	        return tmpFile;
-	    
-	    if(tis != null && tis.hasFile())
-	        tmpFile = tis.getFile();
-	    
-	    if(tmpFile == null)
-	        tmpFile = getTikaStream().getFile();
-	    
-	    return tmpFile;
-	}
-	
-	public void dispose() throws IOException{
-	    tmpSrc.close();
-	}
 
-	public boolean isSubItem() {
-		return isSubItem;
-	}
+        if (tmpFile == null)
+            tmpFile = getTikaStream().getFile();
 
-	public void setSubItem(boolean isSubItem) {
-		this.isSubItem = isSubItem;
-	}
+        return tmpFile;
+    }
 
-	public boolean isToExtract() {
-		return isToExtract;
-	}
+    /**
+     * 
+     * @return um TikaInputStream com o conteúdo do arquivo
+     * @throws IOException
+     */
+    public TikaInputStream getTikaStream() throws IOException {
+        if (tmpFile == null && tis != null && tis.hasFile())
+            tmpFile = tis.getFile();
+        if (tmpFile != null)
+            tis = TikaInputStream.get(tmpFile);
+        else if (startOffset == -1 && file != null && !this.isDir)
+            tis = TikaInputStream.get(file);
+        else
+            tis = TikaInputStream.get(getBufferedStream());
 
-	public void setToExtract(boolean isToExtract) {
-		this.isToExtract = isToExtract;
-	}
+        tmpResources.addResource(tis);
+        return tis;
+    }
 
-	public String getSleuthId() {
-		return sleuthId;
-	}
+    /**
+     * @return o tipo de arquivo baseado na análise de assinatura
+     */
+    public EvidenceFileType getType() {
+        return type;
+    }
 
-	public void setSleuthId(String sleuthId) {
-		this.sleuthId = sleuthId;
-	}
+    /**
+     * Obtém o arquivo de visualização. Se for nulo, retorna o arquivo
+     * exportado. Apenas para reports do FTK1.
+     * 
+     * @return nome e caminho relativo ao caso do arquivo de para visualização
+     */
+    public String getViewFile() {
+        return (viewFile == null) ? exportedFile : viewFile;
+    }
 
-	public boolean isExtracted() {
-		return extracted;
-	}
+    /**
+     * 
+     * @return true se o item tem filhos, como subitens ou itens carveados
+     */
+    public boolean hasChildren() {
+        return hasChildren;
+    }
 
-	public void setExtracted(boolean extracted) {
-		this.extracted = extracted;
-	}
+    /**
+     * 
+     * @return true se o item é proveniente de carving
+     */
+    public boolean isCarved() {
+        return carved;
+    }
 
-	public void setCarved(boolean carved) {
-		this.carved = carved;
-	}
+    /**
+     * 
+     * @return true se o item está apagado
+     */
+    public boolean isDeleted() {
+        return deleted;
+    }
 
-	public boolean isCarved() {
-		return carved;
-	}
+    /**
+     * 
+     * @return true se o item é um diretório
+     */
+    public boolean isDir() {
+        return isDir;
+    }
 
-	public void setEncrypted(boolean encrypted) {
-		this.encrypted = encrypted;
-	}
+    /**
+     * @return true se o item é uma duplicata de outro,
+     * baseado no hash
+     */
+    public boolean isDuplicate() {
+        return duplicate;
+    }
 
-	public boolean isEncrypted() {
-		return encrypted;
-	}
+    /**
+     * @return true se o item está cifrado
+     */
+    public boolean isEncrypted() {
+        return encrypted;
+    }
+    
+    /**
+     * @return true se o item foi submetido a parsing
+     */
+    public boolean isParsed() {
+        return parsed;
+    }
+    
+    /**
+     * @return true se é um item de fim de fila de processamento
+     */
+    public boolean isQueueEnd() {
+        return isQueueEnd;
+    }
+    
+    /**
+     * @param id identificador do item
+     */
+    public void setId(int id){
+        this.id = id;
+    }
 
-	public void setFileOffset(long fileOffset) {
-		this.startOffset = fileOffset;
-	}
+    /**
+     * @return true se é um item raiz
+     */
+    public boolean isRoot() {
+        return isRoot;
+    }
 
-	public long getFileOffset() {
-		return startOffset;
-	}
+    /**
+     * @return true se é um subitem de um container
+     */
+    public boolean isSubItem() {
+        return isSubItem;
+    }
 
-	public boolean hasChildren() {
-		return hasChildren;
-	}
+    /**
+     * @return true se o parsing do item ocasionou timeout
+     */
+    public boolean isTimedOut() {
+        return timeOut;
+    }
 
-	public void setHasChildren(boolean hasChildren) {
-		this.hasChildren = hasChildren;
-	}
+    /**
+     * 
+     * @return true se o item deve ser exportado
+     */
+    public boolean isToExtract() {
+        return isToExtract;
+    }
 
-	public boolean isDir() {
-		return isDir;
-	}
+    /**
+     * 
+     * @return true se o item deve ser ignorado pelas próximas
+     *      tarefas de processamento e excluído do caso
+     */
+    public boolean isToIgnore() {
+        return toIgnore;
+    }
 
-	public void setIsDir(boolean isDir) {
-		this.isDir = isDir;
-	}
+    /**
+     * 
+     * @return true se o item deve ser adicionado ao caso
+     */
+    public boolean isToAddToCase() {
+        return addToCase;
+    }
 
-	public boolean isRoot() {
-		return isRoot;
-	}
+    /**
+     * Remove o item da categoria
+     * 
+     * @param category categoria a ser removida
+     */
+    public void removeCategory(String category) {
+        categories.remove(category);
+    }
 
-	public void setRoot(boolean isRoot) {
-		this.isRoot = isRoot;
-	}
+    /**
+     * @param accessDate
+     *            nova data de último acesso
+     */
+    public void setAccessDate(Date accessDate) {
+        this.accessDate = accessDate;
+    }
 
-	public String getParentIdsString() {
-		String parents = "";
-		for (Integer id : parentIds)
-			parents += id + " ";
+    /**
+     * @param alternativeFile
+     *            nome e caminho do arquivo alternativo
+     */
+    public void setAlternativeFile(String alternativeFile) {
+        this.alternativeFile = alternativeFile;
+    }
 
-		return parents;
-	}
+    /**
+     * Define se é um item de carving
+     * 
+     * @param carved se é item de carving
+     */
+    public void setCarved(boolean carved) {
+        this.carved = carved;
+    }
 
-	public void addParentId(int parentId) {
-		this.parentIds.add(parentId);
-	}
+    /**
+     * Redefine a categoria do item
+     * 
+     * @param category nova categoria
+     */
+    public void setCategory(String category) {
+        categories = new HashSet<String>();
+        categories.add(category);
+    }
 
-	public List<Integer> getParentIds() {
-		return parentIds;
-	}
+    /**
+     * @param creationDate
+     *            nova data de criação do arquivo
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
 
-	public void addParentIds(List<Integer> parentIds) {
-		this.parentIds.addAll(parentIds);
-	}
+    /**
+     * Define se o item é apagado
+     * 
+     * @param deleted se é apagado
+     */
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
 
-	public String getParsedTextCache() {
-		return parsedTextCache;
-	}
+    /**
+     * Define se o item é duplicado
+     * 
+     * @param duplicate se é duplicado
+     */
+    public void setDuplicate(boolean duplicate) {
+        this.duplicate = duplicate;
+    }
 
-	public void setParsedTextCache(String parsedTextCache) {
-		this.parsedTextCache = parsedTextCache;
-	}
+    /**
+     * Define o email pai do item. Usado apenas em reports do FTK1.
+     * 
+     * @param pai email pai
+     */
+    public void setEmailPai(EvidenceFile pai) {
+        emailPai = pai;
+    }
 
-	public boolean isToIndex() {
-		return toIndex;
-	}
+    /**
+     * Define se o item é cifrado
+     * 
+     * @param encrypted se é cifrado
+     */
+    public void setEncrypted(boolean encrypted) {
+        this.encrypted = encrypted;
+    }
 
-	public void setToIndex(boolean toIndex) {
-		this.toIndex = toIndex;
-	}
+    /**
+     * Define o caminho para o arquivo do item, no caso de processamento de pastas
+     * e para subitens extraídos.
+     * 
+     * @param exportedFile
+     *            caminho para o arquivo do item
+     */
+    public void setExportedFile(String exportedFile) {
+        this.exportedFile = exportedFile;
+    }
 
-	public boolean isToIgnore() {
-		return toIgnore;
-	}
+    /**
+     * Define a extensão do item.
+     * 
+     * @param ext extensão
+     */
+    public void setExtension(String ext) {
+        extension = ext;
+    }
 
-	public void setToIgnore(boolean toIgnore) {
-		this.toIgnore = toIgnore;
-	}
+    /**
+     * Define um atributo extra para o item
+     * @param key nome do atributo
+     * @param value valor do atributo
+     */
+    public void setExtraAttribute(String key, Object value) {
+        this.extraAttributes.put(key, value);
+    }
 
-	public boolean isParsed() {
-		return parsed;
-	}
+    /**
+     * Define o arquivo referente ao item, caso existente
+     * 
+     * @param file arquivo referente ao item
+     */
+    public void setFile(File file) {
+        this.file = file;
+    }
 
-	public void setParsed(boolean parsed) {
-		this.parsed = parsed;
-	}
+    /**
+     * Define o offset onde itens de carving são encontrados no item pai
+     * 
+     * @param fileOffset offset do item
+     */
+    public void setFileOffset(long fileOffset) {
+        this.startOffset = fileOffset;
+    }
 
-	public boolean isTimedOut() {
-		return timeOut;
-	}
+    /**
+     * Define o id do FTK3+, em casos de report
+     * 
+     * @param ftkID id do FTK
+     */
+    public void setFtkID(String ftkID) {
+        this.ftkID = ftkID;
+    }
 
-	public void setTimeOut(boolean timeOut) {
-		this.timeOut = timeOut;
-	}
+    /**
+     * Define se o item tem filhos, como subitens ou itens de carving
+     * 
+     * @param hasChildren se tem filhos
+     */
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
+    }
 
-	public boolean isDuplicate() {
-		return duplicate;
-	}
+    /**
+     * Define o hash do item
+     * 
+     * @param hash hash do item
+     */
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
 
-	public void setDuplicate(boolean duplicate) {
-		this.duplicate = duplicate;
-	}
+    /**
+     * Define se o item é um diretório.
+     * 
+     * @param isDir se é diretório
+     */
+    public void setIsDir(boolean isDir) {
+        this.isDir = isDir;
+    }
 
-	public boolean isQueueEnd() {
-		return isQueueEnd;
-	}
+    /**
+     * Define os marcadores do item
+     * 
+     * @param labels marcadores concatenados
+     */
+    public void setLabels(String labels) {
+        this.labels = labels;
+    }
 
-	public void setQueueEnd(boolean isQueueEnd) {
-		this.isQueueEnd = isQueueEnd;
-	}
+    /**
+     * @param length tamanho do arquivo
+     */
+    public void setLength(Long length) {
+        this.length = length;
+    }
 
-	public Object getExtraAttribute(String key) {
-		return extraAttributes.get(key);
-	}
+    /**
+     * Define o mediaType do item baseado na assinatura
+     * @param mediaType internet mediaType
+     */
+    public void setMediaType(MediaType mediaType) {
+        this.mediaType = mediaType;
+    }
 
-	public void setExtraAttribute(String key, Object value) {
-		this.extraAttributes.put(key, value);
-	}
-	
-	public Map<String, Object> getExtraAttributeMap(){
-		return this.extraAttributes;
-	}
+    /**
+     * @param modificationDate
+     *            data da última modificação do arquivo
+     */
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
+    }
+
+    /**
+     * @param name
+     *            nome do arquivo
+     */
+    public void setName(String name) {
+        this.name = name;
+        int p = name.lastIndexOf(".");
+        extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase();
+    }
+
+    /**
+     * @param parentId identificador do item pai
+     */
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
+    }
+
+    /**
+     * @param parsed se foi realizado parsing do item
+     */
+    public void setParsed(boolean parsed) {
+        this.parsed = parsed;
+    }
+
+    /**
+     * @param parsedTextCache texto extraído após o parsing
+     */
+    public void setParsedTextCache(String parsedTextCache) {
+        this.parsedTextCache = parsedTextCache;
+    }
+
+    /**
+     * @param path caminho do arquivo. Utilizado apenas em relatórios do FTK1
+     */
+    public void setPathNode(PathNode path) {
+        this.path = path;
+    }
+
+    /**
+     * @param path caminho do item
+     */
+    public void setPath(String path) {
+        this.pathString = path;
+    }
+
+    /**
+     * @param isQueueEnd se é um item especial de fim de fila
+     */
+    public void setQueueEnd(boolean isQueueEnd) {
+        this.isQueueEnd = isQueueEnd;
+    }
+
+    /**
+     * @param isRoot se o item é raiz
+     */
+    public void setRoot(boolean isRoot) {
+        this.isRoot = isRoot;
+    }
+
+    /**
+     * @param sleuthFile objeto que representa o item no sleuthkit
+     */
+    public void setSleuthFile(AbstractFile sleuthFile) {
+        this.sleuthFile = sleuthFile;
+    }
+
+    /**
+     * @param sleuthId id do item no sleuthkit
+     */
+    public void setSleuthId(String sleuthId) {
+        this.sleuthId = sleuthId;
+    }
+
+    /**
+     * @param isSubItem se o item é um subitem
+     */
+    public void setSubItem(boolean isSubItem) {
+        this.isSubItem = isSubItem;
+    }
+
+    /**
+     * @param timeOut se o parsing do item ocasionou timeout
+     */
+    public void setTimeOut(boolean timeOut) {
+        this.timeOut = timeOut;
+    }
+
+    /**
+     * @param isToExtract se o item deve ser extraído
+     */
+    public void setToExtract(boolean isToExtract) {
+        this.isToExtract = isToExtract;
+    }
+
+    /**
+     * @param toIgnore se o item deve ser ignorado pela tarefas
+     *  de processamento seguintes e excluído do caso
+     */
+    public void setToIgnore(boolean toIgnore) {
+        this.toIgnore = toIgnore;
+    }
+
+    /**
+     * @param toIndex se o item deve ser adicionado ao caso
+     */
+    public void setAddToCase(boolean addToCase) {
+        this.addToCase = addToCase;
+    }
+
+    /**
+     * @param type tipo de arquivo
+     */
+    public void setType(EvidenceFileType type) {
+        this.type = type;
+    }
+
+    /**
+     * @param viewFile caminho do arquivo para visualização. Utilizado apenas
+     * em relatórios do FTK1.
+     */
+    public void setViewFile(String viewFile) {
+        this.viewFile = viewFile;
+    }
+
+    /**
+     * Retorna String com os dados contidos no objeto.
+     * 
+     * @return String listando as propriedades do arquivo.
+     */
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Arquivo: " + name);
+        sb.append("\n\t\tCaminho: ").append(getPath());
+        if (type != null)
+            sb.append("\n\t\t").append("Tipo de Arquivo: ")
+                    .append(type.getLongDescr());
+        if (creationDate != null)
+            sb.append("\n\t\tData de Criação: ").append(
+                    FormatUtil.format(creationDate));
+        if (modificationDate != null)
+            sb.append("\n\t\tData de Modificação: ").append(
+                    FormatUtil.format(modificationDate));
+        if (accessDate != null)
+            sb.append("\n\t\tData de Último Acesso: ").append(
+                    FormatUtil.format(accessDate));
+        if (length != null)
+            sb.append("\n\t\tTamanho do Arquivo: ").append(length);
+        return sb.toString();
+    }
 
 }

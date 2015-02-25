@@ -19,6 +19,7 @@ import java.util.zip.GZIPOutputStream;
  * Classe que define todos os dados do caso.
  * 
  * @author Wladimir Leite (GPINF/SP)
+ * @author Nassif (GPINF/SP)
  */
 public class CaseData implements Serializable {
 	/** Identificador utilizado para serialização da classe. */
@@ -33,11 +34,11 @@ public class CaseData implements Serializable {
 	/** Grupos de arquivos por data. */
 	private final List<FileGroup> timeGroups = new ArrayList<FileGroup>();
 
-	/** Arquivos de Evidência do caso. */
+	/** Fila de processamento dos itens do caso*/
 	private LinkedBlockingDeque<EvidenceFile> evidenceFiles;
 	
 	/**
-	 * Mapa genérico de objetos do caso.
+	 * Mapa genérico de objetos extras do caso.
 	 * Pode ser utilizado como área de compartilhamento de objetos entre as
 	 * instâncias das tarefas.
 	 */
@@ -47,11 +48,17 @@ public class CaseData implements Serializable {
 
 	private int alternativeFiles = 0;
 	
-	public long getDiscoveredVolume() {
+	/**
+	 * @return retorna o volume de dados descobertos até o momento
+	 */
+	public synchronized long getDiscoveredVolume() {
 		return discoveredVolume;
 	}
 
-	public void incDiscoveredVolume(Long volume) {
+	/**
+	 * @param volume tamanho do novo item descoberto
+	 */
+	public synchronized void incDiscoveredVolume(Long volume) {
 		if(volume != null)
 			this.discoveredVolume += volume;
 		else
@@ -63,6 +70,9 @@ public class CaseData implements Serializable {
 	/** Árvore de arquivos de evidência. */
 	private final PathNode root = new PathNode("Caso");
 
+	/**
+	 * indica que o caso se trata de um relatório
+	 */
 	private boolean containsReport = false;
 
 	synchronized public void incAlternativeFiles(int inc) {
@@ -82,7 +92,12 @@ public class CaseData implements Serializable {
 	}
 
 	private int maxQueueSize;
-
+	
+	/**
+	 * Cria objeto do caso
+	 * 
+	 * @param queueSize tamanho da fila de processamento dos itens
+	 */
 	public CaseData(int queueSize) {
 		this.maxQueueSize = queueSize;
 		evidenceFiles = new LinkedBlockingDeque<EvidenceFile>();
@@ -181,9 +196,9 @@ public class CaseData implements Serializable {
 	}
 
 	/**
-	 * Obtém lista de arquivos de evidência do caso.
+	 * Obtém fila de arquivos de evidência do caso.
 	 * 
-	 * @return lista não modificável de arquivos.
+	 * @return fila de arquivos.
 	 */
 	public LinkedBlockingDeque<EvidenceFile> getEvidenceFiles() {
 		return evidenceFiles;
@@ -222,18 +237,31 @@ public class CaseData implements Serializable {
 		return data;
 	}
 
+	/**
+	 * @return true se o caso contém um report
+	 */
 	public boolean containsReport() {
 		return containsReport;
 	}
 
+	/**
+	 * 
+	 * @param containsReport se o caso contém um report
+	 */
 	public void setContainsReport(boolean containsReport) {
 		this.containsReport = containsReport;
 	}
 
+	/**
+	 * @return o mapa genérico de objetos extras do caso
+	 */
 	public HashMap<String, Object> getObjectMap() {
 		return objectMap;
 	}
 
+	/**
+	 * @param objectMap mapa genérico de objetos do caso
+	 */
 	public void setObjectMap(HashMap<String, Object> objectMap) {
 		this.objectMap = objectMap;
 	}
