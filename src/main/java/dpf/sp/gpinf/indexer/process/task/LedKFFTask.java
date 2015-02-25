@@ -32,9 +32,11 @@ public class LedKFFTask extends AbstractTask{
             this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
             String hash = confParams.getProperty("hash");
             String ledWkffPath = confParams.getProperty("ledWkffPath");
-            
-            ArrayList<HashValue> hashList = new ArrayList<HashValue>();
+            if(ledWkffPath == null)
+                return;
             File wkffDir = new File(ledWkffPath);
+            ArrayList<HashValue> hashList = new ArrayList<HashValue>();
+            
             for(File wkffFile : wkffDir.listFiles()){
                 BufferedReader reader = new BufferedReader(new FileReader(wkffFile));
                 String line = reader.readLine();
