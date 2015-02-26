@@ -173,43 +173,6 @@ public class Worker extends Thread {
 	}
 	
 	/**
-	 * Processa o item em determinada tarefa. Caso ocorra timeout, o item é reprocessado
-	 * na tarefa com um parser seguro, sem risco de novo timeout.
-	 * 
-	 * @param evidence Item a ser procesado
-	 * @param task Tarefa que será executada sobre o item.
-	 * @throws Exception Se ocorrer erro inesperado.
-	 */
-	private void processTask(EvidenceFile evidence, AbstractTask task) throws Exception{
-		AbstractTask prevTask = runningTask;
-		runningTask = task;
-		try {
-			task.processAndSendToNextTask(evidence);
-			
-		} catch (TimeoutException e) {
-			System.out.println(new Date() + "\t[ALERT]\t" + this.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
-			stats.incTimeouts();
-			evidence.setTimeOut(true);
-			processTask(evidence, task);
-
-		}catch (Throwable t) {
-			//Ignora arquivos recuperados e corrompidos
-			if(t.getCause() instanceof TikaException && evidence.isCarved()){
-				stats.incCorruptCarveIgnored();
-				//System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
-				evidence.setToIgnore(true);
-				if(evidence.isSubItem()){
-					evidence.getFile().delete();
-				}
-				
-			}else
-				throw t;
-			
-		}
-		runningTask = prevTask;
-	}
-	
-	/**
 	 * Processa ou enfileira novo item criado (subitem de zip, pst, carving, etc).
 	 * 
 	 * @param evidence novo item a ser processado.
