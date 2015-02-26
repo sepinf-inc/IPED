@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Properties;
 
+import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -117,17 +118,15 @@ public class ExportFileTask extends AbstractTask{
 	public void process(EvidenceFile evidence) {
 		
 		// Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
-		if (hasCategoryToExtract() || evidence.isToExtract()) {
-			if (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract())) {
-				evidence.setToExtract(true);
-				extract(evidence);
-				incSubitensExtracted();
-			}
-			
-		}
+	    if (ItemProducer.indexerReport || (!evidence.isSubItem() && 
+                (isToBeExtracted(evidence) || evidence.isToExtract()))) {
+            evidence.setToExtract(true);
+            extract(evidence);
+            incSubitensExtracted();
+        }
 		
 		//Renomeia subitem caso deva ser exportado
-		if (evidence.isSubItem() && evidence.isToExtract()) {
+		if (evidence.isSubItem() && evidence.isToExtract() && !ItemProducer.indexerReport) {
 			renameToHash(evidence);
 			incSubitensExtracted();
 		}

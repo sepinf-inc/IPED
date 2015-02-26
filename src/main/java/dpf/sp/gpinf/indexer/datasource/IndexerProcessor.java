@@ -185,6 +185,9 @@ public class IndexerProcessor {
 			value = doc.get(IndexItem.CARVED);
 			evidence.setCarved(Boolean.parseBoolean(value));
 			
+			value = doc.get(IndexItem.SUBITEM);
+            evidence.setSubItem(Boolean.parseBoolean(value));
+			
 			value = doc.get(IndexItem.OFFSET);
 			if(value != null)
 				evidence.setFileOffset(Long.parseLong(value));

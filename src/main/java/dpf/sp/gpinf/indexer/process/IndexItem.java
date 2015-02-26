@@ -60,6 +60,7 @@ public class IndexItem {
 	public static final String DELETED = "deletado";
 	public static final String HASCHILD = "hasChildren";
 	public static final String CARVED = "carved";
+	public static final String SUBITEM = "subitem";
 	public static final String OFFSET = "offset";
 	public static final String DUPLICATE = "duplicate";
 	public static final String TIMEOUT = "timeout";
@@ -196,6 +197,9 @@ public class IndexItem {
 		
 		value = Boolean.toString(evidence.isCarved());
 		doc.add(new StringField(CARVED, value, Field.Store.YES));
+		
+		value = Boolean.toString(evidence.isSubItem());
+        doc.add(new StringField(SUBITEM, value, Field.Store.YES));
 		
 		long off = evidence.getFileOffset();
 		if(off != -1)
