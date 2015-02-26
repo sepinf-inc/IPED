@@ -18,6 +18,11 @@
     
     <repositories>
         <repository>
+            <id>local</id>
+            <name>local</name>
+            <url>file://c:/users/wifi/.m2/repository</url>
+        </repository>
+        <repository>
             <id>internal</id>
             <name>Archiva SEPINF - Internal</name>
             <url>http://10.61.242.12:8081/repository/internal/</url>
@@ -50,64 +55,6 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>icepdf</groupId>
-            <artifactId>icepdf-core</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>icepdf</groupId>
-            <artifactId>icepdf-viewer</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>javax-media</groupId>
-            <artifactId>jai-codec</artifactId>
-            <version>1.1.3</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>javax-media</groupId>
-            <artifactId>jai-imageio</artifactId>
-            <version>1.1.3</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>javax-media</groupId>
-            <artifactId>jai-core</artifactId>
-            <version>1.1.3</version>
-            <type>jar</type>
-        </dependency>
-        <!-- INICIO: LIBRE OFFICE 4 -->
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>unoil</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>ridl</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>jurt</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
         	<groupId>iped</groupId>
         	<artifactId>iped-carver</artifactId>
         	<version>3.3-SNAPSHOT</version>
@@ -117,7 +64,11 @@
     		<artifactId>iped-parsers-impl</artifactId>
     		<version>3.3-SNAPSHOT</version>
         </dependency>
-        <!-- FIM: LIBRE OFFICE 4 -->
+        <dependency>
+        <groupId>gpinf.iped</groupId>
+    		<artifactId>iped-viewer-app</artifactId>
+    		<version>3.3-SNAPSHOT</version>
+    	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->
         <dependency>
