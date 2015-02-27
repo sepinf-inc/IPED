@@ -57,8 +57,8 @@ public class Worker extends Thread {
 
 	public IndexWriter writer;
 	String baseFilePath;
-	public boolean containsReport;
 
+	//TODO mover para tarefas que usam estes objetos
 	public IndexerDefaultParser autoParser;
 	public Detector detector;
 	public TikaConfig config;
@@ -84,7 +84,6 @@ public class Worker extends Thread {
 		super("Worker-" + k);
 		this.caseData = caseData;
 		this.evidences = caseData.getEvidenceFiles();
-		this.containsReport = caseData.containsReport();
 		this.writer = writer;
 		this.output = output;
 		this.manager = manager;
