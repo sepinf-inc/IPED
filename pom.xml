@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.3-SNAPSHOT</version>    
+    <version>3.3</version>    
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -67,7 +67,7 @@
         <dependency>
         <groupId>gpinf.iped</groupId>
     		<artifactId>iped-viewer-app</artifactId>
-    		<version>3.3-SNAPSHOT</version>
+    		<version>3.3</version>
     	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->
@@ -106,6 +106,12 @@
             <artifactId>tika-parsers</artifactId>
             <version>1.7</version>
             <type>jar</type>
+            <exclusions>
+        		<exclusion>
+          			<groupId>com.pff</groupId>
+    				<artifactId>java-libpst</artifactId>
+        		</exclusion>
+      		</exclusions> 
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -364,6 +370,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>
+                                     <Class-Path>conf/CustomSignatures.jar</Class-Path>
                                 </manifestEntries>
                             </archive>
                         </configuration>
@@ -441,6 +448,7 @@
                             </resources>
                         </configuration>
                     </execution>
+                    
                 </executions>
             </plugin>
             <plugin>
