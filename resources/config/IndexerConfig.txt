@@ -20,12 +20,6 @@ numThreads = default
 # É muito custoso, sendo desnecessário caso o índice seja acessado a partir de um HD.
 forceMerge = false
 
-# Tamanho em bytes de divisão do texto extraído dos arquivos para limitar o consumo de memória da biblioteca de indexação
-textSplitSize = 10000000
-
-# Overlap entre os fragmentos de texto de arquivos divididos para viabilizar consultas de proximidade nas bordas
-textOverlapSize = 10000
-
 # Tempo de espera por progresso no parsing dos arquivos. São adicionados 1s por MB.
 # Após este limite, são indexadas strings brutas do arquivo.
 timeOut = 180

@@ -119,18 +119,6 @@ public class Configuration {
 		if (value != null && value.equalsIgnoreCase("false"))
 			forceMerge = false;
 
-		value = properties.getProperty("textSplitSize");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			textSplitSize = Integer.valueOf(value);
-
-		value = properties.getProperty("textOverlapSize");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			textOverlapSize = Integer.valueOf(value);
-
 		value = properties.getProperty("timeOut");
 		if (value != null)
 			value = value.trim();
