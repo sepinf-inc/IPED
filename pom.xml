@@ -66,7 +66,7 @@
         </dependency>
         <dependency>
         <groupId>gpinf.iped</groupId>
-    		<artifactId>iped-viewer-app</artifactId>
+    		<artifactId>iped-desktop-app</artifactId>
     		<version>3.3</version>
     	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
