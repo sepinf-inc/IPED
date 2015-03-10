@@ -93,7 +93,7 @@ public class CaseInfo implements Serializable {
 	/**
 	 * Altera o texto do cabeçalho.
 	 * 
-	 * @param headerImage
+	 * @param headerText
 	 *            novo texto
 	 */
 	public void setHeaderText(String headerText) {

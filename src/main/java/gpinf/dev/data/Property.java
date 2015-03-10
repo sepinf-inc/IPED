@@ -3,7 +3,7 @@ package gpinf.dev.data;
 import java.io.Serializable;
 
 /**
- * Classe que define uma propriedade, composta pelo par (nome -> valor).
+ * Classe que define uma propriedade, composta pelo par (nome para valor).
  * 
  * @author Wladimir Leite (GPINF/SP)
  */

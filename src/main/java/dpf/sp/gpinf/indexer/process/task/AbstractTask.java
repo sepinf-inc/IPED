@@ -79,7 +79,7 @@ public abstract class AbstractTask {
 	/**
 	 * Método de inicialização da tarefa. Chamado em cada instância da tarefa pelo
 	 * Worker no qual ela está instalada.
-	 * @param confProps Parâmetros obtidos do arquivo de configuração principal
+	 * @param confParams Parâmetros obtidos do arquivo de configuração principal
 	 * @param confDir Diretório que pode conter um arquivo avançado de configuração da tarefa
 	 * @throws Exception Se ocorreu erro durante a inicialização
 	 */

@@ -25,23 +25,7 @@ public class GenericFileType extends EvidenceFileType {
 	 */
 	private String descr;
 
-	/**
-	 * Tipo de visualização. * private ViewType viewType = ViewType.NONE;
-	 * 
-	 * /**
-	 * 
-	 * @return o tipo de visualização
-	 * 
-	 *         public ViewType getViewType() { return viewType; }
-	 * 
-	 *         /**
-	 * @param viewType
-	 *            o novo tipo de visualização
-	 * 
-	 *            protected void setViewType(ViewType viewType) { this.viewType
-	 *            = viewType; }
-	 * 
-	 *            /** Construtor que recebe a descrição do tipo de arquivo.
+	/** Construtor que recebe a descrição do tipo de arquivo.
 	 * @param descr
 	 *            Descrição a ser utilizada pélo método de obtenção da
 	 *            descrição.

@@ -127,8 +127,6 @@ public class ParsingReader extends Reader {
 	 *            document metadata
 	 * @param context
 	 *            parsing context
-	 * @param executor
-	 *            executor for the parsing task
 	 * @throws IOException
 	 *             if the document can not be parsed
 	 * @since Apache Tika 0.4

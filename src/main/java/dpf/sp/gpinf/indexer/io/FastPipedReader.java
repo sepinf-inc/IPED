@@ -101,7 +101,7 @@ public class FastPipedReader extends Reader {
 	 * @exception IOException
 	 *                if an I/O error occurs.
 	 * @exception IllegalArgumentException
-	 *                if <code>pipeSize <= 0</code>.
+	 *                if <code>pipeSize less than 1</code>.
 	 * @since 1.6
 	 */
 	public FastPipedReader(FastPipedWriter src, int pipeSize) throws IOException {
@@ -111,7 +111,7 @@ public class FastPipedReader extends Reader {
 
 	/**
 	 * Creates a <code>PipedReader</code> so that it is not yet
-	 * {@linkplain #connect(java.io.PipedWriter) connected}. It must be
+	 * {@linkplain #connect(FastPipedWriter) connected}. It must be
 	 * {@linkplain java.io.PipedWriter#connect(java.io.PipedReader) connected}
 	 * to a <code>PipedWriter</code> before being used.
 	 */
@@ -121,7 +121,7 @@ public class FastPipedReader extends Reader {
 
 	/**
 	 * Creates a <code>PipedReader</code> so that it is not yet
-	 * {@link #connect(java.io.PipedWriter) connected} and uses the specified
+	 * {@link #connect(FastPipedWriter) connected} and uses the specified
 	 * pipe size for the pipe's buffer. It must be
 	 * {@linkplain java.io.PipedWriter#connect(java.io.PipedReader) connected}
 	 * to a <code>PipedWriter</code> before being used.
@@ -129,7 +129,7 @@ public class FastPipedReader extends Reader {
 	 * @param pipeSize
 	 *            the size of the pipe's buffer.
 	 * @exception IllegalArgumentException
-	 *                if <code>pipeSize <= 0</code>.
+	 *                if <code>pipeSize less than 1</code>.
 	 * @since 1.6
 	 */
 	public FastPipedReader(int pipeSize, int timeOutBySize) {
@@ -272,7 +272,7 @@ public class FastPipedReader extends Reader {
 	 * @exception IOException
 	 *                if the pipe is <a href=PipedInputStream.html#BROKEN>
 	 *                <code>broken</code></a>,
-	 *                {@link #connect(java.io.PipedWriter) unconnected}, closed,
+	 *                {@link #connect(FastPipedWriter) unconnected}, closed,
 	 *                or an I/O error occurs.
 	 */
 	@Override
@@ -338,7 +338,7 @@ public class FastPipedReader extends Reader {
 	 * @exception IOException
 	 *                if the pipe is <a href=PipedInputStream.html#BROKEN>
 	 *                <code>broken</code></a>,
-	 *                {@link #connect(java.io.PipedWriter) unconnected}, closed,
+	 *                {@link #connect(FastPipedWriter) unconnected}, closed,
 	 *                or an I/O error occurs.
 	 */
 	@Override
@@ -389,7 +389,7 @@ public class FastPipedReader extends Reader {
 	 * @exception IOException
 	 *                if the pipe is <a href=PipedInputStream.html#BROKEN>
 	 *                <code>broken</code></a>,
-	 *                {@link #connect(java.io.PipedWriter) unconnected}, or
+	 *                {@link #connect(FastPipedWriter) unconnected}, or
 	 *                closed.
 	 */
 	@Override

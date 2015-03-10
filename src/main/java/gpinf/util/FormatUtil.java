@@ -56,7 +56,7 @@ public class FormatUtil {
 	/**
 	 * Formata um número decimal.
 	 * 
-	 * @param number
+	 * @param d
 	 *            Número a ser formatado.
 	 * @return String com o número formatado. No caso do número ser nulo retorna
 	 *         uma String vazia.

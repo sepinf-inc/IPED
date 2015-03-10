@@ -85,7 +85,7 @@ public final class FastASCIIFoldingFilter extends TokenFilter {
   }
 
   /**
-   * Does the filter preserve the original tokens?
+   * @return true if the filter preserve the original tokens
    */
   public boolean isPreserveOriginal() {
     return preserveOriginal;

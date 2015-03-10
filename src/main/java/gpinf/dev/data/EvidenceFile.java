@@ -1000,7 +1000,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * @param toIndex se o item deve ser adicionado ao caso
+     * @param addToCase se o item deve ser adicionado ao caso
      */
     public void setAddToCase(boolean addToCase) {
         this.addToCase = addToCase;

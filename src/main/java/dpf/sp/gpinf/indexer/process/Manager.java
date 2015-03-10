@@ -80,7 +80,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
  * informando a interface sobre o estado do processamento e verificando se os workers processaram todos os itens.
  * 
  * O pós-processamento inclui a pré-ordenação das propriedades dos itens, o armazenamento do volume de texto 
- * indexado de cada item, do mapeamento indexId->id, dos ids dos itens fragmentados, a filtragem de categorias
+ * indexado de cada item, do mapeamento indexId para id, dos ids dos itens fragmentados, a filtragem de categorias
  * e palavras-chave e o log de estatísticas do processamento.
  * 
  */

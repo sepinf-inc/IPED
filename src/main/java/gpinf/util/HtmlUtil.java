@@ -105,7 +105,7 @@ public class HtmlUtil {
 	}
 
 	/**
-	 * Converte caracteres especiais &#xx; para os valores correspondentes.
+	 * Converte caracteres especiais html; para os valores correspondentes.
 	 * 
 	 * @param str
 	 *            String a ser processada.

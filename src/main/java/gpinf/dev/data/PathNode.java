@@ -9,10 +9,8 @@ import java.util.TreeMap;
  * Define um nó de uma estrutura de árvore que armazena caminhos (pastas) de
  * arquivos. A idéia de utilizar uma árvore é de reaproveitar partes das String
  * que se repetem quando há vários arquivos em uma mesma pasta, economizando
- * espaço de armazenamento. Por exemplo, dois arquivos "xxx\yyy\aaa.txt" e
- * "xxx\yyy\bbb.txt" são armazenados como ("xxx") <-> ("yyy") <-> ("aaa.txt",
- * "bbb.txt"). Além disso esta estrutura permite uma navegação biderecional (pai
- * <-> filhos) das pastas.
+ * espaço de armazenamento. Além disso esta estrutura permite uma navegação biderecional (pai
+ * para filhos) das pastas.
  * 
  * @author Wladimir Leite (GPINF/SP)
  */
@@ -183,8 +181,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
 	/**
 	 * Retorna o filho em uma dada posição.
 	 * 
-	 * @param índice
-	 *            requisitado
+	 * @param pos índice requisitado
 	 * @return nó filho correspondente a um índice
 	 */
 	public PathNode getChild(int pos) {
@@ -194,7 +191,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
 	/**
 	 * Retorna a posição de um determinado nó filho.
 	 * 
-	 * @param nó
+	 * @param child nó
 	 *            requisitado
 	 * @return índice correspondente a um nó
 	 */
@@ -226,7 +223,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
 	 * 
 	 * @param pn
 	 *            outro nó a ser comparado
-	 * @return <0 se este nó for menor que o outro, 0 se for igual e >0 se for
+	 * @return negativo se este nó for menor que o outro, 0 se for igual e positivo se for
 	 *         maior.
 	 */
 	@Override

@@ -44,11 +44,10 @@ public class StandardASCIIAnalyzer extends Analyzer {
 	private final boolean pipeTokenizer;
 
 	/**
-	 * Builds an analyzer with the default stop words ({@link #STOP_WORDS_SET}).
+	 * Builds an analyzer with the default stop words.
 	 * 
 	 * @param matchVersion
-	 *            Lucene version to match See
-	 *            {@link <a href="#version">above</a>}
+	 *            Lucene version to match
 	 */
 	public StandardASCIIAnalyzer(Version matchVersion, boolean pipeTokenizer) {
 		this.matchVersion = matchVersion;
