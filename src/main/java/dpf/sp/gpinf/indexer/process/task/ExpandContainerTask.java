@@ -179,12 +179,12 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!((isToBeExpanded(evidence) && !evidence.isTimedOut()) ||
+		if (!evidence.isTimedOut() && (isToBeExpanded(evidence) ||
 			(CarveTask.ignoreCorrupted && evidence.isCarved() &&
-			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) )))
-				return;
+			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
+		    new ExpandContainerTask(worker).safeProcess(evidence);
+		}
 		
-		new ExpandContainerTask(worker).safeProcess(evidence);
 	}
 	
 	
