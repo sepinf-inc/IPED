@@ -22,16 +22,6 @@
             <name>local</name>
             <url>file://c:/users/wifi/.m2/repository</url>
         </repository>
-        <repository>
-            <id>internal</id>
-            <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
-        </repository>
     </repositories>
         
     <dependencies>
@@ -149,6 +139,11 @@
             <version>3.8.7</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+    		<groupId>org.mapdb</groupId>
+    		<artifactId>mapdb</artifactId>
+    		<version>1.0.6</version>
+		</dependency>
         <!-- FIM: EXTERNAS -->
     </dependencies>
     <build>
