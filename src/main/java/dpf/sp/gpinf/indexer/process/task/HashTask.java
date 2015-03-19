@@ -23,6 +23,7 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.Date;
 import java.util.Properties;
@@ -62,10 +63,14 @@ public class HashTask extends AbstractTask{
 		
 	}
 
-	public static class HashValue implements Comparable<HashValue>{
+	public static class HashValue implements Comparable<HashValue>, Serializable{
 
 		byte[] bytes;
 
+		public HashValue(){
+		    
+		}
+		
 		public HashValue(String hash) {
 			bytes = DatatypeConverter.parseHexBinary(hash);
 		}
