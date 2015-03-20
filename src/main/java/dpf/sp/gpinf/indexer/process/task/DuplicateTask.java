@@ -49,7 +49,7 @@ public class DuplicateTask extends AbstractTask{
 		
 		if(ignoreDuplicates && evidence.isDuplicate() && !evidence.isDir() && !evidence.isRoot() && !ItemProducer.indexerReport){
 			evidence.setToIgnore(true);
-			stats.incDuplicatesIgnored();
+			stats.incIgnored();
 			if (evidence.isSubItem()) {
 				if (!evidence.getFile().delete())
 					System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + evidence.getFile().getAbsolutePath());

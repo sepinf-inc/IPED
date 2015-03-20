@@ -43,7 +43,7 @@ public class KFFTask extends AbstractTask{
     private static Map<HashValue, Boolean> map;
     //private static Map<HashValue, Boolean> sha1Map;
     private static DB db;
-    private static int excluded = 0;
+    public static int excluded = 0;
     
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
@@ -94,7 +94,7 @@ public class KFFTask extends AbstractTask{
     @Override
     public void finish() throws Exception {
         if(excluded != -1)
-            System.out.println(new Date() + "\t[INFO]\t" + "Arquivos ignorados via KFF: " + excluded);
+            System.out.println(new Date() + "\t[INFO]\t" + "Itens ignorados via KFF: " + excluded);
         excluded = -1;
     }
     
@@ -124,6 +124,8 @@ public class KFFTask extends AbstractTask{
                 
                 progress += line.length() + 2;
                 if(progress > i * length / 1000){
+                    if(monitor.isCanceled())
+                        return;
                     monitor.setProgress((int)(progress/1000));
                     i++;
                 }
@@ -146,6 +148,7 @@ public class KFFTask extends AbstractTask{
                 if(kffattr){
                     if(excludeKffIgnorable){
                         evidence.setToIgnore(true);
+                        stats.incIgnored();
                         synchronized(lock){
                             excluded++;
                         }

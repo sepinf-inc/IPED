@@ -37,7 +37,7 @@ public class Statistics {
 	long volumeIndexed = 0;
 	int lastId = -1;
 	int corruptCarveIgnored = 0;
-	int duplicatesIgnored = 0;
+	int ignored = 0;
 	int previousIndexedFiles = 0;
 	
 	public Statistics(CaseData caseData, File indexDir){
@@ -93,12 +93,12 @@ public class Statistics {
 		corruptCarveIgnored++;
 	}
 
-	synchronized public int getDuplicatesIgnored() {
-		return duplicatesIgnored;
+	synchronized public int getIgnored() {
+		return ignored;
 	}
 
-	synchronized public void incDuplicatesIgnored() {
-		duplicatesIgnored++;
+	synchronized public void incIgnored() {
+		ignored++;
 	}
 
 	synchronized public void updateLastId(int id) {
@@ -120,7 +120,7 @@ public class Statistics {
 		int extracted = ExportFileTask.getSubitensExtracted();
 		int activeFiles = getActiveProcessed();
 		int carvedIgnored = getCorruptCarveIgnored();
-		int duplicatesIgnored = getDuplicatesIgnored();
+		int ignored = getIgnored();
 		
 		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + getSplits());
 		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + getTimeouts());
@@ -129,7 +129,7 @@ public class Statistics {
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + CarveTask.getItensCarved());
 		System.out.println(new Date() + "\t[INFO]\t" + "Carvings corrompidos ignorados: " + carvedIgnored);
-		System.out.println(new Date() + "\t[INFO]\t" + "Duplicados descartados: " + duplicatesIgnored);
+		System.out.println(new Date() + "\t[INFO]\t" + "Itens ignorados: " + ignored);
 
 		if (caseData.getAlternativeFiles() > 0)
 			System.out.println(new Date() + "\t[INFO]\t" + "Processadas " + caseData.getAlternativeFiles() + " versões de visualização dos itens ao invés das originais.");
@@ -154,8 +154,8 @@ public class Statistics {
 			throw new Exception("Processados " + processed + " itens de " + discovered);
 
 		if(!ExportFileTask.hasCategoryToExtract()){
-			if (indexed != discovered - carvedIgnored - duplicatesIgnored)
-				throw new Exception("Indexados " + indexed + " itens de " + (discovered - carvedIgnored - duplicatesIgnored));
+			if (indexed != discovered - carvedIgnored - ignored)
+				throw new Exception("Indexados " + indexed + " itens de " + (discovered - carvedIgnored - ignored));
 		}/*else 
 			if (indexed != extracted)
 				throw new Exception("Indexados " + indexed + " itens de " + extracted);

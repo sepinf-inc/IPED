@@ -46,11 +46,11 @@ hash = md5
 # existentes na base são adicionados a uma categoria "Alerta de hash"
 #ledWkffPath = D:/LED/V1.17.00/pedo/wkff
 
-# Caminho para base de hashes (KFF) em formato indexado. Comente caso não queira confrontar hashes na base.
+# Caminho para base de hashes (KFF) em formato pre-indexado. Comente caso não queira confrontar hashes na base.
 # A base pre-indexada pode ser copiada ou importada de base no formato NSRL via parâmetro -importkff.
 kffDb = d:/kff/kff.db
 
-# Exclui do caso arquivos ignoráveis conforme base de hashes.
+# Exclui do estante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = true
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.
