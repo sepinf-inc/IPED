@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
+import dpf.sp.gpinf.indexer.process.task.KFFTask;
 
 /**
  * Ponto de entrada do programa ao processar evidências.
@@ -175,7 +177,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				+ "--append: \tadiciona indexação a um indice ja existente" + "\n" 
 				+ "--nogui: \tnao exibe a janela de progresso da indexacao" + "\n"
 				+ "--nologfile: \timprime as mensagem de log na saida padrao" + "\n" 
-				+ "--verbose: \tgera mensagens de log detalhadas, para debugar erros, porem diminui desempenho";
+				+ "--verbose: \tgera mensagens de log detalhadas, para debugar erros, porem diminui desempenho" + "\n"
+		        + "-importkff: \timporta diretorio com base de hashes no formato NSRL";
 
 		System.out.println(usage);
 		System.exit(1);
@@ -225,7 +228,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				verbose = true;
 			} else if (args[i].compareTo("--append") == 0) {
 				appendIndex = true;
-			} else
+			}  else if (args[i].compareTo("-importkff") == 0 && args.length > i + 1) {
+			    importKFF(args[++i]);
+                System.exit(0);
+                
+            }else
 				printUsageExit();
 		}
 
@@ -243,6 +250,18 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		else
 			output = new File(aditionalDir.getParentFile(), "indexador");
 
+	}
+	
+	
+	private void importKFF(String kffPath){
+	    try {
+            setConfigPath();
+            Configuration.getConfiguration(configPath);
+            KFFTask.staticInit(Configuration.properties);
+            KFFTask.importKFF(new File(kffPath));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 
 	/**
