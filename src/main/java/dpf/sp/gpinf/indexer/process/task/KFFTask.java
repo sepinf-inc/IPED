@@ -36,35 +36,40 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class KFFTask extends AbstractTask{
     
-    private static String ALERT = "Alerta de Hash";
-    private static String IGNORE = "Ignorável por Hash";
+    private static String ALERT = "Hash com Alerta";
+    private static String IGNORE = "Hash Ignorável";
     
     private static Object lock = new Object();
     private static Map<HashValue, Boolean> map;
     //private static Map<HashValue, Boolean> sha1Map;
     private static DB db;
     private static int excluded = 0;
+    
     private boolean excludeKffIgnorable = true;
+    private boolean md5 = true;
 
     public KFFTask(Worker worker) {
         super(worker);
-    }
-    
-    public static void staticInit(Properties confParams){
-        excluded = 0;
-        String kffDbPath = confParams.getProperty("kffDb");
-        if(kffDbPath == null)
-            return;
-        
-        File kffDb = new File(kffDbPath);
-        openDb(kffDb);
     }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
      
+        excluded = 0;
         if(map == null){
-            staticInit(confParams);
+            String hash = confParams.getProperty("hash");
+            if(hash.equals("md5"))
+                md5 = true;
+            else if(hash.equals("sha-1"))
+                md5 = false;
+            
+            String kffDbPath = confParams.getProperty("kffDb");
+            if(kffDbPath == null)
+                return;
+            
+            File kffDb = new File(kffDbPath);
+            openDb(kffDb);
+            
             excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable"));
             if(caseData != null){
                 this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
@@ -93,14 +98,7 @@ public class KFFTask extends AbstractTask{
         excluded = -1;
     }
     
-    public static void importKFF(File kffDir) throws IOException{
-        boolean md5 = true;
-        /*String hash = Configuration.properties.getProperty("hash");
-        if(hash.equals("md5"))
-            md5 = true;
-        else if(hash.equals("sha-1"))
-            md5 = false;
-        */
+    public void importKFF(File kffDir) throws IOException{
         
         for(File kffFile : kffDir.listFiles()){
             if(!kffFile.getName().contains("NSRLFile"))

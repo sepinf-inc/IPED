@@ -174,11 +174,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				+ "-l: \tarquivo com lista de expressoes a serem exibidas na busca.\n\tExpressoes sem ocorrencias sao filtradas." + "\n"
 				+ "-ocr: \taplica OCR apenas no bookmark informado.\n\t Pode ser utilizado multiplas vezes." + "\n" 
 				+ "-log: \tEspecifica um arquivo de log diferente do padrao." + "\n"
+				+ "-importkff: \timporta diretorio com base de hashes no formato NSRL" + "\n"
 				+ "--append: \tadiciona indexação a um indice ja existente" + "\n" 
 				+ "--nogui: \tnao exibe a janela de progresso da indexacao" + "\n"
 				+ "--nologfile: \timprime as mensagem de log na saida padrao" + "\n" 
-				+ "--verbose: \tgera mensagens de log detalhadas, para debugar erros, porem diminui desempenho" + "\n"
-		        + "-importkff: \timporta diretorio com base de hashes no formato NSRL";
+				+ "--verbose: \tgera mensagens de log detalhadas, para debugar erros, porem diminui desempenho";
 
 		System.out.println(usage);
 		System.exit(1);
@@ -252,13 +252,18 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 	}
 	
-	
+	/**
+	 * Importa base de hashes no formato NSRL.
+	 * 
+	 * @param kffPath caminho para base de hashes.
+	 */
 	private void importKFF(String kffPath){
 	    try {
             setConfigPath();
             Configuration.getConfiguration(configPath);
-            KFFTask.staticInit(Configuration.properties);
-            KFFTask.importKFF(new File(kffPath));
+            KFFTask kff = new KFFTask(null);
+            kff.init(Configuration.properties, null);
+            kff.importKFF(new File(kffPath));
         } catch (Exception e) {
             e.printStackTrace();
         }
