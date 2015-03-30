@@ -55,40 +55,40 @@ public class KFFTask extends AbstractTask{
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
      
-        excluded = 0;
+        String hash = confParams.getProperty("hash");
+        if(hash == null)
+            return;
+        if(hash.equals("md5"))
+            md5 = true;
+        else if(hash.equals("sha-1"))
+            md5 = false;
+        
+        excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable"));
+        
+        String kffDbPath = confParams.getProperty("kffDb");
+        if(kffDbPath == null)
+            return;
+        
         if(map == null){
-            String hash = confParams.getProperty("hash");
-            if(hash.equals("md5"))
-                md5 = true;
-            else if(hash.equals("sha-1"))
-                md5 = false;
-            
-            String kffDbPath = confParams.getProperty("kffDb");
-            if(kffDbPath == null)
-                return;
+            excluded = 0;
             
             File kffDb = new File(kffDbPath);
-            openDb(kffDb);
+            db = DBMaker.newFileDB(kffDb)
+                    .transactionDisable()
+                    .mmapFileEnableIfSupported()
+                    .asyncWriteEnable()
+                    .asyncWriteFlushDelay(1000)
+                    .asyncWriteQueueSize(1024000)
+                    .make();
+            map = db.getHashMap("hashMap");
+            //sha1Map = db.getHashMap("sha1Map");
             
-            excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable"));
             if(caseData != null){
                 this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
                 this.caseData.addBookmark(new FileGroup(IGNORE, "", ""));
             }
             
         }
-    }
-    
-    private static void openDb(File kffDb){
-        db = DBMaker.newFileDB(kffDb)
-                .transactionDisable()
-                .mmapFileEnableIfSupported()
-                .asyncWriteEnable()
-                .asyncWriteFlushDelay(1000)
-                .asyncWriteQueueSize(1024000)
-                .make();
-        map = db.getHashMap("hashMap");
-        //sha1Map = db.getHashMap("sha1Map");
     }
     
     @Override
@@ -142,7 +142,7 @@ public class KFFTask extends AbstractTask{
          
     
         String hash = evidence.getHash();
-        if(hash != null && map != null){
+        if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
             Boolean kffattr = map.get(new HashValue(hash));
             if(kffattr != null){
                 if(kffattr){
