@@ -51,7 +51,7 @@ hash = md5
 kffDb = d:/kff/kff.db
 
 # Exclui do estante do processamento e do caso arquivos ignoráveis conforme base de hashes.
-excludeKffIgnorable = true
+excludeKffIgnorable = false
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.
 # Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o cálculo de hash.
@@ -79,7 +79,7 @@ indexFileContents = true
 extraCharsToIndex =
 
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
-addUnallocated = false
+addUnallocated = true
 
 # Indexa o espaço não alocado adicionado
 indexUnallocated = true
