@@ -18,19 +18,28 @@
     
     <repositories>
     	<repository>
-      <id>central</id>
-      <name>Maven Repository Switchboard</name>
-      <layout>default</layout>
-      <url>http://repo1.maven.org/maven2</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
+            <id>internal</id>
+            <name>Archiva SEPINF - Internal</name>
+            <url>http://10.61.242.12:8081/repository/internal/</url>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <name>Archiva SEPINF - Snapshot</name>
+            <url>http://10.61.242.12:8081/repository/snapshots/</url>
+        </repository>
+        <!--
+    	<repository>
+      		<id>central</id>
+      		<name>Maven Repository Switchboard</name>
+      		<layout>default</layout>
+      		<url>http://repo1.maven.org/maven2</url>
+    	</repository>
         <repository>
             <id>local</id>
             <name>local</name>
             <url>file://c:/users/wifi/.m2/repository</url>
         </repository>
+        -->
     </repositories>
         
     <dependencies>
@@ -54,18 +63,18 @@
             <type>jar</type>
         </dependency>
         <dependency>
-        	<groupId>iped</groupId>
-        	<artifactId>iped-carver</artifactId>
-        	<version>3.3-SNAPSHOT</version>
+        	<groupId>gpinf.iped</groupId>
+        	<artifactId>iped-ahocorasick</artifactId>
+        	<version>1.0</version>
         </dependency>
         <dependency>
         	<groupId>gpinf.iped</groupId>
     		<artifactId>iped-parsers-impl</artifactId>
-    		<version>3.3-SNAPSHOT</version>
+    		<version>3.3</version>
         </dependency>
         <dependency>
         <groupId>gpinf.iped</groupId>
-    		<artifactId>iped-desktop-app</artifactId>
+    		<artifactId>iped-desktop</artifactId>
     		<version>3.3</version>
     	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
@@ -344,8 +353,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.2</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <showDeprecation>true</showDeprecation>
                 </configuration>
             </plugin>
