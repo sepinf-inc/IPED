@@ -117,10 +117,14 @@ public class KFFTask extends AbstractTask{
                 if(values[4].equals(ignoreStr))
                     attr.ignore = true;
                 
+                HashValue hash;
                 if(md5)
-                    map.put(new HashValue(values[1]), attr.ignore);
+                	hash = new HashValue(values[1]);	
                 else
-                    map.put(new HashValue(values[0].substring(1)), attr.ignore);
+                	hash = new HashValue(values[0].substring(1));
+
+                if(!attr.ignore || !map.containsKey(hash))
+                    map.put(hash, attr.ignore);
                 
                 progress += line.length() + 2;
                 if(progress > i * length / 1000){
@@ -143,9 +147,9 @@ public class KFFTask extends AbstractTask{
     
         String hash = evidence.getHash();
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
-            Boolean kffattr = map.get(new HashValue(hash));
-            if(kffattr != null){
-                if(kffattr){
+            Boolean ignore = map.get(new HashValue(hash));
+            if(ignore != null){
+                if(ignore){
                     if(excludeKffIgnorable){
                         evidence.setToIgnore(true);
                         stats.incIgnored();
