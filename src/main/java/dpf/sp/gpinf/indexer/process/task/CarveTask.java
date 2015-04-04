@@ -101,6 +101,8 @@ public class CarveTask extends AbstractTask{
 	}
 	
 	public static void loadConfigFile(File file) throws Exception{
+		if(signatures != null)
+			return;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "Windows-1252"));
 		String line;
 		while ((line = reader.readLine()) != null) {
@@ -173,7 +175,7 @@ public class CarveTask extends AbstractTask{
 				//avança 1 byte para não recuperar o próprio arquivo analisado
 				if(TYPES_TO_CARVE.contains(type)){
 					prevLen = (int)tis.skip(1);
-					break;
+					//break;
 				}
 				if(TYPES_TO_NOT_PROCESS.contains(type.toString()) || TYPES_TO_NOT_PROCESS.contains(type.getType())){
 					tis.close();
