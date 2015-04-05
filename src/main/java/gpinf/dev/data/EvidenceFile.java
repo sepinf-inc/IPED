@@ -203,8 +203,12 @@ public class EvidenceFile implements Serializable, StreamSource {
      * 
      * @throws IOException caso ocorra erro de IO
      */
-    public void dispose() throws IOException {
-        tmpResources.close();
+    public void dispose(){
+        try {
+			tmpResources.close();
+		} catch (IOException e) {
+			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " " + e.toString());
+		}
     }
 
     /**

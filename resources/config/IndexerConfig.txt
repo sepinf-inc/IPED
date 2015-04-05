@@ -8,6 +8,12 @@
 # Configurar indexTemp em outro disco pode aumentar consideravelmente o desempenho, principalmente em um SSD.
 indexTemp = default
 
+# Habilite caso indexTemp (e a pasta de saída no caso de appends) esteja em disco SSD.
+# Nesse caso, são feitas otimizações que podem reduzir o tempo de processamento em até 60%:
+# número de merge threads do índice é incrementado e, no caso de imagens E01, são utilizados arquivos
+# temporários para evitar múltiplas descompactações dos itens pela libewf (que sincroniza descompactações)
+indexTempOnSSD = false
+
 # Número de threads de processamento: "default" utiliza o número de processadores.
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
 numThreads = default
@@ -23,10 +29,6 @@ timeOut = 180
 # Parser para arquivos não suportados pelo Tika, como binários, desconhecidos, pagefile, drivefreespace, etc
 # Deixe em branco (nao comentado) caso não deseje indexar tais arquivios.
 fallBackParser = dpf.sp.gpinf.indexer.parsers.RawStringParser
-
-# Parser para arquivos corrompidos que causem erro de parsing pelo Tika
-# Deixe em branco caso não deseje indexar tais arquivos
-errorParser = dpf.sp.gpinf.indexer.parsers.RawStringParser
 
 # Tamanho mínimo de strings brutas extraídas pelo RawStringParser
 minRawStringSize = 4
@@ -48,7 +50,7 @@ hash = md5
 
 # Caminho para base de hashes (KFF) em formato pre-indexado. Comente caso não queira confrontar hashes na base.
 # A base pre-indexada pode ser copiada ou importada de base no formato NSRL via parâmetro -importkff.
-kffDb = d:/kff/kff.db
+kffDb = E:/kff/kff.db
 
 # Exclui do estante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
@@ -73,6 +75,10 @@ expandContainers = true
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
+
+# Não indexa trechos de dados "aleatórios", como fragmentos apagados de vídeos, imagens, áudios, compactados, etc.
+# Isso torna a indexação mais rápida e resulta num índice até 50% menor
+entropyTest = true
 
 # Define caracteres adicionais a serem indexados além de letras e números, isto é, deixam de ser separadores
 # Utilize espaço para separar os caracteres
