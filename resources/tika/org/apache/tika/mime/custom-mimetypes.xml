@@ -41,7 +41,7 @@
       <match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
       <match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
       <match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
-      <match value="MIME-Version:" type="stringignorecase" offset="0"/>
+      <match value="\nMIME-Version:" type="stringignorecase" offset="0:1000"/>
     </magic>
     <sub-class-of type="text/plain"/>
     <glob pattern="*.eml"/>
