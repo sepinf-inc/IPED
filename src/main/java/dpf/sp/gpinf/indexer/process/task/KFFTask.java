@@ -41,7 +41,8 @@ public class KFFTask extends AbstractTask{
     
     private static Object lock = new Object();
     private static Map<HashValue, Boolean> map;
-    //private static Map<HashValue, Boolean> sha1Map;
+    private static Map<HashValue, Boolean> md5Map;
+    private static Map<HashValue, Boolean> sha1Map;
     private static DB db;
     public static int excluded = 0;
     
@@ -80,8 +81,13 @@ public class KFFTask extends AbstractTask{
                     .asyncWriteFlushDelay(1000)
                     .asyncWriteQueueSize(1024000)
                     .make();
-            map = db.getHashMap("hashMap");
-            //sha1Map = db.getHashMap("sha1Map");
+            md5Map = db.getHashMap("md5Map");
+            sha1Map = db.getHashMap("sha1Map");
+            
+            if(md5)
+            	map = md5Map;
+            else
+            	map = sha1Map;
             
             if(caseData != null){
                 this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
@@ -117,14 +123,17 @@ public class KFFTask extends AbstractTask{
                 if(values[4].equals(ignoreStr))
                     attr.ignore = true;
                 
-                HashValue hash;
-                if(md5)
-                	hash = new HashValue(values[1]);	
-                else
-                	hash = new HashValue(values[0].substring(1));
+                HashValue md5 = new HashValue(values[1]);	
+                HashValue sha1 = new HashValue(values[0].substring(1));
 
-                if(!attr.ignore || !map.containsKey(hash))
-                    map.put(hash, attr.ignore);
+                if(!attr.ignore || !md5Map.containsKey(md5)){
+                	md5Map.put(md5, attr.ignore);
+                	sha1Map.put(sha1, attr.ignore);
+                }
+                    
+                
+                if(!attr.ignore)
+                	System.out.println(line);
                 
                 progress += line.length() + 2;
                 if(progress > i * length / 1000){
@@ -144,7 +153,6 @@ public class KFFTask extends AbstractTask{
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
          
-    
         String hash = evidence.getHash();
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
             Boolean ignore = map.get(new HashValue(hash));

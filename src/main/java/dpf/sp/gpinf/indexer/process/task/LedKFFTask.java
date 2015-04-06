@@ -21,7 +21,7 @@ import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
  */
 public class LedKFFTask extends AbstractTask{
     
-    private static String ledCategory = "Hash com Alerta (Pedo)";
+    private static String ledCategory = "Hash com Alerta (Porn.Inf)";
     private static Object lock = new Object();
     private static HashValue[] hashArray;
 
