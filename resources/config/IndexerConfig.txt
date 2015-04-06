@@ -92,7 +92,7 @@ indexUnallocated = true
 
 # Habilita ou não o carving. Opções avançadas de carving, como tipos de arquivo a processar e a recuperar,
 # devem ser configuradas no arquivo conf/CarvingConfig.txt
-enableCarving = true
+enableCarving = false
 
 # Tamanho em bytes de divisão do espaço não alocado
 unallocatedFragSize = 104857600
