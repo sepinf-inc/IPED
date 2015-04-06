@@ -10,7 +10,7 @@ indexTemp = default
 
 # Habilite caso indexTemp (e a pasta de saída no caso de appends) esteja em disco SSD.
 # Nesse caso, são feitas otimizações que podem reduzir o tempo de processamento em até 60%:
-# número de merge threads do índice é incrementado e, no caso de imagens E01, são utilizados arquivos
+# número de merge threads do índice é aumentado e, no caso de imagens E01, são utilizados arquivos
 # temporários para evitar múltiplas descompactações dos itens pela libewf (que sincroniza descompactações)
 indexTempOnSSD = false
 
@@ -75,10 +75,6 @@ expandContainers = true
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
-
-# Não indexa trechos de dados "aleatórios", como fragmentos apagados de vídeos, imagens, áudios, compactados, etc.
-# Isso torna a indexação mais rápida e resulta num índice até 50% menor
-entropyTest = true
 
 # Define caracteres adicionais a serem indexados além de letras e números, isto é, deixam de ser separadores
 # Utilize espaço para separar os caracteres
