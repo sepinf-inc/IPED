@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -100,9 +101,17 @@ public class Worker extends Thread {
 		autoParser.setFallback((Parser) Configuration.fallBackParser.newInstance());
 		autoParser.setErrorParser((Parser) Configuration.errorParser.newInstance());
 		
-		new TaskInstaller().installProcessingTasks(this);
+		TaskInstaller taskInstaller = new TaskInstaller();
+		taskInstaller.installProcessingTasks(this);
+		doTaskChaining();
 		initTasks();
 
+	}
+	
+	private void doTaskChaining(){
+		firstTask = tasks.get(0);
+		for(int i = 0; i < tasks.size() - 1; i ++)
+			tasks.get(i).setNextTask(tasks.get(i + 1));
 	}
 	
 	private void initTasks() throws Exception{

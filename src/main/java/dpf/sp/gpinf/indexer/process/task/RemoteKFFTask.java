@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  *
  * @author Fredim
  */
-public class KFFQueryTask extends AbstractTask {
+public class RemoteKFFTask extends AbstractTask {
 
     private MessageDigest digestMD5_512 = null;
     private MessageDigest digestMD5_64k = null;
@@ -34,7 +34,7 @@ public class KFFQueryTask extends AbstractTask {
     int count = 0;
     private boolean addedToList=false;
 
-    public KFFQueryTask(Worker worker) {
+    public RemoteKFFTask(Worker worker) {
         super(worker);
     }
 

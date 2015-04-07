@@ -1,21 +1,8 @@
-package dpf.sp.gpinf.indexer.process;
+package dpf.sp.gpinf.indexer.process.task;
 
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.DuplicateTask;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
-import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
-import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.process.task.IndexTask;
-import dpf.sp.gpinf.indexer.process.task.KFFQueryTask;
-import dpf.sp.gpinf.indexer.process.task.KFFTask;
-import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.process.task.SetTypeTask;
-import dpf.sp.gpinf.indexer.process.task.SignatureTask;
+import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
  * Instancia e instala as tarefas de processamento em um Worker.
@@ -31,8 +18,6 @@ public class TaskInstaller {
 	public void installProcessingTasks(Worker worker) throws Exception{
 		
 		List<AbstractTask> tasks = worker.tasks;
-	
-        //tasks.add(new KFFQueryTask(worker));
                 
 		tasks.add(new HashTask(worker));
 		tasks.add(new SignatureTask(worker));
@@ -49,10 +34,7 @@ public class TaskInstaller {
 		tasks.add(new CarveTask(worker));
 		tasks.add(new IndexTask(worker));
 		
-		worker.firstTask = tasks.get(0);
-		for(int i = 0; i < tasks.size() - 1; i ++)
-			tasks.get(i).setNextTask(tasks.get(i + 1));
-		
 	}
+	
 	
 }
