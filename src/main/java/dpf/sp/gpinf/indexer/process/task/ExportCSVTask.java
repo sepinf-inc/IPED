@@ -48,8 +48,6 @@ public class ExportCSVTask extends AbstractTask{
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
 		super(worker);
 		this.output = new File(output.getParentFile(), CSV_NAME);
-		if(this.output.exists() && !IndexFiles.getInstance().appendIndex)
-			this.output.delete();
 	}
 
 	@Override
