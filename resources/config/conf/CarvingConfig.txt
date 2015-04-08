@@ -80,6 +80,13 @@ PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF
 HTM, text/html, 1000, 10000000, <html, </html>
 HTM, text/html, 1000, 10000000, <HTML, </HTML>
 
+# XML do MSN/Windows Live Messenger
+XML, application/messenger-chat,  1000, 10000000, <\3Fxml, </log>
+XML, application/messenger-chat,  1000, 10000000, <\3Fxml, </Log>
+XML, application/messenger-chat,  1000, 10000000, <\3FXml, </log>
+XML, application/messenger-chat,  1000, 10000000, <\3FXml, </Log>
+XML, application/messenger-chat,  1000, 10000000, <\3FXML, </LOG>
+
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
 #TIF, image/tiff, 1000, 1000000, II\2a\00, null
