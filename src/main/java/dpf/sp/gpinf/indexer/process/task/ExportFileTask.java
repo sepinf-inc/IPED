@@ -56,7 +56,7 @@ public class ExportFileTask extends AbstractTask{
 	public static int subDirCounter = 0, subitensExtracted = 0;
 	private static File subDir;
 	
-	private boolean computeHash = false;
+	private static boolean computeHash = false;
 	private File extractDir;
 	private HashMap<HashValue, HashValue> hashMap;
 
