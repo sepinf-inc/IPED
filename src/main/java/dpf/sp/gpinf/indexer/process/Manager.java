@@ -93,7 +93,7 @@ public class Manager {
 	private List<String> caseNames;
 	private File output, indexDir, indexTemp, palavrasChave;
 
-	private Thread contador, produtor;
+	private ItemProducer contador, produtor;
 	private Worker[] workers;
 	private IndexWriter writer;
 
@@ -142,11 +142,11 @@ public class Manager {
 			iniciarIndexacao();
 
 			// apenas conta o número de arquivos a indexar
-			contador = new Thread(new ItemProducer(this, caseData, true, reports, caseNames, output));
+			contador = new ItemProducer(this, caseData, true, reports, caseNames, output);
 			contador.start();
 
 			// produz lista de arquivos e propriedades a indexar
-			produtor = new Thread(new ItemProducer(this, caseData, false, reports, caseNames, output));
+			produtor = new ItemProducer(this, caseData, false, reports, caseNames, output);
 			produtor.start();
 			
 			monitorarIndexacao();
@@ -213,7 +213,7 @@ public class Manager {
 		conf.setSimilarity(new IndexerSimilarity());
 		ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
 		if(Configuration.indexTempOnSSD)
-			mergeScheduler.setMaxMergesAndThreads(6, 3);
+			mergeScheduler.setMaxMergesAndThreads(8, 3);
 		conf.setMergeScheduler(mergeScheduler);
 		conf.setRAMBufferSizeMB(32);
 		TieredMergePolicy tieredPolicy = new TieredMergePolicy();
@@ -251,7 +251,10 @@ public class Manager {
 			} catch (InterruptedException e) {
 				exception = new InterruptedException("Indexação cancelada!");
 			}
-
+			
+			String currentDir = contador.currentDirectory();
+			if(contador.isAlive() && currentDir != null && !currentDir.trim().isEmpty())
+				IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando \"" + currentDir.trim() + "\"");
 			IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
 			IndexFiles.getInstance().firePropertyChange("processed", -1, stats.getProcessed());
 			IndexFiles.getInstance().firePropertyChange("progresso", 0, (int)(stats.getVolume()/1000000));
@@ -265,8 +268,8 @@ public class Manager {
 				 *  TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
 				 *  não é demasiado grave pois será detectado o problema no log de estatísticas e o usuario sera informado do erro. 
 				 */
-				//if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive())
-				if(workers[k].isAlive())
+				if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive())
+				//if(workers[k].isAlive())
 					someWorkerAlive = true;
 
 				// TODO verificar se algum worker morreu e reinicia-lo? (Nao deve ocorrer...)

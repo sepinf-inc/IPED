@@ -39,10 +39,9 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
  *  fontes de dados: pastas, relatórios do FTK, imagens forenses ou casos do IPED.
  *  
  */  
-public class ItemProducer implements Runnable {
+public class ItemProducer extends Thread {
 	
 	public static volatile boolean indexerReport = false;
-	public static volatile Object sleuthkitLock = new Object(); 
 
 	private final CaseData caseData;
 	private final boolean listOnly;
@@ -50,6 +49,8 @@ public class ItemProducer implements Runnable {
 	private List<String> caseNames;
 	private File output;
 	private Manager manager;
+	
+	private SleuthkitProcessor sleuthkitProcessor;
 
 	ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> reports, List<String> caseNames, File output) {
 		this.caseData = caseData;
@@ -60,6 +61,13 @@ public class ItemProducer implements Runnable {
 		this.manager = manager;
 		if(listOnly)
 			indexerReport = false;
+	}
+	
+	public String currentDirectory(){
+		if(sleuthkitProcessor != null)
+			return sleuthkitProcessor.currentDirectory();
+		else
+			return null;
 	}
 
 	@Override
@@ -85,8 +93,8 @@ public class ItemProducer implements Runnable {
 					alternativeFiles += processor.process(report);
 
 				} else if (SleuthkitProcessor.isSupported(report)) {
-					SleuthkitProcessor processor = new SleuthkitProcessor(caseData, output, listOnly);
-					processor.process(report);
+					sleuthkitProcessor = new SleuthkitProcessor(caseData, output, listOnly);
+					sleuthkitProcessor.process(report);
 
 				} else if (IndexerProcessor.isSupported(report)) {
 					indexerReport = true;
@@ -105,7 +113,7 @@ public class ItemProducer implements Runnable {
 			
 				 EvidenceFile evidence = new EvidenceFile();
 				 evidence.setQueueEnd(true);
-				 caseData.addEvidenceFile(evidence);
+				 //caseData.addEvidenceFile(evidence);
 				 
 			} else {
 				IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int)(caseData.getDiscoveredVolume()/1000000));

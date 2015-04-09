@@ -62,6 +62,7 @@ public class Configuration {
 	public static String javaTmpDir = System.getProperty("java.io.tmpdir");
 	public static boolean indexTempOnSSD = false;
 	public static boolean entropyTest = true;
+	public static boolean addFatOrphans = true;
 
 	/**
 	 * LÃª as configuraÃ§Ãµes a partir do caminho informado.
@@ -273,6 +274,12 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			entropyTest = Boolean.valueOf(value);
+		
+		value = properties.getProperty("addFatOrphans");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			addFatOrphans = Boolean.valueOf(value);
 		
 
 	}

@@ -57,6 +57,7 @@ public class SleuthkitProcessor {
 	private CaseData caseData;
 	private boolean listOnly;
 	private File output;
+	private AddImageProcess addImage;
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
@@ -84,6 +85,13 @@ public class SleuthkitProcessor {
 	public static boolean isPhysicalDrive(File file){
 		return file.getName().toLowerCase().contains("physicaldrive") ||
 			   file.getAbsolutePath().toLowerCase().contains("/dev/");
+	}
+	
+	public String currentDirectory(){
+		if(addImage != null)
+			return addImage.currentDirectory();
+		else
+			return null;
 	}
 
 	public void process(File file) throws Exception {
@@ -119,7 +127,6 @@ public class SleuthkitProcessor {
 			if (!file.getName().equals(DB_NAME)) {
 
 				firstId = sleuthCase.getLastObjectId() + 1;
-				AddImageProcess addImage = null;
 				try {
 					sleuthCase.acquireExclusiveLock();
 					
@@ -128,7 +135,7 @@ public class SleuthkitProcessor {
 
 					TimeZone timezone = TimeZone.getDefault();
 					boolean processUnallocSpace = Configuration.addUnallocated;
-					boolean noFatFsOrphans = false;
+					boolean noFatFsOrphans = !Configuration.addFatOrphans;
 
 					addImage = sleuthCase.makeAddImageProcess(timezone.toString(), processUnallocSpace, noFatFsOrphans);
 					addImage.run(imgPath);
