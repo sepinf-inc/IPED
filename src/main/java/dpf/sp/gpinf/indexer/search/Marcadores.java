@@ -331,17 +331,21 @@ public class Marcadores implements Serializable {
 	public void loadState(File file) throws IOException, ClassNotFoundException {
 
 		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
-		if (state == null || (state.selected != null && state.selected.length != this.selected.length))
-			throw new IOException("Arquivo de marcadores incorreto ou incompatível com número de itens");
-
+		
 		if(state.selected != null &&  state.read != null){
-			this.selected = state.selected;
-			this.read = state.read;
+			System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
+			System.arraycopy(state.read, 0, this.read, 0, state.read.length);
 		}
+		
+		for(byte[] array : state.labels){
+			byte[] newArray = new byte[App.get().lastId + 1];
+			this.labels.add(newArray);
+			System.arraycopy(array, 0, newArray, 0, array.length);
+		}
+		
 		this.typedWords = state.typedWords;
 		this.selectedItens = state.selectedItens;
 		this.labelNames = state.labelNames;
-		this.labels = state.labels;
 
 		if (App.get().termo != null) {
 			if (typedWords.size() != 0)
