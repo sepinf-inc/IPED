@@ -234,16 +234,11 @@ public class IndexTask extends AbstractTask{
 
 				stats.setLastId(textSizesArray.length - 1);
 				EvidenceFile.setStartID(textSizesArray.length);
-
-				
 			}
 		}
 		
 		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
 		if(splitedIds == null){
-			splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
-			caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
-			
 			File prevFile = new File(output, "data/splits.ids");
 			if(prevFile.exists()){
 				FileInputStream fileIn = new FileInputStream(prevFile);
@@ -253,11 +248,15 @@ public class IndexTask extends AbstractTask{
 
 				in.close();
 				fileIn.close();
-			}
+			}else
+				splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
+			
+			caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
 		}
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void finish() throws Exception {
 		
