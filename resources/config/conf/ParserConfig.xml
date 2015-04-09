@@ -65,7 +65,13 @@
 	<parser class="dpf.sp.gpinf.indexer.parsers.OutlookPSTParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
-	<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser"></parser>
+	<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
+		<mime>image/jpeg</mime>
+		<mime>image/png</mime>
+		<mime>image/tiff</mime>
+		<mime>image/x-ms-bmp</mime>
+		<mime>image/gif</mime>
+	</parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.EmptyVideoParser"></parser>
 	<parser class="org.apache.tika.parser.EmptyParser">
