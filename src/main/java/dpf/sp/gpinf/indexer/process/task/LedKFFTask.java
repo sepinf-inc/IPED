@@ -21,7 +21,7 @@ import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
  */
 public class LedKFFTask extends AbstractTask{
     
-    private static String ledCategory = "Hash com Alerta (Porn.Inf)";
+    private static String ledCategory = "Hash com Alerta (PI)";
     private static Object lock = new Object();
     private static HashValue[] hashArray;
 
@@ -42,8 +42,10 @@ public class LedKFFTask extends AbstractTask{
             if(ledWkffPath == null)
                 return;
             File wkffDir = new File(ledWkffPath);
-            ArrayList<HashValue> hashList = new ArrayList<HashValue>();
+            if(!wkffDir.exists())
+            	throw new Exception("Caminho para base de hashes do LED inválido!");
             
+            ArrayList<HashValue> hashList = new ArrayList<HashValue>();
             for(File wkffFile : wkffDir.listFiles()){
                 BufferedReader reader = new BufferedReader(new FileReader(wkffFile));
                 String line = reader.readLine();
