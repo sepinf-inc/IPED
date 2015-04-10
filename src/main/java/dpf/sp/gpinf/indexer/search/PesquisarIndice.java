@@ -324,7 +324,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	@Override
 	public void done() {
 
-		progressDialog.close();
 		if(numFilters > 1)
 			App.get().multiFilterAlert.setVisible(true);
 		else
@@ -337,9 +336,12 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				App.get().galleryModel.fireTableStructureChanged();
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
 				App.get().resultsTable.getTableHeader().repaint();
+				App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		
+		progressDialog.close();
 
 	}
 

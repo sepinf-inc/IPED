@@ -34,6 +34,7 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -129,6 +130,7 @@ public class App extends JFrame implements WindowListener {
 	boolean isReport;
 
 	ResultTableModel resultsModel;
+	List resultSortKeys;
 	public HitsTableModel hitsModel = new HitsTableModel();
 	SubitemTableModel subItemModel = new SubitemTableModel();
 	ParentTableModel parentItemModel = new ParentTableModel();
@@ -417,6 +419,7 @@ public class App extends JFrame implements WindowListener {
 		
 		if(!isReport){
 			recursiveTreeList = new JCheckBox("Listagem recursiva");
+			recursiveTreeList.setSelected(true);
 			tree = new JTree(new Object[0]);
 			tree.setRootVisible(true);
 			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

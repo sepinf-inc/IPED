@@ -24,6 +24,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.List;
+
+import javax.swing.RowSorter.SortKey;
 
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 
@@ -41,6 +44,7 @@ public class AppListener implements ActionListener, MouseListener {
 		App.get().results = new SearchResult(0);
 		App.get().lastSelectedDoc = -1;
 		App.get().resultsModel.fireTableDataChanged();
+		App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
 		App.get().resultsTable.setRowSorter(null);
 		App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 		App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
