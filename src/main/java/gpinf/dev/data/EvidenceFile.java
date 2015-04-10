@@ -498,8 +498,12 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @return InputStream com o conteúdo do arquivo.
      */
     public InputStream getStream() throws IOException {
+    	if (startOffset == -1 && file != null && !isDir)
+            return new FileInputStream(file);
+    	
         if (tmpFile == null && tis != null && tis.hasFile())
             tmpFile = tis.getFile();
+        
         if (tmpFile != null)
             return new FileInputStream(tmpFile);
 
@@ -536,15 +540,12 @@ public class EvidenceFile implements Serializable, StreamSource {
     public File getTempFile() throws IOException {
         if (startOffset == -1 && file != null)
             return file;
-        if (tmpFile != null)
-            return tmpFile;
-
-        if (tis != null && tis.hasFile())
-            tmpFile = tis.getFile();
-
-        if (tmpFile == null)
-            tmpFile = getTikaStream().getFile();
-
+        if (tmpFile == null){
+	        if (tis != null && tis.hasFile())
+	            tmpFile = tis.getFile();
+	        else
+	        	tmpFile = getTikaStream().getFile();
+        }
         return tmpFile;
     }
 
@@ -554,14 +555,17 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @throws IOException
      */
     public TikaInputStream getTikaStream() throws IOException {
-        if (tmpFile == null && tis != null && tis.hasFile())
-            tmpFile = tis.getFile();
-        if (tmpFile != null)
-            tis = TikaInputStream.get(tmpFile);
-        else if (startOffset == -1 && file != null && !this.isDir)
+        
+        if (startOffset == -1 && file != null && !this.isDir)
             tis = TikaInputStream.get(file);
-        else
-            tis = TikaInputStream.get(getBufferedStream());
+        else{
+        	if (tmpFile == null && tis != null && tis.hasFile())
+                tmpFile = tis.getFile();
+            if (tmpFile != null)
+                tis = TikaInputStream.get(tmpFile);
+            else
+            	tis = TikaInputStream.get(getBufferedStream());
+        }
 
         tmpResources.addResource(tis);
         return tis;
