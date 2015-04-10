@@ -16,9 +16,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.swing.ProgressMonitor;
 import javax.swing.ProgressMonitorInputStream;
@@ -38,13 +40,17 @@ public class KFFTask extends AbstractTask{
     
     private static String ALERT = "Hash com Alerta";
     private static String IGNORE = "Hash Ignorável";
+    private static String CONF_FILE = "KFFTaskConfig.txt";
     
-    private static Object lock = new Object();
-    private static Map<HashValue, Boolean> map;
-    private static Map<HashValue, Boolean> md5Map;
-    private static Map<HashValue, Boolean> sha1Map;
-    private static DB db;
     public static int excluded = 0;
+    private static Object lock = new Object();
+    
+    private static Map<HashValue, Integer> map;
+    private static Map<HashValue, Integer> md5Map;
+    private static Map<HashValue, Integer> sha1Map;
+    private static Map<Integer, String> products; 
+    private static Set<String> alertProducts;
+    private static DB db;
     
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
@@ -83,11 +89,23 @@ public class KFFTask extends AbstractTask{
                     .make();
             md5Map = db.getHashMap("md5Map");
             sha1Map = db.getHashMap("sha1Map");
+            products = db.getHashMap("productMap");
             
             if(md5)
             	map = md5Map;
             else
             	map = sha1Map;
+            
+            alertProducts = new HashSet<String>();
+            File confFile = new File(confDir, CONF_FILE);
+        	BufferedReader reader = new BufferedReader(new FileReader(confFile));
+        	String line; 
+            while((line = reader.readLine()) != null){
+            	if(line.startsWith("#"))
+            		continue;
+            	alertProducts.add(line.trim());
+            }
+            reader.close();
             
             if(caseData != null){
                 this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
@@ -106,6 +124,16 @@ public class KFFTask extends AbstractTask{
     
     public void importKFF(File kffDir) throws IOException{
         
+    	File NSRLProd = new File(kffDir, "NSRLProd.txt");
+    	BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));
+    	String line = reader.readLine();
+        while((line = reader.readLine()) != null){
+        	int idx = line.indexOf(',');
+        	String key = line.substring(0, idx);
+        	String[] values = line.substring(idx + 2).split("\",\"");
+        	products.put(Integer.valueOf(key), values[0] + " " + values[1]);
+        }
+        reader.close();
         for(File kffFile : kffDir.listFiles()){
             if(!kffFile.getName().contains("NSRLFile"))
                 continue;
@@ -113,27 +141,26 @@ public class KFFTask extends AbstractTask{
             long progress = 0;
             int i = 0;
             ProgressMonitor monitor = new ProgressMonitor(null, "", "Importando " + kffFile.getName(), 0, (int)(length/1000));
-            BufferedReader reader = new BufferedReader(new FileReader(kffFile));
-            String line = reader.readLine();
-            String ignoreStr = "\""; 
+            reader = new BufferedReader(new FileReader(kffFile));
+            line = reader.readLine();
+            String ignoreStr = "\"\""; 
             while((line = reader.readLine()) != null){
-                String[] values = line.split("\",\"");
+                String[] values = line.split(",");
                 KffAttr attr = new KffAttr();
-                //attr.group = values[5];
-                if(values[4].equals(ignoreStr))
-                    attr.ignore = true;
-                
-                HashValue md5 = new HashValue(values[1]);	
-                HashValue sha1 = new HashValue(values[0].substring(1));
-
-                if(!attr.ignore || !md5Map.containsKey(md5)){
-                	md5Map.put(md5, attr.ignore);
-                	sha1Map.put(sha1, attr.ignore);
-                }
-                    
-                
-                if(!attr.ignore)
+                attr.group = Integer.valueOf(values[values.length - 3]);
+                if(values[values.length - 1].equals(ignoreStr))
+                    //attr.ignore = true;
+                	attr.group *= -1;
+                else
                 	System.out.println(line);
+                
+                HashValue md5 = new HashValue(values[1].substring(1, 33));	
+                HashValue sha1 = new HashValue(values[0].substring(1, 41));
+
+                if(attr.group > 0 || !md5Map.containsKey(md5)){
+                	md5Map.put(md5, attr.group);
+                	sha1Map.put(sha1, attr.group);
+                }
                 
                 progress += line.length() + 2;
                 if(progress > i * length / 1000){
@@ -155,9 +182,11 @@ public class KFFTask extends AbstractTask{
          
         String hash = evidence.getHash();
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
-            Boolean ignore = map.get(new HashValue(hash));
-            if(ignore != null){
-                if(ignore){
+        	Integer attr = map.get(new HashValue(hash));
+            if(attr != null){
+                if(attr > 0 || alertProducts.contains(products.get(-attr)))
+                	evidence.addCategory(ALERT);
+                else{
                     if(excludeKffIgnorable){
                         evidence.setToIgnore(true);
                         stats.incIgnored();
@@ -166,9 +195,8 @@ public class KFFTask extends AbstractTask{
                         }
                     }else
                         evidence.addCategory(IGNORE);
-                }else
-                    evidence.addCategory(ALERT);
-                
+                }
+                    
                 //evidence.setExtraAttribute("kffgroup", kffattr.group);
             }
         }
@@ -179,12 +207,9 @@ public class KFFTask extends AbstractTask{
          * 
          */
         private static final long serialVersionUID = 1L;
-        /*
-         * ignore: status = 1
-         * alert: status = 2
-         */
-        boolean ignore = false;
-        //String group;
+ 
+        boolean alert = false;
+        int group;
         
         @Override
         public boolean equals(Object o) {
@@ -193,8 +218,8 @@ public class KFFTask extends AbstractTask{
 
             KffAttr attr = (KffAttr) o;
 
-            if (ignore != attr.ignore) return false;
-            //if (group != null ? !group.equals(attr.group) : attr.group != null) return false;
+            if (alert != attr.alert) return false;
+            if (group != attr.group) return false;
 
             return true;
         }
@@ -204,14 +229,14 @@ public class KFFTask extends AbstractTask{
 
         @Override
         public void serialize(DataOutput out, KffAttr value) throws IOException {
-            out.writeBoolean(value.ignore);
+            out.writeBoolean(value.alert);
             //out.writeUTF(value.group);
         }
 
         @Override
         public KffAttr deserialize(DataInput in, int available) throws IOException {
             KffAttr value = new KffAttr();
-            value.ignore = in.readBoolean();
+            value.alert = in.readBoolean();
             //value.group  = in.readUTF();
             return value;
         }
