@@ -1,16 +1,21 @@
-xx/03/2015: IPED-3.3
-- Modularização geral do código de processamento e divisão em subprojetos maven
-- Documentação das principais classes de processamento e atributos no índice
+10/04/2015: IPED-3.3
+- Refatoração, modularização e documentação do código de processamento e divisão em subprojetos maven
 - Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento
 - Tarefa de consulta de hashes na base do LED
 - Importação e consulta a base de hashes no formato NSRL
+- Assinaturas p/ carving de logs de MSN (contribuição PCF Ayrton)
+- Novas categorias baseadas em propriedades dos itens (contribuição PCF Gabriel)
+- Exibição da tarefa e pasta sendo adicionada pelo sleuthkit durante adição de imagem 
+- Detecção de arquivos 7z cifrados
+- Exposição do parâmetro noFatOrphans
 Correções:
-- Criação automática da pasta de saída e abortagem do processamento caso exista
-- Arquivos detectados incorretamente como EMF
-- Menos falsos positivos ao detectar arquivos EML
+- Arquivos XPS e Office2007 genéricos indexados via strings após descompactação
+- Criação automática da pasta de saída e abortagem do processamento caso já exista
+- Melhor detecção de assinatura de arquivos EMF e EML
 - Arquivo CSV sobrescrito ao usar --append
-- Desativação do parser de 3gp, mp4, m4v e mov (provocava leak de memória e timeouts)
-- Concatenação do nome de categorias em itens com mais de uma
+- Concatenação do nome de categorias em itens em mais de uma
+- Erro ao processar pasta raiz cujo nome tenha 1 caracter
+- Perda de marcadores após adicionar evidência com --append
 
 
 30/01/2015: IPED 3.2.4

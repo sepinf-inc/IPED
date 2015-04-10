@@ -5,13 +5,12 @@
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
 # Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.
-# Configurar indexTemp em outro disco pode aumentar consideravelmente o desempenho, principalmente em um SSD.
+# Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
 indexTemp = default
 
-# Habilite caso indexTemp (e a pasta de saída no caso de appends) esteja em disco SSD.
-# Nesse caso, são feitas otimizações que podem reduzir o tempo de processamento em até 60%:
-# número de merge threads do índice é aumentado e, no caso de imagens E01, são utilizados arquivos
-# temporários para evitar múltiplas descompactações dos itens pela libewf (que sincroniza descompactações)
+# Habilite caso indexTemp (ou a pasta do caso ao usar --append) esteja em disco SSD. Nesse caso, são feitas otimizações 
+# que podem reduzir o tempo de processamento em até 60%: merge threads do índice é aumentado e, no caso de imagens E01, 
+# são utilizados arquivos temporários para evitar múltiplas descompactações dos itens pela libewf
 indexTempOnSSD = false
 
 # Número de threads de processamento: "default" utiliza o número de processadores.
@@ -45,12 +44,13 @@ defaultCategory = Outros Itens Exportados
 hash = md5
 
 # Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
-# existentes na base são adicionados a uma categoria "Alerta de hash"
+# existentes na base são adicionados a uma categoria "Alerta de hash (PI)"
 #ledWkffPath = D:/LED/V1.17.00/pedo/wkff
 
-# Caminho para base de hashes (KFF) em formato pre-indexado. Comente caso não queira confrontar hashes na base.
-# A base pre-indexada pode ser copiada ou importada de base no formato NSRL via parâmetro -importkff.
-kffDb = E:/kff/kff.db
+# Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base.
+# É altamente recomendado armazenar a base num disco SSD, sob pena de impactar severamente o processamento.
+# Pode ser importada base no formato NSRL via parâmetro -importkff.
+#kffDb = E:/kff/kff.db
 
 # Exclui do estante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
@@ -82,6 +82,10 @@ extraCharsToIndex =
 
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
 addUnallocated = true
+
+# Adiciona arquivos apagados sem pai em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
+# possivelmente impactando tempo de processamento
+addFatOrphans = true
 
 # Indexa o espaço não alocado adicionado
 indexUnallocated = true
