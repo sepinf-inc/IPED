@@ -251,6 +251,19 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			return clearResults(result, removed);
 	  }
 	  
+	  public SearchResult filtrarSemMarcadores(SearchResult result){
+		  	Marcadores marcadores = App.get().marcadores;
+			int removed = 0;
+			int[] ids = App.get().ids;
+			for (int i = 0; i < result.length; i++)
+				if (marcadores.hasLabel(ids[result.docs[i]])) {
+					result.docs[i] = -1;
+					removed++;
+				}
+
+			return clearResults(result, removed);
+	  }
+	  
 	  public SearchResult filtrarMarcadores(SearchResult result){
 		  	Marcadores marcadores = App.get().marcadores;
 			int removed = 0;
@@ -304,6 +317,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			
 			else if(filtro.equals(Marcadores.BOOKMARKS_DIV))
 				result = filtrarMarcadores(result);
+			
+			else if(filtro.equals(Marcadores.NO_BOOKMARKS_DIV))
+				result = filtrarSemMarcadores(result);
 			
 			else if(App.get().filtro.getSelectedIndex() >= Marcadores.BOOKMARKS_DIV_INDEX + 1 && 
 					App.get().filtro.getSelectedIndex() < App.get().marcadores.labelNames.size() + Marcadores.BOOKMARKS_DIV_INDEX + 1)

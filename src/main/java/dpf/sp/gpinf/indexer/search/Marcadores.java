@@ -46,11 +46,12 @@ public class Marcadores implements Serializable {
 	 * 
 	 */
 	public static String HISTORY_DIV = "-----------------------Histórico-----------------------";
+	public static String NO_BOOKMARKS_DIV = "[Sem Marcadores]";
 	public static String BOOKMARKS_DIV = "<html><font color=\"blue\"><b>[Marcadores]";
 	public static String CATEGORIES_DIV = "<html><b>[Categorias]";
 	public static String BOOKMARKS_PREFIX = "<html><font color=\"blue\">";
 	public static String CATEGORIES_PREFIX = "";
-	public static int BOOKMARKS_DIV_INDEX = 2;
+	public static int BOOKMARKS_DIV_INDEX = 3;
 	
 	public static String EXT = "." + Versao.APP_EXT.toLowerCase();
 	public static String STATEFILENAME = "marcadores" + EXT;
@@ -226,8 +227,10 @@ public class Marcadores implements Serializable {
 		App.get().filtro.addItem(App.FILTRO_TODOS);
 		App.get().filtro.addItem(App.FILTRO_SELECTED);
 		
-		if(labelNames.size() > 0)
+		if(labelNames.size() > 0){
+			App.get().filtro.addItem(NO_BOOKMARKS_DIV);
 			App.get().filtro.addItem(BOOKMARKS_DIV);
+		}
 		
 		String[] labels = labelNames.values().toArray(new String[0]); 
 		Arrays.sort(labels);
