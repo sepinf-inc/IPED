@@ -45,10 +45,15 @@ public class KFFTask extends AbstractTask{
     public static int excluded = 0;
     private static Object lock = new Object();
     
+    /*
+     * valor negativo no mapa indica hash ignorável
+     * valor positivo indica alerta
+     */
     private static Map<HashValue, Integer> map;
     private static Map<HashValue, Integer> md5Map;
     private static Map<HashValue, Integer> sha1Map;
-    private static Map<Integer, String> products; 
+    
+    private static Map<Integer, String[]> products; 
     private static Set<String> alertProducts;
     private static DB db;
     
@@ -96,16 +101,18 @@ public class KFFTask extends AbstractTask{
             else
             	map = sha1Map;
             
-            alertProducts = new HashSet<String>();
-            File confFile = new File(confDir, CONF_FILE);
-        	BufferedReader reader = new BufferedReader(new FileReader(confFile));
-        	String line; 
-            while((line = reader.readLine()) != null){
-            	if(line.startsWith("#"))
-            		continue;
-            	alertProducts.add(line.trim());
+            if(confDir != null){
+            	alertProducts = new HashSet<String>();
+                File confFile = new File(confDir, CONF_FILE);
+            	BufferedReader reader = new BufferedReader(new FileReader(confFile));
+            	String line; 
+                while((line = reader.readLine()) != null){
+                	if(line.startsWith("#"))
+                		continue;
+                	alertProducts.add(line.trim());
+                }
+                reader.close();
             }
-            reader.close();
             
             if(caseData != null){
                 this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
@@ -131,7 +138,8 @@ public class KFFTask extends AbstractTask{
         	int idx = line.indexOf(',');
         	String key = line.substring(0, idx);
         	String[] values = line.substring(idx + 2).split("\",\"");
-        	products.put(Integer.valueOf(key), values[0] + " " + values[1]);
+        	String[] prod = {values[0], values[1]};
+        	products.put(Integer.valueOf(key), prod);
         }
         reader.close();
         for(File kffFile : kffDir.listFiles()){
@@ -149,7 +157,6 @@ public class KFFTask extends AbstractTask{
                 KffAttr attr = new KffAttr();
                 attr.group = Integer.valueOf(values[values.length - 3]);
                 if(values[values.length - 1].equals(ignoreStr))
-                    //attr.ignore = true;
                 	attr.group *= -1;
                 else
                 	System.out.println(line);
@@ -157,7 +164,8 @@ public class KFFTask extends AbstractTask{
                 HashValue md5 = new HashValue(values[1].substring(1, 33));	
                 HashValue sha1 = new HashValue(values[0].substring(1, 41));
 
-                if(attr.group > 0 || !md5Map.containsKey(md5)){
+                Integer value = md5Map.get(md5);
+                if(value == null || (value > 0 && attr.group < 0)){
                 	md5Map.put(md5, attr.group);
                 	sha1Map.put(sha1, attr.group);
                 }
@@ -184,7 +192,7 @@ public class KFFTask extends AbstractTask{
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
         	Integer attr = map.get(new HashValue(hash));
             if(attr != null){
-                if(attr > 0 || alertProducts.contains(products.get(-attr)))
+                if(attr > 0 || alertProducts.contains(products.get(-attr)[0]))
                 	evidence.addCategory(ALERT);
                 else{
                     if(excludeKffIgnorable){
