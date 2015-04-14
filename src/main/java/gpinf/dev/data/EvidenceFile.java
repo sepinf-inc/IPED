@@ -204,6 +204,10 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @throws IOException caso ocorra erro de IO
      */
     public void dispose(){
+    	if (isSubItem && (toIgnore || !addToCase)) {
+			if (!file.delete())
+				System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + file.getAbsolutePath());
+		}
         try {
 			tmpResources.close();
 		} catch (IOException e) {
