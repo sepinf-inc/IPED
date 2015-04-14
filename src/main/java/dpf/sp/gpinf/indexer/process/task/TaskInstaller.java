@@ -23,9 +23,9 @@ public class TaskInstaller {
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));
 		tasks.add(new SetCategoryTask(worker));
-		tasks.add(new KFFTask(worker));
 		tasks.add(new LedKFFTask(worker));
 		tasks.add(new ExportCSVTask(worker));
+		tasks.add(new KFFTask(worker));
 		tasks.add(new DuplicateTask(worker));
 		tasks.add(new ExpandContainerTask(worker));
 		tasks.add(new ExportFileTask(worker));
