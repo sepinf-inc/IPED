@@ -494,9 +494,10 @@ public class CarveTask extends AbstractTask{
 		incItensCarved();
 		
 		// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-		if (ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract())
+		if (ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract()){
+			caseData.incDiscoveredEvidences(1);
 			worker.process(evidence);
-		else
+		}else
 			worker.processNewItem(evidence);
 			
 	}
