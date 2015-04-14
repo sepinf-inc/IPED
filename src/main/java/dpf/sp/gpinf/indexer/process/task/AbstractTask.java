@@ -174,9 +174,6 @@ public abstract class AbstractTask {
 				stats.incCorruptCarveIgnored();
 				//System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
 				evidence.setToIgnore(true);
-				if(evidence.isSubItem()){
-					evidence.getFile().delete();
-				}
 				
 			}else
 				throw t;
