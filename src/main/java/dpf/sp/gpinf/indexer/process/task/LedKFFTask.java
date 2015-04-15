@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Properties;
 
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 
@@ -44,6 +45,8 @@ public class LedKFFTask extends AbstractTask{
             File wkffDir = new File(ledWkffPath);
             if(!wkffDir.exists())
             	throw new Exception("Caminho para base de hashes do LED inválido!");
+            
+            IndexFiles.getInstance().firePropertyChange("mensagem", "", "Carregando base de hashes do LED...");
             
             ArrayList<HashValue> hashList = new ArrayList<HashValue>();
             for(File wkffFile : wkffDir.listFiles()){

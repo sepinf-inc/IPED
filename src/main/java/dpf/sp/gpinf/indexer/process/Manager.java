@@ -204,8 +204,8 @@ public class Manager {
 	}
 
 	private void iniciarIndexacao() throws Exception {
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Indexação iniciada...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Indexação iniciada...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Processamento iniciado...");
+		System.out.println(new Date() + "\t[INFO]\t" + "Processamento iniciado...");
 
 		IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
 		conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
