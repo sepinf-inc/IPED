@@ -75,6 +75,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
+	private static HashSet<String> categoriesToTestEncryption = getCategoriesToTestEncryption();
 
 	private Detector detector;
 	
@@ -138,6 +139,28 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		
 		return metadata;
 	}
+	
+	private static HashSet<String> getCategoriesToTestEncryption(){
+		HashSet<String> set = new HashSet<String>();
+		set.add("Documentos PDF");
+		set.add("Documentos de Texto");
+		set.add("Planilhas");
+		set.add("Apresentações");
+		set.add("Arquivos Compactados");
+		return set;
+	}
+	
+	private boolean isToTestEncryption(HashSet<String> categories) {
+		
+		boolean result = false;
+		for (String category : categories) {
+			if (categoriesToTestEncryption.contains(category)) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
 
 	public static void load(File file) throws FileNotFoundException, IOException {
 		categoriesToExpand = new HashSet<String>();
@@ -179,9 +202,9 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!evidence.isTimedOut() && (isToBeExpanded(evidence) ||
-			(CarveTask.ignoreCorrupted && evidence.isCarved() &&
-			(ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
+		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
+			|| isToTestEncryption(evidence.getCategorySet()) 
+			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
 		    new ExpandContainerTask(worker).safeProcess(evidence);
 		}
 		
@@ -222,6 +245,10 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 				evidence.setParsedTextCache(writer.toString());
 			}
 			evidence.setParsed(true);
+			if(metadata.get("EncryptedDocument") != null){
+				evidence.setEncrypted(true);
+				evidence.addCategory(SetCategoryTask.ENCRYPTED_CATEGORY);
+			}
 
 		}finally{
 			//do nothing
