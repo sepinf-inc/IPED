@@ -57,9 +57,20 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 			App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
 			int galleryRow = resultTableLeadSelIdx / App.get().galleryModel.colCount;
 			int galleyCol = resultTableLeadSelIdx % App.get().galleryModel.colCount;
-			App.get().gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
-			App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
 			App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
+			
+			App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
+			App.get().gallery.clearSelection();
+			int[] selRows = App.get().resultsTable.getSelectedRows();
+			int start = 0;
+			while(start < selRows.length){
+			    int i = start + 1;
+			    while(i < selRows.length && selRows[i] - selRows[i - 1] == 1)
+	                i++;
+			    App.get().gallery.setCellSelectionInterval(selRows[start], selRows[i - 1]);
+			    start = i;
+			}
+			App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
 		}
 
 		processSelectedFile();

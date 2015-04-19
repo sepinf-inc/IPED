@@ -42,18 +42,17 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 	public void valueChanged(ListSelectionEvent e) {
 
 		if (App.get().resultTab.getSelectedIndex() == 1 && !e.getValueIsAdjusting()) {
-			int[] rows = App.get().gallery.getSelectedRows();
-			int[] cols = App.get().gallery.getSelectedColumns();
 			App.get().resultsTable.clearSelection();
 			App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
-			int colCount = App.get().galleryModel.colCount;
-			int length = App.get().results.length;
-			for (int row : rows)
-				for (int col : cols) {
-					int idx = row * colCount + col;
-					if (idx < length)
-						App.get().resultsTable.getSelectionModel().addSelectionInterval(idx, idx);
-				}
+			int[] selRows = App.get().gallery.getSelectedCells();
+            int start = 0;
+            while(start < selRows.length){
+                int i = start + 1;
+                while(i < selRows.length && selRows[i] - selRows[i - 1] == 1)
+                    i++;
+                App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
+                start = i;
+            }
 			App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
 		}
 

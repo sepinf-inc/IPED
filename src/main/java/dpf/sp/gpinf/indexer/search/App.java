@@ -108,7 +108,8 @@ public class App extends JFrame implements WindowListener {
 	JButton pesquisar, opcoes;
 	JButton ajuda;
 	JCheckBox checkBox, filtrarDuplicados, recursiveTreeList;
-	JTable resultsTable, gallery;
+	JTable resultsTable;
+	GalleryTable gallery;
 	public HitsTable hitsTable;
 
 	HitsTable subItemTable;
@@ -338,7 +339,7 @@ public class App extends JFrame implements WindowListener {
 		resultsTable.setAutoscrolls(false);
 		resultsTable.setDefaultRenderer(String.class, new TableCellRenderer());
 
-		gallery = new JTable(galleryModel);
+		gallery = new GalleryTable(galleryModel);
 		galleryScroll = new JScrollPane(gallery);
 		gallery.setFillsViewportHeight(true);
 		gallery.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
