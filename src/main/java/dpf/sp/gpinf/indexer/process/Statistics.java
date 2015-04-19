@@ -14,7 +14,7 @@ import org.apache.lucene.store.FSDirectory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.App;
 
@@ -125,7 +125,7 @@ public class Statistics {
 		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + getSplits());
 		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + getTimeouts());
 		System.out.println(new Date() + "\t[INFO]\t" + "Exceções de parsing: " + IndexerDefaultParser.parsingErrors);
-		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ExpandContainerTask.getSubitensDiscovered());
+		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ParsingTask.getSubitensDiscovered());
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
 		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + CarveTask.getItensCarved());
 		System.out.println(new Date() + "\t[INFO]\t" + "Carvings corrompidos ignorados: " + carvedIgnored);

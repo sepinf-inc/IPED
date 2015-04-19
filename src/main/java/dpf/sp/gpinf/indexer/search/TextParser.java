@@ -45,7 +45,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.ExpandContainerTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
@@ -159,7 +159,7 @@ public class TextParser extends CancelableWorker {
 			ParseContext context = new ParseContext();
 			context.set(Parser.class, (Parser) App.get().autoParser);
 			context.set(ItemInfo.class, new ItemInfo(id, categorias, doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
-			ExpandContainerTask expander = new ExpandContainerTask(context);
+			ParsingTask expander = new ParsingTask(context);
 			expander.init(Configuration.properties, new File(Configuration.configPath));
 			context.set(EmbeddedDocumentExtractor.class, expander);
 

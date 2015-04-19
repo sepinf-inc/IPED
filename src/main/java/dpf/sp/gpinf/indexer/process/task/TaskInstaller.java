@@ -27,7 +27,7 @@ public class TaskInstaller {
 		tasks.add(new ExportCSVTask(worker));
 		tasks.add(new KFFTask(worker));
 		tasks.add(new DuplicateTask(worker));
-		tasks.add(new ExpandContainerTask(worker));
+		tasks.add(new ParsingTask(worker));
 		tasks.add(new ExportFileTask(worker));
 		//Carving precisa ficar apos exportação (devido a rename que muda a referencia)
 		//e antes da indexação (pois pode setar propriedade hasChildren no pai)

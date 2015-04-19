@@ -65,7 +65,7 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
  * TAMBÉM REALIZA O PARSING DE ITENS DE CARVING PARA IGNORAR CORROMPIDOS, CASO
  * A INDEXAÇÃO (QUE TB FAZ O PARSING) ESTEJA DESABILITADA.
  */
-public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumentExtractor {
+public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
 	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
 	public static boolean expandContainers = false;
@@ -85,12 +85,12 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
 	private ParsingReader reader;
 
-	public ExpandContainerTask(ParseContext context) {
+	public ParsingTask(ParseContext context) {
 		super(null);
 		setContext(context);
 	}
 
-	public ExpandContainerTask(Worker worker) {
+	public ParsingTask(Worker worker) {
 		super(worker);
 		this.detector = worker.detector;
 	}
@@ -205,7 +205,7 @@ public class ExpandContainerTask extends AbstractTask implements EmbeddedDocumen
 		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
 			|| isToTestEncryption(evidence.getCategorySet()) 
 			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
-		    new ExpandContainerTask(worker).safeProcess(evidence);
+		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
 	}

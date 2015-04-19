@@ -174,7 +174,7 @@ public class IndexTask extends AbstractTask{
 		context.set(StreamSource.class, evidence);
 		if(CarveTask.ignoreCorrupted)
 			context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
-		context.set(EmbeddedDocumentExtractor.class, new ExpandContainerTask(context) {
+		context.set(EmbeddedDocumentExtractor.class, new ParsingTask(context) {
 			@Override
 			public boolean shouldParseEmbedded(Metadata arg0) {
 				return !parsed;
