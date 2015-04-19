@@ -16,6 +16,10 @@ function addNewCategories(set)
 	set.add("Tamanho Zero");
 	set.add("Imagens em Pasta de Sistema");
 	set.add("Textos em Pasta de Sistema");
+	set.add("Lixeira do Windows");
+	set.add("Internet - Histórico");
+	set.add("Atalhos para arquivos");
+	set.add("Atalhos para URLs");
 }
 
 
@@ -62,10 +66,66 @@ function addCategory(e){
 
 		else if(inSystemFolder(e))
 			e.setCategory("Textos em Pasta de Sistema");
+
+		else {
+			var ext = e.getExt().toLowerCase();
+			if (ext.equals("url"))
+				e.setCategory("Atalhos para URLs");
+		}
 			
 	}
+	
+	else if(isFromInternet(e)){
+		if(e.getMediaType().toString().equals("application/x-sqlite3"))
+			e.setCategory("Internet - Histórico");
+	}
+    
+    else if(categorias.indexOf("Outros Arquivos") > -1){
+		var ext = e.getExt().toLowerCase();
+		if (ext.equals("lnk"))
+			e.setCategory("Atalhos para arquivos");
+				
+		else if (ext.equals("url"))
+			e.setCategory("Atalhos para URLs");
+			
+		else if (ext.equals("plist")) {
+			var path = e.getPath().toLowerCase();
+			if (path.indexOf("/safari/") > -1) {
+				var nome = e.getName().toLowerCase();
+				if (nome.indexOf("history") > -1 || 
+	 			   nome.indexOf("downloads") > -1 ||
+	  			   nome.indexOf("lastsession") > -1 ||
+	   			   nome.indexOf("topsites") > -1 || 
+				   nome.indexOf("bookmarks") > -1)
+					e.setCategory("Internet - Histórico");
+			}
+		} else {
+			var nome = e.getName().toLowerCase();
+			if (nome.equals("index.dat")) {
+				var path = e.getPath().toLowerCase();
+				if (path.indexOf("/cookies/") > -1 || 
+	 			   path.indexOf("/internet explorer/") > -1 ||
+	 			   path.indexOf("/iedownloadhistory/") > -1 ||
+	  			   path.indexOf("/content.ie5/") > -1 || 
+				   path.indexOf("/history.ie5/") > -1)
+					e.setCategory("Internet - Histórico");
+					
+			} else if (nome.equals("contacts.edb")) {
+				e.setCategory("Contatos");
+				
+			} else if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {
+				if (nome.indexOf(" session") > -1 || 
+	 			   nome.indexOf(" tabs") > -1 ||
+	  			   nome.indexOf("visited links") > -1 ||
+	   			   nome.indexOf("history") > -1 || 
+				   nome.indexOf("journal") > -1)
+					e.setCategory("Internet - Histórico");
+			}
+		}
+	}
 
-
+	if(inRecycle(e))
+		e.addCategory("Lixeira do Windows");
 }
 
 
@@ -77,9 +137,10 @@ function isFromInternet(e){
 	var path = e.getPath();
 	
 	return 	path.indexOf("Temporary Internet") > -1 || 
-		path.indexOf("Chrome/User Data/Default/Cache") > -1 ||
+		path.indexOf("Chrome/User Data/") > -1 ||
 		path.indexOf("Mozilla/Firefox/Profiles") > -1 || 
-		path.indexOf("Apple Computer/Safari") > -1;
+		path.indexOf("Apple Computer/Safari") > -1 || 
+		path.indexOf("/Cookies/") > -1;
 }
 
 
@@ -96,4 +157,12 @@ function inSystemFolder(e){
 		path.indexOf("system volume information") > -1 ||
 		path.indexOf("program files") > -1;
 
+}
+
+/*
+ *  Função auxiliar
+ */
+function inRecycle(e){
+	var path = e.getPath().toLowerCase();
+	return 	path.indexOf("/$recycle.bin/") > -1 || path.indexOf("/recycler/") > -1;
 }
