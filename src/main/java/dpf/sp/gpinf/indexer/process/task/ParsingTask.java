@@ -142,11 +142,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	
 	private static HashSet<String> getCategoriesToTestEncryption(){
 		HashSet<String> set = new HashSet<String>();
+		set.add("Arquivos Compactados");
 		set.add("Documentos PDF");
 		set.add("Documentos de Texto");
 		set.add("Planilhas");
 		set.add("Apresentações");
-		set.add("Arquivos Compactados");
+		set.add("Outros Documentos");
 		return set;
 	}
 	
@@ -245,7 +246,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				evidence.setParsedTextCache(writer.toString());
 			}
 			evidence.setParsed(true);
-			if(metadata.get("EncryptedDocument") != null){
+			if(metadata.get("EncryptedDocument") != null || evidence.isEncrypted()){
 				evidence.setEncrypted(true);
 				evidence.addCategory(SetCategoryTask.ENCRYPTED_CATEGORY);
 			}

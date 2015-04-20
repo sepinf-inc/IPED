@@ -44,8 +44,13 @@ public class SignatureTask extends AbstractTask {
 					}
 				}
 				
-				if (type == null)
+				if (type == null || (type.toString().equals("application/x-tika-ooxml-protected")
+						&& "docx xlsx pptx".contains(evidence.getExt().toLowerCase()))){
+					if(type != null)
+						evidence.setEncrypted(true);
 					type = worker.detector.detect(null, metadata).getBaseType();
+				}
+					
 
 			} catch (Exception e) {
 				type = MediaType.OCTET_STREAM;
