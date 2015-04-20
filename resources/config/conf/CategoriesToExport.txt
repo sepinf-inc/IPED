@@ -10,6 +10,7 @@
 #Documentos PDF
 #Documentos HTML
 #Arquivos XML
+#Arquivos Criptografados
 #Documentos RTF
 #Documentos de Texto
 #Outros Documentos
@@ -36,3 +37,6 @@
 #Imagens em Pasta de Sistema
 #Textos Temporários Internet
 #Textos em Pasta de Sistema
+#Internet - Histórico
+#Atalhos para arquivos
+#Atalhos para URLs

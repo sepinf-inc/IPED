@@ -53,7 +53,7 @@ public class SetCategoryTask extends AbstractTask{
 	public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
 	public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
 	public static String FOLDER_CATEGORY = "Pastas";
-	public static String ENCRYPTED_CATEGORY = "Arquivos Cifrados";
+	public static String ENCRYPTED_CATEGORY = "Arquivos Criptografados";
 	
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
 	private static TreeSet<String> categories;
