@@ -8,7 +8,7 @@ Caixas de Emails
 Arquivos Compactados
 Emails
 #Bases de dados
-#Internet - Histórico
+#Histórico de Internet
 #Documentos de Texto
 #Planilhas
 #Apresentações

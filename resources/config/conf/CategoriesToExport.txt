@@ -37,6 +37,6 @@
 #Imagens em Pasta de Sistema
 #Textos Temporários Internet
 #Textos em Pasta de Sistema
-#Internet - Histórico
+#Histórico de Internet
 #Atalhos para arquivos
 #Atalhos para URLs
