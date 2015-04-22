@@ -15,7 +15,9 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 
 /**
- * Tarefa de consulta a base de hashes do LED.
+ * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser integrada a tarefa de KFF.
+ * A vantagem de ser independente é que a base de hashes pode ser atualizada facilmente, apenas apontando para
+ * a nova base, sem necessidade de importação.
  * 
  * @author Nassif
  *

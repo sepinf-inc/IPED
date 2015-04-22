@@ -44,8 +44,11 @@ public class SignatureTask extends AbstractTask {
 					}
 				}
 				
-				if (type == null || (type.toString().equals("application/x-tika-ooxml-protected")
+				if (type == null 
+						//Caso seja item office07 cifrado e tenha extensão específica, realiza nova detecção para refinar o tipo
+						|| (type.toString().equals("application/x-tika-ooxml-protected")
 						&& "docx xlsx pptx".contains(evidence.getExt().toLowerCase()))){
+					
 					if(type != null)
 						evidence.setEncrypted(true);
 					type = worker.detector.detect(null, metadata).getBaseType();

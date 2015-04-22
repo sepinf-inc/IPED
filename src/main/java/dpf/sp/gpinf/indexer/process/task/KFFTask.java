@@ -36,6 +36,16 @@ import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
+/**
+ * Tarefa de KFF com implementação simples utilizando base local, sem servidor de banco de dados.
+ * É altamente recomendável armazenar a base em disco SSD, sob pena de degradar o processamento.
+ * Isso porque a biblioteca utiliza o cache do sistema, mas o page size geralmente é de apenas 4KB,
+ * sendo difícil que novos hashes pesquisados (aleatórios) caiam em blocos já carregados no cache do SO 
+ * antes que sejam descartados, pois os hashes são de difícil repetição.
+ * 
+ * @author Nassif
+ *
+ */
 public class KFFTask extends AbstractTask{
     
     private static String ALERT = "Hash com Alerta";
