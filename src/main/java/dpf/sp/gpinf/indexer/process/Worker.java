@@ -55,8 +55,6 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class Worker extends Thread {
 	
-	private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
-
 	LinkedBlockingDeque<EvidenceFile> evidences;
 
 	public IndexWriter writer;
@@ -169,8 +167,6 @@ public class Worker extends Thread {
 				}
 			*/
 			
-			createTempFileIfOnSSD(evidence);
-			
 			firstTask.processAndSendToNextTask(evidence);
 
 		} catch (Throwable t) {	
@@ -185,18 +181,7 @@ public class Worker extends Thread {
 		//this.evidence = prevEvidence;
 
 	}
-	
-	private final void createTempFileIfOnSSD(EvidenceFile evidence){
-		Long len = evidence.getLength();
-		if(Configuration.indexTempOnSSD && len != null && len < MAX_TEMPFILE_LEN
-				&& evidence.getPath().toLowerCase().contains(".e01/vol_vol"))
-			try{
-				evidence.getTempFile();
-			}catch(IOException e){
-				System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " Erro ao acessar " + evidence.getPath() + " " + e.toString());
-			}
-	}
-	
+
 	/**
 	 * Processa ou enfileira novo item criado (subitem de zip, pst, carving, etc).
 	 * 

@@ -18,7 +18,8 @@ public class TaskInstaller {
 	public void installProcessingTasks(Worker worker) throws Exception{
 		
 		List<AbstractTask> tasks = worker.tasks;
-                
+           
+		tasks.add(new TempFileTask(worker));
 		tasks.add(new HashTask(worker));
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));
