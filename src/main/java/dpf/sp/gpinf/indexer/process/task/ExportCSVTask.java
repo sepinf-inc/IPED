@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Properties;
@@ -48,6 +49,8 @@ public class ExportCSVTask extends AbstractTask{
 	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
 		super(worker);
 		this.output = new File(output.getParentFile(), CSV_NAME);
+		if(output.exists() && !IndexFiles.getInstance().appendIndex)
+			Files.delete(output.toPath());
 	}
 
 	@Override
@@ -61,6 +64,8 @@ public class ExportCSVTask extends AbstractTask{
 		value = evidence.getFileToIndex();
 		if (!value.isEmpty() && evidence.getFileOffset() == -1)
 			value = "=HIPERLINK(\"\"" + value + "\"\";\"\"Abrir\"\")";
+		else
+			value = "";
 		list.append("\"" + value + "\";");
 		
 		Long length = evidence.getLength();

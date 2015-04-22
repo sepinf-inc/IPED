@@ -53,7 +53,7 @@ public class ResultTableModel extends AbstractTableModel {
 		for(String col : columnNames)
 			cols.add(col);
 		for(String col : fields)
-			cols.add(col);
+			cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
 		columnNames = cols.toArray(new String[0]);
 	}
 
