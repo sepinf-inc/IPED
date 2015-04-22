@@ -21,6 +21,8 @@
    <mime-type type="text/x-dbf">
       <_comment>xBase Database File</_comment> 
       <glob pattern="*.dbf"/>
+      <glob pattern="*.dbase"/>
+      <glob pattern="*.dbase3"/>
    </mime-type>
    
    <mime-type type="message/rfc822">
@@ -201,24 +203,6 @@
     <glob pattern="*.bat"/>
     <magic priority="50">
       <match value="MZ" type="string" offset="0"/>
-    </magic>
-  </mime-type>
-  
-  <mime-type type="application/octet-stream-2">
-    <_comment>Remove after fix to TIKA-1554</_comment>
-    <magic priority="60">
-      <match value="0x01000000" type="string" offset="0"/>
-    </magic>
-  </mime-type>
-  
-  <mime-type type="application/x-emf">
-    <acronym>EMF</acronym>
-    <_comment>Extended Metafile</_comment>
-    <glob pattern="*.emf"/>
-    <magic priority="70">
-      <match value="0x01000000" type="string" offset="0">
-        <match value=" EMF" type="string" offset="40"/>
-      </match>
     </magic>
   </mime-type>
    

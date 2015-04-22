@@ -68,14 +68,14 @@ public class ImageUtil {
 
 	public static BufferedImage getThumb(InputStream stream, GalleryValue value) {
 		try {
-			Metadata metadata = JpegMetadataReader.readMetadata(stream, false);
+			Metadata metadata = JpegMetadataReader.readMetadata(stream);
 			if (metadata != null) {
-				ExifThumbnailDirectory dir = metadata.getDirectory(ExifThumbnailDirectory.class);
+				ExifThumbnailDirectory dir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
 				if (dir != null) {
 					byte[] imgBytes = dir.getThumbnailData();
 					BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
 					try {
-						JpegDirectory dj = metadata.getDirectory(JpegDirectory.class);
+						JpegDirectory dj = metadata.getFirstDirectoryOfType(JpegDirectory.class);
 						if (dj != null) {
 							int iw = dj.getImageWidth();
 							value.originalW = iw;

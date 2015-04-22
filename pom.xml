@@ -27,19 +27,12 @@
             <name>Archiva SEPINF - Snapshot</name>
             <url>http://10.61.242.12:8081/repository/snapshots/</url>
         </repository>
-        <!--
     	<repository>
       		<id>central</id>
       		<name>Maven Repository Switchboard</name>
       		<layout>default</layout>
       		<url>http://repo1.maven.org/maven2</url>
     	</repository>
-        <repository>
-            <id>local</id>
-            <name>local</name>
-            <url>file://c:/users/wifi/.m2/repository</url>
-        </repository>
-        -->
     </repositories>
         
     <dependencies>
@@ -82,7 +75,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>1.7</version>
+            <version>1.8</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -112,7 +105,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
-            <version>1.7</version>
+            <version>1.8</version>
             <type>jar</type>
             <exclusions>
         		<exclusion>

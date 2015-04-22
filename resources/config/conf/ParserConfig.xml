@@ -31,6 +31,7 @@
 	<parser class="org.apache.tika.parser.image.ImageParser"></parser>
 	<parser class="org.apache.tika.parser.image.PSDParser"></parser>
 	<parser class="org.apache.tika.parser.image.TiffParser"></parser>
+	<parser class="org.apache.tika.parser.image.WebPParser"></parser>
 	<parser class="org.apache.tika.parser.image.BPGParser"></parser>
 	<parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
 	<parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
@@ -52,6 +53,7 @@
 	<parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
 	<parser class="org.apache.tika.parser.chm.ChmParser"></parser>
 	<parser class="org.apache.tika.parser.prt.PRTParser"></parser>
+	<parser class="org.apache.tika.parser.jdbc.SQLite3Parser"></parser>
 	<parser class="org.gagravarr.tika.FlacParser"></parser>
 	<parser class="org.gagravarr.tika.OggParser"></parser>
 	<parser class="org.gagravarr.tika.VorbisParser"></parser>

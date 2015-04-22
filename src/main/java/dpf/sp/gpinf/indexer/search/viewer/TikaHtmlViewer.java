@@ -26,8 +26,8 @@ public class TikaHtmlViewer extends HtmlViewer{
 	
 	@Override
 	public boolean isSupportedType(String contentType) {
-		return 	contentType.equals("application/x-msaccess"); 
-				//|| contentType.equals("application/vnd.ms-outlook");  
+		return 	contentType.equals("application/x-msaccess") 
+				|| contentType.equals("application/x-sqlite3");  
 	}
 	
 
