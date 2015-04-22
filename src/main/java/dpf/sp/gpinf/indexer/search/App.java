@@ -40,9 +40,11 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -53,6 +55,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -189,7 +192,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "D:/test90/indexador/lib/search.jar";
+			//codePath = "E:/Casos/teste6/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 			if (codePath.charAt(0) == '/' && codePath.charAt(2) == ':')
@@ -338,6 +341,9 @@ public class App extends JFrame implements WindowListener {
 		resultsTable.setRowSorter(new ResultTableRowSorter());
 		resultsTable.setAutoscrolls(false);
 		resultsTable.setDefaultRenderer(String.class, new TableCellRenderer());
+		InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
+		inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
 
 		gallery = new GalleryTable(galleryModel);
 		galleryScroll = new JScrollPane(gallery);
@@ -357,7 +363,11 @@ public class App extends JFrame implements WindowListener {
 		GalleryListener keyListener = new GalleryListener();
 		keyListener.setCellEditor(cellEditor);
 		gallery.addKeyListener(keyListener);
-		// gallery.setRowHeight(galleryModel.size);
+		
+		inputMap = gallery.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+		inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
+		inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
+		
 		gallery.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
