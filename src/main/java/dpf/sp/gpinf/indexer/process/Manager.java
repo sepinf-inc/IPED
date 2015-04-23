@@ -213,7 +213,7 @@ public class Manager {
 		conf.setSimilarity(new IndexerSimilarity());
 		ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
 		if(Configuration.indexTempOnSSD)
-			mergeScheduler.setMaxMergesAndThreads(7, 2);
+			mergeScheduler.setMaxMergesAndThreads(8, 3);
 		conf.setMergeScheduler(mergeScheduler);
 		conf.setRAMBufferSizeMB(32);
 		TieredMergePolicy tieredPolicy = new TieredMergePolicy();
