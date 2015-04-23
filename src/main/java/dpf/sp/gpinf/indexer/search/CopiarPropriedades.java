@@ -56,6 +56,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 
 		ArrayList<String> fields = new ArrayList<String>();
 		fields.add(IndexItem.ID);
+		fields.add(IndexItem.PARENTID);
 		fields.add("marcador");
 		for (String field : ((ResultTableModel) App.get().resultsTable.getModel()).fields)
 			fields.add(field);

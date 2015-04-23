@@ -1,21 +1,28 @@
-10/04/2015: IPED-3.3
-- Refatoração, modularização e documentação do código de processamento e divisão em subprojetos maven
+22/04/2015: IPED-3.3
+- Modularização e documentação parcial do código de processamento e divisão em subprojetos maven
 - Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento
-- Tarefa de consulta de hashes na base do LED
-- Importação e consulta a base de hashes no formato NSRL
-- Assinaturas p/ carving de logs de MSN (contribuição PCF Ayrton)
-- Novas categorias baseadas em propriedades dos itens (contribuição PCF Gabriel)
-- Exibição da tarefa e pasta sendo adicionada pelo sleuthkit durante adição de imagem 
-- Detecção de arquivos 7z cifrados
+- Módulo simples de KFF local, com importação de base de hashes no formato NSRL
+- Consulta de hashes na base do LED
+- Categoria p/ arquivos cifrados (office97/07, openoffice, pdf, zip, rar, pst e agora 7z)
+- Novas categorias baseadas em propriedades (Lixeira, Atalhos e Histórico de Internet, contribuição PCF Gabriel)
+- Exibição da tarefa de processamento do IPED e pasta sendo adicionada pelo sleuthkit
+- Melhorias no parser de MDB (visualização e extração de subitens)
+- Atualização Tika-1.8 (SQLiteParser e correções)
+- Ordenação da tabela mantida após alterar filtro
+- Filtro para listar "Arquivos Sem Marcadores"
 - Exposição do parâmetro noFatOrphans
 Correções:
+- Opção em ParserConfig.xml p/ excluir GIFs do OCR (pode causar erros no Windows)
 - Arquivos XPS e Office2007 genéricos indexados via strings após descompactação
 - Criação automática da pasta de saída e abortagem do processamento caso já exista
 - Melhor detecção de assinatura de arquivos EMF e EML
 - Arquivo CSV sobrescrito ao usar --append
-- Concatenação do nome de categorias em itens em mais de uma
 - Erro ao processar pasta raiz cujo nome tenha 1 caracter
 - Perda de marcadores após adicionar evidência com --append
+- Erro durante exportação automática devido a deleção de arquivo por antivirus
+- Melhor categorização de arquivos office2007 cifrados
+- Timeout durante OCR em arquivos TIF com muitas páginas
+- Problema de seleção múltipla na galeria
 
 
 30/01/2015: IPED 3.2.4
