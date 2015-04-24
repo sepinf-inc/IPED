@@ -1,4 +1,4 @@
-22/04/2015: IPED-3.3
+24/04/2015: IPED-3.3
 - Refatoração, modularização e documentação parcial do código de processamento e divisão em subprojetos maven
 - Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento
 - Módulo simples de KFF local, com importação de base de hashes no formato NSRL
