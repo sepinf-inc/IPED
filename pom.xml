@@ -33,6 +33,11 @@
       		<layout>default</layout>
       		<url>http://repo1.maven.org/maven2</url>
     	</repository>
+    	<repository>
+    		<id>jbig2.googlecode</id>
+    		<name>JBIG2 ImageIO-Plugin repository at googlecode.com</name>
+    		<url>http://jbig2-imageio.googlecode.com/svn/maven-repository</url>
+  		</repository>
     </repositories>
         
     <dependencies>
@@ -149,6 +154,11 @@
     		<artifactId>mapdb</artifactId>
     		<version>1.0.6</version>
 		</dependency>
+		<dependency>
+  			<groupId>com.levigo.jbig2</groupId>
+  			<artifactId>levigo-jbig2-imageio</artifactId>
+  			<version>1.6.3</version>
+		</dependency> 
         <!-- FIM: EXTERNAS -->
         <!-- INICIO: VIEWERS -->
         <dependency>
