@@ -195,9 +195,9 @@ public class CarveTask extends AbstractTask{
 		
 			findSig(tis);
 			
-		}catch(Throwable t){
+		}catch(Exception t){
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro no Carving de " + evidence.getPath() + " " + t.toString());
-			t.printStackTrace();
+			//t.printStackTrace();
 			
 		}finally{
 			IOUtil.closeQuietly(tis);
@@ -484,6 +484,8 @@ public class CarveTask extends AbstractTask{
 		if(this.evidence.getSleuthFile() != null){
 			evidence.setSleuthFile(this.evidence.getSleuthFile());
 			evidence.setSleuthId(this.evidence.getSleuthId());
+			if(this.evidence.hasTmpFile())
+				evidence.setFile(this.evidence.getTempFile());
 		}else{
 			evidence.setFile(this.evidence.getFile());
 			evidence.setExportedFile(this.evidence.getExportedFile());

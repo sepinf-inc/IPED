@@ -7,6 +7,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -509,17 +510,30 @@ public class EvidenceFile implements Serializable, StreamSource {
             tmpFile = tis.getFile();
         
         if (tmpFile != null)
-            return new FileInputStream(tmpFile);
+        	try{
+        		return new FileInputStream(tmpFile);
+        	
+        	//workaround para itens com erro de parsing cujo tmpFile foi setado por chamada anterior de getStream() e dps apagado
+        	}catch(FileNotFoundException fnfe){
+        		tmpFile = null;
+        	}
 
-        InputStream stream;
+        InputStream stream = null;
         if (file != null && !this.isDir)
-            stream = new FileInputStream(file);
+        	try{
+        		stream = new FileInputStream(file);
+        		
+        	//workaround para itens carveados apontando para tmpFile to pai que foi apagado
+        	}catch(FileNotFoundException fnfe){
+        		file = null;
+        	}
 
-        else if (sleuthFile != null)
-            stream = new ReadContentInputStream(sleuthFile);
+        if (stream == null)
+        	if(sleuthFile != null){
+        		stream = new ReadContentInputStream(sleuthFile);
 
-        else
-            stream = new ByteArrayInputStream(new byte[0]);
+        	}else
+        		stream = new ByteArrayInputStream(new byte[0]);
 
         if (startOffset != -1) {
             long skiped = 0;
@@ -551,6 +565,11 @@ public class EvidenceFile implements Serializable, StreamSource {
 	        	tmpFile = getTikaStream().getFile();
         }
         return tmpFile;
+    }
+    
+    
+    public boolean hasTmpFile(){
+    	return tmpFile != null;
     }
 
     /**
