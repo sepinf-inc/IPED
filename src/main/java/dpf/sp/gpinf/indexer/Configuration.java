@@ -22,7 +22,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.parser.EmptyParser;
 
 import dpf.sp.gpinf.indexer.analysis.LowerCaseLetterDigitTokenizer;
@@ -70,7 +74,8 @@ public class Configuration {
 	public static void getConfiguration(String configPathStr) throws Exception {
 
 		// DataSource.testConnection(configPathStr);
-
+		LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
+		
 		configPath = configPathStr;
 
 		if (new File(configPath + "/tools/sleuth").exists())

@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -164,6 +166,7 @@ public class SleuthkitProcessor {
 			
 		}
 
+		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 
 		for (long k = firstId; k <= lastId; k++) {
 
