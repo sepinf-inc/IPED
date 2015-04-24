@@ -1,5 +1,5 @@
 22/04/2015: IPED-3.3
-- Modularização e documentação parcial do código de processamento e divisão em subprojetos maven
+- Refatoração, modularização e documentação parcial do código de processamento e divisão em subprojetos maven
 - Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento
 - Módulo simples de KFF local, com importação de base de hashes no formato NSRL
 - Consulta de hashes na base do LED
@@ -7,13 +7,12 @@
 - Novas categorias baseadas em propriedades (Lixeira, Atalhos e Histórico de Internet, contribuição PCF Gabriel)
 - Exibição da tarefa de processamento do IPED e pasta sendo adicionada pelo sleuthkit
 - Melhorias no parser de MDB (visualização e extração de subitens)
-- Atualização Tika-1.8 (SQLiteParser e correções)
+- Atualização Tika-1.8 (SQLiteParser, etc)
 - Ordenação da tabela mantida após alterar filtro
 - Filtro para listar "Arquivos Sem Marcadores"
 - Exposição do parâmetro noFatOrphans
 Correções:
 - Opção em ParserConfig.xml p/ excluir GIFs do OCR (pode causar erros no Windows)
-- Arquivos XPS e Office2007 genéricos indexados via strings após descompactação
 - Criação automática da pasta de saída e abortagem do processamento caso já exista
 - Melhor detecção de assinatura de arquivos EMF e EML
 - Arquivo CSV sobrescrito ao usar --append
@@ -23,6 +22,7 @@ Correções:
 - Melhor categorização de arquivos office2007 cifrados
 - Timeout durante OCR em arquivos TIF com muitas páginas
 - Problema de seleção múltipla na galeria
+- Log com menos lixo de bibliotecas
 
 
 30/01/2015: IPED 3.2.4
