@@ -7,17 +7,20 @@ import java.util.Set;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToHTMLContentHandler;
 
-import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
  * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.
  * Somente os tipos cujo Html seja satisfatório devem ser configurados.
  */
 public class TikaHtmlViewer extends HtmlViewer{
+	
+	Parser parser = new AutoDetectParser();
 
 	@Override
 	public String getName() {
@@ -43,22 +46,28 @@ public class TikaHtmlViewer extends HtmlViewer{
 
 	private File getHtmlVersion(File file) {
 
+		File outFile = null;
+		TikaInputStream tis = null;
+		BufferedOutputStream outStream = null;
 		try {
 			Metadata metadata = new Metadata();
-			TikaInputStream tis = TikaInputStream.get(file);
+			tis = TikaInputStream.get(file);
 			ParseContext context = new ParseContext();
-			File outFile = File.createTempFile("tmp", ".html");
+			outFile = File.createTempFile("tmp", ".html");
 			outFile.deleteOnExit();
-			BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(outFile));
+			outStream = new BufferedOutputStream(new FileOutputStream(outFile));
 			ToHTMLContentHandler handler = new ToHTMLContentHandler(outStream, "windows-1252");
-			((Parser) App.get().autoParser).parse(tis, handler, metadata, context);
-			tis.close();
-			return outFile;
+			parser.parse(tis, handler, metadata, context);
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
+			
+		}finally{
+			IOUtil.closeQuietly(tis);
+			IOUtil.closeQuietly(outStream);
 		}
-		return null;
+		return outFile;
 
 	}
 }
