@@ -484,8 +484,8 @@ public class CarveTask extends AbstractTask{
 		if(this.evidence.getSleuthFile() != null){
 			evidence.setSleuthFile(this.evidence.getSleuthFile());
 			evidence.setSleuthId(this.evidence.getSleuthId());
-			if(this.evidence.hasTmpFile())
-				evidence.setFile(this.evidence.getTempFile());
+			//if(this.evidence.hasTmpFile())
+			//	evidence.setFile(this.evidence.getTempFile());
 		}else{
 			evidence.setFile(this.evidence.getFile());
 			evidence.setExportedFile(this.evidence.getExportedFile());
