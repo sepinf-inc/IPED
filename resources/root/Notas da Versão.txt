@@ -1,3 +1,10 @@
+27/04/2015: IPED-3.3.1
+- Teste de entropia ao indexar desconhecidos, melhorando sobremaneira eficiência de indexação de espaço não alocado.
+Correções:
+- Regressão ao não indexar corpo de emails e subitens não expandidos como xls dentro de doc (3.3)
+- Regressão ao ignorar algumas imagens de carving devido a exceção (3.3)
+
+
 24/04/2015: IPED-3.3
 - Refatoração, modularização e documentação parcial do código de processamento e divisão em subprojetos maven
 - Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento

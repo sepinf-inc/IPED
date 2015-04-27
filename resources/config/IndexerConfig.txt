@@ -25,13 +25,6 @@ forceMerge = false
 # Após este limite, são indexadas strings brutas do arquivo.
 timeOut = 180
 
-# Parser para arquivos não suportados pelo Tika, como binários, desconhecidos, pagefile, drivefreespace, etc
-# Deixe em branco (nao comentado) caso não deseje indexar tais arquivios.
-fallBackParser = dpf.sp.gpinf.indexer.parsers.RawStringParser
-
-# Tamanho mínimo de strings brutas extraídas pelo RawStringParser
-minRawStringSize = 4
-
 # Copia LibreOffice.zip (100MB) para a pasta de saída da indexação, permitindo visualizar mais de 20 formatos diferentes.
 embutirLibreOffice = true
 
@@ -45,7 +38,7 @@ hash = md5
 
 # Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
 # existentes na base são adicionados a uma categoria "Alerta de hash (PI)"
-#ledWkffPath = D:/LED/V1.17.00/pedo/wkff
+#ledWkffPath = E:/LED/V1.17.00/pedo/wkff
 
 # Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base. É altamente
 # recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
@@ -76,22 +69,34 @@ expandContainers = true
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 
+# Indexa arquivos sem decodificador específico, como binários, desconhecidos, pagefile, não alocado, etc
+# Nesse caso são indexadas strings brutas em claro extraídas dos arquivos.
+indexUnknownFiles = true
+
+# Tamanho mínimo de strings brutas extraídas de arquivos desconhecidos
+minRawStringSize = 4
+
 # Define caracteres adicionais a serem indexados além de letras e números, isto é, deixam de ser separadores
 # Utilize espaço para separar os caracteres
 extraCharsToIndex =
 
-# Adiciona e processa áreas não alocadas de imagens via sleuthkit
-addUnallocated = true
-
-# Adiciona arquivos apagados sem pai em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
+# Adiciona arquivos apagados orphans em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
 # possivelmente impactando tempo de processamento
 addFatOrphans = true
 
-# Indexa o espaço não alocado adicionado
+# Adiciona e processa áreas não alocadas de imagens via sleuthkit
+addUnallocated = true
+
+# Indexa o espaço não alocado adicionado. Necessário habilitar "indexUnknownFiles"
 indexUnallocated = true
 
-# Habilita ou não o carving. Opções avançadas de carving, como tipos de arquivo a processar e a recuperar,
-# devem ser configuradas no arquivo conf/CarvingConfig.txt
+# Realiza teste de aleatoriedade antes de indexar trechos de itens desconhecidos e fragmentos de dados. 
+# Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
+entropyTest = true
+
+# Habilita o carving. Por padrão o carving é bastante inclusivo, sendo executado sobre não alocado e 
+# sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
+# configurados no arquivo conf/CarvingConfig.txt
 enableCarving = false
 
 # Tamanho em bytes de divisão do espaço não alocado
