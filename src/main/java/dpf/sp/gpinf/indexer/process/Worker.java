@@ -96,8 +96,8 @@ public class Worker extends Thread {
 		detector = config.getDetector();
 
 		autoParser = new IndexerDefaultParser();
-		autoParser.setFallback((Parser) Configuration.fallBackParser.newInstance());
-		autoParser.setErrorParser((Parser) Configuration.errorParser.newInstance());
+		autoParser.setFallback(Configuration.fallBackParser);
+		autoParser.setErrorParser(Configuration.errorParser);
 		
 		TaskInstaller taskInstaller = new TaskInstaller();
 		taskInstaller.installProcessingTasks(this);

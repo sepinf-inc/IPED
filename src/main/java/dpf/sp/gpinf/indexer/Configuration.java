@@ -26,6 +26,7 @@ import java.util.Properties;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.parser.EmptyParser;
+import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.analysis.LowerCaseLetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
@@ -54,8 +55,8 @@ public class Configuration {
 	public static int timeOut = 180;
 	public static boolean forceMerge = true;
 	public static String configPath;
-	public static Class<?> errorParser = RawStringParser.class;
-	public static Class<?> fallBackParser = RawStringParser.class;
+	public static Parser errorParser = new RawStringParser(true);
+	public static Parser fallBackParser = new RawStringParser(true);
 	public static boolean embutirLibreOffice = true;
 	public static String defaultCategory = "";
 	public static boolean sortPDFChars = false;
@@ -134,26 +135,22 @@ public class Configuration {
 		ParsingReader.setTextSplitSize(textSplitSize);
 		ParsingReader.setTextOverlapSize(textOverlapSize);
 		FastPipedReader.setTimeout(timeOut);
-
-		value = properties.getProperty("fallBackParser");
+		
+		value = properties.getProperty("entropyTest");
 		if (value != null)
 			value = value.trim();
-		if (value != null) {
-			if (value.isEmpty())
-				fallBackParser = EmptyParser.class;
-			else
-				fallBackParser = Class.forName(value);
-		}
+		if (value != null && !value.isEmpty())
+			entropyTest = Boolean.valueOf(value);
 
-		value = properties.getProperty("errorParser");
+		value = properties.getProperty("indexUnknownFiles");
 		if (value != null)
 			value = value.trim();
-		if (value != null) {
-			if (value.isEmpty())
-				errorParser = EmptyParser.class;
-			else
-				errorParser = Class.forName(value);
-		}
+		if (value != null && !Boolean.valueOf(value))
+			fallBackParser = new EmptyParser();
+		else
+			fallBackParser = new RawStringParser(entropyTest);
+
+		errorParser = new RawStringParser(entropyTest);
 
 		value = properties.getProperty("minRawStringSize");
 		if (value != null)
@@ -271,12 +268,6 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			indexTempOnSSD = Boolean.valueOf(value);
-		
-		value = properties.getProperty("entropyTest");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			entropyTest = Boolean.valueOf(value);
 		
 		value = properties.getProperty("addFatOrphans");
 		if (value != null)

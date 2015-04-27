@@ -83,8 +83,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			ParsingReader.setTextSplitSize(Long.MAX_VALUE);
 
 			IndexerDefaultParser autoParser = new IndexerDefaultParser();
-			autoParser.setFallback((Parser) Configuration.fallBackParser.newInstance());
-			autoParser.setErrorParser((Parser) Configuration.errorParser.newInstance());
+			autoParser.setFallback(Configuration.fallBackParser);
+			autoParser.setErrorParser(Configuration.errorParser);
 			App.get().autoParser = autoParser;
 
 			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
