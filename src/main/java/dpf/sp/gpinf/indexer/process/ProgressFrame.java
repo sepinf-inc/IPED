@@ -95,8 +95,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (indexStart == null)
-			indexStart = new Date();
 		
 		if ("processed".equals(evt.getPropertyName())) {
 			indexed = (Integer) evt.getNewValue();
@@ -109,10 +107,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			
 		} else if ("discovered".equals(evt.getPropertyName())) {
 			discovered = (Integer) evt.getNewValue();
-			/*if (taskSize != 0) {
-				taskSize = discovered;
-				progressBar.setMaximum(taskSize);
-			}*/
 			updateString();
 			
 		} else if ("mensagem".equals(evt.getPropertyName())) {
@@ -120,12 +114,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			list.setText("");
 			
 		} else if ("progresso".equals(evt.getPropertyName())) {
+			if (indexStart == null)
+				indexStart = new Date();
 			volume = (Integer) evt.getNewValue();
 			if (taskSize != 0)
 				progressBar.setValue((volume));
 			
 			Date now = new Date();
-			long interval = (now.getTime() - indexStart.getTime()) / 1000;
+			long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
 			rate = (long)volume * 1000000L * 3600L / (1024L * 1024L * 1024L * interval);
 			
 		} else if ("workers".equals(evt.getPropertyName())) {
