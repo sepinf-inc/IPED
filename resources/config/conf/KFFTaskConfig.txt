@@ -1,4 +1,5 @@
-# Nomes de produtos em base de hashes no formato NSRL cujos arquivos devem receber o status de alerta.
+# Nomes de grupos/produtos em base de hashes no formato NSRL cujos arquivos devem receber o status de alerta.
+# Arquivos pertencentes todos os demais grupos não listados recebem status de irrelevância.
 # Alterações automaticamente são aplicadas em novos processamentos, sem necessidade de reimportar a base.
 
 NSRL_Alert
