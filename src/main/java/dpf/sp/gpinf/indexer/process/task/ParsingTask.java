@@ -88,7 +88,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	private ParseContext context;
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
-	private ParsingReader reader;
+	private volatile ParsingReader reader;
 
 	public ParsingTask(ParseContext context) {
 		super(null);
@@ -400,12 +400,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if (e.toString().contains("Error writing"))
 				Thread.currentThread().interrupt();
 
-			//e.printStackTrace();
+			e.printStackTrace();
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair subitem " + filePath + "\t\t" + e.toString());
 
 		} catch (Exception e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
-			//e.printStackTrace();
+			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + "\t" + worker.runningTask.getClass().getSimpleName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
+			e.printStackTrace();
 
 		} finally {
 			tmp.close();
