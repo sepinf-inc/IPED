@@ -2,7 +2,7 @@
 # Configuração da Extração de Cenas de Vídeos #
 ###############################################
 
-# Configuracao do caminho (completo ou relativo) do MPLAYER para extracao de cenas dos videos.
+# Configuração do caminho (completo ou relativo) do MPLAYER para extracao de cenas dos videos.
 # Configuração padrão aponta para MPlayer para Windows, em subpasta incluída na distribuição do IPED.
 # Necessário reconfigurar para rodar no Linux.
 MPlayer = tools/mplayer/mplayer.exe
