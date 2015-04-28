@@ -102,6 +102,9 @@ enableCarving = false
 # Tamanho em bytes de divisão do espaço não alocado
 unallocatedFragSize = 104857600
 
+# Habilita extração de imagens de cenas de vídeos.
+# Os parâmetro de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
+enableVideoThumbs = true
 
 ########################################################################
 # Configurações da Pesquisa
