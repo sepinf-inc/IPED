@@ -76,7 +76,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	public static boolean expandContainers = false;
 	
 	// Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
-	private static int NAME_MAX_LEN = 1024;
+	private static int NAME_MAX_LEN = 256;
 
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
@@ -234,6 +234,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		Metadata metadata = getMetadata(evidence);
 		
 		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
+		reader.startBackgroundParsing();
+		
 		try{
 			StringWriter writer;
 			char[] cbuf = new char[128*1024];
@@ -247,10 +249,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
 			} while (reader.nextFragment());
 			
-			if (numFrags == 1){
+			if (numFrags == 1)
 				evidence.setParsedTextCache(writer.toString());
-			}
-			evidence.setParsed(true);
+			
+			if(extractEmbedded)
+				evidence.setParsed(true);
+			
 			if(metadata.get("EncryptedDocument") != null || evidence.isEncrypted()){
 				evidence.setEncrypted(true);
 				evidence.addCategory(SetCategoryTask.ENCRYPTED_CATEGORY);
@@ -376,6 +380,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				itemInfo.setEvidence(subItem);
 			}
 
+			// pausa contagem de timeout do pai antes de extrair e processar subitem
+			reader.setTimeoutPaused(true);
+						
 			ExportFileTask extractor = new ExportFileTask(worker);
 			extractor.extractFile(tis, subItem);
 
@@ -389,9 +396,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
 			}
 
-			// pausa contagem de timeout enquanto processa subitem
-			reader.setTimeoutPaused(true);
 			worker.processNewItem(subItem);
+			
+			//despausa contador de timeout do pai somente após processar subitem
 			reader.setTimeoutPaused(false);
 
 		} catch (SAXException e) {
@@ -400,12 +407,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if (e.toString().contains("Error writing"))
 				Thread.currentThread().interrupt();
 
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair subitem " + filePath + "\t\t" + e.toString());
 
 		} catch (Exception e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + "\t" + worker.runningTask.getClass().getSimpleName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
-			e.printStackTrace();
+			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + "\t" + 
+					worker.runningTask.getClass().getSimpleName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
+			//e.printStackTrace();
 
 		} finally {
 			tmp.close();

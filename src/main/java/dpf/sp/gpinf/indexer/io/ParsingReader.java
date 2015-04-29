@@ -164,9 +164,10 @@ public class ParsingReader extends Reader {
 		 * forkParser.setJavaCommand("java -Xms512m");
 		 * forkParser.setPoolSize(8); } this.parser = forkParser;
 		 */
-
+	}
+	
+	public void startBackgroundParsing(){
 		future = threadPool.submit(new ParsingTask());
-
 	}
 	
 	public static ExecutorService threadPool = Executors.newCachedThreadPool();

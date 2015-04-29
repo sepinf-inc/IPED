@@ -113,8 +113,10 @@ public class IndexTask extends AbstractTask{
 			
 			ParsingReader reader = null;
 			if ( indexFileContents && tis != null && 
-				(indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType())))
+				(indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))){
 					reader = new ParsingReader(worker.autoParser, tis, metadata, context);
+					reader.startBackgroundParsing();
+			}
 			
 			Document doc = IndexItem.Document(evidence, reader, dateFormat);
 			int fragments = 0;
