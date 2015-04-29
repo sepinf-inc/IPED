@@ -37,6 +37,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -47,7 +48,7 @@ public class Configuration {
 	public static String CONFIG_FILE = "IndexerConfig.txt";
 	public static String PARSER_CONFIG = "ParserConfig.xml";
 
-	public static Properties properties = new Properties();
+	public static UTF8Properties properties = new UTF8Properties();
 	public static File indexTemp, indexerTemp;
 	public static int numThreads;
 	public static int textSplitSize = 10000000;
@@ -87,7 +88,7 @@ public class Configuration {
 		else
 			System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
-		properties.load(new FileInputStream(new File(configPath + "/" + CONFIG_FILE)));
+		properties.load(new File(configPath + "/" + CONFIG_FILE));
 
 		String value;
 
