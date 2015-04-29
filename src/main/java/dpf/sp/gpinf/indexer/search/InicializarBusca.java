@@ -72,7 +72,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			//IOUtil.readFile(new File(App.get().codePath + "/../lib/" + Versao.TIKA_VERSION));
 			
 			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
-            App.get().ids = (int[]) Util.readObject(App.get().codePath + "/../data/ids.map");
             App.get().lastId = App.get().textSizes.length - 1;
 
 			inicializar(App.get().codePath + "/../index");
@@ -177,6 +176,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();
 			App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
+			App.get().ids = (int[]) Util.readObject(index + "/../data/ids.map");
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
 				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
 			App.get().marcadores = new Marcadores(index + "/..");
