@@ -24,6 +24,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.lucene.document.Document;
+import org.apache.tika.Tika;
 
 public class CompositeViewer extends JPanel implements ChangeListener, ActionListener {
 
@@ -54,14 +56,16 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	AbstractViewer viewerToUse;
 	volatile int currentTab;
 	TextViewer textViewer;
-	volatile File file, lastFile;
-	volatile String contentType;
+	volatile File file, lastFile, viewFile;
+	volatile String contentType, viewMediaType;
 	volatile Document doc;
 	Set<String> highlightTerms;
 
 	JTabbedPane tabbedPane;
 	JCheckBox fixViewer;
 	JButton prevHit, nextHit;
+	
+	Tika tika = new Tika();
 
 	public CompositeViewer() {
 		super(new BorderLayout());
@@ -126,15 +130,30 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 		loadFile(doc, file, file, contentType, highlightTerms);
 	}
 	
+	private void getViewType(){
+		if(viewFile != file)
+			try {
+				viewMediaType = tika.detect(viewFile);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		else
+			viewMediaType = contentType;
+	}
+	
 	public void loadFile(Document doc, File file, File viewFile, String contentType, Set<String> highlightTerms) {
 		this.file = file;
+		this.viewFile = viewFile;
 		this.contentType = contentType;
 		this.doc = doc;
 		this.highlightTerms = highlightTerms;
+		
+		getViewType();
 
 		viewerToUse = null;
 		for (AbstractViewer viewer : viewerList) {
-			if (viewer.isSupportedType(contentType)) {
+			if (viewer.isSupportedType(viewMediaType)) {
 				viewerToUse = viewer;
 			} else
 				viewer.loadFile(null);
@@ -156,7 +175,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	}
 
 	private void loadFile() {
-		if (file != lastFile && currentTab != 0 && viewerToUse != textViewer && viewerToUse.isSupportedType(contentType)) {
+		if (file != lastFile && currentTab != 0 && viewerToUse != textViewer && viewerToUse.isSupportedType(viewMediaType)) {
 
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -166,7 +185,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 				}
 			});
 
-			viewerToUse.loadFile(file, contentType, highlightTerms);
+			viewerToUse.loadFile(viewFile, viewMediaType, highlightTerms);
 			lastFile = file;
 		}
 
