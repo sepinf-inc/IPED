@@ -137,6 +137,13 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		}
 
 		String contentType = doc.get(IndexItem.CONTENTTYPE);
+		String hash = doc.get(IndexItem.HASH);
+		File viewFile = null;
+		
+		if(hash != null)
+			viewFile = new File(App.get().codePath + "/../view/" + hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ".jpg");
+		
+		
 
 		App.get().compositeViewer.loadFile(doc, file, contentType, App.get().highlightTerms);
 

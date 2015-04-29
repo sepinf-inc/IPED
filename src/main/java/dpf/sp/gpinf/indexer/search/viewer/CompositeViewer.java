@@ -123,6 +123,10 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	}
 
 	public void loadFile(Document doc, File file, String contentType, Set<String> highlightTerms) {
+		loadFile(doc, file, file, contentType, highlightTerms);
+	}
+	
+	public void loadFile(Document doc, File file, File viewFile, String contentType, Set<String> highlightTerms) {
 		this.file = file;
 		this.contentType = contentType;
 		this.doc = doc;
@@ -142,7 +146,6 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 			changeTab(viewerToUse);
 
 		textViewer.loadFile(doc, file, contentType);
-
 	}
 
 	public AbstractViewer getCurrentViewer() {
