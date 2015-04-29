@@ -24,15 +24,16 @@ import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.Log;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de 
@@ -89,7 +90,7 @@ public class VideoThumbTask extends AbstractTask {
     private static boolean verbose = false;
 
     /** Objeto estático de inicialização. Necessário para garantir que seja feita apenas uma vez. */
-    private static Boolean init = false;
+    private static final AtomicBoolean init = new AtomicBoolean(false);
 
     /**
      * Construtor.
@@ -114,22 +115,22 @@ public class VideoThumbTask extends AbstractTask {
 
         //Inicialização sincronizada
         synchronized (init) {
-            if (!init) {
+            if (!init.get()) {
                 //Verifica se tarefa está habilitada
                 String value = confParams.getProperty("enableVideoThumbs");
                 if (value != null && value.trim().equalsIgnoreCase("true")) {
                     taskEnabled = true;
                 } else {
                     Log.info("Extração de Cenas de Vídeos Desabilitada.");
-                    init = true;
+                    init.set(true);
                     return;
                 }
 
                 //Lê parâmetros do arquivo de configuração
-                Properties properties = new Properties();
+                UTF8Properties properties = new UTF8Properties();
                 File confFile = new File(confDir, configFileName);
                 try {
-                    properties.load(new FileInputStream(confFile));
+                    properties.load(confFile);
 
                     //Caminho do MPlayer
                     value = properties.getProperty("MPlayer");
@@ -163,9 +164,8 @@ public class VideoThumbTask extends AbstractTask {
                 } catch (Exception e) {
                     e.printStackTrace();
                     Log.error("Erro lendo arquivo de configuração de tarefa de extração de cenas de vídeos: " + confFile.getAbsolutePath());
-                    Log.error("Extração de cenas de vídeos desabilitada!");
                     taskEnabled = false;
-                    init = true;
+                    init.set(true);
                     throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
                 }
 
@@ -176,14 +176,13 @@ public class VideoThumbTask extends AbstractTask {
                     Log.error("MPLAYER NÃO PODE SER EXECUTADO!");
                     Log.error("MPlyer Configurado = " + mplayer);
                     Log.error("Verifique o caminho e tente executá-lo diretamente na linha de comando.");
-                    Log.error("Extração de cenas de vídeos desabilitada!");
                     taskEnabled = false;
-                    init = true;
+                    init.set(true);
                     throw new RuntimeException("Erro na extração de cenas de vídeos: MPlayer não pode ser executado!");
                 }
                 Log.info("Extração de Cenas de Vídeos Habilitada.");
                 Log.info("Versão do MPLAYER utilizada: " + vmp);
-                init = true;
+                init.set(true);
             }
         }
 
