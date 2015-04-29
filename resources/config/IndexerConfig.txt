@@ -1,59 +1,59 @@
 ########################################################################
-# ConfiguraÁıes do Processamento
+# Configura√ß√µes do Processamento
 ########################################################################
 
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
-# DiretÛrio tempor·rio de indexaÁ„o: "default" utiliza o diretÛrio tempor·rio padr„o do sistema.
+# Diret√≥rio tempor√°rio de indexa√ß√£o: "default" utiliza o diret√≥rio tempor√°rio padr√£o do sistema.
 # Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
 indexTemp = default
 
-# Habilite caso indexTemp (ou a pasta do caso ao usar --append) esteja em disco SSD. Nesse caso, s„o feitas otimizaÁıes 
-# que podem reduzir o tempo de processamento em atÈ 60%: merge threads do Ìndice È aumentado e, no caso de imagens E01, 
-# s„o utilizados arquivos tempor·rios para evitar m˙ltiplas descompactaÁıes dos itens pela libewf
+# Habilite caso indexTemp (ou a pasta do caso ao usar --append) esteja em disco SSD. Nesse caso, s√£o feitas otimiza√ß√µes 
+# que podem reduzir o tempo de processamento em at√© 60%: merge threads do √≠ndice √© aumentado e, no caso de imagens E01, 
+# s√£o utilizados arquivos tempor√°rios para evitar m√∫ltiplas descompacta√ß√µes dos itens pela libewf
 indexTempOnSSD = false
 
-# N˙mero de threads de processamento: "default" utiliza o n˙mero de processadores.
-# Caso haja problemas de consumo de memÛria, configurar um valor pequeno (no mÌnimo 1) e/ou aumentar memÛria heap do java (-Xms)
+# N√∫mero de threads de processamento: "default" utiliza o n√∫mero de processadores.
+# Caso haja problemas de consumo de mem√≥ria, configurar um valor pequeno (no m√≠nimo 1) e/ou aumentar mem√≥ria heap do java (-Xms)
 numThreads = default
 
-# ForÁa merge do Ìndice para um ˙nico segmento, diminuindo o Ìndice e otimizando a busca a partir de mÌdias Ûpticas.
-# … muito custoso, sendo desnecess·rio caso o Ìndice seja acessado a partir de um HD.
+# For√ßa merge do √≠ndice para um √∫nico segmento, diminuindo o √≠ndice e otimizando a busca a partir de m√≠dias √≥pticas.
+# √â muito custoso, sendo desnecess√°rio caso o √≠ndice seja acessado a partir de um HD.
 forceMerge = false
 
-# Tempo de espera por progresso no parsing dos arquivos. S„o adicionados 1s por MB.
-# ApÛs este limite, s„o indexadas strings brutas do arquivo.
+# Tempo de espera por progresso no parsing dos arquivos. S√£o adicionados 1s por MB.
+# Ap√≥s este limite, s√£o indexadas strings brutas do arquivo.
 timeOut = 180
 
-# Copia LibreOffice.zip (100MB) para a pasta de saÌda da indexaÁ„o, permitindo visualizar mais de 20 formatos diferentes.
+# Copia LibreOffice.zip (100MB) para a pasta de sa√≠da da indexa√ß√£o, permitindo visualizar mais de 20 formatos diferentes.
 embutirLibreOffice = true
 
-# Categoria para arquivos exportados para o relatÛrio, porÈm n„o pertencentes a nenhum bookmark
+# Categoria para arquivos exportados para o relat√≥rio, por√©m n√£o pertencentes a nenhum bookmark
 # Ex: Anexos de emails
 defaultCategory = Outros Itens Exportados
 
-# Habilita c·lculo de hashes dos arquivos
-# Valores possÌveis: md5, sha-1, sha-256 e sha-512
+# Habilita c√°lculo de hashes dos arquivos
+# Valores poss√≠veis: md5, sha-1, sha-256 e sha-512
 hash = md5
 
-# DiretÛrio contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
-# existentes na base s„o adicionados a uma categoria "Alerta de hash (PI)"
+# Diret√≥rio contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
+# existentes na base s√£o adicionados a uma categoria "Alerta de hash (PI)"
 #ledWkffPath = E:/LED/V1.17.00/pedo/wkff
 
-# Caminho para base de hashes (KFF) do IPED. Comente caso n„o queira confrontar hashes na base. … altamente
+# Caminho para base de hashes (KFF) do IPED. Comente caso n√£o queira confrontar hashes na base. √â altamente
 # recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
-# base NSRL via opÁ„o -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt
+# base NSRL via op√ß√£o -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt
 #kffDb = E:/kff/kff.db
 
-# Exclui do estante do processamento e do caso arquivos ignor·veis conforme base de hashes.
+# Exclui do estante do processamento e do caso arquivos ignor√°veis conforme base de hashes.
 excludeKffIgnorable = false
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.
-# Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o c·lculo de hash.
+# Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o c√°lculo de hash.
 ignoreDuplicates = false
 
-# Habilita ordenaÁ„o dos caracteres de PDFs por posiÁ„o.
-# Necess·rio para indexar corretamente PDFs rotacionados, mas dobra o tempo de processamento de PDFs
+# Habilita ordena√ß√£o dos caracteres de PDFs por posi√ß√£o.
+# Necess√°rio para indexar corretamente PDFs rotacionados, mas dobra o tempo de processamento de PDFs
 sortPDFChars = false
 
 # Exporta as propriedades de todos os arquivos para o arquivo "Lista de Arquivos.csv"
@@ -66,93 +66,96 @@ processFileSignatures = true
 # Os tipos de arquivo a expandir podem ser alterados no arquivo conf/CategoriesToExpand.txt
 expandContainers = true
 
-# Indexa o conte˙do dos arquivos. Caso desabilitado, indexa apenas as propriedades.
+# Indexa o conte√∫do dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 
-# Indexa arquivos sem decodificador especÌfico, como bin·rios, desconhecidos, pagefile, n„o alocado, etc
-# Nesse caso s„o indexadas strings brutas em claro extraÌdas dos arquivos.
+# Indexa arquivos sem decodificador espec√≠fico, como bin√°rios, desconhecidos, pagefile, n√£o alocado, etc
+# Nesse caso s√£o indexadas strings brutas em claro extra√≠das dos arquivos.
 indexUnknownFiles = true
 
-# Tamanho mÌnimo de strings brutas extraÌdas de arquivos desconhecidos
+# Tamanho m√≠nimo de strings brutas extra√≠das de arquivos desconhecidos
 minRawStringSize = 4
 
-# Define caracteres adicionais a serem indexados alÈm de letras e n˙meros, isto È, deixam de ser separadores
-# Utilize espaÁo para separar os caracteres
+# Define caracteres adicionais a serem indexados al√©m de letras e n√∫meros, isto √©, deixam de ser separadores
+# Utilize espa√ßo para separar os caracteres
 extraCharsToIndex =
 
 # Adiciona arquivos apagados orphans em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
 # possivelmente impactando tempo de processamento
 addFatOrphans = true
 
-# Adiciona e processa ·reas n„o alocadas de imagens via sleuthkit
+# Adiciona e processa √°reas n√£o alocadas de imagens via sleuthkit
 addUnallocated = true
 
-# Indexa o espaÁo n„o alocado adicionado. Necess·rio habilitar "indexUnknownFiles"
+# Indexa o espa√ßo n√£o alocado adicionado. Necess√°rio habilitar "indexUnknownFiles"
 indexUnallocated = true
 
 # Realiza teste de aleatoriedade antes de indexar trechos de itens desconhecidos e fragmentos de dados. 
-# Torna a indexaÁ„o mto mais r·pida e o Ìndice mto menor, principalmente ao indexar espaÁo n„o alocado.
+# Torna a indexa√ß√£o mto mais r√°pida e o √≠ndice mto menor, principalmente ao indexar espa√ßo n√£o alocado.
 entropyTest = true
 
-# Habilita o carving. Por padr„o o carving È bastante inclusivo, sendo executado sobre n„o alocado e 
+# Habilita o carving. Por padr√£o o carving √© bastante inclusivo, sendo executado sobre n√£o alocado e 
 # sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
 # configurados no arquivo conf/CarvingConfig.txt
 enableCarving = false
 
-# Tamanho em bytes de divis„o do espaÁo n„o alocado
+# Tamanho em bytes de divis√£o do espa√ßo n√£o alocado
 unallocatedFragSize = 104857600
 
+# Habilita extra√ß√£o de imagens de cenas de v√≠deos.
+# Os par√¢metros de extra√ß√£o podem ser alterados no arquivo conf/VideoThumbsConfig.txt
+enableVideoThumbs = true
 
 ########################################################################
-# ConfiguraÁıes da Pesquisa
+# Configura√ß√µes da Pesquisa
 ########################################################################
 
-# Utiliza GraphicsMagick ao invÈs de ImageMagick para renderizar imagens n„o suportadas pela JVM.
+# Utiliza GraphicsMagick ao inv√©s de ImageMagick para renderizar imagens n√£o suportadas pela JVM.
 useGM = true
 
-# Timeout(s) para aguardar convers„o externa entre formatos de imagem via IM/GM.
+# Timeout(s) para aguardar convers√£o externa entre formatos de imagem via IM/GM.
 imgConvTimeout = 5
 
-# N˙mero de threads de geraÁ„o de miniaturas na galeria. "default" utiliza o n˙mero de processadores.
-# Diminua o valor caso haja problemas de consumo de memÛria.
+# N√∫mero de threads de gera√ß√£o de miniaturas na galeria. "default" utiliza o n√∫mero de processadores.
+# Diminua o valor caso haja problemas de consumo de mem√≥ria.
 galleryThreads = default
 
 
 ########################################################################
-# ConfiguraÁıes OCR
+# Configura√ß√µes OCR
 ########################################################################
 
-# Os resultados dependem da qualidade e resoluÁ„o das imagens e do tamanho e tipo das fontes utilizadas
-# Opcionalmente, utilize o par‚metro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado v·rias vezes)
+# Os resultados dependem da qualidade e resolu√ß√£o das imagens e do tamanho e tipo das fontes utilizadas
+# Opcionalmente, utilize o par√¢metro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado v√°rias vezes)
 
-# DESABILITADO POR PADR√O, POIS PODE DEMORAR V¡RIOS SEGUNDOS POR DIGITALIZA«√O
+# DESABILITADO POR PADR√ÉO, POIS PODE DEMORAR V√ÅRIOS SEGUNDOS POR DIGITALIZA√á√ÉO
 enableOCR = false
 
 # Caminho relativo ou completo para OCR Tesseract
-# Comente caso j· esteja no PATH
+# Comente caso j√° esteja no PATH
 TesseractPath = tools/tesseract
 
-# Idioma do dicion·rio a ser utilizado pelo OCR. Est„o incluÌdos portuguÍs(por) e inglÍs(eng). Podem ser utilizados em conjunto: por+eng
+# Idioma do dicion√°rio a ser utilizado pelo OCR. Est√£o inclu√≠dos portugu√™s(por) e ingl√™s(eng). Podem ser utilizados em conjunto: por+eng
 OCRLanguage = por
 
-# Modo de an·lise de layout do Tesseract, por ex: 1 - com OSD (orientation & script detection), 3 - sem OSD (padr„o Tesseract)
+# Modo de an√°lise de layout do Tesseract, por ex: 1 - com OSD (orientation & script detection), 3 - sem OSD (padr√£o Tesseract)
 pageSegMode = 1
 
-# Tamanho mÌnimo em bytes de arquivos para aplicar OCR
+# Tamanho m√≠nimo em bytes de arquivos para aplicar OCR
 minFileSize2OCR = 10000
 
-# Tamanho m·ximo em bytes de arquivos para aplicar OCR
+# Tamanho m√°ximo em bytes de arquivos para aplicar OCR
 maxFileSize2OCR = 100000000
 
-# ResoluÁ„o em dpi para convers„o de PDF's para imagem. Aumente caso a fonte das digitalizaÁıes seja pequena
+# Resolu√ß√£o em dpi para convers√£o de PDF's para imagem. Aumente caso a fonte das digitaliza√ß√µes seja pequena
 pdfToImgResolution = 200
 
-# M·ximo de caracteres de texto que um PDF pode conter para ser aplicado OCR
+# M√°ximo de caracteres de texto que um PDF pode conter para ser aplicado OCR
 maxPDFTextSize2OCR = 100
 
 
 ########################################################################
-# ConfiguraÁıes do Banco de Dados para relatÛrios do FTK3+
+# Configura√ß√µes do Banco de Dados para relat√≥rios do FTK3+
 ########################################################################
 
 #Aplicativo de banco de dados (oracle, postgreSQL ou sqlserver)
@@ -166,13 +169,13 @@ ServerName = 127.0.0.1
 PortNumber = 5432
 #PortNumber = 1433
 
-#Usu·rio e senha do banco
+#Usu√°rio e senha do banco
 #User = sys as sysdba
 User = postgres
 #User = sa
 Password = pcf
 
-# ServiÁo/Nome do banco de dados
+# Servi√ßo/Nome do banco de dados
 ServiceName = ftk2
 #ServiceName = adg
 
@@ -180,6 +183,6 @@ ServiceName = ftk2
 #Valor "auto" funciona apenas em conjunto com AsAP 4.x
 VersaoFTK = auto
 
-#ConfiguraÁıes da conex„o Java
+#Configura√ß√µes da conex√£o Java
 DriverType = thin
 NetworkProtocol = ipc
