@@ -174,6 +174,7 @@ public class TextParser extends CancelableWorker {
 			*/
 
 			textReader = new ParsingReader((Parser) App.get().autoParser, tis, metadata, context);
+			textReader.startBackgroundParsing();
 
 			tmp.dispose();
 			File tmpFile = tmp.createTemporaryFile();
