@@ -19,7 +19,10 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -98,7 +101,8 @@ public class GalleryModel extends AbstractTableModel {
 		}
 
 		final String mediaType = doc.get(IndexItem.CONTENTTYPE);
-		if (!mediaType.startsWith("image") && !mediaType.endsWith("msmetafile") && !mediaType.endsWith("x-emf"))
+		if (!mediaType.startsWith("image") && !mediaType.endsWith("msmetafile") && !mediaType.endsWith("x-emf")
+				&& !mediaType.startsWith("video") && !mediaType.endsWith("vnd.rn-realmedia"))
 			return new GalleryValue(doc.get(IndexItem.NAME), unsupportedIcon, id);
 		
 		if(executor == null)
@@ -117,8 +121,12 @@ public class GalleryModel extends AbstractTableModel {
 					if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false)))
 						return;
 
+					String hash = doc.get(IndexItem.HASH);
+					if(hash != null)
+						stream = getViewFile(hash);
+					
 					String export = doc.get(IndexItem.EXPORT);
-					if (export != null && !export.isEmpty()) {
+					if (stream == null && export != null && !export.isEmpty()) {
 
 						image = getThumbFromReport(export);
 
@@ -135,9 +143,9 @@ public class GalleryModel extends AbstractTableModel {
 							stream = Util.getStream(file, doc);
 						}
 
-					} else
+					}
+					if(image == null && stream == null)
 						stream = Util.getSleuthStream(App.get().sleuthCase, doc);
-
 					
 					if (stream != null)
 						stream.mark(1000000);
@@ -204,6 +212,18 @@ public class GalleryModel extends AbstractTableModel {
 		});
 
 		return new GalleryValue(doc.get(IndexItem.NAME), null, id);
+	}
+	
+	private InputStream getViewFile(String hash) throws FileNotFoundException{
+		if(hash == null)
+			return null;
+		hash = hash.toLowerCase();
+		File hashDir = new File(App.get().codePath + "/../view/" + hash.charAt(0) + "/" + hash.charAt(1));
+		if(hashDir.exists())
+			for(File file : hashDir.listFiles())
+				if(file.getName().toLowerCase().startsWith(hash))
+					return new BufferedInputStream(new FileInputStream(file));
+		return null;
 	}
 
 	private BufferedImage getThumbFromReport(String export) {
