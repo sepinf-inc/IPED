@@ -25,8 +25,10 @@ import gpinf.video.VideoThumbsOutputConfig;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tika.mime.MediaType;
@@ -91,6 +93,12 @@ public class VideoThumbTask extends AbstractTask {
 
     /** Objeto estático de inicialização. Necessário para garantir que seja feita apenas uma vez. */
     private static final AtomicBoolean init = new AtomicBoolean(false);
+
+    /** 
+     * Set com videos em processamento, estático e sincronizado para evitar que duas threads processem
+     * arquivos duplicados simultaneamente.
+     */
+    private static final Set<String> currentVideos = new HashSet<String>();
 
     /**
      * Construtor.
@@ -220,20 +228,31 @@ public class VideoThumbTask extends AbstractTask {
         //Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || !isMediaTypeProcessed(evidence.getMediaType())) return;
 
+        //Verifica se há outro vídeo igual em processamento, senão inclui
+        synchronized (currentVideos) {
+            if (currentVideos.contains(evidence.getHash())) return;
+            currentVideos.add(evidence.getHash());
+        }
+
         //Chama o método de extração de cenas
         File tmpFile = null;
         try {
             File outFile = getHashFile(baseFolder, evidence.getHash(), "jpg");
+            if (outFile.exists()) return; //Já existe então não é necessário gerar
+
             tmpFile = new File(outFile.getParentFile(), evidence.getHash() + tempSuffix);
             config.setOutFile(tmpFile);
             VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
-            if (r.isSuccess()) {
-                tmpFile.renameTo(outFile);
-            }
+            if (r.isSuccess()) tmpFile.renameTo(outFile);
         } catch (Exception e) {
-
+            e.printStackTrace();
         } finally {
             if (tmpFile != null && tmpFile.exists()) tmpFile.delete();
+
+            //Retira do Ser de arquivos em processamento
+            synchronized (currentVideos) {
+                currentVideos.remove(evidence.getHash());
+            }
         }
     }
 
@@ -242,7 +261,7 @@ public class VideoThumbTask extends AbstractTask {
      * @param mediaType
      */
     private boolean isMediaTypeProcessed(MediaType mediaType) {
-        return mediaType.getType().equals("video") || mediaType.getBaseType().equals("application/vnd.rn-realmedia");
+        return mediaType.getType().equals("video") || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia");
     }
 
     /**
