@@ -10,8 +10,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.ToHTMLContentHandler;
 
+import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /*
@@ -53,10 +53,11 @@ public class TikaHtmlViewer extends HtmlViewer{
 			Metadata metadata = new Metadata();
 			tis = TikaInputStream.get(file);
 			ParseContext context = new ParseContext();
+			//context.set(Parser.class, parser);
 			outFile = File.createTempFile("tmp", ".html");
 			outFile.deleteOnExit();
 			outStream = new BufferedOutputStream(new FileOutputStream(outFile));
-			ToHTMLContentHandler handler = new ToHTMLContentHandler(outStream, "windows-1252");
+			ToXMLContentHandler handler = new ToXMLContentHandler(outStream, "UTF-8");
 			parser.parse(tis, handler, metadata, context);
 
 		} catch (Exception e) {
