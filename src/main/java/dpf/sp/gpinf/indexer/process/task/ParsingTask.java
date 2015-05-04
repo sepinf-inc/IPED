@@ -372,7 +372,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			subItem.setCreationDate(created);
 			subItem.setModificationDate(modified);
 			subItem.setDeleted(parent.isDeleted());
-			subItem.setCarved(parent.isCarved());
+			//causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
+			//subItem.setCarved(parent.isCarved());
 			subItem.setSubItem(true);
 			
 			if(metadata.get(OutlookPSTParser.HAS_ATTACHS) != null && OutlookPSTParser.OUTLOOK_MSG_MIME.equals(contentTypeStr)){
