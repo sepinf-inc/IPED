@@ -2,6 +2,8 @@
 - Correções no parser de arquivos SQLite (3.3)
 - Bug de concorrência fazia subitens não serem indexados e ficarem como lixo na pasta Exportados (3.3)
 - Erro ao gerar report a partir de arquivo *.iped (3.3)
+- Exclusão de subitens com mesmo hash de subitens corrompidos extraídos de zips recuperados (3.2.x)
+- Timeouts ao indexar via strings não mais monitorados
 
 27/04/2015: IPED-3.3.1
 - Teste de entropia ao indexar desconhecidos, melhorando sobremaneira eficiência de indexação de espaço não alocado.
