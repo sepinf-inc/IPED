@@ -42,8 +42,6 @@
 	<parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
 	<parser class="org.apache.tika.parser.mp3.Mp3Parser"></parser>
 	<parser class="org.apache.tika.parser.mp4.MP4Parser"></parser>
-	<parser class="org.apache.tika.parser.hdf.HDFParser"></parser>
-	<parser class="org.apache.tika.parser.netcdf.NetCDFParser"></parser>
 	<parser class="org.apache.tika.parser.odf.OpenDocumentParser"></parser>
 	<parser class="org.apache.tika.parser.pdf.PDFParser"></parser>
 	<parser class="org.apache.tika.parser.pkg.CompressorParser"></parser>
@@ -53,7 +51,6 @@
 	<parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
 	<parser class="org.apache.tika.parser.chm.ChmParser"></parser>
 	<parser class="org.apache.tika.parser.prt.PRTParser"></parser>
-	<parser class="org.apache.tika.parser.jdbc.SQLite3Parser"></parser>
 	<parser class="org.gagravarr.tika.FlacParser"></parser>
 	<parser class="org.gagravarr.tika.OggParser"></parser>
 	<parser class="org.gagravarr.tika.VorbisParser"></parser>
@@ -67,6 +64,7 @@
 	<parser class="dpf.sp.gpinf.indexer.parsers.OutlookPSTParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
+	<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
 		<mime>image/jpeg</mime>
 		<mime>image/png</mime>

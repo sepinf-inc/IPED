@@ -117,7 +117,23 @@
           			<groupId>com.pff</groupId>
     				<artifactId>java-libpst</artifactId>
         		</exclusion>
-      		</exclusions> 
+        		<exclusion>
+          			<groupId>edu.ucar</groupId>
+          			<artifactId>grib</artifactId>
+        		</exclusion>
+        		<exclusion>
+          			<groupId>edu.ucar</groupId>
+          			<artifactId>cdm</artifactId>
+        		</exclusion>
+        		<exclusion>
+          			<groupId>com.google.guava</groupId>
+          			<artifactId>guava</artifactId>
+        		</exclusion>
+        		<exclusion>
+          			<groupId>edu.ucar</groupId>
+          			<artifactId>httpservices</artifactId>
+        		</exclusion>
+      		</exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
