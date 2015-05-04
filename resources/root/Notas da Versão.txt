@@ -1,12 +1,13 @@
 29/04/2015: IPED-3.3.2
-- Regressão devido a bug de concorrência que fazia subitens não serem indexados e ficarem como lixo na pasta Exportados
-- Regressão impedia geração de report a partir de arquivo *.iped
+- Correções no parser de arquivos SQLite (3.3)
+- Bug de concorrência fazia subitens não serem indexados e ficarem como lixo na pasta Exportados (3.3)
+- Erro ao gerar report a partir de arquivo *.iped (3.3)
 
 27/04/2015: IPED-3.3.1
 - Teste de entropia ao indexar desconhecidos, melhorando sobremaneira eficiência de indexação de espaço não alocado.
 Correções:
-- Regressão ao não indexar corpo de emails e subitens não expandidos como xls dentro de doc (3.3)
-- Regressão ao ignorar algumas imagens de carving devido a exceção (3.3)
+- Não indexação de corpo de emails e subitens não expandidos como xls dentro de doc (3.3)
+- Descarte de imagens de carving devido a exceção (3.3)
 
 
 24/04/2015: IPED-3.3
