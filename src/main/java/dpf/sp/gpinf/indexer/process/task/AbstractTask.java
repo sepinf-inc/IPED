@@ -166,7 +166,7 @@ public abstract class AbstractTask {
 			System.out.println(new Date() + "\t[ALERT]\t" + worker.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
 			stats.incTimeouts();
 			evidence.setTimeOut(true);
-			process(evidence);
+			processMonitorTimeout(evidence);
 
 		}catch (Throwable t) {
 			//Ignora arquivos recuperados e corrompidos
