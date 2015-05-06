@@ -29,7 +29,7 @@ public class CmdLineArgs {
 						+ "Expressoes sem ocorrencias sao filtradas"},
 		{"-ocr"			, "aplica OCR apenas na categoria informada. Pode ser usado varias vezes."},
 		{"-log"			, "Especifica um arquivo de log diferente do padrao"},
-        {"-asap"        , "arquivo .asap (Criminalistica) com informacoes do caso para relatorio HTML"},
+        {"-asap"        , "arquivo .asap (Criminalistica) com informacoes para relatorio HTML"},
 		{"-importkff"	, "importa diretorio com base de hashes no formato NSRL"},
 		{"-Xxxx"		, "parâmetros extras de módulos iniciados com -X"},
 		{"--append"		, "adiciona indexação a um indice ja existente"},
