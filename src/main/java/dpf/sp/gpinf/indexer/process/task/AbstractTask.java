@@ -117,7 +117,7 @@ public abstract class AbstractTask {
 		if(!evidence.isQueueEnd())
 			worker.evidence = evidence;
 		
-		if(!evidence.isToIgnore()){
+		if(!evidence.isToIgnore() || processIgnoredItem()){
 			processMonitorTimeout(evidence);
 		}
 		sendToNextTask(evidence);
@@ -166,7 +166,7 @@ public abstract class AbstractTask {
 			System.out.println(new Date() + "\t[ALERT]\t" + worker.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
 			stats.incTimeouts();
 			evidence.setTimeOut(true);
-			process(evidence);
+			processMonitorTimeout(evidence);
 
 		}catch (Throwable t) {
 			//Ignora arquivos recuperados e corrompidos
@@ -179,6 +179,17 @@ public abstract class AbstractTask {
 				throw t;
 			
 		}
+	}
+	
+	/**
+	 * Indica se itens ignorados, como KFF ignorable, devem ser processados pela tarefa ou não.
+	 * O valor padrão é false, assim itens ignorados não são processados pelas tarefas seguintes.
+	 * Tarefas específicas podem sobrescrever esse comportamento.
+	 * 
+	 * @return se a tarefa deve processar um item ignorado.
+	 */
+	protected boolean processIgnoredItem(){
+		return false;
 	}
 
 }

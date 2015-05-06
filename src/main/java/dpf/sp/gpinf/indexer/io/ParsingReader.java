@@ -30,6 +30,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.fork.ForkParser;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -38,6 +39,7 @@ import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 
 /**
@@ -147,14 +149,15 @@ public class ParsingReader extends Reader {
 				length = Long.parseLong(lengthStr);
 		}
 		timeOutBySize = (int) (length / 1000000);
-
+		
 		pipedReader = new FastPipedReader(128 * 1024, timeOutBySize);
 		this.reader = new BufferedReader(pipedReader);
 		this.writer = new FastPipedWriter(pipedReader);
-
-		// armazena referencia para pausar contador de timeout ao processar
-		// subitens
-		context.set(FastPipedReader.class, pipedReader);
+		
+		String timeout = metadata.get(IndexerDefaultParser.INDEXER_TIMEOUT);
+		String mediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+		if(timeout != null || mediaType.equals(MediaType.OCTET_STREAM.toString()))
+			pipedReader.setTimeoutPaused(true);
 
 		// Teste para executar parsing em outra JVM, isolando problemas, mas
 		// impacta desempenho

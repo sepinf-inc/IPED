@@ -73,6 +73,11 @@ indexFileContents = true
 # Nesse caso são indexadas strings brutas em claro extraídas dos arquivos.
 indexUnknownFiles = true
 
+# Realiza teste de aleatoriedade antes de indexar trechos de itens binários e desconhecidos.
+# Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
+# Em casos raros pode ocasionar perda de hits cercados por conteúdo "aleatório".
+entropyTest = true
+
 # Tamanho mínimo de strings brutas extraídas de arquivos desconhecidos
 minRawStringSize = 4
 
@@ -85,26 +90,24 @@ extraCharsToIndex =
 addFatOrphans = true
 
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
-addUnallocated = true
+addUnallocated = false
 
-# Indexa o espaço não alocado adicionado. Necessário habilitar "indexUnknownFiles"
-indexUnallocated = true
-
-# Realiza teste de aleatoriedade antes de indexar trechos de itens desconhecidos e fragmentos de dados. 
-# Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
-entropyTest = true
+# Indexa o espaço não alocado adicionado. Necessário habilitar "indexUnknownFiles".
+indexUnallocated = false
 
 # Habilita o carving. Por padrão o carving é bastante inclusivo, sendo executado sobre não alocado e 
 # sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
 # configurados no arquivo conf/CarvingConfig.txt
 enableCarving = false
 
-# Tamanho em bytes de divisão do espaço não alocado
+# Tamanho em bytes de divisão do espaço não alocado. Em casos onde o espaço não alocado não seja indexado,
+# é interessante aumentar em 10x ou mais o valor para minimizar a perda de itens de carving nas bordas.
 unallocatedFragSize = 104857600
 
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = true
+
 
 ########################################################################
 # Configurações da Pesquisa
@@ -179,7 +182,7 @@ Password = pcf
 ServiceName = ftk2
 #ServiceName = adg
 
-#Versao do schema FTK no Banco (FTK 3.2: 32, 3.3: 33, 3.4: 40, 4.0:41, 4.1: 42, 4.2:ADG53, 5.0:ADG54, 5.1:ADG55)
+#Versao do schema FTK no Banco (FTK 3.2: 32, 3.3: 33, 3.4: 40, 4.0:41, 4.1: 42, 4.2:ADG53, 5.0:ADG54, 5.1:ADG55, 5.6:ADG510)
 #Valor "auto" funciona apenas em conjunto com AsAP 4.x
 VersaoFTK = auto
 

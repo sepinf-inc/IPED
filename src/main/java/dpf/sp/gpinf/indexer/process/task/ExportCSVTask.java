@@ -52,6 +52,17 @@ public class ExportCSVTask extends AbstractTask{
 		if(output.exists() && !IndexFiles.getInstance().appendIndex)
 			Files.delete(output.toPath());
 	}
+	
+	/**
+	 * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados
+	 * no arquivo CSV.
+	 * 
+	 * @return true
+	 */
+	@Override
+	protected boolean processIgnoredItem(){
+		return true;
+	}
 
 	@Override
 	protected  void process(EvidenceFile evidence) throws IOException {
