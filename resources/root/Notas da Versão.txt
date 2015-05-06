@@ -1,4 +1,8 @@
-29/04/2015: IPED-3.3.2
+05/05/2015: IPED-3.3.3
+- Não carregamento de marcadores em relatórios iped (3.3)
+- Arquivo CSV de relatórios gerado sem caminho de exportação dos itens (3.3) 
+
+01/05/2015: IPED-3.3.2
 - Correções no parser de arquivos SQLite (3.3)
 - Bug de concorrência fazia subitens não serem indexados e ficarem como lixo na pasta Exportados (3.3)
 - Erro ao gerar report a partir de arquivo *.iped (3.3)
