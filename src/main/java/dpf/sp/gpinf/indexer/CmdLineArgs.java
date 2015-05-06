@@ -29,6 +29,7 @@ public class CmdLineArgs {
 						+ "Expressoes sem ocorrencias sao filtradas"},
 		{"-ocr"			, "aplica OCR apenas na categoria informada. Pode ser usado varias vezes."},
 		{"-log"			, "Especifica um arquivo de log diferente do padrao"},
+        {"-asap"        , "arquivo .asap (Criminalistica) com informacoes do caso para relatorio HTML"},
 		{"-importkff"	, "importa diretorio com base de hashes no formato NSRL"},
 		{"-Xxxx"		, "parâmetros extras de módulos iniciados com -X"},
 		{"--append"		, "adiciona indexação a um indice ja existente"},
@@ -99,6 +100,8 @@ public class CmdLineArgs {
 			} else if (args[i].compareTo("-log") == 0) {
 				IndexFiles.getInstance().logFile = new File(args[i + 1]);
 				
+            } else if (args[i].compareTo("-asap") == 0) {
+                
 			} else if (args[i].compareTo("-importkff") == 0) {
 				IndexFiles.getInstance().importKFF(args[++i]);
                 System.exit(0);

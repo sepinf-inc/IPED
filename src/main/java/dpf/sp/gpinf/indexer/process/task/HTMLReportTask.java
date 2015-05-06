@@ -56,6 +56,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
@@ -75,7 +76,7 @@ public class HTMLReportTask extends AbstractTask {
      * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
      */
     private static final Collator collator = Collator.getInstance(new Locale("pt", "BR"));
-    
+
     /** Nome da tarefa. */
     private static final String taskName = "Geração de Relatório HTML";
 
@@ -167,10 +168,6 @@ public class HTMLReportTask extends AbstractTask {
         collator.setStrength(Collator.TERTIARY);
     }
 
-    //TODO: IMPLEMENTAR VIEW -> para outros tipos de arquivo!!!!!!!!!!!!!!!!
-    //TODO: Testar MPlayer novo
-    //TODO: Diminuir vídeos ruins
-
     /**
      * Inicializa tarefa, realizando controle de alocação de apenas uma thread principal. 
      */
@@ -245,19 +242,25 @@ public class HTMLReportTask extends AbstractTask {
                     throw new RuntimeException("Erro lendo arquivo de configuração da tarefa de geração de relatório HTML:" + confFile.getAbsolutePath());
                 }
 
-                //TODO: Receber arquivo!!!!!!!
-                File infoFile = new File("C:/Users/Wladimir/Downloads/AsAP_Laudo_1776-2015.asap");
-                if (infoFile != null) {
-                    Log.info(taskName, "Processando arquivo com informações do caso: " + infoFile.getAbsolutePath());
-                    if (!infoFile.exists()) {
-                        throw new RuntimeException("Arquivo não encontrado:" + infoFile.getAbsolutePath());
-                    }
-                    try {
-                        readInfoFile(infoFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        init.set(true);
-                        throw new RuntimeException("Erro processando arquivo com informações do caso:" + infoFile.getAbsolutePath());
+                //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se este foi específicado 
+                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+                if (args != null) {
+                    String info = args.getCmdArgs().get("-asap");
+                    if (info != null) {
+                        File infoFile = new File(info);
+                        if (infoFile != null) {
+                            Log.info(taskName, "Processando arquivo com informações do caso: " + infoFile.getAbsolutePath());
+                            if (!infoFile.exists()) {
+                                throw new RuntimeException("Arquivo não encontrado:" + infoFile.getAbsolutePath());
+                            }
+                            try {
+                                readInfoFile(infoFile);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                init.set(true);
+                                throw new RuntimeException("Erro processando arquivo com informações do caso:" + infoFile.getAbsolutePath());
+                            }
+                        }
                     }
                 }
                 init.set(true);
@@ -286,7 +289,7 @@ public class HTMLReportTask extends AbstractTask {
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res"));
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
-            Log.info(taskName, "Relatório gerado em " + t + " segundos.");
+            Log.info(taskName, "Tempo de Geração do Relatório (em segundos):  " + t);
         }
     }
 
@@ -520,6 +523,8 @@ public class HTMLReportTask extends AbstractTask {
                     it.append(">");
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
+            } else if (!reg.isVideo && !reg.isImage) {
+                ////TODO: View
             }
 
             replace(it, "%SEQ%", reg.hash);
