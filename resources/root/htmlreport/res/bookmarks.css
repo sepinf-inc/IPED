@@ -1,0 +1,30 @@
+/* CSS Document */
+
+/* This css contains definitions that are used excusively by
+   the Bookmarks and Registry report sections */
+
+/* .bkmkSeparator class selector is used in conjuction with 
+   .bkmkValue class selector which defined the border-bottom-style::inset 
+   and border-bottom-width:thin properties for .bkmkSeparator;
+   .bkmkValue class selector is defined in Common.css */
+.bkmkSeparator
+{
+  border-top-style:double;
+  clear:both;
+}
+.bkmkLblFileSel
+{
+  font-weight:bold;
+  text-decoration:underline;
+  margin-top:12pt;
+  clear:both;
+}
+.bkmkColLeft
+{
+  float:left;
+  width:185px;
+}
+.bkmkColRight
+{
+  float:left;
+}

@@ -1,0 +1,66 @@
+body {
+  margin: 0;
+  color: black;
+  background-color: rgb(52,102,153);
+  background-image: url('background.jpg');
+  background-repeat: repeat-x;
+}
+
+div#menu {
+  font-family: Verdana, Arial, Tahoma;
+  padding-top: 10px;
+  padding-left: 10px;
+}
+
+div#emblema {
+  padding-left: 20px;
+}
+
+.MenuText:link, .MenuText:visited, .MenuText:active {
+  font-family: 'Verdana';
+  font-size: 8pt; 
+  color: rgb(255,255,192);
+  text-decoration: none;
+}
+
+.MenuText:hover {
+  text-decoration: underline;
+}
+
+.SmallText {
+  font-size: 10pt;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+}
+
+.SmallText1 {
+  font-size: 9pt;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+}
+
+.SmallText2 {
+  font-size: 9pt;
+  font-weight: bold;
+  color: white;
+  text-decoration: none;
+}
+
+.SmallText2:link, .SmallText2:visited, .SmallText2:active {
+  color: white;
+  text-decoration: none;
+}
+
+.SmallText2:hover {
+  color: rgb(255,255,192);
+  text-decoration: underline;
+}
+
+.SmallText3 {
+  font-size: 8pt;
+  font-weight: bold;
+  color: white; 
+  text-decoration: none;
+}

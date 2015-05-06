@@ -1,0 +1,101 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Departamento de Polícia Federal</title>
+<link rel="stylesheet" type="text/css" href="res/estilo.css" />
+<link rel="stylesheet" type="text/css" href="res/main.css" title="mainstyles" />
+</head>
+<body>
+<div id="conteudo">
+<p class="HeaderText">Ajuda</p>
+<b>Itens do Menu:</b><br />
+<br />
+<ul>
+<li><b>Informações</b>
+<ul>
+<li>Página inicial contendo informações referentes ao exame pericial, como o número do laudo, material examinado, peritos responsáveis, entre outros.</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><b>Arquivos selecionados</b>
+<ul>
+<li><i>Lista por diretório:</i> Página contendo o nome e respectivo atalho para os arquivos selecionados durante o exame pericial. Neste item, a estrutura de diretórios original dos arquivos é mantida. Não são apresentadas informações adicionais para os arquivos (como nome original, tamanho, datas, entre outros).</li>
+<li><i>Lista por categoria:</i> Página contendo o nome, a descrição e o atalho para as categorias dos arquivos selecionados.
+<ul>
+<li><i>Categoria:</i> Página(s) contendo o nome e respectivo atalho dos arquivos selecionados durante o exame pericial em cada categoria. Neste item, para cada arquivo listado são apresentadas informações adicionais, como, por exemplo, seu nome original e tamanho.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li><b>Arquivos adicionais (Opcional)</b>
+<ul>
+<li>Apresenta a relação de arquivos suplementares adicionados ao laudo.</li>
+</ul>
+</li>
+</ul>
+<br />
+<hr />
+<br />
+<b>Armazenamento e visualização dos arquivos</b><br />
+<br />
+<ul>
+<li>Os arquivos selecionados durante os exames foram renomeados e exportados para o diretório "Export" (ou "files") desta mídia. Para obter os nomes e demais informações originais dos arquivos acesse "Lista por categoria".<br />
+<br /></li>
+<li>Nem todos os arquivos presentes no diretório "Export" (ou "files") estão diretamente relacionados no menu "Arquivos selecionados". É o caso, por exemplo, de anexos de mensagens eletrônicas (<i>e-mails</i>). Nesse caso, se o e-mail for selecionado em alguma categoria, seus anexos serão automaticamente exportados com o e-mail de origem, porém não estarão diretamente relacionados no menu "Arquivos selecionados".<br />
+<br /></li>
+<li>Recomenda-se configurar o programa navegador para modo de trabalho <i>offline</i>, de forma que o conteúdo de arquivos hipertexto, tais como temporários de navegação na Internet, seja visualizado sem atualização de dados em servidores externos.<br />
+<br /></li>
+<li>Para visualizar o conteúdo desta mídia ótica num computador com sistema Linux/Unix, certifique-se de que as configurações de <i>locales</i> do sistema estão configuradas para o conjunto de caracteres ISO-8859-1.<br />
+<br /></li>
+<li>Nem todos os arquivos exportados nesta mídia podem ser abertos diretamente pelo programa navegador utilizado. Neste caso, pode ser necessária a instalação do aplicativo apropriado (entre em contato com o suporte técnico de informática do seu setor para informações sobre visualizadores disponíveis).<br />
+<br /></li>
+</ul>
+<br />
+<hr />
+<br />
+<b>O Algoritmo SHA-256</b><br />
+<br />
+<ul>
+<li>O SHA-256 (Secure Hash Algorithm de 256 bits) é um algoritmo que, a partir de uma mensagem de entrada de qualquer tamanho, gera uma saída de tamanho fixo de 256 bits (conhecido como código de integridade, resumo ou <i>hash</i>), calculada a partir do conteúdo dessa mensagem. A segurança do procedimento consiste no fato de não ser conhecido método computacionalmente viável para produzir o mesmo código de integridade a partir de duas mensagens distintas ou, a partir do código de integridade, obter a mensagem de entrada.<br />
+<br /></li>
+<li>Cada arquivo contido nesta mídia ótica é tratado como se fosse uma mensagem que passa individualmente pelo processamento do algoritmo. Ao final, obtém-se a relação dos nomes dos arquivos precedidos por seus respectivos códigos de integridade em formato hexadecimal.<br />
+<br /></li>
+<li>Esta mídia ótica apresenta um arquivo denominado "hashes.txt" que contém a relação supracitada (listagem dos nomes dos arquivos precedidos do respectivo código de integridade). Por sua vez, o código de integridade do arquivo "hashes.txt" encontra-se no laudo impresso.<br />
+<br /></li>
+<li>O acréscimo, alteração ou remoção de um único caractere em um arquivo é condição suficiente para que o código de integridade gerado seja diferente, tornando detectável a alteração do conteúdo desta mídia ótica.<br />
+<br /></li>
+</ul>
+<br />
+<hr />
+<br />
+<b>Verificação da integridade da mídia ótica</b><br />
+<br />
+<ul>
+<li>Para verificar a integridade das mídias óticas, qualquer programa que suporte o algoritmo SHA-256 pode ser utilizado. O processo de verificação envolve duas etapas que devem ser executadas para cada mídia: 
+<ol><li>cálculo da integridade do arquivo “hashes.txt” e comparação com o resultado presente no laudo impresso;</li>
+<li>cálculo da integridade dos arquivos contidos nesta mídia e comparação com os valores registrados no arquivo “hashes.txt”.</li></ol>
+<br /></li>
+<li>Um dos programas que pode ser utilizado para realizar essa verificação é o <i>FSUM</i>, disponível gratuitamente na Internet no endereço <i>http://www.slavasoft.com</i>.<br />
+<br /></li>
+<li>Assumindo que o sistema operacional utilizado para a verificação seja da família <i>Windows</i>, que o programa <i>FSUM</i> esteja armazenado na pasta "c:\fsum\" e que esta mídia ótica esteja no <i>drive</i> "d:\", as seguintes etapas devem ser executadas:<br />
+<br />
+<ol>
+<li>Na janela do <i>prompt de comando</i> (<i>normalmente em Iniciar - Programas - Acessórios - Prompt de comando</i>) verificar o código de integridade do arquivo "hashes.txt", digitando:<br />
+<i><b>c:\fsum\fsum -d"d:" -sha256 d:\hashes.txt</b></i><br />
+<br /></li>
+<li>Nesta mesma janela, verificar os códigos de integridade dos arquivos contidos nesta mídia ótica, digitando:<br />
+<i><b>c:\fsum\fsum -jf -d"d:" -c d:\hashes.txt</b></i><br />
+<br /></li>
+</ol>
+</li>
+<li>O resultado da etapa (1) será um código de integridade apresentado na tela, que deve ser comparado com aquele presente no laudo impresso. Ambos devem ser idênticos, indicando que não houve alteração nesta mídia ótica.<br />
+<br /></li>
+<li>O resultado esperado da etapa (2) é a correta verificação de todos os arquivos, ou seja, o programa não deve acusar nenhuma falha, indicando que todos os arquivos presentes nesta mídia ótica estão íntegros conforme os códigos de integridade calculados durante a produção do laudo.<br />
+<br /></li>
+</ul>
+</div>
+</body>
+</html>
