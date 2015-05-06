@@ -30,6 +30,7 @@ public class TaskInstaller {
 		tasks.add(new ParsingTask(worker));
 		tasks.add(new ExportFileTask(worker));
 		tasks.add(new VideoThumbTask(worker));
+		tasks.add(new HTMLReportTask(worker));
 		//Carving precisa ficar apos exportação (devido a rename que muda a referencia)
 		//e antes da indexação (pois pode setar propriedade hasChildren no pai)
 		tasks.add(new CarveTask(worker));
