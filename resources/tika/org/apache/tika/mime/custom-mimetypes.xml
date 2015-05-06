@@ -110,6 +110,11 @@
     	<glob pattern="*.mbox"/>
     </mime-type>
     
+    <mime-type type="application/x-urlclassifier">
+    	<sub-class-of type="application/x-sqlite3"/> 
+    	<glob pattern="urlclassifier3.sqlite"/>
+    </mime-type>
+    
     <mime-type type="application/x-sqlite3">
     	<magic priority="50">
     	 	<match value="SQLite format 3\x00" type="string" offset="0"/>
