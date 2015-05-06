@@ -342,8 +342,9 @@ public class Marcadores implements Serializable {
 		
 		for(byte[] array : state.labels){
 			byte[] newArray = new byte[App.get().lastId + 1];
+			int len = Math.min(newArray.length, array.length);
+			System.arraycopy(array, 0, newArray, 0, len);
 			this.labels.add(newArray);
-			System.arraycopy(array, 0, newArray, 0, array.length);
 		}
 		
 		this.typedWords = state.typedWords;
