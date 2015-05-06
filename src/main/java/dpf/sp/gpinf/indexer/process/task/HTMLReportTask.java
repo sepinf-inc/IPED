@@ -80,6 +80,9 @@ public class HTMLReportTask extends AbstractTask {
     /** Nome da tarefa. */
     private static final String taskName = "Geração de Relatório HTML";
 
+    /** Nome da subpasta com versões de visualização dos arquivos. */
+    private static final String viewFolder = "view";
+
     /** Registros organizados por marcador. */
     private static final SortedMap<String, List<ReportEntry>> entriesByLabel = new TreeMap<String, List<ReportEntry>>(collator);
 
@@ -524,7 +527,14 @@ public class HTMLReportTask extends AbstractTask {
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
             } else if (!reg.isVideo && !reg.isImage) {
-                ////TODO: View
+                File view = getViewFile(reg.hash);
+                if (view != null) {
+                    it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
+                    it.append(getRelativePath(view, reportSubFolder));
+                    it.append("\">");
+                    it.append(view.getName());
+                    it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
+                }
             }
 
             replace(it, "%SEQ%", reg.hash);
@@ -574,7 +584,18 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoThumbsFile(String hash) {
-        return Util.getFileFromHash(new File(this.output, "view"), hash, "jpg");
+        return Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
+    }
+
+    private File getViewFile(String hash) {
+        File view = Util.getFileFromHash(new File(this.output, viewFolder), hash, "");
+        File[] files = view.getParentFile().listFiles();
+        for (File file : files) {
+            if (file.getName().startsWith(view.getName())) {
+                return file;
+            }
+        }
+        return null;
     }
 
     private String getRelativePath(File file, File refFolder) {
