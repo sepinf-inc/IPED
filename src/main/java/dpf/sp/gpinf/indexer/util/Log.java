@@ -25,27 +25,27 @@ import java.util.Date;
  * @author Wladimir
  */
 public class Log {
-    public static void error(String msg) {
-        print("ERRO", msg);
+    public static void error(String source, String msg) {
+        print("ERRO", source, msg);
     }
 
-    public static void warning(String msg) {
-        print("AVISO", msg);
+    public static void warning(String source, String msg) {
+        print("AVISO", source, msg);
     }
 
-    public static void alert(String msg) {
-        print("ALERTA", msg);
+    public static void alert(String source, String msg) {
+        print("ALERTA", source, msg);
     }
 
-    public static void info(String msg) {
-        print("INFO", msg);
+    public static void info(String source, String msg) {
+        print("INFO", source, msg);
     }
 
-    private static void print(String type, String msg) {
+    private static void print(String type, String source, String msg) {
         StringBuilder sb = new StringBuilder(msg.length() + 64);
         sb.append(new Date().toString());
         sb.append("\t[").append(type).append("]\t");
-        //sb.append(Thread.currentThread().getName()).append(' ');
+        sb.append("[").append(source).append("]\t");
         sb.append(msg);
         System.out.println(sb.toString());
     }

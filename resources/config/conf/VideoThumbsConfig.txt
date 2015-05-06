@@ -10,7 +10,7 @@ MPlayer = tools/mplayer/mplayer.exe
 
 # Configuração de Extracao de Cenas, no formato <Largura em pixels de cada cena>,<Número de colunas>,<Número de linhas>. 
 # Quanto mais cenas/resolução mais lento o processo de extração.
-Layout = 240,3,6
+Layout = 240,4,5
 
 
 # Timeouts (em segundos) utilizado pelo processo de controle do MPlayer.

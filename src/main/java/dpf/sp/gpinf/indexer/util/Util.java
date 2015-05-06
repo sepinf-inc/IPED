@@ -542,4 +542,18 @@ public class Util {
 				System.load(subFile.getAbsolutePath());
 	}
 
+    /**
+     * Cria caminho completo a partir da pasta base, hash e extensao, no formato:
+     * "base/0/1/01hhhhhhh.ext".
+     */
+    public static File getFileFromHash(File baseDir, String hash, String ext) {
+        StringBuilder path = new StringBuilder();
+        path.append(hash.charAt(0)).append('/');
+        path.append(hash.charAt(1)).append('/');
+        path.append(hash).append('.').append(ext);
+        File result = new File(baseDir, path.toString());
+        File parent = result.getParentFile();
+        if (!parent.exists()) parent.mkdirs();
+        return result;
+    }
 }

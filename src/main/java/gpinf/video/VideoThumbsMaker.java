@@ -1,21 +1,3 @@
-/*
- * Copyright 2015-2015, Wladimir Leite
- * 
- * This file is part of Indexador e Processador de Evidencias Digitais (IPED).
- *
- * IPED is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * IPED is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
- */
 package gpinf.video;
 
 import java.awt.Color;
@@ -36,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 /**
  * Classe principal de geração de imagens com cenas extraídas de vídeos.
@@ -88,7 +72,7 @@ public class VideoThumbsMaker {
         VideoProcessResult result = new VideoProcessResult();
 
         File in = inOrg;
-        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer,"-noautosub","-noconsolecontrols","-vo","null","-ao","null","-frames","0","-identify",in.getPath()}));
+        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer,"-nosound","-noautosub","-noconsolecontrols","-vo","null","-ao","null","-frames","0","-identify",in.getPath()}));
 
         File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis());
         subTmp.mkdir();
@@ -162,7 +146,6 @@ public class VideoThumbsMaker {
         String s1 = "VO: [jpeg] ";
         String s2 = " => ";
         File[] files = null;
-        int pos = 0;
 
         int maxHeight = result.getDimension().height * maxWidth / result.getDimension().width;
         String scale = "scale=" + maxWidth + ":" + maxHeight;
@@ -170,6 +153,9 @@ public class VideoThumbsMaker {
         boolean scaled = result.getDimension().width > maxWidth;
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
+        cmds.add("-demuxer");
+        cmds.add("lavf");
+        cmds.add("-nosound");
         cmds.add("-noconsolecontrols");
         cmds.add("-noautosub");
         if (ignoreWaitKeyFrame != 1) {
@@ -181,7 +167,7 @@ public class VideoThumbsMaker {
         String ssVal = String.valueOf(result.getVideoDuration() < 5000 ? 0 : Math.max(frequency / 2, 1));
         cmds.addAll(Arrays.asList(new String[] {"-vo","jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape,"-ao","null","-ss",ssVal,"-sstep",String.valueOf(frequency),"-frames",String.valueOf(maxThumbs + 1),in.getPath()}));
 
-        for (int step = 0; step <= 2; step++) {
+        for (int step = 0; step <= 1; step++) {
             String ret = run(cmds.toArray(new String[0]), timeoutProcess);
             files = subTmp.listFiles(new FileFilter() {
                 public boolean accept(File pathname) {
@@ -202,7 +188,7 @@ public class VideoThumbsMaker {
                                 Dimension nd = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
                                 if (!nd.equals(result.getDimension())) {
                                     result.setDimension(nd);
-                                    pos = cmds.indexOf(scale);
+                                    int pos = cmds.indexOf(scale);
                                     if (pos >= 0) {
                                         maxHeight = result.getDimension().height * maxWidth / result.getDimension().width;
                                         scale = "scale=" + maxWidth + ":" + maxHeight;
@@ -221,23 +207,22 @@ public class VideoThumbsMaker {
                 if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) && (rlc.indexOf("lavdopts") >= 0 || rlc.indexOf("wait_keyframe") >= 0)) {
                     step = -1;
                     ignoreWaitKeyFrame = 1;
-                    cmds.remove(4);
-                    cmds.remove(3);
+                    int pos = cmds.indexOf("-lavdopts");
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
                     System.err.println(">>>>> OPCAO '-lavdopts wait_keyframe' DESABILITADA.");
                     continue;
                 }
             }
 
             if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) break;
-            if (step == 1) {
-                pos = cmds.indexOf("-sstep");
+            if (step == 0) {
+                int  pos = cmds.indexOf("-sstep");
                 cmds.remove(pos + 1);
                 cmds.remove(pos);
-            } else if (step == 2) {
-                cmds.add(pos + 2, "-sstep");
-                cmds.add(pos + 3, String.valueOf(frequency));
-                cmds.add(1, "-demuxer");
-                cmds.add(2, "lavf");
+                pos = cmds.indexOf("-ss");
+                cmds.remove(pos + 1);
+                cmds.remove(pos);
             }
         }
         if (ignoreWaitKeyFrame == 0) ignoreWaitKeyFrame = -1;
@@ -367,10 +352,11 @@ public class VideoThumbsMaker {
             }
         }
         g2.dispose();
-        ImageIO.write(img, "jpeg", config.getOutFile());
+        //ImageIO.write(img, "jpeg", config.getOutFile());
+        ImageUtil.saveJpegWithMetadata(img, config.getOutFile(), "Frames=" + config.getRows() + "x" + config.getColumns());
     }
 
-    private void cleanTemp(File subTmp) {
+    public void cleanTemp(File subTmp) {
         File[] files = subTmp.listFiles();
         for (File file : files) {
             file.delete();
@@ -453,8 +439,12 @@ public class VideoThumbsMaker {
         return null;
     }
 
-    public void setMplayer(String mplayer) {
+    public void setMPlayer(String mplayer) {
         this.mplayer = mplayer;
+    }
+
+    public String getMPlayer() {
+        return mplayer;
     }
 
     public void setTimeoutProcess(int timeoutProcess) {
@@ -497,7 +487,7 @@ public class VideoThumbsMaker {
         public void run() {
             try {
                 InputStreamReader isr = new InputStreamReader(is);
-                BufferedReader br = new BufferedReader(isr);
+                BufferedReader br = new BufferedReader(isr, 256);
                 String line = null;
                 while ((line = br.readLine()) != null) {
                     synchronized (sb) {
