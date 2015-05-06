@@ -251,18 +251,25 @@ public class CaseData implements Serializable {
 	public void setContainsReport(boolean containsReport) {
 		this.containsReport = containsReport;
 	}
-
+	
 	/**
-	 * @return o mapa genérico de objetos extras do caso
+	 * Retorna um objeto armazenado no caso.
+	 * 
+	 * @param key Nome do objeto
+	 * @return O objeto armazenado no caso
 	 */
-	public HashMap<String, Object> getObjectMap() {
-		return objectMap;
+	public Object getCaseObject(String key){
+		return objectMap.get(key);
+	}
+	
+	/**
+	 * Armazena um objeto genérico no caso.
+	 * 
+	 * @param key Nome do objeto a armazenar
+	 * @param value Objeto a ser armazenado
+	 */
+	public void putCaseObject(String key, Object value){
+		objectMap.put(key, value);
 	}
 
-	/**
-	 * @param objectMap mapa genérico de objetos do caso
-	 */
-	public void setObjectMap(HashMap<String, Object> objectMap) {
-		this.objectMap = objectMap;
-	}
 }
