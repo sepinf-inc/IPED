@@ -211,10 +211,10 @@ public class IndexTask extends AbstractTask{
 		if (value != null && !value.isEmpty())
 			indexUnallocated = Boolean.valueOf(value);
 		
-		textSizes = (List<IdLenPair>) caseData.getObjectMap().get(TEXT_SIZES);
+		textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
 		if(textSizes == null){
 			textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
-			caseData.getObjectMap().put(TEXT_SIZES, textSizes);
+			caseData.putCaseObject(TEXT_SIZES, textSizes);
 			
 			File prevFile = new File(output, "data/texts.size");
 			if(prevFile.exists()){
@@ -234,7 +234,7 @@ public class IndexTask extends AbstractTask{
 			}
 		}
 		
-		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
+		splitedIds = (Set<Integer>) caseData.getCaseObject(SPLITED_IDS);
 		if(splitedIds == null){
 			File prevFile = new File(output, "data/splits.ids");
 			if(prevFile.exists()){
@@ -248,7 +248,7 @@ public class IndexTask extends AbstractTask{
 			}else
 				splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
 			
-			caseData.getObjectMap().put(SPLITED_IDS, splitedIds);
+			caseData.putCaseObject(SPLITED_IDS, splitedIds);
 		}
 		
 	}
@@ -257,15 +257,15 @@ public class IndexTask extends AbstractTask{
 	@Override
 	public void finish() throws Exception {
 		
-		textSizes = (List<IdLenPair>) caseData.getObjectMap().get(TEXT_SIZES);
+		textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
 		if(textSizes != null)
 			salvarTamanhoTextosExtraidos();
-		caseData.getObjectMap().remove(TEXT_SIZES);
+		caseData.putCaseObject(TEXT_SIZES, null);
 		
-		splitedIds = (Set<Integer>) caseData.getObjectMap().get(SPLITED_IDS);
+		splitedIds = (Set<Integer>) caseData.getCaseObject(SPLITED_IDS);
 		if(splitedIds != null)
 			salvarDocsFragmentados();
-		caseData.getObjectMap().remove(SPLITED_IDS);
+		caseData.putCaseObject(SPLITED_IDS, null);
 		
 	}
 	

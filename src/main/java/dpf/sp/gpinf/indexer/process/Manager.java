@@ -89,6 +89,11 @@ public class Manager {
 	private static int QUEUE_SIZE = 100000;
 
 	private CaseData caseData;
+	
+	public CaseData getCaseData() {
+		return caseData;
+	}
+
 	private List<File> reports;
 	private List<String> caseNames;
 	private File output, indexDir, indexTemp, palavrasChave;

@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -49,17 +48,18 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 * command line parameters
 	 */
 	public boolean fromCmdLine = false;
-	private boolean nogui = false;
-	private boolean nologfile = false;
 	public boolean verbose = false;
 	public boolean appendIndex = false;
-
-	private File palavrasChave;
-	private List<File> reports;
-	private File output;
-	private File logFile;
-	public String configPath;
-
+	
+	String configPath;
+	boolean nogui = false;
+	boolean nologfile = false;
+	File palavrasChave;
+	List<File> dataSource;
+	File output;
+	File logFile;
+	
+	private CmdLineArgs cmdLineParams;
 	
 	/**
 	 * Nome dos casos fo FTK3+, necessário apenas em processamento de relatórios
@@ -93,15 +93,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 */
 	public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList, Boolean ignore, List<String> bookmarksToOCR) {
 		super();
-		this.reports = reports;
+		lastInstance = this;
+		this.dataSource = reports;
 		this.output = output;
 		this.palavrasChave = keywordList;
 		this.configPath = configPath;
 		this.logFile = logFile;
 		this.caseNames = new ArrayList<String>();
-		OCRParser.bookmarksToOCR = bookmarksToOCR;
-
-		lastInstance = this;
+		OCRParser.bookmarksToOCR = bookmarksToOCR;		
 	}
 
 	/**
@@ -109,10 +108,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 */
 	public IndexFiles(String[] args) {
 		super();
-		takeArgs(args);
-		this.fromCmdLine = true;
-
 		lastInstance = this;
+		cmdLineParams = new CmdLineArgs();
+		cmdLineParams.takeArgs(args);
+		this.fromCmdLine = true;
 	}
 
 	/**
@@ -160,104 +159,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.setOut(out);
 		System.setErr(err);
 	}
-
-	/**
-	 * Imprime ajuda e aborta execução.
-	 */
-	private static void printUsageExit() {
-		String usage = Versao.APP_NAME + "\n" + "Uso: java -jar indexer.jar -opcao  argumento [--opcao_sem_argumento]" + "\n" 
-				+ "-r: \tpasta do relatorio do AsAP3 ou FTK3+" + "\n"
-				+ "-d: \tfontes de dados diversas (pode ser utilizado varias vezes):" + "\n" 
-					+ "\tdiretorio, imagem dd, 001, e01, aff (apenas linux), iso, disco físico ou arquivo iped (nesse caso os arquivos selecionados sao exportados e reindexados)" + "\n"
-				+ "-o: \tpasta de saida da indexacao" + "\n" 
-				+ "-c: \tnome do caso, necessário apenas para relatorio do FTK3+" + "\n"
-				+ "-l: \tarquivo com lista de expressoes a serem exibidas na busca.\n\tExpressoes sem ocorrencias sao filtradas." + "\n"
-				+ "-ocr: \taplica OCR apenas no bookmark informado.\n\t Pode ser utilizado multiplas vezes." + "\n" 
-				+ "-log: \tEspecifica um arquivo de log diferente do padrao." + "\n"
-				+ "-importkff: \timporta diretorio com base de hashes no formato NSRL" + "\n"
-				+ "--append: \tadiciona indexação a um indice ja existente" + "\n" 
-				+ "--nogui: \tnao exibe a janela de progresso da indexacao" + "\n"
-				+ "--nologfile: \timprime as mensagem de log na saida padrao" + "\n" 
-				+ "--verbose: \tgera mensagens de log detalhadas, para debugar erros, porem diminui desempenho";
-
-		System.out.println(usage);
-		System.exit(1);
-	}
-
-	/**
-	 * Interpreta parâmetros informados via linha de comando.
-	 */
-	private void takeArgs(String[] args) {
-		if (args.length == 0 || args[0].contains("--help") || args[0].contains("/?") || args[0].contains("-h"))
-			printUsageExit();
-
-		File reportDir = null, aditionalDir = null, outputDir = null;
-		reports = new ArrayList<File>();
-		caseNames = new ArrayList<String>();
-		OCRParser.bookmarksToOCR = new ArrayList<String>();
-
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].compareTo("-r") == 0 && args.length > i + 1) {
-				reportDir = new File(args[i + 1]);
-				reports.add(reportDir);
-				i++;
-			} else if (args[i].compareTo("-d") == 0 && args.length > i + 1) {
-				aditionalDir = new File(args[i + 1]);
-				reports.add(aditionalDir);
-				i++;
-			} else if (args[i].compareTo("-c") == 0 && args.length > i + 1) {
-				caseNames.add(args[i + 1]);
-				i++;
-			} else if (args[i].compareTo("-ocr") == 0 && args.length > i + 1) {
-				OCRParser.bookmarksToOCR.add(args[i + 1]);
-				i++;
-			} else if (args[i].compareTo("-l") == 0 && args.length > i + 1) {
-				palavrasChave = new File(args[i + 1]);
-				i++;
-			} else if (args[i].compareTo("-o") == 0 && args.length > i + 1) {
-				outputDir = new File(args[i + 1]);
-				i++;
-			} else if (args[i].compareTo("-log") == 0 && args.length > i + 1) {
-				logFile = new File(args[i + 1]);
-				i++;
-			} else if (args[i].compareTo("--nogui") == 0) {
-				nogui = true;
-			} else if (args[i].compareTo("--nologfile") == 0) {
-				nologfile = true;
-			} else if (args[i].compareTo("--verbose") == 0) {
-				verbose = true;
-			} else if (args[i].compareTo("--append") == 0) {
-				appendIndex = true;
-			}  else if (args[i].compareTo("-importkff") == 0 && args.length > i + 1) {
-			    importKFF(args[++i]);
-                System.exit(0);
-                
-            }else
-				printUsageExit();
-		}
-
-		if (reportDir == null || !(new File(reportDir, "files")).exists()) {
-			if (reportDir == null || !(new File(reportDir, "Export")).exists())
-				if (aditionalDir == null || (!aditionalDir.exists() && !SleuthkitProcessor.isPhysicalDrive(aditionalDir)))
-					printUsageExit();
-		} else if (caseNames.size() == 0)
-			printUsageExit();
-
-		if (outputDir != null)
-			output = new File(outputDir, "indexador");
-		else if (reportDir != null)
-			output = new File(reportDir, "indexador");
-		else
-			output = new File(aditionalDir.getParentFile(), "indexador");
-
-	}
 	
 	/**
 	 * Importa base de hashes no formato NSRL.
 	 * 
 	 * @param kffPath caminho para base de hashes.
 	 */
-	private void importKFF(String kffPath){
+	void importKFF(String kffPath){
 	    try {
             setConfigPath();
             Configuration.getConfiguration(configPath);
@@ -288,11 +196,12 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			System.out.println(new Date() + "\t[INFO]\t" + Versao.APP_NAME);
 
 			if (!fromCmdLine)
-				caseNames = FTK3ReportProcessor.getFTK3CaseNames(reports);
+				caseNames = FTK3ReportProcessor.getFTK3CaseNames(dataSource);
 
 			Configuration.getConfiguration(configPath);
 
-			Manager manager = new Manager(reports, caseNames, output, palavrasChave);
+			Manager manager = new Manager(dataSource, caseNames, output, palavrasChave);
+			manager.getCaseData().putCaseObject(CmdLineArgs.class.getName(), cmdLineParams);
 			manager.process();
 
 			if (fromCmdLine)

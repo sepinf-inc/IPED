@@ -63,10 +63,10 @@ public class DuplicateTask extends AbstractTask{
 		if (value != null && !value.isEmpty())
 			ignoreDuplicates = Boolean.valueOf(value);
 		
-		hashMap = (HashMap<HashValue, HashValue>) worker.caseData.getObjectMap().get(HASH_MAP);
+		hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(HASH_MAP);
 		if(hashMap == null){
 			hashMap = new HashMap<HashValue, HashValue>();
-			worker.caseData.getObjectMap().put(HASH_MAP, hashMap);
+			caseData.putCaseObject(HASH_MAP, hashMap);
 			
 			File indexDir = new File(worker.output, "index");
 			if(indexDir.exists() && indexDir.list().length > 10){

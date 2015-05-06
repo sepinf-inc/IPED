@@ -295,7 +295,7 @@ public class ExportFileTask extends AbstractTask{
 		subitensExtracted = 0;
 		subDirCounter = 0;
 		
-		hashMap = (HashMap<HashValue, HashValue>) worker.caseData.getObjectMap().get(DuplicateTask.HASH_MAP);
+		hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
 		
 	}
 
