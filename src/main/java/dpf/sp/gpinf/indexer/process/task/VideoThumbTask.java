@@ -240,7 +240,7 @@ public class VideoThumbTask extends AbstractTask {
                 finished.set(true);
                 Log.info(taskName, "Total de Vídeos Processados: " + totalProcessed);
                 Log.info(taskName, "Total de Vídeos Não Processados (MPlayer não conseguiu extrair cenas): " + totalFailed);
-                Log.info(taskName, "Tempo Total do Processamento de Vídeos: " + ((totalTime.longValue() + 500) / 1000) + " segundos");
+                Log.info(taskName, "Tempo Total do Processamento de Vídeos (em segundos): " + ((totalTime.longValue() + 500) / 1000));
             }
         }
     }
