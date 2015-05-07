@@ -201,7 +201,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			Configuration.getConfiguration(configPath);
 
 			Manager manager = new Manager(dataSource, caseNames, output, palavrasChave);
-			manager.getCaseData().putCaseObject(CmdLineArgs.class.getName(), cmdLineParams);
+			cmdLineParams.saveIntoCaseData(manager.getCaseData());
 			manager.process();
 
 			if (fromCmdLine)

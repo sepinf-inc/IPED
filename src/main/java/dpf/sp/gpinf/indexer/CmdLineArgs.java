@@ -1,13 +1,26 @@
 package dpf.sp.gpinf.indexer;
 
+import gpinf.dev.data.CaseData;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 
+/**
+ * Classe para leitura dos parâmetros informados via linha de comando.
+ * Parâmetros iniciados com 01 hífen aceitam 01 valor e com 02 hífens não aceitam valor.
+ * Os parâmetros são armazenados no caso, podendo ser obtidos por outros módulos:
+ * 
+ * caseData.getCaseObject(CmdLineArgs.class.getName())
+ * 
+ * @author Nassif
+ *
+ */
 public class CmdLineArgs {
 	
 	/** Título da ajuda */
@@ -15,8 +28,7 @@ public class CmdLineArgs {
 	
 	/**
 	 * Parâmetros aceitos via linha de comando e respectiva descrição (ajuda).
-	 * Parâmetros iniciados com 01 hífen aceitam 01 valor.
-	 * Parâmetros iniciados com 02 hífens não aceitam valor.
+	 * Aqui devem ser cadastrados novos parâmetros de novos módulos.
 	 */
 	private static String[][] params = {
 		{"-d"			, "dados diversos (pode ser usado varias vezes):\n\t"
@@ -38,13 +50,22 @@ public class CmdLineArgs {
 		{"--verbose"	, "gera mensagens de log detalhadas, porem diminui desempenho"},
 	};
 	
-	private Map<String, String> paramMap = new HashMap<String, String>();
+	private Map<String, List<String>> paramMap = new HashMap<String, List<String>>();
 	
 	/**
 	 * @return Mapa com argumentos da linha de comando e seus valores.
 	 */
-	public Map<String, String> getCmdArgs() {
+	public Map<String, List<String>> getCmdArgs() {
 		return paramMap;
+	}
+	
+	/**
+	 * Salva os parâmetros no objeto do caso, para serem consultados pelos módulos.
+	 * 
+	 * @param caseData caso atual
+	 */
+	public void saveIntoCaseData(CaseData caseData){
+		caseData.putCaseObject(CmdLineArgs.class.getName(), this);
 	}
 
 	/**
@@ -66,6 +87,45 @@ public class CmdLineArgs {
 		
 		if (args.length == 0 || args[0].contains("--help") || args[0].contains("/?") || args[0].contains("-h"))
 			printUsageExit();
+		
+		for (int i = 0; i < args.length; i++) {
+			
+			if(!args[i].startsWith("--") && (i + 1 == args.length || args[i + 1].startsWith("-")))
+				printUsageExit();
+			
+			if(!args[i].startsWith("-X")){
+				boolean knownArg = false;
+            	for(String[] param : params)
+            		if(args[i].equals(param[0])){
+            			knownArg = true;
+            			break;
+            		}
+            	if(!knownArg)
+            		printUsageExit();
+	        }
+			
+			if(args[i].startsWith("--"))
+				paramMap.put(args[i], null);
+			else{
+				List<String> values = paramMap.get(args[i]);
+				if(values == null){
+					values = new ArrayList<String>();
+					paramMap.put(args[i], values);
+				}
+				values.add(args[++i]);
+			}
+		}
+		
+		handleSpecificArgs(args);
+	}
+	
+	/**
+	 * Trata parâmetros específicos informados.
+	 * TODO: mover o tratamento de cada parâmetro para a classe que o utiliza e remover esta função.
+	 * 
+	 * @param args parâmetros
+	 */
+	private void handleSpecificArgs(String[] args){
 
 		File reportDir = null, dataSource = null, outputDir = null;
 		IndexFiles.getInstance().dataSource = new ArrayList<File>();
@@ -74,10 +134,7 @@ public class CmdLineArgs {
 
 		for (int i = 0; i < args.length; i++) {
 			
-			if(!args[i].startsWith("--") && i + 1 == args.length){
-				printUsageExit();
-				
-			} else if (args[i].compareTo("-r") == 0) {
+			if (args[i].compareTo("-r") == 0) {
 				reportDir = new File(args[i + 1]);
 				IndexFiles.getInstance().dataSource.add(reportDir);
 				
@@ -100,9 +157,7 @@ public class CmdLineArgs {
 			} else if (args[i].compareTo("-log") == 0) {
 				IndexFiles.getInstance().logFile = new File(args[i + 1]);
 				
-            } else if (args[i].compareTo("-asap") == 0) {
-                
-			} else if (args[i].compareTo("-importkff") == 0) {
+            } else if (args[i].compareTo("-importkff") == 0) {
 				IndexFiles.getInstance().importKFF(args[++i]);
                 System.exit(0);
             
@@ -118,13 +173,8 @@ public class CmdLineArgs {
 			} else if (args[i].compareTo("--append") == 0) {
 				IndexFiles.getInstance().appendIndex = true;
 				    
-            } else if (!args[i].startsWith("-X"))
-            	printUsageExit();
+            }
 			
-			if(args[i].startsWith("--"))
-				paramMap.put(args[i], null);
-			else
-				paramMap.put(args[i], args[++i]);
 		}
 
 		if (reportDir == null || !(new File(reportDir, "files")).exists()) {
