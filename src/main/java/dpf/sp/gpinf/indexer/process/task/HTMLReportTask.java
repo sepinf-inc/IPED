@@ -41,6 +41,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
@@ -57,6 +58,7 @@ import javax.imageio.ImageIO;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
@@ -154,10 +156,10 @@ public class HTMLReportTask extends AbstractTask {
     private static final String configFileName = "HTMLReportConfig.txt";
 
     /** Formato de datas no relatório. */
-    private static final DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    private final DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
     /** Formato de números no relatório. */
-    private static final DecimalFormat longFormat = new DecimalFormat("#,##0");
+    private final DecimalFormat longFormat = new DecimalFormat("#,##0");
 
     /** 
      * Set com arquivos em processamento, estático e sincronizado para evitar que duas threads processem
@@ -277,6 +279,8 @@ public class HTMLReportTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         if (taskEnabled && ItemProducer.indexerReport && info != null) {
+            IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
+            
             Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());
             Log.info(taskName, "Pasta de modelos:   " + templatesFolder.getAbsolutePath());
             long t = System.currentTimeMillis();
@@ -450,7 +454,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private void processaBookmark(String name, String id, StringBuilder model, StringBuilder item, boolean isLabel, List<ReportEntry> regs) throws Exception {
-        regs.sort(new Comparator<ReportEntry>() {
+        Collections.sort(regs, new Comparator<ReportEntry>() {
             public int compare(ReportEntry a, ReportEntry b) {
                 int cmp = collator.compare(a.path, b.path);
                 if (cmp == 0) cmp = collator.compare(a.name, b.name);
@@ -712,11 +716,11 @@ public class HTMLReportTask extends AbstractTask {
         }
     }
 
-    private static String formatDate(Date date) {
+    private String formatDate(Date date) {
         return date == null ? "-" : dateFormat.format(date);
     }
 
-    private static String formatNumber(Long val) {
+    private String formatNumber(Long val) {
         return val == null ? "-" : longFormat.format(val);
     }
 
