@@ -65,6 +65,7 @@
 	<parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
+	<parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
 		<mime>image/jpeg</mime>
 		<mime>image/png</mime>
@@ -85,7 +86,7 @@
 		<mime>application/x-tika-msoffice</mime>
 		<mime>application/x-urlclassifier</mime>
 	</parser>
-
+	
    </parsers>
 
 </properties>

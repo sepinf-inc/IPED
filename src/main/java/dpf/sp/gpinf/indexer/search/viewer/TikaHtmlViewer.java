@@ -11,6 +11,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
@@ -21,6 +22,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 public class TikaHtmlViewer extends HtmlViewer{
 	
 	Parser parser = new AutoDetectParser();
+	private String contentType;
 
 	@Override
 	public String getName() {
@@ -31,18 +33,18 @@ public class TikaHtmlViewer extends HtmlViewer{
 	public boolean isSupportedType(String contentType) {
 		return 	contentType.equals("application/x-msaccess") 
 				|| contentType.equals("application/x-sqlite3")
-				|| contentType.equals("application/sqlite-skype");  
+				|| contentType.equals("application/sqlite-skype")
+				|| contentType.equals("application/x-emule");  
 	}
 	
 
-	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
-		
-		if(file != null)
-			file = getHtmlVersion(file);
-		
-		super.loadFile(file, highlightTerms);
-	}
+	public void loadFile(File file, String contentType, Set<String> highlightTerms) {
+	    this.contentType=contentType;
+        if(file != null)
+            file = getHtmlVersion(file);
+        
+        super.loadFile(file, highlightTerms);
+    }
 
 	private File getHtmlVersion(File file) {
 
@@ -51,6 +53,7 @@ public class TikaHtmlViewer extends HtmlViewer{
 		BufferedOutputStream outStream = null;
 		try {
 			Metadata metadata = new Metadata();
+			metadata.set(Metadata.CONTENT_TYPE, contentType);
 			tis = TikaInputStream.get(file);
 			ParseContext context = new ParseContext();
 			//context.set(Parser.class, parser);

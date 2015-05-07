@@ -210,5 +210,9 @@
       <match value="MZ" type="string" offset="0"/>
     </magic>
   </mime-type>
-   
+
+   <mime-type type="application/x-emule">
+      <_comment>e-Mule known.met</_comment> 
+      <glob pattern="known*.met"/>
+   </mime-type>   
  </mime-info>

@@ -51,3 +51,5 @@ Vídeos = video; application/vnd.rn-realmedia; application/x-shockwave-flash
 Outros Textos = text
 
 Outros Arquivos = application/octet-stream;
+
+Peer-to-peer = application/x-emule
