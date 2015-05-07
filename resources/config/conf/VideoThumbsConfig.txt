@@ -4,7 +4,7 @@
 
 # Configuração do caminho (completo ou relativo) do MPLAYER para extracao de cenas dos videos.
 # Configuração padrão aponta para MPlayer para Windows, em subpasta incluída na distribuição do IPED.
-# Necessário reconfigurar para rodar no Linux.
+# Necessário reconfigurar para rodar no Linux (dependendo da instalação, só "MPlayer = mplayer" funciona).
 MPlayer = tools/mplayer/mplayer.exe
 
 
@@ -20,7 +20,7 @@ Layout = 240,4,5
 #    - Primeira execução (precisa ser maior pois o MPlayer pode atualizar o cache de fontes na primeira chamada).
 #    - Obtenção de propriedades
 #    - Processamento normal do vídeo 
-Timeouts = 180,10,15
+Timeouts = 240,10,30
 
 
 # Habilita(true) / Desabilita(false), apenas para depuração de problemas, o redirecionamento de toda saída do MPlayer para o log.
