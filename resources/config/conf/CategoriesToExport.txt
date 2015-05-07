@@ -19,6 +19,7 @@
 #Apresentações
 #Contatos
 #Chats
+#Peer-to-peer
 #Outros Textos
 #Imagens
 #Vídeos
