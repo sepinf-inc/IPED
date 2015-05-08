@@ -24,6 +24,7 @@ import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 
 import java.io.File;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -194,8 +195,18 @@ public class VideoThumbTask extends AbstractTask {
                     throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
                 }
 
-                //Testa se o MPlayer está funcionando
+                //Configura o caminho do MPlayer, juntando com caminho da pasta principal caso tenha sido utilizado caminho relativo. 
+                if (mplayer.indexOf('/') >= 0 || mplayer.indexOf('\\') >= 0) {
+                    //Adicionando o caminho do jar principal como referência
+                    //Seria melhor pegar o codePath pronto, mas atualmente App.get().codePath está nulo neste ponto.
+                    String codePath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "/+");
+                    codePath = URLDecoder.decode(codePath, "utf-8");
+                    codePath = codePath.replace("/ ", "+");
+                    mplayer = new File(codePath).getParent() + "/" + mplayer;
+                }
                 videoThumbsMaker.setMPlayer(mplayer);
+
+                //Testa se o MPlayer está funcionando
                 String vmp = videoThumbsMaker.getVersion();
                 if (vmp == null) {
                     Log.error(taskName, "MPLAYER NÃO PODE SER EXECUTADO!");

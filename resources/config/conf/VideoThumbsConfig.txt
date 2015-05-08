@@ -2,9 +2,15 @@
 # Configuração da Extração de Cenas de Vídeos #
 ###############################################
 
-# Configuração do caminho (completo ou relativo) do MPLAYER para extracao de cenas dos videos.
+# Configuração do caminho relativo do MPLAYER para extracao de cenas dos videos, em relação a pasta
+# principal do programa (onde está o .jar). Pode ser apenas o nome do executável, sem o caminho, se 
+# o mesmo estiver configurado para ser encontrado automaticamento (no "path" do Windows, por exemplo).
+# Caminho completo não deve ser utilizado.
+#
 # Configuração padrão aponta para MPlayer para Windows, em subpasta incluída na distribuição do IPED.
+#
 # Necessário reconfigurar para rodar no Linux (dependendo da instalação, só "MPlayer = mplayer" funciona).
+#
 MPlayer = tools/mplayer/mplayer.exe
 
 
