@@ -24,6 +24,7 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -39,8 +40,10 @@ import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
+import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
@@ -60,6 +63,7 @@ public class SleuthkitProcessor {
 	private boolean listOnly;
 	private File output;
 	private AddImageProcess addImage;
+	private String deviceName;
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
@@ -167,6 +171,16 @@ public class SleuthkitProcessor {
 		}
 
 		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
+		
+		CmdLineArgs cmdArgs = ((CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName()));
+		List<String> dnames = cmdArgs.getCmdArgs().get("-dname");
+		List<String> sources = cmdArgs.getCmdArgs().get("-d");
+		if(dnames != null)
+			for(int i = 0; i < sources.size(); i++)
+				if(sources.get(i).endsWith(file.getName())){
+					deviceName = dnames.get(i);
+					break;
+				}
 
 		for (long k = firstId; k <= lastId; k++) {
 
@@ -195,7 +209,9 @@ public class SleuthkitProcessor {
 					}
 					frag.setName(absFile.getName() + sufix);
 					frag.setLength(len);
-					frag.setPath(absFile.getUniquePath() + sufix);
+					
+					setPath(frag, absFile.getUniquePath() + sufix);
+					
 					frag.setMediaType(UNALLOCATED_MIMETYPE);
 		            addEvidenceFile(absFile, frag, true);
 				}
@@ -213,6 +229,13 @@ public class SleuthkitProcessor {
 		
 		
 	}
+	
+	private void setPath(EvidenceFile evidence, String path){
+		if(deviceName != null)
+			path = path.replaceFirst("img_.+?\\/" , deviceName + "/");
+		evidence.setPath(path);
+	}
+	
 	
 	private void addEvidenceFile(AbstractFile absFile) throws Exception{
 		addEvidenceFile(absFile, null, false);
@@ -232,7 +255,7 @@ public class SleuthkitProcessor {
 			
 			evidence.setLength(absFile.getSize());
 			// evidence.setType(new UnknownFileType(evidence.getExt()));
-			evidence.setPath(absFile.getUniquePath());
+			setPath(evidence, absFile.getUniquePath());
 		}
 		
 		if (listOnly) {
@@ -305,10 +328,22 @@ public class SleuthkitProcessor {
 				evidence.setName(fsName);
 			}
 				
-		}else
-			evidence.setName(content.getName());
+		}else{
+			if(deviceName != null && content instanceof Image)
+				evidence.setName(deviceName);
+			else
+				evidence.setName(content.getName());
+		}
+			
 		// evidence.setType(new UnknownFileType(evidence.getExt()));
-		evidence.setPath(content.getUniquePath());
+		String path = content.getUniquePath();
+		if(deviceName != null){
+			if(path.indexOf('/', 1) == -1)
+				evidence.setPath("/" + deviceName);
+			else
+				setPath(evidence, path);
+		}else
+			evidence.setPath(path);
 		
 		if(content instanceof Image)
 			evidence.setRoot(true);

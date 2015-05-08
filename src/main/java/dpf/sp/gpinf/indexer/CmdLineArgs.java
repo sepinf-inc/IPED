@@ -16,7 +16,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
  * Parâmetros iniciados com 01 hífen aceitam 01 valor e com 02 hífens não aceitam valor.
  * Os parâmetros são armazenados no caso, podendo ser obtidos por outros módulos:
  * 
- * caseData.getCaseObject(CmdLineArgs.class.getName())
+ * CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName())
  * 
  * @author Nassif
  *
@@ -34,9 +34,10 @@ public class CmdLineArgs {
 		{"-d"			, "dados diversos (pode ser usado varias vezes):\n\t"
 						+ "pasta, imagem DD, 001, E01, AFF (apenas linux), ISO, disco físico,\n\t"
 						+ "ou arquivo *.iped (contendo seleção de itens a exportar e reindexar)"},
+		{"-dname"		, "nome (opcional) para imagens ou discos físicos adicionados via -d"},
 		{"-o"			, "pasta de saida da indexacao"},
 		{"-r"			, "pasta do relatorio do AsAP3 ou FTK3"},
-		{"-c"			, "nome do caso, necessário apenas para relatorio do FTK3"},
+		{"-c"			, "nome do caso, apenas para relatorio do FTK3"},
 		{"-l"			, "arquivo com lista de expressoes a serem exibidas na busca.\n\t"
 						+ "Expressoes sem ocorrencias sao filtradas"},
 		{"-ocr"			, "aplica OCR apenas na categoria informada. Pode ser usado varias vezes."},
