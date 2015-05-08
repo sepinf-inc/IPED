@@ -278,7 +278,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-        if (taskEnabled && ItemProducer.indexerReport && info != null) {
+        if (taskEnabled && caseData.containsReport() && info != null) {
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
             
             Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());
