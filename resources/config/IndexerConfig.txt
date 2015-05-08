@@ -108,7 +108,7 @@ unallocatedFragSize = 104857600
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = true
 
-# Habilita geração de relatório HTML para processamento de itens selecionados.
+# Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
 # Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt
 enableHTMLReport = true
 

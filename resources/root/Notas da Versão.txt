@@ -1,3 +1,10 @@
+xx/05/2015: IPED-3.4
+- Geração de miniaturas de vídeos (PCF Wladimir)
+- Geração de relatório HTML dos itens exportados (PCF Wladimir)
+- Parser para arquivos Known.met (PCF Wladimir)
+- Nova categoria Peer-to-Peer (PCF Wladimir)
+- Atribuição de nome para discos físicos ou imagens (param -dname)
+
 05/05/2015: IPED-3.3.3
 - Não carregamento de marcadores em relatórios iped (3.3)
 - Arquivo CSV de relatórios gerado sem caminho de exportação dos itens (3.3) 
