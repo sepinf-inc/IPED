@@ -29,10 +29,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,7 +61,6 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -99,9 +100,6 @@ public class HTMLReportTask extends AbstractTask {
 
     /** Objeto com informações que serão incluídas no relatório. */
     private ReportInfo info;
-
-    /** Pasta com arquivos HTML formatado que são utilizados como entrada. */
-    private File templatesFolder = new File("htmlreport");
 
     /** Nome da pasta com miniatutas de imagem. */
     private String thumbsFolderName = "thumbs";
@@ -280,14 +278,24 @@ public class HTMLReportTask extends AbstractTask {
     public void finish() throws Exception {
         if (taskEnabled && caseData.containsReport() && info != null) {
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
-            
+
+            // Pasta com arquivos HTML formatado que são utilizados como entrada.
+            String codePath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "/+");
+            codePath = URLDecoder.decode(codePath, "utf-8");
+            codePath = codePath.replace("/ ", "+");
+            File templatesFolder = new File(new File(codePath).getParent(), "htmlreport");
+
             Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());
             Log.info(taskName, "Pasta de modelos:   " + templatesFolder.getAbsolutePath());
+            if (!templatesFolder.exists()) {
+                throw new FileNotFoundException("Para de modelos não encontrada!");
+            }
+
             long t = System.currentTimeMillis();
 
             File rep = reportSubFolder;
             if (!rep.exists()) rep.mkdir();
-            processBookmarks();
+            processBookmarks(templatesFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) createThumbsPage();
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm"));
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm"));
@@ -437,7 +445,7 @@ public class HTMLReportTask extends AbstractTask {
         arq.write();
     }
 
-    private void processBookmarks() throws Exception {
+    private void processBookmarks(File templatesFolder) throws Exception {
         StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content;
         StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content;
         int idx = 1;
