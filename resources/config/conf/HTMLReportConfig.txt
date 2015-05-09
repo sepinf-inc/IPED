@@ -39,10 +39,10 @@ FramesPerStripe = 8
 
 # Inclui lista de categorias na página de conteúdo.
 # Se essa opção não for habilitada, os items selecionados são apresentado somente por marcadores.
-# Pode ser útil desabilitar quando as categoria são redundantes ou muito similares aos marcadores criados.
+# Pode ser útil desabilitar quando as categorias são redundantes ou muito similares aos marcadores criados.
 EnableCategoriesList = true 
 
-# Habilita/Desabilita criação de página com galeria de miniatura de imagens.
+# Habilita/Desabilita criação de página com galeria de miniaturas de imagens.
 EnableThumbsGallery = true
 
 # Quantidade de miniaturas por página na galeria, caso seja habilitada.

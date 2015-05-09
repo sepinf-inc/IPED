@@ -59,7 +59,6 @@ public class Configuration {
 	public static Parser errorParser = new RawStringParser(true);
 	public static Parser fallBackParser = new RawStringParser(true);
 	public static boolean embutirLibreOffice = true;
-	public static String defaultCategory = "";
 	public static boolean sortPDFChars = false;
 	public static boolean addUnallocated = true;
 	public static long unallocatedFragSize = 100 * 1024 * 1024;
@@ -212,12 +211,6 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			embutirLibreOffice = Boolean.valueOf(value);
-
-		value = properties.getProperty("defaultCategory");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			defaultCategory = value;
 
 		value = properties.getProperty("sortPDFChars");
 		if (value != null)

@@ -25,12 +25,8 @@ forceMerge = false
 # Após este limite, são indexadas strings brutas do arquivo.
 timeOut = 180
 
-# Copia LibreOffice.zip (100MB) para a pasta de saída da indexação, permitindo visualizar mais de 20 formatos diferentes.
+# Copia LibreOffice.zip (100MB) para a pasta de saída, permitindo visualizar dezenas de formatos diferentes.
 embutirLibreOffice = true
-
-# Categoria para arquivos exportados para o relatório, porém não pertencentes a nenhum bookmark
-# Ex: Anexos de emails
-defaultCategory = Outros Itens Exportados
 
 # Habilita cálculo de hashes dos arquivos
 # Valores possíveis: md5, sha-1, sha-256 e sha-512
@@ -45,7 +41,7 @@ hash = md5
 # base NSRL via opção -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt
 #kffDb = E:/kff/kff.db
 
-# Exclui do estante do processamento e do caso arquivos ignoráveis conforme base de hashes.
+# Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.

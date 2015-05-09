@@ -4,6 +4,7 @@ xx/05/2015: IPED-3.4
 - Parser para arquivos Known.met (PCF Wladimir)
 - Nova categoria Peer-to-Peer (PCF Wladimir)
 - Atribuição de nome para discos físicos ou imagens (param -dname)
+- Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
 
 05/05/2015: IPED-3.3.3
 - Não carregamento de marcadores em relatórios iped (3.3)
