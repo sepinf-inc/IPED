@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -64,6 +65,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -314,7 +316,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
-        if (!taskEnabled || !caseData.containsReport()) return;
+        if (!taskEnabled || !caseData.containsReport() || !evidence.isToAddToCase()) return;
 
         ReportEntry reg = new ReportEntry();
         reg.name = evidence.getName();
@@ -618,18 +620,33 @@ public class HTMLReportTask extends AbstractTask {
 
     private void createImageThumb(EvidenceFile evidence, File thumbFile) {
         if (!thumbFile.getParentFile().exists()) thumbFile.getParentFile().mkdirs();
+
         try {
             GalleryValue value = new GalleryValue(null, null, -1);
             BufferedImage img = null;
-
             if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
-                img = ImageUtil.getThumb(evidence.getStream(), value);
+            	BufferedInputStream stream = evidence.getBufferedStream();
+            	try{
+            		img = ImageUtil.getThumb(stream, value);
+            	}finally{
+            		IOUtil.closeQuietly(stream);
+            	}
             }
             if (img == null) {
                 final int sampleFactor = 3;
-                img = ImageUtil.getSubSampledImage(evidence.getStream(), thumbSize * sampleFactor, thumbSize * sampleFactor, value);
+                BufferedInputStream stream = evidence.getBufferedStream();
+            	try{
+            		img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor, value);
+            	}finally{
+            		IOUtil.closeQuietly(stream);
+            	}
                 if (img == null) {
-                    img = new GraphicsMagicConverter().getImage(evidence.getStream(), thumbSize * sampleFactor);
+                	stream = evidence.getBufferedStream();
+                	try{
+                		img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
+                	}finally{
+                		IOUtil.closeQuietly(stream);
+                	}
                 }
             }
             if (img != null) {

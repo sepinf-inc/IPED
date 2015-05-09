@@ -265,7 +265,7 @@ public class VideoThumbTask extends AbstractTask {
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
         //Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isVideoType(evidence.getMediaType())) return;
+        if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase()) return;
 
         //Verifica se há outro vídeo igual em processamento, senão inclui
         synchronized (currentVideos) {
