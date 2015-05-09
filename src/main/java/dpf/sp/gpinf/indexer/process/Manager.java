@@ -329,7 +329,7 @@ public class Manager {
 			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
 		}
 
-		if (caseData.containsReport() || ExportFileTask.hasCategoryToExtract())
+		if (caseData.containsReport())
 			new File(output, "data/containsReport.flag").createNewFile();
 
 	}

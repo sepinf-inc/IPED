@@ -219,11 +219,11 @@ public class GalleryModel extends AbstractTableModel {
 		if(hash == null)
 			return null;
 		hash = hash.toLowerCase();
-		File baseFolder;
+		File baseFolder = new File(App.get().codePath).getParentFile();
 		if(isVideo)
-			baseFolder = new File(App.get().codePath + "/../" + HTMLReportTask.viewFolder);
+			baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
 		else
-			baseFolder = new File(App.get().codePath + "/../../" + HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName);
+			baseFolder = new File(baseFolder.getParentFile(), HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName);
 		
 		File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
 		if(hashFile.exists())

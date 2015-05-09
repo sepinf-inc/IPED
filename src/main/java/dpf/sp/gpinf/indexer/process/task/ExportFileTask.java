@@ -286,6 +286,9 @@ public class ExportFileTask extends AbstractTask{
 	public void init(Properties confProps, File confDir) throws Exception {
 		load(new File(confDir, EXTRACT_CONFIG));
 		
+		if(hasCategoryToExtract())
+			caseData.setContainsReport(true);
+		
 		String value = confProps.getProperty("hash");
 		if (value != null)
 			value = value.trim();
