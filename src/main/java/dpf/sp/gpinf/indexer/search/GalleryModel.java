@@ -39,8 +39,11 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
+import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
+import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -72,6 +75,14 @@ public class GalleryModel extends AbstractTableModel {
 	public boolean isCellEditable(int row, int col) {
 		return true;
 	}
+	
+	private boolean isSupportedImage(String mediaType){
+		return mediaType.startsWith("image") || mediaType.endsWith("msmetafile") || mediaType.endsWith("x-emf");
+	}
+	
+	private boolean isSupportedVideo(String mediaType){
+		return VideoThumbTask.isVideoType(MediaType.parse(mediaType));
+	}
 
 	@Override
 	public Class<?> getColumnClass(int c) {
@@ -101,8 +112,7 @@ public class GalleryModel extends AbstractTableModel {
 		}
 
 		final String mediaType = doc.get(IndexItem.CONTENTTYPE);
-		if (!mediaType.startsWith("image") && !mediaType.endsWith("msmetafile") && !mediaType.endsWith("x-emf")
-				&& !mediaType.startsWith("video") && !mediaType.endsWith("vnd.rn-realmedia"))
+		if (!isSupportedImage(mediaType) && !isSupportedVideo(mediaType))
 			return new GalleryValue(doc.get(IndexItem.NAME), unsupportedIcon, id);
 		
 		if(executor == null)
@@ -123,45 +133,36 @@ public class GalleryModel extends AbstractTableModel {
 
 					String hash = doc.get(IndexItem.HASH);
 					if(hash != null)
-						stream = getViewFile(hash);
+						stream = getViewFile(hash, !isSupportedImage(mediaType));
 					
 					String export = doc.get(IndexItem.EXPORT);
-					if (stream == null && export != null && !export.isEmpty()) {
+					if (stream == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
 
 						image = getThumbFromReport(export);
-
 						if (image == null) {
 							File file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-							/*if(mediaType.equals("application/pdf")){
-								PDFToImage pdfConverter = new PDFToImage();
-								pdfConverter.load(file);
-								file = File.createTempFile("indexador",".tmp");
-								file.deleteOnExit();
-								pdfConverter.convert(0, file);
-								pdfConverter.close();
-							}*/
 							stream = Util.getStream(file, doc);
 						}
 
 					}
-					if(image == null && stream == null)
+					if(image == null && stream == null && isSupportedImage(mediaType))
 						stream = Util.getSleuthStream(App.get().sleuthCase, doc);
 					
 					if (stream != null)
 						stream.mark(1000000);
 					
 						
-					if (image == null && doc.get(IndexItem.CONTENTTYPE).equals("image/jpeg")) {
+					if (image == null && stream != null && doc.get(IndexItem.CONTENTTYPE).equals("image/jpeg")) {
 						image = ImageUtil.getThumb(new CloseShieldInputStream(stream), value);
 						stream.reset();
 					}
 
-					if (image == null) {
+					if (image == null && stream != null) {
 						image = ImageUtil.getSubSampledImage(stream, size, size, value);
 						stream.reset();
 					}
 					
-					if(image == null){
+					if(image == null && stream != null){
 						image = new GraphicsMagicConverter().getImage(stream, size);
 					}
 					
@@ -214,15 +215,20 @@ public class GalleryModel extends AbstractTableModel {
 		return new GalleryValue(doc.get(IndexItem.NAME), null, id);
 	}
 	
-	private InputStream getViewFile(String hash) throws FileNotFoundException{
+	private InputStream getViewFile(String hash, boolean isVideo) throws FileNotFoundException{
 		if(hash == null)
 			return null;
 		hash = hash.toLowerCase();
-		File hashDir = new File(App.get().codePath + "/../view/" + hash.charAt(0) + "/" + hash.charAt(1));
-		if(hashDir.exists())
-			for(File file : hashDir.listFiles())
-				if(file.getName().toLowerCase().startsWith(hash))
-					return new BufferedInputStream(new FileInputStream(file));
+		File baseFolder;
+		if(isVideo)
+			baseFolder = new File(App.get().codePath + "/../" + HTMLReportTask.viewFolder);
+		else
+			baseFolder = new File(App.get().codePath + "/../../" + HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName);
+		
+		File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
+		if(hashFile.exists())
+			return new BufferedInputStream(new FileInputStream(hashFile));
+					
 		return null;
 	}
 
@@ -244,7 +250,7 @@ public class GalleryModel extends AbstractTableModel {
 				String thumbPath = export.substring(0, i1) + "thumbnails/" + nome;
 				file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath);
 
-				// Report FTK 1.8
+			// Report FTK 1.8
 			} else if ((i1 = export.indexOf("Export/")) > -1) {
 
 				if (!thumbPathCached)

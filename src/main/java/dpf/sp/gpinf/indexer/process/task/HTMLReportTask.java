@@ -84,7 +84,7 @@ public class HTMLReportTask extends AbstractTask {
     private static final String taskName = "Geração de Relatório HTML";
 
     /** Nome da subpasta com versões de visualização dos arquivos. */
-    private static final String viewFolder = "view";
+    public static final String viewFolder = "view";
 
     /** Registros organizados por marcador. */
     private static final SortedMap<String, List<ReportEntry>> entriesByLabel = new TreeMap<String, List<ReportEntry>>(collator);
@@ -102,10 +102,10 @@ public class HTMLReportTask extends AbstractTask {
     private ReportInfo info;
 
     /** Nome da pasta com miniatutas de imagem. */
-    private String thumbsFolderName = "thumbs";
+    public static String thumbsFolderName = "thumbs";
 
     /** Nome da subpasta destino dos os arquivos do relatório. */
-    private String reportSubFolderName = "relatorio";
+    public static String reportSubFolderName = "relatorio";
 
     /** 
      * Subpasta com a maior parte dos arquivos HTML e arquivos auxiliares. 
