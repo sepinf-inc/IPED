@@ -1,8 +1,9 @@
 xx/05/2015: IPED-3.4
 - Geração de miniaturas de vídeos (PCF Wladimir)
 - Geração de relatório HTML dos itens exportados (PCF Wladimir)
-- Parser para arquivos Known.met (PCF Wladimir)
-- Nova categoria Peer-to-Peer (PCF Wladimir)
+- Parser para arquivos Known.met do e-Mule (PCF Wladimir)
+- Parser para arquivos ShareH.dat e ShareL.dat do Ares Galaxy (PCF Wladimir)
+- Nova categoria Peer-to-Peer, com arquivos do Ares e e-Mule (PCF Wladimir)
 - Atribuição de nome para discos físicos ou imagens (param -dname)
 
 05/05/2015: IPED-3.3.3

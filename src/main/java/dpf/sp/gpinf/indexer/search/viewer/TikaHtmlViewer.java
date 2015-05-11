@@ -32,7 +32,8 @@ public class TikaHtmlViewer extends HtmlViewer{
 		return 	contentType.equals("application/x-msaccess") 
 				|| contentType.equals("application/x-sqlite3")
 				|| contentType.equals("application/sqlite-skype")
-				|| contentType.equals("application/x-emule");
+				|| contentType.equals("application/x-emule")
+				|| contentType.equals("application/x-ares-galaxy");
 	}
 	
 	@Override
