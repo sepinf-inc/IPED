@@ -133,10 +133,10 @@ public class GalleryModel extends AbstractTableModel {
 
 					String hash = doc.get(IndexItem.HASH);
 					if(hash != null)
-						stream = getViewFile(hash, !isSupportedImage(mediaType));
+						image = getViewImage(hash, !isSupportedImage(mediaType));
 					
 					String export = doc.get(IndexItem.EXPORT);
-					if (stream == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
+					if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
 
 						image = getThumbFromReport(export);
 						if (image == null) {
@@ -165,15 +165,6 @@ public class GalleryModel extends AbstractTableModel {
 					if(image == null && stream != null){
 						image = new GraphicsMagicConverter().getImage(stream, size);
 					}
-					
-					// fallBack
-					/*if(image == null){
-						image = ImageIO.read(stream);
-						value.originalW = image.getWidth();
-						value.originalH = image.getHeight();
-						if(value.originalW > size || value.originalH > size) 
-							image = ImageUtil.resizeImage(image, size, size);
-					}*/
 					 
 					if (image == null)
 						value.icon = errorIcon;
@@ -215,7 +206,7 @@ public class GalleryModel extends AbstractTableModel {
 		return new GalleryValue(doc.get(IndexItem.NAME), null, id);
 	}
 	
-	private InputStream getViewFile(String hash, boolean isVideo) throws FileNotFoundException{
+	private BufferedImage getViewImage(String hash, boolean isVideo) throws IOException{
 		if(hash == null)
 			return null;
 		hash = hash.toLowerCase();
@@ -226,8 +217,10 @@ public class GalleryModel extends AbstractTableModel {
 			baseFolder = new File(baseFolder.getParentFile(), HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName);
 		
 		File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
-		if(hashFile.exists())
-			return new BufferedInputStream(new FileInputStream(hashFile));
+		if(hashFile.exists()){
+			BufferedImage image = ImageIO.read(hashFile);
+			return ImageUtil.trim(image);
+		}
 					
 		return null;
 	}
