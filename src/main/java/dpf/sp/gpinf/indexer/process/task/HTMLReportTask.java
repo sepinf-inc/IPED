@@ -62,6 +62,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -325,7 +326,7 @@ public class HTMLReportTask extends AbstractTask {
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
         reg.ext = evidence.getExt();
-        reg.category = evidence.getCategories();
+        reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | ");
         reg.hash = evidence.getHash();
         reg.deleted = evidence.isDeleted();
         reg.carved = evidence.isCarved();
