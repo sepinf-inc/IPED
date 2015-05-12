@@ -211,8 +211,20 @@
     </magic>
   </mime-type>
 
-   <mime-type type="application/x-emule">
-      <_comment>e-Mule known.met</_comment> 
-      <glob pattern="known*.met"/>
-   </mime-type>   
+    <mime-type type="application/x-p2p">
+    </mime-type>
+   
+    <mime-type type="application/x-emule">
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="known*.met"/>
+    </mime-type>   
+   
+    <mime-type type="application/x-ares-galaxy">
+        <sub-class-of type="application/x-p2p"/>
+        <magic priority="50">
+            <match value="__ARESDB1.02H_" type="string" offset="0"/>
+            <match value="__ARESDB1.04L_" type="string" offset="0"/>
+        </magic> 
+    </mime-type>   
+   
  </mime-info>

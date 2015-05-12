@@ -52,4 +52,4 @@ Outros Textos = text
 
 Outros Arquivos = application/octet-stream;
 
-Peer-to-peer = application/x-emule
+Peer-to-peer = application/x-p2p
