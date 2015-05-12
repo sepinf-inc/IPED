@@ -52,7 +52,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 	@Override
 	protected Boolean doInBackground() throws Exception {
 
-		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "windows-1252");
+		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
 
 		ArrayList<String> fields = new ArrayList<String>();
 		fields.add(IndexItem.ID);
