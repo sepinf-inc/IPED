@@ -29,12 +29,12 @@ public class RowComparator implements Comparator<Integer> {
 	private int col;
 	static private int[][] order = new int[fields.length + 4][];
 	static private int[] loadedCol = { 0, 0 };
-	App app = App.get();
+	private App app = App.get();
 
 	public RowComparator(int col) {
 		this.col = col;
-		// if(col >= 4)
-		// loadOrder();
+		//if(col >= 4)
+		//	loadOrder();
 	}
 
 	public static void dispose() {
@@ -54,7 +54,7 @@ public class RowComparator implements Comparator<Integer> {
 	}
 
 	@Override
-	public int compare(Integer a, Integer b) {
+	final public int compare(Integer a, Integer b) {
 		if (col == 1) {
 			if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
 				return 0;
@@ -64,28 +64,15 @@ public class RowComparator implements Comparator<Integer> {
 				return 1;
 
 		} else if (col == 2) {
-			if (App.get().results.scores[a] == App.get().results.scores[b])
-				return 0;
-			else if (App.get().results.scores[a] > App.get().results.scores[b])
-				return 1;
-			else
-				return -1;
+			return (int)(app.results.scores[a] - app.results.scores[b]);
 
-		/*} else if (col == 3) {
-			if (App.get().marcadores.read[a] == App.get().marcadores.read[b])
-				return 0;
-			else if (App.get().marcadores.read[a] == false)
-				return 1;
-			else
-				return -1;
-		*/
 		} else if (col == 3) {
 			return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
 		
-		} else {
+		} else{
 			if (order[col] == null)
 				loadOrder();
-			return order[col][a] < order[col][b] ? -1 : (order[col][a] > order[col][b] ? 1 : 0);
+			return order[col][a] - order[col][b];
 		}
 
 	}
