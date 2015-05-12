@@ -73,7 +73,7 @@ public class ExportCSVTask extends AbstractTask{
 		list.append("\"" + value.replace("\"", "\"\"") + "\";");
 		
 		value = evidence.getFileToIndex();
-		if (!value.isEmpty() && evidence.isToAddToCase() && caseData.containsReport())
+		if (!value.isEmpty()  && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore())
 			value = "=HIPERLINK(\"\"" + value + "\"\";\"\"Abrir\"\")";
 		else
 			value = "";
