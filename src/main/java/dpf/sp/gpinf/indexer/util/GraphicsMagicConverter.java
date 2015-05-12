@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.util;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,7 @@ import org.im4java.process.Pipe;
 import org.im4java.process.ProcessStarter;
 import org.im4java.process.ProcessTask;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.search.App;
 
 public class GraphicsMagicConverter {
@@ -50,7 +52,9 @@ public class GraphicsMagicConverter {
 	static{
 		try{
 			if(System.getProperty("os.name").startsWith("Windows")){
-				String path = App.get().codePath + "/../tools/gm";
+				String path = Configuration.configPath + "/tools/graphicsmagick";
+				if(!new File(path).exists())
+					path = Configuration.configPath + "/../tools/graphicsmagick";
 				ProcessStarter.setGlobalSearchPath(path);
 			}
 			
