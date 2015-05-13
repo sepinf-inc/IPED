@@ -224,7 +224,9 @@
         <magic priority="50">
             <match value="__ARESDB1.02H_" type="string" offset="0"/>
             <match value="__ARESDB1.04L_" type="string" offset="0"/>
-        </magic> 
+        </magic>
+        <glob pattern="shareH.dat"/>
+        <glob pattern="shareL.dat"/>
     </mime-type>   
    
  </mime-info>
