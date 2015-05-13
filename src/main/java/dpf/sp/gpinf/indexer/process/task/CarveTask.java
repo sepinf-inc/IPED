@@ -104,7 +104,7 @@ public class CarveTask extends AbstractTask{
 		if(signatures != null)
 			return;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-		String line;
+		String line = reader.readLine();
 		while ((line = reader.readLine()) != null) {
 			if (line.trim().startsWith("#") || line.trim().isEmpty())
 				continue;

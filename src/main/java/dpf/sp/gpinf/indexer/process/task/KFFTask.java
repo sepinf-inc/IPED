@@ -115,7 +115,7 @@ public class KFFTask extends AbstractTask{
             	alertProducts = new HashSet<String>();
                 File confFile = new File(confDir, CONF_FILE);
             	BufferedReader reader = new BufferedReader(new FileReader(confFile));
-            	String line; 
+            	String line = reader.readLine();
                 while((line = reader.readLine()) != null){
                 	if(line.startsWith("#"))
                 		continue;
