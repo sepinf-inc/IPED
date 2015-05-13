@@ -75,10 +75,13 @@ OLE, application/x-tika-msoffice, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
 # ZIP e derivados (docx, odt, etc). Não altere o nome ZIP, pois é realizado tratamento específico para esse formato
 ZIP, application/zip, 1000, 10000000, PK\03\04, PK\05\06??????????????????
 
-PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF
+PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF?
 
 HTM, text/html, 1000, 10000000, <html, </html>
 HTM, text/html, 1000, 10000000, <HTML, </HTML>
+
+ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.02H_, null
+ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.04L_, null
 
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
