@@ -169,12 +169,18 @@ public class IndexerProcessor {
 			if (value != null)
 				evidence.setMediaType(MediaType.parse(value));
 
-			//provoca problema ao extrair item com timeout, pois hash não é encontrado no mapa de hashes
-			//evidence.timeOut = Boolean.parseBoolean(doc.get("timeout"));
+			evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
 			value = doc.get(IndexItem.HASH);
-			if (value != null)
+			if (value != null){
 				evidence.setHash(value);
+				
+				File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);
+				if(viewFile != null){
+					evidence.setViewFile(viewFile.getAbsolutePath());
+				}
+			}
+				
 			
 			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));

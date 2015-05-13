@@ -556,4 +556,16 @@ public class Util {
         if (!parent.exists()) parent.mkdirs();
         return result;
     }
+    
+    public static File findFileFromHash(File baseDir, String hash){
+		if(hash == null)
+			return null;
+		hash = hash.toLowerCase();
+		File hashDir = new File(baseDir, hash.charAt(0) + "/" + hash.charAt(1));
+		if(hashDir.exists())
+			for(File file : hashDir.listFiles())
+				if(file.getName().toLowerCase().startsWith(hash))
+					return file;
+		return null;
+	}
 }

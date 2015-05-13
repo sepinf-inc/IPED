@@ -123,6 +123,7 @@ public class ExportFileTask extends AbstractTask{
             evidence.setToExtract(true);
             extract(evidence);
             incSubitensExtracted();
+            copyViewFile(evidence);
         }
 		
 		//Renomeia subitem caso deva ser exportado
@@ -148,6 +149,21 @@ public class ExportFileTask extends AbstractTask{
 
 		} finally {
 			IOUtil.closeQuietly(is);
+		}
+	}
+	
+	private void copyViewFile(EvidenceFile evidence){
+		String viewPath = evidence.getViewFile();
+		if(viewPath != null){
+			File viewFile = new File(viewPath);
+			String viewName = viewFile.getName();
+			File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName);
+			destFile.getParentFile().mkdirs();
+			try {
+				IOUtil.copiaArquivo(viewFile, destFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

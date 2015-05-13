@@ -164,7 +164,10 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 		if (!fixViewer.isSelected())
 			changeTab(viewerToUse);
 
-		textViewer.loadFile(doc, file, contentType);
+		if(viewFile != file && viewerToUse == textViewer)
+			textViewer.loadFile(doc, viewFile, viewMediaType);
+		else
+			textViewer.loadFile(doc, file, contentType);
 	}
 
 	public AbstractViewer getCurrentViewer() {

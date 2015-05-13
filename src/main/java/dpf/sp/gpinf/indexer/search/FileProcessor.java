@@ -138,24 +138,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 		String contentType = doc.get(IndexItem.CONTENTTYPE);
 		String hash = doc.get(IndexItem.HASH);
-		File viewFile = getViewFile(hash);
+		File viewFile = Util.findFileFromHash(new File(App.get().codePath + "/../view"), hash);
 		if(viewFile == null)
 			viewFile = file;
 
 		App.get().compositeViewer.loadFile(doc, file, viewFile, contentType, App.get().highlightTerms);
 
-	}
-	
-	private File getViewFile(String hash){
-		if(hash == null)
-			return null;
-		hash = hash.toLowerCase();
-		File hashDir = new File(App.get().codePath + "/../view/" + hash.charAt(0) + "/" + hash.charAt(1));
-		if(hashDir.exists())
-			for(File file : hashDir.listFiles())
-				if(file.getName().toLowerCase().startsWith(hash))
-					return file;
-		return null;
 	}
 
 	private Thread listTask;

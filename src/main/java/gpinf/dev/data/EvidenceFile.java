@@ -602,13 +602,12 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * Obtém o arquivo de visualização. Se for nulo, retorna o arquivo
-     * exportado. Apenas para reports do FTK1.
+     * Obtém o arquivo de visualização. Retorna nulo caso inexistente.
      * 
-     * @return nome e caminho relativo ao caso do arquivo de para visualização
+     * @return caminho relativo ao caso do arquivo de visualização
      */
     public String getViewFile() {
-        return (viewFile == null) ? exportedFile : viewFile;
+        return viewFile;
     }
 
     /**
@@ -1045,8 +1044,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * @param viewFile caminho do arquivo para visualização. Utilizado apenas
-     * em relatórios do FTK1.
+     * @param viewFile caminho do arquivo para visualização.
      */
     public void setViewFile(String viewFile) {
         this.viewFile = viewFile;
