@@ -170,7 +170,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
 	public static void load(File file) throws FileNotFoundException, IOException {
 		categoriesToExpand = new HashSet<String>();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		String line;
 		while ((line = reader.readLine()) != null) {
 			if (line.trim().startsWith("#") || line.trim().isEmpty())

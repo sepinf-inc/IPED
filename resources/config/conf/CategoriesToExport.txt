@@ -1,9 +1,9 @@
-########################################################################
-# ConfiguraÁ„o para exportaÁ„o AUTOMATICA de arquivos.
-# ⁄til em casos de extraÁ„o cega de dados.
-# Descomente as Categorias que dever„o ser EXPORTADAS.
-# Os itens ser„o exportados para a pasta 'Exportados'
-# Nesse caso, somente os arquivos exportados ser„o indexados.
+Ôªø########################################################################
+# Configura√ß√£o para exporta√ß√£o AUTOMATICA de arquivos.
+# √ötil em casos de extra√ß√£o cega de dados.
+# Descomente as Categorias que dever√£o ser EXPORTADAS.
+# Os itens ser√£o exportados para a pasta 'Exportados'
+# Nesse caso, somente os arquivos exportados ser√£o indexados.
 ########################################################################
 
 #Emails
@@ -16,28 +16,28 @@
 #Outros Documentos
 #Bases de dados
 #Planilhas
-#ApresentaÁıes
+#Apresenta√ß√µes
 #Contatos
 #Chats
 #Peer-to-peer
 #Outros Textos
 #Imagens
-#VÌdeos
-#¡udios
+#V√≠deos
+#√Åudios
 #Arquivos OLE
 #Arquivos Compactados
 #Caixas de Emails
 #Registro do Windows
 #Programas e Bibliotecas
-#N„o Alocado
+#N√£o Alocado
 #Outros Arquivos
 
 #Tamanho Zero
 #Imagens Pequenas
-#Imagens Tempor·rias Internet
+#Imagens Tempor√°rias Internet
 #Imagens em Pasta de Sistema
-#Textos Tempor·rios Internet
+#Textos Tempor√°rios Internet
 #Textos em Pasta de Sistema
-#HistÛrico de Internet
+#Hist√≥rico de Internet
 #Atalhos para arquivos
 #Atalhos para URLs

@@ -1,17 +1,17 @@
-########################################################################
-# Descomente as Categorias que dever„o ser expandidas durante a idexaÁ„o
-# Os subitens ser„o extraÌdos para a pasta 'indexador/../Exportados'
-# A expans„o È recursiva, logo pode consumir espaÁo consider·vel
+Ôªø########################################################################
+# Descomente as Categorias que dever√£o ser expandidas durante a idexa√ß√£o
+# Os subitens ser√£o extra√≠dos para a pasta 'indexador/../Exportados'
+# A expans√£o √© recursiva, logo pode consumir espa√ßo consider√°vel
 ########################################################################
 
 Caixas de Emails
 Arquivos Compactados
 Emails
 #Bases de dados
-#HistÛrico de Internet
+#Hist√≥rico de Internet
 #Documentos de Texto
 #Planilhas
-#ApresentaÁıes
+#Apresenta√ß√µes
 #Documentos RTF
 #Documentos PDF
 

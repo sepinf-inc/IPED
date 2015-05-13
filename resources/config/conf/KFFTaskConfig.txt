@@ -1,6 +1,6 @@
-# Nomes de grupos/produtos em base de hashes no formato NSRL cujos arquivos devem receber o status de alerta.
-# Arquivos pertencentes todos os demais grupos n„o listados recebem status de irrelev‚ncia.
-# AlteraÁıes automaticamente s„o aplicadas em novos processamentos, sem necessidade de reimportar a base.
+Ôªø# Nomes de grupos/produtos em base de hashes no formato NSRL cujos arquivos devem receber o status de alerta.
+# Arquivos pertencentes todos os demais grupos n√£o listados recebem status de irrelev√¢ncia.
+# Altera√ß√µes automaticamente s√£o aplicadas em novos processamentos, sem necessidade de reimportar a base.
 
 NSRL_Alert
 Legion

@@ -1,7 +1,7 @@
-########################################################################
-# ConfiguraÁ„o de Categorias por Mimetypes para indexaÁ„o de diretÛrios
+Ôªø########################################################################
+# Configura√ß√£o de Categorias por Mimetypes para indexa√ß√£o de diret√≥rios
 #
-# Novos mimetypes devem ser definidos por assinatura ou extens„o em
+# Novos mimetypes devem ser definidos por assinatura ou extens√£o em
 # CustomSignatures.jar/org/apache/tika/mime/custom-mimetypes.xml
 #
 ########################################################################
@@ -18,7 +18,7 @@ Documentos de Texto = application/vnd.apple.pages; application/msword; applicati
 
 Planilhas = text/csv; application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc; application/x-tika-old-excel
 
-ApresentaÁıes = application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;
+Apresenta√ß√µes = application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;
 
 Arquivos OLE = application/x-tika-ooxml; application/x-tika-msoffice
 
@@ -40,13 +40,13 @@ Registro do Windows = application/x-windows-registry
 
 Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer
 
-N„o Alocado = application/x-unallocated
+N√£o Alocado = application/x-unallocated
 
 Imagens = image; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/x-emf; application/x-msmetafile; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
 
-VÌdeos = video; application/vnd.rn-realmedia; application/x-shockwave-flash
+V√≠deos = video; application/vnd.rn-realmedia; application/x-shockwave-flash
 
-¡udios = audio;
+√Åudios = audio;
 
 Outros Textos = text
 

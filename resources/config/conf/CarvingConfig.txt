@@ -1,15 +1,15 @@
-################################################################################################
-# ConfiguraÁ„o de CARVING
+Ôªø################################################################################################
+# Configura√ß√£o de CARVING
 ################################################################################################
 
 
-# TODO: Ainda n„o implementado. Permitir· avanÁar v·rios bytes entre cada tentativa de carving,
-# realizando o carving apenas no inÌcio dos clusters n„o alocados. Mais r·pido, porÈm com menos resultados.
+# TODO: Ainda n√£o implementado. Permitir√° avan√ßar v√°rios bytes entre cada tentativa de carving,
+# realizando o carving apenas no in√≠cio dos clusters n√£o alocados. Mais r√°pido, por√©m com menos resultados.
 # bytesToSkip = 4096
 
 
-# Tipos de arquivo nos quais ser· efetuado o carving.
-# Comentado por padr„o para efetuar carving em todos os itens, exceto aqueles listados em 'typesToNotProcess'
+# Tipos de arquivo nos quais ser√° efetuado o carving.
+# Comentado por padr√£o para efetuar carving em todos os itens, exceto aqueles listados em 'typesToNotProcess'
 #typesToProcess = application/x-unallocated;
 #typesToProcess = application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow
 #typesToProcess = application/x-iso9660-image; application/x-vmdk; application/x-vhd; application/x-vdi
@@ -18,9 +18,9 @@
 #typesToProcess = application/octet-stream;  
 
 
-# Tipos de arquivo nos quais n„o ser· efetuado o carving. Subtipos tambÈm n„o s„o processados.
-# Est„o configurados por padr„o todos os tipos que s„o expandidos, para n„o serem recuperados itens repetidos.
-# Comente caso n„o queira excluir itens do carving.
+# Tipos de arquivo nos quais n√£o ser√° efetuado o carving. Subtipos tamb√©m n√£o s√£o processados.
+# Est√£o configurados por padr√£o todos os tipos que s√£o expandidos, para n√£o serem recuperados itens repetidos.
+# Comente caso n√£o queira excluir itens do carving.
 typesToNotProcess = video; text/html; application/pdf
 typesToNotProcess = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;
 typesToNotProcess = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
@@ -35,22 +35,22 @@ typesToNotProcess = application/vnd.apple.keynote; application/x-corelpresentati
 ignoreCorrupted = true
 
 
-# DefiniÁıes de assinatura para carving, uma por linha, com os atributos separados por vÌrgula, abaixo descritos:
+# Defini√ß√µes de assinatura para carving, uma por linha, com os atributos separados por v√≠rgula, abaixo descritos:
 #
 # Name, MediaType, MinSize, MaxSize, Header, Footer, SizeOffset, SizeBytes, Bigendian
 #
 # Name		Nome do tipo de arquivo
 # MediaType	Media type do tipo.
-# MinSize	Tamanho mÌnimo
-# MaxSize	Tamanho m·ximo
-# Header	CabeÁalho do arquivo. Utilize \ para indicar valor hexadecimal e ? como coringa (deve ser evitado sempre que possÌvel)
-# Footer	RodapÈ do arquivo. Caso n„o exista, preencha com null
-# SizeOffset	Offset no cabeÁalho para a informaÁ„o de tamanho do arquivo (opcional)
-# SizeBytes	N˙mero de bytes que a info de tamanho do arquivo ocupa (opcional)
-# Bigendian	Indica se a info de tamanho do arquivo est· em bigendian ou n„o (opcional)
+# MinSize	Tamanho m√≠nimo
+# MaxSize	Tamanho m√°ximo
+# Header	Cabe√ßalho do arquivo. Utilize \ para indicar valor hexadecimal e ? como coringa (deve ser evitado sempre que poss√≠vel)
+# Footer	Rodap√© do arquivo. Caso n√£o exista, preencha com null
+# SizeOffset	Offset no cabe√ßalho para a informa√ß√£o de tamanho do arquivo (opcional)
+# SizeBytes	N√∫mero de bytes que a info de tamanho do arquivo ocupa (opcional)
+# Bigendian	Indica se a info de tamanho do arquivo est√° em bigendian ou n√£o (opcional)
 
 
-# AtenÁ„o: deve-se usar ? apenas caso os padrıes por ele separados sejam incomuns
+# Aten√ß√£o: deve-se usar ? apenas caso os padr√µes por ele separados sejam incomuns
 BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\01\00, null, 2, 4, false
 BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\04\00, null, 2, 4, false
 BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\08\00, null, 2, 4, false
@@ -69,10 +69,10 @@ GIF, image/gif, 1000, 10000000, GIF89a, \00\3b
 
 PNG, image/png, 1000, 10000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
 
-# OLE e derivados. N„o altere o nome OLE, pois È realizado tratamento especÌfico para esse formato
+# OLE e derivados. N√£o altere o nome OLE, pois √© realizado tratamento espec√≠fico para esse formato
 OLE, application/x-tika-msoffice, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
 
-# ZIP e derivados (docx, odt, etc). N„o altere o nome ZIP, pois È realizado tratamento especÌfico para esse formato
+# ZIP e derivados (docx, odt, etc). N√£o altere o nome ZIP, pois √© realizado tratamento espec√≠fico para esse formato
 ZIP, application/zip, 1000, 10000000, PK\03\04, PK\05\06??????????????????
 
 PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF
@@ -80,7 +80,7 @@ PDF, application/pdf, 1000, 10000000, %PDF-, %%EOF
 HTM, text/html, 1000, 10000000, <html, </html>
 HTM, text/html, 1000, 10000000, <HTML, </HTML>
 
-# Tipos experimentais, n„o habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
+# Tipos experimentais, n√£o habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
 #TIF, image/tiff, 1000, 1000000, II\2a\00, null
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\ba, \00\00\01\b9

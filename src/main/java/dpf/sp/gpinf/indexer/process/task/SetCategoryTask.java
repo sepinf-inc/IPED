@@ -88,7 +88,7 @@ public class SetCategoryTask extends AbstractTask{
 		categories.add(FOLDER_CATEGORY);
 		categories.add(ENCRYPTED_CATEGORY);
 		
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 
 		String line;
 		while ((line = reader.readLine()) != null) {
@@ -115,7 +115,7 @@ public class SetCategoryTask extends AbstractTask{
 		if(engine != null)
 			return;
 		
-		InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "windows-1252");
+		InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
 
 		ScriptEngineManager manager = new ScriptEngineManager();
 		engine = manager.getEngineByName("javascript");
