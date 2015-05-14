@@ -41,6 +41,8 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
  * Nome não pode ser alterado, pois é utilizada pelo ASAP para testar a conexão ao banco.
  */
 public abstract class DataSource {
+	
+	public static String FTKDatabaseConfig = "conf/FTKDatabaseConfig.txt";
 	/*
 	 * Dados para conexÃ£o com o banco Oracle
 	 */
@@ -64,8 +66,10 @@ public abstract class DataSource {
 	Connection conn;
 	Map<String, String> bookmarksMap;
 
-	public static DataSource get(Properties properties, String caseName, File report) throws Exception {
+	public static DataSource get(String caseName, File report) throws Exception {
 
+		Properties properties = new Properties();
+		properties.load(new FileInputStream(Configuration.configPath + "/" + FTKDatabaseConfig));
 		schemaVersion = properties.getProperty("VersaoFTK");
 
 		if (schemaVersion.equalsIgnoreCase("auto")) {
@@ -85,7 +89,7 @@ public abstract class DataSource {
 	public static boolean testConnection(String configPathStr) throws SQLException, FileNotFoundException, IOException {
 
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(configPathStr + "/" + Configuration.CONFIG_FILE)));
+		props.load(new FileInputStream(configPathStr + "/" + FTKDatabaseConfig));
 		schemaVersion = props.getProperty("VersaoFTK");
 		DataSource dataSrc;
 		if (schemaVersion.equalsIgnoreCase("auto")) {

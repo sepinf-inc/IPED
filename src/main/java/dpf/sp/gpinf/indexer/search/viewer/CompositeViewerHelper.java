@@ -133,7 +133,7 @@ public class CompositeViewerHelper {
 
 				if (System.getProperty("os.name").startsWith("Linux"))
 					try {
-						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../tools/nativeview");
+						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../lib/nativeview");
 						ILazyApplicationInfo[] ila = ass.getLocalApplications();
 						if (ila.length != 0) {
 							systemLO = ila[0].getHome();
@@ -177,7 +177,7 @@ public class CompositeViewerHelper {
 						SwingUtilities.invokeAndWait(new Runnable() {
 							@Override
 							public void run() {
-								officeViewer = new LibreOfficeViewer(App.get().codePath + "/../tools/nativeview", pathLO);
+								officeViewer = new LibreOfficeViewer(App.get().codePath + "/../lib/nativeview", pathLO);
 								App.get().compositeViewer.addViewer(officeViewer);
 							}
 						});

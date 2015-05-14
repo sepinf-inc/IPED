@@ -45,7 +45,8 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class Configuration {
 
-	public static String CONFIG_FILE = "IndexerConfig.txt";
+	public static String CONFIG_FILE = "IPEDConfig.txt";
+	public static String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
 	public static String PARSER_CONFIG = "ParserConfig.xml";
 
 	public static UTF8Properties properties = new UTF8Properties();
@@ -77,17 +78,11 @@ public class Configuration {
 		
 		configPath = configPathStr;
 
-		if (new File(configPath + "/tools/sleuth").exists())
-			Util.loadNatLibs(configPath + "/tools/sleuth");
-		else
-			Util.loadNatLibs(configPath + "/../tools/sleuth");
-
-		if (new File(configPath + "/" + PARSER_CONFIG).exists())
-			System.setProperty("tika.config", configPath + "/" + PARSER_CONFIG);
-		else
-			System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
+		Util.loadNatLibs(configPath + "/lib/libewf");
+		System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
 		properties.load(new File(configPath + "/" + CONFIG_FILE));
+		properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE));
 
 		String value;
 

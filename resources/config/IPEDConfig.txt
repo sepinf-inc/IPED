@@ -1,0 +1,73 @@
+########################################################################
+# Configurações do Processamento
+########################################################################
+
+# Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.
+# Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
+indexTemp = default
+
+# Habilite caso indexTemp (ou a pasta do caso ao usar --append) esteja em disco SSD. Nesse caso, são feitas otimizações 
+# que podem reduzir o tempo de processamento em até 60%: merge threads do índice é aumentado e, no caso de imagens E01, 
+# são utilizados arquivos temporários para evitar múltiplas descompactações dos itens pela libewf
+indexTempOnSSD = false
+
+# Habilita cálculo de hashes dos arquivos
+# Valores possíveis: md5, sha-1, sha-256 e sha-512
+hash = md5
+
+# Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base. É altamente
+# recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
+# base NSRL via opção -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt
+#kffDb = E:/kff/kff.db
+
+# Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
+# existentes na base são adicionados a uma categoria "Alerta de hash (PI)"
+#ledWkffPath = E:/LED/V1.17.00/pedo/wkff
+
+# Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
+excludeKffIgnorable = false
+
+# Ignora/descarta arquivos duplicados do restante do processamento e do caso.
+# Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o cálculo de hash.
+ignoreDuplicates = false
+
+# Exporta as propriedades de todos os arquivos para o arquivo "Lista de Arquivos.csv"
+exportFileProps = true
+
+# Processa a assinatura dos arquivos
+processFileSignatures = true
+
+# Expande containers, como arquivos compactados, caixas de e-mails, emails e documentos office.
+# Os tipos de arquivo a expandir podem ser alterados no arquivo conf/CategoriesToExpand.txt
+expandContainers = true
+
+# Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
+indexFileContents = true
+
+# Indexa arquivos sem decodificador específico, como binários, desconhecidos, pagefile, não alocado, etc
+# Nesse caso são indexadas strings brutas em claro extraídas dos arquivos.
+indexUnknownFiles = true
+
+# Habilita o OCR em imagens e PDFs digitalizados. Pode aumentar consideravelmente o tempo de processamento.
+# Os resultados dependem da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.
+# Opções avançadas do OCR, como o caminho do Tesseract no Linux, podem ser alteradas em conf/AdvancedConfig.txt
+enableOCR = false
+
+# Adiciona e processa áreas não alocadas de imagens via sleuthkit
+addUnallocated = false
+
+# Indexa o espaço não alocado adicionado. Necessário habilitar "indexUnknownFiles".
+indexUnallocated = false
+
+# Habilita o carving. Por padrão o carving é bastante inclusivo, sendo executado sobre não alocado e 
+# sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
+# configurados no arquivo conf/CarvingConfig.txt
+enableCarving = false
+
+# Habilita extração de imagens de cenas de vídeos.
+# Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
+enableVideoThumbs = false
+
+# Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
+# Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt
+enableHTMLReport = true

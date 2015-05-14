@@ -78,7 +78,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
 			// ImageIO.setUseCache(false);
 
-			Configuration.getConfiguration(App.get().codePath + "/../conf");
+			Configuration.getConfiguration(App.get().codePath + "/..");
 			ParsingReader.setTextSplitSize(Long.MAX_VALUE);
 
 			IndexerDefaultParser autoParser = new IndexerDefaultParser();

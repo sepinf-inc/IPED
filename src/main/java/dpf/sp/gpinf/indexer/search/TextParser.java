@@ -160,7 +160,7 @@ public class TextParser extends CancelableWorker {
 			context.set(Parser.class, (Parser) App.get().autoParser);
 			context.set(ItemInfo.class, new ItemInfo(id, categorias, doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
 			ParsingTask expander = new ParsingTask(context);
-			expander.init(Configuration.properties, new File(Configuration.configPath));
+			expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
 			context.set(EmbeddedDocumentExtractor.class, expander);
 
 			// Tratamento p/ acentos de subitens de ZIP

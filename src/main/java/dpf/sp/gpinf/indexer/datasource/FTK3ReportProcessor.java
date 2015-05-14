@@ -38,19 +38,17 @@ import dpf.sp.gpinf.indexer.database.DataSource;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FTK3ReportProcessor {
-
+	
 	private CaseData caseData;
 	private boolean listOnly;
 	private File baseFile;
-	private Properties configuration;
 	private Set<Integer> ADList = new HashSet<Integer>();
 	public static boolean wasInstantiated = false;
 
-	public FTK3ReportProcessor(CaseData caseData, Properties configuration, File basePath, boolean listOnly) {
+	public FTK3ReportProcessor(CaseData caseData, File basePath, boolean listOnly) {
 		this.caseData = caseData;
 		this.listOnly = listOnly;
 		this.baseFile = basePath;
-		this.configuration = configuration;
 		wasInstantiated = true;
 	}
 
@@ -70,7 +68,7 @@ public class FTK3ReportProcessor {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
 			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo propriedades do banco...");
 
-			DataSource ds = DataSource.get(configuration, caseName, report);
+			DataSource ds = DataSource.get(caseName, report);
 			ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
 		}
 

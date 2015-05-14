@@ -85,7 +85,7 @@ public class ItemProducer extends Thread {
 
 				int alternativeFiles = 0;
 				if ((new File(report, "files")).exists() && FTK3ReportProcessor.bookmarkExists(report)) {
-					FTK3ReportProcessor processor = new FTK3ReportProcessor(caseData, Configuration.properties, output, listOnly);
+					FTK3ReportProcessor processor = new FTK3ReportProcessor(caseData, output, listOnly);
 					alternativeFiles += processor.process(report, caseNames.get(caseNameIndex++));
 
 				} else if ((new File(report, "Export")).exists() && new File(report, "CaseInformation.htm").exists()) {
