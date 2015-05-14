@@ -548,7 +548,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append(getRelativePath(view, reportSubFolder));
                     it.append("\">");
                     it.append(view.getName());
-                    it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
+                    it.append("</a></span></div>\n");
                 }
             }
 
