@@ -1,14 +1,15 @@
-xx/05/2015: IPED-3.4
+14/05/2015: IPED-3.4
 - Geração de miniaturas de vídeos (PCF Wladimir)
 - Geração de relatório HTML dos itens exportados (PCF Wladimir)
 - Parser para arquivos Known.met do e-Mule (PCF Wladimir)
 - Parser para arquivos ShareH.dat e ShareL.dat do Ares Galaxy (PCF Wladimir)
 - Nova categoria Peer-to-Peer, com arquivos do Ares e e-Mule (PCF Wladimir)
-- Simplificação para configurar novos argumentos na linha de comando
+- Simplificação para instalar novos argumentos na linha de comando
 - Atribuição de nome para discos físicos ou imagens (parâmetro -dname)
 - Tarefa para gerar versão de visualização de itens com parser apropriado
 - Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
 - Configurações avançadas movidas para arquivos de configuração adicionais
+- Habilitado uso de * no início de palavras pesquisadas 
 - Carving simples de arquivos do Ares Galaxy
 
 

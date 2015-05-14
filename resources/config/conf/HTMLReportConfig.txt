@@ -2,7 +2,8 @@
 # Configuração da Geração de Relatório HTML #
 #############################################
 
-# Informações padrão específicas do caso/perito.
+# As informações do caso são obtidas de arquivo .asap do Criminalística informado via linha de comando (-asap). 
+# Caso não informado arquivo .asap ou caso ele não tenha todos os dados, são utilizados os valores padrão abaixo.
 Cabecalho=SERVIÇO PÚBLICO FEDERAL<br>MJ - DEPARTAMENTO DE POLÍCIA FEDERAL<br>SUPERINTENDÊNCIA REGIONAL EM SÃO PAULO<br>SETEC - NÚCLEO DE CRIMINALÍSTICA
 Classe=1
 DataDocumento=xx/xx/201x
