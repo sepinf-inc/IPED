@@ -552,8 +552,6 @@ public class Util {
         path.append(hash.charAt(1)).append('/');
         path.append(hash).append('.').append(ext);
         File result = new File(baseDir, path.toString());
-        File parent = result.getParentFile();
-        if (!parent.exists()) parent.mkdirs();
         return result;
     }
     

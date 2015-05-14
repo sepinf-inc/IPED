@@ -277,6 +277,7 @@ public class VideoThumbTask extends AbstractTask {
         File mainTmpFile = null;
         try {
             File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg");
+            if (!mainOutFile.getParentFile().exists()) mainOutFile.getParentFile().mkdirs();
 
             //Já está pasta? Então não é necessário gerar.
             if (mainOutFile.exists()) return;

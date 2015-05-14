@@ -4,9 +4,12 @@ xx/05/2015: IPED-3.4
 - Parser para arquivos Known.met do e-Mule (PCF Wladimir)
 - Parser para arquivos ShareH.dat e ShareL.dat do Ares Galaxy (PCF Wladimir)
 - Nova categoria Peer-to-Peer, com arquivos do Ares e e-Mule (PCF Wladimir)
+- Tarefa para gerar versão de visualização de itens suportados
 - Atribuição de nome para discos físicos ou imagens (parâmetro -dname)
 - Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
 - Carving simples de arquivos do Ares Galaxy
+- Configurações avançadas movidas para conf/AdvancedConfig.txt
+
 
 05/05/2015: IPED-3.3.3
 - Não carregamento de marcadores em relatórios iped (3.3)

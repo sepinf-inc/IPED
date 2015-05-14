@@ -542,7 +542,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
             } else if (!reg.isVideo && !reg.isImage) {
-                File view = getViewFile(reg.hash);
+                File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
                 if (view != null) {
                     it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
                     it.append(getRelativePath(view, reportSubFolder));
@@ -595,22 +595,15 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getThumbFile(String hash) {
-        return Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg");
+        File file = Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg");
+        if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
+        return file;
     }
 
     private File getVideoThumbsFile(String hash) {
-        return Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
-    }
-
-    private File getViewFile(String hash) {
-        File view = Util.getFileFromHash(new File(this.output, viewFolder), hash, "");
-        File[] files = view.getParentFile().listFiles();
-        for (File file : files) {
-            if (file.getName().startsWith(view.getName())) {
-                return file;
-            }
-        }
-        return null;
+    	File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
+    	if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
+        return file;
     }
 
     private String getRelativePath(File file, File refFolder) {
@@ -754,7 +747,7 @@ public class HTMLReportTask extends AbstractTask {
      * Verifica se é imagem.
      */
     public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image");
+        return mediaType.getType().equals("image") || mediaType.toString().endsWith("msmetafile") || mediaType.toString().endsWith("x-emf");
     }
 
     /** 
