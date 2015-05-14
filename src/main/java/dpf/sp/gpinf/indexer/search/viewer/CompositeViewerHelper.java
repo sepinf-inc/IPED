@@ -136,9 +136,11 @@ public class CompositeViewerHelper {
 						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../lib/nativeview");
 						ILazyApplicationInfo[] ila = ass.getLocalApplications();
 						if (ila.length != 0) {
-							systemLO = ila[0].getHome();
 							System.out.println("Detected LO " + ila[0].getMajorVersion() + " " + ila[0].getHome());
-							loadJarDir(new File(App.get().codePath + "/../lib/libLO" + ila[0].getMajorVersion()));
+							if(ila[0].getMajorVersion() != 4)
+								System.out.println("Install LibreOffice4 to enable the Libreoffice viewer!");
+							else
+								systemLO = ila[0].getHome();
 						}
 
 					} catch (OfficeApplicationException e1) {
@@ -162,7 +164,6 @@ public class CompositeViewerHelper {
 						if (systemLO == null) {
 							LOExtractor extractor = new LOExtractor(compressedLO, pathLO);
 							useLO = extractor.decompressLO();
-							loadJarDir(new File(App.get().codePath + "/libLO4"));
 						} else
 							useLO = true;
 					}

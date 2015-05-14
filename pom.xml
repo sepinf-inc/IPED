@@ -43,9 +43,9 @@
     <dependencies>
         <!-- INICIO: DEPENDÊNCIAS INTERNAS -->
         <dependency>
-            <groupId>autopsy</groupId>
-            <artifactId>datamodel</artifactId>
-            <version>1.0.0</version>
+            <groupId>org.sleuthkit</groupId>
+            <artifactId>tsk-datamodel</artifactId>
+            <version>4.2-snapshot20140924</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -184,15 +184,15 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>icepdf</groupId>
+            <groupId>org.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
-            <version>1.0.0</version>
+            <version>5.1.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>icepdf</groupId>
+            <groupId>org.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
-            <version>1.0.0</version>
+            <version>5.1.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -216,7 +216,7 @@
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
-            <version>1.0.0</version>
+            <version>0.3</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -255,26 +255,6 @@
                 <version>2.10</version>
                 <executions>
                     <execution>
-                        <id>unpack-libreoffice-libs</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libre-office</groupId>
-                                    <artifactId>libre-office-lib</artifactId>
-                                    <version>1.0.4</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${lib.dir}</outputDirectory>
-                                    <destFileName>libre-office-lib.zip</destFileName>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>unpack-libewf-dlls</id>
                         <phase>package</phase>
                         <goals>
@@ -289,7 +269,6 @@
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
-                                    <destFileName>libewf.zip</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -309,7 +288,6 @@
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
-                                    <destFileName>graphicsmagick.zip</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -329,7 +307,6 @@
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
-                                    <destFileName>tesseract.zip</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -403,7 +380,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>noalibre-lib</artifactId>
-                                    <version>1.0.4</version>
+                                    <version>4.0.4</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
