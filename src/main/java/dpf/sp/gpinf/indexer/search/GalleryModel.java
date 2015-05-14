@@ -207,9 +207,7 @@ public class GalleryModel extends AbstractTableModel {
 	}
 	
 	private BufferedImage getViewImage(String hash, boolean isVideo) throws IOException{
-		if(hash == null)
-			return null;
-		hash = hash.toLowerCase();
+		hash = hash.toUpperCase();
 		File baseFolder = new File(App.get().codePath).getParentFile();
 		if(isVideo)
 			baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
