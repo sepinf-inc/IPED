@@ -1,9 +1,11 @@
-package dpf.sp.gpinf.indexer.search.viewer;
+package dpf.sp.gpinf.indexer.process.task;
+
+import gpinf.dev.data.EvidenceFile;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Set;
+import java.util.Properties;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -12,22 +14,28 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
-/**
- * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.
- * Somente os tipos cujo Html seja satisfatório devem ser configurados.
- */
-public class TikaHtmlViewer extends HtmlViewer{
+public class MakePreviewTask extends AbstractTask{
+	
+	public static String viewFolder = "view";
 	
 	private Parser parser = new AutoDetectParser();
 
+	public MakePreviewTask(Worker worker) {
+		super(worker);
+	}
+
 	@Override
-	public String getName() {
-		return "TikaHtml";
+	public void init(Properties confParams, File confDir) throws Exception {
+	}
+
+	@Override
+	public void finish() throws Exception {
 	}
 	
-	@Override
 	public boolean isSupportedType(String contentType) {
 		return 	contentType.equals("application/x-msaccess") 
 				|| contentType.equals("application/x-sqlite3")
@@ -35,41 +43,23 @@ public class TikaHtmlViewer extends HtmlViewer{
 				|| contentType.equals("application/x-emule")
 				|| contentType.equals("application/x-ares-galaxy");
 	}
-	
+
 	@Override
-	public void loadFile(File file, String contentType, Set<String> highlightTerms) {
+	protected void process(EvidenceFile evidence) throws Exception {
 		
-		if(file != null)
-			file = getHtmlVersion(file, contentType);
+		String mediaType = evidence.getMediaType().toString();
+		if(evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())
+			return;
 		
-		super.loadFile(file, highlightTerms);
-	}
-	/*
-	 * TODO: Gerar preview html em outra thread, senão pode travar a interface ao trocar de abas no
-	 * 		 visualizador caso a geração do preview seja lenta.
-	 */
-	private File getHtmlVersion(File file, String contentType) {
-
-		File outFile = null;
-		TikaInputStream tis = null;
-		try {
-			tis = TikaInputStream.get(file);
-			outFile = File.createTempFile("tmp", ".html");
-			outFile.deleteOnExit();
-			
-			generateHtmlPreview(tis, outFile, contentType);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-			
-		}finally{
-			IOUtil.closeQuietly(tis);
-		}
-		return outFile;
+		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), "html");
+		if (!viewFile.getParentFile().exists()) viewFile.getParentFile().mkdirs();
+		
+		//Não é necessário fechar tis pois será fechado em evidence.dispose()
+		TikaInputStream tis = evidence.getTikaStream();
+		makeHtmlPreview(tis, viewFile, mediaType);
 	}
 	
-	public void generateHtmlPreview(TikaInputStream tis, File outFile, String contentType){
+	private void makeHtmlPreview(TikaInputStream tis, File outFile, String contentType){
 		BufferedOutputStream outStream = null;
 		try {
 			Metadata metadata = new Metadata();
@@ -89,5 +79,5 @@ public class TikaHtmlViewer extends HtmlViewer{
 			IOUtil.closeQuietly(outStream);
 		}
 	}
-	
+
 }

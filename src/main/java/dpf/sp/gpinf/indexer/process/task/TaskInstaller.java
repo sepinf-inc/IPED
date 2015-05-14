@@ -22,17 +22,20 @@ public class TaskInstaller {
 		tasks.add(new TempFileTask(worker));
 		tasks.add(new HashTask(worker));
 		tasks.add(new LedKFFTask(worker));
-		tasks.add(new KFFTask(worker));
-		tasks.add(new DuplicateTask(worker));
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));
 		tasks.add(new SetCategoryTask(worker));
+		//tarefas que ignoram itens após categorização para incluir categoria de ignorados no csv
+		tasks.add(new KFFTask(worker));
+		tasks.add(new DuplicateTask(worker));
+		
 		tasks.add(new ParsingTask(worker));
 		tasks.add(new ExportFileTask(worker));
+		tasks.add(new MakePreviewTask(worker));
 		tasks.add(new VideoThumbTask(worker));
 		tasks.add(new HTMLReportTask(worker));
-		//Carving precisa ficar apos exportação (devido a rename que muda a referencia)
-		//e antes da indexação (pois pode setar propriedade hasChildren no pai)
+		//Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
+		//e antes da indexação (pois pode setar propriedade hasChildren nos itens)
 		tasks.add(new CarveTask(worker));
 		tasks.add(new IndexTask(worker));
 		tasks.add(new ExportCSVTask(worker));
