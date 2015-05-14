@@ -196,7 +196,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				AnalyzingQueryParser parser = new AnalyzingQueryParser(Versao.current, fields[i], analyzer);
 				// ComplexPhraseQueryParser parser = new
 				// ComplexPhraseQueryParser(Versao.current, fields[i], analyzer);
-				parser.setAllowLeadingWildcard(false);
+				parser.setAllowLeadingWildcard(true);
 				parser.setFuzzyPrefixLength(2);
 				parser.setFuzzyMinSim(0.7f);
 				parser.setDateResolution(DateTools.Resolution.SECOND);
