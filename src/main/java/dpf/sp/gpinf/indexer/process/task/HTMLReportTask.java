@@ -815,7 +815,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private void addBookmarkTitle(StringBuilder sb, String bookmark, int size) {
-        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\"> Categoria: ");
+        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\"> Marcador: ");
         sb.append(bookmark);
         sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">Contagem de arquivos: </span>");
         sb.append(size);
