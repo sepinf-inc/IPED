@@ -585,8 +585,12 @@ public class EvidenceFile implements Serializable, StreamSource {
         	if (tmpFile == null && tis != null && tis.hasFile())
                 tmpFile = tis.getFile();
             if (tmpFile != null)
-                tis = TikaInputStream.get(tmpFile);
-            else
+            	try{
+            		tis = TikaInputStream.get(tmpFile);
+            	}catch(FileNotFoundException fnfe){
+            		tmpFile = null;
+            	}
+            if(tmpFile == null)
             	tis = TikaInputStream.get(getBufferedStream());
         }
 

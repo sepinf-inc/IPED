@@ -16,6 +16,7 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class MakePreviewTask extends AbstractTask{
@@ -54,12 +55,18 @@ public class MakePreviewTask extends AbstractTask{
 		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), "html");
 		if (!viewFile.getParentFile().exists()) viewFile.getParentFile().mkdirs();
 		
-		//Não é necessário fechar tis pois será fechado em evidence.dispose()
-		TikaInputStream tis = evidence.getTikaStream();
-		makeHtmlPreview(tis, viewFile, mediaType);
+		try{
+			//Não é necessário fechar tis pois será fechado em evidence.dispose()
+			TikaInputStream tis = evidence.getTikaStream();
+			makeHtmlPreview(tis, viewFile, mediaType);
+			
+		}catch(Exception e){
+			Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
+		}
+		
 	}
 	
-	private void makeHtmlPreview(TikaInputStream tis, File outFile, String contentType){
+	private void makeHtmlPreview(TikaInputStream tis, File outFile, String contentType) throws Exception{
 		BufferedOutputStream outStream = null;
 		try {
 			Metadata metadata = new Metadata();
@@ -72,9 +79,6 @@ public class MakePreviewTask extends AbstractTask{
 			ToXMLContentHandler handler = new ToXMLContentHandler(outStream, "UTF-8");
 			parser.parse(tis, handler, metadata, context);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			
 		}finally{
 			IOUtil.closeQuietly(outStream);
 		}
