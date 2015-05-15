@@ -53,3 +53,5 @@ Outros Textos = text
 Outros Arquivos = application/octet-stream;
 
 Peer-to-peer = application/x-p2p
+
+Histórico de Internet = application/x-msie-cache

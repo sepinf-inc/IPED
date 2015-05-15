@@ -17,7 +17,6 @@ function addNewCategories(set)
 	set.add("Imagens em Pasta de Sistema");
 	set.add("Textos em Pasta de Sistema");
 	set.add("Lixeira do Windows");
-	set.add("Histórico de Internet");
 	set.add("Atalhos para arquivos");
 	set.add("Atalhos para URLs");
 }
@@ -101,16 +100,7 @@ function addCategory(e){
 			}
 		} else {
 			var nome = e.getName().toLowerCase();
-			if (nome.equals("index.dat")) {
-				var path = e.getPath().toLowerCase();
-				if (path.indexOf("/cookies/") > -1 || 
-	 			   path.indexOf("/internet explorer/") > -1 ||
-	 			   path.indexOf("/iedownloadhistory/") > -1 ||
-	  			   path.indexOf("/content.ie5/") > -1 || 
-				   path.indexOf("/history.ie5/") > -1)
-					e.setCategory("Histórico de Internet");
-					
-			} else if (nome.equals("contacts.edb")) {
+			if (nome.equals("contacts.edb")) {
 				e.setCategory("Contatos");
 				
 			} else if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {

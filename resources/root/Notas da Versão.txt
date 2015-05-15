@@ -10,7 +10,8 @@
 - Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
 - Configurações avançadas movidas para arquivos de configuração adicionais
 - Habilitado uso de * no início de palavras pesquisadas 
-- Carving simples de arquivos do Ares Galaxy
+- Carving básico de arquivos do Ares Galaxy
+- Carving e melhor classificação de arquivos index.dat
 
 
 05/05/2015: IPED-3.3.3

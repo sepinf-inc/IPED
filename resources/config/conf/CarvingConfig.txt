@@ -83,6 +83,8 @@ HTM, text/html, 1000, 10000000, <HTML, </HTML>
 ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.02H_, null
 ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.04L_, null
 
+INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver, null, 28, 4, false
+
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
 #TIF, image/tiff, 1000, 1000000, II\2a\00, null
