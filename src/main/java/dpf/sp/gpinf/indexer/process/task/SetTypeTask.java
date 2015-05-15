@@ -66,7 +66,7 @@ public class SetTypeTask extends AbstractTask {
 			} catch (MimeTypeException e) {
 			}
 
-		if (ext.isEmpty())
+		if (ext.isEmpty() || ext.equals(".txt"))
 			ext = ext1;
 
 		return ext;
