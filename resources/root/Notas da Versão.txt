@@ -1,4 +1,4 @@
-18/05/2015: IPED-3.4
+14/05/2015: IPED-3.4
 Melhorias:
 - Geração de miniaturas de vídeos (PCF Wladimir)
 - Geração de relatório HTML dos itens exportados (PCF Wladimir)
@@ -13,9 +13,10 @@ Melhorias:
 - Habilitado uso de * no início de palavras pesquisadas
 - Carving e melhor classificação de arquivos index.dat
 - Carving de arquivos do Ares Galaxy (básico), EMF e PLIST
-- Carving especializado para EML, com recuperação de anexos base64
+- Carving para EML, com recuperação de anexos base64
 Correções:
 - Mantém extensão original do item caso detectado como txt
+- Fontes de módulos ausentes na distribuição
 
 
 05/05/2015: IPED-3.3.3

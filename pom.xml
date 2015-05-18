@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.3</version>    
+    <version>3.4</version>    
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -402,6 +402,21 @@
                             <excludeScope>provided</excludeScope>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-modules-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                        	<classifier>sources</classifier>
+                            <outputDirectory>${release.dir}/sources</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <includeGroupIds>gpinf.iped</includeGroupIds>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -509,8 +524,7 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${release.dir}</outputDirectory>
-                            <finalName>iped</finalName>
+                            <outputDirectory>${release.dir}/sources</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
