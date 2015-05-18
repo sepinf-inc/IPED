@@ -413,7 +413,7 @@ public class CarveTask extends AbstractTask{
 			//varre lista de cabeçalhos e rodapés EML encontrados e recupera
 			ArrayDeque<Hit> deque = sigsFound.get("EML");
 			if(deque != null)
-			    while(deque.size() > 1){
+			    while(deque.size() > 2 || (k == -1 && deque.size() > 1)){
 			        Hit head = deque.pollFirst();
 			        Hit foot = deque.pollFirst();
 			        if(head.sig % 2 == 0 && foot.sig % 2 == 1){
