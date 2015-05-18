@@ -368,16 +368,15 @@ public class CarveTask extends AbstractTask{
 							 
 						//Testa se possui footer
 						}else if(signatures[s/2].sigs[1].len > 0 ){
-							/*if(!signatures[s/2].name.equals("ZIP") ){
-								sigsFound[0].addLast(head);
-							}else if(sigsFound[1].isEmpty())
-								sigsFound[1].addLast(head);
-							*/
-							if(!signatures[s/2].name.equals("ZIP") || sigsFound.get(signatures[s/2].name).isEmpty())
+
+							//tratamento específico para ZIP e EML: utiliza primeiro cabeçalho encontrado
+							if(sigsFound.get(signatures[s/2].name).isEmpty() ||
+								(!signatures[s/2].name.equals("ZIP") &&
+								(!signatures[s/2].name.equals("EML") || sigsFound.get("EML").peekLast().sig % 2 == 1)))
 								sigsFound.get(signatures[s/2].name).addLast(head);
 							
 							//descarta headers antigos
-							if(sigsFound.get(signatures[s/2].name).size() > 100)
+							if(sigsFound.get(signatures[s/2].name).size() > 1000)
 								sigsFound.get(signatures[s/2].name).pollFirst();
 							
 						}else{
@@ -387,14 +386,19 @@ public class CarveTask extends AbstractTask{
 						
 					}else{
 						foot = new Hit(s, prevLen + i);
-						/*if(signatures[s/2].name.equals("ZIP"))
-							head = sigsFound[1].pollLast();
-						else{
-							Hit hit = sigsFound[0].peekLast();
-							if(hit != null && hit.sig/2 == s/2)
-								head = sigsFound[0].pollLast();
-						}*/
-						head = sigsFound.get(signatures[s/2].name).pollLast();
+						
+						//tratamento específico para EML: guarda último rodapé encontrado para recuperação posterior
+						if(signatures[s/2].name.equals("EML")){
+						    eml = s/2;
+						    Hit lastHit = sigsFound.get(signatures[s/2].name).peekLast();
+						    if(lastHit != null){
+	                            if(lastHit.sig % 2 == 1)
+	                                sigsFound.get(signatures[s/2].name).pollLast();
+	                            sigsFound.get(signatures[s/2].name).addLast(foot);
+						    }
+						    
+						}else
+						    head = sigsFound.get(signatures[s/2].name).pollLast();
 					}
 					
 					if(foot != null && head != null){
@@ -406,13 +410,25 @@ public class CarveTask extends AbstractTask{
 				}
 				
 			}
+			//varre lista de cabeçalhos e rodapés EML encontrados e recupera
+			ArrayDeque<Hit> deque = sigsFound.get("EML");
+			if(deque != null)
+			    while(deque.size() > 1){
+			        Hit head = deque.pollFirst();
+			        Hit foot = deque.pollFirst();
+			        if(head.sig % 2 == 0 && foot.sig % 2 == 1){
+			            long length = foot.off + signatures[foot.sig/2].sigs[1].len - head.off;
+                        if(length >= signatures[eml].minSize && length <= signatures[eml].maxSize)
+                            addCarvedFile(head.off, length, eml);
+			        }
+			    }
 			
 		}while(k != -1);
 		
 		return null;
 	}
 	
-
+	private int eml;
 	
 	private long getLenFromHeader(int i, int s){
 		long length = 0;

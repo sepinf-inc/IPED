@@ -1,4 +1,5 @@
-14/05/2015: IPED-3.4
+18/05/2015: IPED-3.4
+Melhorias:
 - Geração de miniaturas de vídeos (PCF Wladimir)
 - Geração de relatório HTML dos itens exportados (PCF Wladimir)
 - Parser para arquivos Known.met do e-Mule (PCF Wladimir)
@@ -9,9 +10,12 @@
 - Tarefa para gerar versão de visualização de itens com parser apropriado
 - Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
 - Configurações avançadas movidas para arquivos de configuração adicionais
-- Habilitado uso de * no início de palavras pesquisadas 
-- Carving básico de arquivos do Ares Galaxy
+- Habilitado uso de * no início de palavras pesquisadas
 - Carving e melhor classificação de arquivos index.dat
+- Carving de arquivos do Ares Galaxy (básico), EMF e PLIST
+- Carving especializado para EML, com recuperação de anexos base64
+Correções:
+- Mantém extensão original do item caso detectado como txt
 
 
 05/05/2015: IPED-3.3.3

@@ -58,6 +58,8 @@ BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\10\00, nul
 BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\18\00, null, 2, 4, false
 BMP, image/x-ms-bmp, 1000, 10000000, BM????????????????????????\01\00\20\00, null, 2, 4, false
 
+EMF, application/x-emf, 1000, 10000000, \01\00\00\00???????????????????????????????????? EMF, null, 48, 4, false
+
 JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\DB, \ff\d9
 JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\E0, \ff\d9
 JPG, image/jpeg, 1000, 10000000, \ff\d8\ff\EE, \ff\d9
@@ -83,7 +85,15 @@ HTM, text/html, 1000, 10000000, <HTML, </HTML>
 ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.02H_, null
 ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.04L_, null
 
-INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver, null, 28, 4, false
+INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver 4, null, 28, 4, false
+INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver 5, null, 28, 4, false
+
+PLIST, application/xml, 1000, 1000000, <?xml, </plist>
+
+EML, message/rfc822, 1000, 10000000, Received: by, --\0d\0a
+EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
+EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
+EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
