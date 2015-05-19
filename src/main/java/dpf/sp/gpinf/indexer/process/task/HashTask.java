@@ -139,15 +139,9 @@ public class HashTask extends AbstractTask{
 	public static String getHashString(byte[] hash) {
 		StringBuilder result = new StringBuilder();
 		for (byte b : hash)
-			result.append(String.format("%1$02X", b));
+			result.append(String.format("%1$02x", b));
 
 		return result.toString();
 	}
-
-	public static final byte[] getHashBytes(String hash) {
-		return DatatypeConverter.parseHexBinary(hash);
-	}
-
-
 
 }
