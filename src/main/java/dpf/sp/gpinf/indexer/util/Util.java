@@ -548,6 +548,7 @@ public class Util {
      */
     public static File getFileFromHash(File baseDir, String hash, String ext) {
         StringBuilder path = new StringBuilder();
+        hash = hash.toUpperCase();
         path.append(hash.charAt(0)).append('/');
         path.append(hash.charAt(1)).append('/');
         path.append(hash).append('.').append(ext);
@@ -558,11 +559,11 @@ public class Util {
     public static File findFileFromHash(File baseDir, String hash){
 		if(hash == null)
 			return null;
-		hash = hash.toLowerCase();
+		hash = hash.toUpperCase();
 		File hashDir = new File(baseDir, hash.charAt(0) + "/" + hash.charAt(1));
 		if(hashDir.exists())
 			for(File file : hashDir.listFiles())
-				if(file.getName().toLowerCase().startsWith(hash))
+				if(file.getName().startsWith(hash))
 					return file;
 		return null;
 	}

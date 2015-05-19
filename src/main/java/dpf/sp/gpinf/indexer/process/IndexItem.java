@@ -178,7 +178,7 @@ public class IndexItem {
 
 		value = evidence.getHash();
 		if (value != null)
-			doc.add(new StringField(HASH, value, Field.Store.YES));
+			doc.add(new Field(HASH, value, storedTokenizedNoNormsField));
 
 		value = Boolean.toString(evidence.isDuplicate());
 		doc.add(new StringField(DUPLICATE, value, Field.Store.YES));

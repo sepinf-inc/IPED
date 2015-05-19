@@ -173,6 +173,7 @@ public class IndexerProcessor {
 
 			value = doc.get(IndexItem.HASH);
 			if (value != null){
+				value = value.toUpperCase();
 				evidence.setHash(value);
 				
 				File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);

@@ -13,10 +13,10 @@ Melhorias:
 - Habilitado uso de * no início de palavras pesquisadas
 - Carving e melhor classificação de arquivos index.dat
 - Carving de arquivos do Ares Galaxy (básico), EMF e PLIST
-- Carving para EML, com recuperação de anexos base64
+- Carving especializado para EML, com recuperação de anexos base64 etc
 Correções:
 - Mantém extensão original do item caso detectado como txt
-- Fontes de módulos ausentes na distribuição
+- Códigos-fonte de módulos ausentes na distribuição
 
 
 05/05/2015: IPED-3.3.3
