@@ -113,7 +113,7 @@ public class VideoThumbsMaker {
             Dimension dimension = getDimension(info);
             result.setDimension(dimension);
 
-            if (result.getVideoDuration() != 0 && result.getDimension() != null) break;
+            if (result.getVideoDuration() > 0 && result.getDimension() != null) break;
 
             cmds.add(1, "-demuxer");
             cmds.add(2, "lavf");
@@ -370,6 +370,7 @@ public class VideoThumbsMaker {
         if (p1 < 0) return -1;
         int p2 = info.indexOf('\n', p1);
         String s = info.substring(p1 + s1.length(), p2);
+        if (s.isEmpty() || !Character.isDigit(s.charAt(0))) return -1;
         return (long) (1000 * Double.parseDouble(s));
     }
 
