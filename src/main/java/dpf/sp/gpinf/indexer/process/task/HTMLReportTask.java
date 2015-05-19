@@ -509,7 +509,7 @@ public class HTMLReportTask extends AbstractTask {
                     img.append("<a href=\"");
                     img.append("../").append(reg.export);
                     img.append("\"/><img src=\"");
-                    img.append(thumbFile.getPath());
+                    img.append(getRelativePath(thumbFile,reportSubFolder));
                     img.append("\" width=\"");
                     img.append(thumbSize);
                     img.append("\" height=\"");
@@ -609,7 +609,7 @@ public class HTMLReportTask extends AbstractTask {
     private String getRelativePath(File file, File refFolder) {
         Path pathAbsolute = file.toPath();
         Path pathBase = refFolder.toPath();
-        return pathBase.relativize(pathAbsolute).toString();
+        return pathBase.relativize(pathAbsolute).toString().replace('\\', '/');
     }
 
     private void createImageThumb(EvidenceFile evidence, File thumbFile) {
