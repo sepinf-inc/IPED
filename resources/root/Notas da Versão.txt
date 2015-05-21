@@ -12,8 +12,8 @@ Melhorias:
 - Configurações avançadas movidas para arquivos de configuração adicionais
 - Habilitado uso de * no início de palavras pesquisadas
 - Carving e melhor classificação de arquivos index.dat
-- Carving de arquivos do Ares Galaxy (básico), EMF e PLIST
-- Carving especializado para EML, com recuperação de anexos base64 etc
+- Carving de arquivos do Ares Galaxy (básico) e EMF
+- Carving especializado para EML, com recuperação de anexos base64, etc
 Correções:
 - Mantém extensão original do item caso detectado como txt
 - Códigos-fonte de módulos ausentes na distribuição

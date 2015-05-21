@@ -24,7 +24,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 public class CmdLineArgs {
 	
 	/** Título da ajuda */
-	private static String usage = Versao.APP_NAME + "\n" + "Uso: java -jar indexer.jar -opcao  argumento [--opcao_sem_argumento]";
+	private static String usage = Versao.APP_NAME + "\n" + "Uso: java -jar iped.jar -opcao  argumento [--opcao_sem_argumento]";
 	
 	/**
 	 * Parâmetros aceitos via linha de comando e respectiva descrição (ajuda).
