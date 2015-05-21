@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 
@@ -44,12 +45,16 @@ public class VideoThumbsMaker {
 
     public String getVersion() {
         List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer}));
-        String info = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
+
+        ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
+        if (res.exitCode != 0) return null;
+        String info = res.output;
         if (info != null) {
             if (info.indexOf("\n") > 0) {
                 info = info.substring(0, info.indexOf("\n"));
             }
         }
+        if (info.indexOf("MPlayer")<0) return null;
         return info;
     }
 
@@ -81,12 +86,13 @@ public class VideoThumbsMaker {
         boolean fixed = false;
         File lnk = null;
         for (int step = 0; step <= 1; step++) {
-            String info = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
+            ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
             if (firstCall) {
                 firstCall = false;
                 maxLines = 2000;
             }
 
+            String info = res.output;
             if (step == 0 && info.indexOf("File not found") >= 0 && !fixed) {
                 fixed = true;
                 String shortName = getShortName(inOrg);
@@ -168,12 +174,13 @@ public class VideoThumbsMaker {
         cmds.addAll(Arrays.asList(new String[] {"-vo","jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape,"-ao","null","-ss",ssVal,"-sstep",String.valueOf(frequency),"-frames",String.valueOf(maxThumbs + 1),in.getPath()}));
 
         for (int step = 0; step <= 1; step++) {
-            String ret = run(cmds.toArray(new String[0]), timeoutProcess);
+            ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
             files = subTmp.listFiles(new FileFilter() {
                 public boolean accept(File pathname) {
                     return pathname.getName().toLowerCase().endsWith(".jpg");
                 }
             });
+            String ret = res.output;
             if (!scaled) {
                 int p1 = ret.indexOf(s1);
                 if (p1 > 0) {
@@ -217,7 +224,7 @@ public class VideoThumbsMaker {
 
             if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) break;
             if (step == 0) {
-                int  pos = cmds.indexOf("-sstep");
+                int pos = cmds.indexOf("-sstep");
                 cmds.remove(pos + 1);
                 cmds.remove(pos);
                 pos = cmds.indexOf("-ss");
@@ -297,8 +304,9 @@ public class VideoThumbsMaker {
     private String getShortName(File in) {
         if (!isWindows) return null;
         String[] cdir = new String[] {"cmd","/c","dir","/x",in.getPath()};
-        String sdir = run(cdir, 1000);
-        if (sdir != null) {
+        ExecResult res = run(cdir, 1000);
+        String sdir = res.output;
+        if (sdir != null && res.exitCode == 0) {
             String ext = getExtensao(in.getName());
             if (ext != null) {
                 String[] lines = sdir.split("\n");
@@ -388,7 +396,7 @@ public class VideoThumbsMaker {
         return new Dimension(Integer.parseInt(info.substring(p1 + s1.length(), p2)), Integer.parseInt(info.substring(p3 + s3.length(), p4)));
     }
 
-    private final String run(String[] cmds, int timeout) {
+    private final ExecResult run(String[] cmds, int timeout) {
         if (verbose) {
             System.err.print("CMD = ");
             for (int i = 0; i < cmds.length; i++) {
@@ -400,7 +408,8 @@ public class VideoThumbsMaker {
         }
 
         StringBuilder sb = new StringBuilder();
-        Counter counter = new Counter();
+        AtomicInteger counter = new AtomicInteger();
+        int exitCode = -1000;
         try {
             final Process process = Runtime.getRuntime().exec(cmds);
 
@@ -414,7 +423,7 @@ public class VideoThumbsMaker {
             while (true) {
                 Thread.sleep(10);
                 try {
-                    process.exitValue();
+                    exitCode = process.exitValue();
                     break;
                 } catch (IllegalThreadStateException threadStateException) {
                     if (System.currentTimeMillis() > t) {
@@ -424,14 +433,14 @@ public class VideoThumbsMaker {
                     }
                 }
             }
-            return sb.toString();
+            return new ExecResult(exitCode, sb.toString());
         } catch (Exception e) {
             if (verbose) {
                 System.err.print("Erro executando comando '");
                 e.printStackTrace();
             }
         }
-        return null;
+        return new ExecResult(exitCode, null);
     }
 
     private String getExtensao(String nome) {
@@ -464,45 +473,54 @@ public class VideoThumbsMaker {
         this.verbose = verbose;
     }
 
-    class Counter {
-        int val;
-
-        synchronized void inc() {
-            val++;
-        }
-    }
-
     class StreamGobbler extends Thread {
         InputStream is;
         StringBuilder sb;
-        Counter counter;
+        AtomicInteger counter;
         Process process;
 
-        StreamGobbler(InputStream is, StringBuilder sb, Counter counter, Process process) {
+        StreamGobbler(InputStream is, StringBuilder sb, AtomicInteger counter, Process process) {
             this.is = is;
             this.sb = sb;
             this.counter = counter;
             this.process = process;
+            setDaemon(true);
         }
 
         public void run() {
+            BufferedReader br = null;
             try {
-                InputStreamReader isr = new InputStreamReader(is);
-                BufferedReader br = new BufferedReader(isr, 256);
+                br = new BufferedReader(new InputStreamReader(is), 256);
                 String line = null;
                 while ((line = br.readLine()) != null) {
                     synchronized (sb) {
-                        counter.inc();
+                        counter.incrementAndGet();
                         sb.append(line).append('\n');
                         if (verbose) System.err.println(line);
-                        if (line.indexOf("Error while decoding frame!") >= 0 || counter.val > maxLines) {
+                        if (line.indexOf("Error while decoding frame!") >= 0 || counter.intValue() > maxLines) {
                             process.destroy();
+                            break;
                         }
                     }
                 }
             } catch (IOException ioe) {
-                ioe.printStackTrace();
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {}
+                }
             }
+        }
+    }
+
+    class ExecResult {
+        final int exitCode;
+        final String output;
+
+        public ExecResult(int exitCode, String output) {
+            this.exitCode = exitCode;
+            this.output = output;
         }
     }
 }
