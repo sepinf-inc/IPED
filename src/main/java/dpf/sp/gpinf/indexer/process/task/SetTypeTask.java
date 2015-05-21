@@ -69,7 +69,7 @@ public class SetTypeTask extends AbstractTask {
 		if (ext.isEmpty() || ext.equals(".txt"))
 			ext = ext1;
 
-		return ext;
+		return ext.toLowerCase();
 
 	}
 

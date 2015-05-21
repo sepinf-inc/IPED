@@ -234,5 +234,23 @@
             <match value="Client UrlCache MMF Ver" type="string" offset="0"/>
         </magic>
     </mime-type>
+    
+    <mime-type type="application/x-tika-ooxml-protected-docx">
+        <sub-class-of type="application/x-tika-ooxml-protected"/> 
+        <!--Extensão maiúscula para evitar conflito-->
+        <glob pattern="*.DOCX"/>
+    </mime-type>
+    
+    <mime-type type="application/x-tika-ooxml-protected-xlsx">
+        <sub-class-of type="application/x-tika-ooxml-protected"/>
+        <!--Extensão maiúscula para evitar conflito-->
+        <glob pattern="*.XLSX"/>
+    </mime-type>
+    
+    <mime-type type="application/x-tika-ooxml-protected-pptx">
+        <sub-class-of type="application/x-tika-ooxml-protected"/>
+        <!--Extensão maiúscula para evitar conflito-->
+        <glob pattern="*.PPTX"/>
+    </mime-type>
    
  </mime-info>
