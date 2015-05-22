@@ -333,29 +333,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				return;
 			}
 			
-			
-			MediaType contentType;
-			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
-			if(contentTypeStr == null)
-				try {
-					if(SignatureTask.processFileSignatures)
-						contentType = detector.detect(tis, metadata).getBaseType();
-					else
-						contentType = detector.detect(null, metadata).getBaseType();
-					
-				} catch (Exception e) {
-					contentType = MediaType.OCTET_STREAM;
-				}
-			else
-				contentType = MediaType.parse(contentTypeStr);
-
 			EvidenceFile subItem = new EvidenceFile();
 			subItem.setName(name);
 			if (hasTitle)
 				subItem.setExtension("");
 			subItem.setPath(filePath);
-			subItem.setMediaType(contentType);
+			
+			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+			if(contentTypeStr != null)
+				subItem.setMediaType(MediaType.parse(contentTypeStr));
 			
 			EvidenceFile parent = evidence;
 			if(itemInfo.getEvidence() != null)
@@ -376,21 +362,24 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			//subItem.setCarved(parent.isCarved());
 			subItem.setSubItem(true);
 			
-			if(metadata.get(OutlookPSTParser.HAS_ATTACHS) != null && OutlookPSTParser.OUTLOOK_MSG_MIME.equals(contentTypeStr)){
-				//subItem.setHasChildren(true);
+			//guarda email para setá-lo como pai dos seus anexos
+			if(metadata.get(OutlookPSTParser.HAS_ATTACHS) != null)
 				itemInfo.setEvidence(subItem);
-			}
 
 			// pausa contagem de timeout do pai antes de extrair e processar subitem
 			reader.setTimeoutPaused(true);
 						
 			ExportFileTask extractor = new ExportFileTask(worker);
+			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
 			extractor.extractFile(tis, subItem);
 
-			new SetCategoryTask(worker).process(subItem);
+			//TODO setar tipo antes da categoria?
+			if(contentTypeStr != null)
+				new SetCategoryTask(worker).process(subItem);
 
-			// teste para extraÃ§Ã£o de anexos de emails de PSTs
-			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
+			// teste para extração£o de anexos de emails de PSTs
+			if (metadata.get(ExtraProperties.TO_EXTRACT) != null || (contentTypeStr != null &&
+				(!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem))) ) {
 				subItem.setToExtract(true);
 				metadata.set(ExtraProperties.TO_EXTRACT, "true");
 				//int id = evidence.getId();

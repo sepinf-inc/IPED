@@ -10,6 +10,7 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
@@ -29,7 +30,10 @@ public class SetTypeTask extends AbstractTask {
 	public void process(EvidenceFile evidence) throws Exception {
 		
 		if (evidence.getType() == null) {
-			String ext = getExtBySig(evidence);
+			String ext = "";
+			if (!evidence.getMediaType().toString().equals(OutlookPSTParser.OUTLOOK_MSG_MIME))
+				ext = getExtBySig(evidence);
+			
 			if (!ext.isEmpty()){
 				if(ext.length() > 1 && evidence.isCarved() && evidence.getName().startsWith("Carved-")){
 					evidence.setName(evidence.getName() + ext);

@@ -127,7 +127,9 @@ public class ExportFileTask extends AbstractTask{
         }
 		
 		//Renomeia subitem caso deva ser exportado
-		if (evidence.isSubItem() && evidence.isToExtract() && !ItemProducer.indexerReport) {
+		if (evidence.isSubItem() && !ItemProducer.indexerReport &&
+		   (!hasCategoryToExtract() || isToBeExtracted(evidence) || evidence.isToExtract()))	
+		{
 			renameToHash(evidence);
 			incSubitensExtracted();
 		}
@@ -182,12 +184,9 @@ public class ExportFileTask extends AbstractTask{
 		String hash = evidence.getHash();
 		if (hash != null) {
 			File file = evidence.getFile();
-			String name = file.getName();
-			String ext = "";
-			int i = name.lastIndexOf('.');
-			if (i != -1)
-				ext = name.substring(i);
-
+			String ext = evidence.getType().getLongDescr();
+			if(!ext.isEmpty())
+				ext = "." + ext;
 			
 			File hashFile = getHashFile(hash, ext);
 			
@@ -237,11 +236,13 @@ public class ExportFileTask extends AbstractTask{
 
 	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
 
-		String ext = new SetTypeTask(worker).getExtBySig(evidence);
-		String type = ext;
-		ext = Util.getValidFilename(ext);
-		if (ext.equals("."))
-			ext = "";
+		String ext = "";
+		if(evidence.getMediaType() != null){
+			ext = new SetTypeTask(worker).getExtBySig(evidence);
+			ext = Util.getValidFilename(ext);
+			if (ext.equals("."))
+				ext = "";
+		}
 
 		String hash;
 		File outputFile = null;
@@ -282,13 +283,6 @@ public class ExportFileTask extends AbstractTask{
 				}
 			}
 		}
-		
-
-		if (evidence.getMediaType().toString().equals("message/outlook-pst"))
-			type = "";
-		if (!type.isEmpty())
-			type = type.substring(1);
-		evidence.setType(new GenericFileType(type));
 
 		String relativePath = Util.getRelativePath(output, outputFile);
 		evidence.setExportedFile(relativePath);
