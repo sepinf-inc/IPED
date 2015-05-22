@@ -89,6 +89,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	private boolean extractEmbedded;
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
 	private volatile ParsingReader reader;
+	private boolean hasTitle = false;
 
 	public ParsingTask(ParseContext context) {
 		super(null);
@@ -273,7 +274,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		return true;
 	}
 	
-	private String getName(Metadata metadata, int child, Boolean hasTitle){
+	private String getName(Metadata metadata, int child){
+		hasTitle = false;
 		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
 		if (name == null || name.isEmpty()) {
 			name = metadata.get(TikaCoreProperties.TITLE);
@@ -304,8 +306,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			ItemInfo itemInfo = context.get(ItemInfo.class);
 			itemInfo.incChild();
 
-			Boolean hasTitle = false;
-			String name = getName(metadata, itemInfo.getChild(), hasTitle);
+			String name = getName(metadata, itemInfo.getChild());
 
 			filePath = metadata.get(ExtraProperties.EMBEDDED_PATH);
 			String parentPath = itemInfo.getPath();
@@ -314,9 +315,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			else
 				filePath = parentPath + ">>" + filePath + ">>" + name;
 			
-			int i = name.lastIndexOf('/');
-			if (i != -1)
-				name = name.substring(i + 1);
+			if(!hasTitle){
+				int i = name.lastIndexOf('/');
+				if (i != -1)
+					name = name.substring(i + 1);
+			}
 
 			char[] nameChars = (name + "\n\n").toCharArray();
 			handler.characters(nameChars, 0, nameChars.length);
