@@ -48,7 +48,7 @@ public class SignatureTask extends AbstractTask {
 				}
 				
 				//Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
-				if(type.toString().equals("application/x-tika-ooxml-protected")
+				if(type != null && type.toString().equals("application/x-tika-ooxml-protected")
 					&& "docx xlsx pptx".contains(evidence.getExt().toLowerCase())){
 						type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase());
 				}
