@@ -25,6 +25,8 @@ import gpinf.dev.filetypes.GenericFileType;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
 import org.apache.tika.mime.MediaType;
@@ -90,13 +92,12 @@ public class IndexerProcessor {
 				InicializarBusca.inicializar(indexDir.getAbsolutePath());
 		}
 		
+		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 		
 		HashSet<Integer> selectedLabels = new HashSet<Integer>(); 
 		App.get().marcadores = state;
 		PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(""));
 		SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
-		
-		
 
 		for (int docID : result.docs) {
 
