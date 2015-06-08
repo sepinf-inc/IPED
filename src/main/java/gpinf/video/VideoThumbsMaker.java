@@ -54,7 +54,7 @@ public class VideoThumbsMaker {
                 info = info.substring(0, info.indexOf("\n"));
             }
         }
-        if (info.indexOf("MPlayer")<0) return null;
+        if (info.indexOf("MPlayer") < 0) return null;
         return info;
     }
 
@@ -93,7 +93,7 @@ public class VideoThumbsMaker {
             }
 
             String info = res.output;
-            if (step == 0 && info.indexOf("File not found") >= 0 && !fixed) {
+            if (step == 0 && info != null && info.indexOf("File not found") >= 0 && !fixed) {
                 fixed = true;
                 String shortName = getShortName(inOrg);
                 if (shortName != null) {
@@ -112,14 +112,15 @@ public class VideoThumbsMaker {
                     continue;
                 }
             }
+            if (info != null) {
+                long duration = getDuration(info);
+                result.setVideoDuration(duration);
 
-            long duration = getDuration(info);
-            result.setVideoDuration(duration);
+                Dimension dimension = getDimension(info);
+                result.setDimension(dimension);
 
-            Dimension dimension = getDimension(info);
-            result.setDimension(dimension);
-
-            if (result.getVideoDuration() > 0 && result.getDimension() != null) break;
+                if (result.getVideoDuration() > 0 && result.getDimension() != null) break;
+            }
 
             cmds.add(1, "-demuxer");
             cmds.add(2, "lavf");
@@ -181,48 +182,49 @@ public class VideoThumbsMaker {
                 }
             });
             String ret = res.output;
-            if (!scaled) {
-                int p1 = ret.indexOf(s1);
-                if (p1 > 0) {
-                    int p2 = ret.indexOf(s2, p1);
-                    if (p2 > 0) {
-                        int p3 = ret.indexOf(" ", p2 + s2.length());
-                        if (p3 > 0) {
-                            String[] s = ret.substring(p1 + s1.length(), p3).split(s2);
-                            if (s.length == 2) {
-                                s = s[1].split("x");
-                                scaled = true;
-                                Dimension nd = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-                                if (!nd.equals(result.getDimension())) {
-                                    result.setDimension(nd);
-                                    int pos = cmds.indexOf(scale);
-                                    if (pos >= 0) {
-                                        maxHeight = result.getDimension().height * maxWidth / result.getDimension().width;
-                                        scale = "scale=" + maxWidth + ":" + maxHeight;
-                                        cmds.set(pos, scale);
-                                        step--;
-                                        continue;
+            if (ret != null) {
+                if (!scaled) {
+                    int p1 = ret.indexOf(s1);
+                    if (p1 > 0) {
+                        int p2 = ret.indexOf(s2, p1);
+                        if (p2 > 0) {
+                            int p3 = ret.indexOf(" ", p2 + s2.length());
+                            if (p3 > 0) {
+                                String[] s = ret.substring(p1 + s1.length(), p3).split(s2);
+                                if (s.length == 2) {
+                                    s = s[1].split("x");
+                                    scaled = true;
+                                    Dimension nd = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+                                    if (!nd.equals(result.getDimension())) {
+                                        result.setDimension(nd);
+                                        int pos = cmds.indexOf(scale);
+                                        if (pos >= 0) {
+                                            maxHeight = result.getDimension().height * maxWidth / result.getDimension().width;
+                                            scale = "scale=" + maxWidth + ":" + maxHeight;
+                                            cmds.set(pos, scale);
+                                            step--;
+                                            continue;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
-            if (ignoreWaitKeyFrame == 0 && step == 0) {
-                String rlc = ret.toLowerCase();
-                if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) && (rlc.indexOf("lavdopts") >= 0 || rlc.indexOf("wait_keyframe") >= 0)) {
-                    step = -1;
-                    ignoreWaitKeyFrame = 1;
-                    int pos = cmds.indexOf("-lavdopts");
-                    cmds.remove(pos + 1);
-                    cmds.remove(pos);
-                    System.err.println(">>>>> OPCAO '-lavdopts wait_keyframe' DESABILITADA.");
-                    continue;
+                if (ignoreWaitKeyFrame == 0 && step == 0) {
+                    String rlc = ret.toLowerCase();
+                    if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) && (rlc.indexOf("lavdopts") >= 0 || rlc.indexOf("wait_keyframe") >= 0)) {
+                        step = -1;
+                        ignoreWaitKeyFrame = 1;
+                        int pos = cmds.indexOf("-lavdopts");
+                        cmds.remove(pos + 1);
+                        cmds.remove(pos);
+                        System.err.println(">>>>> OPCAO '-lavdopts wait_keyframe' DESABILITADA.");
+                        continue;
+                    }
                 }
+                if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) break;
             }
-
-            if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) break;
             if (step == 0) {
                 int pos = cmds.indexOf("-sstep");
                 cmds.remove(pos + 1);
@@ -503,8 +505,7 @@ public class VideoThumbsMaker {
                         }
                     }
                 }
-            } catch (IOException ioe) {
-            } finally {
+            } catch (IOException ioe) {} finally {
                 if (br != null) {
                     try {
                         br.close();
