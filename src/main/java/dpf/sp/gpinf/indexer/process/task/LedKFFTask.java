@@ -13,6 +13,7 @@ import java.util.Properties;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.Log;
 
 /**
  * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser integrada a tarefa de KFF.
@@ -22,11 +23,12 @@ import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
  * @author Nassif
  *
  */
-public class LedKFFTask extends AbstractTask{
-    
+public class LedKFFTask extends AbstractTask {
+
     private static String ledCategory = "Hash com Alerta (PI)";
     private static Object lock = new Object();
     private static HashValue[] hashArray;
+    private static final String taskName = "Consulta Base de Hashes do LED";
 
     public LedKFFTask(Worker worker) {
         super(worker);
@@ -34,58 +36,63 @@ public class LedKFFTask extends AbstractTask{
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        
-        synchronized(lock){
-            if(hashArray != null)
-                return;
-            
+
+        synchronized (lock) {
+            if (hashArray != null) return;
+
             this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
-            String hash = confParams.getProperty("hash");
+            String hash = confParams.getProperty("hash").toLowerCase();
             String ledWkffPath = confParams.getProperty("ledWkffPath");
-            if(ledWkffPath == null)
-                return;
+            if (ledWkffPath == null) return;
             File wkffDir = new File(ledWkffPath);
-            if(!wkffDir.exists())
-            	throw new Exception("Caminho para base de hashes do LED inválido!");
-            
+            if (!wkffDir.exists()) throw new Exception("Caminho para base de hashes do LED inválido!");
+
+            int column = -1;
+            if (hash.equals("md5")) column = 0;
+            else if (hash.equals("sha-1") || hash.equals("sha1")) column = 3;
+            else {
+                Log.warning(taskName, "Apenas hashes md5 e sha-1 disponíveis na base do LED.");
+                Log.warning(taskName, "Tipo de hash configurado: " + hash + ".");
+                Log.warning(taskName, "Tarefa DESABILITADA!");
+                hashArray = new HashValue[0];
+                return;
+            }
+
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Carregando base de hashes do LED...");
-            
+
             ArrayList<HashValue> hashList = new ArrayList<HashValue>();
-            for(File wkffFile : wkffDir.listFiles()){
+            for (File wkffFile : wkffDir.listFiles()) {
                 BufferedReader reader = new BufferedReader(new FileReader(wkffFile));
                 String line = reader.readLine();
-                while((line = reader.readLine()) != null){
+                while ((line = reader.readLine()) != null) {
                     String[] hashes = line.split(" \\*");
-                    if(hash.equals("md5"))
-                        hashList.add(new HashValue(hashes[0].trim()));
-                    else if(hash.equals("sha-1"))
-                        hashList.add(new HashValue(hashes[3].trim()));
+                    hashList.add(new HashValue(hashes[column].trim()));
                 }
                 reader.close();
             }
             hashArray = hashList.toArray(new HashValue[0]);
             hashList = null;
             Arrays.sort(hashArray);
+            Log.info(taskName, "Hashes carregados: " + hashArray.length);
         }
-        
+
     }
 
     @Override
     public void finish() throws Exception {
         hashArray = null;
-        
+
     }
 
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
-        
+
         String hash = evidence.getHash();
-        if(hash != null && hashArray != null){
-            if(Arrays.binarySearch(hashArray, new HashValue(hash)) >= 0)
-                evidence.addCategory(ledCategory);
-                
+        if (hash != null && hashArray != null) {
+            if (Arrays.binarySearch(hashArray, new HashValue(hash)) >= 0) evidence.addCategory(ledCategory);
+
         }
-        
+
     }
 
 }

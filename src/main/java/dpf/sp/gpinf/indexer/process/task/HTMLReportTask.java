@@ -500,7 +500,7 @@ public class HTMLReportTask extends AbstractTask {
             it.delete(0, it.length());
             it.append(item);
 
-            if (reg.isImage && imageThumbsEnabled) {
+            if (reg.isImage && imageThumbsEnabled && reg.hash != null) {
                 File thumbFile = getThumbFile(reg.hash);
                 if (thumbFile.exists()) {
                     it.append("<table width=\"100%\"><tr><td>");
@@ -525,7 +525,7 @@ public class HTMLReportTask extends AbstractTask {
                         l.add(img.toString());
                     }
                 }
-            } else if (reg.isVideo && videoThumbsEnabled) {
+            } else if (reg.isVideo && videoThumbsEnabled && reg.hash != null) {
                 File videoThumbsFile = getVideoThumbsFile(reg.hash);
                 File stripeFile = getThumbFile(reg.hash);
                 if (stripeFile.exists()) {
@@ -541,7 +541,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append(">");
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
-            } else if (!reg.isVideo && !reg.isImage) {
+            } else if (!reg.isVideo && !reg.isImage && reg.hash != null) {
                 File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
                 if (view != null) {
                     it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
@@ -730,7 +730,7 @@ public class HTMLReportTask extends AbstractTask {
     private void replace(StringBuilder sb, String a, String b) {
         while (true) {
             int pos = sb.indexOf(a);
-            if (pos >= 0) sb.replace(pos, pos + a.length(), b);
+            if (pos >= 0) sb.replace(pos, pos + a.length(), b == null ? "-" : b);
             else break;
         }
     }
