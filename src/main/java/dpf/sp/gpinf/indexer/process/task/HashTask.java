@@ -51,7 +51,7 @@ public class HashTask extends AbstractTask{
 		if (value != null)
 			value = value.trim();
 		if (value != null && !value.isEmpty()){
-			this.algorithm = value.toUpperCase().replace("-", "");
+			this.algorithm = value.toUpperCase();
 			this.digest = MessageDigest.getInstance(algorithm);
 		}
 		
