@@ -118,7 +118,7 @@ public class GraphicsMagicConverter {
 						}
 		 				
 		 		} catch (TimeoutException e) {
-		 			System.out.println("Timeout running GM.");
+		 			Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP, probably the image is corrupted.");
 		 			convertTask.cancel(true);
 		 			
 		 		}
