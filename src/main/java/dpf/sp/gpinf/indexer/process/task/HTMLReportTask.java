@@ -352,7 +352,7 @@ public class HTMLReportTask extends AbstractTask {
             }
         }
 
-        if (((imageThumbsEnabled && reg.isImage) || (videoThumbsEnabled && reg.isVideo)) && !reg.hash.isEmpty()) {
+        if (((imageThumbsEnabled && reg.isImage) || (videoThumbsEnabled && reg.isVideo)) && reg.hash != null) {
             //Verifica se há outro arquivo igual em processamento, senão inclui
             synchronized (currentFiles) {
                 if (currentFiles.contains(evidence.getHash())) return;
