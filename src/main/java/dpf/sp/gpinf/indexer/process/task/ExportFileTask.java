@@ -169,7 +169,7 @@ public class ExportFileTask extends AbstractTask{
 	
 
 	private File getHashFile(String hash, String ext) {
-		String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ext;
+		String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext);
 		File result = new File(extractDir, path);
 		File parent = result.getParentFile();
 		if (!parent.exists())
@@ -239,16 +239,13 @@ public class ExportFileTask extends AbstractTask{
 
 		String ext = new SetTypeTask(worker).getExtBySig(evidence);
 		String type = ext;
-		ext = Util.getValidFilename(ext);
-		if (ext.equals("."))
-			ext = "";
 
 		String hash;
 		File outputFile = null;
 		Object hashLock = new Object();
 		
 		if (!computeHash)
-			outputFile = new File(getSubDir(extractDir), Integer.toString(evidence.getId()) + ext);
+			outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
 
 		else if ((hash = evidence.getHash()) != null){
 			outputFile = getHashFile(hash, ext);
@@ -258,7 +255,7 @@ public class ExportFileTask extends AbstractTask{
 			}
 					
 		}else {
-			outputFile = new File(extractDir, Integer.toString(evidence.getId()) + ext);
+			outputFile = new File(extractDir, Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
 			if (!outputFile.getParentFile().exists())
 				outputFile.getParentFile().mkdirs();
 		}
