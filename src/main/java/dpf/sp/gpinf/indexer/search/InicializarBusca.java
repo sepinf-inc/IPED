@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
@@ -124,46 +125,49 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		}
 	}
 	
-	private void updateImagePaths() throws TskCoreException{
-		File sleuthFile = new File(App.get().codePath + "/../../sleuth.db"); 
+	private void updateImagePaths() throws Exception{
+		File tmpCase = null, sleuthFile = new File(App.get().codePath + "/../../sleuth.db"); 
 		if (sleuthFile.exists()) {
-			// IOUtil.loadNatLibs(App.get().codePath + "/../lib/sleuth");
 			App.get().sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
-			if(sleuthFile.canWrite()){
-				char letter = App.get().codePath.charAt(0);
-				Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
-				for(Long id : imgPaths.keySet()){
-					List<String> paths = imgPaths.get(id);
-					ArrayList<String> newPaths = new ArrayList<String>(); 
-					for(String path : paths){
-						if(new File(path).exists())
-							break;
+			char letter = App.get().codePath.charAt(0);
+			Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
+			for(Long id : imgPaths.keySet()){
+				List<String> paths = imgPaths.get(id);
+				ArrayList<String> newPaths = new ArrayList<String>(); 
+				for(String path : paths){
+					if(new File(path).exists())
+						break;
+					else{
+						String newPath = letter + path.substring(1);
+						if(new File(newPath).exists())
+							newPaths.add(newPath);
+						
 						else{
-							String newPath = letter + path.substring(1);
+							File file = new File(path);
+							String relPath = "";
+							do{
+								relPath = File.separator + file.getName() + relPath;
+								newPath = sleuthFile.getParent() + relPath;
+								file = file.getParentFile();
+								
+							}while(file != null && !new File(newPath).exists());
+							
 							if(new File(newPath).exists())
 								newPaths.add(newPath);
-							
-							else{
-								File file = new File(path);
-								String relPath = "";
-								do{
-									relPath = File.separator + file.getName() + relPath;
-									newPath = sleuthFile.getParent() + relPath;
-									file = file.getParentFile();
-									
-								}while(file != null && !new File(newPath).exists());
-								
-								if(new File(newPath).exists())
-									newPaths.add(newPath);
-							}
 						}
 					}
-					if(newPaths.size() > 0)
-						App.get().sleuthCase.setImagePaths(id, newPaths);
-					
+				}
+				if(newPaths.size() > 0){
+					if(tmpCase == null && !sleuthFile.canWrite()){
+						tmpCase = File.createTempFile("iped-", ".db");
+						tmpCase.deleteOnExit();
+						App.get().sleuthCase.close();
+						IOUtil.copiaArquivo(sleuthFile, tmpCase);
+						App.get().sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
+					}	
+					App.get().sleuthCase.setImagePaths(id, newPaths);	
 				}
 			}
-			
 		}
 	}
 
