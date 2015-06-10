@@ -539,6 +539,8 @@ public class Util {
 
 		} else {
 			path += File.separator + "Win" + File.separator + arch;
+			System.load(new File(path + "msvcp100.dll").getAbsolutePath());
+			System.load(new File(path + "msvcr100.dll").getAbsolutePath());
 			System.load(new File(path + "zlib.dll").getAbsolutePath());
 			System.load(new File(path + "libewf.dll").getAbsolutePath());
 		}

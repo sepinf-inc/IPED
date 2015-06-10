@@ -265,7 +265,7 @@
                                 <artifactItem>
                                     <groupId>libyal.libewf</groupId>
                                     <artifactId>libewf-zip</artifactId>
-                                    <version>2014.02.03</version>
+                                    <version>2014.02.03.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
