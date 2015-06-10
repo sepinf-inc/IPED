@@ -1,3 +1,11 @@
+10/06/2015: IPED-3.4.1
+- Erro ao configurar hashes sha-256 e sha-512
+- Erro durante geração de relatório HTML ao processar item sem hash
+- Inclusão de dlls do MS Visual c++ necessárias
+- Correção do ajuste do nome de itens exportados, considerando limitações do Joliet
+- Geração de sleuth.db temporário quando readonly se necessário atualizar caminho para imagens
+- Correção para detectar tipo de itens com conteúdo inacessível via extensão
+
 21/05/2015: IPED-3.4
 Melhorias:
 - Geração de miniaturas de vídeos (PCF Wladimir)

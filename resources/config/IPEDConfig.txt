@@ -17,11 +17,13 @@ hash = md5
 
 # Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base. É altamente
 # recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
-# base NSRL via opção -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt
+# base NSRL via opção -importkff. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt.
+# Necessário utilizar hash md5 ou sha-1.
 #kffDb = E:/kff/kff.db
 
 # Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
-# existentes na base são adicionados a uma categoria "Alerta de hash (PI)"
+# existentes na base são adicionados a uma categoria "Hash com Alerta (PI)"
+# Necessário utilizar hash md5 ou sha-1.
 #ledWkffPath = E:/LED/V1.17.00/pedo/wkff
 
 # Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
