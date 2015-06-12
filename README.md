@@ -1,4 +1,4 @@
-# IPED (site em contrução)
+# IPED (em contrução, ainda sem código)
 
 Software forense computacional para exame completo de mídias de armazenamento de dados.
 
