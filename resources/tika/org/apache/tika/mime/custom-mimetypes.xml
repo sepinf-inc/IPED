@@ -130,7 +130,7 @@
     </mime-type>
   	
   	<mime-type type="application/messenger-chat">
-    	<magic priority="50">
+    	<magic priority="60">
     	 	<match value="MessageLog.xsl......Log" type="string" offset="60:70" mask="0xFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000FFFFFF"/>
     	</magic>
     	<sub-class-of type="application/xml"/>
