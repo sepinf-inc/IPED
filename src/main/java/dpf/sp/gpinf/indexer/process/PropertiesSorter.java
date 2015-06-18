@@ -87,11 +87,8 @@ public class PropertiesSorter {
 					field.value = value.getBytes("UTF-8");
 					array[i] = field;
 				}
-				
-				if(System.getProperty("java.version").compareTo("1.8") >= 0)
-				    Arrays.parallelSort(array, comparator);
-				else
-				    Arrays.sort(array, comparator);
+
+				Arrays.sort(array, comparator);
 
 				int[] sortedArray = new int[reader.maxDoc()];
 				int order = 0;
