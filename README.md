@@ -1,6 +1,7 @@
 # IPED (em contrução)
 
 Software forense computacional para exame completo de mídias de armazenamento de dados.
+Licenciado sob GNU GPL v3
 
 Desenvolvido em java, com foco na velocidade de processamento e num exame detalhado e em profundidade sem perder a simplicidade de análise. Resumo das principais funcionalidades:
 - Decodificação de imagens dd, 001, e01 e iso via Sleuthkit 4.2 e Libewf
