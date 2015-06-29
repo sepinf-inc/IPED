@@ -443,6 +443,9 @@ public class CarveTask extends AbstractTask{
 		if(i + prevLen + length > maxLen)
 			length = maxLen - (i + prevLen);
 		
+		if(signatures[s/2].name.equals("AVI"))
+			length += 8; 
+		
 		return length;
 	}
 	

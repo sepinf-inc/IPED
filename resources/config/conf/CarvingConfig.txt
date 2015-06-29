@@ -93,6 +93,8 @@ EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 
+AVI, video/x-msvideo, 100000, 100000000, RIFF????AVI, null, 4, 4, false
+
 #PLIST, application/xml, 1000, 1000000, <?xml, </plist>
 
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
@@ -100,8 +102,7 @@ EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 #TIF, image/tiff, 1000, 1000000, II\2a\00, null
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\ba, \00\00\01\b9
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\b3, \00\00\01\b7
-#AVI, video/x-msvideo, 100000, 10000000, RIFF????AVI, null
-#ASF, video/x-ms-asf, 100000, 10000000, \30\26\B2\75, null
+#ASF, video/x-ms-asf, 100000, 10000000, \30\26\B2\75\8E\66\CF\11, null
 #FLV, video/x-flv, 100000, 10000000, FLV, null
 #MP4, video/mp4, 100000, 10000000, ????ftypmp41, null
 #MP4, video/mp4, 100000, 10000000, ????ftypmp42, null
