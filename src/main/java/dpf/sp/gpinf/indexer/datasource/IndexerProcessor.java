@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
@@ -94,7 +95,7 @@ public class IndexerProcessor {
 		
 		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 		
-		HashSet<Integer> selectedLabels = new HashSet<Integer>(); 
+		HashSet<Integer> selectedLabels = new HashSet<Integer>();
 		App.get().marcadores = state;
 		PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(""));
 		SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
@@ -182,7 +183,17 @@ public class IndexerProcessor {
 					evidence.setViewFile(viewFile.getAbsolutePath());
 				}
 			}
-				
+			
+			//Copia resultado prévio do OCR
+			String ocrPrefix = Util.getOcrTextPath(id);
+			File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
+			File destDir = new File(output, ocrPrefix);
+			if(ocrDir.exists()){
+				destDir.mkdirs();
+				for(String name : ocrDir.list())
+					if(name.equals(id + ".txt") || name.startsWith(id + "-child"))
+						IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
+			}
 			
 			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));
