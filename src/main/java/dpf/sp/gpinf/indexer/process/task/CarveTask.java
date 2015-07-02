@@ -363,8 +363,27 @@ public class CarveTask extends AbstractTask{
 						//Testa se possui info de tamanho
 						}else if(signatures[s/2].sizeBytes > 0){
 							long length = getLenFromHeader(i, s);
-							if(length > 0)
+							
+							//utiliza cabeçalho anterior ASF encontrado
+							if(signatures[s/2].name.equals("ASF"))
+								head = sigsFound.get("ASF").pollLast();
+							
+							if(length > 0 && head != null)
 								foot = new Hit(s, head.off + length);
+						
+							//experimental: MOV e derivados
+							/*if(signatures[s/2].name.startsWith("MOV") && foot != null){
+								if(signatures[s/2].name.equals("MOV")){
+									sigsFound.get("MOV").addLast(head);
+									sigsFound.get("MOV").addLast(foot);
+									
+								}else if(!sigsFound.get("MOV").isEmpty() && sigsFound.get("MOV").peekLast().off == head.off){
+									sigsFound.get("MOV").pollLast();
+									sigsFound.get("MOV").addLast(foot);
+								}
+								foot = null;
+								mov = s/2;
+							}*/
 							 
 						//Testa se possui footer
 						}else if(signatures[s/2].sigs[1].len > 0 ){
@@ -491,7 +510,7 @@ public class CarveTask extends AbstractTask{
 		
 		evidence.setDeleted(this.evidence.isDeleted());
 		evidence.setCarved(true);
-		if(!signatures[sig].name.equals("OLE") && !signatures[sig].name.equals("ZIP"))
+		if(signatures[sig].mimeType != null)
 			evidence.setMediaType(signatures[sig].mimeType);
 		
 		long prevOff = this.evidence.getFileOffset();
