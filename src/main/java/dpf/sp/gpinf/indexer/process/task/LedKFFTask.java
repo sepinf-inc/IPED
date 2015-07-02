@@ -41,13 +41,15 @@ public class LedKFFTask extends AbstractTask {
             if (hashArray != null) return;
 
             this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
-            String hash = confParams.getProperty("hash").toLowerCase();
+            String hash = confParams.getProperty("hash");
             String ledWkffPath = confParams.getProperty("ledWkffPath");
-            if (ledWkffPath == null) return;
+            if (ledWkffPath == null || hash == null)
+            	return;
             File wkffDir = new File(ledWkffPath);
             if (!wkffDir.exists()) throw new Exception("Caminho para base de hashes do LED inválido!");
 
             int column = -1;
+            hash = hash.toLowerCase();
             if (hash.equals("md5")) column = 0;
             else if (hash.equals("sha-1") || hash.equals("sha1")) column = 3;
             else {
