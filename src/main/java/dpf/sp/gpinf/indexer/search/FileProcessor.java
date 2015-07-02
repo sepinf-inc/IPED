@@ -36,7 +36,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 	private static Object lock = new Object(), lock2 = new Object();
 	private Document doc;
 	private boolean listSubItens;
-	private static volatile File lastFile, dirFile;
+	private static volatile File lastFile, emptyFile;
 
 	public FileProcessor(int docId, boolean listSubItens) {
 		this.listSubItens = listSubItens;
@@ -95,20 +95,21 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 				return;
 			App.get().parentItemModel.listParents(doc);
 		}
-		
 
 		File file = null;
 		String export = doc.get(IndexItem.EXPORT);
 		if (export != null && !export.isEmpty()){
 			file = Util.getRelativeFile(App.get().codePath + "/../..", export);
 			file = Util.getFile(file, doc);
-			if(file.isDirectory()){
-				if(dirFile == null)
+			
+			//teste se não é arquivo regular (dir, named pipe, simlink, socket)
+			if(!file.isFile()){
+				if(emptyFile == null)
 					try {
-						dirFile = File.createTempFile("indexador", ".tmp");
-						dirFile.deleteOnExit();
+						emptyFile = File.createTempFile("indexador", ".tmp");
+						emptyFile.deleteOnExit();
 					} catch (IOException e) {}
-				file = dirFile;
+				file = emptyFile;
 			}
 			
 		}else {

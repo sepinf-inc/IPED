@@ -503,7 +503,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @return InputStream com o conteúdo do arquivo.
      */
     public InputStream getStream() throws IOException {
-    	if (startOffset == -1 && file != null && !isDir)
+    	if (startOffset == -1 && file != null && !isDir && file.isFile())
             return new FileInputStream(file);
     	
         if (tmpFile == null && tis != null && tis.hasFile())
@@ -519,7 +519,7 @@ public class EvidenceFile implements Serializable, StreamSource {
         	}
 
         InputStream stream = null;
-        if (file != null && !this.isDir)
+        if (file != null && !this.isDir && file.isFile())
         	try{
         		stream = new FileInputStream(file);
         		
@@ -579,7 +579,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public TikaInputStream getTikaStream() throws IOException {
         
-        if (startOffset == -1 && file != null && !this.isDir)
+        if (startOffset == -1 && file != null && !this.isDir && file.isFile())
             tis = TikaInputStream.get(file);
         else{
         	if (tmpFile == null && tis != null && tis.hasFile())
