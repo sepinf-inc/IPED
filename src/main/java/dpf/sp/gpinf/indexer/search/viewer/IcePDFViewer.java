@@ -41,7 +41,7 @@ public class IcePDFViewer extends AbstractViewer {
 	 * 
 	 */
 	private static final long serialVersionUID = -4538119351386926692L;
-	private volatile SwingController pdfController, prevController;
+	private volatile SwingController pdfController;
 	private volatile JPanel viewerPanel;
 
 	volatile int fitMode = DocumentViewController.PAGE_FIT_WINDOW_WIDTH;
@@ -65,7 +65,8 @@ public class IcePDFViewer extends AbstractViewer {
 		System.setProperty("org.icepdf.core.ccittfax.jai", "true");
 		System.setProperty("org.icepdf.core.minMemory", "150M");
 		System.setProperty("org.icepdf.core.views.page.text.highlightColor", "0xFFFF00");
-		// System.setProperty("org.icepdf.core.awtFontLoading", "true");
+		//pode provocar crash da jvm
+		//System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
 	}
 
@@ -76,31 +77,32 @@ public class IcePDFViewer extends AbstractViewer {
 
 		pdfController = new SwingController();
 		pdfController.setIsEmbeddedComponent(true);
+		pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
 
 		PropertiesManager propManager = new PropertiesManager(System.getProperties(), pdfController.getMessageBundle());
 		propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false");
-		//propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_UTILITY, "false");
 		propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false");
 		propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true");
 		propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false");
 		propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true");
 		propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+		//propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_UTILITY, "false");
 		// propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_PAGENAV, "true");
 		// propManager.set("application.showLocalStorageDialogs", "NO");
 
 		final SwingViewBuilder factory = new SwingViewBuilder(pdfController, propManager, null, false, SwingViewBuilder.TOOL_BAR_STYLE_FIXED, null, viewMode, fitMode);
-
-		// SwingViewBuilder factory = new SwingViewBuilder(pdfController,
-		// viewMode, fitMode);
+		// SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+		
+		final JPanel panel = this.getPanel();
 
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				viewerPanel = factory.buildViewerPanel();
+				panel.add(viewerPanel, BorderLayout.CENTER);
+				panel.setMinimumSize(new Dimension());
 			}
 		});
-
-		// System.out.println("Viewer PDF ok");
 
 	}
 
@@ -119,42 +121,15 @@ public class IcePDFViewer extends AbstractViewer {
 	@Override
 	public void loadFile(final File file, final Set<String> highlightTerms) {
 
-		new Thread() {
-			SwingController controller = prevController;
-
-			@Override
-			public void run() {
-				if (controller != null) {
-					if (controller.getDocumentViewController().getFitMode() != 0)
-						fitMode = controller.getDocumentViewController().getFitMode();
-
-					controller.closeDocument();
-					controller.dispose();
-				}
-			}
-		}.start();
-
+		pdfController.closeDocument();
+		
 		if (file == null)
 			return;
 
-		final JPanel panel = this.getPanel();
-
 		new Thread() {
 			@Override
 			public void run() {
 
-				init();
-
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						panel.removeAll();
-						panel.add(viewerPanel, BorderLayout.CENTER);
-						panel.setMinimumSize(new Dimension());
-					}
-				});
-
-				prevController = pdfController;
 				pdfController.openDocument(file.getAbsolutePath());
 
 				if (fitMode != pdfController.getDocumentViewController().getFitMode())
@@ -163,6 +138,7 @@ public class IcePDFViewer extends AbstractViewer {
 				if (pdfController.isUtilityPaneVisible())
 					pdfController.setUtilityPaneVisible(false);
 
+				//resize to force redraw
 				getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
 				delta *= -1;
 
@@ -184,7 +160,7 @@ public class IcePDFViewer extends AbstractViewer {
 				return;
 			
 			//Workaround to rendering problem whith the first page with hits
-			Thread.sleep(1000);
+			Thread.sleep(500);
 
 			boolean caseSensitive = false, wholeWord = true;
 			for (String term : highlightTerms)
