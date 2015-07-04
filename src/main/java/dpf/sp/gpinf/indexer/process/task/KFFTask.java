@@ -95,13 +95,20 @@ public class KFFTask extends AbstractTask{
             excluded = 0;
             
             File kffDb = new File(kffDbPath);
-            db = DBMaker.newFileDB(kffDb)
-                    .transactionDisable()
-                    .mmapFileEnableIfSupported()
-                    .asyncWriteEnable()
-                    .asyncWriteFlushDelay(1000)
-                    .asyncWriteQueueSize(1024000)
-                    .make();
+            try{
+                db = DBMaker.newFileDB(kffDb)
+                        .transactionDisable()
+                        .mmapFileEnableIfSupported()
+                        .asyncWriteEnable()
+                        .asyncWriteFlushDelay(1000)
+                        .asyncWriteQueueSize(1024000)
+                        .make();
+              
+            }catch(ArrayIndexOutOfBoundsException e){
+                throw new Exception("Base KFF corrompida. Importe ou copie novamente 'AMBOS' os arquivos "
+                        + "kff.db e kff.db.p para a pasta " + kffDb.getParent());
+            }
+            
             md5Map = db.getHashMap("md5Map");
             sha1Map = db.getHashMap("sha1Map");
             products = db.getHashMap("productMap");
