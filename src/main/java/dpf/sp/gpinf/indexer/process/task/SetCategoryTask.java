@@ -61,10 +61,6 @@ public class SetCategoryTask extends AbstractTask{
 	private static ScriptEngine engine;
 	private static Invocable inv;
 	private static boolean refineCategories = false;
-
-	public SetCategoryTask(Worker worker) {
-		super(worker);
-	}
 	
 	//TODO inserir parametro no init referente a arquivo e diretorio de configuraÃ§Ã£o	
 	@Override

@@ -41,10 +41,6 @@ public class HashTask extends AbstractTask{
 	private MessageDigest digest;
 	private String algorithm;	
 	
-	public HashTask(Worker worker){
-		super(worker);
-	}
-	
 	@Override
 	public void init(Properties confProps, File confDir) throws Exception {
 		String value = confProps.getProperty("hash");

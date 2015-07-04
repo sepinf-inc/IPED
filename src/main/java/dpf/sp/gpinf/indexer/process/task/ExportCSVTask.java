@@ -45,13 +45,6 @@ public class ExportCSVTask extends AbstractTask{
 	public static volatile boolean headerWritten = false;
 	
 	private StringBuilder list = new StringBuilder();
-
-	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
-		super(worker);
-		this.output = new File(output.getParentFile(), CSV_NAME);
-		if(output.exists() && !IndexFiles.getInstance().appendIndex)
-			Files.delete(output.toPath());
-	}
 	
 	/**
 	 * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados
@@ -170,6 +163,10 @@ public class ExportCSVTask extends AbstractTask{
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			exportFileProps = Boolean.valueOf(value);
+		
+		this.output = new File(output.getParentFile(), CSV_NAME);
+        if(output.exists() && !IndexFiles.getInstance().appendIndex)
+            Files.delete(output.toPath());
 		
 		headerWritten = false;
 		

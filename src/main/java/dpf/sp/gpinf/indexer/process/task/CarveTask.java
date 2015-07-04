@@ -70,13 +70,12 @@ public class CarveTask extends AbstractTask{
 	
 	static ArrayList<CarverType> sigArray = new ArrayList<CarverType>();
 	static CarverType[] signatures;
+	static MediaTypeRegistry registry;
 	
 	public static int itensCarved = 0;
 	private static int largestPatternLen = 100;
 	
 	EvidenceFile evidence;
-	MediaTypeRegistry registry;
-
 	
 	long prevLen = 0;
 	int len = 0, k = 0;
@@ -89,11 +88,6 @@ public class CarveTask extends AbstractTask{
 
 	synchronized public static int getItensCarved() {
 		return itensCarved;
-	}
-
-	public CarveTask(Worker worker){
-		super(worker);
-		this.registry = worker.config.getMediaTypeRegistry();
 	}
 
 	public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -154,7 +148,7 @@ public class CarveTask extends AbstractTask{
 	
 	public void process(EvidenceFile evidence) {
 		//Nova instancia pois o mesmo objeto é reusado e nao é imutável
-		new CarveTask(worker).safeProcess(evidence);
+		new CarveTask().safeProcess(evidence);
 	}
 
 	private void safeProcess(EvidenceFile evidence) {
@@ -544,6 +538,10 @@ public class CarveTask extends AbstractTask{
 
 	@Override
 	public void init(Properties confProps, File confDir) throws Exception {
+	    
+	    if(registry == null)
+	        registry = worker.config.getMediaTypeRegistry();
+	    
 		String value = confProps.getProperty("enableCarving");
 		if (value != null)
 			value = value.trim();

@@ -60,14 +60,6 @@ public class ExportFileTask extends AbstractTask{
 	private File extractDir;
 	private HashMap<HashValue, HashValue> hashMap;
 
-	public ExportFileTask(Worker worker) {
-		super(worker);
-		if (output != null) {
-			this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
-		}
-
-	}
-
 	public static synchronized void incSubitensExtracted() {
 		subitensExtracted++;
 	}
@@ -146,7 +138,7 @@ public class ExportFileTask extends AbstractTask{
 			extractFile(is, evidence);
 			evidence.setFileOffset(-1);
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao extrair " + evidence.getPath() + "\t\t" + e.toString());
 
 		} finally {
@@ -234,11 +226,15 @@ public class ExportFileTask extends AbstractTask{
 		}
 	}
 
-	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
+	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws Exception {
 
 		String ext = "";
-		if(evidence.getMediaType() != null)
-			ext = new SetTypeTask(worker).getExtBySig(evidence);
+		if(evidence.getMediaType() != null){
+		    SetTypeTask typeTask = new SetTypeTask();
+		    typeTask.setWorker(worker);
+		    typeTask.init(null, null);
+			ext = typeTask.getExtBySig(evidence);
+		}
 
 		String hash;
 		File outputFile = null;
@@ -287,10 +283,18 @@ public class ExportFileTask extends AbstractTask{
 			evidence.setLength(outputFile.length());
 
 	}
+	
+	public void initOutDir(){
+	    if (output != null)
+            this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+	}
 
 	@Override
 	public void init(Properties confProps, File confDir) throws Exception {
-		load(new File(confDir, EXTRACT_CONFIG));
+	    
+	    initOutDir();
+		
+	    load(new File(confDir, EXTRACT_CONFIG));
 		
 		if(hasCategoryToExtract())
 			caseData.setContainsReport(true);

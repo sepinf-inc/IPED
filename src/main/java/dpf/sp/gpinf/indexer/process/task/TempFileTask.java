@@ -24,10 +24,6 @@ public class TempFileTask extends AbstractTask{
 	private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
 	private boolean indexTempOnSSD = false;
 
-	public TempFileTask(Worker worker) {
-		super(worker);
-	}
-
 	@Override
 	public void init(Properties confParams, File confDir) throws Exception {
 		String value = confParams.getProperty("indexTempOnSSD");
