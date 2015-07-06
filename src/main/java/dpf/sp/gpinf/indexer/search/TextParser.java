@@ -158,7 +158,8 @@ public class TextParser extends CancelableWorker {
 
 			ParseContext context = new ParseContext();
 			context.set(Parser.class, (Parser) App.get().autoParser);
-			context.set(ItemInfo.class, new ItemInfo(id, categorias, doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
+			context.set(ItemInfo.class, new ItemInfo(id, doc.get(IndexItem.HASH),categorias, 
+			            doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
 			ParsingTask expander = new ParsingTask(context);
 			expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
 			context.set(EmbeddedDocumentExtractor.class, expander);

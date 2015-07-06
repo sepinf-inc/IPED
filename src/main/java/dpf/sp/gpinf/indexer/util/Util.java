@@ -579,7 +579,4 @@ public class Util {
 		return null;
 	}
     
-    public static String getOcrTextPath(int id){
-    	return "text/" + (id % 100) / 10 + "/" + id % 10;
-    }
 }
