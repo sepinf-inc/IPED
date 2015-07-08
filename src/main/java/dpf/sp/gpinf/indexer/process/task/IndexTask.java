@@ -141,7 +141,9 @@ public class IndexTask extends AbstractTask{
 			}finally{
 				if (reader != null)
 					reader.reallyClose();
-				IOUtil.closeQuietly(tis);
+				//comentado pois provoca problema de concorrência com temporaryResources
+				//Já é fechado na thread de parsing do parsingReader
+				//IOUtil.closeQuietly(tis);
 			}
 			
 			if (reader != null)
