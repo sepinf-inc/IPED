@@ -4,6 +4,7 @@ import gpinf.dev.data.CaseData;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,8 @@ public class CmdLineArgs {
 	/** Título da ajuda */
 	private static String usage = Versao.APP_NAME + "\n" + "Uso: java -jar iped.jar -opcao  argumento [--opcao_sem_argumento]";
 	
+	public static String ALL_ARGS = "ALL_ARGS";
+	
 	/**
 	 * Parâmetros aceitos via linha de comando e respectiva descrição (ajuda).
 	 * Aqui devem ser cadastrados novos parâmetros de novos módulos.
@@ -34,7 +37,7 @@ public class CmdLineArgs {
 		{"-d"			, "dados diversos (pode ser usado varias vezes):\n\t"
 						+ "pasta, imagem DD, 001, E01, AFF (apenas linux), ISO, disco físico,\n\t"
 						+ "ou arquivo *.iped (contendo seleção de itens a exportar e reindexar)"},
-		{"-dname"		, "nome (opcional) para imagens ou discos físicos adicionados via -d"},
+		{"-dname"		, "nome (opcional) para dados adicionados via -d"},
 		{"-o"			, "pasta de saida da indexacao"},
 		{"-r"			, "pasta do relatorio do AsAP3 ou FTK3"},
 		{"-c"			, "nome do caso, apenas para relatorio do FTK3"},
@@ -88,6 +91,8 @@ public class CmdLineArgs {
 		
 		if (args.length == 0 || args[0].contains("--help") || args[0].contains("/?") || args[0].contains("-h"))
 			printUsageExit();
+		
+		paramMap.put(ALL_ARGS, Arrays.asList(args));
 		
 		for (int i = 0; i < args.length; i++) {
 			

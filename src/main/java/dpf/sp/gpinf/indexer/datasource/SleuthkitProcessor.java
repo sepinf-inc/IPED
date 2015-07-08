@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 
@@ -173,15 +174,7 @@ public class SleuthkitProcessor {
 
 		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 		
-		CmdLineArgs cmdArgs = ((CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName()));
-		List<String> dnames = cmdArgs.getCmdArgs().get("-dname");
-		List<String> sources = cmdArgs.getCmdArgs().get("-d");
-		if(dnames != null)
-			for(int i = 0; i < sources.size(); i++)
-				if(sources.get(i).endsWith(file.getName())){
-					deviceName = dnames.get(i);
-					break;
-				}
+		deviceName = ItemProducer.getEvidenceName(caseData, file);
 
 		for (long k = firstId; k <= lastId; k++) {
 

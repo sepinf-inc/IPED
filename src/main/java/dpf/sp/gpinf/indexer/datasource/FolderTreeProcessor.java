@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.LinkedList;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -42,6 +43,7 @@ public class FolderTreeProcessor {
 	private boolean listOnly;
 	private File baseFile, rootFile;
 	private String category;
+	private String evidenceName;
 
 	public FolderTreeProcessor(CaseData caseData, File basePath, boolean listOnly) {
 		this.caseData = caseData;
@@ -52,6 +54,7 @@ public class FolderTreeProcessor {
 	public void process(File file) throws Exception {
 
 		rootFile = file;
+		evidenceName = ItemProducer.getEvidenceName(caseData, file);
 		
 		if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
 			category = file.getName();
@@ -71,13 +74,19 @@ public class FolderTreeProcessor {
 			return null;
 		} else {
 			EvidenceFile evidenceFile = new EvidenceFile();
-
-			String name = file.getName();
-			evidenceFile.setName(name);
+			evidenceFile.setName(file.getName());
 
 			String relativePath = Util.getRelativePath(baseFile, file);
 			evidenceFile.setExportedFile(relativePath);
-			evidenceFile.setPath(relativePath);
+			
+			if(evidenceName == null)
+				evidenceFile.setPath(relativePath);
+			else{
+				String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
+				evidenceFile.setPath(path);
+				if(file.equals(rootFile))
+					evidenceFile.setName(evidenceName);
+			}
 			// evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
 
 			if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport())
