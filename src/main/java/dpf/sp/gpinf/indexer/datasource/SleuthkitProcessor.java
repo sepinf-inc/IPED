@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -184,15 +185,21 @@ public class SleuthkitProcessor {
 
 		for (long k = firstId; k <= lastId; k++) {
 
-			AbstractFile absFile = sleuthCase.getAbstractFileById(k);
+			AbstractFile absFile = null;
+			Content content = null;
 			
-			if(absFile == null){
-				Content content = sleuthCase.getContentById(k);
-
-				if(content != null)
-					addEvidenceFile(content);
+			try{
+				absFile = sleuthCase.getAbstractFileById(k);
+				if(absFile == null)
+					content = sleuthCase.getContentById(k);
+				
+			}catch(TskCoreException e){
+				//Tenta continuar após erro de banco corrompido
 				continue;
 			}
+			
+			if(content != null)
+				addEvidenceFile(content);
 			
 			if(Configuration.addUnallocated && absFile != null && absFile.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) == 0){
 				
