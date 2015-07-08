@@ -87,7 +87,7 @@ public class PropertiesSorter {
 					field.value = value.getBytes("UTF-8");
 					array[i] = field;
 				}
-
+				
 				Arrays.sort(array, comparator);
 
 				int[] sortedArray = new int[reader.maxDoc()];
@@ -225,16 +225,16 @@ public class PropertiesSorter {
 
 		// FieldSorter[] sorter = new FieldSorter[numThreads];
 		// consome menos mem.
-		FieldSorter[] sorter = new FieldSorter[1];
-		int fieldIndex = 0;
+		FieldSorter[] sorter = new FieldSorter[2];
+		int fieldIndex = fields.length - 1;
 
 		boolean someWorkerAlive = true;
 		Exception exception = null;
 		while (someWorkerAlive && exception == null) {
 			someWorkerAlive = false;
 			for (int k = 0; k < sorter.length; k++) {
-				if ((sorter[k] == null || !sorter[k].isAlive()) && fieldIndex < fields.length) {
-					sorter[k] = new FieldSorter(fields[fieldIndex++], reader);
+				if ((sorter[k] == null || !sorter[k].isAlive()) && fieldIndex >= 0) {
+					sorter[k] = new FieldSorter(fields[fieldIndex--], reader);
 					sorter[k].start();
 					someWorkerAlive = true;
 				}
