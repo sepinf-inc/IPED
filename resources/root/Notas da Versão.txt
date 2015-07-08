@@ -1,3 +1,14 @@
+XX/07/2015: IPED-3.4.2
+Melhorias:
+- Reaproveita resultado do OCR ao gerar relatório
+- Carving para AVI e ASF (WMV e WMA)
+Correções:
+- Problema intermitente ao renderizar PDFs e perda de foco
+- Itens presentes na base do LED não eram categorizados por tipo
+- Travamento ao processar pastas com arquivos especiais (named pipes, sockets, etc)
+- Melhor classificação de Históricos do MSN
+
+
 10/06/2015: IPED-3.4.1
 - Erro ao configurar hashes sha-256 e sha-512
 - Erro durante geração de relatório HTML ao processar item sem hash
