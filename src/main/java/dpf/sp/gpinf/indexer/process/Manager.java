@@ -186,7 +186,8 @@ public class Manager {
 				}
 		ParsingReader.shutdownTasks();
 		if (writer != null)
-			writer.close();
+			writer.rollback();
+		
 		if (contador != null) {
 			contador.interrupt();
 			// contador.join(5000);
@@ -316,7 +317,7 @@ public class Manager {
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
 			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Índice...");
-			IOUtil.copiaDiretorio(indexTemp, indexDir);			
+			IOUtil.copiaDiretorio(indexTemp, indexDir);
 		}
 		
 		for (int k = 0; k < workers.length; k++) {
