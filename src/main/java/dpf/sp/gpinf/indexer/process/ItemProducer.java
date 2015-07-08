@@ -45,18 +45,18 @@ public class ItemProducer extends Thread {
 
 	private final CaseData caseData;
 	private final boolean listOnly;
-	private List<File> reports;
+	private List<File> datasources;
 	private List<String> caseNames;
 	private File output;
 	private Manager manager;
 	
 	private SleuthkitProcessor sleuthkitProcessor;
 
-	ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> reports, List<String> caseNames, File output) {
+	ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, List<String> caseNames, File output) {
 		this.caseData = caseData;
 		this.listOnly = listOnly;
 		this.caseNames = caseNames;
-		this.reports = reports;
+		this.datasources = datasources;
 		this.output = output;
 		this.manager = manager;
 		if(listOnly)
@@ -74,36 +74,36 @@ public class ItemProducer extends Thread {
 	public void run() {
 		try {
 			int caseNameIndex = 0;
-			for (File report : reports) {
+			for (File source : datasources) {
 				if (Thread.interrupted())
 					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
 
 				if (!listOnly) {
-					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Processando '" + report.getAbsolutePath() + "'");
-					System.out.println(new Date() + "\t[INFO]\t" + "Processando '" + report.getAbsolutePath() + "'");
+					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Processando '" + source.getAbsolutePath() + "'");
+					System.out.println(new Date() + "\t[INFO]\t" + "Processando '" + source.getAbsolutePath() + "'");
 				}
 
 				int alternativeFiles = 0;
-				if ((new File(report, "files")).exists() && FTK3ReportProcessor.bookmarkExists(report)) {
+				if ((new File(source, "files")).exists() && FTK3ReportProcessor.bookmarkExists(source)) {
 					FTK3ReportProcessor processor = new FTK3ReportProcessor(caseData, output, listOnly);
-					alternativeFiles += processor.process(report, caseNames.get(caseNameIndex++));
+					alternativeFiles += processor.process(source, caseNames.get(caseNameIndex++));
 
-				} else if ((new File(report, "Export")).exists() && new File(report, "CaseInformation.htm").exists()) {
+				} else if ((new File(source, "Export")).exists() && new File(source, "CaseInformation.htm").exists()) {
 					FTK1ReportProcessor processor = new FTK1ReportProcessor(caseData, listOnly);
-					alternativeFiles += processor.process(report);
+					alternativeFiles += processor.process(source);
 
-				} else if (SleuthkitProcessor.isSupported(report)) {
+				} else if (SleuthkitProcessor.isSupported(source)) {
 					sleuthkitProcessor = new SleuthkitProcessor(caseData, output, listOnly);
-					sleuthkitProcessor.process(report);
+					sleuthkitProcessor.process(source);
 
-				} else if (IndexerProcessor.isSupported(report)) {
+				} else if (IndexerProcessor.isSupported(source)) {
 					indexerReport = true;
 					IndexerProcessor processor = new IndexerProcessor(caseData, output, listOnly);
-					processor.process(report);
+					processor.process(source);
 
 				} else {
 					FolderTreeProcessor processor = new FolderTreeProcessor(caseData, output, listOnly);
-					processor.process(report);
+					processor.process(source);
 
 				}
 
