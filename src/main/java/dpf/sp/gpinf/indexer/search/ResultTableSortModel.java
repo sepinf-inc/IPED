@@ -42,6 +42,6 @@ public class ResultTableSortModel extends AbstractTableModel {
 		if (col == 2)
 			return row;
 		else
-			return app.results.docs[row];
+			return app.ids[app.results.docs[row]];
 	}
 }

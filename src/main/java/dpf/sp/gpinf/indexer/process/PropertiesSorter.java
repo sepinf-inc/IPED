@@ -30,12 +30,14 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.search.ResultTableModel;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Realiza a pré-ordenação das propriedades, agilizando as ordenações no aplicativo de análise,
@@ -78,19 +80,24 @@ public class PropertiesSorter {
 				Comparator<Field> comparator = getComparator(field);
 
 				Field[] array = new Field[reader.maxDoc()];
+				int lastId = 0;
 				for (int i = 0; i < reader.maxDoc(); i++) {
-					String value = reader.document(i).get(field);
+					Document doc = reader.document(i);
+					int id = Integer.valueOf(doc.get(IndexItem.ID));
+					if(id > lastId)
+						lastId = id;
+					String value = doc.get(field);
 					if (value == null)
 						value = "";
 					Field field = new Field();
-					field.id = i;
+					field.id = id;
 					field.value = value.getBytes("UTF-8");
 					array[i] = field;
 				}
 				
 				Arrays.sort(array, comparator);
 
-				int[] sortedArray = new int[reader.maxDoc()];
+				int[] sortedArray = new int[lastId + 1];
 				int order = 0;
 				Field previous = null;
 				for (Field field : array) {
@@ -102,13 +109,19 @@ public class PropertiesSorter {
 						return;
 				}
 
-				FileOutputStream fileOut = new FileOutputStream(new File(output, "data/" + field + ".sort"));
-				ObjectOutputStream out = new ObjectOutputStream(fileOut);
-				out.writeObject(sortedArray);
-				out.close();
-				fileOut.close();
+				//Tenta gravar o resultado algumas vezes, pois o arquivo pode estar sendo acessado
+				//pea aplicação de análise durante alguma ordenação
+				int repeat = 0;
+				while(repeat++ < 10)
+					try{
+						Util.writeObject(sortedArray, output.getAbsolutePath() + "data/" + field + ".sort");
+						repeat = 10;
+					}catch(IOException e){
+						Thread.sleep(1000);
+					}
+				
 
-			} catch (IOException e) {
+			} catch (Exception e) {
 				exception = e;
 			}
 
