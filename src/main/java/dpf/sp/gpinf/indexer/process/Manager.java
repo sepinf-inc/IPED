@@ -486,18 +486,20 @@ public class Manager {
 
 		if (!output.exists() && !output.mkdirs())
 			throw new IOException("Não foi possível criar diretório " + output.getAbsolutePath());
+		
+		if(!IndexFiles.getInstance().appendIndex){
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/nativeview"), new File(output, "lib/nativeview"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libewf"), new File(output, "lib/libewf"));
+			if (Configuration.embutirLibreOffice)
+				IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
 
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/nativeview"), new File(output, "lib/nativeview"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libewf"), new File(output, "lib/libewf"));
-		if (Configuration.embutirLibreOffice)
-			IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
-
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
-		IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
-		IOUtil.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
+			IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
+		}
 
 		if (palavrasChave != null)
 			IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt"));
