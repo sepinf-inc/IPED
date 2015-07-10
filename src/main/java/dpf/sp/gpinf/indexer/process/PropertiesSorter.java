@@ -114,7 +114,7 @@ public class PropertiesSorter {
 				int repeat = 0;
 				while(repeat++ < 10)
 					try{
-						Util.writeObject(sortedArray, output.getAbsolutePath() + "data/" + field + ".sort");
+						Util.writeObject(sortedArray, output.getAbsolutePath() + "/data/" + field + ".sort");
 						repeat = 10;
 					}catch(IOException e){
 						Thread.sleep(1000);

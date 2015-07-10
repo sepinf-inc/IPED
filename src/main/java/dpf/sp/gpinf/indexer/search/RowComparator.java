@@ -56,9 +56,9 @@ public class RowComparator implements Comparator<Integer> {
 	@Override
 	final public int compare(Integer a, Integer b) {
 		if (col == 1) {
-			if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
+			if (app.marcadores.selected[a] == app.marcadores.selected[b])
 				return 0;
-			else if (app.marcadores.selected[app.ids[a]] == true)
+			else if (app.marcadores.selected[a] == true)
 				return -1;
 			else
 				return 1;
@@ -67,7 +67,7 @@ public class RowComparator implements Comparator<Integer> {
 			return (int)(app.results.scores[a] - app.results.scores[b]);
 
 		} else if (col == 3) {
-			return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
+			return app.marcadores.getLabels(a).compareTo(app.marcadores.getLabels(b));
 		
 		} else{
 			if (order[col] == null)
