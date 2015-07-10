@@ -67,6 +67,7 @@
 	<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
+	<parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
 		<mime>image/jpeg</mime>
 		<mime>image/png</mime>

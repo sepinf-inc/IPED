@@ -252,5 +252,9 @@
         <!--Extensão maiúscula para evitar conflito-->
         <glob pattern="*.PPTX"/>
     </mime-type>
+    
+    <mime-type type="application/x-lnk">
+        <glob pattern="*.lnk"/>
+    </mime-type> 
    
  </mime-info>

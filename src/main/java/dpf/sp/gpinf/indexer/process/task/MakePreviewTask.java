@@ -42,7 +42,8 @@ public class MakePreviewTask extends AbstractTask{
 				|| contentType.equals("application/x-sqlite3")
 				|| contentType.equals("application/sqlite-skype")
 				|| contentType.equals("application/x-emule")
-				|| contentType.equals("application/x-ares-galaxy");
+				|| contentType.equals("application/x-ares-galaxy")
+				|| contentType.equals("application/x-lnk");
 	}
 
 	@Override
