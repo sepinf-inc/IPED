@@ -254,6 +254,9 @@
     </mime-type>
     
     <mime-type type="application/x-lnk">
+    	<magic priority="50">
+            <match value="0x4C0000000114020000000000C000000000000046" type="string" offset="0"/>
+        </magic>
         <glob pattern="*.lnk"/>
     </mime-type> 
    
