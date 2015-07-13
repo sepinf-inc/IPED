@@ -245,6 +245,8 @@ public class MenuListener implements ActionListener {
 				App.get().treeListener.navigateToParent(docId);
 			}
 			
+		} else if (e.getSource() == menu.exportTerms){
+			new ExportIndexedTerms(App.get().reader).export();
 		}
 
 	}

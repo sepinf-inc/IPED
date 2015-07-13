@@ -28,7 +28,7 @@ public class MenuClass extends JPopupMenu {
 	private static final long serialVersionUID = 1L;
 
 	JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
-			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent;
+			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms;
 
 	// JCheckBoxMenuItem changeViewerTab;
 
@@ -91,6 +91,21 @@ public class MenuClass extends JPopupMenu {
 		this.add(copiarMarcados);
 
 		this.addSeparator();
+		
+		importarPalavras = new JMenuItem("Importar lista de palavras-chave");
+		importarPalavras.addActionListener(menuListener);
+		this.add(importarPalavras);
+		
+		limparBuscas = new JMenuItem("Limpar expressões pesquisadas");
+		limparBuscas.addActionListener(menuListener);
+		this.add(limparBuscas);
+		
+		exportTerms = new JMenuItem("Exportar lista de termos indexados");
+		exportTerms.addActionListener(menuListener);
+		this.add(exportTerms);
+		
+		this.addSeparator();
+		
 		disposicao = new JMenuItem("Alterar disposição vertical/horizontal");
 		disposicao.addActionListener(menuListener);
 		this.add(disposicao);
@@ -99,14 +114,6 @@ public class MenuClass extends JPopupMenu {
 		copiarPreview.addActionListener(menuListener);
 		this.add(copiarPreview);
 		
-		importarPalavras = new JMenuItem("Importar lista de palavras-chave");
-		importarPalavras.addActionListener(menuListener);
-		this.add(importarPalavras);
-
-		limparBuscas = new JMenuItem("Limpar expressões pesquisadas");
-		limparBuscas.addActionListener(menuListener);
-		this.add(limparBuscas);
-
 		aumentarGaleria = new JMenuItem("Alterar nº colunas da galeria");
 		aumentarGaleria.addActionListener(menuListener);
 		this.add(aumentarGaleria);
