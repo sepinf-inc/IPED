@@ -63,7 +63,6 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -508,7 +507,7 @@ public class HTMLReportTask extends AbstractTask {
                     img.append("<a href=\"");
                     img.append("../").append(reg.export);
                     img.append("\"/><img src=\"");
-                    img.append(getRelativePath(thumbFile,reportSubFolder));
+                    img.append(getRelativePath(thumbFile, reportSubFolder));
                     img.append("\" width=\"");
                     img.append(thumbSize);
                     img.append("\" height=\"");
@@ -559,8 +558,8 @@ public class HTMLReportTask extends AbstractTask {
             replace(it, "%EXCLUIDO%", reg.deleted ? "Sim" : "N&atilde;o");
             replace(it, "%CARVED%", reg.carved ? "Sim" : "N&atilde;o");
             replace(it, "%HASH%", reg.hash);
-            replace(it, "%EXP%", "../" + reg.export);
-            replace(it, "%EXP_DESC%", reg.export);
+            String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>";
+            replace(it, "%EXP%", export);
             replace(it, "%DT_CRIACAO%", formatDate(reg.created));
             replace(it, "%DT_MOD%", formatDate(reg.modified));
             replace(it, "%DT_ACESSO%", formatDate(reg.accessed));
@@ -600,8 +599,8 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getVideoThumbsFile(String hash) {
-    	File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
-    	if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
+        File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
+        if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
         return file;
     }
 
@@ -618,28 +617,28 @@ public class HTMLReportTask extends AbstractTask {
             GalleryValue value = new GalleryValue(null, null, -1);
             BufferedImage img = null;
             if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
-            	BufferedInputStream stream = evidence.getBufferedStream();
-            	try{
-            		img = ImageUtil.getThumb(stream, value);
-            	}finally{
-            		IOUtil.closeQuietly(stream);
-            	}
+                BufferedInputStream stream = evidence.getBufferedStream();
+                try {
+                    img = ImageUtil.getThumb(stream, value);
+                } finally {
+                    IOUtil.closeQuietly(stream);
+                }
             }
             if (img == null) {
                 final int sampleFactor = 3;
                 BufferedInputStream stream = evidence.getBufferedStream();
-            	try{
-            		img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor, value);
-            	}finally{
-            		IOUtil.closeQuietly(stream);
-            	}
+                try {
+                    img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor, value);
+                } finally {
+                    IOUtil.closeQuietly(stream);
+                }
                 if (img == null) {
-                	stream = evidence.getBufferedStream();
-                	try{
-                		img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
-                	}finally{
-                		IOUtil.closeQuietly(stream);
-                	}
+                    stream = evidence.getBufferedStream();
+                    try {
+                        img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
+                    } finally {
+                        IOUtil.closeQuietly(stream);
+                    }
                 }
             }
             if (img != null) {
