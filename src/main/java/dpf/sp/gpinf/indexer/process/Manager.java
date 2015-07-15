@@ -227,8 +227,9 @@ public class Manager {
 		 * Seta tamanho máximo dos subíndices. Padrão é 5GB.
 		 * Poucos subíndices grandes impactam processamento devido a merges parciais demorados.
 		 * Muitos subíndices pequenos aumentam tempo e memória necessários p/ pesquisas.
+		 * Usa 4000MB devido a limite do ISO9660
 		 */
-		//tieredPolicy.setMaxMergedSegmentMB(1024);
+		tieredPolicy.setMaxMergedSegmentMB(4000);
 		conf.setMergePolicy(tieredPolicy);
 
 		writer = new IndexWriter(FSDirectory.open(indexTemp), conf);
