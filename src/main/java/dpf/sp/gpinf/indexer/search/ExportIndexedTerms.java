@@ -8,8 +8,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 
 import javax.swing.JFileChooser;
-import javax.swing.ProgressMonitor;
-import javax.swing.SwingWorker;
 
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
@@ -58,7 +56,7 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
 		String[] field = {IndexItem.NAME, IndexItem.CONTENT};
 		long progress = 0;
 		
-		//Exibe progresso, porém exporta termos por subíndice, logo exporta termos duplicados
+		//Exibe progresso, porém exporta termos por subíndice, logo exporta mtos termos duplicados
 		/*for(AtomicReaderContext atomicContext: reader.leaves()){
 			AtomicReader atomicReader = atomicContext.reader();
 			Fields fields = atomicReader.fields();
@@ -94,7 +92,6 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
 		Fields fields = atomicReader.fields();
 		for (String f : field) {
             Terms terms = fields.terms(f);
-            System.out.println(terms.size());
             TermsEnum termsEnum = terms.iterator(null);	            
             while (termsEnum.next() != null) {
             	writer.write(termsEnum.term().utf8ToString());
