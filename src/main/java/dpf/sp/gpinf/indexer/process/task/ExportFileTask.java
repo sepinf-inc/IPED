@@ -31,11 +31,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
@@ -59,6 +62,7 @@ public class ExportFileTask extends AbstractTask{
 	private static boolean computeHash = false;
 	private File extractDir;
 	private HashMap<HashValue, HashValue> hashMap;
+	private List<String> noContentLabels;
 
 	public ExportFileTask(Worker worker) {
 		super(worker);
@@ -121,20 +125,52 @@ public class ExportFileTask extends AbstractTask{
 	    if (ItemProducer.indexerReport || (!evidence.isSubItem() && 
                 (isToBeExtracted(evidence) || evidence.isToExtract()))) {
             evidence.setToExtract(true);
-            extract(evidence);
+            if(doNotExport(evidence)){
+            	evidence.setSleuthId(null);
+            	evidence.setExportedFile(null);
+            }else
+            	extract(evidence);
+            
             incSubitensExtracted();
             copyViewFile(evidence);
         }
 		
 		//Renomeia subitem caso deva ser exportado
 		if (evidence.isSubItem() && evidence.isToExtract() && !ItemProducer.indexerReport) {
-			renameToHash(evidence);
+			if(!doNotExport(evidence))
+				renameToHash(evidence);
+			else{
+				evidence.setExportedFile(null);
+				evidence.setDeleteFile(true);
+			}
 			incSubitensExtracted();
 		}
 		
 		if (ExportFileTask.hasCategoryToExtract() && !evidence.isToExtract())
 			evidence.setAddToCase(false);
 		
+	}
+	
+	private boolean doNotExport(EvidenceFile evidence){
+		if(noContentLabels == null){
+			CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName());
+			noContentLabels = args.getCmdArgs().get("-nocontent");
+			if(noContentLabels == null)
+				noContentLabels = Collections.emptyList();
+		}
+		for(String noContentLabel : noContentLabels){
+			if(evidence.getLabels() != null && !evidence.getLabels().isEmpty()){
+				for(String label : evidence.getLabels().split(" \\| ")){
+					if(label.equalsIgnoreCase(noContentLabel))
+						return true;
+				}
+					
+			}else
+				for(String category : evidence.getCategorySet())
+					if(category.equalsIgnoreCase(noContentLabel))
+						return true;
+		}
+		return false;
 	}
 	
 	public void extract(EvidenceFile evidence) {

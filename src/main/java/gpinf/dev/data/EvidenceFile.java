@@ -134,9 +134,20 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private boolean isDir = false, isRoot = false;
     
-    private boolean toIgnore = false, addToCase = true, isToExtract = false;
+    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false;
 
-    private boolean carved = false, encrypted = false;
+    /**
+     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser processado
+     * e incluído no relatório, porém sem ter seu conteúdo exportado (ex: gera thumb do vídeo 
+     * e dps deleta o vídeo)
+     * 
+     * @param deleteFile se deve ser deletado ao não
+     */
+    public void setDeleteFile(boolean deleteFile) {
+		this.deleteFile = deleteFile;
+	}
+
+	private boolean carved = false, encrypted = false;
 
     private boolean isQueueEnd = false, parsed = false;
 
@@ -205,7 +216,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @throws IOException caso ocorra erro de IO
      */
     public void dispose(){
-    	if (isSubItem && (toIgnore || !addToCase)) {
+    	if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
 			if (!file.delete())
 				System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + file.getAbsolutePath());
 		}
