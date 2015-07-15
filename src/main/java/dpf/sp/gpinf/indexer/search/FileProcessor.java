@@ -26,6 +26,7 @@ import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -112,7 +113,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 				file = emptyFile;
 			}
 			
-		}else {
+		}else if(doc.get(IndexItem.SLEUTHID) != null){
 			if (doc.get(IndexItem.LENGTH).isEmpty() || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
 				App.get().compositeViewer.clear();
 
@@ -131,10 +132,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 				}.start();
 				
 			lastFile = file;
-
-			if (file == null)
-				return;
-
 		}
 
 		String contentType = doc.get(IndexItem.CONTENTTYPE);
@@ -142,6 +139,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		File viewFile = Util.findFileFromHash(new File(App.get().codePath + "/../view"), hash);
 		if(viewFile == null)
 			viewFile = file;
+		if(viewFile == null && hash != null){
+			File thumb = Util.getFileFromHash(new File(App.get().codePath + "/../../" + 
+					HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), hash, "jpg");
+			if(thumb.exists())
+				viewFile = thumb;
+		}
 
 		App.get().compositeViewer.loadFile(doc, file, viewFile, contentType, App.get().highlightTerms);
 

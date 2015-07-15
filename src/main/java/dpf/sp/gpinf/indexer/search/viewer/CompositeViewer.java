@@ -178,7 +178,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	}
 
 	private void loadFile() {
-		if (file != lastFile && currentTab != 0 && viewerToUse != textViewer && viewerToUse.isSupportedType(viewMediaType)) {
+		if (viewFile != lastFile && currentTab != 0 && viewerToUse != textViewer && viewerToUse.isSupportedType(viewMediaType)) {
 
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -189,7 +189,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 			});
 
 			viewerToUse.loadFile(viewFile, viewMediaType, highlightTerms);
-			lastFile = file;
+			lastFile = viewFile;
 		}
 
 	}
