@@ -50,6 +50,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.App;
 
 public class Util {
@@ -360,7 +361,7 @@ public class Util {
 	}
 	
 	public static File getReadOnlyFile(File file, Document doc) throws IOException{
-		String offsetS = doc.get("offset");
+		String offsetS = doc.get(IndexItem.OFFSET);
 		if(offsetS != null)
 			return getFile(file, doc);
 		if (file.canWrite()) {
@@ -373,12 +374,12 @@ public class Util {
 	}
 	
 	public static File getFile(File file, Document doc){
-		String offsetS = doc.get("offset");
-		String lenS = doc.get("tamanho");
+		String offsetS = doc.get(IndexItem.OFFSET);
+		String lenS = doc.get(IndexItem.LENGTH);
 		if(offsetS != null && lenS != null){
 			long offset = Long.parseLong(offsetS);
 			long len = Long.parseLong(lenS);
-			String ext = doc.get("tipo");
+			String ext = doc.get(IndexItem.TYPE);
 			if (!ext.isEmpty())
 				ext = "." + Util.getValidFilename(ext);
 			try {
@@ -391,8 +392,8 @@ public class Util {
 	}
 	
 	public static InputStream getStream(File file, Document doc) throws IOException{
-		String offsetS = doc.get("offset");
-		String lenS = doc.get("tamanho");
+		String offsetS = doc.get(IndexItem.OFFSET);
+		String lenS = doc.get(IndexItem.LENGTH);
 		if(offsetS != null && lenS != null){
 			long offset = Long.parseLong(offsetS);
 			long len = Long.parseLong(lenS);
@@ -430,15 +431,15 @@ public class Util {
 	}
 
 	public static InputStream getSleuthStream(SleuthkitCase sleuthCase, Document doc) {
-		String sleuthId = doc.get("sleuthId");
+		String sleuthId = doc.get(IndexItem.SLEUTHID);
 		try {
 			Content sleuthFile = sleuthCase.getContentById(Long.valueOf(sleuthId));
 			InputStream in = new ReadContentInputStream(sleuthFile);
 			
-			String offStr = doc.get("offset");
+			String offStr = doc.get(IndexItem.OFFSET);
 			if(offStr != null){
 				long offset = Long.parseLong(offStr);
-				long len = Long.parseLong(doc.get("tamanho"));
+				long len = Long.parseLong(doc.get(IndexItem.LENGTH));
 				in = getSubStream(in, offset, len);
 			}
 			in = new BufferedInputStream(in);
@@ -463,8 +464,8 @@ public class Util {
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						progressDialog = new ProgressDialog(App.get(), extractor);
-						if(!doc.get("tamanho").isEmpty())
-							progressDialog.setMaximum(Long.valueOf(doc.get("tamanho")));
+						if(!doc.get(IndexItem.LENGTH).isEmpty())
+							progressDialog.setMaximum(Long.valueOf(doc.get(IndexItem.LENGTH)));
 						progressDialog.setNote("Extraindo p/ arquivo temporário...");
 					}
 				});
@@ -473,7 +474,7 @@ public class Util {
 				InputStream in = null;
 				File file = null;
 				try {
-					String ext = doc.get("tipo");
+					String ext = doc.get(IndexItem.TYPE);
 					if (!ext.isEmpty())
 						ext = "." + Util.getValidFilename(ext);
 					file = File.createTempFile("indexador", ext);
