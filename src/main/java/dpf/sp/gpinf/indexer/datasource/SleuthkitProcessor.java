@@ -23,6 +23,7 @@ import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -31,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.tika.mime.MediaType;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
@@ -41,6 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
+import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -58,6 +61,7 @@ public class SleuthkitProcessor {
 	//private static Object lock = new Object();
 	private static ConcurrentHashMap<File, Object[]> idRangeMap = new ConcurrentHashMap<File, Object[]>();
 	private ArrayList<Integer> sleuthIdToId = new ArrayList<Integer>();
+	private ArrayList<Integer> parentIds = new ArrayList<Integer>();
 	
 	public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
 
@@ -153,7 +157,7 @@ public class SleuthkitProcessor {
 					e.printStackTrace();
 
 				} finally {
-					addImage.commit();
+					firstId = addImage.commit();
 					System.out.println(new Date() + "\t[INFO]\t" + "Imagem " + imgPath[0] + " adicionada.");
 					sleuthCase.releaseExclusiveLock();
 				}
@@ -175,23 +179,82 @@ public class SleuthkitProcessor {
 		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 		
 		deviceName = ItemProducer.getEvidenceName(caseData, file);
-
+		
+		/* ordena os itens pelo primeiro setor utilizado, na tentativa de ler os itens
+		 * na ordem em que aparecem fisicamente no HD, evitando seeks na imagem
+		*/
+		/*class ItemStart implements Comparable<ItemStart>{
+		    int id;
+		    long start = 0;
+		    
+            @Override
+            public int compareTo(ItemStart o) {
+                return start < o.start ? -1 : start > o.start ? 1 : 0; 
+            }
+		}
+		
+		ArrayList<ItemStart> items = new ArrayList<ItemStart>();
 		for (long k = firstId; k <= lastId; k++) {
+		    ItemStart item = new ItemStart();
+		    item.id = (int)k;
+		    List<TskFileRange> rangeList = sleuthCase.getFileRanges(k);
+		    if(rangeList != null && !rangeList.isEmpty()){
+		    	int i = 0;
+		    	long start = rangeList.get(i).getByteStart();
+		    	do{
+		    		item.start = start;
+		    	}while(++i < rangeList.size() && (start = rangeList.get(i).getByteStart()) < item.start);
+		    }
+		    items.add(item);
+		}
+		ItemStart[] itemArray = items.toArray(new ItemStart[0]);
+		items = null;
+		Arrays.sort(itemArray);
+		
+		for (ItemStart item : itemArray) {
+		    long k = item.id;
+		    Content content = sleuthCase.getContentById(k);
+			if(content != null)
+				addContent(content, null);
+		}
+		*/
+		
+		if(firstId != 0)
+			recurseIntoContent(sleuthCase.getImageById(firstId), null);
+		else
+			for(Content child : sleuthCase.getImages())
+				recurseIntoContent(child, null);
+		/*
+		for (long k = firstId; k <= lastId; k++) {
+			Content content = sleuthCase.getContentById(k);
+			if(content != null)
+				addContent(content);
+		}*/
+		
+	}
+	
+	private void recurseIntoContent(Content content, Content parent) throws Exception{
+		
+		addContent(content, parent);
+		Content unallocFolder = null;
+		for(Content child : content.getChildren()){
+			//Processa não alocado no final
+			if("$Unalloc".equals(child.getName()))
+				unallocFolder = child;
+			else
+				recurseIntoContent(child, content);
+		}
+		if(unallocFolder != null)
+			recurseIntoContent(unallocFolder, content);
+	}
+		
+	private void addContent(Content content, Content parent) throws Exception{
 
 			AbstractFile absFile = null;
-			Content content = null;
+			if(content instanceof AbstractFile)
+				absFile = (AbstractFile)content;
 			
-			try{
-				absFile = sleuthCase.getAbstractFileById(k);
-				if(absFile == null)
-					content = sleuthCase.getContentById(k);
-				
-			}catch(TskCoreException e){
-				//Tenta continuar após erro de banco corrompido
-				continue;
-			}
-			
-			if(content != null)
+			if(content != null && absFile == null)
 				addEvidenceFile(content);
 			
 			if(Configuration.addUnallocated && absFile != null && absFile.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) == 0){
@@ -213,21 +276,18 @@ public class SleuthkitProcessor {
 					setPath(frag, absFile.getUniquePath() + sufix);
 					
 					frag.setMediaType(UNALLOCATED_MIMETYPE);
-		            addEvidenceFile(absFile, frag, true);
+		            addEvidenceFile(absFile, frag, true, parent);
 				}
 				
-				continue;
+				return;
 				
 			}
 			
 			if (absFile == null || absFile.getName().equals("$BadClus:$Bad"))
-				continue;
+				return;
 			
-			addEvidenceFile(absFile);
+			addEvidenceFile(absFile, parent);
 			
-		}
-		
-		
 	}
 	
 	private void setPath(EvidenceFile evidence, String path){
@@ -237,25 +297,18 @@ public class SleuthkitProcessor {
 	}
 	
 	
-	private void addEvidenceFile(AbstractFile absFile) throws Exception{
-		addEvidenceFile(absFile, null, false);
+	private void addEvidenceFile(AbstractFile absFile, Content parent) throws Exception{
+		addEvidenceFile(absFile, null, false, parent);
 	}
 	
-	private void addEvidenceFile(AbstractFile absFile, EvidenceFile evidence, boolean unalloc) throws Exception{
+	private void addEvidenceFile(AbstractFile absFile, EvidenceFile evidence, boolean unalloc, Content parent) throws Exception{
 		
 		if(absFile.isDir() && (absFile.getName().equals(".") || absFile.getName().equals("..")))
 			return;
 		
 		if(evidence == null){
 			evidence = new EvidenceFile();
-			if(absFile.isRoot() && absFile.getName().isEmpty())
-				evidence.setName("/");
-			else
-				evidence.setName(absFile.getName());
-			
 			evidence.setLength(absFile.getSize());
-			// evidence.setType(new UnknownFileType(evidence.getExt()));
-			setPath(evidence, absFile.getUniquePath());
 		}
 		
 		if (listOnly) {
@@ -264,14 +317,21 @@ public class SleuthkitProcessor {
 			return;
 		}
 		
+		if(evidence.getName() == null){
+			if(absFile.isRoot() && absFile.getName().isEmpty())
+				evidence.setName("/");
+			else
+				evidence.setName(absFile.getName());
+			
+			setPath(evidence, absFile.getUniquePath());
+		}
+		
 		if(absFile.isDir()){
 			evidence.setIsDir(true);
 			evidence.setCategory(SetCategoryTask.FOLDER_CATEGORY);
 		}
 		
 		evidence.setHasChildren(absFile.hasChildren());
-		Content parent = absFile.getParent();
-		
 		evidence.setSleuthFile(absFile);
 		evidence.setSleuthId(Long.toString(absFile.getId()));
 		
@@ -280,11 +340,16 @@ public class SleuthkitProcessor {
 			sleuthIdToId.add(0);
 		sleuthIdToId.set(sleuthId, evidence.getId());
 		
-		evidence.setParentId(sleuthIdToId.get((int)(parent.getId() - firstId)).toString());
-		do{
-			evidence.addParentId(sleuthIdToId.get((int)(parent.getId() - firstId)));
-		}while((parent = parent.getParent()) != null);
+		Integer parentId = sleuthIdToId.get((int)(parent.getId() - firstId));
+		evidence.setParentId(parentId.toString());
 		
+		while(evidence.getId() >= parentIds.size())
+			parentIds.add(-1);
+		parentIds.set(evidence.getId(), parentId);
+		
+		do{
+			evidence.addParentId(parentId);
+		}while((parentId = parentIds.get(parentId)) != -1);
 		
 		if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC) || 
 				absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC) || 
@@ -361,12 +426,19 @@ public class SleuthkitProcessor {
 		sleuthIdToId.set(sleuthId, evidence.getId());
 		
 		Content parent = content.getParent();
+		Integer parentId = -1;
 		if(parent != null){	
-			evidence.setParentId(sleuthIdToId.get((int)(parent.getId() - firstId)).toString());
-			do{
-				evidence.addParentId(sleuthIdToId.get((int)(parent.getId() - firstId)));
-			}while((parent = parent.getParent()) != null);
-			
+			parentId = sleuthIdToId.get((int)(parent.getId() - firstId));
+			evidence.setParentId(parentId.toString());
+		}
+		
+		while(evidence.getId() >= parentIds.size())
+			parentIds.add(-1);
+		parentIds.set(evidence.getId(), parentId);
+		
+		while(parentId != -1){
+			evidence.addParentId(parentId);
+			parentId = parentIds.get(parentId);
 		}
 		
 		caseData.addEvidenceFile(evidence);
