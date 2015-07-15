@@ -184,7 +184,7 @@ public class IndexerProcessor {
 				}
 				
 				//Copia resultado prévio do OCR
-				String ocrPrefix = "text/" + value.charAt(0) + "/" + value.charAt(1);
+				/*String ocrPrefix = "text/" + value.charAt(0) + "/" + value.charAt(1);
 	            File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
 	            File destDir = new File(output, ocrPrefix);
 	            if(ocrDir.exists()){
@@ -193,6 +193,18 @@ public class IndexerProcessor {
 	                    if(name.equals(value + ".txt") || name.startsWith(value + "-child"))
 	                        IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
 	            }
+	            */
+			}
+			
+			//Copia resultado prévio do OCR
+			String ocrPrefix = "text/" + (id % 100) / 10 + "/" + id % 10;
+			File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
+			File destDir = new File(output, ocrPrefix);
+			if(ocrDir.exists()){
+				destDir.mkdirs();
+				for(String name : ocrDir.list())
+					if(name.equals(id + ".txt") || name.startsWith(id + "-child"))
+						IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
 			}
 			
 			value = doc.get(IndexItem.DELETED);
