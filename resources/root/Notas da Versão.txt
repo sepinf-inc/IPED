@@ -10,7 +10,7 @@ Melhorias:
 - Pré-ordenação de propriedades em paralelo (2 por vez)
 - Atualização Sleuthkit p/ Windows (correções HFS+)
 - Suporte a parâmetro -dname para pastas
-- Parâmetro -nocontent para não exportar conteúdo de itens de um marcador/categoria
+- Parâmetro -nocontent para não exportar conteúdo de itens de um marcador/categoria (apenas thumbs e propriedades)
 Correções:
 - Problema intermitente ao renderizar PDFs e perda de foco
 - Workers inicialmente suspensos devido a lentidão na leitura do sleuth.db
@@ -20,6 +20,7 @@ Correções:
 - Erro de ConcurrentModificationException durante indexação
 - Visualizador não limpo ao clicar em arquivo com conteúdo inacessível
 - Não exibição de thumbs de vídeos ao cancelar geração de temporário
+- Inconsistência na árvore de diretórios ao processar AD1 montado
 
 
 10/06/2015: IPED-3.4.1

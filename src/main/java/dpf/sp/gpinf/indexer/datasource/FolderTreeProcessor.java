@@ -69,9 +69,9 @@ public class FolderTreeProcessor {
 	private EvidenceFile getEvidence(File file) throws IOException {
 		if (listOnly) {
 			caseData.incDiscoveredEvidences(1);
-			//IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
 			caseData.incDiscoveredVolume(file.length());
 			return null;
+			
 		} else {
 			EvidenceFile evidenceFile = new EvidenceFile();
 			evidenceFile.setName(file.getName());
@@ -98,7 +98,10 @@ public class FolderTreeProcessor {
 
 	class FolderVisitor implements FileVisitor<Path> {
 		
-		private LinkedList<Integer> parentIds = new LinkedList<Integer>(); 
+		private LinkedList<Integer> parentIds = new LinkedList<Integer>();
+		
+		//Proteção caso postVisitDirectory seja chamado após SKIP_SUBTREE em preVisitDirectory?
+		private boolean removedInPreVisit = false;
 
 		public void walk(File file) throws IOException {
 			Path startingDir = file.toPath();
@@ -145,11 +148,17 @@ public class FolderTreeProcessor {
 		@Override
 		public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
+			removedInPreVisit = false;
+			
 			if(this.visitFile(path, attr).equals(FileVisitResult.TERMINATE))
 				return FileVisitResult.TERMINATE;
 			
-			if (attr.isSymbolicLink() || attr.isOther()) // pula links simbólicos e NTFS junctions
+			if (attr.isSymbolicLink() || attr.isOther()){ // pula links simbólicos e NTFS junctions
+				parentIds.pollLast();
+				removedInPreVisit = true;
 				return FileVisitResult.SKIP_SUBTREE;
+				
+			}
 
 			return FileVisitResult.CONTINUE;
 		}
@@ -157,10 +166,13 @@ public class FolderTreeProcessor {
 		@Override
 		public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-			parentIds.pollLast();
+			if(!removedInPreVisit)
+				parentIds.pollLast();
+			
+			removedInPreVisit = false;
 			
 			if (exception != null)
-				System.err.println(new Date() + "\t[ALERTA]\t" + "Indexação ignorada: " + path.toFile().getAbsolutePath() + " " + exception.toString());
+				System.err.println(new Date() + "\t[ALERTA]\t" + "Item ignorado: " + path.toFile().getAbsolutePath() + " " + exception.toString());
 
 			return FileVisitResult.CONTINUE;
 		}
@@ -169,7 +181,7 @@ public class FolderTreeProcessor {
 		public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
 			if (exception != null)
-				System.err.println(new Date() + "\t[ALERTA]\t" + "Indexação ignorada: " + path.toFile().getAbsolutePath() + " " + exception.toString());
+				System.err.println(new Date() + "\t[ALERTA]\t" + "Item ignorado: " + path.toFile().getAbsolutePath() + " " + exception.toString());
 
 			return FileVisitResult.CONTINUE;
 		}
