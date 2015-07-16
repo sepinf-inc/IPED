@@ -1,12 +1,25 @@
-XX/07/2015: IPED-3.4.2
+15/07/2015: IPED-3.5
 Melhorias:
-- Reaproveita resultado do OCR ao gerar relatório
+- Rollback do Índice após erro ou cancelamento durante append de evidência
+- Análise do caso simultanea com append de evidências adicionais
+- Parâmetro para paralelizar pesquisas em índices gigantes
 - Carving para AVI e ASF (WMV e WMA)
+- Parser para atalhos LNK (Contribuição PCF Gabriel)
+- Exportação de lista de termos indexados para quebra de senhas
+- Reaproveitamento do resultado do OCR ao gerar relatório
+- Pré-ordenação de propriedades em paralelo (2 por vez)
+- Atualização Sleuthkit p/ Windows (correções HFS+)
+- Suporte a parâmetro -dname para pastas
+- Parâmetro -nocontent para não exportar conteúdo de itens de um marcador/categoria
 Correções:
 - Problema intermitente ao renderizar PDFs e perda de foco
-- Itens presentes na base do LED não eram categorizados por tipo
+- Workers inicialmente suspensos devido a lentidão na leitura do sleuth.db
+- Itens com hit na base do LED não eram categorizados por tipo
 - Travamento ao processar pastas com arquivos especiais (named pipes, sockets, etc)
 - Melhor classificação de Históricos do MSN
+- Erro de ConcurrentModificationException durante indexação
+- Visualizador não limpo ao clicar em arquivo com conteúdo inacessível
+- Não exibição de thumbs de vídeos ao cancelar geração de temporário
 
 
 10/06/2015: IPED-3.4.1
