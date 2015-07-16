@@ -98,7 +98,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 				FileProcessor parsingTask = new FileProcessor(App.get().results.docs[selectedDoc], true);
 				parsingTask.execute();
 
-				App.get().resultsModel.setValueAt(true, selectedDoc, 2);
+				//App.get().resultsModel.setValueAt(true, selectedDoc, 2);
 				App.get().resultsModel.fireTableRowsUpdated(selectedDoc, selectedDoc);
 
 			}

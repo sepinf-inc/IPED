@@ -74,7 +74,7 @@ public class Marcadores implements Serializable {
 
 	public Marcadores(final String basePath) {
 		selected = new boolean[App.get().lastId + 1];
-		read = new boolean[App.get().lastId + 1];
+		//read = new boolean[App.get().lastId + 1];
 		labels = new ArrayList<byte[]>();
 		indexDir = new File(basePath, "index");
 		long date = indexDir.lastModified();
@@ -96,7 +96,7 @@ public class Marcadores implements Serializable {
 	}
 	
 	public void resetAndSetIndexDir(File indexDir){
-		read = null;
+		//read = null;
 		selected = null;
 		selectedItens = 0;
 		typedWords = new LinkedHashSet<String>();
@@ -335,9 +335,9 @@ public class Marcadores implements Serializable {
 
 		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
 		
-		if(state.selected != null &&  state.read != null){
+		if(state.selected != null /*&&  state.read != null*/){
 			System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
-			System.arraycopy(state.read, 0, this.read, 0, state.read.length);
+			//System.arraycopy(state.read, 0, this.read, 0, state.read.length);
 		}
 		
 		for(byte[] array : state.labels){
@@ -404,22 +404,20 @@ public class Marcadores implements Serializable {
 				else
 					selectedItens--;
 			}
-		} else
-			array = read;
+			// seta valor nos outros fragmentos
+			try {
+				array[id] = (Boolean) value;
+				setValueAtOtherVersion(value, id, col, array);
 
-		// seta valor nos outros fragmentos
-		try {
-			array[id] = (Boolean) value;
-			setValueAtOtherVersion(value, id, col, array);
+				if (!multiSetting) {
+					if (col == 1)
+						saveState();
+					atualizarGUI();
+				}
 
-			if (!multiSetting) {
-				if (col == 1)
-					saveState();
-				atualizarGUI();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 
