@@ -21,6 +21,8 @@ package dpf.sp.gpinf.indexer.search;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map.Entry;
 
 import javax.swing.ButtonGroup;
@@ -51,8 +53,16 @@ public class GerenciadorMarcadores implements ActionListener {
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
 	JScrollPane scrollList = new JScrollPane(list);
-
-	ArrayList<Integer> labelIds = new ArrayList<Integer>();
+	
+	class Label{
+		int id;
+		public Label(int id){
+			this.id = id;
+		}
+		public String ToString(){
+			return App.get().marcadores.getLabelMap().get(id);
+		}
+	}
 
 	public GerenciadorMarcadores() {
 
@@ -64,10 +74,7 @@ public class GerenciadorMarcadores implements ActionListener {
 		group.add(checked);
 		highlighted.setSelected(true);
 
-		for (int id : App.get().marcadores.labelNames.keySet()) {
-			listModel.addElement(App.get().marcadores.labelNames.get(id));
-			labelIds.add(id);
-		}
+		populateList();
 
 		newLabel.setToolTipText("Novo marcador");
 		novo.setToolTipText("Criar novo marcador");
@@ -111,18 +118,27 @@ public class GerenciadorMarcadores implements ActionListener {
 		dialog.setVisible(true);
 
 	}
+	
+	private void populateList(){
+		String[] labels = App.get().marcadores.getLabelMap().values().toArray(new String[0]);
+		Arrays.sort(labels);
+		listModel.clear();
+		for (String label : labels)
+			listModel.addElement(label);
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 
 		if (evt.getSource() == novo) {
 			String texto = newLabel.getText().trim();
-			if (!texto.isEmpty()) {
-				int id = App.get().marcadores.newLabel(texto);
-				listModel.addElement(texto);
-				list.setSelectedIndex(listModel.getSize() - 1);
-				labelIds.add(id);
+			if (!texto.isEmpty() && !listModel.contains(texto)) {
+				App.get().marcadores.newLabel(texto);
+				populateList();	
 			}
+			for(int i = 0; i < listModel.size(); i ++)
+				if(listModel.get(i).equals(texto))
+					list.setSelectedIndex(i);
 
 		}
 		if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
@@ -153,10 +169,11 @@ public class GerenciadorMarcadores implements ActionListener {
 			}
 
 			for (int idx : list.getSelectedIndices()) {
+				int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
 				if (evt.getSource() == add || evt.getSource() == novo)
-					App.get().marcadores.addLabel(uniqueSelectedIds, labelIds.get(idx));
+					App.get().marcadores.addLabel(uniqueSelectedIds, labelId);
 				else
-					App.get().marcadores.removeLabel(uniqueSelectedIds, labelIds.get(idx));
+					App.get().marcadores.removeLabel(uniqueSelectedIds, labelId);
 
 				App.get().marcadores.saveState();
 				App.get().marcadores.atualizarGUI();
@@ -165,25 +182,25 @@ public class GerenciadorMarcadores implements ActionListener {
 		} else if (evt.getSource() == delete) {
 			int result = JOptionPane.showConfirmDialog(dialog, "Deseja realmente apagar os marcadores selecionados?", "Confirmar", JOptionPane.YES_NO_OPTION);
 			if (result == JOptionPane.YES_OPTION){
-				int del = 0;
 				for (int idx : list.getSelectedIndices()){
-					App.get().marcadores.delLabel(labelIds.get(idx - del));
-					listModel.removeElementAt(idx - del);
-					labelIds.remove(idx - del);
-					del++;
+					int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
+					App.get().marcadores.delLabel(labelId);
 				}
+				populateList();
 				App.get().marcadores.saveState();
 				App.get().marcadores.atualizarGUI();
 				
 			}
 
 		} else if (evt.getSource() == rename) {
-			String newLabel = JOptionPane.showInputDialog(dialog, "Novo nome para os marcadores selecionados", list.getSelectedValue());
-			if (newLabel != null && !newLabel.isEmpty()){
+			String newLabel = JOptionPane.showInputDialog(dialog, "Novo nome para o primeiro marcador selecionado", list.getSelectedValue());
+			if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())){
 				for (int idx : list.getSelectedIndices()){
-					App.get().marcadores.changeLabel(labelIds.get(idx), newLabel);;
-					listModel.setElementAt(newLabel, idx);
+					int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
+					App.get().marcadores.changeLabel(labelId, newLabel.trim());;
+					break;
 				}
+				populateList();
 				App.get().marcadores.saveState();
 				App.get().marcadores.atualizarGUI();
 				
