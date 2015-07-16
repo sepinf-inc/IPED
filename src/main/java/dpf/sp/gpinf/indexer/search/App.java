@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -101,6 +102,7 @@ public class App extends JFrame implements WindowListener {
 
 	public IndexReader reader;
 	public IndexSearcher searcher;
+	public ExecutorService searchExecutorService;
 	Analyzer analyzer;
 	Query query;
 	public Object autoParser; // IndexerDefaultParser
@@ -192,7 +194,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/Casos/teste6/indexador/lib/search.jar";
+			//codePath = "E:/1973/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 			if (codePath.charAt(0) == '/' && codePath.charAt(2) == ':')
@@ -219,6 +221,8 @@ public class App extends JFrame implements WindowListener {
 			reader.close();
 			if (compositeViewer != null)
 				compositeViewer.dispose();
+			if(searchExecutorService != null)
+				searchExecutorService.shutdown();
 
 		} catch (Exception e) {
 			e.printStackTrace();

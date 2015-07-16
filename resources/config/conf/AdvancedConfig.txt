@@ -75,6 +75,10 @@ maxPDFTextSize2OCR = 100
 # Configurações da Pesquisa
 ########################################################################
 
+# Número de threads utilizadas para pesquisar o índice. Pode agilizar pesquisas em índices grandes.
+# Valores altos podem degradar a pesquisa caso o índice esteja num disco lento.
+searchThreads = 1
+
 # Utiliza GraphicsMagick ao invés de ImageMagick para renderizar imagens não suportadas pela JVM.
 useGM = true
 

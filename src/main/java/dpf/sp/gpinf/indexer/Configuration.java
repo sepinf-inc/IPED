@@ -67,6 +67,7 @@ public class Configuration {
 	public static boolean indexTempOnSSD = false;
 	public static boolean entropyTest = true;
 	public static boolean addFatOrphans = true;
+	public static int searchThreads = 1;
 
 	/**
 	 * LÃª as configuraÃ§Ãµes a partir do caminho informado.
@@ -263,6 +264,12 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			addFatOrphans = Boolean.valueOf(value);
+		
+		value = properties.getProperty("searchThreads");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			searchThreads = Integer.valueOf(value);
 		
 
 	}

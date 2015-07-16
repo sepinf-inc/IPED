@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
 
 import javax.swing.SwingWorker;
 
@@ -75,12 +76,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
             App.get().lastId = App.get().textSizes.length - 1;
 
-			inicializar(App.get().codePath + "/../index");
-
 			// ImageIO.setUseCache(false);
 
 			Configuration.getConfiguration(App.get().codePath + "/..");
 			ParsingReader.setTextSplitSize(Long.MAX_VALUE);
+			
+			inicializar(App.get().codePath + "/../index");
 
 			IndexerDefaultParser autoParser = new IndexerDefaultParser();
 			autoParser.setFallback(Configuration.fallBackParser);
@@ -176,7 +177,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		try {
 			Directory directory = FSDirectory.open(new File(index));
 			App.get().reader = DirectoryReader.open(directory);
-			App.get().searcher = new IndexSearcher(App.get().reader);
+			App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
+			App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();
 			App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
