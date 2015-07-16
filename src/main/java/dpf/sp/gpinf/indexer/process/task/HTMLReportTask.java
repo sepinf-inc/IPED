@@ -504,15 +504,19 @@ public class HTMLReportTask extends AbstractTask {
                     it.append("<table width=\"100%\"><tr><td>");
 
                     StringBuilder img = new StringBuilder();
-                    img.append("<a href=\"");
-                    img.append("../").append(reg.export);
-                    img.append("\"/><img src=\"");
+                    if (reg.export != null) {
+                        img.append("<a href=\"");
+                        img.append("../").append(reg.export);
+                        img.append("\">");
+                    }
+                    img.append("<img src=\"");
                     img.append(getRelativePath(thumbFile, reportSubFolder));
                     img.append("\" width=\"");
                     img.append(thumbSize);
                     img.append("\" height=\"");
                     img.append(thumbSize);
                     img.append("\"/>");
+                    if (reg.export != null) img.append("</a>");
 
                     it.append(img);
                     it.append("</td></tr></table>\n");
