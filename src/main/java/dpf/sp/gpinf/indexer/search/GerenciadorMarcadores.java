@@ -18,6 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -25,6 +29,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map.Entry;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -32,6 +38,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -67,7 +74,7 @@ public class GerenciadorMarcadores implements ActionListener {
 	public GerenciadorMarcadores() {
 
 		dialog.setTitle("Marcadores");
-		dialog.setBounds(0, 0, 440, 420);
+		dialog.setBounds(0, 0, 440, 440);
 		dialog.setAlwaysOnTop(true);
 
 		group.add(highlighted);
@@ -81,33 +88,39 @@ public class GerenciadorMarcadores implements ActionListener {
 		add.setToolTipText("Adicionar itens aos marcadores selecionados");
 		remove.setToolTipText("Remover itens dos marcadores selecionados");
 		delete.setToolTipText("Apagar marcadores selecionados");
+	
+		JPanel top = new JPanel(new GridLayout(2, 2, 0, 0));
+		top.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+		top.add(msg);
+		top.add(new JLabel());
+		top.add(highlighted);
+		top.add(checked);
 		
-
-		msg.setBounds(20, 15, 150, 20);
-		highlighted.setBounds(20, 30, 180, 30);
-		checked.setBounds(200, 30, 200, 30);
-		novo.setBounds(20, 70, 120, 30);
-		newLabel.setBounds(150, 70, 250, 30);
-		delete.setBounds(20, 330, 120, 30);
-		texto.setBounds(25, 80, 255, 20);
-		scrollList.setBounds(150, 110, 250, 250);
-		add.setBounds(20, 110, 120, 30);
-		remove.setBounds(20, 140, 120, 30);
-		rename.setBounds(20, 300, 120, 30);
-
-		dialog.getContentPane().add(msg);
-		dialog.getContentPane().add(highlighted);
-		dialog.getContentPane().add(checked);
-		//dialog.getContentPane().add(texto);
-		dialog.getContentPane().add(newLabel);
-		dialog.getContentPane().add(add);
-		dialog.getContentPane().add(remove);
-		dialog.getContentPane().add(rename);
-		dialog.getContentPane().add(novo);
-		dialog.getContentPane().add(delete);
-		dialog.getContentPane().add(scrollList);
-		dialog.getContentPane().add(new JLabel());
-
+		JPanel left1 = new JPanel(new GridLayout(0, 1, 5, 5));
+		left1.add(novo);
+		left1.add(add);
+		left1.add(remove);
+		
+		JPanel left2 = new JPanel(new GridLayout(0, 1, 5, 5));
+		left2.add(rename);
+		left2.add(delete);
+		
+		JPanel left = new JPanel(new BorderLayout());
+		left.add(left1, BorderLayout.PAGE_START);
+		left.add(left2, BorderLayout.PAGE_END);
+		
+		JPanel center = new JPanel(new BorderLayout());
+		center.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+		center.add(newLabel, BorderLayout.PAGE_START);
+		center.add(scrollList, BorderLayout.CENTER);
+		
+		JPanel pane = new JPanel(new BorderLayout());
+		pane.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		pane.add(top, BorderLayout.PAGE_START);
+		pane.add(left, BorderLayout.LINE_START);
+		pane.add(center, BorderLayout.CENTER);
+		dialog.getContentPane().add(pane);
+		
 		add.addActionListener(this);
 		remove.addActionListener(this);
 		rename.addActionListener(this);
