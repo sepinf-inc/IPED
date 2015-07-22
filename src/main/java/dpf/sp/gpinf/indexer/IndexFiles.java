@@ -169,7 +169,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	    try {
             setConfigPath();
             Configuration.getConfiguration(configPath);
-            KFFTask kff = new KFFTask(null);
+            KFFTask kff = new KFFTask();
             kff.init(Configuration.properties, null);
             kff.importKFF(new File(kffPath));
         } catch (Exception e) {
