@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
@@ -50,8 +51,8 @@ public class GerenciadorMarcadores implements ActionListener {
 	JRadioButton highlighted = new JRadioButton("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
 	JRadioButton checked = new JRadioButton("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
 	ButtonGroup group = new ButtonGroup();
-	JButton add = new JButton("Adicionar a");
-	JButton remove = new JButton("Remover de");
+	JButton add = new JButton("Adicionar");
+	JButton remove = new JButton("Remover");
 	JButton rename = new JButton("Renomear");
 	JTextField newLabel = new JTextField();
 	JLabel texto = new JLabel("Marcadores existentes:");
@@ -90,18 +91,22 @@ public class GerenciadorMarcadores implements ActionListener {
 		delete.setToolTipText("Apagar marcadores selecionados");
 	
 		JPanel top = new JPanel(new GridLayout(2, 2, 0, 0));
-		top.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		top.add(msg);
 		top.add(new JLabel());
 		top.add(highlighted);
 		top.add(checked);
 		
-		JPanel left1 = new JPanel(new GridLayout(0, 1, 5, 5));
+		add.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+		remove.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+		
+		JPanel left1 = new JPanel();
+		left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
 		left1.add(novo);
+		left1.add(Box.createRigidArea(new Dimension(0,10)));
 		left1.add(add);
 		left1.add(remove);
 		
-		JPanel left2 = new JPanel(new GridLayout(0, 1, 5, 5));
+		JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
 		left2.add(rename);
 		left2.add(delete);
 		
@@ -109,12 +114,11 @@ public class GerenciadorMarcadores implements ActionListener {
 		left.add(left1, BorderLayout.PAGE_START);
 		left.add(left2, BorderLayout.PAGE_END);
 		
-		JPanel center = new JPanel(new BorderLayout());
-		center.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+		JPanel center = new JPanel(new BorderLayout(0, 10));
 		center.add(newLabel, BorderLayout.PAGE_START);
 		center.add(scrollList, BorderLayout.CENTER);
 		
-		JPanel pane = new JPanel(new BorderLayout());
+		JPanel pane = new JPanel(new BorderLayout(10, 10));
 		pane.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		pane.add(top, BorderLayout.PAGE_START);
 		pane.add(left, BorderLayout.LINE_START);
