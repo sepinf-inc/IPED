@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -333,7 +334,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			e.printStackTrace();
 			return new SearchResult(0);
 		}
-
+		
 		return result;
 	}
 
@@ -350,7 +351,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				App.get().results = this.get();
 				App.get().resultsModel.fireTableDataChanged();
 				App.get().galleryModel.fireTableStructureChanged();
-				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
+				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().length);
 				App.get().resultsTable.getTableHeader().repaint();
 				App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
 			} catch (Exception e) {
@@ -380,10 +381,11 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 					}
 				});
 				volume = 0;
-				IndexReader reader = App.get().reader;
+				IndexSearcher searcher = App.get().searcher;
+				Set<String> fieldsToLoad = Collections.singleton(IndexItem.LENGTH);
 				for (int doc : result.docs) {
 					try {
-						String len = reader.document(doc).get(IndexItem.LENGTH);
+						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
 						if (!len.isEmpty())
 							volume += Long.valueOf(len);
 
@@ -422,7 +424,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			String index = App.get().codePath + "/../index";
 			Directory directory = FSDirectory.open(new File(index));
 			App.get().reader = IndexReader.open(directory);
-			App.get().searcher = new IndexSearcher(App.get().reader);
+			App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 
 		} catch (IOException e) {
