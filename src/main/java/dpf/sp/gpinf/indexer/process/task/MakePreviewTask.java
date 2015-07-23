@@ -54,6 +54,9 @@ public class MakePreviewTask extends AbstractTask{
 			return;
 		
 		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), "html");
+		if(viewFile.exists())
+			return;
+		
 		if (!viewFile.getParentFile().exists()) viewFile.getParentFile().mkdirs();
 		
 		try{
