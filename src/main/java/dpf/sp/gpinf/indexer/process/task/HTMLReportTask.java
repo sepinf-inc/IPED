@@ -729,11 +729,12 @@ public class HTMLReportTask extends AbstractTask {
         return ImageUtil.resizeImage(img, width, height);
     }
 
-    private void replace(StringBuilder sb, String a, String b) {
-        while (true) {
-            int pos = sb.indexOf(a);
-            if (pos >= 0) sb.replace(pos, pos + a.length(), b == null ? "-" : b);
-            else break;
+    private static void replace(StringBuilder sb, String a, String b) {
+        int pos = 0;
+        while ((pos = sb.indexOf(a, pos)) >= 0) {
+            String rep = b == null ? "-" : b;
+            sb.replace(pos, pos + a.length(), rep);
+            pos += rep.length();
         }
     }
 
