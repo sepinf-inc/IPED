@@ -29,6 +29,7 @@ public class RowComparator implements Comparator<Integer> {
 	private int col;
 	static private int[][] order = new int[fields.length + 4][];
 	static private int[] loadedCol = { 0, 0 };
+	
 	private App app = App.get();
 
 	public RowComparator(int col) {
@@ -55,26 +56,29 @@ public class RowComparator implements Comparator<Integer> {
 
 	@Override
 	final public int compare(Integer a, Integer b) {
-		if (col == 1) {
-			if (app.marcadores.selected[a] == app.marcadores.selected[b])
-				return 0;
-			else if (app.marcadores.selected[a] == true)
-				return -1;
-			else
-				return 1;
-
-		} else if (col == 2) {
-			return (int)(app.results.scores[a] - app.results.scores[b]);
-
-		} else if (col == 3) {
-			return app.marcadores.getLabels(a).compareTo(app.marcadores.getLabels(b));
 		
-		} else{
-			if (order[col] == null)
-				loadOrder();
-			return order[col][a] - order[col][b];
+		if(Thread.currentThread().isInterrupted())
+			throw new RuntimeException("Ordenação cancelada.");
+		
+		switch(col){
+			case 1:
+				if (app.marcadores.selected[a] == app.marcadores.selected[b])
+					return 0;
+				else if (app.marcadores.selected[a] == true)
+					return -1;
+				else
+					return 1;
+			case 2:
+				return (int)(app.results.scores[a] - app.results.scores[b]);
+				
+			case 3:
+				return app.marcadores.getLabels(a).compareTo(app.marcadores.getLabels(b));
+				
+			default:
+				if (order[col] == null)
+					loadOrder();
+				return order[col][a] - order[col][b];
 		}
-
 	}
 
 }

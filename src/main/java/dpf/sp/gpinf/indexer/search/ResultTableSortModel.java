@@ -38,7 +38,7 @@ public class ResultTableSortModel extends AbstractTableModel {
 	}
 
 	@Override
-	final public Object getValueAt(int row, int col) {
+	final public Integer getValueAt(int row, int col) {
 		if (col == 2)
 			return row;
 		else
