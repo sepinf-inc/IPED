@@ -55,7 +55,7 @@ public class RowComparator implements Comparator<Integer> {
 	}
 
 	@Override
-	final public int compare(Integer a, Integer b) {
+	public int compare(Integer a, Integer b) {
 		
 		if(Thread.currentThread().isInterrupted())
 			throw new RuntimeException("Ordenação cancelada.");

@@ -37,7 +37,21 @@ public class TreeViewModel implements TreeModel{
 	private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
 	private Node root;
 	private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
-	private RowComparator comparator = new RowComparator(4);
+	private TreeNameComparator comparator = new TreeNameComparator(4);
+	
+	class TreeNameComparator extends RowComparator{
+		
+		private App app = App.get();
+		
+		public TreeNameComparator(int col) {
+			super(col);
+		}
+		
+		@Override
+		final public int compare(Integer a, Integer b) {
+			return super.compare(app.ids[a], app.ids[b]);
+		}
+	}
 	
 	public class Node{
 		private Document doc;
