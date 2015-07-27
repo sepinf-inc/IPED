@@ -1,3 +1,14 @@
+27/07/2015: IPED-3.5.1
+- Ordenação das colunas em background e cancelável (útil com milhões de itens)
+- Parser inicial para msgstore.db (whatsapp) - contribuição PCF Pfeifer
+Correções:
+- Alguns tipos de RAR cifrados não eram identificados
+- Ordenação alfabética na árvore perdida (3.5)
+- Travamento raro durante geração de relatório HTML
+- Ícone do item não acompanhava movimentação da coluna Nome
+- Não gera novamente preview do item durante geração de relatório
+- Resize dos componentes da janela de marcadores
+
 15/07/2015: IPED-3.5
 Melhorias:
 - Rollback do Índice após erro ou cancelamento durante append de evidência
