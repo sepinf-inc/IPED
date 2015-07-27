@@ -44,7 +44,8 @@ public class AppListener implements ActionListener, MouseListener {
 		App.get().results = new SearchResult(0);
 		App.get().lastSelectedDoc = -1;
 		App.get().resultsModel.fireTableDataChanged();
-		App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
+		if(App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty()))
+			App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
 		App.get().resultsTable.setRowSorter(null);
 		App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 		App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");

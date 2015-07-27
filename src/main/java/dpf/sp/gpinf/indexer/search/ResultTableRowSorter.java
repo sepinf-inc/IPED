@@ -21,6 +21,8 @@ package dpf.sp.gpinf.indexer.search;
 import java.awt.Dialog;
 import java.util.List;
 
+import javax.swing.RowSorter;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableRowSorter;
 
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -28,8 +30,6 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 	
-	ProgressDialog progressMonitor;
-
 	public ResultTableRowSorter() {
 		super(new ResultTableSortModel());
 		this.setSortable(0, false);
@@ -41,12 +41,7 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 	
 	public void setSortKeys(final List<? extends SortKey> sortKeys) {
 		
-		//System.out.println("sorting");
 		BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
-		
-		progressMonitor = new ProgressDialog(App.get(), backgroundSort, true, 200, Dialog.ModalityType.MODELESS);
-		progressMonitor.setNote("Ordenando...");
-		
 		backgroundSort.execute();
 		
 	}
@@ -57,36 +52,46 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 	
 	class BackgroundSort extends CancelableWorker{
 		
+		ProgressDialog progressMonitor;
 		List<? extends SortKey> sortKeys;
 		ResultTableRowSorter sorter = new ResultTableRowSorter();
 		
 		public BackgroundSort(List<? extends SortKey> sortKeys){
 			this.sortKeys = sortKeys;
+			progressMonitor = new ProgressDialog(App.get(), this, true, 200, Dialog.ModalityType.APPLICATION_MODAL);
+			progressMonitor.setNote("Ordenando...");
 		}
 
 		@Override
 		protected Object doInBackground() throws Exception {
-			//System.out.println("backgroundSort");
+			
 			sorter.setSortKeysSuper(sortKeys);
-			//System.out.println("finished backgroundSort");
+
 			return null;
 		}
 		
 		@Override
 		public void done(){
 			progressMonitor.close();
-			if(!this.isCancelled()){
-				int idx = App.get().resultsTable.getSelectionModel().getLeadSelectionIndex();
-				if(idx != -1)
-					idx = App.get().resultsTable.convertRowIndexToModel(idx);
-				
-				App.get().resultsTable.setRowSorter(sorter);
-				App.get().resultsTable.getTableHeader().repaint();
-				
-				if(idx != -1){
-					idx = App.get().resultsTable.convertRowIndexToView(idx);
-					App.get().resultsTable.setRowSelectionInterval(idx, idx);
-				}
+			int idx = App.get().resultsTable.getSelectionModel().getLeadSelectionIndex();
+			if(idx != -1)
+				idx = App.get().resultsTable.convertRowIndexToModel(idx);
+			
+			RowSorter oldSorter = App.get().resultsTable.getRowSorter();
+			App.get().resultsTable.setRowSorter(null);
+			App.get().resultsModel.fireTableDataChanged();
+			
+			if(!this.isCancelled())
+				App.get().resultsTable.setRowSorter(sorter);	
+			else
+				App.get().resultsTable.setRowSorter(oldSorter);
+			
+			App.get().resultsTable.getTableHeader().repaint();
+			App.get().galleryModel.fireTableStructureChanged();
+			
+			if(idx != -1){
+				idx = App.get().resultsTable.convertRowIndexToView(idx);
+				App.get().resultsTable.setRowSelectionInterval(idx, idx);
 			}
 
 		}

@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -350,11 +348,14 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		if (!this.isCancelled())
 			try {
 				App.get().results = this.get();
-				App.get().resultsModel.fireTableDataChanged();
-				App.get().galleryModel.fireTableStructureChanged();
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().length);
 				App.get().resultsTable.getTableHeader().repaint();
-				App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+				if(App.get().results.length < 1 << 24)
+					App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+				else{
+					App.get().resultsModel.fireTableDataChanged();
+					App.get().galleryModel.fireTableStructureChanged();
+				}
 					
 			} catch (Exception e) {
 				e.printStackTrace();
