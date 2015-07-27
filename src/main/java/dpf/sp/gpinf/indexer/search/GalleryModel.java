@@ -100,8 +100,10 @@ public class GalleryModel extends AbstractTableModel {
 		final int docId = App.get().results.docs[idx];
 		final int id = App.get().ids[docId];
 
-		if (cache.containsKey(id))
-			return cache.get(id);
+		synchronized (cache) {
+			if (cache.containsKey(id))
+				return cache.get(id);
+		}
 
 		final Document doc;
 		try {
