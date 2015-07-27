@@ -115,6 +115,15 @@
     	<glob pattern="urlclassifier3.sqlite"/>
     </mime-type>
     
+    <mime-type type="message/x-whatsapp-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-db">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="msgstore.db"/>
+    </mime-type>
+    
     <mime-type type="application/x-sqlite3">
     	<magic priority="50">
     	 	<match value="SQLite format 3\x00" type="string" offset="0"/>

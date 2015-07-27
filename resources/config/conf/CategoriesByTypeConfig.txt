@@ -34,7 +34,7 @@ Arquivos Compactados = application/vnd.ms-tnef; application/zip; application/x-r
 
 Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; message/x-whatsapp-msg
 
 Registro do Windows = application/x-windows-registry
 

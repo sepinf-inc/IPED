@@ -62,7 +62,8 @@ public class HtmlViewer extends AbstractViewer {
 	@Override
 	public boolean isSupportedType(String contentType) {
 		return contentType.equals("text/html") || contentType.equals("application/xhtml+xml") || contentType.equals("text/asp") || contentType.equals("text/aspdotnet")
-				|| contentType.equals("message/outlook-pst") || contentType.equals("application/messenger-plus") || contentType.equals("application/outlook-contact");
+				|| contentType.equals("message/outlook-pst") || contentType.equals("application/messenger-plus") || contentType.equals("application/outlook-contact")
+				|| contentType.equals("message/x-whatsapp-msg");
 	}
 
 	public HtmlViewer() {
