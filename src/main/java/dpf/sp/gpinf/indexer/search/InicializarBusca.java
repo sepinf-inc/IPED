@@ -177,8 +177,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		try {
 			Directory directory = FSDirectory.open(new File(index));
 			App.get().reader = DirectoryReader.open(directory);
-			App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
-			App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+			if(Configuration.searchThreads > 1){
+				App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
+				App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+			}else
+				App.get().searcher = new IndexSearcher(App.get().reader);
+			
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();
 			App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");

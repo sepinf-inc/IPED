@@ -51,6 +51,7 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -354,6 +355,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().length);
 				App.get().resultsTable.getTableHeader().repaint();
 				App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+					
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -424,7 +426,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			String index = App.get().codePath + "/../index";
 			Directory directory = FSDirectory.open(new File(index));
 			App.get().reader = IndexReader.open(directory);
-			App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+			if(Configuration.searchThreads > 1){
+				App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+			}else
+				App.get().searcher = new IndexSearcher(App.get().reader);
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 
 		} catch (IOException e) {
