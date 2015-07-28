@@ -81,6 +81,17 @@
 		<glob pattern="*.rec"/>
 	<sub-class-of type="text/plain"/>
     </mime-type>
+    
+    <mime-type type="application/x-shareaza-searches-dat">
+    	<_comment>Shareaza Searches.dat file</_comment>
+    	<glob pattern="Searches.dat" />
+    </mime-type>
+    
+    <mime-type type="application/x-shareaza-library-dat">
+    	<_comment>Shareaza Library{1,2}.dat file</_comment>
+    	<glob pattern="Library1.dat" />
+        <glob pattern="Library2.dat" />
+    </mime-type>
 
     <mime-type type="message/outlook-pst">
 	<magic priority="70">
