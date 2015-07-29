@@ -12,7 +12,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -42,8 +41,6 @@ public class SignatureTask extends AbstractTask {
 						System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Detecção do tipo abortada: "
 								+ evidence.getPath() + " (" + evidence.getLength() + " bytes)\t\t" + e.toString());
 						
-					}finally{
-						IOUtil.closeQuietly(tis);
 					}
 				}
 				
