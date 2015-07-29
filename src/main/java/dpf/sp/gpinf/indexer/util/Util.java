@@ -111,40 +111,31 @@ public class Util {
 	public static String getValidFilename(String filename) {
 		filename = filename.trim();
 
-		String invalidChars = "\\/:;*?\"<>|";
+		String invalidChars = "\\/:*?\"<>|";
 		char[] chars = filename.toCharArray();
 		for (int i = 0; i < chars.length; i++)
 			if ((invalidChars.indexOf(chars[i]) >= 0) || (chars[i] < '\u0020'))
 				filename = filename.replace(chars[i] + "", "");
 
-		String[] invalidNames = { "CON", "PRN", "AUX", "NUL", 
-				"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-				"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
-		
+		String[] invalidNames = { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+				"LPT9" };
 		for (String name : invalidNames)
 			if (filename.equalsIgnoreCase(name) || filename.toUpperCase().startsWith(name + "."))
-				filename = "1" + filename;
+				filename = "'" + filename;
 
-		//Limite máximo do Joliet
-		int MAX_LENGTH = 64;
-		
+		int MAX_LENGTH = 128;
 		if (filename.length() > MAX_LENGTH) {
 			int extIndex = filename.lastIndexOf('.');
 			if (extIndex == -1)
 				filename = filename.substring(0, MAX_LENGTH);
 			else {
 				String ext = filename.substring(extIndex);
-				int MAX_EXT_LEN = 20;
-				if (ext.length() > MAX_EXT_LEN)
-					ext = filename.substring(extIndex, extIndex + MAX_EXT_LEN);
+				if (ext.length() > MAX_LENGTH / 2)
+					ext = filename.substring(extIndex, extIndex + MAX_LENGTH / 2);
 				filename = filename.substring(0, MAX_LENGTH - ext.length()) + ext;
 			}
 		}
-		
-		char c;
-		while((c = filename.charAt(filename.length() - 1)) == ' ' || c == '.')
-			filename = filename.substring(0, filename.length() - 1);
-		
+
 		return filename;
 	}
 
