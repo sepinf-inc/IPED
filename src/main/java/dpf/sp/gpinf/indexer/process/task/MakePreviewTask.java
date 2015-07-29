@@ -44,7 +44,8 @@ public class MakePreviewTask extends AbstractTask{
 				|| contentType.equals("application/x-emule")
 				|| contentType.equals("application/x-ares-galaxy")
 				|| contentType.equals("application/x-lnk")
-				|| contentType.equals("application/x-whatsapp-db");
+				|| contentType.equals("application/x-whatsapp-db")
+				|| contentType.equals("application/x-shareaza-library-dat");
 	}
 
 	@Override
