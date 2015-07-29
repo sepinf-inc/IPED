@@ -119,6 +119,13 @@ public class VideoThumbTask extends AbstractTask {
     private static final Set<String> currentVideos = new HashSet<String>();
 
     /**
+     * Construtor.
+     */
+    public VideoThumbTask(Worker worker) {
+        super(worker);
+    }
+
+    /**
      * Inicializa a tarefa de processamento de vídeos.
      * Carrega configurações sobre o tamanho/layout a ser gerado e camimnho do MPlayer,
      * que é o programa responsável pela extração de frames.

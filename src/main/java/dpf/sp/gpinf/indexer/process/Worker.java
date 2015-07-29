@@ -113,10 +113,8 @@ public class Worker extends Thread {
 	}
 	
 	private void initTasks() throws Exception{
-		for(AbstractTask task : tasks){
-		    task.setWorker(this);
+		for(AbstractTask task : tasks)
 			task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
-		}
 	}
 	
 	private void finishTasks() throws Exception{

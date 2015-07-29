@@ -30,6 +30,10 @@ public class LedKFFTask extends AbstractTask {
     private static HashValue[] hashArray;
     private static final String taskName = "Consulta Base de Hashes do LED";
 
+    public LedKFFTask(Worker worker) {
+        super(worker);
+    }
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 

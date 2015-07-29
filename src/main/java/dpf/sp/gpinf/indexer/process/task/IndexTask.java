@@ -67,6 +67,10 @@ public class IndexTask extends AbstractTask{
 	private List<IdLenPair> textSizes;
 	private Set<Integer> splitedIds;
 	
+	public IndexTask(Worker worker){
+		super(worker);
+	}
+	
 	public static class IdLenPair {
 		int id, length;
 

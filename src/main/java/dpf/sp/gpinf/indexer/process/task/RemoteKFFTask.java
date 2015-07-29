@@ -34,6 +34,10 @@ public class RemoteKFFTask extends AbstractTask {
     int count = 0;
     private boolean addedToList=false;
 
+    public RemoteKFFTask(Worker worker) {
+        super(worker);
+    }
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
         digestMD5_512 = MessageDigest.getInstance("MD5");

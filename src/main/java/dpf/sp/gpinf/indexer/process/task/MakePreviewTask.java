@@ -25,6 +25,10 @@ public class MakePreviewTask extends AbstractTask{
 	
 	private Parser parser = new AutoDetectParser();
 
+	public MakePreviewTask(Worker worker) {
+		super(worker);
+	}
+
 	@Override
 	public void init(Properties confParams, File confDir) throws Exception {
 	}

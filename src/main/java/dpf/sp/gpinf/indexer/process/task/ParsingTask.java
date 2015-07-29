@@ -81,6 +81,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
 	private static HashSet<String> categoriesToTestEncryption = getCategoriesToTestEncryption();
+
+	private Detector detector;
 	
 	private EvidenceFile evidence;
 	private ParseContext context;
@@ -90,13 +92,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	private boolean hasTitle = false;
 
 	public ParsingTask(ParseContext context) {
+		super(null);
 		setContext(context);
 	}
-	
-	public ParsingTask() {
-    }
 
-    private void setContext(ParseContext context){
+	public ParsingTask(Worker worker) {
+		super(worker);
+		this.detector = worker.detector;
+	}
+	
+	private void setContext(ParseContext context){
 		this.context = context;
 		this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
 		ItemInfo appContext = context.get(ItemInfo.class);
@@ -207,7 +212,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
 			|| isToTestEncryption(evidence.getCategorySet()) 
 			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
-		    new ParsingTask().safeProcess(evidence);
+		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
 	}
@@ -367,15 +372,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			// pausa contagem de timeout do pai antes de extrair e processar subitem
 			reader.setTimeoutPaused(true);
 						
-			ExportFileTask extractor = new ExportFileTask();
-			extractor.setWorker(worker);
-			extractor.initOutDir();
+			ExportFileTask extractor = new ExportFileTask(worker);
 			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
 			extractor.extractFile(tis, subItem);
 
 			//TODO setar tipo antes da categoria?
 			if(contentTypeStr != null)
-				new SetCategoryTask().process(subItem);
+				new SetCategoryTask(worker).process(subItem);
 
 			// teste para extração£o de anexos de emails de PSTs
 			if (metadata.get(ExtraProperties.TO_EXTRACT) != null || (contentTypeStr != null &&

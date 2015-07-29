@@ -21,6 +21,10 @@ public class SignatureTask extends AbstractTask {
 	
 	public static boolean processFileSignatures = true;
 	
+	public SignatureTask(Worker worker){
+		super(worker);
+	}
+	
 	public void process(EvidenceFile evidence){
 			
 		MediaType type = evidence.getMediaType();

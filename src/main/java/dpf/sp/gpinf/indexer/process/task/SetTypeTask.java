@@ -20,6 +20,11 @@ import dpf.sp.gpinf.indexer.process.Worker;
 public class SetTypeTask extends AbstractTask {
 	
 	TikaConfig config;
+	
+	public SetTypeTask(Worker worker){
+		super(worker);
+		config = worker.config;
+	}
 
 	@Override
 	public void process(EvidenceFile evidence) throws Exception {
@@ -74,7 +79,8 @@ public class SetTypeTask extends AbstractTask {
 
 	@Override
 	public void init(Properties confProps, File confDir) throws Exception {
-	    config = worker.config;
+		// TODO Auto-generated method stub
+		
 	}
 
 	@Override

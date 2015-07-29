@@ -62,19 +62,18 @@ public abstract class AbstractTask {
 		this.nextTask = nextTask;
 	}
 
-	
 	/**
-     * Configura o worker que executará a tarefa.
-     * 
-     * @param worker O worker que executará esta tarefa
-     */
-	public void setWorker(Worker worker){
-	    this.worker = worker;
-        if(worker != null){
-            this.stats = worker.stats;
-            this.caseData = worker.caseData;
-            this.output = worker.output;
-        }
+	 * Construtor recebendo um worker.
+	 * 
+	 * @param worker O worker que executará esta tarefa
+	 */
+	public AbstractTask(Worker worker){
+		this.worker = worker;
+		if(worker != null){
+			this.stats = worker.stats;
+			this.caseData = worker.caseData;
+			this.output = worker.output;
+		}
 	}
 	
 	/**

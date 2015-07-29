@@ -168,7 +168,8 @@ public class HTMLReportTask extends AbstractTask {
     private static final Set<String> currentFiles = new HashSet<String>();
 
     /** Construtor. */
-    public HTMLReportTask() {
+    public HTMLReportTask(Worker worker) {
+        super(worker);
         collator.setStrength(Collator.TERTIARY);
     }
 

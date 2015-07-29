@@ -70,6 +70,10 @@ public class KFFTask extends AbstractTask{
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
 
+    public KFFTask(Worker worker) {
+        super(worker);
+    }
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
      
