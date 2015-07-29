@@ -84,11 +84,13 @@
     
     <mime-type type="application/x-shareaza-searches-dat">
     	<_comment>Shareaza Searches.dat file</_comment>
+    	<sub-class-of type="application/x-p2p"/>
     	<glob pattern="Searches.dat" />
     </mime-type>
     
     <mime-type type="application/x-shareaza-library-dat">
     	<_comment>Shareaza Library{1,2}.dat file</_comment>
+    	<sub-class-of type="application/x-p2p"/>
     	<glob pattern="Library1.dat" />
         <glob pattern="Library2.dat" />
     </mime-type>
