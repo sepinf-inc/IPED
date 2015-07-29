@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -19,7 +20,12 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class ImageThumbTask extends AbstractTask{
     
-    private static String thumbsFolder = "thumbs";
+    public ImageThumbTask(Worker worker) {
+		super(worker);
+		// TODO Auto-generated constructor stub
+	}
+
+	private static String thumbsFolder = "thumbs";
     private static String hasThumbProp = "hasThumb";
     private static int thumbSize = 112;
     
