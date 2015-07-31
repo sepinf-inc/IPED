@@ -137,14 +137,12 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	
 	private void configureLogParameters(File logFile, boolean noLog) {
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		System.setProperty("logFileDate", df.format(new Date()));
 		
 		if (noLog) {
 			System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationConsoleOnly.xml");
 		} else {
 			if (logFile == null) {
-				String date = df.format(new Date());
-				System.setProperty("logFileName", Versao.APP_EXT + "-" + date + ".log");
-				System.setProperty("tikaLogFileName", "TikaParsers-" + date + ".log");
 				System.setProperty("log4j.configurationFile", "conf/Log4j2Configuration.xml");
 			} else {
 				System.setProperty("logFileNamePath", logFile.getPath());
