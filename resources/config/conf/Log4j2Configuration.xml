@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO">
+<Configuration packages="gpinf.util.log">
 	<Properties>
 		<Property name="log-path">log</Property>
 	</Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
+            <PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="DENY" onMismatch="ACCEPT"/>
         </Console>
         <File name="LogFile" fileName="${log-path}/${sys:logFileName}"
         	immediateFlush="true" append="true" bufferSize="4096">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
+            <PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="DENY" onMismatch="ACCEPT"/>
+        </File>
+        <File name="LogTika" filename="${log-path}/${sys:tikaLogFileName}">
+        	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
+        	<PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="ACCEPT" onMismatch="DENY"/>
         </File>
     </Appenders>
     <Loggers>
         <Root level="info">
         	<AppenderRef ref="Console" level="error"/>
             <AppenderRef ref="LogFile" />
+            <AppenderRef ref="LogTika" />
         </Root>
     </Loggers>
 </Configuration>

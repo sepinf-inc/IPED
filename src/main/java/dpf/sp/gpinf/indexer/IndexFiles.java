@@ -142,7 +142,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationConsoleOnly.xml");
 		} else {
 			if (logFile == null) {
-				System.setProperty("logFileName", Versao.APP_EXT + "-" + df.format(new Date())+ ".log");
+				String date = df.format(new Date());
+				System.setProperty("logFileName", Versao.APP_EXT + "-" + date + ".log");
+				System.setProperty("tikaLogFileName", "TikaParsers-" + date + ".log");
 				System.setProperty("log4j.configurationFile", "conf/Log4j2Configuration.xml");
 			} else {
 				System.setProperty("logFileNamePath", logFile.getPath());
