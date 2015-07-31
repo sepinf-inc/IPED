@@ -26,6 +26,9 @@ import java.net.URLClassLoader;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ag.ion.bion.officelayer.application.IApplicationAssistant;
 import ag.ion.bion.officelayer.application.ILazyApplicationInfo;
 import ag.ion.bion.officelayer.application.OfficeApplicationException;
@@ -35,6 +38,8 @@ import dpf.sp.gpinf.indexer.search.FileProcessor;
 import dpf.sp.gpinf.indexer.util.LOExtractor;
 
 public class CompositeViewerHelper {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(CompositeViewerHelper.class);
 
 	boolean useLO = false;
 	String pathLO = System.getProperty("user.home") + "/.indexador/libreoffice4";
@@ -72,7 +77,7 @@ public class CompositeViewerHelper {
 			Method method = sysclass.getDeclaredMethod("addURL", parameters);
 			method.setAccessible(true);
 			method.invoke(sysloader, new Object[] { jarUrl });
-			System.out.println(jarUrl.toString() + " loaded");
+			LOGGER.info("{} loaded", jarUrl.toString());
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -136,9 +141,9 @@ public class CompositeViewerHelper {
 						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../lib/nativeview");
 						ILazyApplicationInfo[] ila = ass.getLocalApplications();
 						if (ila.length != 0) {
-							System.out.println("Detected LO " + ila[0].getMajorVersion() + " " + ila[0].getHome());
+							LOGGER.info("Detected LOG {} {}", ila[0].getMajorVersion(), ila[0].getHome());
 							if(ila[0].getMajorVersion() != 4)
-								System.out.println("Install LibreOffice4 to enable the Libreoffice viewer!");
+								LOGGER.info("Install LibreOffice4 to enable the Libreoffice viewer!");
 							else
 								systemLO = ila[0].getHome();
 						}

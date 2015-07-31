@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+	<Properties>
+		<Property name="log-path">log</Property>
+	</Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
+        </Console>
+        <File name="LogFile" fileName="${log-path}/${sys:logFileName}"
+        	immediateFlush="true" append="true" bufferSize="4096">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+        	<AppenderRef ref="Console" level="error"/>
+            <AppenderRef ref="LogFile" />
+        </Root>
+    </Loggers>
+</Configuration>

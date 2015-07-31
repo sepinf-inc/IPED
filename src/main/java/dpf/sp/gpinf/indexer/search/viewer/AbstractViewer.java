@@ -34,8 +34,13 @@ import java.util.Set;
 
 import javax.swing.JPanel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class AbstractViewer {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(AbstractViewer.class);
+	
 	/**
 	 * 
 	 */
@@ -140,7 +145,7 @@ public abstract class AbstractViewer {
 
 		@Override
 		public void lostOwnership(Clipboard arg0, Transferable arg1) {
-			System.out.println("Lost Clipboard Ownership");
+			LOGGER.info("Lost Clipboard Ownership");
 
 		}
 	}

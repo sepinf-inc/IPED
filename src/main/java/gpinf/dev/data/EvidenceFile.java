@@ -1,8 +1,5 @@
 package gpinf.dev.data;
 
-import gpinf.dev.filetypes.EvidenceFileType;
-import gpinf.util.FormatUtil;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,16 +15,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.LimitedInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import gpinf.dev.filetypes.EvidenceFileType;
+import gpinf.util.FormatUtil;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -41,7 +41,8 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
  * @author Nassif (GPINF/SP)
  */
 public class EvidenceFile implements Serializable, StreamSource {
-    
+    private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+	
     private static class Counter {
 
         public static synchronized int getNextId() {
@@ -218,12 +219,12 @@ public class EvidenceFile implements Serializable, StreamSource {
     public void dispose(){
     	if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
 			if (!file.delete())
-				System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + file.getAbsolutePath());
+				LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
 		}
         try {
 			tmpResources.close();
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " " + e.toString());
+			LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
 		}
     }
 

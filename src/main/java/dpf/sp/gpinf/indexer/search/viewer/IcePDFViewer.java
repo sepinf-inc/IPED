@@ -34,9 +34,12 @@ import org.icepdf.ri.common.SwingViewBuilder;
 import org.icepdf.ri.common.views.DocumentViewController;
 import org.icepdf.ri.common.views.DocumentViewControllerImpl;
 import org.icepdf.ri.util.PropertiesManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IcePDFViewer extends AbstractViewer {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
 	/**
 	 * 
 	 */
@@ -182,7 +185,7 @@ public class IcePDFViewer extends AbstractViewer {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println("Erro/Interrupção do Highlight");
+			LOGGER.info("Erro/Interrupção do Highlight");
 		}
 
 	}

@@ -1,22 +1,23 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Properties;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
  */
 public class SignatureTask extends AbstractTask {
+	private static Logger LOGGER = LoggerFactory.getLogger(SignatureTask.class); 
 	
 	public static boolean processFileSignatures = true;
 	
@@ -38,9 +39,8 @@ public class SignatureTask extends AbstractTask {
 						type = worker.detector.detect(tis, metadata).getBaseType();
 						
 					} catch (IOException e) {
-						System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Detecção do tipo abortada: "
-								+ evidence.getPath() + " (" + evidence.getLength() + " bytes)\t\t" + e.toString());
-						
+						LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), evidence.getPath(), 
+								evidence.getLength(), e.toString());						
 					}
 				}
 				
@@ -57,8 +57,8 @@ public class SignatureTask extends AbstractTask {
 			} catch (Exception e) {
 				type = MediaType.OCTET_STREAM;
 				
-				System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Detecção do tipo abortada: "
-				+ evidence.getPath() + " (" + evidence.getLength() + " bytes)\t\t" + e.toString());
+				LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), 
+						evidence.getPath(), evidence.getLength(), e.toString());
 			}
 			evidence.setMediaType(type);
 		}

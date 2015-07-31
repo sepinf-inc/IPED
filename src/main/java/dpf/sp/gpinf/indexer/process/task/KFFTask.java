@@ -1,40 +1,29 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
-
 import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.ProgressMonitor;
-import javax.swing.ProgressMonitorInputStream;
 
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
-import org.mapdb.SerializerBase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.FileGroup;
 
 /**
  * Tarefa de KFF com implementação simples utilizando base local, sem servidor de banco de dados.
@@ -48,6 +37,7 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
  */
 public class KFFTask extends AbstractTask{
     
+	private Logger LOGGER = LoggerFactory.getLogger(KFFTask.class);
     private static String ALERT = "Hash com Alerta";
     private static String IGNORE = "Hash Ignorável";
     private static String CONF_FILE = "KFFTaskConfig.txt";
@@ -142,7 +132,7 @@ public class KFFTask extends AbstractTask{
     @Override
     public void finish() throws Exception {
         if(excluded != -1)
-            System.out.println(new Date() + "\t[INFO]\t" + "Itens ignorados via KFF: " + excluded);
+        	LOGGER.info("Itens ignorados via KFF: {}", excluded);
         excluded = -1;
     }
     

@@ -8,6 +8,8 @@ import java.util.Date;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
@@ -26,6 +28,8 @@ import dpf.sp.gpinf.indexer.process.Worker;
  * 
  */
 public abstract class AbstractTask {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(AbstractTask.class);
 	
 	/**
 	 * Worker que executará esta tarefa.
@@ -163,7 +167,7 @@ public abstract class AbstractTask {
 			this.process(evidence);
 			
 		} catch (TimeoutException e) {
-			System.out.println(new Date() + "\t[ALERT]\t" + worker.getName() + " TIMEOUT ao processar " + evidence.getPath() + " (" + evidence.getLength() + "bytes)\t" + e);
+			LOGGER.warn("{} TIMEOUT ao processar {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e);
 			stats.incTimeouts();
 			evidence.setTimeOut(true);
 			processMonitorTimeout(evidence);

@@ -18,11 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
-import gpinf.dev.preprocessor.AsapReportParser;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,10 +28,20 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.util.Date;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.FileGroup;
+import gpinf.dev.preprocessor.AsapReportParser;
+
 public class FTK1ReportProcessor {
 
 	private CaseData caseData;
 	private boolean listOnly;
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(FTK1ReportProcessor.class);
 
 	// private PropertyChangeListener listener;
 
@@ -77,7 +82,7 @@ public class FTK1ReportProcessor {
 	public static void criarLinkBusca(File output) throws Exception {
 		File file = new File(output.getParentFile(), "contents.htm");
 		if (!file.exists()) {
-			System.out.println(new Date() + "\t[AVISO]\t" + "Link para busca não criado: contents.htm não encontrado.");
+			LOGGER.warn("Link para busca não criado: contents.htm não encontrado.");
 			return;
 		}
 		Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));

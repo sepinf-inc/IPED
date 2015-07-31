@@ -35,12 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.concurrent.Worker.State;
-import netscape.javascript.JSObject;
-
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.codec.DecodeMonitor;
 import org.apache.james.mime4j.codec.DecoderUtil;
@@ -69,14 +63,22 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.javafx.application.PlatformImpl;
 
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.concurrent.Worker;
+import javafx.concurrent.Worker.State;
+import netscape.javascript.JSObject;
 
 public class EmailViewer extends HtmlViewer {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(EmailViewer.class); 
 	/**
 	 * 
 	 */
@@ -181,7 +183,7 @@ public class EmailViewer extends HtmlViewer {
 										highlightNode(doc, false);
 
 								} else {
-									System.out.println("Null DOM to highlight!");
+									LOGGER.info("Null DOM to highlight!");
 									queryTerms = highlightTerms.toArray(new String[0]);
 									currTerm = queryTerms.length > 0 ? 0 : -1;
 

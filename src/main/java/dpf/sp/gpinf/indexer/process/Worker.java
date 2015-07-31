@@ -18,13 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -32,17 +27,18 @@ import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.parser.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de processamento instalada:
@@ -54,6 +50,8 @@ import dpf.sp.gpinf.indexer.util.Util;
  * Caso haja uma exceção não esperada, ela é armazenada para que possa ser detectada pelo manager.
  */
 public class Worker extends Thread {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 	
 	LinkedBlockingDeque<EvidenceFile> evidences;
 
@@ -156,7 +154,7 @@ public class Worker extends Thread {
 		try {
 
 			if (IndexFiles.getInstance().verbose)
-				System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " Indexando " + evidence.getPath());
+				LOGGER.info("{} Indexando {}", getName(), evidence.getPath());
 
 			checkFile(evidence);
 			
@@ -200,7 +198,7 @@ public class Worker extends Thread {
 	@Override
 	public void run() {
 
-		System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " iniciada.");
+		LOGGER.info("{} iniciada.", getName());
 		
 		while (!this.isInterrupted() && exception == null) {
 
@@ -232,9 +230,9 @@ public class Worker extends Thread {
 		}
 
 		if (evidence == null)
-			System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " finalizada.");
+			LOGGER.info("{} finalizada.", getName());
 		else
-			System.out.println(new Date() + "\t[INFO]\t" + this.getName() + " interrompida com " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
+			LOGGER.info("{} interrompida com {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
 	}
 
 }
