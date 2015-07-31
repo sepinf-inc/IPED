@@ -147,7 +147,7 @@ public class SleuthkitProcessor {
 					addImage.run(imgPath);
 
 				} catch (Exception e) {
-					LOGGER.warn("Erro do Sleuthkit ao processar imagem {}", imgPath[0]);
+					LOGGER.error("Erro do Sleuthkit ao adicionar imagem {}", imgPath[0]);
 					e.printStackTrace();
 
 				} finally {
