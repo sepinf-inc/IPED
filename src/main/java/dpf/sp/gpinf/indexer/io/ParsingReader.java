@@ -213,6 +213,11 @@ public class ParsingReader extends Reader {
 			} catch (TikaException e){
 				throwable = e;
 				
+			} catch (OutOfMemoryError t) {
+				ItemInfo itemInfo = context.get(ItemInfo.class);
+				String filePath = itemInfo.getPath();
+				LOGGER.error("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
+				
 			} catch (Throwable t) {
 
 				// Loga outros erros que não sejam de parsing, como OutMemory
@@ -222,10 +227,8 @@ public class ParsingReader extends Reader {
 				if (!(t instanceof SAXException)) {
 					ItemInfo itemInfo = context.get(ItemInfo.class);
 					String filePath = itemInfo.getPath();
-
 					LOGGER.warn("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
 				}
-				// t.printStackTrace();
 
 			}
 
