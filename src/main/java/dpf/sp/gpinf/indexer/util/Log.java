@@ -31,6 +31,10 @@ public class Log {
     public static void error(String source, String msg) {
     	LOGGER.error("[{}]\t{}", source, msg);
     }
+    
+    public static void debug(String source, Throwable t) {
+    	LOGGER.debug("[" + source + "]\t{}", t);
+    }
 
     public static void warning(String source, String msg) {
     	LOGGER.warn("[{}]\t{}", source, msg);
