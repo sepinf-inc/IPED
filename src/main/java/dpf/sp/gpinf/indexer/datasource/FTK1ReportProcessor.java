@@ -81,10 +81,9 @@ public class FTK1ReportProcessor {
 
 	public static void criarLinkBusca(File output) throws Exception {
 		File file = new File(output.getParentFile(), "contents.htm");
-		if (!file.exists()) {
-			LOGGER.warn("Link para busca não criado: contents.htm não encontrado.");
+		if (!file.exists())
 			return;
-		}
+		
 		Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));
 		String contents = "";
 		char[] buf = new char[(int) file.length()];
