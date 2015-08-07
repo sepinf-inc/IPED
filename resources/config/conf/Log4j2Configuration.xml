@@ -5,24 +5,17 @@
 	</Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
-            <PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="DENY" onMismatch="ACCEPT"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
         </Console>
         <File name="LogFile" fileName="${log-path}/IPED-${sys:logFileDate}.log"
         	immediateFlush="true" append="true" bufferSize="4096">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
-            <PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="DENY" onMismatch="ACCEPT"/>
-        </File>
-        <File name="LogTika" filename="${log-path}/TikaParsers-${sys:logFileDate}.log">
-        	<PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS}\t[%level]\t%msg%n" />
-        	<PackageRegexpFilter regex="dpf\.sp\.gpinf\.indexer\.parsers.*" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
         </File>
     </Appenders>
     <Loggers>
         <Root level="info">
         	<AppenderRef ref="Console" level="error"/>
             <AppenderRef ref="LogFile" />
-            <AppenderRef ref="LogTika" />
         </Root>
     </Loggers>
 </Configuration>
