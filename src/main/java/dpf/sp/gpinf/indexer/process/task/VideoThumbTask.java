@@ -296,7 +296,9 @@ public class VideoThumbTask extends AbstractTask {
             totalProcessed.incrementAndGet();
             totalTime.addAndGet(t);
         } catch (Exception e) {
-            e.printStackTrace();
+        	Log.warning(taskName, e.toString());
+        	Log.debug(taskName, e);
+        	
         } finally {
             //Tenta apaga possível temporários deixados "perdidos" (no caso normal eles foram renomeados)
             if (mainTmpFile != null && mainTmpFile.exists()) mainTmpFile.delete();

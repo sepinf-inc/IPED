@@ -18,21 +18,21 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
-import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FolderTreeProcessor;
 import dpf.sp.gpinf.indexer.datasource.IndexerProcessor;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  *  Responsável por instanciar e executar o contador e o produtor de itens do caso
@@ -42,6 +42,7 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
  */  
 public class ItemProducer extends Thread {
 	
+	private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 	public static volatile boolean indexerReport = false;
 
 	private final CaseData caseData;
@@ -80,8 +81,8 @@ public class ItemProducer extends Thread {
 					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
 
 				if (!listOnly) {
-					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Processando '" + source.getAbsolutePath() + "'");
-					System.out.println(new Date() + "\t[INFO]\t" + "Processando '" + source.getAbsolutePath() + "'");
+					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
+					LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
 				}
 
 				int alternativeFiles = 0;
@@ -118,7 +119,7 @@ public class ItemProducer extends Thread {
 				 
 			} else {
 				IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int)(caseData.getDiscoveredVolume()/1000000));
-				System.out.println(new Date() + "\t[INFO]\t" + "Localizados " + caseData.getDiscoveredEvidences() + " itens");
+				LOGGER.info("Localizados {} itens", caseData.getDiscoveredEvidences());
 			}
 
 		} catch (Exception e) {

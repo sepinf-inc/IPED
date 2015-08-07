@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,6 +68,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewer;
@@ -82,6 +83,8 @@ public class App extends JFrame implements WindowListener {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(App.class);
 
 	SleuthkitCase sleuthCase;
 
@@ -181,7 +184,7 @@ public class App extends JFrame implements WindowListener {
 
 	public void init() {
 
-		System.out.println("init");
+		LOGGER.info("init");
 
 		applet = this;
 
@@ -204,7 +207,7 @@ public class App extends JFrame implements WindowListener {
 				@Override
 				public void run() {
 					createGUI();
-					System.out.println("GUI created");
+					LOGGER.info("GUI created");
 				}
 			});
 

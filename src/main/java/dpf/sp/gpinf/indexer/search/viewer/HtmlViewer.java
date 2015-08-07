@@ -25,6 +25,15 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+
+import com.sun.javafx.application.PlatformImpl;
+
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -35,16 +44,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-
-import com.sun.javafx.application.PlatformImpl;
-
-import dpf.sp.gpinf.indexer.util.IOUtil;
-
 public class HtmlViewer extends AbstractViewer {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
 	/**
 	 * 
 	 */
@@ -164,7 +166,7 @@ public class HtmlViewer extends AbstractViewer {
 										highlightNode(doc, false);
 
 								} else {
-									System.out.println("Null DOM to highlight!");
+									LOGGER.info("Null DOM to highlight!");
 									queryTerms = highlightTerms.toArray(new String[0]);
 									currTerm = queryTerms.length > 0 ? 0 : -1;
 

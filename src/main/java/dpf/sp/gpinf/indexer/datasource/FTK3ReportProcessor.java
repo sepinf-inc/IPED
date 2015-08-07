@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,15 +25,17 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.database.DataSource;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
 
 public class FTK3ReportProcessor {
 	
@@ -44,6 +44,7 @@ public class FTK3ReportProcessor {
 	private File baseFile;
 	private Set<Integer> ADList = new HashSet<Integer>();
 	public static boolean wasInstantiated = false;
+	private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportProcessor.class);
 
 	public FTK3ReportProcessor(CaseData caseData, File basePath, boolean listOnly) {
 		this.caseData = caseData;
@@ -66,7 +67,7 @@ public class FTK3ReportProcessor {
 
 		if (!listOnly) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo propriedades do banco...");
+			LOGGER.info("Obtendo propriedades do banco...");
 
 			DataSource ds = DataSource.get(caseName, report);
 			ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
@@ -144,7 +145,7 @@ public class FTK3ReportProcessor {
 		} else
 			throw new FileNotFoundException("'CaseInfo.html' não encontrado. Defina manualmente 'versaoFTK' nas configurações.");
 
-		System.out.println(new Date() + "\t[INFO]\t" + "Detectado relatório gerado pelo FTK " + version);
+		LOGGER.info("Detectado relatório gerado pelo FTK {}", version);
 		return version;
 	}
 
@@ -173,7 +174,7 @@ public class FTK3ReportProcessor {
 			if (bookmarks.size() == 0)
 				throw new Exception("Bookmarks não encontrados em " + file.getAbsolutePath());
 			else
-				System.out.println(new Date() + "\t[INFO]\t" + "Detectados " + bookmarks.size() + " bookmarks no relatório.");
+				LOGGER.info("Detectados {} bookmarks no relatório.", bookmarks.size());
 
 		} else
 			throw new FileNotFoundException(file.getName() + " não encontrado!");
@@ -199,7 +200,7 @@ public class FTK3ReportProcessor {
 					int start = contents.indexOf(str) + str.length();
 					String caseName = contents.substring(start, contents.indexOf("</td>", start));
 					caseNames.add(caseName);
-					System.out.println(new Date() + "\t[INFO]\t" + "Detectado caso " + caseName);
+					LOGGER.info("Detectado caso {}", caseName);
 				} else
 					throw new Exception("Nome do caso não encontrado em CaseInfo.html. O relatório está em português?");
 			}

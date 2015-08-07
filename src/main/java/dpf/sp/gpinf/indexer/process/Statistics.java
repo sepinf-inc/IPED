@@ -1,8 +1,8 @@
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.CaseData;
-
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.Date;
 
 import javax.swing.JOptionPane;
@@ -10,13 +10,17 @@ import javax.swing.JOptionPane;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.FSDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
-import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.App;
+import gpinf.dev.data.CaseData;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados, volume processado,
@@ -24,7 +28,9 @@ import dpf.sp.gpinf.indexer.search.App;
  * Contém métodos para enviar as estatísticas para arquivo de log.
  */
 public class Statistics {
-
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
+	
 	CaseData caseData;
 	File indexDir;
 	
@@ -122,32 +128,31 @@ public class Statistics {
 		int carvedIgnored = getCorruptCarveIgnored();
 		int ignored = getIgnored();
 		
-		System.out.println(new Date() + "\t[INFO]\t" + "Divisões de arquivo: " + getSplits());
-		System.out.println(new Date() + "\t[INFO]\t" + "Timeouts: " + getTimeouts());
-		System.out.println(new Date() + "\t[INFO]\t" + "Exceções de parsing: " + IndexerDefaultParser.parsingErrors);
-		System.out.println(new Date() + "\t[INFO]\t" + "Subitens descobertos: " + ParsingTask.getSubitensDiscovered());
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens extraídos: " + extracted);
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens de Carving: " + CarveTask.getItensCarved());
-		System.out.println(new Date() + "\t[INFO]\t" + "Carvings corrompidos ignorados: " + carvedIgnored);
-		System.out.println(new Date() + "\t[INFO]\t" + "Itens ignorados: " + ignored);
+		LOGGER.info("Divisões de arquivo: {}", getSplits());
+		LOGGER.info("Timeouts: {}", getTimeouts());
+		LOGGER.info("Exceções de parsing: {}", IndexerDefaultParser.parsingErrors);
+		LOGGER.info("Subitens descobertos: {}", ParsingTask.getSubitensDiscovered());
+		LOGGER.info("Itens extraídos: {}", extracted);
+		LOGGER.info("Itens de Carving: {}", CarveTask.getItensCarved());
+		LOGGER.info("Carvings corrompidos ignorados: {}", carvedIgnored);
+		LOGGER.info("Itens ignorados: {}", ignored);
 
 		if (caseData.getAlternativeFiles() > 0)
-			System.out.println(new Date() + "\t[INFO]\t" + "Processadas " + caseData.getAlternativeFiles() + " versões de visualização dos itens ao invés das originais.");
+			LOGGER.info("Processadas {} versões de visualização dos itens ao invés das originais.", caseData.getAlternativeFiles());
 
 		IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
 		int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
 		reader.close();
 
 		if (indexed != processed && ExportFileTask.hasCategoryToExtract())
-			System.out.println(new Date() + "\t[INFO]\t" + "Itens indexados: " + indexed);
+			LOGGER.info("Itens indexados: {}", indexed);
 
 		long processedVolume = getVolume() / (1024 * 1024);
 		
 		if (activeFiles != processed)
-			System.out.println(new Date() + "\t[INFO]\t" + "Itens ativos processados: " + activeFiles);
+			LOGGER.info("Itens ativos processados: {}", activeFiles);
 
-		System.out.println(new Date() + "\t[INFO]\t" + "Total processado: " + processed + " itens em " + 
-				((new Date()).getTime() - start.getTime()) / 1000 + " segundos (" + processedVolume + " MB)");
+		LOGGER.info("Total processado: {} itens em {} segundos ({} MB)", processed, ((new Date()).getTime() - start.getTime()) / 1000, processedVolume );
 
 		int discovered = caseData.getDiscoveredEvidences();
 		if (processed != discovered)
@@ -163,16 +168,20 @@ public class Statistics {
 	}
 	
 	public void printSystemInfo() throws Exception {
+		LOGGER.info("Sistema Operacional: {}", System.getProperty("os.name"));
+		LOGGER.info("Versão Java: {}", System.getProperty("java.version"));
+		LOGGER.info("Arquitetura: {}", System.getProperty("os.arch"));
+		LOGGER.info("Processadores: {}", Runtime.getRuntime().availableProcessors());
+		LOGGER.info("numThreads: {}", Configuration.numThreads);
 
-		System.out.println(new Date() + "\t[INFO]\t" + "Sistema Operacional: " + System.getProperty("os.name"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Versão Java: " + System.getProperty("java.version"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Arquitetura: " + System.getProperty("os.arch"));
-		System.out.println(new Date() + "\t[INFO]\t" + "Processadores: " + Runtime.getRuntime().availableProcessors());
-		System.out.println(new Date() + "\t[INFO]\t" + "numThreads: " + Configuration.numThreads);
-
-		int minMemPerThread = 200;
 		long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
-		System.out.println(new Date() + "\t[INFO]\t" + "Memória disponível: " + maxMemory + " MB");
+		LOGGER.info("Memória disponível: {} MB", maxMemory);
+		
+		StringBuilder args = new StringBuilder();
+		RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
+		for (String arg : bean.getInputArguments())
+			args.append(arg + " ");
+		LOGGER.info("Argumentos: {}{}", args.toString(), System.getProperty("sun.java.command"));
 
 		/*
 		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
@@ -180,6 +189,7 @@ public class Statistics {
 		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
 		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
 		 */
+		int minMemPerThread = 200;
 		if (maxMemory / Configuration.numThreads < minMemPerThread) {
 			String memoryAlert = "Pouca memória disponível: menos de " + minMemPerThread + "MB por thread de processamento." + "\nIsso pode causar lentidão e erros de parsing de arquivos complexos."
 					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memória da JVM via parâmetro -Xmx " + "\n\tou diminua o parâmetro numThreads em IndexerConfig.txt";

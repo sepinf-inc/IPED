@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,7 +26,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,9 +41,12 @@ import org.apache.tika.parser.ParseContext;
 import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o qual gera uma máquina de estados
@@ -55,6 +55,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  */
 public class CarveTask extends AbstractTask{
 
+	private static Logger LOGGER = LoggerFactory.getLogger(CarveTask.class);
 	private static final long serialVersionUID = 1L;
 	
 	public static String CARVE_CONFIG = "CarvingConfig.txt";
@@ -196,7 +197,7 @@ public class CarveTask extends AbstractTask{
 			findSig(tis);
 			
 		}catch(Exception t){
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro no Carving de " + evidence.getPath() + " " + t.toString());
+			LOGGER.warn("{} Erro no Carving de {} {}", Thread.currentThread().getName(), evidence.getPath(), t.toString());
 			//t.printStackTrace();
 			
 		}finally{

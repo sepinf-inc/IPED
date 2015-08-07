@@ -52,7 +52,6 @@ public class CmdLineArgs {
 		{"--append"		, "adiciona indexação a um indice ja existente"},
 		{"--nogui"		, "nao exibe a janela de progresso da indexacao"},
 		{"--nologfile"	, "imprime as mensagem de log na saida padrao"},
-		{"--verbose"	, "gera mensagens de log detalhadas, porem diminui desempenho"},
 	};
 	
 	private Map<String, List<String>> paramMap = new HashMap<String, List<String>>();
@@ -173,9 +172,6 @@ public class CmdLineArgs {
 				
 			} else if (args[i].compareTo("--nologfile") == 0) {
 				IndexFiles.getInstance().nologfile = true;
-				
-			} else if (args[i].compareTo("--verbose") == 0) {
-				IndexFiles.getInstance().verbose = true;
 				
 			} else if (args[i].compareTo("--append") == 0) {
 				IndexFiles.getInstance().appendIndex = true;

@@ -27,6 +27,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.LowerCaseLetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
@@ -41,7 +43,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
- * Classe principal de carregamento e acesso Ã s configuraÃ§Ãµs da aplicaÃ§Ã£o.
+ * Classe principal de carregamento e acesso às configurações da aplicação.
  */
 public class Configuration {
 
@@ -77,6 +79,8 @@ public class Configuration {
 		// DataSource.testConnection(configPathStr);
 		LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
 		
+		Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
+		
 		configPath = configPathStr;
 
 		Util.loadNatLibs(configPath + "/lib/libewf");
@@ -96,7 +100,7 @@ public class Configuration {
 			if (value != null && !value.equalsIgnoreCase("default")) {
 				newTmp = new File(value);
 				if (!newTmp.exists() && !newTmp.mkdirs())
-					System.out.println(new Date() + "\t[INFO]\t" + "NÃ£o foi possÃ­vel criar diretÃ³rio temporÃ¡rio " + newTmp.getAbsolutePath());
+					LOGGER.info("Não foi possível criar diretório temporário {}", newTmp.getAbsolutePath());
 				else
 					tmp = newTmp;
 			}

@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.Configuration;
 
 /*
@@ -39,6 +42,8 @@ public class FTK42FileTypes {
 	private static Map<Integer, String> mapTypeDesc;
 
 	private static String CONFIG_FILE = "FTKCategoriesConfig.txt";
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(FTK42FileTypes.class);
 
 	public static void getFTK42FileTypes(String configPath) throws IOException {
 		Properties properties = new Properties();
@@ -53,10 +58,10 @@ public class FTK42FileTypes {
 				mapTypeDesc.put(i, desc);
 			}
 		} catch (FileNotFoundException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + " Arquivo não encontrado: " + file.getAbsolutePath());
+			LOGGER.warn("Arquivo não encontrado: {}", file.getAbsolutePath());
 			throw e;
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + " Não foi possível ler " + file.getAbsolutePath());
+			LOGGER.warn("Não foi possível ler {}", file.getAbsolutePath());
 			throw e;
 		}
 

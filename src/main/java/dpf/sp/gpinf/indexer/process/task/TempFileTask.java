@@ -1,13 +1,14 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.process.Worker;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do processamento.
@@ -21,6 +22,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class TempFileTask extends AbstractTask{
 	
+	private static Logger LOGGER = LoggerFactory.getLogger(TempFileTask.class);
 	private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
 	private boolean indexTempOnSSD = false;
 
@@ -51,7 +53,7 @@ public class TempFileTask extends AbstractTask{
 			try{
 				evidence.getTempFile();
 			}catch(IOException e){
-				System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao acessar " + evidence.getPath() + " " + e.toString());
+				LOGGER.warn("{} Erro ao acessar {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 			}
 		
 	}

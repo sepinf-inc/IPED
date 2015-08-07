@@ -18,44 +18,38 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.tika.mime.MediaType;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
-import org.sleuthkit.datamodel.TskFileRange;
-import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
 
 public class SleuthkitProcessor {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitProcessor.class);
+	
 	public static String DB_NAME = "sleuth.db";
 	private Long firstId , lastId;
 	//private static Object lock = new Object();
@@ -131,9 +125,9 @@ public class SleuthkitProcessor {
 	
 				else {
 					IndexFiles.getInstance().firePropertyChange("mensagem", "", "Criando " + dbPath);
-					System.out.println(new Date() + "\t[INFO]\t" + "Criando " + dbPath);
+					LOGGER.info("Criando {}", dbPath);
 					sleuthCase = SleuthkitCase.newCase(dbPath);
-					System.out.println(new Date() + "\t[INFO]\t" + dbPath + " criado.");
+					LOGGER.info("{} criado", dbPath);
 				}
 
 			if (!file.getName().equals(DB_NAME)) {
@@ -143,7 +137,7 @@ public class SleuthkitProcessor {
 					sleuthCase.acquireExclusiveLock();
 					
 					IndexFiles.getInstance().firePropertyChange("mensagem", "", "Aguarde, adicionando imagem " + imgPath[0]);
-					System.out.println(new Date() + "\t[INFO]\t" + "Adicionando imagem " + imgPath[0]);
+					LOGGER.info("Adicionando imagem {}", imgPath[0]);
 
 					TimeZone timezone = TimeZone.getDefault();
 					boolean processUnallocSpace = Configuration.addUnallocated;
@@ -153,12 +147,12 @@ public class SleuthkitProcessor {
 					addImage.run(imgPath);
 
 				} catch (Exception e) {
-					System.out.println(new Date() + "\t[ALERTA]\t" + "Erro do Sleuthkit ao processar imagem " + imgPath[0]);
+					LOGGER.error("Erro do Sleuthkit ao adicionar imagem {}", imgPath[0]);
 					e.printStackTrace();
 
 				} finally {
 					firstId = addImage.commit();
-					System.out.println(new Date() + "\t[INFO]\t" + "Imagem " + imgPath[0] + " adicionada.");
+					LOGGER.info("Imagem {} adicionada.", imgPath[0]);
 					sleuthCase.releaseExclusiveLock();
 				}
 				
@@ -176,7 +170,7 @@ public class SleuthkitProcessor {
 			
 		}
 
-		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
+		java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
 		
 		deviceName = ItemProducer.getEvidenceName(caseData, file);
 		

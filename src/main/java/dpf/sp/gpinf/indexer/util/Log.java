@@ -18,35 +18,33 @@
  */
 package dpf.sp.gpinf.indexer.util;
 
-import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Classe auxiliar com métodos para impressão no console de mensagens de log.
  * @author Wladimir
  */
 public class Log {
+	private static Logger LOGGER = LoggerFactory.getLogger(Log.class);
+	
     public static void error(String source, String msg) {
-        print("ERRO", source, msg);
+    	LOGGER.error("[{}]\t{}", source, msg);
+    }
+    
+    public static void debug(String source, Throwable t) {
+    	LOGGER.debug("[" + source + "]\t{}", t);
     }
 
     public static void warning(String source, String msg) {
-        print("AVISO", source, msg);
+    	LOGGER.warn("[{}]\t{}", source, msg);
     }
 
     public static void alert(String source, String msg) {
-        print("ALERTA", source, msg);
+    	LOGGER.warn("[{}]\t{}", source, msg);
     }
 
     public static void info(String source, String msg) {
-        print("INFO", source, msg);
-    }
-
-    private static void print(String type, String source, String msg) {
-        StringBuilder sb = new StringBuilder(msg.length() + 64);
-        sb.append(new Date().toString());
-        sb.append("\t[").append(type).append("]\t");
-        sb.append("[").append(source).append("]\t");
-        sb.append(msg);
-        System.out.println(sb.toString());
+    	LOGGER.info("[{}]\t{}", source, msg);
     }
 }

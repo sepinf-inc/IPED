@@ -40,6 +40,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ag.ion.bion.officelayer.NativeView;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import ag.ion.bion.officelayer.application.OfficeApplicationException;
@@ -90,6 +93,7 @@ import dpf.sp.gpinf.indexer.util.ProcessUtil;
 
 public class LibreOfficeViewer extends AbstractViewer {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeViewer.class);
 	/**
 	 * 
 	 */
@@ -211,7 +215,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 			officeApplication.activate();
 			officeApplication.getDesktopService().activateTerminationPrevention();
 
-			System.out.println("LibreOffice running with pid " + ProcessUtil.getPid(PORT));
+			LOGGER.info("LibreOffice running with pid {}", ProcessUtil.getPid(PORT));
 
 		} catch (Exception e1) {
 			e1.printStackTrace();
@@ -224,7 +228,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
 				public void run() {
-					System.out.println("Constructing LibreOffice frame...");
+					LOGGER.info("Constructing LibreOffice frame...");
 					nat = new NativeView(nativelib);
 					noaPanel.removeAll();
 					noaPanel.add(nat);
@@ -243,7 +247,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 
 					try {
 						officeFrame = officeApplication.getDesktopService().constructNewOfficeFrame(nat);
-						System.out.println("LibreOffice frame ok");
+						LOGGER.info("LibreOffice frame ok");
 
 					} catch (DesktopException e1) {
 						e1.printStackTrace();
@@ -332,7 +336,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 				} catch (Exception e) {
 					loading = false;
 
-					System.out.println(e.toString());
+					LOGGER.info(e.toString());
 					// System.out.println("exception!");
 					//e.printStackTrace();
 
@@ -369,7 +373,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 					}
 
 					if (blocked && lastFile != null) {
-						System.out.println("Congelamento da interface detectado! Recuperando...");
+						LOGGER.info("Congelamento da interface detectado! Recuperando...");
 						synchronized (startLOLock) {
 							restartLO();
 						}
@@ -387,7 +391,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 	}
 
 	public void restartLO() {
-		System.out.println("Restarting LibreOffice...");
+		LOGGER.info("Restarting LibreOffice...");
 		restartCalled = true;
 
 		// loadingThread.interrupt();
@@ -412,7 +416,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 		startLO();
 		constructLOFrame();
 
-		System.out.println("LibreOffice restarted.");
+		LOGGER.info("LibreOffice restarted.");
 	}
 
 	private int delta = 1;
@@ -571,7 +575,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 						XSpreadsheet sheet = UnoRuntime.queryInterface(XSpreadsheet.class, spreadsheets.getByName(sheetName));
 						XProtectable protectable = UnoRuntime.queryInterface(XProtectable.class, sheet);
 						if (protectable.isProtected())
-							System.out.println("Protected sheet:" + sheetName);
+							LOGGER.info("Protected sheet: {}", sheetName);
 						// protectable.unprotect("");
 						XSearchable xSearchable = UnoRuntime.queryInterface(XSearchable.class, sheet);
 						XSearchDescriptor xSearchDesc = xSearchable.createSearchDescriptor();
@@ -724,7 +728,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 				}
 
 		} catch (Exception e) {
-			System.out.println("Erro/Interrupção do highlight:");
+			LOGGER.info("Erro/Interrupção do highlight:");
 			// e.printStackTrace();
 		}
 	}
@@ -781,7 +785,7 @@ public class LibreOfficeViewer extends AbstractViewer {
 
 				} catch (Exception e) {
 					// e.printStackTrace();
-					System.out.println("Erro ao rolar para hit");
+					LOGGER.info("Erro ao rolar para hit");
 				}
 
 			}

@@ -1,5 +1,18 @@
 package gpinf.dev.preprocessor;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.sp.gpinf.indexer.IndexFiles;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.CaseInfo;
 import gpinf.dev.data.EvidenceFile;
@@ -14,17 +27,6 @@ import gpinf.util.FileUtil;
 import gpinf.util.HtmlUtil;
 import gpinf.util.ParseUtil;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import dpf.sp.gpinf.indexer.IndexFiles;
-
 /**
  * Implementação do processamento do relatório gerado pelo ASAP (que por sua vez
  * utiliza o relatório do FTK). Por ser um tratamento a relatório já existente,
@@ -37,6 +39,8 @@ import dpf.sp.gpinf.indexer.IndexFiles;
  * @author Wladimir Leite (GPINF/SP)
  */
 public class AsapReportParser extends ReportParser {
+	private static Logger LOGGER = LoggerFactory.getLogger(AsapReportParser.class);
+	
 	/** Arquivo de informações do caso. */
 	private static final String CASE_INFOMATION_FILE = "CaseInformation.htm";
 
@@ -112,7 +116,7 @@ public class AsapReportParser extends ReportParser {
 		CaseInfo caseInformation = caseData.getCaseInformation();
 		File file = new File(reportDir, CASE_INFOMATION_FILE);
 		if (countOnly)
-			System.out.println(new Date() + "\t[INFO]\t" + "Processando " + file.getName());
+			LOGGER.info("Processando {}", file.getName());
 		String str = FileUtil.read(file);
 
 		// Layout esperado: Tabela, sendo a primeira linha com o Cabeçalho e uma
@@ -194,7 +198,7 @@ public class AsapReportParser extends ReportParser {
 		File file = new File(reportDir, BOOKMARK_FILE);
 		String str = FileUtil.read(file);
 		if (countOnly)
-			System.out.println(new Date() + "\t[INFO]\t" + "Processando " + file.getName());
+			LOGGER.info("Processando {}", file.getName());
 		caseData.bookmarks = new ArrayList<FileGroup>();
 
 		// Layout esperado: Categoria, composta de pagina HTML, nome e
@@ -251,7 +255,7 @@ public class AsapReportParser extends ReportParser {
 		File file = new File(reportDir, CONTENTS_FILE);
 		String str = FileUtil.read(file);
 		if (countOnly)
-			System.out.println(new Date() + "\t[INFO]\t" + "Processando " + file.getName());
+			LOGGER.info("Processando {}", file.getName());
 		caseData.bookmarks = new ArrayList<FileGroup>();
 
 		// Layout esperado: Categoria, composta de pagina HTML, nome e
@@ -318,7 +322,7 @@ public class AsapReportParser extends ReportParser {
 				break;
 			}
 			if (countOnly)
-				System.out.println(new Date() + "\t[INFO]\t" + "Processando " + file.getName());
+				LOGGER.info("Processando {}", file.getName());
 
 			// Lê e interpreta o arquivo
 			String str = FileUtil.read(file);

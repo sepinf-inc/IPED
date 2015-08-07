@@ -18,26 +18,28 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
-import java.util.Date;
 import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Classe para calcular e manipular hashes.
  */
 public class HashTask extends AbstractTask{
 
+	private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
 	private MessageDigest digest;
 	private String algorithm;	
 	
@@ -113,7 +115,7 @@ public class HashTask extends AbstractTask{
 				// save(hash, evidence.getPath());
 
 			} catch (Exception e) {
-				System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao calcular hash " + evidence.getPath() + "\t" + e);
+				LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 				//e.printStackTrace();
 				
 			} finally {

@@ -24,6 +24,8 @@ import java.io.IOException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
@@ -31,6 +33,8 @@ import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FileProcessor extends CancelableWorker<Void, Void> {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
 	private static int STATUS_LENGTH = 200;
 	private volatile static FileProcessor parsingTask;
@@ -85,7 +89,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 	private void process() {
 
-		System.out.println(doc.get(IndexItem.PATH));
+		LOGGER.info(doc.get(IndexItem.PATH));
 
 		RowComparator.dispose();
 		

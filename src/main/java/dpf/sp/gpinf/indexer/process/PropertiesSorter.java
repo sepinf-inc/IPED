@@ -19,9 +19,7 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.Collator;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -34,6 +32,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.search.ResultTableModel;
@@ -44,6 +44,8 @@ import dpf.sp.gpinf.indexer.util.Util;
  * muito lentas caso as strings sejam ordenadas considerando o idioma local.
  */
 public class PropertiesSorter {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(PropertiesSorter.class); 
 
 	String[] fields = ResultTableModel.fields;
 
@@ -75,7 +77,7 @@ public class PropertiesSorter {
 		public void run() {
 			try {
 				IndexFiles.getInstance().firePropertyChange("mensagem", "", "Pré-ordenando '" + field + "'");
-				System.out.println(new Date() + "\t[INFO]\t" + "Pré-ordenando '" + field + "'");
+				LOGGER.info("Pré-ordenando '{}'", field);
 
 				Comparator<Field> comparator = getComparator(field);
 
@@ -234,7 +236,7 @@ public class PropertiesSorter {
 		IndexReader reader = IndexReader.open(directory);
 
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Pré-ordenando propriedades...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Pré-ordenando propriedades...");
+		LOGGER.info("Pré-ordenando propriedades...");
 
 		// FieldSorter[] sorter = new FieldSorter[numThreads];
 		// consome menos mem.

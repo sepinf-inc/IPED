@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,6 +42,8 @@ import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -56,6 +56,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO, CASO PEQUENO, 
@@ -72,6 +73,7 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
  */
 public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
 	public static boolean expandContainers = false;
 	
@@ -227,7 +229,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			tis = evidence.getTikaStream();
 			
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao abrir: " + evidence.getPath() + " " + e.toString());
+			LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 			return;
 		}
 		
@@ -412,11 +414,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				Thread.currentThread().interrupt();
 
 			//e.printStackTrace();
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair subitem " + filePath + "\t\t" + e.toString());
+			LOGGER.warn("{} Erro ao extrair subitem {}\t\t{}", Thread.currentThread().getName(), filePath, e.toString());
 
 		} catch (Exception e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + "\t" + 
-					worker.runningTask.getClass().getSimpleName() + " Erro ao extrair Subitem " + filePath + "\t\t" + e.toString());
+			LOGGER.warn("{}\t{} Erro ao extrair Subitem {}\t\t{}", Thread.currentThread().getName(), worker.runningTask.getClass().getSimpleName(),
+					filePath, e.toString());
 			//e.printStackTrace();
 
 		} finally {

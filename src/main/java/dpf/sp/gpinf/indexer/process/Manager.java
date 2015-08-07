@@ -43,6 +43,8 @@ import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
@@ -87,6 +89,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 public class Manager {
 
 	private static int QUEUE_SIZE = 100000;
+	private static Logger LOGGER = LoggerFactory.getLogger(Manager.class);
 
 	private CaseData caseData;
 	
@@ -140,8 +143,9 @@ public class Manager {
 		if (IndexFiles.getInstance().appendIndex)
 			loadExistingData();
 
+		int i = 1;
 		for (File report : reports)
-			System.out.println(new Date() + "\t[INFO]\t" + "Adicionando '" + report.getAbsolutePath() + "'");
+			LOGGER.info("Evidência " + (i++) + ": '{}'", report.getAbsolutePath());
 
 		try {
 			iniciarIndexacao();
@@ -210,8 +214,8 @@ public class Manager {
 	}
 
 	private void iniciarIndexacao() throws Exception {
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Processamento iniciado...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Processamento iniciado...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Configurando índice...");
+		LOGGER.info("Configurando índice...");
 
 		IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
 		conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
@@ -302,22 +306,22 @@ public class Manager {
 
 		if (Configuration.forceMerge) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Índice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Otimizando Índice...");
+			LOGGER.info("Otimizando Índice...");
 			try {
 				writer.forceMerge(1);
 			} catch (Throwable e) {
-				System.out.println(new Date() + "\t[ALERTA]\t" + "Erro durante otimização: " + e);
+				LOGGER.error("Erro durante otimização: {}", e);
 			}
 
 		}
 
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando Índice...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Fechando Índice...");
+		LOGGER.info("Fechando Índice...");
 		writer.close();
 
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Copiando Índice...");
+			LOGGER.info("Copiando Índice...");
 			IOUtil.copiaDiretorio(indexTemp, indexDir);
 		}
 		
@@ -328,7 +332,7 @@ public class Manager {
 		try {
 			IOUtil.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[AVISO]\t" + "Não foi possível apagar " + Configuration.indexerTemp.getPath());
+			LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
 		}
 
 		if (caseData.containsReport())
@@ -337,7 +341,7 @@ public class Manager {
 	}
 
 	private void configurarCategorias() throws Exception {
-		System.out.println(new Date() + "\t[INFO]\t" + "Configurando categorias...");
+		LOGGER.info("Configurando categorias...");
 		TreeSet<String> categories = Util.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 
 		if (caseData.getBookmarks().size() > 0) {
@@ -369,14 +373,14 @@ public class Manager {
 
 			Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
 			int filtradas = categories.size() - palavrasFinais.size();
-			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " categorias.");
+			LOGGER.info("Filtradas {} categorias", filtradas);
 		} else
-			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma categoria detectada.");
+			LOGGER.info("Nenhuma categoria detectada.");
 
 	}
 
 	private void filtrarPalavrasChave() throws Exception {
-		System.out.println(new Date() + "\t[INFO]\t" + "Filtrando palavras-chave...");
+		LOGGER.info("Filtrando palavras-chave...");
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Filtrando palavras-chave...");
 		ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
 
@@ -397,9 +401,9 @@ public class Manager {
 			App.get().destroy();
 			Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
 			int filtradas = palavras.size() - palavrasFinais.size();
-			System.out.println(new Date() + "\t[INFO]\t" + "Filtradas " + filtradas + " palavras-chave.");
+			LOGGER.info("Filtradas {} palavras-chave.", filtradas);
 		} else
-			System.out.println(new Date() + "\t[INFO]\t" + "Nenhuma palavra-chave pré-configurada para filtrar.");
+			LOGGER.info("Nenhuma palavra-chave pré-configurada para filtrar.");
 
 	}
 
@@ -409,7 +413,7 @@ public class Manager {
 
 		if (FTK3ReportProcessor.wasInstantiated) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versções de visualização para originais...");
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtendo mapa versões de visualização -> originais...");
+			LOGGER.info("Obtendo mapa versões de visualização -> originais...");
 
 			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
 			String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
@@ -450,7 +454,7 @@ public class Manager {
 			}
 			reader.close();
 
-			System.out.println(new Date() + "\t[INFO]\t" + "Obtidos " + viewToRaw.getMappings() + " mapeamentos de versões de visualização para originais.");
+			LOGGER.info("Obtidos {} mapeamentos de versões de visualização para originais.", viewToRaw.getMappings());
 		}
 
 		FileOutputStream fileOut = new FileOutputStream(new File(output, "data/alternativeToOriginals.ids"));
@@ -464,7 +468,7 @@ public class Manager {
 	private void salvarDocIdToIdMap() throws IOException{
 		
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando mapeamento indexId->id");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando mapeamento indexId->id");
+		LOGGER.info("Salvando mapeamento indexId->id");
 
 		IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
 		int[] ids = new int[reader.maxDoc()];

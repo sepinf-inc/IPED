@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -36,6 +35,8 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -54,6 +55,8 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
  */
 public class ParsingReader extends Reader {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(ParsingReader.class);
+	
 	// Tamanho mínimo dos fragmentos de divisão do texto de arquivos grandes
 	private static long textSplitSize = 10000000;
 
@@ -210,6 +213,11 @@ public class ParsingReader extends Reader {
 			} catch (TikaException e){
 				throwable = e;
 				
+			} catch (OutOfMemoryError t) {
+				ItemInfo itemInfo = context.get(ItemInfo.class);
+				String filePath = itemInfo.getPath();
+				LOGGER.error("{} Estouro de memória com '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
+				
 			} catch (Throwable t) {
 
 				// Loga outros erros que não sejam de parsing, como OutMemory
@@ -219,10 +227,8 @@ public class ParsingReader extends Reader {
 				if (!(t instanceof SAXException)) {
 					ItemInfo itemInfo = context.get(ItemInfo.class);
 					String filePath = itemInfo.getPath();
-
-					System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao processar '" + filePath + "' (" + length + " bytes)\t" + t.toString());
+					LOGGER.warn("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
 				}
-				// t.printStackTrace();
 
 			}
 

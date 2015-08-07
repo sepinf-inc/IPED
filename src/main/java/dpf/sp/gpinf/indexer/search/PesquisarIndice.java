@@ -48,6 +48,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -57,6 +59,7 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
+	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	volatile static int numFilters = 0;
 	Query query;
 	ProgressDialog progressDialog;
@@ -422,7 +425,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	public boolean doCancel(boolean mayInterruptIfRunning) {
 
 		try {
-			System.out.println("Pesquisa cancelada!");
+			LOGGER.info("Pesquisa cancelada!");
 			App.get().reader.close();
 			String index = App.get().codePath + "/../index";
 			Directory directory = FSDirectory.open(new File(index));

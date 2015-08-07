@@ -1,19 +1,13 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -21,17 +15,13 @@ import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Bits;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
@@ -40,10 +30,10 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a indexação
@@ -56,6 +46,7 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class IndexTask extends AbstractTask{
 	
+	private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
 	private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES";
 	private static String SPLITED_IDS = IndexTask.class.getSimpleName() + "SPLITED_IDS";
 
@@ -108,7 +99,7 @@ public class IndexTask extends AbstractTask{
 			try {
 				tis = evidence.getTikaStream();
 			} catch (IOException e) {
-				System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao abrir: " + evidence.getPath() + " " + e.toString());
+				LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 			}
 			
 			ParsingReader reader = null;
@@ -130,8 +121,7 @@ public class IndexTask extends AbstractTask{
 						if (fragments == 2)
 							splitedIds.add(evidence.getId());
 
-						if (IndexFiles.getInstance().verbose)
-							System.out.println(new Date() + "\t[INFO]\t" + Thread.currentThread().getName() + "  Dividindo texto de " + evidence.getPath());
+						LOGGER.debug("{} Dividindo texto de {}", Thread.currentThread().getName(), evidence.getPath());
 					}
 
 					worker.writer.addDocument(doc);
@@ -274,7 +264,7 @@ public class IndexTask extends AbstractTask{
 	private void salvarTamanhoTextosExtraidos() throws Exception {
 
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando tamanho dos textos extraídos...");
+		LOGGER.info("Salvando tamanho dos textos extraídos...");
 
 		int[] textSizesArray = new int[stats.getLastId() + 1];
 
@@ -288,7 +278,7 @@ public class IndexTask extends AbstractTask{
 	
 	private void salvarDocsFragmentados() throws Exception {
 		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
-		System.out.println(new Date() + "\t[INFO]\t" + "Salvando IDs dos itens fragmentados...");
+		LOGGER.info("Salvando IDs dos itens fragmentados...");
 
 		Util.writeObject(splitedIds, output.getAbsolutePath() + "/data/splits.ids");
 

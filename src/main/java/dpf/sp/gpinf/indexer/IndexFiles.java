@@ -19,18 +19,21 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.net.URLDecoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import org.apache.logging.log4j.LogManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
+
 import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
@@ -44,11 +47,11 @@ import dpf.sp.gpinf.indexer.process.task.KFFTask;
  */
 public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
+	private static Logger LOGGER = null;
 	/**
 	 * command line parameters
 	 */
 	public boolean fromCmdLine = false;
-	public boolean verbose = false;
 	public boolean appendIndex = false;
 	
 	String configPath;
@@ -66,7 +69,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 */
 	public List<String> caseNames;
 
-	private PrintStream log, out, err;
 	private ProgressFrame progressFrame;
 
 	/**
@@ -131,34 +133,29 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		if (configPath.charAt(0) == '/' && configPath.charAt(2) == ':')
 			configPath = configPath.substring(1);
 	}
-
-	/**
-	 * Redireciona saída padrão e de erro para o arquivo de log informado.
-	 * TODO Utilizar biblioteca de logging permitirá isolar saídas indesejadas de bibliotecas de terceiros,
-	 * bem como definir o nível de log desejado.
-	 */
-	private void setLogFile(File logFile) throws Exception {
-		if (logFile == null) {
-			File logDir = new File(configPath + "/log");
-			logDir.mkdir();
-			logFile = new File(logDir, Versao.APP_EXT + "-" + (new Date()).getTime() + ".log");
+	
+	private void configureLogParameters(File logFile, boolean noLog) {
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		System.setProperty("logFileDate", df.format(new Date()));
+		
+		if (noLog) {
+			System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationConsoleOnly.xml");
+		} else {
+			if (logFile == null) {
+				System.setProperty("log4j.configurationFile", "conf/Log4j2Configuration.xml");
+			} else {
+				System.setProperty("logFileNamePath", logFile.getPath());
+				System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationFile.xml");
+			}
 		}
-
-		out = System.out;
-		err = System.err;
-		log = new PrintStream(new FileOutputStream(logFile, true));
-		System.setOut(log);
-		System.setErr(log);
-	}
-
-	/**
-	 * Fecha o arquivo de log, realizando flush automaticamente.
-	 */
-	private void closeLogFile() {
-		log.close();
-		System.setOut(out);
-		System.setErr(err);
-	}
+		// instala bridge para capturar logs gerados pelo java.util.logging
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
+		
+		//instancia o logger
+		LogManager.getRootLogger();
+		LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+	}	
 	
 	/**
 	 * Importa base de hashes no formato NSRL.
@@ -188,12 +185,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 			if (fromCmdLine) {
 				setConfigPath();
-				if (!nologfile)
-					setLogFile(logFile);
-			} else if (!nologfile)
-				setLogFile(logFile);
+			}
+			configureLogParameters(logFile, nologfile);
 
-			System.out.println(new Date() + "\t[INFO]\t" + Versao.APP_NAME);
+			LOGGER.info(Versao.APP_NAME);
 
 			if (!fromCmdLine)
 				caseNames = FTK3ReportProcessor.getFTK3CaseNames(dataSource);
@@ -208,20 +203,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				FTK1ReportProcessor.criarLinkBusca(output);
 
 			this.firePropertyChange("mensagem", "", "Finalizado");
-			System.out.println(new Date() + "\t[INFO]\t" + Versao.APP_EXT + " finalizado com sucesso.");
+			LOGGER.info("{} finalizado com sucesso", Versao.APP_EXT);
 
 		} catch (Throwable e) {
-			System.err.print(new Date() + "\t[ERRO]\t");
-			e.printStackTrace();
-			if (!nologfile)
-				closeLogFile();
+			LOGGER.error("Erro no processamento:", e);
 
 			done = true;
 			return false;
 		}
-
-		if (!nologfile)
-			closeLogFile();
 
 		done = true;
 		success = true;
@@ -288,7 +277,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			System.out.println("\n" + Versao.APP_EXT + " finalizado com sucesso.");
 
 		if (!indexador.nologfile)
-			System.out.println("Consulte o LOG na pasta \"Indexador/log\".");
+			System.out.println("Consulte o LOG na pasta \"IPED/log\".");
+		
+		System.exit(0);
 
 		// PARA ASAP:
 		// IndexFiles indexador = new IndexFiles(List<File> reports, File
@@ -299,5 +290,5 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		// boolean success = indexador.executar();
 
 	}
-
+	
 }

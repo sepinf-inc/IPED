@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.GenericFileType;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -32,11 +29,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.process.ItemProducer;
@@ -44,6 +43,8 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.filetypes.GenericFileType;
 
 /**
  * Responsável por extrair subitens de containers.
@@ -52,6 +53,7 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class ExportFileTask extends AbstractTask{
 
+	private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
 	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
 	public static String EXTRACT_DIR = "Exportados";
 	
@@ -181,7 +183,7 @@ public class ExportFileTask extends AbstractTask{
 			evidence.setFileOffset(-1);
 
 		} catch (IOException e) {
-			System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Erro ao extrair " + evidence.getPath() + "\t\t" + e.toString());
+			LOGGER.warn("{} Erro ao extrair {} \t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 
 		} finally {
 			IOUtil.closeQuietly(is);
@@ -242,16 +244,16 @@ public class ExportFileTask extends AbstractTask{
 						if (hashFile.exists()) {
 							changeTargetFile(evidence, hashFile);
 							if (!file.delete())
-								System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + file.getAbsolutePath());
+								LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
 						} else
-							System.out.println(new Date() + "\t[ALERTA]\t" + Thread.currentThread().getName() + " Falha ao renomear para o hash: " + evidence.getFileToIndex());
+							LOGGER.warn("{} Falha ao renomear para o hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex());
 					} else
 						changeTargetFile(evidence, hashFile);
 					
 				} else {
 					changeTargetFile(evidence, hashFile);
 					if (!file.delete())
-						System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Falha ao deletar " + file.getAbsolutePath());
+						LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
 				}
 			}
 			
@@ -307,7 +309,7 @@ public class ExportFileTask extends AbstractTask{
 
 				} catch (IOException e) {
 					//e.printStackTrace();
-					System.out.println(new Date() + "\t[AVISO]\t" + Thread.currentThread().getName() + " Erro ao extrair " + evidence.getPath() + "\t" + e.toString());
+					LOGGER.warn("{} Erro ao extrair {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 
 				} finally {
 					if (bos != null)
