@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.database.DataSource;
+import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 
@@ -69,7 +69,7 @@ public class FTK3ReportProcessor {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
 			LOGGER.info("Obtendo propriedades do banco...");
 
-			DataSource ds = DataSource.get(caseName, report);
+			FTKDatabase ds = FTKDatabase.get(caseName, report);
 			ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
 		}
 

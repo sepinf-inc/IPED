@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.database;
+package dpf.sp.gpinf.indexer.datasource.ftk;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.FileGroup;
@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
  * Classe abstrata que representa uma conexão ao banco  de dados do FTK3+.
  * Nome não pode ser alterado, pois é utilizada pelo ASAP para testar a conexão ao banco.
  */
-public abstract class DataSource {
+public abstract class FTKDatabase {
 	
 	public static String FTKDatabaseConfig = "conf/FTKDatabaseConfig.txt";
 	/*
@@ -66,7 +66,7 @@ public abstract class DataSource {
 	Connection conn;
 	Map<String, String> bookmarksMap;
 
-	public static DataSource get(String caseName, File report) throws Exception {
+	public static FTKDatabase get(String caseName, File report) throws Exception {
 
 		Properties properties = new Properties();
 		properties.load(new FileInputStream(Configuration.configPath + "/" + FTKDatabaseConfig));
@@ -91,7 +91,7 @@ public abstract class DataSource {
 		Properties props = new Properties();
 		props.load(new FileInputStream(configPathStr + "/" + FTKDatabaseConfig));
 		schemaVersion = props.getProperty("VersaoFTK");
-		DataSource dataSrc;
+		FTKDatabase dataSrc;
 		if (schemaVersion.equalsIgnoreCase("auto")) {
 			dataSrc = new FTK42Database(props, "", null);
 			Connection conn = dataSrc.ods.getConnection();
@@ -121,7 +121,7 @@ public abstract class DataSource {
 
 	}
 
-	protected DataSource(Properties properties, String caseName, File report) {
+	protected FTKDatabase(Properties properties, String caseName, File report) {
 		this.report = report;
 		user = properties.getProperty("User");
 		password = properties.getProperty("Password");
