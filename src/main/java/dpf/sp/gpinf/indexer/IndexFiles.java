@@ -52,7 +52,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 * command line parameters
 	 */
 	public boolean fromCmdLine = false;
-	public boolean verbose = false;
 	public boolean appendIndex = false;
 	
 	String configPath;
@@ -207,9 +206,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			LOGGER.info("{} finalizado com sucesso", Versao.APP_EXT);
 
 		} catch (Throwable e) {
-			System.err.print(new Date() + "\t[ERRO]\t");
-			e.printStackTrace();
-			LOGGER.error("Exceção capturada:", e);
+			LOGGER.error("Erro no processamento:", e);
 
 			done = true;
 			return false;
@@ -280,7 +277,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			System.out.println("\n" + Versao.APP_EXT + " finalizado com sucesso.");
 
 		if (!indexador.nologfile)
-			System.out.println("Consulte o LOG na pasta \"Indexador/log\".");
+			System.out.println("Consulte o LOG na pasta \"IPED/log\".");
+		
+		System.exit(0);
 
 		// PARA ASAP:
 		// IndexFiles indexador = new IndexFiles(List<File> reports, File

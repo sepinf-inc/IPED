@@ -81,8 +81,8 @@ public class ItemProducer extends Thread {
 					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
 
 				if (!listOnly) {
-					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Processando '" + source.getAbsolutePath() + "'");
-					LOGGER.info("Processando '{}'", source.getAbsolutePath());
+					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
+					LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
 				}
 
 				int alternativeFiles = 0;

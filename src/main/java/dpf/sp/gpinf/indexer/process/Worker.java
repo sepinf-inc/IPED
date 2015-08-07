@@ -153,8 +153,7 @@ public class Worker extends Thread {
 		
 		try {
 
-			if (IndexFiles.getInstance().verbose)
-				LOGGER.info("{} Indexando {}", getName(), evidence.getPath());
+			LOGGER.debug("{} Indexando {}", getName(), evidence.getPath());
 
 			checkFile(evidence);
 			

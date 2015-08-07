@@ -143,8 +143,9 @@ public class Manager {
 		if (IndexFiles.getInstance().appendIndex)
 			loadExistingData();
 
+		int i = 1;
 		for (File report : reports)
-			LOGGER.info("Adicionado '{}'", report.getAbsolutePath());
+			LOGGER.info("Evidência " + (i++) + ": '{}'", report.getAbsolutePath());
 
 		try {
 			iniciarIndexacao();
@@ -213,8 +214,8 @@ public class Manager {
 	}
 
 	private void iniciarIndexacao() throws Exception {
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Processamento iniciado...");
-		LOGGER.info("Processamento iniciado...");
+		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Configurando índice...");
+		LOGGER.info("Configurando índice...");
 
 		IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
 		conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);

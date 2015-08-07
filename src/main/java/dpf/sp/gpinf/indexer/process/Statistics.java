@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.Date;
 
 import javax.swing.JOptionPane;
@@ -11,6 +13,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
@@ -171,10 +174,14 @@ public class Statistics {
 		LOGGER.info("Processadores: {}", Runtime.getRuntime().availableProcessors());
 		LOGGER.info("numThreads: {}", Configuration.numThreads);
 
-		int minMemPerThread = 200;
 		long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
-		//System.out.println(new Date() + "\t[INFO]\t" + "Memória disponível: " + maxMemory + " MB");
 		LOGGER.info("Memória disponível: {} MB", maxMemory);
+		
+		StringBuilder args = new StringBuilder();
+		RuntimeMXBean bean = ManagementFactory.getRuntimeMXBean();
+		for (String arg : bean.getInputArguments())
+			args.append(arg + " ");
+		LOGGER.info("Argumentos: {}{}", args.toString(), System.getProperty("sun.java.command"));
 
 		/*
 		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
@@ -182,6 +189,7 @@ public class Statistics {
 		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
 		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
 		 */
+		int minMemPerThread = 200;
 		if (maxMemory / Configuration.numThreads < minMemPerThread) {
 			String memoryAlert = "Pouca memória disponível: menos de " + minMemPerThread + "MB por thread de processamento." + "\nIsso pode causar lentidão e erros de parsing de arquivos complexos."
 					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memória da JVM via parâmetro -Xmx " + "\n\tou diminua o parâmetro numThreads em IndexerConfig.txt";

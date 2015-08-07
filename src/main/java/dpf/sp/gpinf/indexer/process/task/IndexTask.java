@@ -121,8 +121,7 @@ public class IndexTask extends AbstractTask{
 						if (fragments == 2)
 							splitedIds.add(evidence.getId());
 
-						if (IndexFiles.getInstance().verbose)
-							LOGGER.info("{} Dividindo texto de {}", Thread.currentThread().getName(), evidence.getPath());
+						LOGGER.debug("{} Dividindo texto de {}", Thread.currentThread().getName(), evidence.getPath());
 					}
 
 					worker.writer.addDocument(doc);

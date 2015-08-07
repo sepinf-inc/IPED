@@ -216,7 +216,7 @@ public class ParsingReader extends Reader {
 			} catch (OutOfMemoryError t) {
 				ItemInfo itemInfo = context.get(ItemInfo.class);
 				String filePath = itemInfo.getPath();
-				LOGGER.error("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
+				LOGGER.error("{} Estouro de memória com '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
 				
 			} catch (Throwable t) {
 
