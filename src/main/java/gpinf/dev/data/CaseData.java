@@ -73,7 +73,15 @@ public class CaseData implements Serializable {
 	/**
 	 * indica que o caso se trata de um relatório
 	 */
-	private boolean containsReport = false;
+	private boolean containsReport = false, ipedReport = false;
+
+	public boolean isIpedReport() {
+		return ipedReport;
+	}
+
+	public void setIpedReport(boolean ipedReport) {
+		this.ipedReport = ipedReport;
+	}
 
 	synchronized public void incAlternativeFiles(int inc) {
 		alternativeFiles += inc;

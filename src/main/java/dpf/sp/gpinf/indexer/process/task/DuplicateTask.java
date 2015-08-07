@@ -47,7 +47,7 @@ public class DuplicateTask extends AbstractTask{
 			}
 		}
 		
-		if(ignoreDuplicates && evidence.isDuplicate() && !evidence.isDir() && !evidence.isRoot() && !ItemProducer.indexerReport){
+		if(ignoreDuplicates && evidence.isDuplicate() && !evidence.isDir() && !evidence.isRoot() && !caseData.isIpedReport()){
 			evidence.setToIgnore(true);
 			stats.incIgnored();
 		}

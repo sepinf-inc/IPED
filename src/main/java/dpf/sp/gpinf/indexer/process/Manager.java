@@ -97,8 +97,7 @@ public class Manager {
 		return caseData;
 	}
 
-	private List<File> reports;
-	private List<String> caseNames;
+	private List<File> sources;
 	private File output, indexDir, indexTemp, palavrasChave;
 
 	private ItemProducer contador, produtor;
@@ -108,16 +107,13 @@ public class Manager {
 	public Statistics stats;
 	public Exception exception;
 
-	public Manager(List<File> reports, List<String> caseNames, File output, File palavras) {
+	public Manager(List<File> sources, File output, File palavras) {
 		this.indexTemp = Configuration.indexTemp;
-		this.caseNames = caseNames;
-		this.reports = reports;
+		this.sources = sources;
 		this.output = output;
 		this.palavrasChave = palavras;
 
 		this.caseData = new CaseData(QUEUE_SIZE);
-		if (caseNames.size() > 0)
-			caseData.setContainsReport(true);
 
 		Worker.resetStaticVariables();
 		EvidenceFile.setStartID(0);
@@ -144,18 +140,18 @@ public class Manager {
 			loadExistingData();
 
 		int i = 1;
-		for (File report : reports)
-			LOGGER.info("Evidência " + (i++) + ": '{}'", report.getAbsolutePath());
+		for (File source : sources)
+			LOGGER.info("Evidência " + (i++) + ": '{}'", source.getAbsolutePath());
 
 		try {
 			iniciarIndexacao();
 
 			// apenas conta o número de arquivos a indexar
-			contador = new ItemProducer(this, caseData, true, reports, caseNames, output);
+			contador = new ItemProducer(this, caseData, true, sources, output);
 			contador.start();
 
 			// produz lista de arquivos e propriedades a indexar
-			produtor = new ItemProducer(this, caseData, false, reports, caseNames, output);
+			produtor = new ItemProducer(this, caseData, false, sources, output);
 			produtor.start();
 			
 			monitorarIndexacao();
@@ -411,7 +407,7 @@ public class Manager {
 
 		VersionsMap viewToRaw = new VersionsMap(0);
 
-		if (FTK3ReportProcessor.wasInstantiated) {
+		if (FTK3ReportProcessor.wasExecuted) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versções de visualização para originais...");
 			LOGGER.info("Obtendo mapa versões de visualização -> originais...");
 

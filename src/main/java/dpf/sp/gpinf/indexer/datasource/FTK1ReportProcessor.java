@@ -26,7 +26,6 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,21 +35,14 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.data.FileGroup;
 import gpinf.dev.preprocessor.AsapReportParser;
 
-public class FTK1ReportProcessor {
+public class FTK1ReportProcessor extends DataSourceProcessor{
 
-	private CaseData caseData;
-	private boolean listOnly;
-	
 	private static Logger LOGGER = LoggerFactory.getLogger(FTK1ReportProcessor.class);
-
-	// private PropertyChangeListener listener;
-
-	public FTK1ReportProcessor(CaseData caseData, boolean listOnly) {
-		this.caseData = caseData;
-		this.listOnly = listOnly;
-		// this.listener = listener;
+	
+	public FTK1ReportProcessor(CaseData caseData, File output, boolean listOnly) {
+		super(caseData, output, listOnly);
 	}
-
+	
 	public int process(File report) throws Exception {
 
 		caseData.setContainsReport(true);
@@ -100,6 +92,11 @@ public class FTK1ReportProcessor {
 			writer.close();
 		}
 
+	}
+
+	@Override
+	public boolean isSupported(File source) {
+		return (new File(source, "Export")).exists() && new File(source, "CaseInformation.htm").exists();
 	}
 
 }

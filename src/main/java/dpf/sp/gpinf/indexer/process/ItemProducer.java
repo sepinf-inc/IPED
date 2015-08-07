@@ -19,6 +19,9 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -26,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.datasource.DataSourceProcessor;
 import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.datasource.FolderTreeProcessor;
@@ -43,31 +47,45 @@ import gpinf.dev.data.EvidenceFile;
 public class ItemProducer extends Thread {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
-	public static volatile boolean indexerReport = false;
 
 	private final CaseData caseData;
 	private final boolean listOnly;
 	private List<File> datasources;
-	private List<String> caseNames;
 	private File output;
 	private Manager manager;
 	
-	private SleuthkitProcessor sleuthkitProcessor;
+	private DataSourceProcessor currentProcessor;
+	
+	private ArrayList<DataSourceProcessor> sourceProcessors = new ArrayList<DataSourceProcessor>();
 
-	ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, List<String> caseNames, File output) {
+	public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output) throws Exception {
 		this.caseData = caseData;
 		this.listOnly = listOnly;
-		this.caseNames = caseNames;
 		this.datasources = datasources;
 		this.output = output;
 		this.manager = manager;
-		if(listOnly)
-			indexerReport = false;
+		
+		installDataSourcesProcessors();
+	}
+	
+	private void installDataSourcesProcessors() throws Exception{
+		Class<? extends DataSourceProcessor>[] processorList = new Class[]{
+				FTK1ReportProcessor.class,
+				FTK3ReportProcessor.class,
+				SleuthkitProcessor.class,
+				IndexerProcessor.class,
+				FolderTreeProcessor.class	//deve ser o último
+		};
+		
+		for(Class<? extends DataSourceProcessor> processor : processorList){
+			Constructor constr = processor.getConstructor(CaseData.class, File.class, boolean.class);
+	        sourceProcessors.add((DataSourceProcessor) constr.newInstance(caseData, output, listOnly));
+		}
 	}
 	
 	public String currentDirectory(){
-		if(sleuthkitProcessor != null)
-			return sleuthkitProcessor.currentDirectory();
+		if(currentProcessor != null)
+			return currentProcessor.currentDirectory();
 		else
 			return null;
 	}
@@ -75,7 +93,6 @@ public class ItemProducer extends Thread {
 	@Override
 	public void run() {
 		try {
-			int caseNameIndex = 0;
 			for (File source : datasources) {
 				if (Thread.interrupted())
 					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
@@ -86,33 +103,17 @@ public class ItemProducer extends Thread {
 				}
 
 				int alternativeFiles = 0;
-				if ((new File(source, "files")).exists() && FTK3ReportProcessor.bookmarkExists(source)) {
-					FTK3ReportProcessor processor = new FTK3ReportProcessor(caseData, output, listOnly);
-					alternativeFiles += processor.process(source, caseNames.get(caseNameIndex++));
-
-				} else if ((new File(source, "Export")).exists() && new File(source, "CaseInformation.htm").exists()) {
-					FTK1ReportProcessor processor = new FTK1ReportProcessor(caseData, listOnly);
-					alternativeFiles += processor.process(source);
-
-				} else if (SleuthkitProcessor.isSupported(source)) {
-					sleuthkitProcessor = new SleuthkitProcessor(caseData, output, listOnly);
-					sleuthkitProcessor.process(source);
-
-				} else if (IndexerProcessor.isSupported(source)) {
-					indexerReport = true;
-					IndexerProcessor processor = new IndexerProcessor(caseData, output, listOnly);
-					processor.process(source);
-
-				} else {
-					FolderTreeProcessor processor = new FolderTreeProcessor(caseData, output, listOnly);
-					processor.process(source);
-
+				for(DataSourceProcessor processor: sourceProcessors){
+					if(processor.isSupported(source)){
+						currentProcessor = processor;
+						alternativeFiles += processor.process(source);
+						break;
+					}
+						
 				}
-
 				caseData.incAlternativeFiles(alternativeFiles);
 			}
 			if (!listOnly) {
-			
 				 EvidenceFile evidence = new EvidenceFile();
 				 evidence.setQueueEnd(true);
 				 //caseData.addEvidenceFile(evidence);
@@ -129,14 +130,4 @@ public class ItemProducer extends Thread {
 
 	}
 	
-	public static String getEvidenceName(CaseData caseData, File datasource){
-		CmdLineArgs cmdArgs = ((CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName()));
-		List<String> params = cmdArgs.getCmdArgs().get(CmdLineArgs.ALL_ARGS);
-		for(int i = 0; i < params.size(); i++)
-			if(params.get(i).equals("-d") && datasource.equals(new File(params.get(i+1))) && 
-					i+2 < params.size() && params.get(i+2).equals("-dname"))
-				return params.get(i+3);
-		
-		return null;
-	}
 }

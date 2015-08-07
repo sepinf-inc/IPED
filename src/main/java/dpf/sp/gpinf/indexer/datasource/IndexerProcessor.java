@@ -47,14 +47,10 @@ import dpf.sp.gpinf.indexer.util.Util;
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
-public class IndexerProcessor {
+public class IndexerProcessor extends DataSourceProcessor{
 
 	private static Object lock = new Object();
-	//private static volatile int resultLen;
 
-	private CaseData caseData;
-	private File output;
-	private boolean listOnly;
 	private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
@@ -62,19 +58,18 @@ public class IndexerProcessor {
 	static SleuthkitCase sleuthCase;
 
 	public IndexerProcessor(CaseData caseData, File output, boolean listOnly) {
-		this.caseData = caseData;
-		this.listOnly = listOnly;
-		this.output = output;
+		super(caseData, output, listOnly);
 	}
 
-	public static boolean isSupported(File report) {
+	public boolean isSupported(File report) {
 		String name = report.getName().toLowerCase();
 		return name.endsWith(Marcadores.EXT);
 	}
 
-	public void process(File file) throws Exception {
+	public int process(File file) throws Exception {
 
 		caseData.setContainsReport(true);
+		caseData.setIpedReport(true);
 		
 		// Configuração para não expandir containers
 		ParsingTask.expandContainers = false;
@@ -239,6 +234,8 @@ public class IndexerProcessor {
 
 		if (!listOnly)
 			App.get().destroy();
+		
+		return 0;
 
 	}
 

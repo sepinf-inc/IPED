@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -33,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
@@ -63,11 +61,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	File logFile;
 	
 	private CmdLineArgs cmdLineParams;
-	
-	/**
-	 * Nome dos casos fo FTK3+, necessário apenas em processamento de relatórios
-	 */
-	public List<String> caseNames;
 
 	private ProgressFrame progressFrame;
 
@@ -101,8 +94,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		this.palavrasChave = keywordList;
 		this.configPath = configPath;
 		this.logFile = logFile;
-		this.caseNames = new ArrayList<String>();
-		OCRParser.bookmarksToOCR = bookmarksToOCR;		
+		OCRParser.bookmarksToOCR = bookmarksToOCR;
 	}
 
 	/**
@@ -190,12 +182,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 			LOGGER.info(Versao.APP_NAME);
 
-			if (!fromCmdLine)
-				caseNames = FTK3ReportProcessor.getFTK3CaseNames(dataSource);
-
 			Configuration.getConfiguration(configPath);
 
-			Manager manager = new Manager(dataSource, caseNames, output, palavrasChave);
+			Manager manager = new Manager(dataSource, output, palavrasChave);
 			cmdLineParams.saveIntoCaseData(manager.getCaseData());
 			manager.process();
 
@@ -246,15 +235,22 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 */
 	public boolean executar() {
 		this.execute();
+		/*try {
+			return this.get();
+		
+		} catch (InterruptedException | ExecutionException e) {
+			//e.printStackTrace();
+			return false;
+		}
+		 * */
 		while (!done)
 			try {
 				Thread.sleep(2000);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-
+		
 		return success;
-
 	}
 
 	/**

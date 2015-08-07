@@ -40,7 +40,6 @@ public class CmdLineArgs {
 		{"-dname"		, "nome (opcional) para dados adicionados via -d"},
 		{"-o"			, "pasta de saida da indexacao"},
 		{"-r"			, "pasta do relatorio do AsAP3 ou FTK3"},
-		{"-c"			, "nome do caso, apenas para relatorio do FTK3"},
 		{"-l"			, "arquivo com lista de expressoes a serem exibidas na busca.\n\t"
 						+ "Expressoes sem ocorrencias sao filtradas"},
 		{"-ocr"			, "aplica OCR apenas na categoria informada. Pode ser usado varias vezes."},
@@ -135,7 +134,6 @@ public class CmdLineArgs {
 
 		File reportDir = null, dataSource = null, outputDir = null;
 		IndexFiles.getInstance().dataSource = new ArrayList<File>();
-		IndexFiles.getInstance().caseNames = new ArrayList<String>();
 		OCRParser.bookmarksToOCR = new ArrayList<String>();
 
 		for (int i = 0; i < args.length; i++) {
@@ -147,9 +145,6 @@ public class CmdLineArgs {
 			} else if (args[i].compareTo("-d") == 0) {
 				dataSource = new File(args[i + 1]);
 				IndexFiles.getInstance().dataSource.add(dataSource);
-				
-			} else if (args[i].compareTo("-c") == 0) {
-				IndexFiles.getInstance().caseNames.add(args[i + 1]);
 				
 			} else if (args[i].compareTo("-ocr") == 0) {
 				OCRParser.bookmarksToOCR.add(args[i + 1]);
@@ -185,8 +180,7 @@ public class CmdLineArgs {
 				if (dataSource == null || (!dataSource.exists() && !SleuthkitProcessor.isPhysicalDrive(dataSource)))
 					printUsageExit();
 			
-		} else if (IndexFiles.getInstance().caseNames.size() == 0)
-			printUsageExit();
+		}
 
 		if (outputDir != null)
 			IndexFiles.getInstance().output = new File(outputDir, "indexador");

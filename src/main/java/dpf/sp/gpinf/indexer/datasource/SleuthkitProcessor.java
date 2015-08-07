@@ -40,13 +40,12 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
-public class SleuthkitProcessor {
+public class SleuthkitProcessor extends DataSourceProcessor{
 
 	private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitProcessor.class);
 	
@@ -59,9 +58,6 @@ public class SleuthkitProcessor {
 	
 	public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
 
-	private CaseData caseData;
-	private boolean listOnly;
-	private File output;
 	private AddImageProcess addImage;
 	private String deviceName;
 	
@@ -70,12 +66,10 @@ public class SleuthkitProcessor {
 	static SleuthkitCase sleuthCase;
 
 	public SleuthkitProcessor(CaseData caseData, File output, boolean listOnly) {
-		this.caseData = caseData;
-		this.listOnly = listOnly;
-		this.output = output;
+		super(caseData, output, listOnly);
 	}
 
-	public static boolean isSupported(File report) {
+	public boolean isSupported(File report) {
 		String name = report.getName().toLowerCase();
 		return 	name.endsWith(".000") ||
 				name.endsWith(".001") || 
@@ -100,7 +94,7 @@ public class SleuthkitProcessor {
 			return null;
 	}
 
-	public void process(File file) throws Exception {
+	public int process(File file) throws Exception {
 
 		String[] imgPath = { file.getAbsolutePath() };
 		
@@ -136,8 +130,8 @@ public class SleuthkitProcessor {
 				try {
 					sleuthCase.acquireExclusiveLock();
 					
-					IndexFiles.getInstance().firePropertyChange("mensagem", "", "Aguarde, adicionando imagem " + imgPath[0]);
-					LOGGER.info("Adicionando imagem {}", imgPath[0]);
+					IndexFiles.getInstance().firePropertyChange("mensagem", "", "Aguarde, decodificando imagem " + imgPath[0]);
+					LOGGER.info("Decodificando imagem {}", imgPath[0]);
 
 					TimeZone timezone = TimeZone.getDefault();
 					boolean processUnallocSpace = Configuration.addUnallocated;
@@ -147,12 +141,12 @@ public class SleuthkitProcessor {
 					addImage.run(imgPath);
 
 				} catch (Exception e) {
-					LOGGER.error("Erro do Sleuthkit ao adicionar imagem {}", imgPath[0]);
-					e.printStackTrace();
+					LOGGER.error("Erro do Sleuthkit ao adicionar imagem " + imgPath[0], e);
+					//e.printStackTrace();
 
 				} finally {
 					firstId = addImage.commit();
-					LOGGER.info("Imagem {} adicionada.", imgPath[0]);
+					LOGGER.info("Imagem {} decodificada.", imgPath[0]);
 					sleuthCase.releaseExclusiveLock();
 				}
 				
@@ -172,7 +166,7 @@ public class SleuthkitProcessor {
 
 		java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
 		
-		deviceName = ItemProducer.getEvidenceName(caseData, file);
+		deviceName = getEvidenceName(file);
 		
 		/* ordena os itens pelo primeiro setor utilizado, na tentativa de ler os itens
 		 * na ordem em que aparecem fisicamente no HD, evitando seeks na imagem
@@ -224,6 +218,8 @@ public class SleuthkitProcessor {
 			if(content != null)
 				addContent(content);
 		}*/
+		
+		return 0;
 		
 	}
 	
