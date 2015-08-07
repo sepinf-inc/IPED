@@ -26,6 +26,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.RowSorter.SortKey;
 
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
@@ -106,9 +107,12 @@ public class AppListener implements ActionListener, MouseListener {
 
 		if (evt.getSource() == App.get().checkBox) {
 			if (App.get().marcadores.selectedItens > 0) {
-				App.get().marcadores.selectedItens = 0;
-				for (int i = 0; i < App.get().marcadores.selected.length; i++)
-					App.get().marcadores.selected[i] = false;
+				int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
+				if (result == JOptionPane.YES_OPTION){
+					App.get().marcadores.selectedItens = 0;
+					for (int i = 0; i < App.get().marcadores.selected.length; i++)
+						App.get().marcadores.selected[i] = false;
+				}
 			} else {
 				App.get().marcadores.selectedItens = App.get().totalItens;
 				for (int i = 0; i < App.get().marcadores.selected.length; i++)
