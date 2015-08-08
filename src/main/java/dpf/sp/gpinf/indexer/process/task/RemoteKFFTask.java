@@ -18,7 +18,7 @@ import java.util.Properties;
 
 import org.apache.commons.codec.binary.Hex;
 
-import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
@@ -69,7 +69,7 @@ public class RemoteKFFTask extends AbstractTask {
         
         
         if ((!evidence.isQueueEnd())&&(!evidence.isDir())&&(!evidence.isRoot()) &&
-                ((evidence.getMediaType()==null) || (evidence.getMediaType().equals(SleuthkitProcessor.UNALLOCATED_MIMETYPE)))){
+                ((evidence.getMediaType()==null) || (evidence.getMediaType().equals(SleuthkitReader.UNALLOCATED_MIMETYPE)))){
             listEvidenceFile.add(evidence);
             addedToList = true;
         }else{

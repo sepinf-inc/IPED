@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.process.task;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -12,7 +11,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 

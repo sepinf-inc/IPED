@@ -45,9 +45,9 @@ import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
-public class SleuthkitProcessor extends DataSourceProcessor{
+public class SleuthkitReader extends DataSourceReader{
 
-	private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitProcessor.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
 	
 	public static String DB_NAME = "sleuth.db";
 	private Long firstId , lastId;
@@ -65,7 +65,7 @@ public class SleuthkitProcessor extends DataSourceProcessor{
 	//via referência interna ao JNI para acessar os itens do caso
 	static SleuthkitCase sleuthCase;
 
-	public SleuthkitProcessor(CaseData caseData, File output, boolean listOnly) {
+	public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
 	}
 

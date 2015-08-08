@@ -4,7 +4,6 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.util.Date;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.io.TimeoutException;
-import dpf.sp.gpinf.indexer.process.ItemProducer;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 

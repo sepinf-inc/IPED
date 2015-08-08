@@ -36,13 +36,13 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.util.Util;
 
-public class FolderTreeProcessor extends DataSourceProcessor{
+public class FolderTreeReader extends DataSourceReader{
 
 	private File rootFile;
 	private String category;
 	private String evidenceName;
 
-	public FolderTreeProcessor(CaseData caseData, File output, boolean listOnly) {
+	public FolderTreeReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
 	}
 

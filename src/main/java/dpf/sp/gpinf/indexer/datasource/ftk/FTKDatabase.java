@@ -34,7 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
+import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 
 /*
  * Classe abstrata que representa uma conexão ao banco  de dados do FTK3+.
@@ -73,7 +73,7 @@ public abstract class FTKDatabase {
 		schemaVersion = properties.getProperty("VersaoFTK");
 
 		if (schemaVersion.equalsIgnoreCase("auto")) {
-			String version = FTK3ReportProcessor.getFTKVersion(report);
+			String version = FTK3ReportReader.getFTKVersion(report);
 			schemaVersion = translateFTKToDBVersion(version);
 			if (schemaVersion == null)
 				throw new Exception("Nova Versão do FTK detectada. Defina manualmente a versão do schema de dados em 'VersaoFTK' no IndexerConfig.txt.");

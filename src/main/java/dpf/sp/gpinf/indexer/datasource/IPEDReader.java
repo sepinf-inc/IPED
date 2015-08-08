@@ -47,7 +47,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
-public class IndexerProcessor extends DataSourceProcessor{
+public class IPEDReader extends DataSourceReader{
 
 	private static Object lock = new Object();
 
@@ -57,7 +57,7 @@ public class IndexerProcessor extends DataSourceProcessor{
 	//via referência interna ao JNI para acessar os itens do caso
 	static SleuthkitCase sleuthCase;
 
-	public IndexerProcessor(CaseData caseData, File output, boolean listOnly) {
+	public IPEDReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
 	}
 
@@ -78,7 +78,7 @@ public class IndexerProcessor extends DataSourceProcessor{
 		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
 		File indexDir = state.getIndexDir().getCanonicalFile();
 		String basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-		String dbPath = basePath + File.separator + SleuthkitProcessor.DB_NAME;
+		String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
 		
 		synchronized (lock) {
 			if (new File(dbPath).exists() && sleuthCase == null)

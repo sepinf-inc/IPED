@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
+import dpf.sp.gpinf.indexer.datasource.FTK1ReportReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
@@ -189,7 +189,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			manager.process();
 
 			if (fromCmdLine)
-				FTK1ReportProcessor.criarLinkBusca(output);
+				FTK1ReportReader.criarLinkBusca(output);
 
 			this.firePropertyChange("mensagem", "", "Finalizado");
 			LOGGER.info("{} finalizado com sucesso", Versao.APP_EXT);

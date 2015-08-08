@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 
 /**
@@ -177,7 +177,7 @@ public class CmdLineArgs {
 
 		if (reportDir == null || !(new File(reportDir, "files")).exists()) {
 			if (reportDir == null || !(new File(reportDir, "Export")).exists())
-				if (dataSource == null || (!dataSource.exists() && !SleuthkitProcessor.isPhysicalDrive(dataSource)))
+				if (dataSource == null || (!dataSource.exists() && !SleuthkitReader.isPhysicalDrive(dataSource)))
 					printUsageExit();
 			
 		}

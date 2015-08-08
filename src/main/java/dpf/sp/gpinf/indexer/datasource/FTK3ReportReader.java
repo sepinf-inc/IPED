@@ -37,13 +37,13 @@ import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 
-public class FTK3ReportProcessor extends DataSourceProcessor{
+public class FTK3ReportReader extends DataSourceReader{
 	
 	private Set<Integer> ADList = new HashSet<Integer>();
 	public static boolean wasExecuted = false;
-	private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportProcessor.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportReader.class);
 
-	public FTK3ReportProcessor(CaseData caseData, File output, boolean listOnly) {
+	public FTK3ReportReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
 	}
 	

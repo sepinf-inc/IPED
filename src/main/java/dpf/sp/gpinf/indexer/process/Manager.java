@@ -50,7 +50,8 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
+import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
+import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -407,7 +408,7 @@ public class Manager {
 
 		VersionsMap viewToRaw = new VersionsMap(0);
 
-		if (FTK3ReportProcessor.wasExecuted) {
+		if (FTK3ReportReader.wasExecuted) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versções de visualização para originais...");
 			LOGGER.info("Obtendo mapa versões de visualização -> originais...");
 

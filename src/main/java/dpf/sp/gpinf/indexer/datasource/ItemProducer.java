@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.process;
+package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -29,12 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.datasource.DataSourceProcessor;
-import dpf.sp.gpinf.indexer.datasource.FTK1ReportProcessor;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
-import dpf.sp.gpinf.indexer.datasource.FolderTreeProcessor;
-import dpf.sp.gpinf.indexer.datasource.IndexerProcessor;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitProcessor;
+import dpf.sp.gpinf.indexer.process.Manager;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
@@ -53,10 +48,8 @@ public class ItemProducer extends Thread {
 	private List<File> datasources;
 	private File output;
 	private Manager manager;
-	
-	private DataSourceProcessor currentProcessor;
-	
-	private ArrayList<DataSourceProcessor> sourceProcessors = new ArrayList<DataSourceProcessor>();
+	private DataSourceReader currentReader;
+	private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
 
 	public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output) throws Exception {
 		this.caseData = caseData;
@@ -65,27 +58,28 @@ public class ItemProducer extends Thread {
 		this.output = output;
 		this.manager = manager;
 		
-		installDataSourcesProcessors();
+		installDataSourceReaders();
 	}
 	
-	private void installDataSourcesProcessors() throws Exception{
-		Class<? extends DataSourceProcessor>[] processorList = new Class[]{
-				FTK1ReportProcessor.class,
-				FTK3ReportProcessor.class,
-				SleuthkitProcessor.class,
-				IndexerProcessor.class,
-				FolderTreeProcessor.class	//deve ser o último
+	private void installDataSourceReaders() throws Exception{
+		
+		Class<? extends DataSourceReader>[] readerList = new Class[]{
+				FTK1ReportReader.class,
+				FTK3ReportReader.class,
+				SleuthkitReader.class,
+				IPEDReader.class,
+				FolderTreeReader.class	//deve ser o último
 		};
 		
-		for(Class<? extends DataSourceProcessor> processor : processorList){
-			Constructor constr = processor.getConstructor(CaseData.class, File.class, boolean.class);
-	        sourceProcessors.add((DataSourceProcessor) constr.newInstance(caseData, output, listOnly));
+		for(Class<? extends DataSourceReader> srcReader : readerList){
+			Constructor constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
+	        sourceReaders.add((DataSourceReader) constr.newInstance(caseData, output, listOnly));
 		}
 	}
 	
 	public String currentDirectory(){
-		if(currentProcessor != null)
-			return currentProcessor.currentDirectory();
+		if(currentReader != null)
+			return currentReader.currentDirectory();
 		else
 			return null;
 	}
@@ -103,10 +97,10 @@ public class ItemProducer extends Thread {
 				}
 
 				int alternativeFiles = 0;
-				for(DataSourceProcessor processor: sourceProcessors){
-					if(processor.isSupported(source)){
-						currentProcessor = processor;
-						alternativeFiles += processor.process(source);
+				for(DataSourceReader srcReader: sourceReaders){
+					if(srcReader.isSupported(source)){
+						currentReader = srcReader;
+						alternativeFiles += srcReader.process(source);
 						break;
 					}
 						

@@ -39,7 +39,7 @@ import oracle.jdbc.pool.OracleDataSource;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportProcessor;
+import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.util.NtfsTimeConverter;
 
 /*
@@ -266,7 +266,7 @@ public class FTK42Database extends FTKDatabase {
 	@Override
 	protected Map<String, String> getBookmarksMap(File report) throws Exception {
 
-		HashSet<String> bookmarks = FTK3ReportProcessor.getBookmarks(report);
+		HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
 		Connection conn = ods.getConnection();
 		HashMap<String, String> result = new HashMap<String, String>();
 

@@ -35,11 +35,11 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.data.FileGroup;
 import gpinf.dev.preprocessor.AsapReportParser;
 
-public class FTK1ReportProcessor extends DataSourceProcessor{
+public class FTK1ReportReader extends DataSourceReader{
 
-	private static Logger LOGGER = LoggerFactory.getLogger(FTK1ReportProcessor.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(FTK1ReportReader.class);
 	
-	public FTK1ReportProcessor(CaseData caseData, File output, boolean listOnly) {
+	public FTK1ReportReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
 	}
 	

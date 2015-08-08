@@ -7,13 +7,13 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 
-public abstract class DataSourceProcessor {
+public abstract class DataSourceReader {
 	
 	CaseData caseData;
 	boolean listOnly;
 	File output;
 
-	public DataSourceProcessor(CaseData caseData, File output, boolean listOnly) {
+	public DataSourceReader(CaseData caseData, File output, boolean listOnly) {
 		this.caseData = caseData;
 		this.listOnly = listOnly;
 		this.output = output;
