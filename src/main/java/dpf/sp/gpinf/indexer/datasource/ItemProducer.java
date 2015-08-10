@@ -72,8 +72,8 @@ public class ItemProducer extends Thread {
 		};
 		
 		for(Class<? extends DataSourceReader> srcReader : readerList){
-			Constructor constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
-	        sourceReaders.add((DataSourceReader) constr.newInstance(caseData, output, listOnly));
+			Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
+	        sourceReaders.add(constr.newInstance(caseData, output, listOnly));
 		}
 	}
 	
