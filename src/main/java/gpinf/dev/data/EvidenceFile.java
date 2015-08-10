@@ -206,11 +206,6 @@ public class EvidenceFile implements Serializable, StreamSource {
         this.parentIds.addAll(parentIds);
     }
 
-    @Override
-    public EvidenceFile clone() {
-        return this.clone();
-    }
-
     /**
      * Libera recursos utilizados, como arquivos temporários e handles
      * 
