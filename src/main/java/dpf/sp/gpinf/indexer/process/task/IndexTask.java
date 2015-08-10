@@ -53,8 +53,6 @@ public class IndexTask extends AbstractTask{
 	public static boolean indexFileContents = true;
 	public static boolean indexUnallocated = false;
 	
-	private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-	
 	private List<IdLenPair> textSizes;
 	private Set<Integer> splitedIds;
 	
@@ -83,9 +81,9 @@ public class IndexTask extends AbstractTask{
 		if (textCache != null) {
 			Document doc;
 			if (indexFileContents)
-				doc = IndexItem.Document(evidence, new StringReader(textCache), dateFormat);
+				doc = IndexItem.Document(evidence, new StringReader(textCache));
 			else
-				doc = IndexItem.Document(evidence, null, dateFormat);
+				doc = IndexItem.Document(evidence, null);
 			
 			worker.writer.addDocument(doc);
 			textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
@@ -109,7 +107,7 @@ public class IndexTask extends AbstractTask{
 					reader.startBackgroundParsing();
 			}
 			
-			Document doc = IndexItem.Document(evidence, reader, dateFormat);
+			Document doc = IndexItem.Document(evidence, reader);
 			int fragments = 0;
 			try{
 				/* Indexa os arquivos dividindo-os em fragmentos, pois a lib de

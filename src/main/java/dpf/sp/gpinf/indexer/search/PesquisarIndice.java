@@ -20,8 +20,10 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -32,11 +34,14 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
+import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.analyzing.AnalyzingQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
+import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
+import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -48,11 +53,13 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
@@ -194,11 +201,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		} else {
 			String[] fields = { IndexItem.NAME, IndexItem.CONTENT };
 
-			BooleanQuery result = new BooleanQuery();
+			/*BooleanQuery result = new BooleanQuery();
 			for (int i = 0; i < fields.length; i++) {
 				AnalyzingQueryParser parser = new AnalyzingQueryParser(Versao.current, fields[i], analyzer);
-				// ComplexPhraseQueryParser parser = new
-				// ComplexPhraseQueryParser(Versao.current, fields[i], analyzer);
+				// ComplexPhraseQueryParser parser = new ComplexPhraseQueryParser(Versao.current, fields[i], analyzer);
 				parser.setAllowLeadingWildcard(true);
 				parser.setFuzzyPrefixLength(2);
 				parser.setFuzzyMinSim(0.7f);
@@ -207,18 +213,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				result.add(parser.parse(texto), Occur.SHOULD);
 			}
 			
-			
 			return result;
-			
-			  //remove acentos e converte para caixa baixa como
-			  /*char[] input = texto.toLowerCase().toCharArray();
-			  char[] output = new char[input.length*4];
-			  ASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length); texto = (new String(output)).trim();
-			  texto = texto.replaceAll(" and ", " AND ").replaceAll(" or ", " OR ");
-			  texto = texto.replaceAll(" not ", " NOT ").replaceAll(" to ", " TO ");
-			  */
-			  
-			  /*StandardQueryParser parser = new StandardQueryParser(analyzer);
+			*/
+  
+			  StandardQueryParser parser = new StandardQueryParser(analyzer);
 			  parser.setMultiFields(fields);
 			  parser.setAllowLeadingWildcard(true);
 			  parser.setFuzzyPrefixLength(2);
@@ -226,14 +224,21 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  parser.setDateResolution(DateTools.Resolution.SECOND);
 			  parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
 			  
-			  NumericConfig config = new NumericConfig(4, NumberFormat.getInstance(), FieldType.NumericType.LONG);
+			  DecimalFormat nf = new DecimalFormat();
+			  NumericConfig config = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.LONG);
 			  HashMap<String,NumericConfig> numericConfigMap = new HashMap<String,NumericConfig>();
-			  numericConfigMap.put("tamanho", config);
+			  numericConfigMap.put(IndexItem.LENGTH, config);
 			  parser.setNumericConfigMap(numericConfigMap);
 			  
+			//remove acentos e converte para caixa baixa, pois StandardQueryParser não normaliza wildcardQueries
+			  char[] input = texto.toLowerCase().toCharArray();
+			  char[] output = new char[input.length*4];
+			  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+			  texto = (new String(output)).trim();
+			  texto = texto.replaceAll(" and ", " AND ").replaceAll(" or ", " OR ");
+			  texto = texto.replaceAll(" not ", " NOT ").replaceAll(" to ", " TO ");
+			  
 			  return parser.parse(texto, null);
-			 */
-
 		}
 
 	}
@@ -392,7 +397,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				for (int doc : result.docs) {
 					try {
 						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
-						if (!len.isEmpty())
+						if (len != null)
 							volume += Long.valueOf(len);
 
 					} catch (IOException e) {

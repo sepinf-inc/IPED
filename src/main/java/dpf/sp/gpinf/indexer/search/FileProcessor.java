@@ -118,7 +118,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			}
 			
 		}else if(doc.get(IndexItem.SLEUTHID) != null){
-			if (doc.get(IndexItem.LENGTH).isEmpty() || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
+			if (doc.get(IndexItem.LENGTH) == null || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
 				App.get().compositeViewer.clear();
 
 			file = Util.extractSleuthFile(App.get().sleuthCase, doc);

@@ -19,10 +19,13 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.TimeZone;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 
@@ -57,12 +60,14 @@ public class ResultTableModel extends AbstractTableModel {
 		columnNames = cols.toArray(new String[0]);
 	}
 
-	/*
-	 * private static DateFormat df = new
-	 * SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-	 * 
-	 * static{ df.setTimeZone(TimeZone.getTimeZone("GMT")); }
-	 */
+	
+	private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
+	
+	public ResultTableModel(){
+		super();
+		df.setTimeZone(TimeZone.getTimeZone("GMT"));
+	}
+	 
 
 	@Override
 	public int getColumnCount() {
@@ -125,12 +130,6 @@ public class ResultTableModel extends AbstractTableModel {
 		else if (col == 2)
 			return app.results.scores[row];
 
-		/*else if (col == 3)
-			if (!App.get().marcadores.read[App.get().results.docs[row]])
-				return UIManager.getIcon("Tree.collapsedIcon");
-			else
-				return null;
-		*/
 		else if (col == 3)
 			return app.marcadores.getLabels(app.ids[app.results.docs[row]]);
 		
@@ -144,19 +143,11 @@ public class ResultTableModel extends AbstractTableModel {
 				int fCol = col - 4;
 				String field = fields[fCol];
 				value = doc.get(field);
+				if(value == null)
+					value = "";
 				
-				//boolean read = App.get().marcadores.read[App.get().results.docs[row]];
-
-				/*
-				 * if(!value.equals("") && col == 8) value =
-				 * df.format(DateTools.stringToDate(value)) + " GMT";
-				 * 
-				 * if(col == 6 && value.equals("-1")) value = "";
-				 */
-				/*
-				 * if(col == 7) value =
-				 * App.get().categorias.get(App.get().categoryMap[docId] + 2);
-				 */
+				if(fCol >= 5  && fCol <= 7 && !value.isEmpty())
+					value = df.format(DateTools.stringToDate(value));
 				
 				if(fCol == 2 && !value.isEmpty())
 					value = NumberFormat.getNumberInstance().format(Long.valueOf(value));
@@ -174,9 +165,6 @@ public class ResultTableModel extends AbstractTableModel {
 
 				if (fCol == 4)
 					value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
-
-				//if(!App.get().marcadores.read[docId])
-				//	value = "<html><b>" + value;
 
 			} catch (Exception e) {
 				e.printStackTrace();

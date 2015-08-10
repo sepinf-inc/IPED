@@ -33,7 +33,6 @@
 #Outros Arquivos
 
 #Tamanho Zero
-#Imagens Pequenas
 #Imagens Temporárias Internet
 #Imagens em Pasta de Sistema
 #Textos Temporários Internet

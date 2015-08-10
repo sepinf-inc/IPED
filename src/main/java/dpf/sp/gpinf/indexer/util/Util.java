@@ -464,7 +464,7 @@ public class Util {
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						progressDialog = new ProgressDialog(App.get(), extractor);
-						if(!doc.get(IndexItem.LENGTH).isEmpty())
+						if(doc.get(IndexItem.LENGTH) != null)
 							progressDialog.setMaximum(Long.valueOf(doc.get(IndexItem.LENGTH)));
 						progressDialog.setNote("Extraindo p/ arquivo temporário...");
 					}

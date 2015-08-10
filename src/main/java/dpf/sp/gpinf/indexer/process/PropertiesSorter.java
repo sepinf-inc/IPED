@@ -167,41 +167,6 @@ public class PropertiesSorter {
 
 					}
 				};
-			} else if (field.equalsIgnoreCase(IndexItem.CREATED) || field.equalsIgnoreCase(IndexItem.ACCESSED) || field.equalsIgnoreCase(IndexItem.MODIFIED)) {
-				comparator = new Comparator<Field>() {
-					DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-					String s1 = "", s2 = "";
-
-					@Override
-					public int compare(Field f1, Field f2) {
-						try {
-							// s1 = f1.value;
-							// s2 = f2.value;
-							s1 = new String(f1.value, "UTF-8");
-							s2 = new String(f2.value, "UTF-8");
-							// s1 = reader.document(f1.id).get(field);
-							// s2 = reader.document(f2.id).get(field);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-							return 0;
-						}
-						Date d1, d2;
-						try {
-							d1 = df.parse(s1);
-							d2 = df.parse(s2);
-							return d1.compareTo(d2);
-
-						} catch (ParseException e) {
-							if (s1.equalsIgnoreCase("")) {
-								if (s2.equalsIgnoreCase(""))
-									return 0;
-								else
-									return -1;
-							} else
-								return 1;
-						}
-					}
-				};
 			} else
 				comparator = new Comparator<Field>() {
 					String s1 = "", s2 = "";

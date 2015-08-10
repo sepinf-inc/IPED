@@ -26,9 +26,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 
+import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
@@ -79,7 +81,7 @@ public class IndexItem {
 		storedTokenizedNoNormsField.setStored(true);
 	}
 	
-	public static Document Document(EvidenceFile evidence, Reader reader, SimpleDateFormat df) {
+	public static Document Document(EvidenceFile evidence, Reader reader) {
 		Document doc = new Document();
 
 		String value = String.valueOf(evidence.getId());
@@ -110,53 +112,39 @@ public class IndexItem {
 		nameField.setBoost(1000.0f);
 		doc.add(nameField);
 
-		
 		EvidenceFileType fileType = evidence.getType();
 		if (fileType != null)
 			value = fileType.getLongDescr();
 		else
 			value = "";
 		doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
-
 		
 		Long length = evidence.getLength();
-		if (length != null)
-			value = length.toString();
-		else
-			value = "";
-		doc.add(new StoredField(LENGTH, value));
-
-		/*
-		 * long length = -1; if(evidence.getLength() != null) length =
-		 * evidence.getLength(); LongField longfield = new LongField("tamanho",
-		 * length, Field.Store.YES); doc.add(longfield);
-		 * 
-		 * if(evidence.getCreationDate() != null) value =
-		 * DateTools.dateToString(evidence.getCreationDate(),
-		 * DateTools.Resolution.SECOND); else value = ""; doc.add(new
-		 * Field("criacao", value, Field.Store.YES, Field.Index.NOT_ANALYZED));
-		 */
-
+		if(length != null){
+			LongField longfield = new LongField(LENGTH, length, Field.Store.YES);
+			doc.add(longfield);
+		}
+		
 		Date date = evidence.getCreationDate();
-		if (date != null)
-			value = df.format(date);
+		if(date != null)
+			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
-		doc.add(new StoredField(CREATED, value));
+		doc.add(new StringField(CREATED, value, Field.Store.YES));
 
 		date = evidence.getAccessDate();
-		if (date != null)
-			value = df.format(date);
+		if(date != null)
+			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
-		doc.add(new StoredField(ACCESSED, value));
+		doc.add(new StringField(ACCESSED, value, Field.Store.YES));
 
 		date = evidence.getModDate();
-		if (date != null)
-			value = df.format(date);
+		if(date != null)
+			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
-		doc.add(new StoredField(MODIFIED, value));
+		doc.add(new StringField(MODIFIED, value, Field.Store.YES));
 
 		value = evidence.getPath();
 		if (value == null)
@@ -174,7 +162,7 @@ public class IndexItem {
 			value = "";
 		doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
 
-		doc.add(new StoredField(TIMEOUT, Boolean.toString(evidence.isTimedOut())));
+		doc.add(new StringField(TIMEOUT, Boolean.toString(evidence.isTimedOut()), Field.Store.YES));
 
 		value = evidence.getHash();
 		if (value != null)
@@ -211,7 +199,8 @@ public class IndexItem {
 		for(Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()){
 			Object eValue = entry.getValue();
 			if(eValue instanceof Date){
-				doc.add(new StoredField(entry.getKey(), df.format((Date)eValue)));
+				value = DateTools.dateToString((Date)eValue, DateTools.Resolution.SECOND);
+				doc.add(new StringField(entry.getKey(), value, Field.Store.YES));
 			}else{
 				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));
 			}

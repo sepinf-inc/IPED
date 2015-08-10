@@ -11,7 +11,6 @@
 function addNewCategories(set)
 {
 	set.add("Imagens Temporárias Internet");
-	set.add("Imagens Pequenas");
 	set.add("Textos Temporários Internet");
 	set.add("Tamanho Zero");
 	set.add("Imagens em Pasta de Sistema");
@@ -47,10 +46,7 @@ function addCategory(e){
 
 	else if(categorias.indexOf("Imagens") > -1){
 
-		if(length < 5000)
-			e.setCategory("Imagens Pequenas");
-
-		else if(isFromInternet(e))
+		if(isFromInternet(e))
 			e.setCategory("Imagens Temporárias Internet");
 
 		else if(inSystemFolder(e))
