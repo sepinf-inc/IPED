@@ -201,8 +201,8 @@ public class ImageViewPanel extends JPanel {
 		if (zoomFactor < 0.1)
 			zoomFactor = 0.1;
 		double f = zoomFactor / currFactor;
-		int w = image == null ? 0 : (int) (image.getWidth() * zoomFactor);
-		int h = image == null ? 0 : (int) (image.getHeight() * zoomFactor);
+		int w = (int) (image.getWidth() * zoomFactor);
+		int h = (int) (image.getHeight() * zoomFactor);
 		Dimension d = new Dimension(w, h);
 		imgPanel.setPreferredSize(d);
 		imgPanel.revalidate();
