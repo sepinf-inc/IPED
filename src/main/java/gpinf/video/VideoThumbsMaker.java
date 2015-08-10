@@ -53,8 +53,9 @@ public class VideoThumbsMaker {
             if (info.indexOf("\n") > 0) {
                 info = info.substring(0, info.indexOf("\n"));
             }
+            if (info.indexOf("MPlayer") < 0) return null;
         }
-        if (info.indexOf("MPlayer") < 0) return null;
+        
         return info;
     }
 
