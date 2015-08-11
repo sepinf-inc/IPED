@@ -23,11 +23,14 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.TimeZone;
 
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
+import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
@@ -69,6 +72,8 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 
 		int progress = 0;
 		App app = App.get();
+		SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
+		df.setTimeZone(TimeZone.getTimeZone("GMT"));
 		for (Integer docId : uniqueIds) {
 			this.firePropertyChange("progress", progress, ++progress);
 			try {
@@ -83,6 +88,8 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 						value = "";
 					if (field.equals(IndexItem.CATEGORY))
 						value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+					if (!value.isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED)))
+						value = df.format(DateTools.stringToDate(value));
 					writer.write("\"" + value.replace("\"", "\"\"") + "\";");
 				}
 				writer.write("\r\n");
