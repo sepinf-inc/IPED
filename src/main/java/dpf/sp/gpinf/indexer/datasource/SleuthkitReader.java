@@ -94,7 +94,7 @@ public class SleuthkitReader extends DataSourceReader{
 			return null;
 	}
 
-	public int process(File file) throws Exception {
+	public int read(File file) throws Exception {
 
 		String[] imgPath = { file.getAbsolutePath() };
 		

@@ -66,7 +66,7 @@ public class IPEDReader extends DataSourceReader{
 		return name.endsWith(Marcadores.EXT);
 	}
 
-	public int process(File file) throws Exception {
+	public int read(File file) throws Exception {
 
 		caseData.setContainsReport(true);
 		caseData.setIpedReport(true);

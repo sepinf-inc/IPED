@@ -43,7 +43,7 @@ public class FTK1ReportReader extends DataSourceReader{
 		super(caseData, output, listOnly);
 	}
 	
-	public int process(File report) throws Exception {
+	public int read(File report) throws Exception {
 
 		caseData.setContainsReport(true);
 		AsapReportParser parser = new AsapReportParser(listOnly);

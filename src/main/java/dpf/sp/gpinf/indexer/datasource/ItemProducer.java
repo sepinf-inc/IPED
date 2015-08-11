@@ -100,7 +100,7 @@ public class ItemProducer extends Thread {
 				for(DataSourceReader srcReader: sourceReaders){
 					if(srcReader.isSupported(source)){
 						currentReader = srcReader;
-						alternativeFiles += srcReader.process(source);
+						alternativeFiles += srcReader.read(source);
 						break;
 					}
 						

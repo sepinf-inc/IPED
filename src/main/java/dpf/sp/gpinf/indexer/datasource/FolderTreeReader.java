@@ -46,7 +46,7 @@ public class FolderTreeReader extends DataSourceReader{
 		super(caseData, output, listOnly);
 	}
 
-	public int process(File file) throws Exception {
+	public int read(File file) throws Exception {
 
 		rootFile = file;
 		evidenceName = getEvidenceName(file);

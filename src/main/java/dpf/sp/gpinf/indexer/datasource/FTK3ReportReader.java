@@ -52,7 +52,7 @@ public class FTK3ReportReader extends DataSourceReader{
 		return (new File(source, "files")).exists() && bookmarkExists(source);
 	}
 
-	public int process(File report) throws Exception {
+	public int read(File report) throws Exception {
 		
 		caseData.setContainsReport(true);
 		wasExecuted = true;
