@@ -230,13 +230,11 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  numericConfigMap.put(IndexItem.LENGTH, config);
 			  parser.setNumericConfigMap(numericConfigMap);
 			  
-			//remove acentos e converte para caixa baixa, pois StandardQueryParser não normaliza wildcardQueries
-			  char[] input = texto.toLowerCase().toCharArray();
+			  //remove acentos, pois StandardQueryParser não normaliza wildcardQueries
+			  char[] input = texto.toCharArray();
 			  char[] output = new char[input.length*4];
 			  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
 			  texto = (new String(output)).trim();
-			  texto = texto.replaceAll(" and ", " AND ").replaceAll(" or ", " OR ");
-			  texto = texto.replaceAll(" not ", " NOT ").replaceAll(" to ", " TO ");
 			  
 			  return parser.parse(texto, null);
 		}
