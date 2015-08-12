@@ -218,7 +218,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 		}
         try {
 			tmpResources.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
 		}
     }
