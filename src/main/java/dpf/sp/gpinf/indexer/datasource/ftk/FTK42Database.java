@@ -225,13 +225,13 @@ public class FTK42Database extends FTKDatabase {
 					evidenceFile.setType(new GenericFileType(fileType)); // Alterado
 				long createdDate = rset.getLong("CREATIONDATEFT"); // Alterado
 				if (createdDate > 0)
-					evidenceFile.setCreationDate(NtfsTimeConverter.ntfsTimeToDate(createdDate));
+					evidenceFile.setCreationDate(NtfsTimeConverter.fileTimeToDate(createdDate));
 				long modifiedDate = rset.getLong("MODIFICATIONDATEFT"); // Alterado
 				if (modifiedDate > 0)
-					evidenceFile.setModificationDate(NtfsTimeConverter.ntfsTimeToDate(modifiedDate));
+					evidenceFile.setModificationDate(NtfsTimeConverter.fileTimeToDate(modifiedDate));
 				long accessedDate = rset.getLong("ACCESSDATEFT"); // Alterado
 				if (accessedDate > 0)
-					evidenceFile.setAccessDate(NtfsTimeConverter.ntfsTimeToDate(accessedDate));
+					evidenceFile.setAccessDate(NtfsTimeConverter.fileTimeToDate(accessedDate));
 				else {
 					String fatDate = rset.getString("FATACCESSDATE"); // Alterado
 					if (fatDate != null) {

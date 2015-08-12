@@ -188,13 +188,13 @@ public class FTK3Database extends FTKDatabase {
 					evidenceFile.setType(new GenericFileType(fileType));
 				long createdDate = rset.getLong("CREATEDDATE");
 				if (createdDate > 0)
-					evidenceFile.setCreationDate(NtfsTimeConverter.ntfsTimeToDate(createdDate));
+					evidenceFile.setCreationDate(NtfsTimeConverter.fileTimeToDate(createdDate));
 				long modifiedDate = rset.getLong("modifieddate");
 				if (modifiedDate > 0)
-					evidenceFile.setModificationDate(NtfsTimeConverter.ntfsTimeToDate(modifiedDate));
+					evidenceFile.setModificationDate(NtfsTimeConverter.fileTimeToDate(modifiedDate));
 				long accessedDate = rset.getLong("last_accesseddate");
 				if (accessedDate > 0)
-					evidenceFile.setAccessDate(NtfsTimeConverter.ntfsTimeToDate(accessedDate));
+					evidenceFile.setAccessDate(NtfsTimeConverter.fileTimeToDate(accessedDate));
 				else {
 					String fatDate = rset.getString("fatlastaccesseddateasstring");
 					if (fatDate != null) {
