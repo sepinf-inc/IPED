@@ -38,7 +38,7 @@ import java.util.Properties;
 import oracle.jdbc.pool.OracleDataSource;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.util.NtfsTimeConverter;
+import dpf.sp.gpinf.indexer.util.TimeConverter;
 
 /*
  * Classe que obtém informações do banco de dados do FTK3 até o FTK4.1.
@@ -188,13 +188,13 @@ public class FTK3Database extends FTKDatabase {
 					evidenceFile.setType(new GenericFileType(fileType));
 				long createdDate = rset.getLong("CREATEDDATE");
 				if (createdDate > 0)
-					evidenceFile.setCreationDate(NtfsTimeConverter.fileTimeToDate(createdDate));
+					evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
 				long modifiedDate = rset.getLong("modifieddate");
 				if (modifiedDate > 0)
-					evidenceFile.setModificationDate(NtfsTimeConverter.fileTimeToDate(modifiedDate));
+					evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
 				long accessedDate = rset.getLong("last_accesseddate");
 				if (accessedDate > 0)
-					evidenceFile.setAccessDate(NtfsTimeConverter.fileTimeToDate(accessedDate));
+					evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
 				else {
 					String fatDate = rset.getString("fatlastaccesseddateasstring");
 					if (fatDate != null) {
