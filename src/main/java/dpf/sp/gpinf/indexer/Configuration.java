@@ -69,6 +69,7 @@ public class Configuration {
 	public static boolean indexTempOnSSD = false;
 	public static boolean entropyTest = true;
 	public static boolean addFatOrphans = true;
+	public static long minOrphanSizeToIgnore = -1;
 	public static int searchThreads = 1;
 
 	/**
@@ -268,6 +269,12 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			addFatOrphans = Boolean.valueOf(value);
+		
+		value = properties.getProperty("minOrphanSizeToIgnore");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			minOrphanSizeToIgnore = Long.valueOf(value);
 		
 		value = properties.getProperty("searchThreads");
 		if (value != null)

@@ -296,6 +296,10 @@ public class SleuthkitReader extends DataSourceReader{
 		if(absFile.isDir() && (absFile.getName().equals(".") || absFile.getName().equals("..")))
 			return;
 		
+		if(Configuration.minOrphanSizeToIgnore != -1 && absFile.getUniquePath().contains("/$OrphanFiles/") && 
+				absFile.getSize() >= Configuration.minOrphanSizeToIgnore)
+			return;
+		
 		if(evidence == null){
 			evidence = new EvidenceFile();
 			evidence.setLength(absFile.getSize());

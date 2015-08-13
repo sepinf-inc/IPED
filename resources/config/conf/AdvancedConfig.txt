@@ -39,6 +39,11 @@ extraCharsToIndex =
 # possivelmente impactando tempo de processamento
 addFatOrphans = true
 
+# Configure caso queira ignorar arquivos orphans com base no seu tamanho.
+# Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
+# que podem tornar o processamento inviável.
+#minOrphanSizeToIgnore = 10240000
+
 # Tamanho em bytes de divisão do espaço não alocado. Em casos onde o espaço não alocado não seja indexado,
 # é interessante aumentar em 10x ou mais o valor para minimizar a perda de itens de carving nas bordas.
 unallocatedFragSize = 104857600
