@@ -1,3 +1,10 @@
+xx/0x/2015: IPED-3.6
+- Decodificação de datas em arquivos sqlite (históricos de internet, skype, etc)
+- Indexação e consulta nas propriedades de data e tamanho
+Correções:
+- Erro de ConcurrentModificationException durante evidence.dispose()
+- Correta pausa do contador de timeout do pai ao processar subitem 
+
 27/07/2015: IPED-3.5.1
 - Ordenação das colunas em background e cancelável (útil com milhões de itens)
 - Parser inicial para msgstore.db (whatsapp) - contribuição PCF Pfeifer
