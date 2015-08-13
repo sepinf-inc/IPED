@@ -185,12 +185,14 @@ public class ParsingReader extends Reader {
 	
 
 	public void closeAndInterruptParsingTask() {
-		future.cancel(true);
+		
 		try {
 			writer.close();
-		} catch (Exception e) {}
-		// comentado pois provoca problema de concorrência com tracked resources
-		// stream.close();
+			stream.close();
+		} catch (Exception e){}
+		
+		future.cancel(true);
+		
 	}
 
 	/**
@@ -349,8 +351,8 @@ public class ParsingReader extends Reader {
 		}
 	}
 	
-	public void setTimeoutPaused(boolean paused){
-		pipedReader.setTimeoutPaused(paused);
+	public boolean setTimeoutPaused(boolean paused){
+		return pipedReader.setTimeoutPaused(paused);
 	}
 
 }

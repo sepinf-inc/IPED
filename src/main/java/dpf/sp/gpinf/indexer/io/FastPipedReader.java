@@ -27,10 +27,11 @@ public class FastPipedReader extends Reader {
 	private int timer = 0;
 	private int timeOutBySize = 0;
 	private static int TIMEOUT = 60;
-	private volatile boolean timeoutPaused = false;
+	private boolean timeoutPaused = false, timedOut = false;
 
-	public void setTimeoutPaused(boolean paused) {
+	synchronized public boolean setTimeoutPaused(boolean paused) {
 		this.timeoutPaused = paused;
+		return !timedOut;
 	}
 
 	public static void setTimeout(int timeout) {
@@ -303,8 +304,10 @@ public class FastPipedReader extends Reader {
 			} catch (InterruptedException ex) {
 				throw new java.io.InterruptedIOException();
 			}
-			if (!timeoutPaused && timer++ == TIMEOUT + timeOutBySize)
+			if (!timeoutPaused && timer++ == TIMEOUT + timeOutBySize){
+				timedOut = true;
 				throw new TimeoutException();
+			}
 		}
 		timer = 0;
 		int ret = buffer[out++];

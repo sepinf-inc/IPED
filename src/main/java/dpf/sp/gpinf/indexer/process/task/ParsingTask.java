@@ -387,25 +387,27 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			}
 
 			// pausa contagem de timeout do pai antes de extrair e processar subitem
-			reader.setTimeoutPaused(true);
-						
-			ExportFileTask extractor = new ExportFileTask(worker);
-			extractor.extractFile(tis, subItem);
-
-			new SetCategoryTask(worker).process(subItem);
-
-			// teste para extraÃ§Ã£o de anexos de emails de PSTs
-			if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
-				subItem.setToExtract(true);
-				metadata.set(ExtraProperties.TO_EXTRACT, "true");
-				//int id = evidence.getId();
-				//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
-			}
-
-			worker.processNewItem(subItem);
-			
-			//despausa contador de timeout do pai somente após processar subitem
-			reader.setTimeoutPaused(false);
+			if(reader.setTimeoutPaused(true))
+				try{
+					ExportFileTask extractor = new ExportFileTask(worker);
+					extractor.extractFile(tis, subItem);
+	
+					new SetCategoryTask(worker).process(subItem);
+	
+					// teste para extraÃ§Ã£o de anexos de emails de PSTs
+					if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
+						subItem.setToExtract(true);
+						metadata.set(ExtraProperties.TO_EXTRACT, "true");
+						//int id = evidence.getId();
+						//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
+					}
+	
+					worker.processNewItem(subItem);
+	
+				}finally{
+					//despausa contador de timeout do pai somente após processar subitem
+					reader.setTimeoutPaused(false);
+				}
 
 		} catch (SAXException e) {
 			// TODO Provavelmente PipedReader foi interrompido, interrompemos
