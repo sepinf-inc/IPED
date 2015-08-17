@@ -389,7 +389,7 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%LAUDO%", info.laudo);
         replace(arq.content, "%DATALAUDO%", info.dataLaudo);
         replace(arq.content, "%PERITO%", info.perito);
-        replace(arq.content, "%CLASSE%", info.classe);
+        replace(arq.content, "%CLASSE%", info.classe + "a Classe");
         replace(arq.content, "%MAT%", info.matricula);
         replace(arq.content, "%CABECALHO%", info.cabecalho);
         replace(arq.content, "%TITULO%", info.titulo);
