@@ -499,15 +499,10 @@ public class CarveTask extends AbstractTask{
 	
 	private void addCarvedFile(long off, long len, int sig) throws Exception{
 		
-		EvidenceFile evidence = new EvidenceFile();
+		EvidenceFile evidence = this.evidence.createSubitem(true);
 		evidence.setName("Carved-" + off);
 		evidence.setPath(this.evidence.getPath() + ">>" + evidence.getName());
 		evidence.setLength(len);
-		
-		int parentId = this.evidence.getId();
-		evidence.setParentId(Integer.toString(parentId));
-		evidence.addParentIds(this.evidence.getParentIds());
-		evidence.addParentId(parentId);
 		
 		evidence.setDeleted(this.evidence.isDeleted());
 		evidence.setCarved(true);
@@ -519,17 +514,7 @@ public class CarveTask extends AbstractTask{
 			evidence.setFileOffset(off);
 		else
 			evidence.setFileOffset(prevOff + off);
-		
-		if(this.evidence.getSleuthFile() != null){
-			evidence.setSleuthFile(this.evidence.getSleuthFile());
-			evidence.setSleuthId(this.evidence.getSleuthId());
-			//if(this.evidence.hasTmpFile())
-			//	evidence.setFile(this.evidence.getTempFile());
-		}else{
-			evidence.setFile(this.evidence.getFile());
-			evidence.setExportedFile(this.evidence.getExportedFile());
-		}
-		
+				
 		this.evidence.setHasChildren(true);
 		
 		incItensCarved();

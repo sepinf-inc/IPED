@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.SleuthEvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 /**
@@ -127,7 +128,9 @@ public class ExportFileTask extends AbstractTask{
                 (isToBeExtracted(evidence) || evidence.isToExtract()))) {
             evidence.setToExtract(true);
             if(doNotExport(evidence)){
-            	evidence.setSleuthId(null);
+            	if (evidence instanceof SleuthEvidenceFile) {
+            		((SleuthEvidenceFile) evidence).setSleuthId(null);
+            	}
             	evidence.setExportedFile(null);
             }else
             	extract(evidence);

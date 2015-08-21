@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.SleuthEvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
@@ -110,7 +111,13 @@ public class IPEDReader extends DataSourceReader{
 				continue;
 			}
 			
-			EvidenceFile evidence = new EvidenceFile();
+			EvidenceFile evidence;
+			if (sleuthCase == null) {
+				evidence = new EvidenceFile();
+			} else {
+				evidence = new SleuthEvidenceFile();
+			}
+			
 			evidence.setName(doc.get(IndexItem.NAME));
 			
 			evidence.setLength(len);
@@ -157,8 +164,8 @@ public class IPEDReader extends DataSourceReader{
 			else {
 				value = doc.get(IndexItem.SLEUTHID);
 				if (value != null && !value.isEmpty()) {
-					evidence.setSleuthId(value);
-					evidence.setSleuthFile(sleuthCase.getAbstractFileById(Long.valueOf(value)));
+					((SleuthEvidenceFile)evidence).setSleuthId(value);
+					((SleuthEvidenceFile)evidence).setSleuthFile(sleuthCase.getAbstractFileById(Long.valueOf(value)));
 				}
 			}
 

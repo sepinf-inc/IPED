@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.SleuthEvidenceFile;
 
 public class SleuthkitReader extends DataSourceReader{
 
@@ -254,7 +254,7 @@ public class SleuthkitReader extends DataSourceReader{
 				int fragNum = 0;
 				for(long offset = 0; offset < absFile.getSize(); offset += fragSize){
 					long len = offset + fragSize < absFile.getSize() ? fragSize : absFile.getSize() - offset;
-					EvidenceFile frag = new EvidenceFile();
+					SleuthEvidenceFile frag = new SleuthEvidenceFile();
 					String sufix = "";
 					if(absFile.getSize() > fragSize){
 						sufix = "-Frag" + fragNum++;
@@ -280,7 +280,7 @@ public class SleuthkitReader extends DataSourceReader{
 			
 	}
 	
-	private void setPath(EvidenceFile evidence, String path){
+	private void setPath(SleuthEvidenceFile evidence, String path){
 		if(deviceName != null)
 			path = path.replaceFirst("img_.+?\\/" , deviceName + "/");
 		evidence.setPath(path);
@@ -291,7 +291,7 @@ public class SleuthkitReader extends DataSourceReader{
 		addEvidenceFile(absFile, null, false, parent);
 	}
 	
-	private void addEvidenceFile(AbstractFile absFile, EvidenceFile evidence, boolean unalloc, Content parent) throws Exception{
+	private void addEvidenceFile(AbstractFile absFile, SleuthEvidenceFile evidence, boolean unalloc, Content parent) throws Exception{
 		
 		if(absFile.isDir() && (absFile.getName().equals(".") || absFile.getName().equals("..")))
 			return;
@@ -301,7 +301,7 @@ public class SleuthkitReader extends DataSourceReader{
 			return;
 		
 		if(evidence == null){
-			evidence = new EvidenceFile();
+			evidence = new SleuthEvidenceFile();
 			evidence.setLength(absFile.getSize());
 		}
 		
@@ -366,7 +366,7 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	private void addEvidenceFile(Content content) throws Exception{
 		
-		EvidenceFile evidence = new EvidenceFile();
+		SleuthEvidenceFile evidence = new SleuthEvidenceFile();
 		
 		//Comentado pois tamanho da imagem e partições distorcem estimativa de progresso
 		//evidence.setLength(content.getSize());

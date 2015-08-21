@@ -27,6 +27,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.LimitedInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import gpinf.dev.filetypes.EvidenceFileType;
+import gpinf.util.AlwaysEmptyInputStream;
 import gpinf.util.FormatUtil;
 
 /**
@@ -160,11 +161,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private TemporaryResources tmpResources = new TemporaryResources();
 
-    private AbstractFile sleuthFile;
-
     private long startOffset = -1;
-
-    private String sleuthId;
 
     private TikaInputStream tis;
 
@@ -491,22 +488,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * 
-     * @return o objeto do Sleuthkit que representa o item
-     */
-    public AbstractFile getSleuthFile() {
-        return sleuthFile;
-    }
-
-    /**
-     * 
-     * @return o id do item no Sleuthkit
-     */
-    public String getSleuthId() {
-        return sleuthId;
-    }
-
-    /**
      * @return InputStream com o conteúdo do arquivo.
      */
     public InputStream getStream() throws IOException {
@@ -535,12 +516,9 @@ public class EvidenceFile implements Serializable, StreamSource {
         		file = null;
         	}
 
-        if (stream == null)
-        	if(sleuthFile != null){
-        		stream = new ReadContentInputStream(sleuthFile);
-
-        	}else
-        		stream = new ByteArrayInputStream(new byte[0]);
+        if (stream == null) {
+        	stream = createInputStream();
+        }
 
         if (startOffset != -1) {
             long skiped = 0;
@@ -554,6 +532,39 @@ public class EvidenceFile implements Serializable, StreamSource {
         }
         return stream;
     }
+    
+    /**
+     * Método para criar um ImputStream com os dados do arquivo. Deve ser sobrescrito pelas subclasses.
+     * Implementação padrão retorna InputStream vazio.
+     * @return InputStream contendo dados do arquivo.
+     * @throws IOException
+     */
+    protected InputStream createInputStream() throws IOException {
+    	return new AlwaysEmptyInputStream();
+    }
+    
+	/**
+	 * Cria um EvidenceFile para ser usado como subitem deste EvidenceFile.
+	 * 
+	 * @param useSameData
+	 *            caso verdadeiro, utiliza a mesma fonte de dados do pai.
+	 * @return
+	 */
+	public EvidenceFile createSubitem(boolean useSameData) {
+		EvidenceFile subitem = new EvidenceFile();
+
+		int parentId = getId();
+		subitem.setParentId(Integer.toString(parentId));
+		subitem.addParentIds(getParentIds());
+		subitem.addParentId(parentId);
+
+		if (useSameData) {
+			subitem.setFile(getFile());
+			subitem.setExportedFile(getExportedFile());
+		}
+
+		return subitem;
+	}
 
     /**
      * Usado em módulos que só possam processar um File e não um InputStream.
@@ -995,20 +1006,6 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public void setRoot(boolean isRoot) {
         this.isRoot = isRoot;
-    }
-
-    /**
-     * @param sleuthFile objeto que representa o item no sleuthkit
-     */
-    public void setSleuthFile(AbstractFile sleuthFile) {
-        this.sleuthFile = sleuthFile;
-    }
-
-    /**
-     * @param sleuthId id do item no sleuthkit
-     */
-    public void setSleuthId(String sleuthId) {
-        this.sleuthId = sleuthId;
     }
 
     /**

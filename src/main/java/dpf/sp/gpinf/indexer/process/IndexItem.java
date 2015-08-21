@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.SleuthEvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
 
 import java.io.Reader;
@@ -37,11 +38,11 @@ import org.apache.lucene.document.TextField;
 import org.apache.tika.mime.MediaType;
 
 /**
- * Cria um org.apache.lucene.document.Document a partir das propriedades do itens
- * que será adicionado ao índice.
+ * Cria um org.apache.lucene.document.Document a partir das propriedades do
+ * itens que será adicionado ao índice.
  */
 public class IndexItem {
-	
+
 	public static final String ID = "id";
 	public static final String FTKID = "ftkId";
 	public static final String PARENTID = "parentId";
@@ -68,11 +69,10 @@ public class IndexItem {
 	public static final String TIMEOUT = "timeout";
 	public static final String CONTENTTYPE = "contentType";
 	public static final String CONTENT = "conteudo";
-	
 
 	private static FieldType contentField = new FieldType();
 	private static FieldType storedTokenizedNoNormsField = new FieldType();
-	
+
 	static {
 		contentField.setIndexed(true);
 		contentField.setOmitNorms(true);
@@ -80,7 +80,7 @@ public class IndexItem {
 		storedTokenizedNoNormsField.setOmitNorms(true);
 		storedTokenizedNoNormsField.setStored(true);
 	}
-	
+
 	public static Document Document(EvidenceFile evidence, Reader reader) {
 		Document doc = new Document();
 
@@ -91,20 +91,21 @@ public class IndexItem {
 		if (value != null)
 			doc.add(new StringField(FTKID, value, Field.Store.YES));
 
-		value = evidence.getSleuthId();
-		if (value != null)
-			doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
-		
+		if (evidence instanceof SleuthEvidenceFile) {
+			value = ((SleuthEvidenceFile) evidence).getSleuthId();
+			if (value != null)
+				doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
+		}
+
 		value = evidence.getParentId();
 		if (value == null)
 			if (evidence.getEmailPai() != null)
 				value = String.valueOf(evidence.getEmailPai().getId());
 		if (value != null)
 			doc.add(new StringField(PARENTID, value, Field.Store.YES));
-		
+
 		doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
 
-		
 		value = evidence.getName();
 		if (value == null)
 			value = "";
@@ -118,29 +119,29 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
-		
+
 		Long length = evidence.getLength();
-		if(length != null){
+		if (length != null) {
 			LongField longfield = new LongField(LENGTH, length, Field.Store.YES);
 			doc.add(longfield);
 		}
-		
+
 		Date date = evidence.getCreationDate();
-		if(date != null)
+		if (date != null)
 			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
 		doc.add(new StringField(CREATED, value, Field.Store.YES));
 
 		date = evidence.getAccessDate();
-		if(date != null)
+		if (date != null)
 			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
 		doc.add(new StringField(ACCESSED, value, Field.Store.YES));
 
 		date = evidence.getModDate();
-		if(date != null)
+		if (date != null)
 			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
 		else
 			value = "";
@@ -152,7 +153,7 @@ public class IndexItem {
 		doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
 
 		doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
-		
+
 		doc.add(new Field(CATEGORY, evidence.getCategories(), storedTokenizedNoNormsField));
 
 		MediaType type = evidence.getMediaType();
@@ -173,35 +174,35 @@ public class IndexItem {
 
 		value = Boolean.toString(evidence.isDeleted());
 		doc.add(new StringField(DELETED, value, Field.Store.YES));
-		
+
 		value = Boolean.toString(evidence.hasChildren());
 		doc.add(new StringField(HASCHILD, value, Field.Store.YES));
-		
+
 		value = Boolean.toString(evidence.isDir());
 		doc.add(new StringField(ISDIR, value, Field.Store.YES));
-		
-		if(evidence.isRoot())
+
+		if (evidence.isRoot())
 			doc.add(new StringField(ISROOT, "true", Field.Store.YES));
-		
+
 		value = Boolean.toString(evidence.isCarved());
 		doc.add(new StringField(CARVED, value, Field.Store.YES));
-		
+
 		value = Boolean.toString(evidence.isSubItem());
-        doc.add(new StringField(SUBITEM, value, Field.Store.YES));
-		
+		doc.add(new StringField(SUBITEM, value, Field.Store.YES));
+
 		long off = evidence.getFileOffset();
-		if(off != -1)
+		if (off != -1)
 			doc.add(new StoredField(OFFSET, Long.toString(off)));
 
 		if (reader != null)
 			doc.add(new Field(CONTENT, reader, contentField));
-		
-		for(Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()){
+
+		for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
 			Object eValue = entry.getValue();
-			if(eValue instanceof Date){
-				value = DateTools.dateToString((Date)eValue, DateTools.Resolution.SECOND);
+			if (eValue instanceof Date) {
+				value = DateTools.dateToString((Date) eValue, DateTools.Resolution.SECOND);
 				doc.add(new StringField(entry.getKey(), value, Field.Store.YES));
-			}else{
+			} else {
 				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));
 			}
 		}

@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.SleuthEvidenceFile;
 
 import java.io.File;
 import java.sql.Connection;
@@ -92,7 +93,7 @@ public class DatabaseTask extends AbstractTask{
             sql.append("(" + 
                     e.getId() +","+
                     e.getParentId() +","+
-                    e.getSleuthId() +",\'"+ 
+                    getSleuthId(e) +",\'"+ 
                     e.getName() + "\',\'" + 
                     e.getType().getLongDescr() + "\',\'" + 
                     e.getCategories() + "\',\'" +
@@ -125,6 +126,13 @@ public class DatabaseTask extends AbstractTask{
         stmt.close();
         //con.commit();
         itemList.clear();
+    }
+    
+    private String getSleuthId(EvidenceFile evidenceFile) {
+    	if (evidenceFile instanceof SleuthEvidenceFile) {
+    		return ((SleuthEvidenceFile) evidenceFile).getSleuthId();
+    	}
+    	return null;
     }
 
 }
