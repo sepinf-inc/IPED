@@ -279,7 +279,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-        if (taskEnabled && caseData.containsReport() && info != null) {
+        if (taskEnabled && caseData.containsReport() && info != null && !reportSubFolder.exists()) {
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
@@ -296,8 +296,8 @@ public class HTMLReportTask extends AbstractTask {
 
             long t = System.currentTimeMillis();
 
-            File rep = reportSubFolder;
-            if (!rep.exists()) rep.mkdir();
+            reportSubFolder.mkdir();
+            
             processBookmarks(templatesFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) createThumbsPage();
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm"));
@@ -389,7 +389,7 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%LAUDO%", info.laudo);
         replace(arq.content, "%DATALAUDO%", info.dataLaudo);
         replace(arq.content, "%PERITO%", info.perito);
-        replace(arq.content, "%CLASSE%", formatClass());
+        replace(arq.content, "%CLASSE%", info.classe + "a Classe");
         replace(arq.content, "%MAT%", info.matricula);
         replace(arq.content, "%CABECALHO%", info.cabecalho);
         replace(arq.content, "%TITULO%", info.titulo);
@@ -401,16 +401,6 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%MATERIAL%", info.material);
         arq.file = target;
         arq.write();
-    }
-
-    private String formatClass() {
-        String s = info.classe;
-        if (s != null && s.length() == 1) {
-            char c = s.charAt(0);
-            if (c >= '1' && c <= '3') s = c + "a Classe";
-            else if (Character.toUpperCase(c) == 'E') s = "Classe Especial";
-        }
-        return s;
     }
 
     private void processContents(File src, File target) throws Exception {
