@@ -322,7 +322,6 @@ public class SleuthkitReader extends DataSourceReader{
 		
 		if(absFile.isDir()){
 			evidence.setIsDir(true);
-			evidence.setCategory(SetCategoryTask.FOLDER_CATEGORY);
 		}
 		
 		evidence.setHasChildren(absFile.hasChildren());

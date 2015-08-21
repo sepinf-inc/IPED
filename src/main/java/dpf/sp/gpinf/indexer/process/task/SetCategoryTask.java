@@ -52,7 +52,7 @@ public class SetCategoryTask extends AbstractTask{
 	
 	public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
 	public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
-	public static String FOLDER_CATEGORY = "Pastas";
+	private static String FOLDER_CATEGORY = "Pastas";
 	public static String ENCRYPTED_CATEGORY = "Arquivos Criptografados";
 	
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
@@ -152,6 +152,9 @@ public class SetCategoryTask extends AbstractTask{
 	
 
 	public void process(EvidenceFile e) throws Exception{
+		
+		if(e.isDir())
+			e.setCategory(FOLDER_CATEGORY);
 		
 		if (e.getCategorySet().size() != 0)
 			return;

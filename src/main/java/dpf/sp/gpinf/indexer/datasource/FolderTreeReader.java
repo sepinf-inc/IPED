@@ -124,7 +124,6 @@ public class FolderTreeReader extends DataSourceReader{
 						
 						if (attr.isDirectory()){
 							evidenceFile.setIsDir(true);
-							evidenceFile.setCategory(SetCategoryTask.FOLDER_CATEGORY);
 							parentIds.addLast(evidenceFile.getId());
 						}
 							
