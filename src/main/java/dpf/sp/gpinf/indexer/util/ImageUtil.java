@@ -219,15 +219,20 @@ public class ImageUtil {
      * necessita-se das dimensões. 
      */
     public static Dimension getImageFileDimension(Object img) {
+    	ImageInputStream in = null;
         try {
-            ImageInputStream in = ImageIO.createImageInputStream(img);
+            in = ImageIO.createImageInputStream(img);
             final Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
             if (readers.hasNext()) {
                 ImageReader reader = readers.next();
                 reader.setInput(in);
                 return new Dimension(reader.getWidth(0), reader.getHeight(0));
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        	//ignore
+        }finally{
+        	IOUtil.closeQuietly(in);
+        }
         return null;
     }
 
