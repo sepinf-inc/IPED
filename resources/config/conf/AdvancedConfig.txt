@@ -73,8 +73,8 @@ maxFileSize2OCR = 100000000
 # Resolução em dpi para conversão de PDF's para imagem. Aumente caso a fonte das digitalizações seja pequena
 pdfToImgResolution = 250
 
-# Máximo de caracteres de texto que um PDF pode conter para ser aplicado OCR
-maxPDFTextSize2OCR = 100
+# Máximo de caracteres de texto por página que um PDF pode conter para ser aplicado OCR
+maxPDFTextSize2OCR = 50
 
 ########################################################################
 # Configurações da Pesquisa

@@ -123,11 +123,6 @@
     	<glob pattern="*.mbox"/>
     </mime-type>
     
-    <mime-type type="application/x-urlclassifier">
-    	<sub-class-of type="application/x-sqlite3"/> 
-    	<glob pattern="urlclassifier3.sqlite"/>
-    </mime-type>
-    
     <mime-type type="message/x-whatsapp-msg">
         <sub-class-of type="text/html"/>
     </mime-type>
@@ -211,6 +206,46 @@
     
     <mime-type type="application/x-vdi">
     	<glob pattern="*.vdi"/>
+    </mime-type>
+    
+    <mime-type type="application/x-udf-image">
+    	<acronym>ISO</acronym>
+    	<_comment>UDF CD-ROM filesystem data</_comment>
+    	<magic priority="50">
+      		<match value="NSR02" type="string" offset="32769"/>
+      		<match value="NSR02" type="string" offset="34817"/>
+      		<match value="NSR02" type="string" offset="36865"/>
+      		<match value="NSR03" type="string" offset="32769"/>
+      		<match value="NSR03" type="string" offset="34817"/>
+      		<match value="NSR03" type="string" offset="36865"/>
+    	</magic>
+  	</mime-type>
+  	
+  	<mime-type type="application/x-disk-image">
+    	<acronym>ISO</acronym>
+    	<_comment>E01 disk images</_comment>
+    	<magic priority="50">
+      		<match value="0x5646090D0AFF00" type="string" offset="1"/>
+    	</magic>
+    	<_comment>RAW disk images</_comment>
+    	<magic priority="30">
+      		<match value="0x55AA" type="string" offset="510">
+      			<match value="0x0000" type="string" offset="444"/>
+      			<match value="0x5A5A" type="string" offset="444"/>
+      		</match>
+    	</magic>
+    	<glob pattern="*.e01"/>
+    	<glob pattern="*.001"/>
+    	<glob pattern="*.dd"/>
+  	</mime-type>
+    
+    <mime-type type="application/x-wim-image">
+    	<magic priority="50">
+      		<match value="MSWIM" type="string" offset="0">
+      			<match value="0x0000" type="string" offset="5"/>
+      		</match>
+    	</magic>
+    	<glob pattern="*.wim"/>
     </mime-type>
     
     <mime-type type="application/x-thumbcache">

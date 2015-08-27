@@ -12,16 +12,16 @@
 # Comentado por padrão para efetuar carving em todos os itens, exceto aqueles listados em 'typesToNotProcess'
 #typesToProcess = application/x-unallocated;
 #typesToProcess = application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow
-#typesToProcess = application/x-iso9660-image; application/x-vmdk; application/x-vhd; application/x-vdi
+#typesToProcess = application/x-disk-image; application/x-vmdk; application/x-vhd; application/x-vdi
 #typesToProcess = application/x-thumbs; application/x-thumbcache
 #Desconhecidos:
-#typesToProcess = application/octet-stream;  
+#typesToProcess = application/octet-stream;
 
 
 # Tipos de arquivo nos quais não será efetuado o carving. Subtipos também não são processados.
 # Estão configurados por padrão todos os tipos que são expandidos, para não serem recuperados itens repetidos.
 # Comente caso não queira excluir itens do carving.
-typesToNotProcess = video; text/html; application/pdf
+typesToNotProcess = video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;
 typesToNotProcess = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;
 typesToNotProcess = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
 typesToNotProcess = application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;

@@ -77,7 +77,6 @@ public class SleuthkitReader extends DataSourceReader{
 				name.endsWith(".aff") || 
 				name.endsWith(".l01") ||
 				name.endsWith(".dd") || 
-				name.endsWith(".iso") ||
 				isPhysicalDrive(report) ||
 				name.equals(DB_NAME);
 	}
@@ -403,9 +402,10 @@ public class SleuthkitReader extends DataSourceReader{
 		}else
 			evidence.setPath(path);
 		
-		if(content instanceof Image)
+		if(content instanceof Image){
 			evidence.setRoot(true);
-		else
+			evidence.setMediaType(MediaType.application("application/x-disc-image"));
+		}else
 			evidence.setIsDir(true);
 		
 		evidence.setHasChildren(content.hasChildren());
