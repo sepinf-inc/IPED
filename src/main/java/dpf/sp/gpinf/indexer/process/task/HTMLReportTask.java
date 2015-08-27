@@ -389,7 +389,7 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%LAUDO%", info.laudo);
         replace(arq.content, "%DATALAUDO%", info.dataLaudo);
         replace(arq.content, "%PERITO%", info.perito);
-        replace(arq.content, "%CLASSE%", info.classe + "a Classe");
+        replace(arq.content, "%CLASSE%", formatClass());
         replace(arq.content, "%MAT%", info.matricula);
         replace(arq.content, "%CABECALHO%", info.cabecalho);
         replace(arq.content, "%TITULO%", info.titulo);
@@ -401,6 +401,16 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%MATERIAL%", info.material);
         arq.file = target;
         arq.write();
+    }
+    
+    private String formatClass() {
+    	String s = info.classe;
+    	if (s != null && s.length() == 1) {
+    		char c = s.charAt(0);
+    		if (c >= '1' && c <= '3') s = c + "a Classe";
+    		else if (Character.toUpperCase(c) == 'E') s = "Classe Especial";
+    	}
+    	return s;
     }
 
     private void processContents(File src, File target) throws Exception {
