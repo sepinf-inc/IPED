@@ -80,7 +80,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>1.8</version>
+            <version>1.10</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -110,7 +110,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
-            <version>1.8</version>
+            <version>1.10</version>
             <type>jar</type>
             <exclusions>
         		<exclusion>
@@ -119,19 +119,23 @@
         		</exclusion>
         		<exclusion>
           			<groupId>edu.ucar</groupId>
-          			<artifactId>grib</artifactId>
+          			<artifactId>*</artifactId>
         		</exclusion>
         		<exclusion>
-          			<groupId>edu.ucar</groupId>
-          			<artifactId>cdm</artifactId>
+          			<groupId>org.apache.opennlp</groupId>
+          			<artifactId>*</artifactId>
         		</exclusion>
+        		<exclusion>
+					<groupId>org.apache.sis.core</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.sis.storage</groupId>
+					<artifactId>sis-netcdf</artifactId>
+				</exclusion>
         		<exclusion>
           			<groupId>com.google.guava</groupId>
           			<artifactId>guava</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>edu.ucar</groupId>
-          			<artifactId>httpservices</artifactId>
         		</exclusion>
       		</exclusions>
         </dependency>
@@ -139,12 +143,6 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
             <version>4.9.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>com.healthmarketscience.jackcess</groupId>
-            <artifactId>jackcess</artifactId>
-            <version>2.0.8</version>
             <type>jar</type>
         </dependency>
         <dependency>
