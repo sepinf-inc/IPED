@@ -50,6 +50,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
+import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
@@ -92,6 +94,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	private ParsingEmbeddedDocumentExtractor embeddedParser;
 	private volatile ParsingReader reader;
 	private boolean hasTitle = false;
+	private String firstParentPath = null;
 
 	public ParsingTask(ParseContext context) {
 		super(null);
@@ -148,6 +151,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		return metadata;
 	}
 	
+	//TODO: Externalizar para arquivo de configuração
 	private static HashSet<String> getCategoriesToTestEncryption(){
 		HashSet<String> set = new HashSet<String>();
 		set.add("Arquivos Compactados");
@@ -293,8 +297,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		if(name.length() > NAME_MAX_LEN)
 			name = name.substring(0, NAME_MAX_LEN);
 		
+		if(!hasTitle){
+			int i = name.lastIndexOf('/');
+			if (i != -1)
+				name = name.substring(i + 1);
+		}
 		return name;
 	}
+	
 
 	@Override
 	public void parseEmbedded(InputStream inputStream, ContentHandler handler, Metadata metadata, boolean outputHtml) throws SAXException, IOException {
@@ -303,41 +313,45 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			return;
 		
 		TemporaryResources tmp = new TemporaryResources();
-		String filePath = null;
+		String subitemPath = null;
 		try {
+			incSubitensDiscovered();
+			
 			ItemInfo itemInfo = context.get(ItemInfo.class);
 			itemInfo.incChild();
-
+			
 			String name = getName(metadata, itemInfo.getChild());
-
-			filePath = metadata.get(ExtraProperties.EMBEDDED_PATH);
 			String parentPath = itemInfo.getPath();
-			if (filePath == null)
-				filePath = parentPath + ">>" + name;
-			else
-				filePath = parentPath + ">>" + filePath + ">>" + name;
+			if(firstParentPath == null) firstParentPath = parentPath;
 			
-			if(!hasTitle){
-				int i = name.lastIndexOf('/');
-				if (i != -1)
-					name = name.substring(i + 1);
-			}
+			EvidenceFile parent = evidence;
+			if(context.get(EmbeddedParent.class) != null){
+			    parent = (EvidenceFile)context.get(EmbeddedParent.class).getObj();
+			    parentPath = parent.getPath();
+			    subitemPath = parentPath + "/" + name;
+			}else
+				subitemPath = parentPath + ">>" + name;
 
-			char[] nameChars = (name + "\n\n").toCharArray();
-			handler.characters(nameChars, 0, nameChars.length);
+			EvidenceFile subItem = new EvidenceFile();
+			subItem.setPath(subitemPath);
+			context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 			
-			incSubitensDiscovered();
+			String embeddedPath = subitemPath.replace(firstParentPath + ">>", "");
+			char[] nameChars = (embeddedPath + "\n\n").toCharArray();
+			handler.characters(nameChars, 0, nameChars.length);
 			
 			if (extractEmbedded && output == null)
 				return;
 
 			if (!extractEmbedded) {
-				itemInfo.setPath(filePath);
-				embeddedParser.parseEmbedded(inputStream, handler, metadata, false);
-				itemInfo.setPath(parentPath);
+				itemInfo.setPath(subitemPath);
+				try{
+					embeddedParser.parseEmbedded(inputStream, handler, metadata, false);
+				}finally{
+					itemInfo.setPath(parentPath);
+				}
 				return;
 			}
-			
 			
 			MediaType contentType;
 			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
@@ -355,16 +369,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			else
 				contentType = MediaType.parse(contentTypeStr);
 
-			EvidenceFile subItem = new EvidenceFile();
 			subItem.setName(name);
 			if (hasTitle)
 				subItem.setExtension("");
-			subItem.setPath(filePath);
 			subItem.setMediaType(contentType);
-			
-			EvidenceFile parent = evidence;
-			if(itemInfo.getEvidence() != null)
-				parent = (EvidenceFile)itemInfo.getEvidence();
 			
 			String parentId = String.valueOf(parent.getId());
 			subItem.setParentId(parentId);
@@ -372,19 +380,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			subItem.addParentId(parent.getId());
 			parent.setHasChildren(true);
 			
-			Date created = metadata.getDate(TikaCoreProperties.CREATED);
-			Date modified = metadata.getDate(TikaCoreProperties.MODIFIED);
-			subItem.setCreationDate(created);
-			subItem.setModificationDate(modified);
+			if(metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null)
+			    subItem.setIsDir(true);
+			
+			subItem.setCreationDate(metadata.getDate(TikaCoreProperties.CREATED));
+			subItem.setModificationDate(metadata.getDate(TikaCoreProperties.MODIFIED));
+			subItem.setAccessDate(metadata.getDate(ExtraProperties.ACCESSED));
 			subItem.setDeleted(parent.isDeleted());
 			//causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
 			//subItem.setCarved(parent.isCarved());
 			subItem.setSubItem(true);
-			
-			if(metadata.get(OutlookPSTParser.HAS_ATTACHS) != null && OutlookPSTParser.OUTLOOK_MSG_MIME.equals(contentTypeStr)){
-				//subItem.setHasChildren(true);
-				itemInfo.setEvidence(subItem);
-			}
 
 			// pausa contagem de timeout do pai antes de extrair e processar subitem
 			if(reader.setTimeoutPaused(true))
@@ -416,11 +421,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				Thread.currentThread().interrupt();
 
 			//e.printStackTrace();
-			LOGGER.warn("{} Erro ao extrair subitem {}\t\t{}", Thread.currentThread().getName(), filePath, e.toString());
+			LOGGER.warn("{} Erro ao extrair subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString());
 
 		} catch (Exception e) {
-			LOGGER.warn("{}\t{} Erro ao extrair Subitem {}\t\t{}", Thread.currentThread().getName(), worker.runningTask.getClass().getSimpleName(),
-					filePath, e.toString());
+			LOGGER.warn("{} Erro ao extrair Subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString());
 			//e.printStackTrace();
 
 		} finally {
