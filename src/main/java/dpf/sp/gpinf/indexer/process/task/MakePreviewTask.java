@@ -52,7 +52,7 @@ public class MakePreviewTask extends AbstractTask{
 	protected void process(EvidenceFile evidence) throws Exception {
 		
 		String mediaType = evidence.getMediaType().toString();
-		if(evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())
+		if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())
 			return;
 		
 		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), "html");
