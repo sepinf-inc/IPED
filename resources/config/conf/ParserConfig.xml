@@ -77,7 +77,7 @@
 		<mime>image/png</mime>
 		<mime>image/tiff</mime>
 		<mime>image/x-ms-bmp</mime>
-		<mime>image/gif</mime>
+		<!--<mime>image/gif</mime>-->	
 	</parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.EmptyVideoParser"></parser>
