@@ -70,12 +70,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			//Não funciona fora do eclipse
 			//Policy.setPolicy(new BlockInternetPolicy());
 			System.setSecurityManager(new AppSecurityManager());
-
-			//IOUtil.readFile(new File(App.get().codePath + "/../lib/" + Versao.TIKA_VERSION));
-			
-			App.get().textSizes = (int[]) Util.readObject(App.get().codePath + "/../data/texts.size");
-            App.get().lastId = App.get().textSizes.length - 1;
-
 			// ImageIO.setUseCache(false);
 
 			Configuration.getConfiguration(App.get().codePath + "/..");
@@ -186,7 +180,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			App.get().searcher.setSimilarity(new IndexerSimilarity());
 			App.get().analyzer = AppAnalyzer.get();
 			App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
+			App.get().textSizes = (int[]) Util.readObject(index + "/../data/texts.size");
+            App.get().lastId = App.get().textSizes.length - 1;
 			App.get().ids = (int[]) Util.readObject(index + "/../data/ids.map");
+			App.get().docs = new int[App.get().lastId + 1];
+			for(int i = 0; i < App.get().ids.length; i++)
+				App.get().docs[App.get().ids[i]] = i;
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
 				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
 			App.get().marcadores = new Marcadores(index + "/..");

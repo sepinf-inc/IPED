@@ -68,12 +68,12 @@
         <dependency>
         	<groupId>gpinf.iped</groupId>
     		<artifactId>iped-parsers-impl</artifactId>
-    		<version>3.3</version>
+    		<version>3.6</version>
         </dependency>
         <dependency>
         <groupId>gpinf.iped</groupId>
     		<artifactId>iped-utils</artifactId>
-    		<version>0.3</version>
+    		<version>0.4</version>
     	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->

@@ -35,6 +35,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -43,6 +44,16 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
+import javax.swing.SwingUtilities;
+
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermQuery;
+
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener {
 
@@ -51,6 +62,7 @@ public class GerenciadorMarcadores implements ActionListener {
 	JRadioButton highlighted = new JRadioButton("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
 	JRadioButton checked = new JRadioButton("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
 	ButtonGroup group = new ButtonGroup();
+	JCheckBox duplicates = new JCheckBox();
 	JButton add = new JButton("Adicionar");
 	JButton remove = new JButton("Remover");
 	JButton rename = new JButton("Renomear");
@@ -75,12 +87,14 @@ public class GerenciadorMarcadores implements ActionListener {
 	public GerenciadorMarcadores() {
 
 		dialog.setTitle("Marcadores");
-		dialog.setBounds(0, 0, 440, 440);
+		dialog.setBounds(0, 0, 450, 450);
 		dialog.setAlwaysOnTop(true);
 
 		group.add(highlighted);
 		group.add(checked);
 		highlighted.setSelected(true);
+		duplicates.setText("Incluir itens com mesmo hash");
+		duplicates.setSelected(true);
 
 		populateList();
 
@@ -90,11 +104,12 @@ public class GerenciadorMarcadores implements ActionListener {
 		remove.setToolTipText("Remover itens dos marcadores selecionados");
 		delete.setToolTipText("Apagar marcadores selecionados");
 	
-		JPanel top = new JPanel(new GridLayout(2, 2, 0, 0));
+		JPanel top = new JPanel(new GridLayout(3, 2, 0, 5));
 		top.add(msg);
 		top.add(new JLabel());
 		top.add(highlighted);
 		top.add(checked);
+		top.add(duplicates);
 		
 		add.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 		remove.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
@@ -143,9 +158,49 @@ public class GerenciadorMarcadores implements ActionListener {
 		for (String label : labels)
 			listModel.addElement(label);
 	}
+	
+	/*
+	 * Lento com mtos itens
+	 */
+	private void includeDuplicates(ArrayList<Integer> uniqueSelectedIds){
+		
+		ProgressDialog progress = new ProgressDialog(App.get(), null);
+		progress.setNote("Obtendo hashes...");
+		progress.setMaximum(uniqueSelectedIds.size());
+		try {
+			BooleanQuery query = new BooleanQuery();
+			App app = App.get();
+			int i = 0;
+			for(Integer id : uniqueSelectedIds){
+				if(progress.isCanceled())
+					return;
+				progress.setProgress(++i);
+				String hash = app.searcher.doc(app.docs[id]).get(IndexItem.HASH);
+				if(hash != null) query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
+				query.add(new TermQuery(new Term(IndexItem.ID, id.toString())), Occur.MUST_NOT);
+			}
+
+			PesquisarIndice task = new PesquisarIndice(query);
+			progress.setTask(task);
+			progress.setNote("Pesquisando duplicatas...");
+			progress.setIndeterminate(true);
+			SearchResult duplicates = task.pesquisar();
+			
+			System.out.println("Duplicados incluídos:" + duplicates.length);
+			
+			for(int doc : duplicates.docs)
+				uniqueSelectedIds.add(app.ids[doc]);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally{
+			progress.close();
+		}
+		
+	}
 
 	@Override
-	public void actionPerformed(ActionEvent evt) {
+	public void actionPerformed(final ActionEvent evt) {
 
 		if (evt.getSource() == novo) {
 			String texto = newLabel.getText().trim();
@@ -161,7 +216,7 @@ public class GerenciadorMarcadores implements ActionListener {
 		if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
 
 			App app = App.get();
-			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
+			final ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 
 			if (checked.isSelected()) {
 				for (int id = 0; id < App.get().marcadores.selected.length; id++)
@@ -180,21 +235,25 @@ public class GerenciadorMarcadores implements ActionListener {
 
 					if (id2 != null)
 						uniqueSelectedIds.add(id2);
-
 				}
-
 			}
-
-			for (int idx : list.getSelectedIndices()) {
-				int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
-				if (evt.getSource() == add || evt.getSource() == novo)
-					App.get().marcadores.addLabel(uniqueSelectedIds, labelId);
-				else
-					App.get().marcadores.removeLabel(uniqueSelectedIds, labelId);
-
-				App.get().marcadores.saveState();
-				App.get().marcadores.atualizarGUI();
-			}
+			
+			new Thread(){
+				public void run(){
+					if(duplicates.isSelected())
+						includeDuplicates(uniqueSelectedIds);
+					
+					for (int idx : list.getSelectedIndices()) {
+						int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
+						if (evt.getSource() == add || evt.getSource() == novo)
+							App.get().marcadores.addLabel(uniqueSelectedIds, labelId);
+						else
+							App.get().marcadores.removeLabel(uniqueSelectedIds, labelId);
+					}	
+					App.get().marcadores.saveState();
+					App.get().marcadores.atualizarGUI();
+				}
+			}.start();
 
 		} else if (evt.getSource() == delete) {
 			int result = JOptionPane.showConfirmDialog(dialog, "Deseja realmente apagar os marcadores selecionados?", "Confirmar", JOptionPane.YES_NO_OPTION);

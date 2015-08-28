@@ -304,13 +304,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		
 		SearchResult result = null;
 		try {
-			final PesquisarIndice pesquisa = this;
-			SwingUtilities.invokeAndWait(new Runnable() {
-				public void run() {
-					progressDialog = new ProgressDialog(App.get(), pesquisa, true);
-				}
-			});
-
+			progressDialog = new ProgressDialog(App.get(), this, true);
 			result = pesquisar();
 
 			String filtro = App.get().filtro.getSelectedItem().toString();
@@ -366,8 +360,8 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		
-		progressDialog.close();
+		if(progressDialog != null)
+			progressDialog.close();
 
 	}
 
@@ -395,7 +389,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				for (int doc : result.docs) {
 					try {
 						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
-						if (len != null)
+						if (len != null && !len.isEmpty())
 							volume += Long.valueOf(len);
 
 					} catch (IOException e) {

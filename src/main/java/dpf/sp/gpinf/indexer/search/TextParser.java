@@ -99,16 +99,9 @@ public class TextParser extends CancelableWorker {
 
 	@Override
 	public void done() {
-
 		App.get().tabbedHits.setTitleAt(0, hits.size() + " Ocorrências");
-		// garante que dialog será fechado após ser criado
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				if (progressMonitor != null)
-					progressMonitor.close();
-			}
-		});
-
+		if (progressMonitor != null)
+			progressMonitor.close();
 	}
 
 	@Override
@@ -119,13 +112,9 @@ public class TextParser extends CancelableWorker {
 			if (this.isCancelled())
 				return null;
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					progressMonitor = new ProgressDialog(App.get(), parsingTask);
-					if(App.get().textSizes.length > id)
-						progressMonitor.setMaximum(App.get().textSizes[id] * 1000L);
-				}
-			});
+			progressMonitor = new ProgressDialog(App.get(), parsingTask);
+			if(App.get().textSizes.length > id)
+				progressMonitor.setMaximum(App.get().textSizes[id] * 1000L);
 
 			sortedHits = new TreeMap<Long, int[]>();
 			hits = new ArrayList<Long>();
@@ -138,6 +127,33 @@ public class TextParser extends CancelableWorker {
 
 		return null;
 	}
+	
+	private ParseContext getTikaContext() throws Exception{
+		ParseContext context = new ParseContext();
+		context.set(Parser.class, (Parser) App.get().autoParser);
+		
+		HashSet<String> categorias = new HashSet<String>();
+		if (doc.get(IndexItem.CATEGORY) != null)
+			for (String categoria : doc.get(IndexItem.CATEGORY).split("" + CategoryTokenizer.SEPARATOR))
+				categorias.add(categoria);
+		context.set(ItemInfo.class, new ItemInfo(id, doc.get(IndexItem.HASH),categorias, 
+		            doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
+		
+		ParsingTask expander = new ParsingTask(context);
+		expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
+		context.set(EmbeddedDocumentExtractor.class, expander);
+
+		// Tratamento p/ acentos de subitens de ZIP
+		ArchiveStreamFactory factory = new ArchiveStreamFactory();
+		factory.setEntryEncoding("Cp850");
+		context.set(ArchiveStreamFactory.class, factory);
+		
+		/*PDFParserConfig config = new PDFParserConfig();
+		config.setExtractInlineImages(true);
+		context.set(PDFParserConfig.class, config);
+		*/
+		return context;
+	}
 
 	public void parseText() {
 		ParsingReader textReader = null;
@@ -147,32 +163,9 @@ public class TextParser extends CancelableWorker {
 			metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, contentType);
 			if (Boolean.valueOf(doc.get(IndexItem.TIMEOUT)))
 				metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-
-			TikaInputStream tis = TikaInputStream.get(file, metadata);
 			metadata.set(Metadata.RESOURCE_NAME_KEY, doc.get(IndexItem.NAME));
-
-			HashSet<String> categorias = new HashSet<String>();
-			if (doc.get(IndexItem.CATEGORY) != null)
-				for (String categoria : doc.get(IndexItem.CATEGORY).split("" + CategoryTokenizer.SEPARATOR))
-					categorias.add(categoria);
-
-			ParseContext context = new ParseContext();
-			context.set(Parser.class, (Parser) App.get().autoParser);
-			context.set(ItemInfo.class, new ItemInfo(id, doc.get(IndexItem.HASH),categorias, 
-			            doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
-			ParsingTask expander = new ParsingTask(context);
-			expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
-			context.set(EmbeddedDocumentExtractor.class, expander);
-
-			// Tratamento p/ acentos de subitens de ZIP
-			ArchiveStreamFactory factory = new ArchiveStreamFactory();
-			factory.setEntryEncoding("Cp850");
-			context.set(ArchiveStreamFactory.class, factory);
-			
-			/*PDFParserConfig config = new PDFParserConfig();
-			config.setExtractInlineImages(true);
-			context.set(PDFParserConfig.class, config);
-			*/
+			TikaInputStream tis = TikaInputStream.get(file, metadata);
+			ParseContext context = getTikaContext();
 
 			textReader = new ParsingReader((Parser) App.get().autoParser, tis, metadata, context);
 			textReader.startBackgroundParsing();
