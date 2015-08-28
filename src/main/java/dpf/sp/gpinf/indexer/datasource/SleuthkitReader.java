@@ -246,10 +246,11 @@ public class SleuthkitReader extends DataSourceReader{
 			if(content != null && absFile == null)
 				addEvidenceFile(content);
 			
-			if(Configuration.addUnallocated && absFile != null && absFile.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) == 0){
+			if(absFile != null && absFile.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) == 0){
+				if(!Configuration.addUnallocated)
+					return;
 				
 				long fragSize = Configuration.unallocatedFragSize;
-				
 				int fragNum = 0;
 				for(long offset = 0; offset < absFile.getSize(); offset += fragSize){
 					long len = offset + fragSize < absFile.getSize() ? fragSize : absFile.getSize() - offset;
