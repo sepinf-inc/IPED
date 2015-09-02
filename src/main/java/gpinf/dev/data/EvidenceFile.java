@@ -212,14 +212,14 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @throws IOException caso ocorra erro de IO
      */
     public void dispose(){
-    	if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
-			if (!file.delete())
-				LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
-		}
-        try {
+    	try {
 			tmpResources.close();
 		} catch (Exception e) {
 			//LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+		}
+    	if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
+			if (!file.delete())
+				LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
 		}
     }
 
