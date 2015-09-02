@@ -50,6 +50,8 @@ public class FolderTreeReader extends DataSourceReader{
 
 		rootFile = file;
 		evidenceName = getEvidenceName(file);
+		if(evidenceName == null)
+			evidenceName = file.getName(); 
 		
 		if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
 			category = file.getName();
@@ -71,18 +73,15 @@ public class FolderTreeReader extends DataSourceReader{
 		} else {
 			EvidenceFile evidenceFile = new EvidenceFile();
 			evidenceFile.setName(file.getName());
+			if(file.equals(rootFile))
+				evidenceFile.setName(evidenceName);
 
 			String relativePath = Util.getRelativePath(output, file);
 			evidenceFile.setExportedFile(relativePath);
 			
-			if(evidenceName == null)
-				evidenceFile.setPath(relativePath);
-			else{
-				String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-				evidenceFile.setPath(path);
-				if(file.equals(rootFile))
-					evidenceFile.setName(evidenceName);
-			}
+			String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
+			evidenceFile.setPath(path);
+			
 			// evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
 
 			if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport())
