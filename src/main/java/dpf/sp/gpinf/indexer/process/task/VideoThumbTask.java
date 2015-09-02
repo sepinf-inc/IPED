@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -197,12 +198,8 @@ public class VideoThumbTask extends AbstractTask {
 
                 //Configura o caminho do MPlayer, juntando com caminho da pasta principal caso tenha sido utilizado caminho relativo. 
                 if (mplayer.indexOf('/') >= 0 || mplayer.indexOf('\\') >= 0) {
-                    //Adicionando o caminho do jar principal como referência
-                    //Seria melhor pegar o codePath pronto, mas atualmente App.get().codePath está nulo neste ponto.
-                    String codePath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "/+");
-                    codePath = URLDecoder.decode(codePath, "utf-8");
-                    codePath = codePath.replace("/ ", "+");
-                    mplayer = new File(codePath).getParent() + "/" + mplayer;
+                    String codePath = Configuration.configPath;
+                    mplayer = new File(codePath).getAbsolutePath() + "/" + mplayer;
                 }
                 videoThumbsMaker.setMPlayer(mplayer);
 

@@ -61,6 +61,7 @@ import javax.imageio.ImageIO;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -279,14 +280,13 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-        if (taskEnabled && caseData.containsReport() && info != null && !reportSubFolder.exists()) {
+    	String reportRoot = "relatorio.htm";
+        if (taskEnabled && caseData.containsReport() && info != null && !new File(reportSubFolder, reportRoot).exists()) {
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
-            String codePath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "/+");
-            codePath = URLDecoder.decode(codePath, "utf-8");
-            codePath = codePath.replace("/ ", "+");
-            File templatesFolder = new File(new File(codePath).getParent(), "htmlreport");
+            String codePath = Configuration.configPath;
+            File templatesFolder = new File(new File(codePath), "htmlreport");
 
             Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());
             Log.info(taskName, "Pasta de modelos:   " + templatesFolder.getAbsolutePath());
@@ -296,13 +296,13 @@ public class HTMLReportTask extends AbstractTask {
 
             long t = System.currentTimeMillis();
 
-            reportSubFolder.mkdir();
+            reportSubFolder.mkdirs();
             
             processBookmarks(templatesFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) createThumbsPage();
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm"));
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm"));
-            copyFile(new File(templatesFolder, "relatorio.htm"), reportSubFolder.getParentFile());
+            copyFile(new File(templatesFolder, reportRoot), reportSubFolder.getParentFile());
             copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder);
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res"));
 
