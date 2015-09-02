@@ -11,7 +11,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**

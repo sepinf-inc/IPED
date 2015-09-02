@@ -405,7 +405,7 @@ public class SleuthkitReader extends DataSourceReader{
 		
 		if(content instanceof Image){
 			evidence.setRoot(true);
-			evidence.setMediaType(MediaType.application("application/x-disc-image"));
+			evidence.setMediaType(MediaType.application("application/x-disk-image"));
 		}else
 			evidence.setIsDir(true);
 		
