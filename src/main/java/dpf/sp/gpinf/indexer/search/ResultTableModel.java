@@ -25,12 +25,12 @@ import java.util.TimeZone;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class ResultTableModel extends AbstractTableModel {
 
@@ -147,7 +147,7 @@ public class ResultTableModel extends AbstractTableModel {
 					value = "";
 				
 				if(fCol >= 5  && fCol <= 7 && !value.isEmpty())
-					value = df.format(DateTools.stringToDate(value));
+					value = df.format(DateUtil.stringToDate(value));
 				
 				if(fCol == 2 && !value.isEmpty())
 					value = NumberFormat.getNumberInstance().format(Long.valueOf(value));

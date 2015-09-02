@@ -39,6 +39,9 @@ public class AppAnalyzer {
 		analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
 		analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
 		analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
+		analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
 		return new PerFieldAnalyzerWrapper(new StandardASCIIAnalyzer(Versao.current, false), analyzerPerField);
 	}
 

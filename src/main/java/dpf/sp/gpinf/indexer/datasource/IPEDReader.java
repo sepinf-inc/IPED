@@ -33,6 +33,7 @@ import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -41,6 +42,7 @@ import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -50,8 +52,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class IPEDReader extends DataSourceReader{
 
 	private static Object lock = new Object();
-
-	private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
@@ -138,15 +138,15 @@ public class IPEDReader extends DataSourceReader{
 
 			value = doc.get(IndexItem.ACCESSED);
 			if (!value.isEmpty())
-				evidence.setAccessDate(df.parse(value));
+				evidence.setAccessDate(DateUtil.stringToDate(value));
 
 			value = doc.get(IndexItem.CREATED);
 			if (!value.isEmpty())
-				evidence.setCreationDate(df.parse(value));
+				evidence.setCreationDate(DateUtil.stringToDate(value));
 
 			value = doc.get(IndexItem.MODIFIED);
 			if (!value.isEmpty())
-				evidence.setModificationDate(df.parse(value));
+				evidence.setModificationDate(DateUtil.stringToDate(value));
 
 			evidence.setPath(doc.get(IndexItem.PATH));
 
@@ -179,7 +179,7 @@ public class IPEDReader extends DataSourceReader{
 				}
 				
 				//Copia resultado prévio do OCR
-				/*String ocrPrefix = "text/" + value.charAt(0) + "/" + value.charAt(1);
+				String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
 	            File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
 	            File destDir = new File(output, ocrPrefix);
 	            if(ocrDir.exists()){
@@ -188,18 +188,6 @@ public class IPEDReader extends DataSourceReader{
 	                    if(name.equals(value + ".txt") || name.startsWith(value + "-child"))
 	                        IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
 	            }
-	            */
-			}
-			
-			//Copia resultado prévio do OCR
-			String ocrPrefix = "text/" + (id % 100) / 10 + "/" + id % 10;
-			File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
-			File destDir = new File(output, ocrPrefix);
-			if(ocrDir.exists()){
-				destDir.mkdirs();
-				for(String name : ocrDir.list())
-					if(name.equals(id + ".txt") || name.startsWith(id + "-child"))
-						IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
 			}
 			
 			value = doc.get(IndexItem.DELETED);

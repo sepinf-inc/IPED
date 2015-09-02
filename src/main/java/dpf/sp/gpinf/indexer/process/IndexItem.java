@@ -22,11 +22,9 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
 
 import java.io.Reader;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -35,6 +33,8 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.tika.mime.MediaType;
+
+import dpf.sp.gpinf.indexer.util.DateUtil;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens
@@ -127,21 +127,21 @@ public class IndexItem {
 		
 		Date date = evidence.getCreationDate();
 		if(date != null)
-			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
+			value = DateUtil.dateToString(date);
 		else
 			value = "";
 		doc.add(new StringField(CREATED, value, Field.Store.YES));
 
 		date = evidence.getAccessDate();
 		if(date != null)
-			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
+			value = DateUtil.dateToString(date);
 		else
 			value = "";
 		doc.add(new StringField(ACCESSED, value, Field.Store.YES));
 
 		date = evidence.getModDate();
 		if(date != null)
-			value = DateTools.dateToString(date, DateTools.Resolution.SECOND);
+			value = DateUtil.dateToString(date);
 		else
 			value = "";
 		doc.add(new StringField(MODIFIED, value, Field.Store.YES));
@@ -199,7 +199,7 @@ public class IndexItem {
 		for(Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()){
 			Object eValue = entry.getValue();
 			if(eValue instanceof Date){
-				value = DateTools.dateToString((Date)eValue, DateTools.Resolution.SECOND);
+				value = DateUtil.dateToString((Date)eValue);
 				doc.add(new StringField(entry.getKey(), value, Field.Store.YES));
 			}else{
 				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));

@@ -30,11 +30,11 @@ import java.util.TimeZone;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
-import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -88,8 +88,9 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 						value = "";
 					if (field.equals(IndexItem.CATEGORY))
 						value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+					
 					if (!value.isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED)))
-						value = df.format(DateTools.stringToDate(value));
+						value = df.format(DateUtil.stringToDate(value));
 					writer.write("\"" + value.replace("\"", "\"\"") + "\";");
 				}
 				writer.write("\r\n");
