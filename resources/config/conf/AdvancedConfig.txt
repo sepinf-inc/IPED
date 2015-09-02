@@ -74,7 +74,11 @@ maxFileSize2OCR = 100000000
 pdfToImgResolution = 250
 
 # Máximo de caracteres de texto por página que um PDF pode conter para ser aplicado OCR
-maxPDFTextSize2OCR = 50
+maxPDFTextSize2OCR = 100
+
+# Biblioteca para conversão de PDFs para imagem antes do OCR.
+# Valores possíveis: pdfbox (mais rápido) ou icepdf (teoricamente mais estável)
+pdfToImgLib = pdfbox
 
 ########################################################################
 # Configurações da Pesquisa

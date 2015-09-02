@@ -206,6 +206,12 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			PDFToImage.RESOLUTION = Integer.valueOf(value);
+		
+		value = properties.getProperty("pdfToImgLib");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			PDFToImage.PDFLIB = value;
 
 		value = properties.getProperty("embutirLibreOffice");
 		if (value != null)
