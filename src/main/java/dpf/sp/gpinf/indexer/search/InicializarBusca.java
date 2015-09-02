@@ -77,14 +77,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			
 			inicializar(App.get().codePath + "/../index");
 
+			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
+			OCRParser.EXECTESS = false;
+			
 			IndexerDefaultParser autoParser = new IndexerDefaultParser();
 			autoParser.setFallback(Configuration.fallBackParser);
 			autoParser.setErrorParser(Configuration.errorParser);
 			App.get().autoParser = autoParser;
 
-			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
-			OCRParser.EXECTESS = false;
-			
 			new CompositeViewerHelper().addViewers();
 
 			// lista todos os itens
