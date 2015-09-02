@@ -12,8 +12,10 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.xml.sax.ContentHandler;
 
-import dpf.sp.gpinf.indexer.parsers.jdbc.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
@@ -45,7 +47,12 @@ public class MakePreviewTask extends AbstractTask{
 				|| contentType.equals("application/x-ares-galaxy")
 				|| contentType.equals("application/x-lnk")
 				|| contentType.equals("application/x-whatsapp-db")
-				|| contentType.equals("application/x-shareaza-library-dat");
+				|| contentType.equals("application/x-shareaza-searches-dat")
+				|| isSupportedTypeCSV(contentType);
+	}
+	
+	private boolean isSupportedTypeCSV(String contentType) {
+		return contentType.equals("application/x-shareaza-library-dat");
 	}
 
 	@Override
@@ -55,7 +62,11 @@ public class MakePreviewTask extends AbstractTask{
 		if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())
 			return;
 		
-		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), "html");
+		String ext = "html";
+		if(isSupportedTypeCSV(mediaType))
+			ext = "csv";
+		
+		File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
 		if(viewFile.exists())
 			return;
 		
@@ -72,17 +83,22 @@ public class MakePreviewTask extends AbstractTask{
 		
 	}
 	
-	private void makeHtmlPreview(TikaInputStream tis, File outFile, String contentType) throws Exception{
+	private void makeHtmlPreview(TikaInputStream tis, File outFile, String mediaType) throws Exception{
 		BufferedOutputStream outStream = null;
 		try {
 			Metadata metadata = new Metadata();
-			metadata.set(Metadata.CONTENT_TYPE, contentType);
+			metadata.set(Metadata.CONTENT_TYPE, mediaType);
 			ParseContext context = new ParseContext();
 			//Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
 			//Ex: Como renderizar no preview html um PDF embutido num banco de dados?
 			//context.set(Parser.class, parser);
 			outStream = new BufferedOutputStream(new FileOutputStream(outFile));
-			ToXMLContentHandler handler = new ToXMLContentHandler(outStream, "UTF-8");
+			ContentHandler handler;
+			if(!isSupportedTypeCSV(mediaType))
+				handler = new ToXMLContentHandler(outStream, "UTF-8");
+			else
+				handler = new ToCSVContentHandler(outStream, "UTF-8");
+			
 			parser.parse(tis, handler, metadata, context);
 
 		}finally{
