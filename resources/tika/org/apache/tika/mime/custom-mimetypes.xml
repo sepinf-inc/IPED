@@ -234,9 +234,6 @@
       			<match value="0x5A5A" type="string" offset="444"/>
       		</match>
     	</magic>
-    	<glob pattern="*.e01"/>
-    	<glob pattern="*.001"/>
-    	<glob pattern="*.dd"/>
   	</mime-type>
     
     <mime-type type="application/x-wim-image">
