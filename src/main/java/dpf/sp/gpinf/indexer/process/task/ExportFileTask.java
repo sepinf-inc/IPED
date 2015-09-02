@@ -55,6 +55,7 @@ public class ExportFileTask extends AbstractTask{
 	private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
 	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
 	public static String EXTRACT_DIR = "Exportados";
+	private static String SUBITEM_DIR = "subitens";
 	
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
 	public static int subDirCounter = 0, subitensExtracted = 0;
@@ -67,10 +68,6 @@ public class ExportFileTask extends AbstractTask{
 
 	public ExportFileTask(Worker worker) {
 		super(worker);
-		if (output != null) {
-			this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
-		}
-
 	}
 
 	public static synchronized void incSubitensExtracted() {
@@ -79,6 +76,15 @@ public class ExportFileTask extends AbstractTask{
 
 	public static int getSubitensExtracted() {
 		return subitensExtracted;
+	}
+	
+	private void setExtractDir(){
+		if(output != null){
+			if(caseData.containsReport())
+				this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+			else
+				this.extractDir = new File(output, SUBITEM_DIR);
+		}
 	}
 
 	public static void load(File file) throws FileNotFoundException, IOException {
@@ -207,6 +213,8 @@ public class ExportFileTask extends AbstractTask{
 
 	private File getHashFile(String hash, String ext) {
 		String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext);
+		if(extractDir == null)
+			setExtractDir();
 		File result = new File(extractDir, path);
 		File parent = result.getParentFile();
 		if (!parent.exists())
@@ -280,6 +288,9 @@ public class ExportFileTask extends AbstractTask{
 		String hash;
 		File outputFile = null;
 		Object hashLock = new Object();
+		
+		if(extractDir == null)
+			setExtractDir();
 		
 		if (!computeHash)
 			outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
