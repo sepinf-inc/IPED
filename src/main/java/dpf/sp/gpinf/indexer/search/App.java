@@ -89,7 +89,7 @@ public class App extends JFrame implements WindowListener {
 	SleuthkitCase sleuthCase;
 
 	SearchResult results = new SearchResult(0);
-	int[] textSizes, ids;
+	int[] textSizes, ids, docs;
 
 	int totalItens, lastId, lastSelectedDoc;
 	public Marcadores marcadores;
@@ -197,7 +197,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/1973/indexador/lib/search.jar";
+			//codePath = "E:/iso/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 			if (codePath.charAt(0) == '/' && codePath.charAt(2) == ':')
