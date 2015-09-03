@@ -1,9 +1,29 @@
-xx/0x/2015: IPED-3.6
-- Decodificação de datas em arquivos sqlite (históricos de internet, skype, etc)
-- Indexação e consulta nas propriedades de data e tamanho
+03/09/2015: IPED-3.6
+- Suporte a ISO com UDF e melhor parsing de CHM e 7z via 7zipJBindings
+- Expansão de ISO, ARJ, Snappy, Deflate e Z
+- Indexação e consulta em propriedades numéricas (datas e tamanho)
+- Reaproveitamento do OCR de arquivos duplicados
+- Opção para incluir/remover itens com mesmo hash nos marcadores
+- Opção para converter PDF para imagem via IcePDF ou PDFBox durante OCR
+- Decodificação genérica de datas em arquivos sqlite (históricos de internet, skype, etc)
+- Parsers para Library{1,2}.dat e Searches.dat do Shareaza (contribuição PCF Pfeifer)
+- Novo sistema de Log, imprimindo erros graves no Console (contribuição PCF Pfeifer)
+- Estrutura interna de pastas de containers reproduzida na árvore
+- Opção para ignorar arquivos Orphans por tamanho (AdvancedConfig.txt)
+- Novas categorias "Imagens de Disco" e "Imagens ISO"
+- Desabilitado carving dentro de imagens e OCR em GIF por padrão
+- Atualização p/ Tika 1.10
 Correções:
 - Erro de ConcurrentModificationException durante evidence.dispose()
-- Correta pausa do contador de timeout do pai ao processar subitem 
+- Zips não compactados contendo data descriptors não expandidos
+- Lentidão ao expandir SQLite contendo milhares de Blobs pequenos
+- Vazamento de file handles durante OCR de TIF e geração de relatório HTML
+- Correta pausa do contador de timeout do pai ao processar subitem
+- Erro ao realizar append de diretório adicional em relatório
+- Falsos zip bomb exceptions devido a tags xml não fechadas
+- Não cria preview de itens com tamanho zero
+- Teste de execução do Tesseract ao habilitar OCR 
+
 
 27/07/2015: IPED-3.5.1
 - Ordenação das colunas em background e cancelável (útil com milhões de itens)

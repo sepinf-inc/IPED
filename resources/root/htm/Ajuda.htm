@@ -11,7 +11,8 @@ Para realizar buscas por palavras-chave, <b>execute a aplicação "Ferramenta de P
 <br>
 A busca por palavras-chave pesquisa termos no nome e em todo o conteúdo de arquivos textuais, como Word, Excel, PDF, Emails, Páginas de Internet, Chats, etc. Caso habilitada na geração do relatório, é utilizada tecnologia OCR (<i>Optical Character Recognition</i>) para pesquisa de texto em imagens. Entretanto, alguns resultados podem não ser encontrados, dependendo da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.<br>
 <br>
-A busca por palavras-chave não diferencia maiúsculas e minúsculas. <b>Recomenda-se pesquisar com os acentos, para que as ocorrências sejam destacadas corretamente na "Pré-visualização"</b>. Não é recomendado pesquisar por expressões comuns ou pequenas, como <b>PF</b>. A seguir são apresentados alguns exemplos de busca:
+A busca por palavras-chave não diferencia maiúsculas e minúsculas. <b>Recomenda-se pesquisar com os acentos, para que as ocorrências sejam destacadas corretamente na "Pré-visualização"</b>. Não é recomendado pesquisar por expressões comuns ou pequenas, como <b>PF</b>. Abaixo são apresentados alguns exemplos de busca.
+Para mais informações sobre a sintaxe de pesquisa consulte <a href=http://lucene.apache.org/core/4_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html>Lucene Query Parser Syntax</a>.
 <br>
 <ul>
 <li>1. <b>suspeito</b><br/>Busca arquivos que contenham exatamente a palavra <b>suspeito</b>. Não serão encontrados arquivos com a palavra <b>suspeitos</b>.
@@ -35,11 +36,13 @@ A busca por palavras-chave não diferencia maiúsculas e minúsculas. <b>Recomenda-
 <li>10. <b>"Fulano Tal"~5</b><br>Busca arquivos que contenham a palavra <b>Tal</b> até 5 palavras da palavra <b>Fulano</b>.
 <br><br /></li>
 <li>11. <b>nome:comprovante</b><br>Lista arquivos com a palavra <b>comprovante</b> no atributo <b>nome</b>.
-<br>Podem ser usados os atributos <b>"nome:"</b>, <b>"tipo:"</b>, <b>"tamanho:"</b>, <b>"deletado:"</b>, <b>"categoria:"</b>, <b>"criacao:"</b>, <b>"modificacao:"</b>,<b>"acesso:"</b>, <b>"hash:"</b>, <b>"caminho:"</b> e <b>"conteudo:"</b>.
+<br>Podem ser usados os atributos <b>"nome:"</b>, <b>"tipo:"</b>, <b>"tamanho:"</b>, <b>"deletado:"</b>, <b>"categoria:"</b>, <b>"criacao:"</b>, <b>"modificacao:"</b>,<b>"acesso:"</b>, <b>"hash:"</b>, <b>"caminho:"</b>, <b>"conteudo:"</b>, <b>"contentType:"</b>, <b>"duplicate:"</b>, <b>"carved:"</b>, <b>"subitem:"</b>, <b>"timeout:"</b>.
 <br><br /></li>
 <li>12. <b>tamanho:[5000 TO *]</b><br>Lista arquivos com tamanho maior que 5000 bytes, inclusive.
 <br><br /></li>
-<li>13. <b>modificacao:[20150131 TO 20150331125959]</b><br>Lista arquivos com data de modificação compreendida entre 0h de 31/01/2015 e 12:59:59 de 31/03/2015.
+<li>13. <b>modificacao:[2015.01.31 TO 2015.03.31.12.59.59]</b><br>Lista arquivos com data de modificação compreendida entre 0h de 31/01/2015 e 12:59:59 de 31/03/2015.
+<br><br /></li>
+<li>14. <b>/<0-17>y(r|o)/</b><br>Expressão regular delimitada por 2 barras. Busca termos indicativos de pornografia infantil. Funciona apenas intra-termos, isto é, não ultrapassa as bordas das palavras.<br>
 <br><br /></li>
 </ul>
 </body>
