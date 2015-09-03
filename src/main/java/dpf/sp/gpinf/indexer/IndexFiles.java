@@ -19,6 +19,9 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,6 +39,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
+import dpf.sp.gpinf.indexer.util.FilterOutputStream;
 
 /**
  * Ponto de entrada do programa ao processar evidências.
@@ -58,7 +62,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	File palavrasChave;
 	List<File> dataSource;
 	File output;
+	
 	File logFile;
+	private PrintStream log, out, err;
+	private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	
 	private CmdLineArgs cmdLineParams;
 
@@ -126,8 +133,35 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 			configPath = configPath.substring(1);
 	}
 	
-	private void configureLogParameters(File logFile, boolean noLog) {
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	/**
+	 * Redireciona saída padrão e de erro para o arquivo de log informado, pois algumas libs
+	 * imprimem msgs de erro e traces no console, confundindo o usuário.
+	 * @throws FileNotFoundException 
+	 */
+	private void setConsoleLogFile(File logFile) throws FileNotFoundException{
+		if (logFile == null) {
+			File logDir = new File(configPath + "/log");
+			logDir.mkdir();
+			logFile = new File(logDir, Versao.APP_EXT + "-" + df.format(new Date()) + "-Console.log");
+		}
+		out = System.out;
+		err = System.err;
+		FileOutputStream fos = new FileOutputStream(logFile, true); 
+		log = new PrintStream(new FilterOutputStream(fos, out, "IPED"));
+		System.setOut(log);
+		System.setErr(log);
+	}
+	
+	/**
+	 * Fecha o arquivo de log, realizando flush automaticamente.
+	 */
+	private void closeConsoleLogFile() {
+		if(log != null) log.close();
+		if(out != null) System.setOut(out);
+		if(err != null) System.setErr(err);
+	}
+	
+	private void configureLogParameters(File logFile, boolean noLog) throws FileNotFoundException {
 		System.setProperty("logFileDate", df.format(new Date()));
 		
 		if (noLog) {
@@ -139,6 +173,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				System.setProperty("logFileNamePath", logFile.getPath());
 				System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationFile.xml");
 			}
+			setConsoleLogFile(logFile);
 		}
 		// instala bridge para capturar logs gerados pelo java.util.logging
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -193,17 +228,18 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 			this.firePropertyChange("mensagem", "", "Finalizado");
 			LOGGER.info("{} finalizado com sucesso", Versao.APP_EXT);
+			success = true;
 
 		} catch (Throwable e) {
+			success = false;
 			LOGGER.error("Erro no processamento:", e);
-
+			
+		}finally{
+			closeConsoleLogFile();
 			done = true;
-			return false;
 		}
 
-		done = true;
-		success = true;
-		return true;
+		return success;
 	}
 
 	/**
