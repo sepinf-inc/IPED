@@ -66,12 +66,13 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
 	@Override
 	protected Boolean doInBackground() throws Exception {
-		int progress = 0;
+		int progress = 0, subdirCount = 1;
 		for (Integer docId : uniqueIds) {
 			try {
 				if (progress % 1000 == 0 && progress > 0) {
-					subdir = new File(dir, Integer.toString(progress / 1000));
-					subdir.mkdir();
+					do{
+						subdir = new File(dir, Integer.toString(subdirCount++));
+					}while(!subdir.mkdir());
 				}
 
 				Document doc = App.get().searcher.doc(docId);
