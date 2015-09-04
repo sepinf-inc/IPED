@@ -82,7 +82,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
 		if (pipeTokenizer)
 			tokenizer = new CategoryTokenizer(matchVersion, reader);
 		else
-			tokenizer = new LowerCaseLetterDigitTokenizer(matchVersion, reader);
+			tokenizer = new LetterDigitTokenizer(matchVersion, reader);
 
 		// src.setMaxTokenLength(maxTokenLength);
 		TokenStream tok = new FastASCIIFoldingFilter(tokenizer);

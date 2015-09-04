@@ -30,7 +30,7 @@ import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.analysis.LowerCaseLetterDigitTokenizer;
+import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -229,7 +229,13 @@ public class Configuration {
 		if (value != null)
 			value = value.trim();
 		if (value != null && !value.isEmpty())
-			LowerCaseLetterDigitTokenizer.load(value);
+			LetterDigitTokenizer.load(value);
+		
+		value = properties.getProperty("convertCharsToLowerCase");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
 
 		value = properties.getProperty("addUnallocated");
 		if (value != null)

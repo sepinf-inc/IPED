@@ -30,12 +30,14 @@ import org.apache.lucene.util.Version;
  * Também converte os caracteres para minúsculas.
  * Assim a indexação tem comportamento similar ao FTK
  */
-public class LowerCaseLetterDigitTokenizer extends CharTokenizer {
+public class LetterDigitTokenizer extends CharTokenizer {
 
+	public static boolean convertCharsToLowerCase = true;
+	
 	private static int[] extraCodePoints;
 
 	/** Construct a new LetterTokenizer. */
-	public LowerCaseLetterDigitTokenizer(Version version, Reader in) {
+	public LetterDigitTokenizer(Version version, Reader in) {
 		super(version, in);
 	}
 	
@@ -91,7 +93,10 @@ public class LowerCaseLetterDigitTokenizer extends CharTokenizer {
 	 */
 	@Override
 	protected int normalize(int c) {
-		return Character.toLowerCase(c);
+		if(convertCharsToLowerCase)
+			return Character.toLowerCase(c);
+		else
+			return c;
 	}
 
 }

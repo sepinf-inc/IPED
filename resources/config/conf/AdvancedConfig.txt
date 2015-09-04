@@ -35,6 +35,10 @@ minRawStringSize = 4
 # Utilize espaço para separar os caracteres
 extraCharsToIndex =
 
+# Converte os caracteres para minúsculas antes da indexação, tornando a pesquisa independente da capitalização.
+# Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
+convertCharsToLowerCase = true
+
 # Adiciona arquivos apagados orphans em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
 # possivelmente impactando tempo de processamento
 addFatOrphans = true
