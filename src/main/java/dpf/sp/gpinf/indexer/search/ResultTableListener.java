@@ -24,12 +24,17 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.text.Collator;
+import java.util.List;
 
+import javax.swing.JTable;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -40,7 +45,14 @@ import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
-
+    private long lastKeyTime = -1;
+    private String lastKeyString = "";
+    private Collator collator = Collator.getInstance();
+    
+    public ResultTableListener() {
+        collator.setStrength(Collator.PRIMARY);
+    }
+    
 	@Override
 	public void valueChanged(ListSelectionEvent evt) {
 
@@ -185,7 +197,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
 		if ((keyBefore == KeyEvent.VK_CONTROL && evt.getKeyCode() == KeyEvent.VK_C) || (keyBefore == KeyEvent.VK_C && evt.getKeyCode() == KeyEvent.VK_CONTROL)) {
 			
-			String value = (String)App.get().resultsTable.getValueAt(App.get().resultsTable.getSelectedRow(), App.get().resultsTable.getSelectedColumn());
+            int selCol = App.get().resultsTable.getSelectedColumn();
+            if (selCol < 0) return;
+            String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
 			value = value.replace("<html><nobr>", "").replace(App.HIGHLIGHT_START_TAG, "").replace(App.HIGHLIGHT_END_TAG, "");
 			StringSelection selection = new StringSelection(value);
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -214,7 +228,57 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
 	@Override
 	public void keyTyped(KeyEvent evt) {
+	    char c = evt.getKeyChar();
+        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) != 0) return;
 
-	}
+        JTable table = App.get().resultsTable;
+        List<? extends SortKey> sortKeys = table.getRowSorter().getSortKeys();
+        if (sortKeys.isEmpty()) return;
+        int sortCol = sortKeys.get(0).getColumn();
+        int viewCol = table.convertColumnIndexToView(sortCol);
+
+        //Provisoriamente as colunas estão fixas 
+        //(colunas onde a comparação de String não funcionaria, porque ordenação é numérica ou de Data)
+        if (sortCol == 1 || sortCol == 2 || sortCol == 6 || sortCol == 7 || sortCol == 9 || sortCol == 10 || sortCol == 11) return;
+
+        long t = System.currentTimeMillis();
+        if (t - lastKeyTime > 500) lastKeyString = "";
+        lastKeyTime = t;
+        if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c) lastKeyString += c;
+        int initialRow = table.getSelectedRow();
+        if (initialRow < 0) initialRow = table.getRowCount() - 1;
+
+        int currRow = initialRow;
+        int foundRow = findRow(table, currRow + 1, table.getRowCount() - 1, viewCol, lastKeyString);
+        if (foundRow < 0) foundRow = findRow(table, 0, currRow - 1, viewCol, lastKeyString);
+        if (foundRow >= 0) {
+            table.setRowSelectionInterval(foundRow, foundRow);
+            table.scrollRectToVisible(table.getCellRect(foundRow, viewCol, true));
+        }
+    }
+
+    private int findRow(JTable table, int from, int to, int col, String search) {
+        while (from < to) {
+            int mid = (from + to) >> 1;
+            int cmp = compare(getCell(table, mid, col), search);
+            if (cmp > 0) to = mid - 1;
+            else if (cmp < 0) from = mid + 1;
+            else to = mid;
+        }
+        if (from == to) {
+            if (compare(getCell(table, from, col), search) == 0) return from;
+        }
+        return -1;
+    }
+
+    private int compare(String a, String b) {
+        if (a.length() > b.length()) a = a.substring(0, b.length());
+        return collator.compare(a, b);
+    }
+
+    private String getCell(JTable table, int row, int col) {
+        String cell = table.getValueAt(row, col).toString();
+        return cell.replace("<html><nobr>", "").replace(App.HIGHLIGHT_START_TAG, "").replace(App.HIGHLIGHT_END_TAG, "");
+    }
 
 }
