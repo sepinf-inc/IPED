@@ -1,6 +1,6 @@
 ﻿########################################################################
 # Descomente as Categorias que deverão ser expandidas durante a idexação
-# Os subitens serão extraídos para a pasta 'indexador/../Exportados'
+# Os subitens serão extraídos para a pasta 'indexador/subitens'
 # A expansão é recursiva, logo pode consumir espaço considerável
 ########################################################################
 
