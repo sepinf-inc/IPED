@@ -69,10 +69,15 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	volatile static int numFilters = 0;
 	Query query;
+	String queryText;
 	ProgressDialog progressDialog;
 
 	public PesquisarIndice(Query query) {
 		this.query = query;
+	}
+	
+	public PesquisarIndice(String query) {
+		this.queryText = query;
 	}
 
 	private Set<String> getQueryStrings(Query query) {
@@ -305,6 +310,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		SearchResult result = null;
 		try {
 			progressDialog = new ProgressDialog(App.get(), this, true);
+				
 			result = pesquisar();
 
 			String filtro = App.get().filtro.getSelectedItem().toString();
@@ -445,7 +451,12 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		return filtrarVersoes(filtrarFragmentos(pesquisarTodos()));
 	}
 
-	public SearchResult pesquisarTodos() throws IOException {
+	public SearchResult pesquisarTodos() throws Exception {
+		
+		if(query == null){
+			query = getQueryWithFilter(queryText);
+			App.get().query = query;
+		}
 
 		int maxResults = 1000000;
 		SearchResult searchResult = new SearchResult(0);

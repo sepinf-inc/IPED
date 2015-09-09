@@ -74,9 +74,7 @@ public class AppListener implements ActionListener, MouseListener {
 		}
 
 		try {
-			App.get().query = PesquisarIndice.getQueryWithFilter(texto);
-			// App.get().query = PesquisarIndice.getQuery(texto);
-			PesquisarIndice task = new PesquisarIndice(App.get().query);
+			PesquisarIndice task = new PesquisarIndice(texto);
 			task.execute();
 
 		} catch (Exception e) {
