@@ -353,26 +353,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				return;
 			}
 			
-			MediaType contentType;
 			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-			TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
-			if(contentTypeStr == null)
-				try {
-					if(SignatureTask.processFileSignatures)
-						contentType = detector.detect(tis, metadata).getBaseType();
-					else
-						contentType = detector.detect(null, metadata).getBaseType();
-					
-				} catch (Exception e) {
-					contentType = MediaType.OCTET_STREAM;
-				}
-			else
-				contentType = MediaType.parse(contentTypeStr);
+			if(contentTypeStr != null)
+				subItem.setMediaType(MediaType.parse(contentTypeStr));
 
 			subItem.setName(name);
 			if (hasTitle)
 				subItem.setExtension("");
-			subItem.setMediaType(contentType);
 			
 			String parentId = String.valueOf(parent.getId());
 			subItem.setParentId(parentId);
@@ -395,18 +382,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if(reader.setTimeoutPaused(true))
 				try{
 					ExportFileTask extractor = new ExportFileTask(worker);
-					extractor.extractFile(tis, subItem);
-	
-					new SetCategoryTask(worker).process(subItem);
-	
-					// teste para extraÃ§Ã£o de anexos de emails de PSTs
+					extractor.extractFile(inputStream, subItem);
+					
+					// Extração de anexos de emails de PSTs, se emails forem extraídos
+					/*if(contentTypeStr != null)
+						new SetCategoryTask(worker).process(subItem);
 					if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
 						subItem.setToExtract(true);
 						metadata.set(ExtraProperties.TO_EXTRACT, "true");
-						//int id = evidence.getId();
-						//metadata.set(EmbeddedFileParser.INDEXER_ID, Integer.toString(id));
 					}
-	
+					*/
 					worker.processNewItem(subItem);
 	
 				}finally{

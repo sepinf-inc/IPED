@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -41,6 +42,10 @@ public class SignatureTask extends AbstractTask {
 					} catch (IOException e) {
 						LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), evidence.getPath(), 
 								evidence.getLength(), e.toString());						
+					}finally{
+						//Fecha handle p/ renomear subitem p/ hash posteriormente. Demais itens são fechados via evidence.dispose()
+						if(evidence.isSubItem())
+							IOUtil.closeQuietly(tis);
 					}
 				}
 				

@@ -131,6 +131,7 @@ public class ExportFileTask extends AbstractTask{
 		// Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
 	    if (caseData.isIpedReport() || (!evidence.isSubItem() && 
                 (isToBeExtracted(evidence) || evidence.isToExtract()))) {
+	    	
             evidence.setToExtract(true);
             if(doNotExport(evidence)){
             	evidence.setSleuthId(null);
@@ -143,7 +144,10 @@ public class ExportFileTask extends AbstractTask{
         }
 		
 		//Renomeia subitem caso deva ser exportado
-		if (evidence.isSubItem() && evidence.isToExtract() && !caseData.isIpedReport()) {
+		if (!caseData.isIpedReport() && evidence.isSubItem() && 
+			(evidence.isToExtract() || !hasCategoryToExtract() || isToBeExtracted(evidence))) {
+			
+			evidence.setToExtract(true);
 			if(!doNotExport(evidence))
 				renameToHash(evidence);
 			else{
@@ -153,7 +157,7 @@ public class ExportFileTask extends AbstractTask{
 			incSubitensExtracted();
 		}
 		
-		if (ExportFileTask.hasCategoryToExtract() && !evidence.isToExtract())
+		if (hasCategoryToExtract() && !evidence.isToExtract())
 			evidence.setAddToCase(false);
 		
 	}
@@ -227,12 +231,9 @@ public class ExportFileTask extends AbstractTask{
 		String hash = evidence.getHash();
 		if (hash != null) {
 			File file = evidence.getFile();
-			String name = file.getName();
-			String ext = "";
-			int i = name.lastIndexOf('.');
-			if (i != -1)
-				ext = name.substring(i);
-
+			String ext = evidence.getType().getLongDescr();
+			if(!ext.isEmpty())
+				ext = "." + ext;
 			
 			File hashFile = getHashFile(hash, ext);
 			
@@ -282,12 +283,15 @@ public class ExportFileTask extends AbstractTask{
 
 	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
 
-		String ext = new SetTypeTask(worker).getExtBySig(evidence);
-		String type = ext;
-
 		String hash;
 		File outputFile = null;
 		Object hashLock = new Object();
+		
+		String ext = "";
+		if(evidence.getType() != null)
+			ext = evidence.getType().getLongDescr();
+		if(!ext.isEmpty())
+			ext = "." + ext;
 		
 		if(extractDir == null)
 			setExtractDir();
@@ -328,13 +332,6 @@ public class ExportFileTask extends AbstractTask{
 			}
 		}
 		
-
-		if (evidence.getMediaType().toString().equals("message/outlook-pst"))
-			type = "";
-		if (!type.isEmpty())
-			type = type.substring(1);
-		evidence.setType(new GenericFileType(type));
-
 		String relativePath = Util.getRelativePath(output, outputFile);
 		evidence.setExportedFile(relativePath);
 		evidence.setFile(outputFile);

@@ -24,6 +24,10 @@ public abstract class EvidenceFileType implements Serializable {
 	 * @return String com a descrição na forma longa do tipo de arquivo.
 	 */
 	public abstract String getLongDescr();
+	
+	public String toString(){
+		return getLongDescr();
+	}
 
 	/**
 	 * Processa lista de arquivos de evidência. Este método é responsável por
