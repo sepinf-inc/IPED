@@ -20,7 +20,11 @@ package dpf.sp.gpinf.indexer.process;
 
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.Date;
 import java.util.Map.Entry;
@@ -33,8 +37,14 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.tika.mime.MediaType;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
+import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens
@@ -207,6 +217,152 @@ public class IndexItem {
 		}
 
 		return doc;
+	}
+	
+	public static EvidenceFile getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewITem){
+		
+		try{
+			EvidenceFile evidence;
+			if(viewITem)
+				evidence = getViewItem();
+			else
+				evidence = new EvidenceFile(){
+				public File getFile(){
+					if(super.getFile() == null)
+						try {
+							return getTempFile();
+						} catch (IOException e) {
+							e.printStackTrace();
+							return null;
+						}
+					else
+						return super.getFile();
+				}
+			};
+			
+			evidence.setName(doc.get(IndexItem.NAME));
+			
+			String value = doc.get(IndexItem.LENGTH);
+			Long len = null;
+			if (value != null && !value.isEmpty())
+				len = Long.valueOf(value);
+			evidence.setLength(len);
+			
+			value = doc.get(IndexItem.ID);
+			if (value != null)
+				evidence.setId(Integer.valueOf(value));
+			
+			//evidence.setLabels(state.getLabels(id));
+
+			value = doc.get(IndexItem.PARENTID);
+			if (value != null)
+				evidence.setParentId(value);
+
+			value = doc.get(IndexItem.TYPE);
+			if (value != null)
+				evidence.setType(new GenericFileType(value));
+
+			value = doc.get(IndexItem.CATEGORY);
+			if (value != null)
+				for(String category : value.split(CategoryTokenizer.SEPARATOR + ""))
+					evidence.addCategory(category);
+			
+			value = doc.get(IndexItem.ACCESSED);
+			if (value != null && !value.isEmpty())
+				evidence.setAccessDate(DateUtil.stringToDate(value));
+
+			value = doc.get(IndexItem.CREATED);
+			if (value != null && !value.isEmpty())
+				evidence.setCreationDate(DateUtil.stringToDate(value));
+
+			value = doc.get(IndexItem.MODIFIED);
+			if (value != null && !value.isEmpty())
+				evidence.setModificationDate(DateUtil.stringToDate(value));
+
+			evidence.setPath(doc.get(IndexItem.PATH));
+
+			value = doc.get(IndexItem.EXPORT);
+			if (value != null && !value.isEmpty())
+				evidence.setFile(Util.getRelativeFile(outputBase.getParent(), value));
+
+			else {
+				value = doc.get(IndexItem.SLEUTHID);
+				if (value != null && !value.isEmpty()) {
+					evidence.setSleuthId(value);
+					evidence.setSleuthFile(sleuthCase.getAbstractFileById(Long.valueOf(value)));
+				}
+			}
+
+			value = doc.get(IndexItem.CONTENTTYPE);
+			if (value != null)
+				evidence.setMediaType(MediaType.parse(value));
+
+			value = doc.get(IndexItem.TIMEOUT);
+			if (value != null)
+				evidence.setTimeOut(Boolean.parseBoolean(value));
+
+			value = doc.get(IndexItem.HASH);
+			if (value != null){
+				value = value.toUpperCase();
+				evidence.setHash(value);
+				
+				File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
+				if(viewFile == null){
+					File thumb = Util.getFileFromHash(new File(outputBase.getParent() + 
+							HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), value, "jpg");
+					if(thumb.exists())
+						viewFile = thumb;
+				}
+				if(viewFile != null)
+					evidence.setViewFile(viewFile);
+			}
+			
+			value = doc.get(IndexItem.DELETED);
+			if (value != null)
+				evidence.setDeleted(Boolean.parseBoolean(value));
+			
+			value = doc.get(IndexItem.ISDIR);
+			if (value != null)
+				evidence.setIsDir(Boolean.parseBoolean(value));
+			
+			value = doc.get(IndexItem.CARVED);
+			if (value != null)
+				evidence.setCarved(Boolean.parseBoolean(value));
+			
+			value = doc.get(IndexItem.SUBITEM);
+			if (value != null)
+				evidence.setSubItem(Boolean.parseBoolean(value));
+	        
+	        value = doc.get(IndexItem.TIMEOUT);
+	        if (value != null)
+	        	evidence.setTimeOut(Boolean.parseBoolean(value));
+			
+			value = doc.get(IndexItem.OFFSET);
+			if(value != null)
+				evidence.setFileOffset(Long.parseLong(value));
+			
+			return evidence;
+			
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return null;
+		
+	}
+	
+	private static EvidenceFile getViewItem(){
+		EvidenceFile item = new EvidenceFile(){
+			private static final long serialVersionUID = 1L;
+			
+			public File getFile(){
+				return getViewFile();
+			}
+			public SeekableInputStream getStream() throws FileNotFoundException{
+				return new SeekableFileInputStream(getViewFile());
+			}
+		};
+		return item;
 	}
 
 }
