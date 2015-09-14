@@ -68,7 +68,7 @@ enableCarving = false
 
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
-enableVideoThumbs = false
+enableVideoThumbs = true
 
 # Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
 # Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt
