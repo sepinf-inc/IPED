@@ -73,7 +73,7 @@
         <dependency>
         <groupId>gpinf.iped</groupId>
     		<artifactId>iped-utils</artifactId>
-    		<version>0.4</version>
+    		<version>0.5</version>
     	</dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->
