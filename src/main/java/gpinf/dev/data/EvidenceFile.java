@@ -1,13 +1,11 @@
 package gpinf.dev.data;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.channels.SeekableByteChannel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,12 +17,16 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.util.LimitedInputStream;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import gpinf.dev.filetypes.EvidenceFileType;
 import gpinf.util.FormatUtil;
@@ -117,7 +119,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     private String alternativeFile;
 
     /** Nome e caminho relativo que o arquivo para visualização. */
-    private String viewFile;
+    private File viewFile;
 
     private EvidenceFile emailPai;
 
@@ -509,26 +511,26 @@ public class EvidenceFile implements Serializable, StreamSource {
     /**
      * @return InputStream com o conteúdo do arquivo.
      */
-    public InputStream getStream() throws IOException {
+    public SeekableInputStream getStream() throws IOException {
     	if (startOffset == -1 && file != null && !isDir && file.isFile())
-            return new FileInputStream(file);
+            return new SeekableFileInputStream(file);
     	
         if (tmpFile == null && tis != null && tis.hasFile())
             tmpFile = tis.getFile();
         
         if (tmpFile != null)
         	try{
-        		return new FileInputStream(tmpFile);
+        		return new SeekableFileInputStream(tmpFile);
         	
         	//workaround para itens com erro de parsing cujo tmpFile foi setado por chamada anterior de getStream() e dps apagado
         	}catch(FileNotFoundException fnfe){
         		tmpFile = null;
         	}
 
-        InputStream stream = null;
+        SeekableInputStream stream = null;
         if (file != null && !this.isDir && file.isFile())
         	try{
-        		stream = new FileInputStream(file);
+        		stream = new SeekableFileInputStream(file);
         		
         	//workaround para itens carveados apontando para tmpFile to pai que foi apagado
         	}catch(FileNotFoundException fnfe){
@@ -537,23 +539,21 @@ public class EvidenceFile implements Serializable, StreamSource {
 
         if (stream == null)
         	if(sleuthFile != null){
-        		stream = new ReadContentInputStream(sleuthFile);
+        		stream = new SleuthkitInputStream(sleuthFile);
 
         	}else
-        		stream = new ByteArrayInputStream(new byte[0]);
+        		return new EmptyInputStream();
 
-        if (startOffset != -1) {
-            long skiped = 0;
-            do {
-                //OBS: skip usando ReadContentInputStream é eficiente pois utiliza seek
-                //TODO implementar skip para File usando RandomAccessFile
-                skiped += stream.skip(startOffset - skiped);
-            } while (skiped < startOffset);
-
-            stream = new LimitedInputStream(stream, length);
-        }
+        if (startOffset != -1)
+            stream = new LimitedSeekableInputStream(stream, startOffset, length);
+        
         return stream;
     }
+
+	@Override
+	public SeekableByteChannel getSeekableByteChannel() throws IOException {
+		return new SeekableByteChannelImpl(this.getStream());
+	}
 
     /**
      * Usado em módulos que só possam processar um File e não um InputStream.
@@ -617,7 +617,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      * 
      * @return caminho relativo ao caso do arquivo de visualização
      */
-    public String getViewFile() {
+    public File getViewFile() {
         return viewFile;
     }
 
@@ -1057,7 +1057,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     /**
      * @param viewFile caminho do arquivo para visualização.
      */
-    public void setViewFile(String viewFile) {
+    public void setViewFile(File viewFile) {
         this.viewFile = viewFile;
     }
 

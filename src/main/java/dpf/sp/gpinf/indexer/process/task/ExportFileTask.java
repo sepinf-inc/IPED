@@ -200,9 +200,8 @@ public class ExportFileTask extends AbstractTask{
 	}
 	
 	private void copyViewFile(EvidenceFile evidence){
-		String viewPath = evidence.getViewFile();
-		if(viewPath != null){
-			File viewFile = new File(viewPath);
+		File viewFile = evidence.getViewFile();
+		if(viewFile != null){
 			String viewName = viewFile.getName();
 			File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName);
 			destFile.getParentFile().mkdirs();

@@ -174,9 +174,8 @@ public class IPEDReader extends DataSourceReader{
 				evidence.setHash(value);
 				
 				File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);
-				if(viewFile != null){
-					evidence.setViewFile(viewFile.getAbsolutePath());
-				}
+				if(viewFile != null)
+					evidence.setViewFile(viewFile);
 				
 				//Copia resultado prévio do OCR
 				String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
