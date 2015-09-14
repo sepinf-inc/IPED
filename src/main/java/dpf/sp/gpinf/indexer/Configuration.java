@@ -163,7 +163,7 @@ public class Configuration {
 		if (value != null)
 			value = value.trim();
 		if (value != null && !value.isEmpty())
-			OCRParser.TESSERACTPATH = configPath + "/" + value + "/";
+			OCRParser.TESSERACTPATH = configPath + "/" + value;
 
 		value = properties.getProperty("enableOCR");
 		if (value != null)
