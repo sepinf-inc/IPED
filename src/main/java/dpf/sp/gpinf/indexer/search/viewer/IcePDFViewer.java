@@ -37,6 +37,8 @@ import org.icepdf.ri.util.PropertiesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+
 public class IcePDFViewer extends AbstractViewer {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(IcePDFViewer.class);
@@ -122,18 +124,18 @@ public class IcePDFViewer extends AbstractViewer {
 	}
 
 	@Override
-	public void loadFile(final File file, final Set<String> highlightTerms) {
+	public void loadFile(final StreamSource content, final Set<String> highlightTerms) {
 
 		pdfController.closeDocument();
 		
-		if (file == null)
+		if (content == null)
 			return;
 
 		new Thread() {
 			@Override
 			public void run() {
 
-				pdfController.openDocument(file.getAbsolutePath());
+				pdfController.openDocument(content.getFile().getAbsolutePath());
 
 				if (fitMode != pdfController.getDocumentViewController().getFitMode())
 					pdfController.setPageFitMode(fitMode, true);

@@ -36,6 +36,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Set;
 
@@ -54,6 +55,8 @@ import com.sun.media.jai.codec.ImageCodec;
 import com.sun.media.jai.codec.ImageDecoder;
 import com.sun.media.jai.codec.TIFFDecodeParam;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+
 public class TiffViewer extends AbstractViewer {
 
 	/**
@@ -68,7 +71,7 @@ public class TiffViewer extends AbstractViewer {
 	private JPanel imgPanel;
 	private JScrollPane scrollPane;
 	private BufferedImage image = null;
-	private File currentFile;
+	private StreamSource currentContent;
 	private int currentPage = 0;
 	private int numPages = 0;
 	private double zoomFactor = 1;
@@ -140,16 +143,16 @@ public class TiffViewer extends AbstractViewer {
 	}
 
 	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
 
-		currentFile = file;
 		currentPage = 1;
 		rotation = 0;
 		image = null;
 		refreshGUI();
-
-		if (file != null)
-			displayPage();
+		
+		currentContent = content;
+		if(currentContent != null)
+			displayPage();		
 
 	}
 
@@ -160,7 +163,7 @@ public class TiffViewer extends AbstractViewer {
 			public void run() {
 				try {
 					TIFFDecodeParam param = null;
-					ImageDecoder dec = ImageCodec.createImageDecoder("tiff", currentFile, param);
+					ImageDecoder dec = ImageCodec.createImageDecoder("tiff", currentContent.getStream(), param);
 					numPages = dec.getNumPages();
 					RenderedImage ri = dec.decodeAsRenderedImage(currentPage - 1);
 					image = getCompatibleImage(PlanarImage.wrapRenderedImage(ri).getAsBufferedImage());
@@ -235,7 +238,7 @@ public class TiffViewer extends AbstractViewer {
 		start.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (currentFile != null && currentPage != 1) {
+				if (currentContent != null && currentPage != 1) {
 					currentPage = 1;
 					displayPage();
 				}
@@ -251,7 +254,7 @@ public class TiffViewer extends AbstractViewer {
 		back.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (currentFile != null && currentPage > 1) {
+				if (currentContent != null && currentPage > 1) {
 					currentPage -= 1;
 					displayPage();
 				}
@@ -301,7 +304,7 @@ public class TiffViewer extends AbstractViewer {
 		forward.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (currentFile != null && currentPage < numPages) {
+				if (currentContent != null && currentPage < numPages) {
 					currentPage += 1;
 					displayPage();
 				}
@@ -317,7 +320,7 @@ public class TiffViewer extends AbstractViewer {
 		end.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if (currentFile != null && currentPage < numPages) {
+				if (currentContent != null && currentPage < numPages) {
 					currentPage = numPages;
 					displayPage();
 				}

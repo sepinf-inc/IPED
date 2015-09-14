@@ -45,6 +45,7 @@ import org.apache.tika.io.TemporaryResources;
 
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.TextParser;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextViewer extends AbstractViewer implements KeyListener, MouseListener {
@@ -101,10 +102,10 @@ public class TextViewer extends AbstractViewer implements KeyListener, MouseList
 		}
 
 	}
-
+	
 	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
-		if (file == null && textParser != null) {
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
+		if (content == null && textParser != null) {
 			textParser.cancel(false);
 
 			textParser.sortedHits = new TreeMap<Long, int[]>();
@@ -113,20 +114,20 @@ public class TextViewer extends AbstractViewer implements KeyListener, MouseList
 
 			App.get().hitsModel.fireTableDataChanged();
 			textViewerModel.fireTableDataChanged();
+			
 		}
-
 	}
 
-	public void loadFile(Document doc, File file, String contentType) {
+	@Override
+	public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
 
-		if(file == null)
-			loadFile(file, null);
+		if(content == null)
+			loadFile(content, null);
 		
 		else{
-			textParser = new TextParser(doc, file, contentType, tmp);
+			textParser = new TextParser(content, contentType, tmp);
 			textParser.execute();
 		}
-		
 
 	}
 

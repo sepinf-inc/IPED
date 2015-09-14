@@ -37,6 +37,8 @@ import javax.swing.JPanel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+
 public abstract class AbstractViewer {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(AbstractViewer.class);
@@ -86,15 +88,15 @@ public abstract class AbstractViewer {
 	/*
 	 * Renderiza o arquivo. Valor nulo deve indicar limpeza da visualização
 	 */
-	public void loadFile(File file, String contentType, Set<String> highlightTerms) {
-		loadFile(file, highlightTerms);
+	public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+		loadFile(content, highlightTerms);
 	}
 
-	public void loadFile(File file) {
-		loadFile(file, null);
+	public void loadFile(StreamSource content) {
+		loadFile(content, null);
 	}
 
-	abstract public void loadFile(File file, Set<String> highlightTerms);
+	abstract public void loadFile(StreamSource content, Set<String> highlightTerms);
 
 	abstract public void scrollToNextHit(boolean forward);
 

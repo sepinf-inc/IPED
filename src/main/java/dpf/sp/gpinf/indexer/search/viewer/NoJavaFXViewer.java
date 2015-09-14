@@ -23,6 +23,8 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+
 public class NoJavaFXViewer extends AbstractViewer {
 
 	final static String NO_JAVAFX_MSG = "<html>Visualização não suportada. Atualize o Java para a versão 7u06 ou superior.</html>";
@@ -52,7 +54,7 @@ public class NoJavaFXViewer extends AbstractViewer {
 	}
 
 	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
 	}
 
 	@Override

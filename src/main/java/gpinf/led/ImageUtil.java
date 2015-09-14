@@ -15,10 +15,10 @@ import javax.imageio.stream.ImageInputStream;
  * @author Wladimir Leite (GPINF/SP)
  */
 public class ImageUtil {
-	public static BufferedImage read(File imageFile) throws IOException {
+	public static BufferedImage read(Object imageObject) throws IOException {
 		BufferedImage img = null;
 		try {
-			ImageInputStream imageStream = ImageIO.createImageInputStream(imageFile);
+			ImageInputStream imageStream = ImageIO.createImageInputStream(imageObject);
 			Iterator<ImageReader> readers = ImageIO.getImageReaders(imageStream);
 
 			ImageReader reader = null;

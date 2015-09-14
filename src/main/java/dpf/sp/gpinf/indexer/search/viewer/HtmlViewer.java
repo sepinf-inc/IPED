@@ -33,6 +33,7 @@ import org.w3c.dom.Node;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -97,21 +98,20 @@ public class HtmlViewer extends AbstractViewer {
 	private File tmpFile;
 
 	@Override
-	public void loadFile(final File htmlfile, Set<String> highlightTerms) {
+	public void loadFile(final StreamSource content, final Set<String> terms) {
 
 		if (tmpFile != null)
 			tmpFile.delete();
-
-		this.file = htmlfile;
-		this.highlightTerms = highlightTerms;
 
 		PlatformImpl.runLater(new Runnable() {
 			@Override
 			public void run() {
 
 				webEngine.load(null);
-				if (file != null)
+				if (content != null)
 					try {
+						file = content.getFile();
+						highlightTerms = terms;
 						if (file.length() <= MAX_SIZE) {
 							if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) {
 								try {

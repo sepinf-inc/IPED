@@ -18,6 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import gpinf.dev.data.EvidenceFile;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -41,7 +43,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 	private static Object lock = new Object(), lock2 = new Object();
 	private Document doc;
 	private boolean listSubItens;
-	private static volatile File lastFile, emptyFile;
+	private static volatile EvidenceFile lastItem;
 
 	public FileProcessor(int docId, boolean listSubItens) {
 		this.listSubItens = listSubItens;
@@ -67,6 +69,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 			}
 		} else {
 			doc = new Document();
+			doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
 			doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
 			doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
 			doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
@@ -100,58 +103,32 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 				return;
 			App.get().parentItemModel.listParents(doc);
 		}
+		
+		EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
 
-		File file = null;
-		String export = doc.get(IndexItem.EXPORT);
-		if (export != null && !export.isEmpty()){
-			file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-			file = Util.getFile(file, doc);
-			
-			//teste se não é arquivo regular (dir, named pipe, simlink, socket)
-			if(!file.isFile()){
-				if(emptyFile == null)
+		disposeItem(lastItem);
+		lastItem = item;
+		String contentType = item.getMediaType().toString();
+		
+		EvidenceFile viewItem = item;
+		
+		if(item.getViewFile() != null)
+			viewItem = IndexItem.getItem(doc, new File(App.get().codePath + "/.."), App.get().sleuthCase, true);
+
+		App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+
+	}
+	
+	private void disposeItem(final EvidenceFile itemToDispose){
+		if (itemToDispose != null)
+			new Thread() {
+				public void run() {
 					try {
-						emptyFile = File.createTempFile("indexador", ".tmp");
-						emptyFile.deleteOnExit();
-					} catch (IOException e) {}
-				file = emptyFile;
-			}
-			
-		}else if(doc.get(IndexItem.SLEUTHID) != null){
-			if (doc.get(IndexItem.LENGTH) == null || Long.valueOf(doc.get(IndexItem.LENGTH)) > 10000000)
-				App.get().compositeViewer.clear();
-
-			file = Util.extractSleuthFile(App.get().sleuthCase, doc);
-
-			final File fileToDelete = lastFile;
-			if (fileToDelete != null)
-				new Thread() {
-					public void run() {
-						try {
-							Thread.sleep(2000);
-						} catch (InterruptedException e) {
-						}
-						fileToDelete.delete();
-					}
-				}.start();
-				
-			lastFile = file;
-		}
-
-		String contentType = doc.get(IndexItem.CONTENTTYPE);
-		String hash = doc.get(IndexItem.HASH);
-		File viewFile = Util.findFileFromHash(new File(App.get().codePath + "/../view"), hash);
-		if(viewFile == null)
-			viewFile = file;
-		if(viewFile == null && hash != null){
-			File thumb = Util.getFileFromHash(new File(App.get().codePath + "/../../" + 
-					HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), hash, "jpg");
-			if(thumb.exists())
-				viewFile = thumb;
-		}
-
-		App.get().compositeViewer.loadFile(doc, file, viewFile, contentType, App.get().highlightTerms);
-
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {}
+					itemToDispose.dispose();
+				}
+			}.start();
 	}
 
 	private Thread listTask;

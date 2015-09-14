@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.search.viewer;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 import org.apache.tika.io.TikaInputStream;
@@ -12,6 +14,8 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
@@ -38,23 +42,28 @@ public class TikaHtmlViewer extends HtmlViewer{
 	}
 	
 	@Override
-	public void loadFile(File file, String contentType, Set<String> highlightTerms) {
+	public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
 		
-		if(file != null)
-			file = getHtmlVersion(file, contentType);
+		if(content != null)
+			try {
+				content = new FileContentSource(getHtmlVersion(content.getStream(), contentType));
+			} catch (IOException e) {
+				e.printStackTrace();
+				content = null;
+			}
 		
-		super.loadFile(file, highlightTerms);
+		super.loadFile(content, highlightTerms);
 	}
 	/*
 	 * TODO: Gerar preview html em outra thread, senão pode travar a interface ao trocar de abas no
 	 * 		 visualizador caso a geração do preview seja lenta.
 	 */
-	private File getHtmlVersion(File file, String contentType) {
+	private File getHtmlVersion(InputStream in, String contentType) {
 
 		File outFile = null;
 		TikaInputStream tis = null;
 		try {
-			tis = TikaInputStream.get(file);
+			tis = TikaInputStream.get(in);
 			outFile = File.createTempFile("tmp", ".html");
 			outFile.deleteOnExit();
 			

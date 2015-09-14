@@ -31,11 +31,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class ImageViewer extends AbstractViewer {
 
@@ -71,23 +74,30 @@ public class ImageViewer extends AbstractViewer {
 	}
 
 	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
 
 		BufferedImage image = null;
-		if(file != null)
+		InputStream in = null;
+		if(content != null)
 			try {
-				image = ImageUtil.read(file);
+				in = new BufferedInputStream(content.getStream());
+				image = ImageUtil.read(in);
 				
 			} catch (IOException e) {
 				
+				InputStream in2 = null;
 				try {
-					BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
-					image = new GraphicsMagicConverter().getImage(in, 0);
+					in2 = new BufferedInputStream(content.getStream());
+					image = new GraphicsMagicConverter().getImage(in2, 0);
 					
-				} catch (FileNotFoundException e1) {
-					//e1.printStackTrace();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}finally{
+					IOUtil.closeQuietly(in2);
 				}
 				
+			}finally{
+				IOUtil.closeQuietly(in);
 			}
 		
 		final BufferedImage img = image;

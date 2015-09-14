@@ -88,6 +88,7 @@ import com.sun.star.view.DocumentZoomType;
 import com.sun.star.view.XSelectionSupplier;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
 
@@ -276,13 +277,14 @@ public class LibreOfficeViewer extends AbstractViewer {
 	private File blankDoc;
 
 	@Override
-	public void loadFile(final File file, Set<String> highlightTerms) {
-		loadFile(file, "", highlightTerms);
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
+		loadFile(content, "", highlightTerms);
 	}
 
 	@Override
-	public void loadFile(final File file, final String contentType, final Set<String> highlightTerms) {
-
+	public void loadFile(final StreamSource content, final String contentType, final Set<String> highlightTerms) {
+		
+		final File file = content != null ? content.getFile() : null;
 		lastFile = file;
 
 		new Thread() {

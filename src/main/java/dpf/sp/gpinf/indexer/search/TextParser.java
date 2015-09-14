@@ -18,6 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import gpinf.dev.data.EvidenceFile;
+
 import java.io.File;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
@@ -47,15 +49,17 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class TextParser extends CancelableWorker {
 
 	private static TextParser parsingTask;
-	private File file;
+	private StreamSource content;
 	private String contentType;
 	volatile int id;
-	private Document doc;
+	private EvidenceFile item;
 	protected ProgressDialog progressMonitor;
 
 	private static Object lock = new Object();
@@ -73,21 +77,20 @@ public class TextParser extends CancelableWorker {
 	// contém offset das quebras de linha do preview
 	public ArrayList<Long> viewRows = new ArrayList<Long>();
 
-	public TextParser(Document doc, File file, String contentType, TemporaryResources tmp) {
+	public TextParser(StreamSource content, String contentType, TemporaryResources tmp) {
 		try {
-			this.file = file;
+			this.content = content;
 			this.contentType = contentType;
 			this.tmp = tmp;
-			this.doc = doc;
+			if(content instanceof EvidenceFile)
+				item = (EvidenceFile)content;
 
 			if (parsingTask != null) {
 				parsingTask.cancel(false);
 			}
 			parsingTask = this;
 
-			String idStr = doc.get(IndexItem.ID);
-			if (idStr != null)
-				id = Integer.parseInt(idStr);
+			id = item.getId();
 
 			this.addPropertyChangeListener(new TextParserListener(this));
 
@@ -131,13 +134,7 @@ public class TextParser extends CancelableWorker {
 	private ParseContext getTikaContext() throws Exception{
 		ParseContext context = new ParseContext();
 		context.set(Parser.class, (Parser) App.get().autoParser);
-		
-		HashSet<String> categorias = new HashSet<String>();
-		if (doc.get(IndexItem.CATEGORY) != null)
-			for (String categoria : doc.get(IndexItem.CATEGORY).split("" + CategoryTokenizer.SEPARATOR))
-				categorias.add(categoria);
-		context.set(ItemInfo.class, new ItemInfo(id, doc.get(IndexItem.HASH),categorias, 
-		            doc.get(IndexItem.PATH), Boolean.getBoolean(doc.get(IndexItem.CARVED))));
+		context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
 		
 		ParsingTask expander = new ParsingTask(context);
 		expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
@@ -147,6 +144,8 @@ public class TextParser extends CancelableWorker {
 		ArchiveStreamFactory factory = new ArchiveStreamFactory();
 		factory.setEntryEncoding("Cp850");
 		context.set(ArchiveStreamFactory.class, factory);
+		
+		context.set(StreamSource.class, content);
 		
 		/*PDFParserConfig config = new PDFParserConfig();
 		config.setExtractInlineImages(true);
@@ -161,13 +160,13 @@ public class TextParser extends CancelableWorker {
 
 			Metadata metadata = new Metadata();
 			metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, contentType);
-			if (Boolean.valueOf(doc.get(IndexItem.TIMEOUT)))
+			metadata.set(Metadata.RESOURCE_NAME_KEY, item.getName());
+			if (item.isTimedOut())
 				metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-			metadata.set(Metadata.RESOURCE_NAME_KEY, doc.get(IndexItem.NAME));
-			TikaInputStream tis = TikaInputStream.get(file, metadata);
+			
 			ParseContext context = getTikaContext();
 
-			textReader = new ParsingReader((Parser) App.get().autoParser, tis, metadata, context);
+			textReader = new ParsingReader((Parser) App.get().autoParser, content.getStream(), metadata, context);
 			textReader.startBackgroundParsing();
 
 			tmp.dispose();

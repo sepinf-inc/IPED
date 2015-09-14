@@ -31,6 +31,8 @@ import javafx.scene.media.MediaView;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+
 public class VideoViewer extends AbstractViewer {
 
 	StackPane root;
@@ -76,7 +78,7 @@ public class VideoViewer extends AbstractViewer {
 	}
 
 	@Override
-	public void loadFile(final File file, Set<String> highlightTerms) {
+	public void loadFile(final StreamSource content, Set<String> highlightTerms) {
 
 		PlatformImpl.runLater(new Runnable() {
 			@Override
@@ -87,8 +89,8 @@ public class VideoViewer extends AbstractViewer {
 					root.getChildren().remove(mediaView);
 				}
 
-				if (file != null) {
-					Media media = new Media(file.toURI().toString());
+				if (content != null) {
+					Media media = new Media(content.getFile().toURI().toString());
 					mediaPlayer = new MediaPlayer(media);
 					mediaPlayer.setAutoPlay(true);
 

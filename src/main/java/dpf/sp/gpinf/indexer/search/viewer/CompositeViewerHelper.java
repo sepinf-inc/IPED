@@ -35,6 +35,7 @@ import ag.ion.bion.officelayer.application.OfficeApplicationException;
 import ag.ion.bion.officelayer.internal.application.ApplicationAssistant;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.FileProcessor;
+import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.LOExtractor;
 
 public class CompositeViewerHelper {
@@ -109,9 +110,9 @@ public class CompositeViewerHelper {
 						@Override
 						public void run() {
 
+							App.get().compositeViewer.addViewer(new HexViewer());
 							App.get().textViewer = new TextViewer();
 							App.get().compositeViewer.addViewer(App.get().textViewer);
-
 							App.get().compositeViewer.addViewer(new ImageViewer());
 
 							if (javaFX) {
@@ -211,7 +212,7 @@ public class CompositeViewerHelper {
 				@Override
 				public void run() {
 					officeViewer.restartLO();
-					officeViewer.loadFile(officeViewer.lastFile);
+					officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
 				}
 			}.start();
 

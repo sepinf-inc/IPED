@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -68,8 +69,11 @@ import org.slf4j.LoggerFactory;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
@@ -98,9 +102,9 @@ public class EmailViewer extends HtmlViewer {
 	}
 
 	@Override
-	public void loadFile(File file, Set<String> highlightTerms) {
+	public void loadFile(StreamSource content, Set<String> highlightTerms) {
 
-		if (file == null) {
+		if (content == null) {
 			super.loadFile(null, null);
 			return;
 		}
@@ -119,15 +123,18 @@ public class EmailViewer extends HtmlViewer {
 		parser.setContentHandler(mch);
 		parser.setContentDecoding(true);
 
+		TikaInputStream tagged = null;
 		try {
-			TikaInputStream tagged = TikaInputStream.get(file);
+			tagged = TikaInputStream.get(content.getStream());
 			parser.parse(tagged);
 
 		} catch (Exception e) {
 			e.printStackTrace();
+		}finally{
+			IOUtil.closeQuietly(tagged);
 		}
 
-		super.loadFile(mch.previewFile, highlightTerms);
+		super.loadFile(new FileContentSource(mch.previewFile), highlightTerms);
 
 	}
 
