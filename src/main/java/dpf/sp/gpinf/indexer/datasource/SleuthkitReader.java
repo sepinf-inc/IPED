@@ -250,6 +250,10 @@ public class SleuthkitReader extends DataSourceReader{
 				if(!Configuration.addUnallocated)
 					return;
 				
+				//Contorna problema de primeiro acesso ao espaço não alocado na thread de
+				//processamento caso haja lock de escrita no sqlite ao adicionar outra evidênca
+				absFile.getRanges();
+				
 				long fragSize = Configuration.unallocatedFragSize;
 				int fragNum = 0;
 				for(long offset = 0; offset < absFile.getSize(); offset += fragSize){
