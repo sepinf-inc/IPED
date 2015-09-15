@@ -1,15 +1,18 @@
 xx/09/2015: IPED-3.x
 - Novo sistema de filtros e redesenho da interface
-- Visualização de arquivos sem geração de temporário
+- Visualização de arquivos mais rápida, sem geração de temporário
 - Visualizador Hexadecimal (contribuição PCF Wladimir)
 - Seleção de item por digitação em coluna ordenada na tabela (PCF Wladimir)
 - Melhor HTML de visualização de itens do Emule e Ares (PCF Wladimir)
 - Opção p/ indexar sem converter p/ minúsculas (melhor dicionário p/ quebra de senhas)
 Correções:
-- Erro ao acessar não alocado durante adição de várias evidências pequenas após atualização do Sleuthkit (3.5)
-- Travamento da interface em pesquisas com milhares de termos após alteração do queryParser
-- Erro durante exportação de arquivos com certos nomes numéricos
 - Planilhas XLSX protegidas dentro de containers corretamente classificadas
+
+14/09/2015: IPED-3.6.1
+- Habilitado por padrão geração de miniaturas de vídeos
+- Possível erro ao processar não alocado ao adicionar várias evidências devido a atualização do Sleuthkit (3.5)
+- Travamento da interface em pesquisas com milhares de termos após alteração do queryParser
+- Erro raro durante exportação de arquivos com certos nomes numéricos
 
 03/09/2015: IPED-3.6
 - Suporte a ISO com UDF e melhor parsing de CHM e 7z via 7zipJBindings
