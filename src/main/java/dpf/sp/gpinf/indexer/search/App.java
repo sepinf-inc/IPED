@@ -20,11 +20,17 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -145,6 +151,8 @@ public class App extends JFrame implements WindowListener {
 	ParentTableModel parentItemModel = new ParentTableModel();
 	GalleryModel galleryModel = new GalleryModel();
 
+	private int zoomLevel;
+	
 	public String codePath;
 	public JLabel status;
 
@@ -379,7 +387,7 @@ public class App extends JFrame implements WindowListener {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				int colWidth = (int) gallery.getVisibleRect().getWidth() / galleryModel.colCount;
-				gallery.setRowHeight(colWidth);
+				if (colWidth > 0) gallery.setRowHeight(colWidth);
 				int selRow = App.get().gallery.getSelectedRow();
 				if (selRow >= 0)
 					App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(selRow, 0, false));
@@ -500,8 +508,54 @@ public class App extends JFrame implements WindowListener {
 		// filtro.getComponent(0).addMouseListener(appletListener);
 		termo.getEditor().getEditorComponent().addMouseListener(appletListener);
 		termo.getComponent(0).addMouseListener(appletListener);
-	}
+	
+        //Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
+        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        manager.addKeyEventDispatcher(new KeyEventDispatcher() {
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getID() == KeyEvent.KEY_RELEASED) {
+                    if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                        if (e.getKeyCode() == KeyEvent.VK_EQUALS) {
+                            synchronized (App.this) {
+                                if (zoomLevel < 8) {
+                                    zoomLevel++;
+                                    zoomFont(App.this, 1);
+                                }
+                            }
+                            return true;
+                        } else if (e.getKeyCode() == KeyEvent.VK_MINUS) {
+                            synchronized (App.this) {
+                                if (zoomLevel > -4) {
+                                    zoomLevel--;
+                                    zoomFont(App.this, -1);
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+    }
 
+    private void zoomFont(Component c, int inc) {
+        if (c instanceof Container) {
+            Component[] childs = ((Container) c).getComponents();
+            for (Component child : childs) {
+                zoomFont(child, inc);
+            }
+        }
+        int currSize = c.getFont().getSize();
+        int newSize = currSize + inc;
+        c.setFont(c.getFont().deriveFont((float) newSize));
+        if (c instanceof JTable) {
+            ((JTable) c).setRowHeight(newSize + 4);
+        }
+        revalidate();
+        repaint();
+    }
+    
 	public void alterarDisposicao() {
 
 		if (disposicaoVertical) {
