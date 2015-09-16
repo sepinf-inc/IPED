@@ -1,26 +1,22 @@
 package dpf.sp.gpinf.indexer.search.viewer;
 
-import gpinf.led.HexViewPanel;
-
 import java.awt.GridLayout;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.Set;
 
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import gpinf.led.HexViewPanel;
 
 public class HexViewer extends AbstractViewer{
 	
 	private HexViewPanel hexPanel = new HexViewPanel(16);
-	JScrollPane scrollPane = new JScrollPane(hexPanel);
 	
 	public HexViewer(){
 		super(new GridLayout());
-		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		this.getPanel().add(scrollPane);
+		this.getPanel().add(hexPanel);
 	}
 
 	@Override
