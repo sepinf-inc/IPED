@@ -104,6 +104,8 @@ public class CompositeViewerHelper {
 			public void run() {
 
 				final boolean javaFX = loadJavaFX();
+				
+				final CompositeCardViewer multiViewer = new CompositeCardViewer();
 
 				try {
 					SwingUtilities.invokeAndWait(new Runnable() {
@@ -111,21 +113,21 @@ public class CompositeViewerHelper {
 						public void run() {
 
 							App.get().compositeViewer.addViewer(new HexViewer());
-							App.get().textViewer = new TextViewer();
-							App.get().compositeViewer.addViewer(App.get().textViewer);
-							App.get().compositeViewer.addViewer(new ImageViewer());
+							App.get().compositeViewer.addViewer(App.get().textViewer = new TextViewer());
+							App.get().compositeViewer.addViewer(multiViewer);
+							
+							multiViewer.addViewer(new ImageViewer());
 
 							if (javaFX) {
-								App.get().compositeViewer.addViewer(new HtmlViewer());
-								App.get().compositeViewer.addViewer(new EmailViewer());
-								App.get().compositeViewer.addViewer(new TikaHtmlViewer());
-								//App.get().compositeViewer.addViewer(new VideoViewer());
+								multiViewer.addViewer(new HtmlViewer());
+								multiViewer.addViewer(new EmailViewer());
+								multiViewer.addViewer(new TikaHtmlViewer());
+								//multiViewer.addViewer(new VideoViewer());
 							} else
-								App.get().compositeViewer.addViewer(new NoJavaFXViewer());
+								multiViewer.addViewer(new NoJavaFXViewer());
 
-							App.get().compositeViewer.addViewer(new IcePDFViewer());
-							App.get().compositeViewer.addViewer(new TiffViewer());
-
+							multiViewer.addViewer(new IcePDFViewer());
+							multiViewer.addViewer(new TiffViewer());
 						}
 					});
 				} catch (Exception e) {
@@ -185,7 +187,7 @@ public class CompositeViewerHelper {
 							@Override
 							public void run() {
 								officeViewer = new LibreOfficeViewer(App.get().codePath + "/../lib/nativeview", pathLO);
-								App.get().compositeViewer.addViewer(officeViewer);
+								multiViewer.addViewer(officeViewer);
 							}
 						});
 					} catch (Exception e) {

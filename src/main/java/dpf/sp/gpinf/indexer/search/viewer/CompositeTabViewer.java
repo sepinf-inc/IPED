@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JButton;
@@ -37,12 +38,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.lucene.document.Document;
 import org.apache.tika.Tika;
 
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
-public class CompositeViewer extends JPanel implements ChangeListener, ActionListener {
+public class CompositeTabViewer extends JPanel implements ChangeListener, ActionListener {
 
 	/**
 	 * 
@@ -51,17 +51,14 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	private final static String VIEWER_CAPTION = "<html>&nbsp;O visualizador pode conter erros. Clique 2 vezes sobre o arquivo para abri-lo.</html>";
 	private static String PREV_HIT_TIP = "Ocorrência anterior";
 	private static String NEXT_HIT_TIP = "Próxima ocorrência";
-	private static String PREVIEW_TAB_TITLE = "Pré-visualização";
+	private static String FIX_VIEWER = "Fixar Visualizador";
 
 	ArrayList<AbstractViewer> viewerList = new ArrayList<AbstractViewer>();
-	JPanel cardViewer;
+	HashSet<AbstractViewer> loadedViewers = new HashSet<AbstractViewer>();
 
-	AbstractViewer viewerToUse;
-	volatile int currentTab;
-	AbstractViewer textViewer, hexViewer;
-	volatile StreamSource file, lastFile, viewFile;
+	volatile AbstractViewer bestViewer, currentViewer, textViewer;
+	volatile StreamSource file, viewFile;
 	volatile String contentType, viewMediaType;
-	volatile Document doc;
 	Set<String> highlightTerms;
 
 	JTabbedPane tabbedPane;
@@ -70,13 +67,13 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	
 	Tika tika = new Tika();
 
-	public CompositeViewer() {
+	public CompositeTabViewer() {
 		super(new BorderLayout());
 
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addChangeListener(this);
 		JLabel viewerLabel = new JLabel(VIEWER_CAPTION);
-		fixViewer = new JCheckBox("Fixar Aba");
+		fixViewer = new JCheckBox(FIX_VIEWER);
 		prevHit = new JButton("<");
 		prevHit.setToolTipText(PREV_HIT_TIP);
 		nextHit = new JButton(">");
@@ -99,22 +96,9 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 
 	public void addViewer(AbstractViewer viewer) {
 		viewerList.add(viewer);
-
-		if (viewer instanceof HexViewer) {
-			hexViewer = viewer;
-			tabbedPane.addTab(viewer.getName(), viewer.getPanel());
-			
-		}else if (viewer instanceof TextViewer) {
+		tabbedPane.addTab(viewer.getName(), viewer.getPanel());
+		if (viewer instanceof TextViewer)
 			textViewer = viewer;
-			tabbedPane.addTab(viewer.getName(), viewer.getPanel());
-			
-		}else {
-			if (cardViewer == null) {
-				cardViewer = new JPanel(new CardLayout());
-				tabbedPane.addTab(PREVIEW_TAB_TITLE, cardViewer);
-			}
-			cardViewer.add(viewer.getPanel(), viewer.getName());
-		}
 
 	}
 
@@ -126,7 +110,9 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 	public void clear() {
 		for (AbstractViewer viewer : viewerList)
 			viewer.loadFile(null);
+		loadedViewers.clear();
 		file = null;
+		viewFile = null;
 	}
 
 	public void dispose() {
@@ -138,51 +124,70 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 		loadFile(file, file, contentType, highlightTerms);
 	}
 	
-	private void getViewType(){
+	private String getViewType(){
 		if(viewFile != file)
 			try {
-				viewMediaType = tika.detect(viewFile.getFile());
+				return tika.detect(viewFile.getFile());
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		else
-			viewMediaType = contentType;
+		return contentType;
 	}
 	
 	public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
+		clear();
 		this.file = file;
 		this.viewFile = viewFile;
 		this.contentType = contentType;
-		this.doc = doc;
+		this.viewMediaType = getViewType();
 		this.highlightTerms = highlightTerms;
 		
-		getViewType();
-
-		viewerToUse = null;
-		for (AbstractViewer viewer : viewerList) {
-			if (viewer.isSupportedType(viewMediaType)) {
-				viewerToUse = viewer;
-			} else
-				viewer.loadFile(null);
+		bestViewer = getBestViewer(viewMediaType);
+		
+		if (fixViewer.isSelected() || currentViewer == bestViewer){
+			loadInViewer(currentViewer);
+		}else{
+			changeToViewer(bestViewer);
 		}
-
-		loadFile();
-
-		if (!fixViewer.isSelected())
-			changeTab(viewerToUse);
-
-		if(viewFile != file && viewerToUse == textViewer)
-			textViewer.loadFile(viewFile, viewMediaType, highlightTerms);
 		
-		else
-			textViewer.loadFile(file, contentType, highlightTerms);
-		
-		hexViewer.loadFile(file, highlightTerms);
+		if(highlightTerms != null && !highlightTerms.isEmpty())
+			loadInViewer(textViewer);
+
+	}
+	
+	//Assume que os visualizadores foam adicionados em ordem crescente de prioridade
+	private AbstractViewer getBestViewer(String contentType){
+		AbstractViewer result = null;
+		for (AbstractViewer viewer : viewerList)
+			if (viewer.isSupportedType(contentType))
+				result = viewer;
+		return result;
 	}
 
-	public AbstractViewer getCurrentViewer() {
-		return getViewerAtTab(currentTab);
+	private void loadInViewer(AbstractViewer viewer) {
+		if (viewer.isSupportedType(viewMediaType)) {
+			if(!loadedViewers.contains(viewer)){
+				loadedViewers.add(viewer);
+				if(viewer == textViewer && bestViewer != textViewer)
+					viewer.loadFile(file, contentType, highlightTerms);
+				
+				else if(viewer instanceof HexViewer)
+					viewer.loadFile(file, contentType, highlightTerms);
+				
+				else
+					viewer.loadFile(viewFile, viewMediaType, highlightTerms);
+			}
+		}else
+			viewer.loadFile(null);
+
+	}
+
+	@Override
+	public void stateChanged(ChangeEvent arg0) {
+		int currentTab = tabbedPane.getSelectedIndex();
+		currentViewer = getViewerAtTab(currentTab);
+		loadInViewer(currentViewer);
 	}
 	
 	private AbstractViewer getViewerAtTab(int tab){
@@ -191,65 +196,35 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
 			if(viewer.getName().equals(tabName))
 				return viewer;
 		
-		//nao encontrado, retorna viewer do cardViewer
-		return viewerToUse;
+		return null;
 		
 	}
 
-	private void loadFile() {
-		if (viewFile != lastFile && viewerToUse == getCurrentViewer() && viewerToUse.isSupportedType(viewMediaType)) {
-
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					CardLayout layout = (CardLayout) cardViewer.getLayout();
-					layout.show(cardViewer, viewerToUse.getName());
-				}
-			});
-
-			viewerToUse.loadFile(viewFile, viewMediaType, highlightTerms);
-			lastFile = viewFile;
-		}
-
-	}
-
-	@Override
-	public void stateChanged(ChangeEvent arg0) {
-		currentTab = tabbedPane.getSelectedIndex();
-		loadFile();
-	}
-
-	private void changeTab(final AbstractViewer viewer) {
+	public void changeToViewer(final AbstractViewer viewer) {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				boolean viewerFound = false;
 				for(int i = 0; i < tabbedPane.getTabCount(); i++)
 					if(tabbedPane.getTitleAt(i).equals(viewer.getName())){
 						tabbedPane.setSelectedIndex(i);
-						viewerFound = true;
 						break;
 					}
-				if(!viewerFound)
-					tabbedPane.setSelectedComponent(cardViewer);
 			}
 		});
 	}
-
-	public void setSelectedIndex(int index) {
-		tabbedPane.setSelectedIndex(index);
+	
+	public AbstractViewer getCurrentViewer(){
+		return currentViewer;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent evt) {
-
-		AbstractViewer viewer = getCurrentViewer();
-
+		
 		if (evt.getSource() == prevHit) {
-			viewer.scrollToNextHit(false);
+			currentViewer.scrollToNextHit(false);
 
 		} else if (evt.getSource() == nextHit) {
-			viewer.scrollToNextHit(true);
+			currentViewer.scrollToNextHit(true);
 		}
 
 	}
