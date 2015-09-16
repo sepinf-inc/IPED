@@ -21,37 +21,31 @@ package dpf.sp.gpinf.indexer.search;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.TreeMap;
 
-import javax.swing.SwingUtilities;
-
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import dpf.sp.gpinf.indexer.util.StreamSource;
 
 public class TextParser extends CancelableWorker {
 
@@ -60,6 +54,7 @@ public class TextParser extends CancelableWorker {
 	private String contentType;
 	volatile int id;
 	private EvidenceFile item;
+	private volatile InputStream is;
 	protected ProgressDialog progressMonitor;
 
 	private static Object lock = new Object();
@@ -102,6 +97,11 @@ public class TextParser extends CancelableWorker {
 
 	@Override
 	public void done() {
+		try {
+			if (is != null)
+				is.close();
+		} catch (Exception e) {}
+		
 		App.get().tabbedHits.setTitleAt(0, hits.size() + " Ocorrências");
 		if (progressMonitor != null)
 			progressMonitor.close();
@@ -165,8 +165,9 @@ public class TextParser extends CancelableWorker {
 				metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 			
 			ParseContext context = getTikaContext();
+			is = content.getStream();
 
-			textReader = new ParsingReader((Parser) App.get().autoParser, content.getStream(), metadata, context);
+			textReader = new ParsingReader((Parser) App.get().autoParser, is, metadata, context);
 			textReader.startBackgroundParsing();
 
 			tmp.dispose();
