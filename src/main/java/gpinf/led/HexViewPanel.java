@@ -1,7 +1,6 @@
 package gpinf.led;
 
-import gpinf.led.FileStringSearch.Match;
-
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -10,203 +9,429 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
-import sun.swing.SwingUtilities2;
 
-public class HexViewPanel extends JPanel implements MouseListener {
-	private static final long serialVersionUID = 7851192102711498776L;
-	private static final Font font = new Font("Courier New", Font.PLAIN, 12);
-	private int lines, height, width;
-	private final int cols;
-	private long len;
-	private SeekableInputStream file;
-	private boolean err;
-	private SeekableInputStream raf;
-	private Map<Integer, int[]> memoBytes = new HashMap<Integer, int[]>();
-	private byte[] readBuf = new byte[1 << 12];
-	private LinkedList<Integer> fifo = new LinkedList<Integer>();
-	private FileStringSearch fileStringSearch;
+public class HexViewPanel extends JPanel {
+    private static final long serialVersionUID = -1432882274158762790L;
+    private static final int MAX_MEMO = 2000;
+    private int height, width, offsetCols;
+    private int cols;
+    private static final Color darkBlue = new Color(0, 0, 192);
+    private static final Color selColor1 = new Color(215, 225, 250);
+    private static final Color selColor2 = new Color(240, 240, 245);
+    private long len, rows;
+    private SeekableInputStream file;
+    private boolean err;
+    private String offsetFormat;
+    private Map<Long, int[]> memoBytes = new HashMap<Long, int[]>();
+    private byte[] readBuf = new byte[1 << 12];
+    private LinkedList<Long> fifo = new LinkedList<Long>();
+    private LongScrollBar hsb, vsb;
+    private JPanel corner, main;
+    private int selMode;
+    private long selStart = -1, selEnd = -1;
+    private boolean isDragging;
 
-	public HexViewPanel(int cols) {
-		this.cols = cols;
-		setBackground(Color.WHITE);
-		setOpaque(true);
-		setFocusable(true);
-		addMouseListener(this);
-		SwingUtilities2.getFontMetrics(null, font); //Adicionado para evitar o LAG na primeira execu��o desta chamada
-	}
+    public HexViewPanel(int numCols) {
+        this.cols = numCols;
 
-	public void setHighlightWords(Collection<String> words) throws IOException {
-		if (fileStringSearch != null) fileStringSearch.setFile(null);
-		fileStringSearch = new FileStringSearch(words);
-		fileStringSearch.setLimit(Integer.MAX_VALUE - readBuf.length);
-	}
+        setLayout(new BorderLayout());
+        hsb = new LongScrollBar(JScrollBar.HORIZONTAL);
+        vsb = new LongScrollBar(JScrollBar.VERTICAL);
 
-	public void setFile(SeekableInputStream file) throws IOException {
-		FontMetrics fontMetrics = getFontMetrics(font);
-		width = fontMetrics.stringWidth("0");
-		height = fontMetrics.getHeight() + 2;
+        add(vsb, BorderLayout.EAST);
+        corner = new JPanel();
+        JPanel aux = new JPanel(new BorderLayout());
+        aux.add(corner, BorderLayout.EAST);
+        aux.add(hsb, BorderLayout.CENTER);
+        add(aux, BorderLayout.SOUTH);
 
-		this.file = file;
-		len = 0;
-		lines = 0;
-		if (file != null) {
-			len = file.size();
-			//if (len > Integer.MAX_VALUE - readBuf.length) len = Integer.MAX_VALUE - readBuf.length; //Limite de 2GB
-			lines = (int) ((len + cols - 1) / cols);
-		}
-		if (fileStringSearch != null) {
-			fileStringSearch.setFile(file);
-		}
-		err = false;
-		memoBytes.clear();
-		if (raf != null) {
-			try {
-				raf.close();
-			} catch (IOException e) {}
-		}
-		raf = null;
-		setPreferredSize(new Dimension(width * (cols * 4 + 8) + 32, lines * height + 4));
-		revalidate();
-	}
+        corner.setPreferredSize(new Dimension(15, 15));
 
-	public void scrollToPosition(long from, long to) {
-		for (int i = 0; i < 100 && !isValid(); i++) {
-			try {
-				Thread.sleep(5);
-			} catch (Exception e) {}
-		}
-		int x1 = (int) (from % cols * 3 * width);
-		int y1 = (int) (from / cols * height);
-		int x2 = (int) (to % cols * 3 * width);
-		int y2 = (int) (to / cols * height);
-		scrollRectToVisible(new Rectangle(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x1 - x2) + 3 * width, Math.abs(y1 - y2) + height));
-		repaint();
-	}
+        main = new JPanel() {
+            private static final long serialVersionUID = -8682174150958743306L;
 
-	public void paint(Graphics g) {
-		super.paint(g);
-		if (file != null) {
-			Graphics2D g2 = (Graphics2D) g;
-			g2.setFont(font);
-			g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-			Rectangle rc = getVisibleRect();
-			if (!err) {
-				int r1 = rc.y / height - 1;
-				if (r1 < 0) r1 = 0;
-				int r2 = (rc.y + rc.height) / height + 1;
-				if (r2 >= lines) r2 = lines - 1;
-				g2.setColor(Color.GRAY);
-				for (int i = r1; i <= r2; i++) {
-					g2.drawString(String.format("%08x", i * cols), 2, (i + 1) * height - 4);
-				}
-				int x = width * 8 + 8;
-				int x2 = x + width * 3 * cols - width + 16;
-				g2.drawLine(x, rc.y, x, rc.y + rc.height);
-				g2.drawLine(x2, rc.y, x2, rc.y + rc.height);
+            public void paint(Graphics g) {
+                super.paint(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+                Rectangle rc = getBounds();
 
-				x += 8;
-				x2 += 8;
-				g2.setColor(Color.BLACK);
-				OUT: for (int i = r1; i <= r2; i++) {
-					int y = (i + 1) * height - 4;
-					for (int j = 0; j < cols; j++) {
-						int b = getByte(i * cols + j);
-						if (err) break OUT;
-						if (b >= 0) {
-							if ((b & 1024) != 0) {
-								b &= 255;
-								g2.setColor(Color.YELLOW);
-								g2.fillRect(x + width * 3 * j - 4, y + 6 - height, 2 * width + 8, height - 1);
-								g2.fillRect(x2 + width * j, y + 6 - height, width, height - 1);
-								g2.setColor(Color.BLACK);
-							}
-							g2.drawString(String.format("%02x", b), x + width * 3 * j, y);
-							g2.drawString((b < 32 || b > 127) ? "." : String.valueOf((char) b), x2 + width * j, y);
-						}
-					}
-				}
-			}
-			if (err) {
-				g2.setColor(Color.WHITE);
-				g2.fill(rc);
-				g2.setColor(Color.RED);
-				g2.drawString("Erro acessando arquivo!!!", 0, rc.y + rc.height / 2 - height);
-				//g2.drawString(file.getAbsolutePath(), 0, rc.y + rc.height / 2 + height);
-			}
-		}
-	}
+                if (file != null) {
+                    long dx = -hsb.getLongValue();
+                    if (!err) {
+                        long r1 = vsb.getLongValue();
+                        if (r1 < 0) r1 = 0;
+                        g2.setColor(darkBlue);
+                        for (long i = r1; i * cols < len; i++) {
+                            int y = (int) ((i - r1 + 1) * height - 4);
+                            g2.drawString(String.format(offsetFormat, i * cols), 2 + dx, y);
+                            if (y > rc.height) break;
+                        }
+                        g2.setColor(Color.LIGHT_GRAY);
+                        long x = width * offsetCols + 8 + dx;
+                        long x2 = x + width * 3 * cols - width + 16;
+                        g2.drawLine((int) x, 0, (int) x, rc.height);
+                        g2.drawLine((int) x2, 0, (int) x2, rc.height);
 
-	private int getByte(long pos) {
-		if (pos >= len) return -1;
-		try {
-			int key = (int) pos >>> 12;
-			long off = ((long)key) << 12;
-			int[] buf = memoBytes.get(key);
-			if (buf == null) {
-				if (raf == null) {
-					raf = file;
-				}
-				raf.seek(off);
-				buf = new int[readBuf.length];
-				int n = raf.read(readBuf);
-				for (int i = 0; i < n; i++) {
-					buf[i] = (readBuf[i] + 256) & 255;
-				}
-				memoBytes.put(key, buf);
-				fifo.addLast(key);
+                        x += 8;
+                        x2 += 8;
+                        g2.setColor(Color.BLACK);
+                        OUT: for (long i = r1; i * cols < len; i++) {
+                            int y = (int) (i - r1 + 1) * height - 4;
+                            for (int j = 0; j < cols; j++) {
+                                long idx = i * cols + j;
+                                int b = getByte(idx);
+                                if (err) break OUT;
+                                if (b >= 0) {
+                                    if (idx >= Math.min(selStart, selEnd) && idx <= Math.max(selStart, selEnd)) {
+                                        g2.setColor(selMode == 1 ? selColor1 : selColor2);
+                                        g2.fillRect((int) (x + width * 3 * j - 4), y + 6 - height, 3 * width, height);
+                                        g2.setColor(selMode == 2 ? selColor1 : selColor2);
+                                        g2.fillRect((int) (x2 + width * j), y + 6 - height, width, height);
+                                        g2.setColor(Color.BLACK);
+                                    }
+                                    g2.drawString(String.format("%02x", b), x + width * 3 * j, y);
+                                    g2.drawString((b < 32 || b > 127) ? "." : String.valueOf((char) b), x2 + width * j, y);
+                                }
+                            }
+                            if (y > rc.height) break;
+                        }
+                    }
+                    if (err) {
+                        g2.setColor(Color.WHITE);
+                        g2.fill(rc);
+                        g2.setColor(Color.RED);
+                        g2.drawString("Erro acessando arquivo!!!", 0, rc.y + rc.height / 2 - height);
+                        g2.drawString(file.toString(), 0, rc.y + rc.height / 2 + height);
+                    }
+                }
+                g2.setColor(Color.GRAY);
+                g2.draw(new Rectangle(0, 0, rc.width - 1, rc.height - 1));
+            }
+        };
+        add(main, BorderLayout.CENTER);
 
-				if (fileStringSearch != null) {
-					long from = off;
-					long to = from + buf.length;
-					while (true) {
-						Match match = fileStringSearch.search(from, to, true);
-						if (match == null) break;
-						from = match.getOffset() + 1;
-						int a = (int) (match.getOffset() - off);
-						int b = (int) (match.getOffset() + match.getLength() - off);
-						for (int i = a; i < b; i++) {
-							buf[i] |= 1024;
-						}
-					}
-				}
+        main.addComponentListener(new ComponentAdapter() {
+            public void componentResized(ComponentEvent e) {
+                updateScrollsBars();
+            }
+        });
 
-				if (fifo.size() > 1000) {
-					int oldest = fifo.removeFirst();
-					memoBytes.remove(oldest);
-				}
-			}
-			return buf[(int)(pos - off)];
-		} catch (Exception e) {
-			e.printStackTrace();
-			err = true;
-		}
-		return 0;
-	}
+        setFont(new Font("Monospaced", Font.PLAIN, 12));
+        setBackground(Color.WHITE);
+        main.setBackground(Color.WHITE);
+        setOpaque(true);
+        main.setOpaque(true);
+        setFocusable(true);
+        main.setFocusable(true);
 
-	public void mouseClicked(MouseEvent e) {
-		requestFocusInWindow();
-	}
+        main.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                if (!isDragging) {
+                    isDragging = true;
+                    long[] sel = translateToFileOffset(e.getX(), e.getY(), 0);
+                    if (sel != null) {
+                        selStart = selEnd = sel[0];
+                        selMode = (int) sel[1];
+                        main.repaint();
+                    } else {
+                        selStart = selEnd = -1;
+                        selMode = 0;
+                        main.repaint();
+                    }
+                } else if (selStart >= 0) {
+                    long[] sel = translateToFileOffset(e.getX(), e.getY(), selMode);
+                    if (sel != null) {
+                        selEnd = sel[0];
+                        if (sel[2] > 0 && selEnd < selStart) selEnd++;
+                        if (sel[3] != 0) {
+                            vsb.setLongValue(vsb.getLongValue() + sel[3]);
+                        }
+                        main.repaint();
+                    }
+                }
+            }
+        });
 
-	public void mousePressed(MouseEvent e) {
-	}
+        main.addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+                main.requestFocusInWindow();
+                if (isDragging) isDragging = false;
+            }
+        });
 
-	public void mouseReleased(MouseEvent e) {
-	}
+        addMouseWheelListener(new MouseWheelListener() {
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                vsb.setLongValue(vsb.getLongValue() + e.getWheelRotation());
+            }
+        });
 
-	public void mouseEntered(MouseEvent e) {
-	}
+        main.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if ((e.getKeyCode() == KeyEvent.VK_C) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                    if (selStart >= 0) {
+                        StringBuilder sb = new StringBuilder();
+                        long a = Math.min(selStart, selEnd);
+                        long b = Math.max(selStart, selEnd);
+                        if (selMode == 1) {
+                            for (long i = a; i <= b; i++) {
+                                sb.append(String.format("%02x", getByte(i)));
+                            }
+                        } else {
+                            for (long i = a; i <= b; i++) {
+                                int c = getByte(i);
+                                sb.append(c < 32 || c > 127 ? '.' : (char) c);
+                            }
+                        }
+                        StringSelection selection = new StringSelection(sb.toString());
+                        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                        clipboard.setContents(selection, selection);
+                    }
+                } else if (e.getKeyCode() == KeyEvent.VK_UP) {
+                    vsb.setLongValue(vsb.getLongValue() - 1);
+                } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                    vsb.setLongValue(vsb.getLongValue() + 1);
+                } else if (e.getKeyCode() == KeyEvent.VK_PAGE_UP) {
+                    vsb.setLongValue(vsb.getLongValue() - main.getBounds().height / height);
+                } else if (e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+                    vsb.setLongValue(vsb.getLongValue() + main.getBounds().height / height);
+                } else if ((e.getKeyCode() == KeyEvent.VK_LEFT) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                    if (cols > 8) {
+                        cols -= 8;
+                        updateRows();
+                        adjustSize();
+                    }
+                } else if ((e.getKeyCode() == KeyEvent.VK_RIGHT) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+                    if (cols < 64) {
+                        cols += 8;
+                        updateRows();
+                        adjustSize();
+                    }
+                }
+            }
+        });
+    }
 
-	public void mouseExited(MouseEvent e) {
-	}
+    private long[] translateToFileOffset(int x, int y, int mode) {
+        long r1 = vsb.getLongValue();
+        if (r1 < 0) r1 = 0;
+        long off = 0;
+        int yOver = 0;
+        for (long i = r1 - 1;; i++) {
+            int fy = (int) ((i - r1 + 1) * height - 4);
+            if (fy >= y) {
+                off = i * cols;
+                if (i < r1) yOver = -1;
+                else if (i - r1 > main.getBounds().height / height) yOver = 1;
+                break;
+            }
+        }
+        long dx = -hsb.getLongValue();
+        long fx1 = width * offsetCols + 8 + dx;
+        long fx2 = fx1 + width * 3 * cols - width + 16;
+
+        if (mode == 0 && x <= fx1) return null;
+        boolean xOver = false;
+        if (mode == 1 || (mode == 0 && x < fx2)) {
+            long c = (x - fx1 - 4) / (width * 3);
+            if (c < 0) {
+                xOver = true;
+                c = -1;
+            } else if (c > cols - 1) {
+                xOver = true;
+                c = cols - 1;
+            }
+            off += c;
+            return new long[] {off,1,xOver ? 1 : 0,yOver};
+        }
+        if (mode == 2 || (mode == 0 && x >= fx2)) {
+            long c = (x - fx2 - 4) / width;
+            if (c < 0) {
+                xOver = true;
+                c = -1;
+            } else if (c > cols - 1) {
+                xOver = true;
+                c = cols - 1;
+            }
+            off += c;
+            return new long[] {off,2,xOver ? 1 : 0,yOver};
+        }
+        return null;
+    }
+
+    public SeekableInputStream getFile() {
+        return file;
+    }
+
+    public void setFile(SeekableInputStream file) throws IOException {
+        if (file != null && file.equals(this.file)) return;
+        if (this.file != null) {
+            try {
+                this.file.close();
+            } catch (IOException e) {}
+            this.file = null;
+        }
+
+        this.file = file;
+        selStart = selEnd = -1;
+        selMode = 0;
+        len = 0;
+        rows = 0;
+        if (file != null) {
+            len = file.size();
+            updateRows();
+            offsetCols = Long.toHexString(len - 1).length();
+            offsetFormat = "%0" + offsetCols + "x";
+        }
+        err = false;
+        memoBytes.clear();
+        adjustSize();
+        hsb.setValue(0);
+        vsb.setValue(0);
+
+        hsb.addAdjustmentListener(new AdjustmentListener() {
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                main.repaint();
+            }
+        });
+        vsb.addAdjustmentListener(new AdjustmentListener() {
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                main.repaint();
+            }
+        });
+    }
+
+    private void updateRows() {
+        rows = (len + cols - 1) / cols;
+    }
+
+    private void adjustSize() {
+        updateScrollsBars();
+        revalidate();
+        repaint();
+    }
+
+    private void updateScrollsBars() {
+        if (main != null) {
+            Rectangle rc = main.getBounds();
+
+            long vc = (offsetCols + 4 + cols * 4) * width - rc.width;
+            hsb.setVisible(vc > 0);
+            hsb.setRange(vc);
+            if (!hsb.isVisible()) hsb.setValue(0);
+            corner.setVisible(hsb.isVisible());
+
+            long vr = rows - rc.height / height;
+            vsb.setVisible(vr > 0);
+            vsb.setRange(vr);
+            if (!vsb.isVisible()) vsb.setValue(0);
+        }
+    }
+
+    public void setFont(Font font) {
+        super.setFont(font);
+        if (main != null) main.setFont(font);
+        FontMetrics fontMetrics = getFontMetrics(getFont());
+        width = fontMetrics.stringWidth("0");
+        height = fontMetrics.getHeight() + 1;
+        adjustSize();
+    }
+
+    private int getByte(long pos) {
+        long vpos = pos;
+        if (vpos >= len || vpos < 0) return -1;
+        try {
+            long key = vpos >>> 12;
+            long off = key << 12;
+            int[] buf = memoBytes.get(key);
+            if (buf == null) {
+                file.seek(off);
+                buf = new int[readBuf.length];
+                int n = file.read(readBuf);
+                for (int i = 0; i < n; i++) {
+                    buf[i] = readBuf[i] & 255;
+                }
+                memoBytes.put(key, buf);
+                fifo.addLast(key);
+                if (fifo.size() > MAX_MEMO) memoBytes.remove(fifo.removeFirst());
+            }
+            int bpos = (int) (vpos - off);
+            return buf[bpos];
+        } catch (Exception e) {
+            e.printStackTrace();
+            err = true;
+        }
+        return 0;
+    }
+}
+
+class LongScrollBar extends JScrollBar {
+    private static final long serialVersionUID = -4465773187404736017L;
+    private long longValue, longRange;
+    private int mult;
+
+    public LongScrollBar(int orientation) {
+        super(orientation);
+    }
+
+    public void setValue(int value) {
+        longValue = value * (long) mult;
+        if (mult > 1 && longValue > longRange) longValue = longRange;
+        super.setValue(value);
+    }
+
+    public void setLongValue(long value) {
+        if (value < 0) value = 0;
+        if (value > longRange) value = longRange;
+        longValue = value;
+        int v = (int) (value / mult);
+        super.setValue(v);
+        super.fireAdjustmentValueChanged(AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED, AdjustmentEvent.TRACK, v);
+    }
+
+    public int getValue() {
+        return getModel().getValue();
+    }
+
+    public void setRange(long range) {
+        longRange = range;
+        super.setMinimum(0);
+        if (range < Integer.MAX_VALUE) {
+            super.setMaximum((int) range);
+            mult = 1;
+        } else {
+            mult = (int) ((range + Integer.MAX_VALUE - 1) / Integer.MAX_VALUE);
+            super.setMaximum((int) ((range + mult - 1) / mult));
+        }
+        if (longValue > longRange) setLongValue(longRange);
+    }
+
+    long getLongValue() {
+        return longValue;
+    }
 }
