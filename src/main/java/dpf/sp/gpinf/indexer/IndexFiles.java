@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -161,17 +162,18 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		if(err != null) System.setErr(err);
 	}
 	
-	private void configureLogParameters(File logFile, boolean noLog) throws FileNotFoundException {
+	private void configureLogParameters(File logFile, boolean noLog) throws FileNotFoundException, MalformedURLException {
 		System.setProperty("logFileDate", df.format(new Date()));
 		
 		if (noLog) {
-			System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationConsoleOnly.xml");
+			System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2ConfigurationConsoleOnly.xml").toURI().toURL().toString());
 		} else {
 			if (logFile == null) {
-				System.setProperty("log4j.configurationFile", "conf/Log4j2Configuration.xml");
+				System.setProperty("logFilePath", configPath + "/log");
+				System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2Configuration.xml").toURI().toURL().toString());
 			} else {
 				System.setProperty("logFileNamePath", logFile.getPath());
-				System.setProperty("log4j.configurationFile", "conf/Log4j2ConfigurationFile.xml");
+				System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
 			}
 			setConsoleLogFile(logFile);
 		}
