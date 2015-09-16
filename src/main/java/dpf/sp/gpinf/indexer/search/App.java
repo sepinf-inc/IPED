@@ -78,7 +78,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.search.viewer.CompositeViewer;
+import dpf.sp.gpinf.indexer.search.viewer.CompositeTabViewer;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 import dpf.sp.gpinf.indexer.search.viewer.TextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -134,7 +134,7 @@ public class App extends JFrame implements WindowListener {
 
 	public TextViewer textViewer;
 
-	public CompositeViewer compositeViewer;
+	public CompositeTabViewer compositeViewer;
 	JTabbedPane tabbedHits, resultTab;
 	JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
 	MenuClass menu;
@@ -431,7 +431,7 @@ public class App extends JFrame implements WindowListener {
 		tabbedHits = new JTabbedPane();
 		tabbedHits.addTab("Ocorrências", hitsScroll);
 
-		compositeViewer = new CompositeViewer();
+		compositeViewer = new CompositeTabViewer();
 
 		verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, tabbedHits);
 		verticalSplitPane.setOneTouchExpandable(true);
