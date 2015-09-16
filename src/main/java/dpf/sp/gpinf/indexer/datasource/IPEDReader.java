@@ -158,7 +158,7 @@ public class IPEDReader extends DataSourceReader{
 				value = doc.get(IndexItem.SLEUTHID);
 				if (value != null && !value.isEmpty()) {
 					evidence.setSleuthId(value);
-					evidence.setSleuthFile(sleuthCase.getAbstractFileById(Long.valueOf(value)));
+					evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
 				}
 			}
 

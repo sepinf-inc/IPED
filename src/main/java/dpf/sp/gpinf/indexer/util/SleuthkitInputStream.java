@@ -2,14 +2,14 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.io.IOException;
 
-import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 public class SleuthkitInputStream extends SeekableInputStream{
     
     ReadContentInputStream rcis;
 
-    public SleuthkitInputStream(AbstractFile file) {
+    public SleuthkitInputStream(Content file) {
         rcis = new ReadContentInputStream(file);
     }
     

@@ -415,7 +415,7 @@ public class SleuthkitReader extends DataSourceReader{
 		
 		evidence.setHasChildren(content.hasChildren());
 		
-		//evidence.setSleuthFile(absFile);
+		//evidence.setSleuthFile(content);
 		evidence.setSleuthId(Long.toString(content.getId()));
 		
 		int sleuthId = (int) (content.getId() - firstId);

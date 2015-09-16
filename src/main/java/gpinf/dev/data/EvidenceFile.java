@@ -17,6 +17,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,7 +163,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private TemporaryResources tmpResources = new TemporaryResources();
 
-    private AbstractFile sleuthFile;
+    private Content sleuthFile;
 
     private long startOffset = -1;
 
@@ -496,7 +497,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      * 
      * @return o objeto do Sleuthkit que representa o item
      */
-    public AbstractFile getSleuthFile() {
+    public Content getSleuthFile() {
         return sleuthFile;
     }
 
@@ -1000,7 +1001,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     /**
      * @param sleuthFile objeto que representa o item no sleuthkit
      */
-    public void setSleuthFile(AbstractFile sleuthFile) {
+    public void setSleuthFile(Content sleuthFile) {
         this.sleuthFile = sleuthFile;
     }
 

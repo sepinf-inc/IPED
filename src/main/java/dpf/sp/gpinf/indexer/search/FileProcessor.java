@@ -113,7 +113,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 		EvidenceFile viewItem = item;
 		
 		if(item.getViewFile() != null)
-			viewItem = IndexItem.getItem(doc, new File(App.get().codePath + "/.."), App.get().sleuthCase, true);
+			viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
 
 		App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
 
