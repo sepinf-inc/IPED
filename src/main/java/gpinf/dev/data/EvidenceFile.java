@@ -1,11 +1,16 @@
 package gpinf.dev.data;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,12 +28,14 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
 import gpinf.util.FormatUtil;
 
@@ -569,8 +576,26 @@ public class EvidenceFile implements Serializable, StreamSource {
         if (tmpFile == null){
 	        if (tis != null && tis.hasFile())
 	            tmpFile = tis.getFile();
-	        else
-	        	tmpFile = getTikaStream().getFile();
+	        else{
+	        	String ext = ".tmp";
+	        	if(type != null)
+	        		ext = Util.getValidFilename("." + type.toString());
+	        	final File file = File.createTempFile("iped", ext);
+	        	tmpResources.addResource(new Closeable() {
+	                public void close() throws IOException {
+	                    if (!file.delete())
+	                        throw new IOException("Could not delete tem file " + file.getPath());
+	                }
+	            });
+	        	InputStream in = getBufferedStream();
+	        	try{
+	        		Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+	        	}finally{
+	        		in.close();
+	        	}
+	        	tmpFile = file;
+	        }
+	        	
         }
         return tmpFile;
     }
