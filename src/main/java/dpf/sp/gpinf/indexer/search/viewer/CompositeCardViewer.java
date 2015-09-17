@@ -37,10 +37,11 @@ public class CompositeCardViewer extends AbstractViewer{
 	}
 	
 	private AbstractViewer getSupportedViewer(String contentType){
+		AbstractViewer result = null;
 		for (AbstractViewer viewer : viewerList)
 			if (viewer.isSupportedType(contentType))
-				return viewer;
-		return null;
+				result = viewer;
+		return result;
 	}
 	
 	private void clear() {
