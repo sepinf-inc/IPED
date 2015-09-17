@@ -68,9 +68,10 @@ public class CompositeCardViewer extends AbstractViewer{
 	@Override
 	public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
 		
-		clear();
-		if(content == null)
+		if(content == null){
+			clear();
 			return;
+		}
 		
 		currentViewer = getSupportedViewer(contentType);
 		if(currentViewer != null){
@@ -83,6 +84,10 @@ public class CompositeCardViewer extends AbstractViewer{
 			});
 			currentViewer.loadFile(content, contentType, highlightTerms);
 		}
+		
+		for (AbstractViewer viewer : viewerList)
+			if(viewer != currentViewer)
+				viewer.loadFile(null);
 			
 	}
 

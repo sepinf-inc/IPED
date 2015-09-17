@@ -110,7 +110,6 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 	public void clear() {
 		for (AbstractViewer viewer : viewerList)
 			viewer.loadFile(null);
-		loadedViewers.clear();
 		file = null;
 		viewFile = null;
 	}
@@ -136,13 +135,13 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 	}
 	
 	public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
-		clear();
 		this.file = file;
 		this.viewFile = viewFile;
 		this.contentType = contentType;
 		this.viewMediaType = getViewType();
 		this.highlightTerms = highlightTerms;
 		
+		loadedViewers.clear();
 		bestViewer = getBestViewer(viewMediaType);
 		
 		if (fixViewer.isSelected() || currentViewer == bestViewer){
@@ -153,6 +152,10 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 		
 		if(highlightTerms != null && !highlightTerms.isEmpty())
 			loadInViewer(textViewer);
+		
+		for (AbstractViewer viewer : viewerList)
+			if(!loadedViewers.contains(viewer))
+				viewer.loadFile(null);
 
 	}
 	
