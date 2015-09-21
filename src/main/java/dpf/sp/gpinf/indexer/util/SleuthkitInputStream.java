@@ -8,7 +8,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public class SleuthkitInputStream extends SeekableInputStream{
     
     ReadContentInputStream rcis;
-    boolean closed = false;
+    volatile boolean closed = false;
 
     public SleuthkitInputStream(Content file) {
         rcis = new ReadContentInputStream(file);
