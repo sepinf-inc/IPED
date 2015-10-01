@@ -23,7 +23,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
-import java.net.URLDecoder;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -127,11 +127,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	 * Define o caminho onde será encontrado o arquivo de configuração principal.
 	 */
 	private void setConfigPath() throws Exception {
-		String path = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-		path = URLDecoder.decode(path, "UTF-8");
-		configPath = path.substring(0, path.lastIndexOf("/"));
-		if (configPath.charAt(0) == '/' && configPath.charAt(2) == ':')
-			configPath = configPath.substring(1);
+		URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+		configPath = new File(url.toURI()).getParent();
 	}
 	
 	/**
@@ -166,14 +163,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.setProperty("logFileDate", df.format(new Date()));
 		
 		if (noLog) {
-			System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2ConfigurationConsoleOnly.xml").toURI().toURL().toString());
+			System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml").getAbsolutePath());
 		} else {
 			if (logFile == null) {
-				System.setProperty("logFilePath", configPath + "/log");
-				System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2Configuration.xml").toURI().toURL().toString());
+				System.setProperty("logFilePath", new File(configPath, "log").getAbsolutePath());
+				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2Configuration.xml").getAbsolutePath());
 			} else {
 				System.setProperty("logFileNamePath", logFile.getPath());
-				System.setProperty("log4j.configurationFile", new File(configPath + "/conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
+				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").getAbsolutePath());
 			}
 			setConsoleLogFile(logFile);
 		}
