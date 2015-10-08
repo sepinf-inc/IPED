@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -33,6 +34,7 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
@@ -81,7 +83,7 @@ public class TextParser extends CancelableWorker {
 				item = (EvidenceFile)content;
 
 			if (parsingTask != null) {
-				parsingTask.cancel(false);
+				parsingTask.cancel(true);
 			}
 			parsingTask = this;
 
@@ -165,7 +167,7 @@ public class TextParser extends CancelableWorker {
 				metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 			
 			ParseContext context = getTikaContext();
-			is = content.getStream();
+			is = item.getTikaStream();
 
 			textReader = new ParsingReader((Parser) App.get().autoParser, is, metadata, context);
 			textReader.startBackgroundParsing();
@@ -300,8 +302,8 @@ public class TextParser extends CancelableWorker {
 
 			textReader.reallyClose();
 
-		} catch (InterruptedIOException e1) {
-			e1.printStackTrace();
+		} catch (InterruptedIOException | ClosedByInterruptException e1) {
+			//e1.printStackTrace();
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
