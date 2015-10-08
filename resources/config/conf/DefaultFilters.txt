@@ -4,13 +4,14 @@
 
 Filtrar Duplicados = duplicate:false
 Filtrar KFF Ignoráveis = *:* -kffstatus:ignore
-Filtrar Duplicados e Ignoráveis = duplicate:false -kffstatus:ignore
+Filtrar Duplicados e Ignoráveis = duplicate:false AND NOT kffstatus:ignore
 Alerta de Hash = kffstatus:alert
 Alerta de Hash (PI) = kffstatus:pedo
 Arquivos Criptografados = encrypted:true
-Possíveis Digitalizações = conteudo:ocrcharcount????*
-Decodificação com Erro = conteudo:"parserexception true"
+Possíveis Digitalizações = conteudo:ocrcharcount???*
+Problema ao Decodificar = conteudo:"parserexception true"
 Timeout ao Processar = timeout:true
 Itens Apagados = deletado:true
 Itens Recuperados = carved:true
 Subitens de Containers = subitem:true
+Containers não Expandidos = hasChildren:false && contentType:("vnd.ms-outlook-pst" "outlook-dbx" "application/mbox" "x-incredimail" "x-iso9660-image" "x-udf-image" "application/zip" "x-rar-compressed" "x-7z-compressed" "x-tar" "x-arj" "x-archive" "x-cpio" "x-tika-unix-dump" "vnd.ms-tnef")
