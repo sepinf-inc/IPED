@@ -262,10 +262,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if(extractEmbedded)
 				evidence.setParsed(true);
 			
-			if(metadata.get("EncryptedDocument") != null || evidence.isEncrypted()){
-				evidence.setEncrypted(true);
-				evidence.addCategory(SetCategoryTask.ENCRYPTED_CATEGORY);
-			}
+			if(metadata.get("EncryptedDocument") != null)
+				evidence.setExtraAttribute("encrypted", "true");
 
 		}finally{
 			//do nothing
