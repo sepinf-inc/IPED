@@ -85,7 +85,7 @@ public class AppListener implements ActionListener, MouseListener {
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 
-		if (!clearSearchBox && !App.get().marcadores.updatingCombo && (evt.getActionCommand().equals("comboBoxChanged") || evt.getSource() == App.get().filtrarDuplicados || evt.getSource() == App.get().recursiveTreeList)) {
+		if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged") || evt.getSource() == App.get().recursiveTreeList)) {
 
 			// System.out.println(evt.getActionCommand() + " " +
 			// evt.getSource());

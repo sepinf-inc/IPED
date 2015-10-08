@@ -99,6 +99,7 @@ public class App extends JFrame implements WindowListener {
 
 	int totalItens, lastId, lastSelectedDoc;
 	public Marcadores marcadores;
+	FilterManager filterManager;
 	ArrayList<String> palavrasChave, categorias;
 	HashSet<String> keywordSet = new HashSet<String>();
 	Set<String> highlightTerms = new HashSet<String>();
@@ -121,14 +122,16 @@ public class App extends JFrame implements WindowListener {
 	JComboBox<String> termo, filtro;
 	JButton pesquisar, opcoes;
 	JButton ajuda;
-	JCheckBox checkBox, filtrarDuplicados, recursiveTreeList;
+	JCheckBox checkBox, recursiveTreeList;
 	JTable resultsTable;
 	GalleryTable gallery;
 	public HitsTable hitsTable;
 
 	HitsTable subItemTable;
-	JTree tree;
+	JTree tree, bookmarksTree, categoryTree;
 	TreeListener treeListener;
+	CategoryTreeListener categoryListener;
+	BookmarksTreeListener bookmarksListener;
 	HitsTable parentItemTable;
 	JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
@@ -139,9 +142,9 @@ public class App extends JFrame implements WindowListener {
 	JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
 	MenuClass menu;
 	JPanel topPanel;
-	JPanel treePanel;
+	JPanel leftPanel;
 	JPanel multiFilterAlert;
-	boolean disposicaoVertical = true;
+	boolean disposicaoVertical = false;
 	boolean isReport;
 
 	ResultTableModel resultsModel;
@@ -197,19 +200,16 @@ public class App extends JFrame implements WindowListener {
 		applet = this;
 
 		try {
-			codePath = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "/+");
-			codePath = URLDecoder.decode(codePath, "utf-8");
-			codePath = codePath.replace("/ ", "+");
+			URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+			codePath = new File(url.toURI()).getAbsolutePath();
 
 			//codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/iso/indexador/lib/search.jar";
+			//codePath = "E:/pchp1/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
-			if (codePath.charAt(0) == '/' && codePath.charAt(2) == ':')
-				codePath = codePath.substring(1);
 
 			javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
 				@Override
@@ -296,15 +296,11 @@ public class App extends JFrame implements WindowListener {
 		}
 
 		filtro = new JComboBox<String>();
-		filtro.addItem(FILTRO_TODOS);
-		filtro.addItem(FILTRO_SELECTED);
-		for(String categoria : categorias)
-			filtro.addItem(categoria);
 		filtro.setMaximumSize(new Dimension(100, 50));
 		filtro.setMaximumRowCount(30);
 		filtro.setToolTipText("Filtro");
-
-		filtrarDuplicados = new JCheckBox("Ignorar Duplicados");
+		filterManager = new FilterManager(filtro);
+		filterManager.loadFilters();
 
 		topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
@@ -323,7 +319,6 @@ public class App extends JFrame implements WindowListener {
 		//topPanel.add(new JLabel("Filtro:"));
 		topPanel.add(filtro);
 		topPanel.add(multiFilterAlert);
-		topPanel.add(filtrarDuplicados);
 		topPanel.add(new JLabel("    Pesquisar:"));
 		topPanel.add(termo);
 		topPanel.add(opcoes);
@@ -433,43 +428,72 @@ public class App extends JFrame implements WindowListener {
 
 		compositeViewer = new CompositeTabViewer();
 
-		verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, tabbedHits);
-		verticalSplitPane.setOneTouchExpandable(true);
-		verticalSplitPane.setContinuousLayout(true);
-		verticalSplitPane.setResizeWeight(0.7);
-
-		horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, verticalSplitPane, compositeViewer);
+		horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabbedHits, compositeViewer);
 		horizontalSplitPane.setOneTouchExpandable(true);
 		horizontalSplitPane.setContinuousLayout(true);
-		horizontalSplitPane.setResizeWeight(0.6);
+		horizontalSplitPane.setResizeWeight(0.3);
+		
+		verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, horizontalSplitPane);
+		verticalSplitPane.setOneTouchExpandable(true);
+		verticalSplitPane.setContinuousLayout(true);
+		verticalSplitPane.setResizeWeight(0.4);
+		
+		leftPanel = new JPanel(new BorderLayout());
+		
+		categoryTree = new JTree(new CategoryTreeModel()){
+			public Dimension getMaximumSize(){
+				int height = isReport ? Integer.MAX_VALUE : this.getPreferredSize().height;
+				return new Dimension(Integer.MAX_VALUE, height);
+			}
+		};
+		categoryTree.collapseRow(0);
+		categoryTree.setExpandsSelectedPaths(false);
+		categoryListener = new CategoryTreeListener();
+		categoryTree.addTreeSelectionListener(categoryListener);
+		categoryTree.addTreeExpansionListener(categoryListener);
+		
+		bookmarksTree = new JTree(new BookmarksTreeModel()){
+			public Dimension getMaximumSize(){
+				return new Dimension(Integer.MAX_VALUE, this.getPreferredSize().height);
+			}
+		};
+		bookmarksListener = new BookmarksTreeListener();
+		bookmarksTree.addTreeSelectionListener(bookmarksListener);
+		bookmarksTree.addTreeExpansionListener(bookmarksListener);
+		bookmarksTree.collapseRow(0);
+		bookmarksTree.setExpandsSelectedPaths(false);
+		
+		JPanel treePanel = new JPanel();
+		treePanel.setLayout(new BoxLayout(treePanel, BoxLayout.Y_AXIS));
+		treePanel.add(bookmarksTree);
+		treePanel.add(categoryTree);
+		
+		JScrollPane treeScroll = new JScrollPane(treePanel);
+		treeScroll.getVerticalScrollBar().setUnitIncrement(16);
+		leftPanel.add(treeScroll, BorderLayout.CENTER);
+		
+		treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, verticalSplitPane);
+		treeSplitPane.setOneTouchExpandable(true);
+		treeSplitPane.setContinuousLayout(true);
+		treeSplitPane.setResizeWeight(0.2);
 		
 		if(!isReport){
-			recursiveTreeList = new JCheckBox("Listagem recursiva");
+			recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
 			recursiveTreeList.setSelected(true);
+			
 			tree = new JTree(new Object[0]);
 			tree.setRootVisible(true);
-			tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-			JScrollPane treeScroll = new JScrollPane(tree);
-			treePanel = new JPanel();
-			treePanel.setLayout(new BorderLayout());
-			treePanel.add(recursiveTreeList, BorderLayout.NORTH);
-			treePanel.add(treeScroll, BorderLayout.CENTER);
-			treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treePanel, horizontalSplitPane);
-			treeSplitPane.setOneTouchExpandable(true);
-			treeSplitPane.setContinuousLayout(true);
-			treeSplitPane.setResizeWeight(0.15);
+			tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 			treeListener = new TreeListener();
 			tree.addTreeSelectionListener(treeListener);
+			treePanel.add(tree);
+			leftPanel.add(recursiveTreeList, BorderLayout.NORTH);
 		}
 
 		status = new JLabel(" ");
 
 		this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-		if(!isReport)
-			this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-		else
-			this.getContentPane().add(horizontalSplitPane, BorderLayout.CENTER);
-		
+		this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 		this.getContentPane().add(status, BorderLayout.PAGE_END);
 
 		progressBar = new JProgressBar(0, 1);
@@ -489,7 +513,6 @@ public class App extends JFrame implements WindowListener {
 		if(!isReport) recursiveTreeList.addActionListener(appletListener);
 		termo.addActionListener(appletListener);
 		filtro.addActionListener(appletListener);
-		filtrarDuplicados.addActionListener(appletListener);
 		pesquisar.addActionListener(appletListener);
 		opcoes.addActionListener(appletListener);
 		ajuda.addActionListener(appletListener);
@@ -510,6 +533,7 @@ public class App extends JFrame implements WindowListener {
 		termo.getComponent(0).addMouseListener(appletListener);
 	
         //Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
+		gallery.repaint();
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(new KeyEventDispatcher() {
             public boolean dispatchKeyEvent(KeyEvent e) {
@@ -564,10 +588,8 @@ public class App extends JFrame implements WindowListener {
 			horizontalSplitPane.remove(compositeViewer);
 			verticalSplitPane.remove(resultTab);
 			verticalSplitPane.remove(tabbedHits);
-			if(!isReport){
-				treeSplitPane.remove(treePanel);
-				treeSplitPane.remove(horizontalSplitPane);
-			}
+			treeSplitPane.remove(leftPanel);
+			treeSplitPane.remove(horizontalSplitPane);
 			applet.getContentPane().removeAll();
 
 			horizontalSplitPane.add(tabbedHits);
@@ -577,12 +599,9 @@ public class App extends JFrame implements WindowListener {
 			
 			applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 			applet.getContentPane().add(status, BorderLayout.PAGE_END);
-			if(!isReport){
-				treeSplitPane.add(treePanel);
-				treeSplitPane.add(verticalSplitPane);
-				applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-			}else
-				applet.getContentPane().add(verticalSplitPane, BorderLayout.CENTER);
+			treeSplitPane.add(leftPanel);
+			treeSplitPane.add(verticalSplitPane);
+			applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 
 			applet.getContentPane().invalidate();
 			applet.getContentPane().validate();
@@ -597,10 +616,8 @@ public class App extends JFrame implements WindowListener {
 			horizontalSplitPane.remove(compositeViewer);
 			verticalSplitPane.remove(resultTab);
 			verticalSplitPane.remove(horizontalSplitPane);
-			if(!isReport){
-				treeSplitPane.remove(treePanel);
-				treeSplitPane.remove(horizontalSplitPane);
-			}
+			treeSplitPane.remove(leftPanel);
+			treeSplitPane.remove(horizontalSplitPane);
 			applet.getContentPane().removeAll();
 
 			verticalSplitPane.add(resultTab);
@@ -610,12 +627,9 @@ public class App extends JFrame implements WindowListener {
 
 			applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 			applet.getContentPane().add(status, BorderLayout.PAGE_END);
-			if(!isReport){
-				treeSplitPane.add(treePanel);
-				treeSplitPane.add(horizontalSplitPane);
-				applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-			}else
-				applet.getContentPane().add(horizontalSplitPane, BorderLayout.CENTER);
+			treeSplitPane.add(leftPanel);
+			treeSplitPane.add(horizontalSplitPane);
+			applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 
 			applet.getContentPane().invalidate();
 			applet.getContentPane().validate();

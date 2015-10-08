@@ -30,6 +30,7 @@ import java.util.TreeMap;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.tree.TreePath;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -46,12 +47,6 @@ public class Marcadores implements Serializable {
 	 * 
 	 */
 	public static String HISTORY_DIV = "-----------------------Histórico-----------------------";
-	public static String NO_BOOKMARKS_DIV = "[Sem Marcadores]";
-	public static String BOOKMARKS_DIV = "<html><font color=\"blue\"><b>[Marcadores]";
-	public static String CATEGORIES_DIV = "<html><b>[Categorias]";
-	public static String BOOKMARKS_PREFIX = "<html><font color=\"blue\">";
-	public static String CATEGORIES_PREFIX = "";
-	public static int BOOKMARKS_DIV_INDEX = 3;
 	
 	public static String EXT = "." + Versao.APP_EXT.toLowerCase();
 	public static String STATEFILENAME = "marcadores" + EXT;
@@ -66,8 +61,6 @@ public class Marcadores implements Serializable {
 	private File indexDir;
 	File stateFile, cookie;
 	public boolean multiSetting = false;
-	
-	public volatile boolean updatingCombo = false;
 
 	private static JFileChooser fileChooser;
 	private static SearchStateFilter filtro;
@@ -151,7 +144,25 @@ public class Marcadores implements Serializable {
 		for(byte[] b : labels){
 			hasLabel = b[id] != 0;
 			if(hasLabel)
-				break;
+				return true;
+		}
+		return hasLabel;
+	}
+	
+	public final byte[] getLabelBits(int[] labelids){
+		byte[] bits = new byte[labels.size()];  
+		for(int label : labelids)
+			bits[label / labelBits] |= (int) Math.pow(2, label % labelBits);
+		
+		return bits;
+	}
+	
+	public final boolean hasLabel(int id, byte[] labelbits){
+		boolean hasLabel = false;
+		for(int i = 0; i < labelbits.length; i++){
+			hasLabel = (labels.get(i)[id] & labelbits[i]) != 0;
+			if(hasLabel)
+				return true;
 		}
 		return hasLabel;
 	}
@@ -175,8 +186,6 @@ public class Marcadores implements Serializable {
 
 	public int newLabel(String labelName) {
 		
-		//App.get().resultsTable.getColumnModel().getColumn(12).setPreferredWidth(150);
-		
 		int labelId = -1;
 		if (labelNames.size() > 0)
 			for (int i = 0; i <= labelNames.lastKey(); i++)
@@ -193,58 +202,23 @@ public class Marcadores implements Serializable {
 			labelId = labelNames.size();
 
 		labelNames.put(labelId, labelName);
-		updateFilter();
-		
+
 		return labelId;
 	}
 
 	public void delLabel(int label) {
 		
 		labelNames.remove(label);
-		//if(labelNames.size() == 0)
-		//	App.get().resultsTable.getColumnModel().getColumn(12).setPreferredWidth(0);
 		
 		int labelOrder = label / labelBits;
 		int labelMod = label % labelBits;
 		for (int i = 0; i < labels.get(labelOrder).length; i++) {
 			labels.get(labelOrder)[i] = (byte) (labels.get(labelOrder)[i] & (~(1 << labelMod)));
 		}
-		
-		if (App.get().termo != null)
-			updateFilter();
 	}
 	
 	public void changeLabel(int labelId, String newLabel){
 		labelNames.put(labelId, newLabel);
-		updateFilter();
-	}
-	
-	private void updateFilter(){
-		updatingCombo = true;
-		Object prevSelected = App.get().filtro.getSelectedItem();
-		
-		App.get().filtro.removeAllItems();
-		App.get().filtro.addItem(App.FILTRO_TODOS);
-		App.get().filtro.addItem(App.FILTRO_SELECTED);
-		
-		if(labelNames.size() > 0){
-			App.get().filtro.addItem(NO_BOOKMARKS_DIV);
-			App.get().filtro.addItem(BOOKMARKS_DIV);
-		}
-		
-		String[] labels = labelNames.values().toArray(new String[0]); 
-		Arrays.sort(labels);
-		for (String word : labels)
-			App.get().filtro.addItem(BOOKMARKS_PREFIX + word);
-		
-		if(App.get().categorias.size() > 0)
-			App.get().filtro.addItem(CATEGORIES_DIV);
-		for(String categoria : App.get().categorias)
-			App.get().filtro.addItem(CATEGORIES_PREFIX + categoria);
-		
-		App.get().filtro.setSelectedItem(prevSelected);
-		
-		updatingCombo = false;
 	}
 
 	public int getLabelId(String labelName) {
@@ -358,7 +332,6 @@ public class Marcadores implements Serializable {
 				App.get().termo.addItem(text);
 			}
 			atualizarGUI();
-			updateFilter();
 		}
 
 	}
@@ -389,6 +362,7 @@ public class Marcadores implements Serializable {
 				}
 				App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().totalItens);
 				App.get().checkBox.setSelected(selectedItens > 0);
+				App.get().bookmarksListener.updateModelAndSelection();
 			}
 		});
 

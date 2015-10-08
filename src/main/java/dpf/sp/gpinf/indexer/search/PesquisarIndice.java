@@ -151,27 +151,26 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		numFilters = 0;
 		if (!texto.trim().isEmpty())
 			numFilters++;
-			
-		String filtro = App.get().filtro.getSelectedItem().toString();
 		
-		if (!filtro.equals(App.FILTRO_TODOS) && !filtro.equals(App.FILTRO_SELECTED) && 
-			App.get().filtro.getSelectedIndex() >= App.get().filtro.getItemCount() - App.get().categorias.size()) {
-			
-			filtro = IndexItem.CATEGORY + ":\"" + filtro.substring(Marcadores.CATEGORIES_PREFIX.length()).replace("\"", "\\\"") + "\"";
+		if(App.get().filtro.getSelectedIndex() > 1){
+			String filter = App.get().filtro.getSelectedItem().toString();
+			filter =  App.get().filterManager.getFilterExpression(filter);
 			if (texto.trim().isEmpty())
-				texto = filtro;
+				texto = filter;
 			else
-				texto = filtro + " && (" + texto + ")";
+				texto = "(" + texto + ") && (" + filter  + ")";
+			numFilters++;
 		}
 		
-		if (App.get().filtrarDuplicados.isSelected())
-			if (texto.trim().isEmpty())
-				texto = IndexItem.DUPLICATE + ":false";
-			else
-				texto = IndexItem.DUPLICATE + ":false" + " && (" + texto + ")";
-		
-		
 		Query result = getQuery(texto, App.get().analyzer);
+		
+		if(App.get().categoryListener.query != null){
+			BooleanQuery boolQuery = new BooleanQuery();
+			boolQuery.add(result, Occur.MUST);
+			boolQuery.add(App.get().categoryListener.query, Occur.MUST);
+			result = boolQuery;
+			numFilters++;
+		}
 		
 		if(!App.get().isReport){
 			Query treeQuery = App.get().treeListener.treeQuery;
@@ -179,17 +178,15 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				treeQuery = App.get().treeListener.recursiveTreeQuery;
 			
 			if(treeQuery != null){
-				if (texto.trim().isEmpty())
-					result = treeQuery;
-				else{
-					BooleanQuery boolQuery = new BooleanQuery();
-					boolQuery.add(result, Occur.MUST);
-					boolQuery.add(treeQuery, Occur.MUST);
-					result = boolQuery;
-				}
+				BooleanQuery boolQuery = new BooleanQuery();
+				boolQuery.add(result, Occur.MUST);
+				boolQuery.add(treeQuery, Occur.MUST);
+				result = boolQuery;
 				numFilters++;
 			}
 		}
+		
+		//System.out.println(result.toString());
 		
 		return result;
 	}
@@ -205,21 +202,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 		} else {
 			String[] fields = { IndexItem.NAME, IndexItem.CONTENT };
-
-			/*BooleanQuery result = new BooleanQuery();
-			for (int i = 0; i < fields.length; i++) {
-				AnalyzingQueryParser parser = new AnalyzingQueryParser(Versao.current, fields[i], analyzer);
-				// ComplexPhraseQueryParser parser = new ComplexPhraseQueryParser(Versao.current, fields[i], analyzer);
-				parser.setAllowLeadingWildcard(true);
-				parser.setFuzzyPrefixLength(2);
-				parser.setFuzzyMinSim(0.7f);
-				parser.setDateResolution(DateTools.Resolution.SECOND);
-				parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
-				result.add(parser.parse(texto), Occur.SHOULD);
-			}
-			
-			return result;
-			*/
   
 			  StandardQueryParser parser = new StandardQueryParser(analyzer);
 			  parser.setMultiFields(fields);
@@ -245,16 +227,42 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		}
 
 	}
-	
-	
-	  public SearchResult filtrarMarcador(SearchResult result, String labelName) throws Exception{
 	  
+	  public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames) throws Exception{
+		  
 		  	Marcadores marcadores = App.get().marcadores;
-		  	int labelId = marcadores.getLabelId(labelName.substring(Marcadores.BOOKMARKS_PREFIX.length()));
+		  	int[] ids = App.get().ids;
+		  	
+		  	int[] labelIds = new int[labelNames.size()];
+		  	int i = 0;
+		  	for(String labelName : labelNames)
+		  		labelIds[i++] = marcadores.getLabelId(labelName);
+			byte[] labelBits = marcadores.getLabelBits(labelIds);
+		  	
 			int removed = 0;
-			int[] ids = App.get().ids;
-			for (int i = 0; i < result.length; i++)
-				if (!marcadores.hasLabel(ids[result.docs[i]], labelId)) {
+			for (i = 0; i < result.length; i++)
+				if (!marcadores.hasLabel(ids[result.docs[i]], labelBits)) {
+					result.docs[i] = -1;
+					removed++;
+				}
+
+			return clearResults(result, removed);
+	  }
+	  
+	  public SearchResult filtrarSemEComMarcadores(SearchResult result, Set<String> labelNames) throws Exception{
+		  
+		  	Marcadores marcadores = App.get().marcadores;
+		  	int[] ids = App.get().ids;
+		  	
+		  	int[] labelIds = new int[labelNames.size()];
+		  	int i = 0;
+		  	for(String labelName : labelNames)
+		  		labelIds[i++] = marcadores.getLabelId(labelName);
+			byte[] labelBits = marcadores.getLabelBits(labelIds);
+		  	
+			int removed = 0;
+			for (i = 0; i < result.length; i++)
+				if (marcadores.hasLabel(ids[result.docs[i]]) && !marcadores.hasLabel(ids[result.docs[i]], labelBits)) {
 					result.docs[i] = -1;
 					removed++;
 				}
@@ -275,19 +283,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			return clearResults(result, removed);
 	  }
 	  
-	  public SearchResult filtrarMarcadores(SearchResult result){
-		  	Marcadores marcadores = App.get().marcadores;
-			int removed = 0;
-			int[] ids = App.get().ids;
-			for (int i = 0; i < result.length; i++)
-				if (!marcadores.hasLabel(ids[result.docs[i]])) {
-					result.docs[i] = -1;
-					removed++;
-				}
-
-			return clearResults(result, removed);
-	  }
-	  
 
 	  public SearchResult filtrarSelecionados(SearchResult result) throws Exception {
 
@@ -301,8 +296,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				}
 
 			return clearResults(result, removed);
-	}
-	 
+	  }
 
 	@Override
 	public SearchResult doInBackground() {
@@ -314,22 +308,25 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			result = pesquisar();
 
 			String filtro = App.get().filtro.getSelectedItem().toString();
-			
-			if(App.get().filtro.getSelectedIndex() != 0 && !filtro.equals(Marcadores.CATEGORIES_DIV))
-				numFilters++;
-			
-			if (filtro.equals(App.FILTRO_SELECTED))
+			if (filtro.equals(App.FILTRO_SELECTED)){
 				result = filtrarSelecionados(result);
+				numFilters++;
+			}
 			
-			else if(filtro.equals(Marcadores.BOOKMARKS_DIV))
-				result = filtrarMarcadores(result);
-			
-			else if(filtro.equals(Marcadores.NO_BOOKMARKS_DIV))
-				result = filtrarSemMarcadores(result);
-			
-			else if(App.get().filtro.getSelectedIndex() >= Marcadores.BOOKMARKS_DIV_INDEX + 1 && 
-					App.get().filtro.getSelectedIndex() < App.get().marcadores.labelNames.size() + Marcadores.BOOKMARKS_DIV_INDEX + 1)
-				result = filtrarMarcador(result, App.get().filtro.getSelectedItem().toString());
+			HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
+			if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
+				numFilters++;
+				if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
+					if(bookmarkSelection.size() == 1)
+						result = filtrarSemMarcadores(result);
+					else{
+						bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
+						result = filtrarSemEComMarcadores(result, bookmarkSelection);
+					}
+				}else
+					result = filtrarMarcadores(result, bookmarkSelection);
+				
+			}
 			 
 			countVolume(result);
 
