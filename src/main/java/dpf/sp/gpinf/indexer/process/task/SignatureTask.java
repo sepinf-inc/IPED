@@ -27,6 +27,9 @@ public class SignatureTask extends AbstractTask {
 	}
 	
 	public void process(EvidenceFile evidence){
+		
+		if(evidence.isDir())
+			evidence.setMediaType(MediaType.OCTET_STREAM);
 			
 		MediaType type = evidence.getMediaType();
 		if (type == null) {
