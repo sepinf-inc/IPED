@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -112,6 +113,12 @@ public class Configuration {
 		}
 		if (indexerTemp != null)
 			indexerTemp.mkdirs();
+		
+		value = properties.getProperty("TskLoaddbPath");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			SleuthkitReader.setTskPath(configPath + "/" + value);
 
 		value = properties.getProperty("numThreads");
 		if (value != null)

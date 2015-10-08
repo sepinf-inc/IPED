@@ -4,6 +4,11 @@
 
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
+# Caminho relativo para o Sleuthkit tsk_loaddb. Comente caso esteja no PATH do sistema.
+# É distribuída versão para Windows com patch que permite processar os itens antes do término do loaddb. 
+# No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
+TskLoaddbPath = tools/tsk/x64/tsk_loaddb
+
 # Número de threads de processamento: "default" utiliza o número de processadores.
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
 numThreads = default
@@ -39,14 +44,15 @@ extraCharsToIndex =
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
 
-# Adiciona arquivos apagados orphans em sistemas FAT. Pode incluir grande quantidade de itens corrompidos,
-# possivelmente impactando tempo de processamento
-addFatOrphans = true
+# Não re-processa hard links apontando para itens já processados. Os hard links são adicionados ao caso,
+# porém seu conteúdo não é processado (indexado, expandido, carveado, etc), mas aproveita o hash já calculado.
+# Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
+ignoreHardLinks = false
 
 # Configure caso queira ignorar arquivos orphans com base no seu tamanho.
 # Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
 # que podem tornar o processamento inviável.
-#minOrphanSizeToIgnore = 10240000
+#minOrphanSizeToIgnore = 102400000
 
 # Tamanho em bytes de divisão do espaço não alocado. Em casos onde o espaço não alocado não seja indexado,
 # é interessante aumentar em 10x ou mais o valor para minimizar a perda de itens de carving nas bordas.
