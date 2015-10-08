@@ -91,7 +91,7 @@ public class ItemProducer extends Thread {
 				if (Thread.interrupted())
 					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
 
-				if (!listOnly) {
+				if (listOnly) {
 					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
 					LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
 				}
