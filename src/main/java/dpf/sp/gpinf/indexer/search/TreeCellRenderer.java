@@ -37,7 +37,7 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer{
 	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus){
 		
 		Node node = (Node)value;
-		boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR));
+		boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) && node.docId != -1;
 		DefaultTreeCellRenderer result = (DefaultTreeCellRenderer)super.getTreeCellRendererComponent(tree, value, selected, expanded, notDir, row, hasFocus);
 		
 		if(notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT)))
