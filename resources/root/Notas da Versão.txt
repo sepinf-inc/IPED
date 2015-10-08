@@ -1,12 +1,27 @@
-xx/09/2015: IPED-3.x
-- Novo sistema de filtros e redesenho da interface
-- Visualização de arquivos mais rápida, sem geração de temporário
+08/10/2015: IPED-3.7
+- Função para criar, nomear e salvar filtros
+- Filtros pre-definidos: timeout, erro de parsing, ignorar duplicados, kffignore, digitalização, etc
 - Visualizador Hexadecimal (contribuição PCF Wladimir)
+- Hierarquia entre Categorias
+- Seleção múltipla de diretórios, categorias e marcadores
+- Início do processamento não mais aguarda término da varredura da imagem (necessário patch no Sleuthkit-4.2)
+- Processamento até 50% mais rápido de itens alocados, via ordenação pelo setor ocupado, evitando seeks
+- Opção para ignorar Hard Links, causadores de lentidão em sistemas HFS+ do tipo time machines
+- Visualização dos itens mais rápida sem geração de temporários
 - Seleção de item por digitação em coluna ordenada na tabela (PCF Wladimir)
 - Melhor HTML de visualização de itens do Emule e Ares (PCF Wladimir)
-- Opção p/ indexar sem converter p/ minúsculas (melhor dicionário p/ quebra de senhas)
+- Opção para indexar sem converter p/ minúsculas (melhor dicionário p/ quebra de senhas)
 Correções:
-- Planilhas XLSX protegidas dentro de containers corretamente classificadas
+- Crashes no parser nativo 7z com CHM, agora configurado para processar apenas ISO e 7z
+- Planilhas XLSX protegidas dentro de containers incorretamente tipadas
+- Lentidão ao abortar visualização de texto de itens grandes com conteúdo zerado
+
+
+17/09/2015: IPED-3.6.3
+- Inclui versão correta dos arquivos de configuração do log
+
+15/09/2015: IPED-3.6.2
+- Corrige geração do log ao executar fora da pasta do iped.jar
 
 14/09/2015: IPED-3.6.1
 - Habilitado por padrão geração de miniaturas de vídeos
