@@ -24,6 +24,8 @@ import java.io.Writer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.fork.ForkParser;
@@ -176,8 +178,20 @@ public class ParsingReader extends Reader {
 		future = threadPool.submit(new ParsingTask());
 	}
 	
-	public static ExecutorService threadPool = Executors.newCachedThreadPool();
+	public static ExecutorService threadPool = Executors.newCachedThreadPool(new ParsingThreadFactory());
+	
 	private Future future;
+	
+	private static class ParsingThreadFactory implements ThreadFactory{
+		AtomicInteger i = new AtomicInteger();
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread t = new Thread(r, "ParsingThread-" + i.getAndIncrement());
+			t.setDaemon(true);
+			return t;
+		}
+		
+	}
 	
 	public static void shutdownTasks(){
 		threadPool.shutdownNow();

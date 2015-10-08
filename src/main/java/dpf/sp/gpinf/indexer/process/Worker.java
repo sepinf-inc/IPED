@@ -77,7 +77,6 @@ public class Worker extends Thread {
 
 	public static void resetStaticVariables() {
 		IndexerDefaultParser.parsingErrors = 0;
-		ParsingReader.threadPool = Executors.newCachedThreadPool();
 	}
 
 	public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
