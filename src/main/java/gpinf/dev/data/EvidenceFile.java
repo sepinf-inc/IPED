@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -51,23 +52,31 @@ import gpinf.util.FormatUtil;
  * @author Nassif (GPINF/SP)
  */
 public class EvidenceFile implements Serializable, StreamSource {
-    private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
-	
-    private static class Counter {
+    
+	private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+    
+	private static class Counter {
 
+		private static int nextId = 0;
+		
         public static synchronized int getNextId() {
             return nextId++;
         }
-
-        public static int nextId = 0;
-
+        
+        public static synchronized int setStartID(int start) {
+            return nextId = start;
+        }
+    }
+	
+    public static int getNextId() {
+        return Counter.getNextId();
     }
 
     /**
      * @param start id inicial para itens adicionados após o processamento inicial
      */
     public static void setStartID(int start) {
-        Counter.nextId = start;
+    	Counter.setStartID(start);
     }
 
     /** Identificador utilizado para serialização da classe. */
@@ -143,7 +152,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private boolean isSubItem = false, hasChildren = false;
 
-    private boolean isDir = false, isRoot = false;
+    private boolean isDir = false, isRoot = false, sumVolume = true;
     
     private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false;
 
@@ -165,6 +174,8 @@ public class EvidenceFile implements Serializable, StreamSource {
     private String parsedTextCache;
 
     private String hash;
+    
+    private HashValue hashValue;
 
     private File file, tmpFile;
 
@@ -393,6 +404,14 @@ public class EvidenceFile implements Serializable, StreamSource {
     public String getHash() {
         return hash;
     }
+    
+    public HashValue getHashValue(){
+    	if(hash == null || hash.isEmpty())
+    		return null;
+    	if(hashValue == null)
+    		hashValue = new HashValue(hash);
+    	return hashValue;
+    }
 
     /**
      * 
@@ -400,7 +419,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public int getId() {
         if (id == -1)
-            id = Counter.getNextId();
+            id = getNextId();
 
         return id;
     }
@@ -584,7 +603,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 	        	tmpResources.addResource(new Closeable() {
 	                public void close() throws IOException {
 	                    if (!file.delete())
-	                        throw new IOException("Could not delete tem file " + file.getPath());
+	                        throw new IOException("Could not delete temp file " + file.getPath());
 	                }
 	            });
 	        	InputStream in = getBufferedStream();
@@ -685,13 +704,6 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public boolean isDuplicate() {
         return duplicate;
-    }
-
-    /**
-     * @return true se o item está cifrado
-     */
-    public boolean isEncrypted() {
-        return encrypted;
     }
     
     /**
@@ -838,15 +850,6 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public void setEmailPai(EvidenceFile pai) {
         emailPai = pai;
-    }
-
-    /**
-     * Define se o item é cifrado
-     * 
-     * @param encrypted se é cifrado
-     */
-    public void setEncrypted(boolean encrypted) {
-        this.encrypted = encrypted;
     }
 
     /**
@@ -1113,5 +1116,13 @@ public class EvidenceFile implements Serializable, StreamSource {
             sb.append("\n\t\tTamanho do Arquivo: ").append(length);
         return sb.toString();
     }
+
+	public boolean isToSumVolume() {
+		return sumVolume;
+	}
+
+	public void setSumVolume(boolean sumVolume) {
+		this.sumVolume = sumVolume;
+	}
 
 }
