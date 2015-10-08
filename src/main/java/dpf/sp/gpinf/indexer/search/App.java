@@ -431,12 +431,12 @@ public class App extends JFrame implements WindowListener {
 		horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabbedHits, compositeViewer);
 		horizontalSplitPane.setOneTouchExpandable(true);
 		horizontalSplitPane.setContinuousLayout(true);
-		horizontalSplitPane.setResizeWeight(0.3);
+		horizontalSplitPane.setResizeWeight(0.4);
 		
 		verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, horizontalSplitPane);
 		verticalSplitPane.setOneTouchExpandable(true);
 		verticalSplitPane.setContinuousLayout(true);
-		verticalSplitPane.setResizeWeight(0.4);
+		verticalSplitPane.setResizeWeight(0.5);
 		
 		leftPanel = new JPanel(new BorderLayout());
 		
@@ -475,7 +475,7 @@ public class App extends JFrame implements WindowListener {
 		treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, verticalSplitPane);
 		treeSplitPane.setOneTouchExpandable(true);
 		treeSplitPane.setContinuousLayout(true);
-		treeSplitPane.setResizeWeight(0.2);
+		treeSplitPane.setResizeWeight(0.1);
 		
 		if(!isReport){
 			recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
@@ -606,8 +606,8 @@ public class App extends JFrame implements WindowListener {
 			applet.getContentPane().invalidate();
 			applet.getContentPane().validate();
 			applet.getContentPane().repaint();
-			verticalSplitPane.setDividerLocation(0.4);
-			horizontalSplitPane.setDividerLocation(0.3);
+			verticalSplitPane.setDividerLocation(0.5);
+			horizontalSplitPane.setDividerLocation(0.4);
 
 			disposicaoVertical = false;
 

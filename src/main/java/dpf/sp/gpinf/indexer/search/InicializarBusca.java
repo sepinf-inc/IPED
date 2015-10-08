@@ -20,8 +20,6 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,9 +32,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.tika.parser.Parser;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
@@ -108,8 +104,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	@Override
 	public void done() {
 		App.get().marcadores.loadState();
-		App.get().marcadores.atualizarGUI();
-		App.get().horizontalSplitPane.setDividerLocation(0.6);
+		App.get().marcadores.atualizarGUI();		
 		App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
 		App.get().resultsTable.getTableHeader().repaint();
 		
