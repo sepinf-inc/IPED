@@ -38,8 +38,6 @@ import gpinf.dev.data.FileGroup;
 public class KFFTask extends AbstractTask{
     
 	private Logger LOGGER = LoggerFactory.getLogger(KFFTask.class);
-    private static String ALERT = "Hash com Alerta";
-    private static String IGNORE = "Hash Ignorável";
     private static String CONF_FILE = "KFFTaskConfig.txt";
     
     public static int excluded = 0;
@@ -121,11 +119,6 @@ public class KFFTask extends AbstractTask{
                 reader.close();
             }
             
-            if(caseData != null){
-                this.caseData.addBookmark(new FileGroup(ALERT, "", ""));
-                this.caseData.addBookmark(new FileGroup(IGNORE, "", ""));
-            }
-            
         }
     }
     
@@ -195,12 +188,13 @@ public class KFFTask extends AbstractTask{
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
          
-        String hash = evidence.getHash();
+    	HashValue hash = evidence.getHashValue();
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
-        	Integer attr = map.get(new HashValue(hash));
+        	Integer attr = map.get(hash);
             if(attr != null){
                 if(attr > 0 || alertProducts.contains(products.get(-attr)[0]))
-                	evidence.addCategory(ALERT);
+                	//evidence.addCategory(ALERT);
+                	evidence.setExtraAttribute("kffstatus", "alert");
                 else{
                     if(excludeKffIgnorable){
                         evidence.setToIgnore(true);
@@ -209,9 +203,9 @@ public class KFFTask extends AbstractTask{
                             excluded++;
                         }
                     }else
-                        evidence.addCategory(IGNORE);
+                        //evidence.addCategory(IGNORE);
+                    	evidence.setExtraAttribute("kffstatus", "ignore");
                 }
-                    
                 //evidence.setExtraAttribute("kffgroup", kffattr.group);
             }
         }

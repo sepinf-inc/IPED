@@ -25,7 +25,6 @@ import dpf.sp.gpinf.indexer.util.Log;
  */
 public class LedKFFTask extends AbstractTask {
 
-    private static String ledCategory = "Hash com Alerta (PI)";
     private static Object lock = new Object();
     private static HashValue[] hashArray;
     private static final String taskName = "Consulta Base de Hashes do LED";
@@ -40,7 +39,7 @@ public class LedKFFTask extends AbstractTask {
         synchronized (lock) {
             if (hashArray != null) return;
 
-            this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
+            //this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
             String hash = confParams.getProperty("hash");
             String ledWkffPath = confParams.getProperty("ledWkffPath");
             if (ledWkffPath == null || hash == null)
@@ -89,10 +88,11 @@ public class LedKFFTask extends AbstractTask {
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
 
-        String hash = evidence.getHash();
+    	HashValue hash = evidence.getHashValue();
         if (hash != null && hashArray != null) {
-            if (Arrays.binarySearch(hashArray, new HashValue(hash)) >= 0) evidence.addCategory(ledCategory);
-
+            if (Arrays.binarySearch(hashArray, hash) >= 0)
+            	//evidence.addCategory(ledCategory);
+            	evidence.setExtraAttribute("kffstatus", "pedo");
         }
 
     }
