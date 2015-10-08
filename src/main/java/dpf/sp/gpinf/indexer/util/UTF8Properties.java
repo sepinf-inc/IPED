@@ -3,8 +3,11 @@ package dpf.sp.gpinf.indexer.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -25,5 +28,14 @@ public class UTF8Properties extends Properties {
             if (pos > 0) super.put(str.substring(0, pos).trim(), str.substring(pos + 1).trim());
         }
         in.close();
+    }
+    
+    public synchronized void store(File file) throws IOException {
+    	OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+        for(Map.Entry<Object,Object> entry : this.entrySet()){
+        	writer.write(entry.getKey() + " = " + entry.getValue());
+        	writer.write("\r\n");
+        }
+        writer.close();
     }
 }

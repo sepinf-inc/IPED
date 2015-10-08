@@ -237,7 +237,11 @@ public class MenuListener implements ActionListener {
 
 			new GerenciadorMarcadores();
 
-		} else if (e.getSource() == menu.navigateToParent) {
+		} else if (e.getSource() == menu.gerenciarFiltros) {
+
+			App.get().filterManager.setVisible(true);
+
+		}else if (e.getSource() == menu.navigateToParent) {
 			
 			int selIdx = App.get().resultsTable.getSelectedRow();
 			if(selIdx != -1){
@@ -247,7 +251,7 @@ public class MenuListener implements ActionListener {
 			
 		} else if (e.getSource() == menu.exportTerms){
 			new ExportIndexedTerms(App.get().reader).export();
-		}
+		} 
 
 	}
 

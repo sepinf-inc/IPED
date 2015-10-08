@@ -28,7 +28,8 @@ public class MenuClass extends JPopupMenu {
 	private static final long serialVersionUID = 1L;
 
 	JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
-			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms;
+			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
+			gerenciarFiltros;
 
 	// JCheckBoxMenuItem changeViewerTab;
 
@@ -56,19 +57,23 @@ public class MenuClass extends JPopupMenu {
 		*/
 
 		//this.addSeparator();
+
+		carregarMarcadores = new JMenuItem("Carregar marcadores");
+		carregarMarcadores.addActionListener(menuListener);
+		this.add(carregarMarcadores);
+		
+		salvarMarcadores = new JMenuItem("Salvar marcadores");
+		salvarMarcadores.addActionListener(menuListener);
+		this.add(salvarMarcadores);
 		
 		gerenciarMarcadores = new JMenuItem("Gerenciar Marcadores");
 		gerenciarMarcadores.addActionListener(menuListener);
 		this.add(gerenciarMarcadores);
 		
-
-		salvarMarcadores = new JMenuItem("Salvar marcadores");
-		salvarMarcadores.addActionListener(menuListener);
-		this.add(salvarMarcadores);
-
-		carregarMarcadores = new JMenuItem("Carregar marcadores");
-		carregarMarcadores.addActionListener(menuListener);
-		this.add(carregarMarcadores);
+		gerenciarFiltros = new JMenuItem("Gerenciar Filtros");
+		gerenciarFiltros.addActionListener(menuListener);
+		this.add(gerenciarFiltros);
+		
 		
 		this.addSeparator();
 

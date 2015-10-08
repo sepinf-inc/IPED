@@ -1,0 +1,16 @@
+﻿###############################
+# Filtros pré-configurados
+############################
+
+Filtrar Duplicados = duplicate:false
+Filtrar KFF Ignoráveis = *:* -kffstatus:ignore
+Filtrar Duplicados e Ignoráveis = duplicate:false -kffstatus:ignore
+Alerta de Hash = kffstatus:alert
+Alerta de Hash (PI) = kffstatus:pedo
+Arquivos Criptografados = encrypted:true
+Possíveis Digitalizações = conteudo:ocrcharcount????*
+Decodificação com Erro = conteudo:"parserexception true"
+Timeout ao Processar = timeout:true
+Itens Apagados = deletado:true
+Itens Recuperados = carved:true
+Subitens de Containers = subitem:true
