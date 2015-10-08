@@ -163,14 +163,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		System.setProperty("logFileDate", df.format(new Date()));
 		
 		if (noLog) {
-			System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml").getAbsolutePath());
+			System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml").toURI().toURL().toString());
 		} else {
 			if (logFile == null) {
 				System.setProperty("logFilePath", new File(configPath, "log").getAbsolutePath());
-				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2Configuration.xml").getAbsolutePath());
+				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2Configuration.xml").toURI().toURL().toString());
 			} else {
 				System.setProperty("logFileNamePath", logFile.getPath());
-				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").getAbsolutePath());
+				System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
 			}
 			setConsoleLogFile(logFile);
 		}
