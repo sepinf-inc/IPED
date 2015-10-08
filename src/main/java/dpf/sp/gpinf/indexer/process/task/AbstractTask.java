@@ -136,7 +136,8 @@ public abstract class AbstractTask {
 				Long len = evidence.getLength();
 				if(len == null)
 					len = 0L;
-				stats.addVolume(len);
+				if(evidence.isToSumVolume())
+				    stats.addVolume(len);
 			}
 			worker.itensBeingProcessed--;
 		}

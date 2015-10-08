@@ -197,7 +197,7 @@ public class Worker extends Thread {
 	@Override
 	public void run() {
 
-		LOGGER.info("{} iniciada.", getName());
+		LOGGER.info("{} iniciado.", getName());
 		
 		while (!this.isInterrupted() && exception == null) {
 
