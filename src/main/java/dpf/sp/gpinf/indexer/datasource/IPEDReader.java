@@ -173,20 +173,22 @@ public class IPEDReader extends DataSourceReader{
 				value = value.toUpperCase();
 				evidence.setHash(value);
 				
-				File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);
-				if(viewFile != null)
-					evidence.setViewFile(viewFile);
-				
-				//Copia resultado prévio do OCR
-				String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
-	            File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
-	            File destDir = new File(output, ocrPrefix);
-	            if(ocrDir.exists()){
-	                destDir.mkdirs();
-	                for(String name : ocrDir.list())
-	                    if(name.equals(value + ".txt") || name.startsWith(value + "-child"))
-	                        IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
-	            }
+				if(!value.isEmpty()){
+					File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);
+					if(viewFile != null)
+						evidence.setViewFile(viewFile);
+					
+					//Copia resultado prévio do OCR
+					String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
+		            File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
+		            File destDir = new File(output, ocrPrefix);
+		            if(ocrDir.exists()){
+		                destDir.mkdirs();
+		                for(String name : ocrDir.list())
+		                    if(name.equals(value + ".txt") || name.startsWith(value + "-child"))
+		                        IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
+		            }
+				}
 			}
 			
 			value = doc.get(IndexItem.DELETED);
