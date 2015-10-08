@@ -18,9 +18,13 @@ public class TaskInstaller {
 	public void installProcessingTasks(Worker worker) throws Exception{
 		
 		List<AbstractTask> tasks = worker.tasks;
-           
+        
+		tasks.add(new IgnoreHardLinkTask(worker));
 		tasks.add(new TempFileTask(worker));
 		tasks.add(new HashTask(worker));
+		//Nova tarefa IgnoreHardLinkTask após HashTask para armazenar hash dos arquivos
+		tasks.add(new IgnoreHardLinkTask(worker));
+		
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));
 		tasks.add(new SetCategoryTask(worker));
