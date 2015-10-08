@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -319,7 +320,12 @@ public class Manager {
 		if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
 			LOGGER.info("Copiando Índice...");
-			IOUtil.copiaDiretorio(indexTemp, indexDir);
+			try{
+				Files.move(indexTemp.toPath(), indexDir.toPath());
+				
+			}catch(IOException e){
+				IOUtil.copiaDiretorio(indexTemp, indexDir);
+			}
 		}
 		
 		for (int k = 0; k < workers.length; k++) {
