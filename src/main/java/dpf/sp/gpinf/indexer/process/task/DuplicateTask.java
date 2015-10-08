@@ -33,9 +33,8 @@ public class DuplicateTask extends AbstractTask{
 	public void process(EvidenceFile evidence){
 		
 		// Verificação de duplicados
-		String hash = evidence.getHash();
-		if (hash != null){
-			HashValue hashValue = new HashValue(hash);
+		HashValue hashValue = evidence.getHashValue();
+		if (hashValue != null){
 			synchronized (hashMap) {
 				if(!hashMap.containsKey(hashValue)){
 					hashMap.put(hashValue, hashValue);
@@ -72,7 +71,7 @@ public class DuplicateTask extends AbstractTask{
 				for (int i = 0; i < reader.maxDoc(); i++) {
 					Document doc = reader.document(i);
 					String hash = doc.get(IndexItem.HASH);
-					if (hash != null){
+					if (hash != null && !hash.isEmpty()){
 						HashValue hValue = new HashValue(hash);
 						hashMap.put(hValue, hValue);
 					}
