@@ -73,16 +73,6 @@ public class GerenciadorMarcadores implements ActionListener {
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
 	JScrollPane scrollList = new JScrollPane(list);
-	
-	class Label{
-		int id;
-		public Label(int id){
-			this.id = id;
-		}
-		public String ToString(){
-			return App.get().marcadores.getLabelMap().get(id);
-		}
-	}
 
 	public GerenciadorMarcadores() {
 
