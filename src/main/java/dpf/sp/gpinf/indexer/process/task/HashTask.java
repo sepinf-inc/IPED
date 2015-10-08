@@ -69,12 +69,16 @@ public class HashTask extends AbstractTask{
 
 		byte[] bytes;
 
-		public HashValue(){
+		/*public HashValue(){
 		    
-		}
+		}*/
 		
 		public HashValue(String hash) {
 			bytes = DatatypeConverter.parseHexBinary(hash);
+		}
+		
+		public String toString(){
+			return DatatypeConverter.printHexBinary(bytes);
 		}
 
 		@Override
