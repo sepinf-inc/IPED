@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -26,6 +27,8 @@ import javax.swing.tree.TreePath;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -35,27 +38,42 @@ import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 public class TreeListener implements  TreeSelectionListener{
 	
 	Query treeQuery, recursiveTreeQuery;
+	HashSet<TreePath> selection = new HashSet<TreePath>();
 
 	@Override
 	public void valueChanged(TreeSelectionEvent evt) {
 		
-		Node selectedNode = (Node)evt.getPath().getLastPathComponent();
+		for(TreePath path : evt.getPaths())
+			if(selection.contains(path))
+				selection.remove(path);
+			else
+				selection.add(path);
 		
-		if(selectedNode.docId == -1){
+		boolean rootSelected = false;
+		for(TreePath path : selection)
+			if(((Node)path.getLastPathComponent()).docId == -1){
+				rootSelected = true;
+				break;
+			}
+		
+		if(rootSelected){
 			treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
 			recursiveTreeQuery = null;
 			
 		}else{
-			Document doc = selectedNode.getDoc();
+			treeQuery = new BooleanQuery();
+			recursiveTreeQuery = new BooleanQuery();
 			
-			String parentId = doc.get(IndexItem.FTKID);
-			if (parentId == null)
-				parentId = doc.get(IndexItem.ID);
-			
-			treeQuery = new TermQuery(new Term(IndexItem.PARENTID, parentId));
-			
-			recursiveTreeQuery = new TermQuery(new Term(IndexItem.PARENTIDs, parentId));
-			
+			for(TreePath path : selection){
+				Document doc = ((Node)path.getLastPathComponent()).getDoc();
+				
+				String parentId = doc.get(IndexItem.FTKID);
+				if (parentId == null)
+					parentId = doc.get(IndexItem.ID);
+				
+				((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
+				((BooleanQuery)recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
+			}
 		}
 		
 		App.get().appletListener.updateFileListing();
