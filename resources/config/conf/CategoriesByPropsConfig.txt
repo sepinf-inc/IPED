@@ -14,6 +14,7 @@ function addNewCategories(set)
 	set.add("Textos Temporários Internet");
 	set.add("Tamanho Zero");
 	set.add("Imagens em Pasta de Sistema");
+	set.add("Outras Imagens");
 	set.add("Textos em Pasta de Sistema");
 	set.add("Lixeira do Windows");
 	set.add("Atalhos para arquivos");
@@ -52,6 +53,8 @@ function addCategory(e){
 		else if(inSystemFolder(e))
 			e.setCategory("Imagens em Pasta de Sistema");
 			
+		else
+			e.setCategory("Outras Imagens");
 	}
 
 	else if(categorias.indexOf("Outros Textos") > -1){
