@@ -39,7 +39,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 			else
 				selection.add(path);
 				
-		if(selection.contains(root)){
+		if(selection.contains(root) || selection.isEmpty()){
 			query = null;
 			
 		}else{

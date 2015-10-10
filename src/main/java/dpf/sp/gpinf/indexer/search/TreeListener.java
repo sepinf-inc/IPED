@@ -56,7 +56,7 @@ public class TreeListener implements  TreeSelectionListener{
 				break;
 			}
 		
-		if(rootSelected){
+		if(rootSelected  || selection.isEmpty()){
 			treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
 			recursiveTreeQuery = null;
 			
