@@ -14,4 +14,4 @@ Timeout ao Processar = timeout:true
 Itens Apagados = deletado:true
 Itens Recuperados = carved:true
 Subitens de Containers = subitem:true
-Containers não Expandidos = hasChildren:false && contentType:("vnd.ms-outlook-pst" "outlook-dbx" "application/mbox" "x-incredimail" "x-iso9660-image" "x-udf-image" "application/zip" "x-rar-compressed" "x-7z-compressed" "x-tar" "x-arj" "x-archive" "x-cpio" "x-tika-unix-dump" "vnd.ms-tnef")
+Containers não Expandidos = hasChildren:false && categoria:("Caixas de Emails" "Arquivos Compactados")
