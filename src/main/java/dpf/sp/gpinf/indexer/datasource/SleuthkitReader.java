@@ -234,7 +234,10 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	private void waitProcess(Process process, File image){
 		try{
-			process.waitFor();
+			int exit = process.waitFor();
+			if(exit != 0)
+				LOGGER.error("Sleuthkit LoadDb terminou com erro {}. Possivelmente"
+						+ " muitos itens nao foram adicionados ao caso!", exit);
 			
 		}catch(InterruptedException ie){
 			process.destroy();
