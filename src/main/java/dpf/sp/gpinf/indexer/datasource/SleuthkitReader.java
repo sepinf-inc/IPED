@@ -19,6 +19,8 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -52,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
@@ -93,21 +96,58 @@ public class SleuthkitReader extends DataSourceReader{
 		TSK_CMD[0] = tskPath;
 	}
 
-	public boolean isSupported(File report) {
-		String name = report.getName().toLowerCase();
+	public boolean isSupported(File file) {
+		String name = file.getName().toLowerCase();
 		return 	name.endsWith(".000") ||
 				name.endsWith(".001") || 
 				name.endsWith(".e01") || 
 				name.endsWith(".aff") || 
 				name.endsWith(".l01") ||
 				name.endsWith(".dd") || 
-				isPhysicalDrive(report) ||
+				isPhysicalDrive(file) ||
+				isISO9660(file) ||
 				name.equals(DB_NAME);
 	}
 	
 	public static boolean isPhysicalDrive(File file){
 		return file.getName().toLowerCase().contains("physicaldrive") ||
 			   file.getAbsolutePath().toLowerCase().contains("/dev/");
+	}
+	
+	private boolean isISO9660(File file){
+		
+		FileInputStream fis = null;
+		try {
+			String magicString = "CD001";
+			byte[] magic = magicString.getBytes("UTF-8");
+			byte[] header = new byte[64 * 1024];
+			fis = new FileInputStream(file);
+			
+			int read = 0, off = 0;
+			while(read != -1 && (off += read) < header.length)
+				read = fis.read(header, off, header.length - off);
+			
+			if(	matchMagic(magic, header, 32769) ||
+				matchMagic(magic, header, 34817) ||
+				matchMagic(magic, header, 37649) ||
+				matchMagic(magic, header, 37657) ||
+				matchMagic(magic, header, 40001) ||
+				matchMagic(magic, header, 40009) )
+				return true;
+			
+		} catch (Exception e) {
+			
+		}finally{
+			IOUtil.closeQuietly(fis);
+		}
+ 		return false;
+	}
+	
+	private boolean matchMagic(byte[] magic, byte[] header, int off){
+		for(int i = 0; i < magic.length; i++)
+			if(magic[i] != header[off + i])
+				return false;
+		return true;
 	}
 	
 	public String currentDirectory(){
