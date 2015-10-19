@@ -52,7 +52,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryModel extends AbstractTableModel {
 
-	public int colCount = 8;
+	public int colCount = 10;
 	public static int size = 150;
 	public static int GALLERY_THREADS;
 
