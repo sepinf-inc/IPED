@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>snapshot-20150625</version>
+            <version>4.2</version>
             <type>jar</type>
         </dependency>
         <dependency>
