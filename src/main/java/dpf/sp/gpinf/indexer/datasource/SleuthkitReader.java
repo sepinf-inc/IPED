@@ -83,6 +83,7 @@ public class SleuthkitReader extends DataSourceReader{
 	private AddImageProcess addImage;
 	private static volatile Thread waitLoadDbThread;
 	private String deviceName;
+	private boolean isISO9660 = false;
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
@@ -97,6 +98,7 @@ public class SleuthkitReader extends DataSourceReader{
 	}
 
 	public boolean isSupported(File file) {
+		isISO9660 = false;
 		String name = file.getName().toLowerCase();
 		return 	name.endsWith(".000") ||
 				name.endsWith(".001") || 
@@ -105,7 +107,7 @@ public class SleuthkitReader extends DataSourceReader{
 				name.endsWith(".l01") ||
 				name.endsWith(".dd") || 
 				isPhysicalDrive(file) ||
-				isISO9660(file) ||
+				(isISO9660 = isISO9660(file)) ||
 				name.equals(DB_NAME);
 	}
 	
@@ -646,9 +648,13 @@ public class SleuthkitReader extends DataSourceReader{
 			if(deviceName != null && content instanceof Image)
 				evidence.setName(deviceName);
 			
-			else if(content instanceof Volume)
-				evidence.setName(content.getName() + " [" + ((Volume)content).getDescription() + "]");
-			else
+			else if(content instanceof Volume){
+				long lenGB = content.getSize() >> 30;
+				String lenStr = lenGB + "GB";
+				if(lenGB == 0) lenStr = (content.getSize() >> 20) + "MB";
+				
+				evidence.setName(content.getName() + " [" + ((Volume)content).getDescription() + "] (" + lenStr + ")");
+			}else
 				evidence.setName(content.getName());
 		}
 			
@@ -664,7 +670,10 @@ public class SleuthkitReader extends DataSourceReader{
 		
 		if(content instanceof Image){
 			evidence.setRoot(true);
-			evidence.setMediaType(MediaType.application("x-disk-image"));
+			if(isISO9660)
+				evidence.setMediaType(MediaType.application("x-iso9660-image"));
+			else
+				evidence.setMediaType(MediaType.application("x-disk-image"));
 		}else
 			evidence.setIsDir(true);
 		
