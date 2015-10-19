@@ -14,4 +14,4 @@ Timeout ao Processar = timeout:true
 Itens Apagados = deletado:true
 Itens Recuperados = carved:true
 Subitens de Containers = subitem:true
-Containers não Expandidos = hasChildren:false && categoria:("Caixas de Emails" "Arquivos Compactados")
+Containers não Expandidos = hasChildren:false && categoria:("Caixas de Emails" "Arquivos Compactados" "Discos ISO" "Outros Espelhos" "Discos Virtuais")

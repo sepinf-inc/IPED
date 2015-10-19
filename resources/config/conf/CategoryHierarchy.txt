@@ -8,4 +8,5 @@ Imagens = Imagens Temporárias Internet; Imagens em Pasta de Sistema; Outras Ima
 Textos = Textos Temporários Internet; Textos em Pasta de Sistema; Outros Textos
 Atalhos = Atalhos para arquivos; Atalhos para URLs
 Emails e Caixas = Emails; Caixas de Emails
-Multimídia = Áudios; Vídeos
+Multimídia = Áudios; Vídeos; Imagens
+Espelhos de Discos = Discos ISO; Outros Espelhos; Discos Virtuais

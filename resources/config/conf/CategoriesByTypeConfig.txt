@@ -57,6 +57,8 @@ Peer-to-peer = application/x-p2p
 
 Histórico de Internet = application/x-msie-cache
 
-Imagens ISO = application/x-iso9660-image; application/x-udf-image;
+Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
-Imagens de Disco = application/x-disk-image; application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
+Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
+
+Outros Espelhos = application/x-disk-image; 

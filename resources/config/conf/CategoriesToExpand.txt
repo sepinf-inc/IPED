@@ -9,7 +9,7 @@ Arquivos Compactados
 Emails
 Bases de dados
 Chats
-Imagens ISO
+Discos ISO
 
 #Histórico de Internet
 #Documentos de Texto
