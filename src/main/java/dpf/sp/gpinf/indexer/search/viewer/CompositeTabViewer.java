@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -147,7 +148,7 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 		if (fixViewer.isSelected() || currentViewer == bestViewer){
 			loadInViewer(currentViewer);
 		}else{
-			changeToViewer(bestViewer);
+			changeToViewerInEDT(bestViewer);
 		}
 		
 		if(highlightTerms != null && !highlightTerms.isEmpty())
@@ -203,17 +204,25 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 		
 	}
 
-	public void changeToViewer(final AbstractViewer viewer) {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				for(int i = 0; i < tabbedPane.getTabCount(); i++)
-					if(tabbedPane.getTitleAt(i).equals(viewer.getName())){
-						tabbedPane.setSelectedIndex(i);
-						break;
-					}
+	public void changeToViewer(AbstractViewer viewer) {
+		for(int i = 0; i < tabbedPane.getTabCount(); i++)
+			if(tabbedPane.getTitleAt(i).equals(viewer.getName())){
+				tabbedPane.setSelectedIndex(i);
+				break;
 			}
-		});
+	}
+	
+	private void changeToViewerInEDT(final AbstractViewer viewer){
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+					changeToViewer(viewer);
+				}
+			});
+		} catch (InvocationTargetException | InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public AbstractViewer getCurrentViewer(){
