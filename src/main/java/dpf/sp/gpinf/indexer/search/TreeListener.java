@@ -127,7 +127,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener{
 		App.get().tree.setSelectionPath(treePath);
 		App.get().tree.scrollPathToVisible(treePath);
 		
-		
+		App.get().treeTab.setSelectedIndex(2);
 	}
 
 	@Override
