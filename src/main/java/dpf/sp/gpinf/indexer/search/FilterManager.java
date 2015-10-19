@@ -1,8 +1,6 @@
 package dpf.sp.gpinf.indexer.search;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -10,23 +8,15 @@ import java.io.IOException;
 import java.text.Collator;
 import java.util.Arrays;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -58,6 +48,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 	
 	JTextArea expression = new JTextArea();
 	JScrollPane scrollExpression = new JScrollPane(expression);
+	Color defaultColor;
 	
 	public void loadFilters(){
 		try {
@@ -112,6 +103,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
 	public FilterManager(JComboBox<String> comboFilter) {
 		this.comboFilter = comboFilter;
+		defaultColor = comboFilter.getBackground();
 	}
 	
 	private void createDialog(){

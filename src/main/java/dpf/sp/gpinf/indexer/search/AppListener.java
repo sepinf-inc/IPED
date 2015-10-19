@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.UIManager;
 
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 
@@ -85,10 +87,12 @@ public class AppListener implements ActionListener, MouseListener {
 	@Override
 	public void actionPerformed(ActionEvent evt) {
 
-		if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged") || evt.getSource() == App.get().recursiveTreeList)) {
+		if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged"))) {
 
-			// System.out.println(evt.getActionCommand() + " " +
-			// evt.getSource());
+			if(App.get().filtro.getSelectedIndex() == 0)
+				App.get().filtro.setBackground(App.get().filterManager.defaultColor);
+			else
+				App.get().filtro.setBackground(App.get().alertColor);
 			
 			updateFileListing();
 			

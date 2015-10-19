@@ -25,6 +25,8 @@ import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ComponentAdapter;
@@ -36,7 +38,6 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,11 +64,13 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.Painter;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.plaf.metal.MetalTabbedPaneUI;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -138,11 +141,11 @@ public class App extends JFrame implements WindowListener {
 	public TextViewer textViewer;
 
 	public CompositeTabViewer compositeViewer;
-	JTabbedPane tabbedHits, resultTab;
+	JTabbedPane tabbedHits, resultTab, treeTab;
+	Color defaultTabColor;
 	JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
 	MenuClass menu;
 	JPanel topPanel;
-	JPanel leftPanel;
 	JPanel multiFilterAlert;
 	boolean disposicaoVertical = false;
 	boolean isReport;
@@ -153,6 +156,8 @@ public class App extends JFrame implements WindowListener {
 	SubitemTableModel subItemModel = new SubitemTableModel();
 	ParentTableModel parentItemModel = new ParentTableModel();
 	GalleryModel galleryModel = new GalleryModel();
+	
+	Color alertColor = Color.RED;//new Color(0xFFFF5050);
 
 	private int zoomLevel;
 	
@@ -165,12 +170,11 @@ public class App extends JFrame implements WindowListener {
 	// "Não foi possível destacar as ocorrências. Clique duas vezes sobre o arquivo para acessar o original!";
 	public final static String HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
 	public final static String HIGHLIGHT_END_TAG = "</font>";
-	final static String FILTRO_TODOS = "[Todos os Arquivos]";
+	final static String FILTRO_TODOS = "[Sem Filtro]";
 	final static String FILTRO_SELECTED = "[Selecionados]";
 	final static String SEARCH_TOOL_TIP = "[Digite ou escolha a expressão a ser pesquisada]";
 
-	public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para
-											// highlight
+	public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
 
 	static int MAX_HITS = 10000;
 
@@ -196,7 +200,7 @@ public class App extends JFrame implements WindowListener {
 	public void init() {
 
 		LOGGER.info("init");
-
+		
 		applet = this;
 
 		try {
@@ -207,7 +211,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/pchp1/indexador/lib/search.jar";
+			//codePath = "E:/casos/4649.13/indexador/lib/search.jar";
 
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
@@ -239,7 +243,7 @@ public class App extends JFrame implements WindowListener {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void createGUI() {
 
 		this.setTitle(Versao.APP_NAME);
@@ -250,6 +254,18 @@ public class App extends JFrame implements WindowListener {
 		this.setIconImage(new ImageIcon(image).getImage());
 		this.setVisible(true);
 		ToolTipManager.sharedInstance().setInitialDelay(10);
+		
+		treeTab = new JTabbedPane();
+		treeTab.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+		//Possibilita pintar aba selecionada
+		treeTab.setUI(new MetalTabbedPaneUI(){
+			protected void paintTabBackground( Graphics g, int tabPlacement, int tabIndex, 
+											int x, int y, int w, int h, boolean isSelected ) {
+				if(tabPane.getBackgroundAt(tabIndex) == alertColor)
+					isSelected = false;
+				super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
+			}
+		});
 
 		try {
 			boolean nimbusFound = false;
@@ -258,6 +274,10 @@ public class App extends JFrame implements WindowListener {
 					UIManager.put("nimbusOrange", new Color(47, 92, 180));
 					UIManager.put("nimbusRed", Color.BLUE);
 					UIManager.setLookAndFeel(info.getClassName());
+					UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
+					defaults.put("ScrollBar.thumbHeight", 12);
+					//Workaround JDK-8134828
+					defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
 					nimbusFound = true;
 					break;
 				}
@@ -272,7 +292,6 @@ public class App extends JFrame implements WindowListener {
 		} catch (IOException e) {
 			palavrasChave = new ArrayList<String>();
 		}
-		// palavrasChave.add(0, FILTRO_TODOS);
 		for (String keyword : palavrasChave)
 			keywordSet.add(keyword);
 
@@ -287,14 +306,13 @@ public class App extends JFrame implements WindowListener {
 		opcoes = new JButton("Opções");
 		ajuda = new JButton("Ajuda");
 		checkBox = new JCheckBox("0");
-		// checkBox.setEnabled(false);
 
 		try {
 			categorias = Util.loadKeywords(codePath + "/../categorias.txt", "UTF-8");
 		} catch (IOException e) {
 			categorias = new ArrayList<String>();
 		}
-
+		
 		filtro = new JComboBox<String>();
 		filtro.setMaximumSize(new Dimension(100, 50));
 		filtro.setMaximumRowCount(30);
@@ -307,16 +325,14 @@ public class App extends JFrame implements WindowListener {
 		topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
 		multiFilterAlert = new JPanel();
-		JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos!");
-		multiFilterAlert.setToolTipText("Combinação de categoria, marcador, palavra-chave ou caminho na árvore");
+		JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
 		multiFilterAlert.add(alertLabel);
-		multiFilterAlert.setBackground(new Color(255, 50, 50));
+		alertLabel.setBackground(alertColor);
+		alertLabel.setOpaque(true);
 		multiFilterAlert.setMaximumSize(new Dimension(100, 50));
-		multiFilterAlert.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+		alertLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
 		multiFilterAlert.setVisible(false);
 		
-		
-		//topPanel.add(new JLabel("Filtro:"));
 		topPanel.add(filtro);
 		topPanel.add(multiFilterAlert);
 		topPanel.add(new JLabel("    Pesquisar:"));
@@ -392,7 +408,7 @@ public class App extends JFrame implements WindowListener {
 		resultTab = new JTabbedPane();
 		resultTab.addTab("Tabela", resultsScroll);
 		resultTab.addTab("Galeria", galleryScroll);
-
+		
 		hitsTable = new HitsTable(hitsModel);
 		JScrollPane hitsScroll = new JScrollPane(hitsTable);
 		hitsTable.setFillsViewportHeight(true);
@@ -429,53 +445,38 @@ public class App extends JFrame implements WindowListener {
 		compositeViewer = new CompositeTabViewer();
 
 		horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabbedHits, compositeViewer);
+		horizontalSplitPane.setDividerSize(5);
 		horizontalSplitPane.setOneTouchExpandable(true);
 		horizontalSplitPane.setContinuousLayout(true);
 		horizontalSplitPane.setResizeWeight(0.4);
 		
 		verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, horizontalSplitPane);
+		verticalSplitPane.setDividerSize(5);
 		verticalSplitPane.setOneTouchExpandable(true);
 		verticalSplitPane.setContinuousLayout(true);
 		verticalSplitPane.setResizeWeight(0.5);
 		
-		leftPanel = new JPanel(new BorderLayout());
+		treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeTab, verticalSplitPane);
+		treeSplitPane.setOneTouchExpandable(true);
+		treeSplitPane.setDividerSize(5);
+		treeSplitPane.setContinuousLayout(true);
+		treeSplitPane.setResizeWeight(0.1);
 		
-		categoryTree = new JTree(new CategoryTreeModel()){
-			public Dimension getMaximumSize(){
-				int height = isReport ? Integer.MAX_VALUE : this.getPreferredSize().height;
-				return new Dimension(Integer.MAX_VALUE, height);
-			}
-		};
-		categoryTree.collapseRow(0);
+		categoryTree = new JTree(new CategoryTreeModel());
 		categoryTree.setExpandsSelectedPaths(false);
 		categoryListener = new CategoryTreeListener();
 		categoryTree.addTreeSelectionListener(categoryListener);
 		categoryTree.addTreeExpansionListener(categoryListener);
 		
-		bookmarksTree = new JTree(new BookmarksTreeModel()){
-			public Dimension getMaximumSize(){
-				return new Dimension(Integer.MAX_VALUE, this.getPreferredSize().height);
-			}
-		};
+		bookmarksTree = new JTree(new BookmarksTreeModel());
 		bookmarksListener = new BookmarksTreeListener();
 		bookmarksTree.addTreeSelectionListener(bookmarksListener);
 		bookmarksTree.addTreeExpansionListener(bookmarksListener);
-		bookmarksTree.collapseRow(0);
 		bookmarksTree.setExpandsSelectedPaths(false);
 		
-		JPanel treePanel = new JPanel();
-		treePanel.setLayout(new BoxLayout(treePanel, BoxLayout.Y_AXIS));
-		treePanel.add(bookmarksTree);
-		treePanel.add(categoryTree);
-		
-		JScrollPane treeScroll = new JScrollPane(treePanel);
-		treeScroll.getVerticalScrollBar().setUnitIncrement(16);
-		leftPanel.add(treeScroll, BorderLayout.CENTER);
-		
-		treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, verticalSplitPane);
-		treeSplitPane.setOneTouchExpandable(true);
-		treeSplitPane.setContinuousLayout(true);
-		treeSplitPane.setResizeWeight(0.1);
+		treeTab.add("Categorias", new JScrollPane(categoryTree));
+		treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
+		defaultTabColor = treeTab.getBackgroundAt(0);
 		
 		if(!isReport){
 			recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
@@ -486,9 +487,15 @@ public class App extends JFrame implements WindowListener {
 			tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 			treeListener = new TreeListener();
 			tree.addTreeSelectionListener(treeListener);
-			treePanel.add(tree);
-			leftPanel.add(recursiveTreeList, BorderLayout.NORTH);
-		}
+			
+			JPanel evidencePanel = new JPanel(new BorderLayout());
+			evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
+			evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
+			
+			treeTab.add("Evidências", evidencePanel);
+			
+		}else
+			treeTab.setSelectedIndex(1);
 
 		status = new JLabel(" ");
 
@@ -510,7 +517,7 @@ public class App extends JFrame implements WindowListener {
 		menu = new MenuClass();
 
 		appletListener = new AppListener();
-		if(!isReport) recursiveTreeList.addActionListener(appletListener);
+		if(!isReport) recursiveTreeList.addActionListener(treeListener);
 		termo.addActionListener(appletListener);
 		filtro.addActionListener(appletListener);
 		pesquisar.addActionListener(appletListener);
@@ -588,7 +595,7 @@ public class App extends JFrame implements WindowListener {
 			horizontalSplitPane.remove(compositeViewer);
 			verticalSplitPane.remove(resultTab);
 			verticalSplitPane.remove(tabbedHits);
-			treeSplitPane.remove(leftPanel);
+			treeSplitPane.remove(treeTab);
 			treeSplitPane.remove(horizontalSplitPane);
 			applet.getContentPane().removeAll();
 
@@ -599,7 +606,7 @@ public class App extends JFrame implements WindowListener {
 			
 			applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 			applet.getContentPane().add(status, BorderLayout.PAGE_END);
-			treeSplitPane.add(leftPanel);
+			treeSplitPane.add(treeTab);
 			treeSplitPane.add(verticalSplitPane);
 			applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 
@@ -616,7 +623,7 @@ public class App extends JFrame implements WindowListener {
 			horizontalSplitPane.remove(compositeViewer);
 			verticalSplitPane.remove(resultTab);
 			verticalSplitPane.remove(horizontalSplitPane);
-			treeSplitPane.remove(leftPanel);
+			treeSplitPane.remove(treeTab);
 			treeSplitPane.remove(horizontalSplitPane);
 			applet.getContentPane().removeAll();
 
@@ -627,7 +634,7 @@ public class App extends JFrame implements WindowListener {
 
 			applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
 			applet.getContentPane().add(status, BorderLayout.PAGE_END);
-			treeSplitPane.add(leftPanel);
+			treeSplitPane.add(treeTab);
 			treeSplitPane.add(horizontalSplitPane);
 			applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 

@@ -18,6 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -35,9 +38,10 @@ import org.apache.lucene.search.TermQuery;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
-public class TreeListener implements  TreeSelectionListener{
+public class TreeListener implements TreeSelectionListener, ActionListener{
 	
 	Query treeQuery, recursiveTreeQuery;
+	boolean rootSelected = false;
 	HashSet<TreePath> selection = new HashSet<TreePath>();
 
 	@Override
@@ -49,7 +53,7 @@ public class TreeListener implements  TreeSelectionListener{
 			else
 				selection.add(path);
 		
-		boolean rootSelected = false;
+		rootSelected = false;
 		for(TreePath path : selection)
 			if(((Node)path.getLastPathComponent()).docId == -1){
 				rootSelected = true;
@@ -75,7 +79,7 @@ public class TreeListener implements  TreeSelectionListener{
 				((BooleanQuery)recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
 			}
 		}
-		
+		actionPerformed(null);
 		App.get().appletListener.updateFileListing();
 
 	}
@@ -123,6 +127,17 @@ public class TreeListener implements  TreeSelectionListener{
 		App.get().tree.setSelectionPath(treePath);
 		App.get().tree.scrollPathToVisible(treePath);
 		
+		
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if((App.get().recursiveTreeList.isSelected() && rootSelected ) || selection.isEmpty())
+			App.get().treeTab.setBackgroundAt(2, App.get().defaultTabColor);
+		else
+			App.get().treeTab.setBackgroundAt(2, App.get().alertColor);
+		
+		App.get().appletListener.updateFileListing();
 		
 	}
 

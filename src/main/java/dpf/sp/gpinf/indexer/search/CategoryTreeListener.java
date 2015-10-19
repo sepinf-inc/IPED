@@ -40,9 +40,12 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 				selection.add(path);
 				
 		if(selection.contains(root) || selection.isEmpty()){
+			App.get().treeTab.setBackgroundAt(0, App.get().defaultTabColor);
 			query = null;
 			
 		}else{
+			App.get().treeTab.setBackgroundAt(0, App.get().alertColor);
+			
 			query = new BooleanQuery();
 			
 			for(TreePath path : selection){

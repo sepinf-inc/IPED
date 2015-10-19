@@ -35,6 +35,11 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
 				selection.add((String)path.getLastPathComponent());
 		
 		App.get().appletListener.updateFileListing();
+		
+		if(selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty())
+			App.get().treeTab.setBackgroundAt(1, App.get().defaultTabColor);
+		else
+			App.get().treeTab.setBackgroundAt(1, App.get().alertColor);
 
 	}
 	
