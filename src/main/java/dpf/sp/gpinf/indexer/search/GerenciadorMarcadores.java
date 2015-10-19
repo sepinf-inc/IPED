@@ -83,7 +83,7 @@ public class GerenciadorMarcadores implements ActionListener {
 		group.add(highlighted);
 		group.add(checked);
 		highlighted.setSelected(true);
-		duplicates.setText("Incluir itens com mesmo hash");
+		duplicates.setText("Incluir duplicatas (hash)");
 		duplicates.setSelected(true);
 
 		populateList();
