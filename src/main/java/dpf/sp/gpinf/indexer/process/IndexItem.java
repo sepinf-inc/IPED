@@ -228,15 +228,12 @@ public class IndexItem {
 			else
 				evidence = new EvidenceFile(){
 				public File getFile(){
-					if(super.getFile() == null)
-						try {
-							return getTempFile();
-						} catch (IOException e) {
-							e.printStackTrace();
-							return null;
-						}
-					else
-						return super.getFile();
+					try {
+						return getTempFile();
+					} catch (IOException e) {
+						e.printStackTrace();
+						return null;
+					}
 				}
 			};
 			
