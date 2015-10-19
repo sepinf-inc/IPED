@@ -1,3 +1,11 @@
+19/10/2015: IPED-3.7.1
+- Reorganização de categorias, marcadores e diretórios em abas
+- ISOs não processados nem expandidos (3.7)
+- Lentidão durante "Configurando Índice" devido a múltiplos checks do OCR (3.6)
+- Melhorias no filtro "Containers não expandidos"
+- Incompatibilidade com sleuthkit-4.2 no Linux
+- Contorna desaparecimento do scrollbar (bug java 1.8_60)
+
 08/10/2015: IPED-3.7
 - Função para criar, nomear e salvar filtros
 - Filtros pre-definidos: timeout, erro de parsing, ignorar duplicados, kffignore, digitalização, etc
