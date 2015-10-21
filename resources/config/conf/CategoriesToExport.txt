@@ -10,7 +10,6 @@
 #Documentos PDF
 #Documentos HTML
 #Arquivos XML
-#Arquivos Criptografados
 #Documentos RTF
 #Documentos de Texto
 #Outros Documentos
