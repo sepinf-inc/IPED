@@ -143,7 +143,7 @@ public class Util {
 		}
 		
 		char c;
-		while((c = filename.charAt(filename.length() - 1)) == ' ' || c == '.')
+		while(filename.length() > 0 && ((c = filename.charAt(filename.length() - 1)) == ' ' || c == '.'))
 			filename = filename.substring(0, filename.length() - 1);
 		
 		return filename;

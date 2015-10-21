@@ -597,7 +597,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 	            tmpFile = tis.getFile();
 	        else{
 	        	String ext = ".tmp";
-	        	if(type != null)
+	        	if(type != null && !type.toString().isEmpty())
 	        		ext = Util.getValidFilename("." + type.toString());
 	        	final File file = File.createTempFile("iped", ext);
 	        	tmpResources.addResource(new Closeable() {
