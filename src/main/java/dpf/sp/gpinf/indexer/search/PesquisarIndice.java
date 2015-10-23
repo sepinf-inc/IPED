@@ -37,7 +37,6 @@ import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.analyzing.AnalyzingQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
@@ -67,6 +66,8 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
+	private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
+	
 	volatile static int numFilters = 0;
 	Query query;
 	String queryText;
@@ -122,8 +123,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			try {
 				Object termo = App.get().termo.getSelectedItem();
 				String queryStr = termo != null ? termo.toString() : "";
-				Analyzer analyzer = new WhitespaceAnalyzer(Versao.current);
-				query = getQuery(queryStr, analyzer).rewrite(App.get().reader);
+				query = getQuery(queryStr, spaceAnalyzer).rewrite(App.get().reader);
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -218,11 +218,13 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  parser.setNumericConfigMap(numericConfigMap);
 			  
 			  //remove acentos, pois StandardQueryParser não normaliza wildcardQueries
-			  char[] input = texto.toCharArray();
-			  char[] output = new char[input.length*4];
-			  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-			  if(!texto.equals((new String(output)).trim()))
-				  texto = "(" + texto + ") OR (" + (new String(output)).trim() + ")";
+			  if(analyzer != spaceAnalyzer){
+				  char[] input = texto.toCharArray();
+				  char[] output = new char[input.length*4];
+				  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+				  texto = (new String(output)).trim();
+			  }
+			  
 			  
 			  return parser.parse(texto, null);
 		}
