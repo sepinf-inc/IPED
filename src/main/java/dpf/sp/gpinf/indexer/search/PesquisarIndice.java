@@ -221,7 +221,8 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  char[] input = texto.toCharArray();
 			  char[] output = new char[input.length*4];
 			  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-			  texto = (new String(output)).trim();
+			  if(!texto.equals((new String(output)).trim()))
+				  texto = "(" + texto + ") OR (" + (new String(output)).trim() + ")";
 			  
 			  return parser.parse(texto, null);
 		}
