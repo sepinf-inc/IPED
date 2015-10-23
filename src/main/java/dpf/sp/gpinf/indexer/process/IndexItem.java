@@ -357,7 +357,7 @@ public class IndexItem {
 			public File getFile(){
 				return getViewFile();
 			}
-			public SeekableInputStream getStream() throws FileNotFoundException{
+			public SeekableInputStream getStream() throws IOException{
 				return new SeekableFileInputStream(getViewFile());
 			}
 		};
