@@ -35,6 +35,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 
+import org.postgresql.ds.PGSimpleDataSource;
+
 import oracle.jdbc.pool.OracleDataSource;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
@@ -267,16 +269,35 @@ public class FTK42Database extends FTKDatabase {
 	protected Map<String, String> getBookmarksMap(File report) throws Exception {
 
 		HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
-		Connection conn = ods.getConnection();
 		HashMap<String, String> result = new HashMap<String, String>();
 
 		Statement stmt = conn.createStatement();
 		String sql;
-		ResultSet rset;
+		ResultSet rset = null;
 
 		sql = "select a.BOOKMARKID, a.BOOKMARKNAME from " + schema + ".FTK_BOOKMARKS a";
 
-		rset = stmt.executeQuery(sql);
+		try{
+			rset = stmt.executeQuery(sql);
+			
+		}catch(Exception e){
+			
+			String str = (schema + ".FTK_BOOKMARKS").toLowerCase();
+			if(e.toString().toLowerCase().contains(str)){
+				stmt.close();
+				conn.close();
+				PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
+				oSource.setUser(user);
+				oSource.setPassword(password);
+				oSource.setServerName(serverName);
+				oSource.setPortNumber(portNumber);
+				oSource.setDatabaseName("case_" + schema.toLowerCase());
+				conn = oSource.getConnection();
+				stmt = conn.createStatement();
+				rset = stmt.executeQuery(sql);
+			}
+		}
+		
 		rset.setFetchSize(1000);
 
 		while (rset.next()) {
@@ -293,7 +314,6 @@ public class FTK42Database extends FTKDatabase {
 		stmt.close();
 		stmt = null;
 
-		conn.close();
 		return result;
 	}
 
