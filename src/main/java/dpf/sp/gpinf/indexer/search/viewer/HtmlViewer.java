@@ -33,6 +33,7 @@ import org.w3c.dom.Node;
 
 import com.sun.javafx.application.PlatformImpl;
 
+import dpf.sp.gpinf.indexer.util.ProxySever;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import javafx.application.Platform;
@@ -71,7 +72,9 @@ public class HtmlViewer extends AbstractViewer {
 
 	public HtmlViewer() {
 		super(new GridLayout());
-		// System.out.println("Inicializando Viewer " + getName());
+		// Instala proxy local que fecha conexões para Internet
+		ProxySever.start();
+
 		Platform.setImplicitExit(false);
 		jfxPanel = new JFXPanel();
 

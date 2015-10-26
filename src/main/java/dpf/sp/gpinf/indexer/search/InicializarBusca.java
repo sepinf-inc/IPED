@@ -63,9 +63,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		publish(0);
 
 		try {
-			//Não funciona fora do eclipse
-			//Policy.setPolicy(new BlockInternetPolicy());
-			System.setSecurityManager(new AppSecurityManager());
 			// ImageIO.setUseCache(false);
 
 			Configuration.getConfiguration(App.get().codePath + "/..");
