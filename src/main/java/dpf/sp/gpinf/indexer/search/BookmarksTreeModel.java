@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.search;
 
+import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeMap;
@@ -55,7 +56,7 @@ public class BookmarksTreeModel implements TreeModel{
 			return NO_BOOKMARKS;
 		
 		String[] labels = labelMap.values().toArray(new String[0]);
-		Arrays.sort(labels);
+		Arrays.sort(labels, Collator.getInstance());
 		
 		return labels[index - 1];
 			
