@@ -305,12 +305,6 @@ public class IndexItem {
 				
 				if(!value.isEmpty()){
 					File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
-					if(viewFile == null){
-						File thumb = Util.getFileFromHash(new File(outputBase.getParent(),
-								HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), value, "jpg");
-						if(thumb.exists())
-							viewFile = thumb;
-					}
 					if(viewFile != null)
 						evidence.setViewFile(viewFile);
 				}
