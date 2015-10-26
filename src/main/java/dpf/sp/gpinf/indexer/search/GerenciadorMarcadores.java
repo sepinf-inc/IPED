@@ -24,6 +24,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -143,7 +144,7 @@ public class GerenciadorMarcadores implements ActionListener {
 	
 	private void populateList(){
 		String[] labels = App.get().marcadores.getLabelMap().values().toArray(new String[0]);
-		Arrays.sort(labels);
+		Arrays.sort(labels, Collator.getInstance());
 		listModel.clear();
 		for (String label : labels)
 			listModel.addElement(label);
