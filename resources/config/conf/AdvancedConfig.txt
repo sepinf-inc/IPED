@@ -64,9 +64,9 @@ unallocatedFragSize = 104857600
 
 # Opcionalmente, utilize o parâmetro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado várias vezes)
 
-# Caminho relativo para OCR Tesseract
+# Caminho relativo para a pasta do Tesseract
 # Comente caso já esteja no PATH
-TesseractPath = tools/tesseract/tesseract
+TesseractPath = tools/tesseract
 
 # Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng
 OCRLanguage = por
