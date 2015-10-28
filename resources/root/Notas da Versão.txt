@@ -1,3 +1,10 @@
+27/10/2015: IPED-3.7.2
+- Visualizador Html mais rápido, não mais repete tentativas de conexao à Internet
+- Erro ao indexar relatórios de casos do FTK 5.4 em database separado
+- Highlight de palavras acentuadas no preview perdido (3.6)
+- Exibição apenas da miniatura da imagem no visualizador em relatórios (3.7)
+- Corrige localização da pasta de dicionários do tesseract (3.7)
+
 19/10/2015: IPED-3.7.1
 - Reorganização de categorias, marcadores e diretórios em abas
 - ISOs RAW não processados por limitação do 7zip (3.6)
