@@ -40,6 +40,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -85,7 +86,6 @@ public class Configuration {
 		
 		configPath = configPathStr;
 
-		Util.loadNatLibs(configPath + "/lib/libewf");
 		System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
 		properties.load(new File(configPath + "/" + CONFIG_FILE));
@@ -94,7 +94,7 @@ public class Configuration {
 		String value;
 
 		File newTmp = null, tmp = new File(System.getProperty("java.io.tmpdir"));
-		// File tmp = new File(configPath + "/tmp");
+		
 		value = properties.getProperty("indexTemp");
 		if (value != null)
 			value = value.trim();
@@ -113,6 +113,9 @@ public class Configuration {
 		}
 		if (indexerTemp != null)
 			indexerTemp.mkdirs();
+		
+		IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
+		Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
 		
 		value = properties.getProperty("TskLoaddbPath");
 		if (value != null)
