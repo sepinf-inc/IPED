@@ -87,7 +87,7 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
-	static volatile SleuthkitCase sleuthCase;
+	public static volatile SleuthkitCase sleuthCase;
 
 	public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
