@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -34,7 +35,9 @@ import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
+import dpf.sp.gpinf.indexer.util.SleuthkitServer;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
@@ -567,7 +570,8 @@ public class EvidenceFile implements Serializable, StreamSource {
         if (stream == null)
         	if(sleuthFile != null){
         		stream = new SleuthkitInputStream(sleuthFile);
-
+        		//SleuthkitClient sleuthProcess = SleuthkitClient.get(SleuthkitReader.sleuthCase.getDbDirPath());
+        		//stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId));
         	}else
         		return new EmptyInputStream();
 

@@ -87,7 +87,7 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
-	static volatile SleuthkitCase sleuthCase;
+	public static volatile SleuthkitCase sleuthCase;
 
 	public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
@@ -129,8 +129,8 @@ public class SleuthkitReader extends DataSourceReader{
 			while(read != -1 && (off += read) < header.length)
 				read = fis.read(header, off, header.length - off);
 			
-			if(	matchMagic(magic, header, 32769) ||
-				matchMagic(magic, header, 34817) ||
+			if(	/*matchMagic(magic, header, 32769) ||
+				matchMagic(magic, header, 34817) ||*/
 				matchMagic(magic, header, 37649) ||
 				matchMagic(magic, header, 37657) ||
 				matchMagic(magic, header, 40001) ||
