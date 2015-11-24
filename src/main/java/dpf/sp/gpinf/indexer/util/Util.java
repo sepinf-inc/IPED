@@ -534,11 +534,7 @@ public class Util {
 	public static void loadNatLibs(String path) {
 		String arch = System.getProperty("os.arch") + File.separator;
 
-		if (System.getProperty("os.name").startsWith("Linux")) {
-			path += File.separator + "Linux" + File.separator + arch;
-			// System.load(path + "libtsk_jni.so");
-
-		} else {
+		if (System.getProperty("os.name").startsWith("Windows")) {
 			path += File.separator + "Win" + File.separator + arch;
 			System.load(new File(path + "msvcp100.dll").getAbsolutePath());
 			System.load(new File(path + "msvcr100.dll").getAbsolutePath());
