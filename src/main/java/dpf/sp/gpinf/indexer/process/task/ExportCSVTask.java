@@ -66,6 +66,9 @@ public class ExportCSVTask extends AbstractTask{
 
 	@Override
 	protected  void process(EvidenceFile evidence) throws IOException {
+	    
+	    if (!exportFileProps)
+	        return;
 		
 		String value = evidence.getName();
 		if (value == null)
