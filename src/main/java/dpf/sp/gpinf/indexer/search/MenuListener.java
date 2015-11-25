@@ -48,6 +48,7 @@ public class MenuListener implements ActionListener {
 
 	public MenuListener(MenuClass menu) {
 		this.menu = menu;
+		fileChooser.setCurrentDirectory(new File(App.get().codePath).getParentFile().getParentFile());
 	}
 
 	private class Filtro extends FileFilter {
