@@ -51,7 +51,9 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
@@ -167,9 +169,11 @@ public class GerenciadorMarcadores implements ActionListener {
 					return;
 				progress.setProgress(++i);
 				String hash = app.searcher.doc(app.docs[id]).get(IndexItem.HASH);
-				if(hash != null) query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
-				query.add(new TermQuery(new Term(IndexItem.ID, id.toString())), Occur.MUST_NOT);
+				if(hash != null)
+				    query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
+				//query.add(new TermQuery(new Term(IndexItem.ID, id.toString())), Occur.MUST_NOT);
 			}
+			query.add(NumericRangeQuery.newLongRange(IndexItem.LENGTH, NumericUtils.PRECISION_STEP_DEFAULT, 0L, 0L, true, true), Occur.MUST_NOT);
 
 			PesquisarIndice task = new PesquisarIndice(query);
 			progress.setTask(task);
