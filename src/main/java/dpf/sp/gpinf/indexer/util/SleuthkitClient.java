@@ -119,7 +119,7 @@ public class SleuthkitClient {
 	
 	public SeekableInputStream getInputStream(int id) throws IOException{
 	    
-	    while(process == null || !process.isAlive())
+	    while(process == null || !isAlive(process))
 	        start();
 	        
 		return new SleuthkitClientInputStream(id, out, is, os);
@@ -132,5 +132,14 @@ public class SleuthkitClient {
 	          p.destroy();
 	        }
 	      });
+	}
+	
+	private boolean isAlive(Process p){
+	    try{
+	        p.exitValue();
+	        return false;
+	    }catch(Exception e){
+	        return true;
+	    }
 	}
 }
