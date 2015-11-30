@@ -112,7 +112,7 @@ public class SleuthkitServer {
                         notify(os);
 						
 					} catch (Throwable e) {
-						e.printStackTrace(System.err);
+						//e.printStackTrace(System.err);
 						byte[] msgBytes = e.getMessage().getBytes("UTF-8");
 						out.putInt(13, msgBytes.length);
 						out.position(17);
