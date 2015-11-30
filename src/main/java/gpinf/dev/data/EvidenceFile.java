@@ -23,6 +23,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,8 @@ import gpinf.util.FormatUtil;
 public class EvidenceFile implements Serializable, StreamSource {
     
 	private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+	
+	public static boolean robustImageReading = false;
     
 	private static class Counter {
 
@@ -569,9 +572,13 @@ public class EvidenceFile implements Serializable, StreamSource {
 
         if (stream == null)
         	if(sleuthFile != null){
-        		stream = new SleuthkitInputStream(sleuthFile);
-        		//SleuthkitClient sleuthProcess = SleuthkitClient.get(SleuthkitReader.sleuthCase.getDbDirPath());
-        		//stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId));
+        	    SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
+        	    if(sleuthcase == null || !robustImageReading){
+        	        stream = new SleuthkitInputStream(sleuthFile);
+        	    }else{
+        	        SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
+                    stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId));
+        	    }
         	}else
         		return new EmptyInputStream();
 

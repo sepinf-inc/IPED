@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
-public class SleuthkitServerInputStream extends SeekableInputStream{
+public class SleuthkitClientInputStream extends SeekableInputStream{
 	
     private static AtomicLong next = new AtomicLong();
     
@@ -23,7 +23,7 @@ public class SleuthkitServerInputStream extends SeekableInputStream{
 	MappedByteBuffer mbb;
 	boolean closed = false, empty = true;
 	
-	public SleuthkitServerInputStream(int id, MappedByteBuffer mbb, InputStream in, OutputStream os){
+	public SleuthkitClientInputStream(int id, MappedByteBuffer mbb, InputStream in, OutputStream os){
 	    this.sleuthId = id;
 		this.mbb = mbb;
 		this.in = in;

@@ -18,6 +18,8 @@
  */
 package dpf.sp.gpinf.indexer;
 
+import gpinf.dev.data.EvidenceFile;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
@@ -122,6 +124,12 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			SleuthkitReader.setTskPath(configPath + "/" + value);
+		
+		value = properties.getProperty("robustImageReading");
+        if (value != null)
+            value = value.trim();
+        if (value != null && !value.isEmpty())
+            EvidenceFile.robustImageReading = Boolean.valueOf(value);
 
 		value = properties.getProperty("numThreads");
 		if (value != null)

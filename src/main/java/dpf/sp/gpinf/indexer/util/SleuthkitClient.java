@@ -1,14 +1,11 @@
 package dpf.sp.gpinf.indexer.util;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -50,8 +47,6 @@ public class SleuthkitClient {
 	}
 	
 	private SleuthkitClient(){
-		while(process == null)
-        	start();
 	}
 	
 	private void start(){
@@ -60,12 +55,14 @@ public class SleuthkitClient {
 		
 		String pipePath = Configuration.indexerTemp + "/pipe-" + port;
 		
-		String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx256M", 
+		String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M", 
 				SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};
 		
 		try {
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			process = pb.start();
+			finishProcessOnJVMShutdown(process);
+			
 			is = process.getInputStream();
 			os = process.getOutputStream();
 			
@@ -73,13 +70,13 @@ public class SleuthkitClient {
 			
 			socket = new Socket();
 			socket.setPerformancePreferences(0, 1, 2);
-			//socket.setReceiveBufferSize(1);
-			//socket.setSendBufferSize(1);
+			socket.setReceiveBufferSize(1);
+			socket.setSendBufferSize(1);
 			socket.setTcpNoDelay(true);
 			socket.connect(new InetSocketAddress("127.0.0.1", port));
-			//socket.setSoTimeout(10000);
-			//is = socket.getInputStream();
-			//os = socket.getOutputStream();
+			socket.setSoTimeout(60000);
+			is = socket.getInputStream();
+			os = socket.getOutputStream();
 			
 			int size = 10 *1024 *1024;
 			RandomAccessFile raf = new RandomAccessFile(pipePath, "rw");
@@ -117,17 +114,23 @@ public class SleuthkitClient {
 			e.printStackTrace();
 			if(process != null)
 				process.destroy();
-			start();
-			return;
 		}
 	}
 	
 	public SeekableInputStream getInputStream(int id) throws IOException{
-		return new SleuthkitServerInputStream(id, out, is, os);
+	    
+	    while(process == null || !process.isAlive())
+	        start();
+	        
+		return new SleuthkitClientInputStream(id, out, is, os);
 	}
 	
-	public void finalize(){
-		process.destroy();
+	private void finishProcessOnJVMShutdown(final Process p){
+	    Runtime.getRuntime().addShutdownHook(new Thread() {
+	        @Override
+	        public void run() {
+	          p.destroy();
+	        }
+	      });
 	}
-	
 }

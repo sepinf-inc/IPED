@@ -64,12 +64,12 @@ public class SleuthkitServer {
 				
 				ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
 				serverSocket.setPerformancePreferences(0, 1, 2);
-				//serverSocket.setReceiveBufferSize(1);
+				serverSocket.setReceiveBufferSize(1);
 				Socket clientSocket = serverSocket.accept();
 				clientSocket.setTcpNoDelay(true);
-				//clientSocket.setSendBufferSize(1);
-				//in = clientSocket.getInputStream();
-				//os = clientSocket.getOutputStream();
+				clientSocket.setSendBufferSize(1);
+				in = clientSocket.getInputStream();
+				os = clientSocket.getOutputStream();
 				
 				Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador");
 				sleuthCase = SleuthkitCase.openCase(dbPath);
@@ -118,7 +118,7 @@ public class SleuthkitServer {
 						out.position(17);
 						out.put(msgBytes);
 						out.put(0, FLAGS.EXCEPTION);
-						notify(os);	
+						notify(os);
 					}				
 				}
 
