@@ -13,9 +13,9 @@ TskLoaddbPath = tools/tsk/x64/tsk_loaddb
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
 numThreads = default
 
-# Usa processos auxiliares para ler o conteúdo de imagens. Assim, no caso de crash causado pelo Sleuthkit,
-# apenas o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
-# pode mais do que dobrar devido aos processos auxiliares.
+# Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
+# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
+# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
 robustImageReading = false
 
 # Força merge do índice para um único segmento, diminuindo o índice e otimizando a busca a partir de mídias ópticas.
