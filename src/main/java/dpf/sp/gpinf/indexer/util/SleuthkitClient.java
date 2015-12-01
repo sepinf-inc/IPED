@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -33,17 +34,25 @@ public class SleuthkitClient {
 	MappedByteBuffer out;
 	OutputStream os;
 	
-	// Thread local variable
-    private static final ThreadLocal<SleuthkitClient> threadLocal =
+    /*private static final ThreadLocal<SleuthkitClient> threadLocal =
         new ThreadLocal<SleuthkitClient>() {
             @Override protected SleuthkitClient initialValue() {
             	return new SleuthkitClient();
         }
-    };
+    };*/
+    
+    private static ConcurrentHashMap<String, SleuthkitClient> clients = new ConcurrentHashMap<String, SleuthkitClient>();
 	
 	public static SleuthkitClient get(String dbPath){
 		dbDirPath = dbPath;
-		return threadLocal.get();
+		String threadGroupName = Thread.currentThread().getThreadGroup().getName();
+		SleuthkitClient sc = clients.get(threadGroupName);
+		if(sc == null){
+		    sc = new SleuthkitClient();
+		    clients.put(threadGroupName, sc);
+		}
+		return sc;
+		//return threadLocal.get();
 	}
 	
 	private SleuthkitClient(){

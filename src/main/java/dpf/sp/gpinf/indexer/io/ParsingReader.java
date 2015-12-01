@@ -21,9 +21,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -175,10 +178,22 @@ public class ParsingReader extends Reader {
 	}
 	
 	public void startBackgroundParsing(){
-		future = threadPool.submit(new ParsingTask());
+		future = getThreadPool().submit(new ParsingTask());
 	}
 	
-	public static ExecutorService threadPool = Executors.newCachedThreadPool(new ParsingThreadFactory());
+	//public static ExecutorService threadPool = Executors.newCachedThreadPool(new ParsingThreadFactory());
+	public static ConcurrentHashMap<String, ExecutorService> threadPools = new ConcurrentHashMap<String, ExecutorService>();
+	
+	private ExecutorService getThreadPool(){
+	    //return threadPool;
+	    String threadGroupName = Thread.currentThread().getThreadGroup().getName();
+	    ExecutorService tp = threadPools.get(threadGroupName);
+	    if(tp == null){
+	        tp = Executors.newCachedThreadPool(new ParsingThreadFactory());
+	        threadPools.put(threadGroupName, tp);
+	    }
+	    return tp;
+	}
 	
 	private Future future;
 	
@@ -186,7 +201,7 @@ public class ParsingReader extends Reader {
 		AtomicInteger i = new AtomicInteger();
 		@Override
 		public Thread newThread(Runnable r) {
-			Thread t = new Thread(r, "ParsingThread-" + i.getAndIncrement());
+			Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "ParsingThread-" + i.getAndIncrement());
 			t.setDaemon(true);
 			return t;
 		}
@@ -194,9 +209,10 @@ public class ParsingReader extends Reader {
 	}
 	
 	public static void shutdownTasks(){
-		threadPool.shutdownNow();
+		//threadPool.shutdownNow();
+	    for(ExecutorService es : threadPools.values())
+	        es.shutdownNow();
 	}
-	
 
 	public void closeAndInterruptParsingTask() {
 		

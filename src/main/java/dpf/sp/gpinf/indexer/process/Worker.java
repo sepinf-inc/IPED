@@ -80,7 +80,7 @@ public class Worker extends Thread {
 	}
 
 	public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
-		super("Worker-" + k);
+		super(new ThreadGroup("ProcessingThreadGroup-" + k), "Worker-" + k);
 		this.caseData = caseData;
 		this.evidences = caseData.getEvidenceFiles();
 		this.writer = writer;
