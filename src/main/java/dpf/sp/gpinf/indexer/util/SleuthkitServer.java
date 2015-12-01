@@ -74,6 +74,8 @@ public class SleuthkitServer {
 				Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador");
 				sleuthCase = SleuthkitCase.openCase(dbPath);
 				
+				java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
+				
 				out.put(0, FLAGS.DONE);
 				notify(os);
 				

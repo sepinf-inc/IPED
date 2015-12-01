@@ -14,8 +14,8 @@ TskLoaddbPath = tools/tsk/x64/tsk_loaddb
 numThreads = default
 
 # Usa processos auxiliares para ler o conteúdo de imagens. Assim, no caso de crash causado pelo Sleuthkit,
-# apenas o processo auxiliar é derrubado, sendo reinicializado. Porém o processamento pode ficar mais lento devido
-# a IPC e a memória usada pode mais do que dobrar devido aos processos auxiliares.
+# apenas o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
+# pode mais do que dobrar devido aos processos auxiliares.
 robustImageReading = false
 
 # Força merge do índice para um único segmento, diminuindo o índice e otimizando a busca a partir de mídias ópticas.
