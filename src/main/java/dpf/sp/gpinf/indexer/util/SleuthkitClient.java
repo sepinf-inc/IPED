@@ -126,12 +126,12 @@ public class SleuthkitClient {
 		}
 	}
 	
-	public SeekableInputStream getInputStream(int id) throws IOException{
+	public SeekableInputStream getInputStream(int id, String path) throws IOException{
 	    
 	    while(process == null || !isAlive(process))
 	        start();
 	        
-		return new SleuthkitClientInputStream(id, out, is, os);
+		return new SleuthkitClientInputStream(id, path, out, is, os);
 	}
 	
 	private void finishProcessOnJVMShutdown(final Process p){

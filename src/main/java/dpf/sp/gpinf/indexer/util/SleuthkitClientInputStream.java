@@ -9,13 +9,19 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
 public class SleuthkitClientInputStream extends SeekableInputStream{
+    
+    private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitClientInputStream.class);
 	
     private static AtomicLong next = new AtomicLong();
     
     int sleuthId;
+    String path;
     long streamId = next.getAndIncrement();
 	private InputStream in;
 	OutputStream os;
@@ -23,8 +29,9 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	MappedByteBuffer mbb;
 	boolean closed = false, empty = true;
 	
-	public SleuthkitClientInputStream(int id, MappedByteBuffer mbb, InputStream in, OutputStream os){
+	public SleuthkitClientInputStream(int id, String path, MappedByteBuffer mbb, InputStream in, OutputStream os){
 	    this.sleuthId = id;
+	    this.path = path;
 		this.mbb = mbb;
 		this.in = in;
 		this.os = os;
@@ -43,8 +50,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	private int readIn(byte b[], int off, int len) throws IOException {
 		
 		if(empty){
-		    sendRead();
-		    byte cmd = waitServerResponse();
+		    byte cmd = sendRead();
 			if(cmd == FLAGS.EOF)
 				return -1;
 		}
@@ -62,18 +68,24 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 		return copyLen;
 	}
 	
-	private void sendRead() throws IOException{
+	private byte sendRead() throws IOException{
 	    mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
 	    mbb.put(0, FLAGS.READ);
 		
 		bufPos = 0;
 		empty = true;
-		SleuthkitServer.notify(os);
+		notifyServer();
+		return waitServerResponse();
 	}
 	
 	private byte waitServerResponse() throws IOException{
-	    in.read();
+	    try {
+            in.read();
+        } catch (IOException e1) {
+            LOGGER.error(getCrashMsg());
+            throw e1;
+        }
         byte cmd;
         while(FLAGS.isClientCmd(cmd = mbb.get(0)))
             try {
@@ -87,12 +99,25 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
             mbb.position(17);
             mbb.get(b);
             try {
-                throw new IOException("IOException from Server: " + new String(b, "UTF-8"));
+                throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8"));
             } catch ( UnsupportedEncodingException e) {
             }
         }
         
 	    return cmd;
+	}
+	
+	private void notifyServer() throws IOException{
+	    try {
+            SleuthkitServer.notify(os);
+        } catch (IOException e) {
+            //LOGGER.error(getCrashMsg());
+            throw e;
+        }
+	}
+	
+	private String getCrashMsg(){
+	    return "Possível crash do Sleuthkit ao ler " + path;
 	}
 
 	@Override
@@ -106,7 +131,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 		mbb.putLong(13, pos);
 		mbb.put(0, FLAGS.SEEK);
 		empty = true;
-		SleuthkitServer.notify(os);
+		notifyServer();
 		waitServerResponse();
 		
 	}
@@ -120,7 +145,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	    mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
 	    mbb.putInt(0, FLAGS.POSITION);
-	    SleuthkitServer.notify(os);
+	    notifyServer();
 	    waitServerResponse();
         return mbb.getLong(13); 
 	}
@@ -134,7 +159,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	    mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
         mbb.putInt(0, FLAGS.SIZE);
-        SleuthkitServer.notify(os);
+        notifyServer();
         waitServerResponse();
         return mbb.getLong(13); 
 	}
@@ -164,7 +189,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
         mbb.putLong(5, streamId);
 		mbb.put(0, FLAGS.CLOSE);
 		empty = true;
-		SleuthkitServer.notify(os);
+		notifyServer();
 		waitServerResponse();
 		
 	}
