@@ -192,7 +192,7 @@ public class Statistics {
 		int minMemPerThread = 200;
 		if (maxMemory / Configuration.numThreads < minMemPerThread) {
 			String memoryAlert = "Pouca memória disponível: menos de " + minMemPerThread + "MB por thread de processamento." + "\nIsso pode causar lentidão e erros de parsing de arquivos complexos."
-					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memória da JVM via parâmetro -Xmx " + "\n\tou diminua o parâmetro numThreads em IndexerConfig.txt";
+					+ "\n\tUtilize uma JVM x64 (preferencial), " + "\n\taumente a memória da JVM via parâmetro -Xmx " + "\n\tou diminua o parâmetro numThreads na configuração avançada.";
 			JOptionPane.showMessageDialog(App.get(), memoryAlert, "Alerta de Memória", JOptionPane.WARNING_MESSAGE);
 			throw new Exception(memoryAlert);
 		}
