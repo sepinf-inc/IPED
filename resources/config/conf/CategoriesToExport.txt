@@ -18,9 +18,16 @@
 #Apresentações
 #Contatos
 #Chats
+#Histórico de Internet
+#Atalhos para arquivos
+#Atalhos para URLs
 #Peer-to-peer
+#Textos Temporários Internet
+#Textos em Pasta de Sistema
 #Outros Textos
-#Imagens
+#Imagens Temporárias Internet
+#Imagens em Pasta de Sistema
+#Outras Imagens
 #Vídeos
 #Áudios
 #Arquivos OLE
@@ -30,12 +37,4 @@
 #Programas e Bibliotecas
 #Não Alocado
 #Outros Arquivos
-
 #Tamanho Zero
-#Imagens Temporárias Internet
-#Imagens em Pasta de Sistema
-#Textos Temporários Internet
-#Textos em Pasta de Sistema
-#Histórico de Internet
-#Atalhos para arquivos
-#Atalhos para URLs
