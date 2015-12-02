@@ -328,6 +328,7 @@ public class HTMLReportTask extends AbstractTask {
         reg.ext = evidence.getExt();
         reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | ");
         reg.hash = evidence.getHash();
+        if(reg.hash != null && reg.hash.isEmpty()) reg.hash = null;
         reg.deleted = evidence.isDeleted();
         reg.carved = evidence.isCarved();
         reg.accessed = evidence.getAccessDate();

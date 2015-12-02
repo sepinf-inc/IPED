@@ -228,7 +228,7 @@ public class ExportFileTask extends AbstractTask{
 	public void renameToHash(EvidenceFile evidence) {
 
 		String hash = evidence.getHash();
-		if (hash != null) {
+		if (hash != null && !hash.isEmpty()) {
 			File file = evidence.getFile();
 			String ext = evidence.getType().getLongDescr();
 			if(!ext.isEmpty())
@@ -298,7 +298,7 @@ public class ExportFileTask extends AbstractTask{
 		if (!computeHash)
 			outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
 
-		else if ((hash = evidence.getHash()) != null){
+		else if ((hash = evidence.getHash()) != null && !hash.isEmpty()){
 			outputFile = getHashFile(hash, ext);
 			HashValue hashVal = new HashValue(hash);
 			synchronized (hashMap) {
