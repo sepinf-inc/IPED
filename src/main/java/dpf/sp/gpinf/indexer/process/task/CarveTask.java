@@ -523,8 +523,12 @@ public class CarveTask extends AbstractTask{
 		if(this.evidence.getSleuthFile() != null){
 			evidence.setSleuthFile(this.evidence.getSleuthFile());
 			evidence.setSleuthId(this.evidence.getSleuthId());
-			//if(this.evidence.hasTmpFile())
-			//	evidence.setFile(this.evidence.getTempFile());
+			//Pode causar problema com itens de carving que ultrapassam as bordas dos fragmentos do não alocado
+			if(this.evidence.hasTmpFile()){
+			    evidence.setFile(this.evidence.getTempFile());
+			    evidence.setFileOffset(off);
+			}
+				
 		}else{
 			evidence.setFile(this.evidence.getFile());
 			evidence.setExportedFile(this.evidence.getExportedFile());
