@@ -1,3 +1,9 @@
+xx/xx/2015: IPED-3.8
+- Opção p/ processamento robusto contra crashes do TSK usando processos auxiliares para ler imagens
+Correções:
+- Inclui bibliotecas nativas para MacOSX x64
+- Corrige geração de relatório contendo itens sem hash
+
 01/12/2015: IPED-3.7.3.1
 - Corrige exportação de "Outras Imagens" na configuração de extração automática de dados (3.7)
 
