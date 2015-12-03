@@ -212,7 +212,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
 			//codePath = "E:/casos/4649.13/indexador/lib/search.jar";
-
+			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
 			javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
@@ -246,7 +246,8 @@ public class App extends JFrame implements WindowListener {
 	
 	public void createGUI() {
 
-		this.setTitle(Versao.APP_NAME);
+	    String tab = "     ";
+		this.setTitle(Versao.APP_NAME + tab + "[Caso: " + new File(codePath).getParentFile().getParent()+"]");
 		this.setSize(new Dimension(800, 600));
 		this.setExtendedState(Frame.MAXIMIZED_BOTH);
 		this.addWindowListener(this);
