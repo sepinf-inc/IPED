@@ -236,7 +236,7 @@ public class MenuListener implements ActionListener {
 
 		} else if (e.getSource() == menu.gerenciarMarcadores) {
 
-			new GerenciadorMarcadores();
+		    GerenciadorMarcadores.setVisible();
 
 		} else if (e.getSource() == menu.gerenciarFiltros) {
 

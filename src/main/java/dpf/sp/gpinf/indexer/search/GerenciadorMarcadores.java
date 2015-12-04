@@ -59,6 +59,8 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener {
+    
+    private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
 	JDialog dialog = new JDialog();
 	JLabel msg = new JLabel("Conjunto de dados:");
@@ -76,8 +78,12 @@ public class GerenciadorMarcadores implements ActionListener {
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
 	JScrollPane scrollList = new JScrollPane(list);
+	
+	public static void setVisible(){
+	    instance.dialog.setVisible(true);
+	}
 
-	public GerenciadorMarcadores() {
+	private GerenciadorMarcadores() {
 
 		dialog.setTitle("Marcadores");
 		dialog.setBounds(0, 0, 450, 450);
@@ -87,7 +93,7 @@ public class GerenciadorMarcadores implements ActionListener {
 		group.add(checked);
 		highlighted.setSelected(true);
 		duplicates.setText("Incluir duplicatas (hash)");
-		duplicates.setSelected(true);
+		duplicates.setSelected(false);
 
 		populateList();
 
@@ -138,9 +144,8 @@ public class GerenciadorMarcadores implements ActionListener {
 		rename.addActionListener(this);
 		novo.addActionListener(this);
 		delete.addActionListener(this);
-
+		
 		dialog.setLocationRelativeTo(App.get());
-		dialog.setVisible(true);
 
 	}
 	
