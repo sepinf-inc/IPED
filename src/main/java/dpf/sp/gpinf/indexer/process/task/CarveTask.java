@@ -526,7 +526,7 @@ public class CarveTask extends AbstractTask{
 			//Pode causar problema com itens de carving que ultrapassam as bordas dos fragmentos do não alocado
 			if(this.evidence.hasTmpFile()){
 			    evidence.setFile(this.evidence.getTempFile());
-			    evidence.setFileOffset(off);
+			    evidence.setTempStartOffset(off);
 			}
 				
 		}else{

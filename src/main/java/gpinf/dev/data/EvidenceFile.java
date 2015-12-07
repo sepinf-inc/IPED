@@ -189,7 +189,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private Content sleuthFile;
 
-    private long startOffset = -1;
+    private long startOffset = -1, tempStartOffset = -1;
 
     private String sleuthId;
 
@@ -581,6 +581,9 @@ public class EvidenceFile implements Serializable, StreamSource {
         	    }
         	}else
         		return new EmptyInputStream();
+        
+        if (tempStartOffset != -1)
+            return new LimitedSeekableInputStream(stream, tempStartOffset, length);
 
         if (startOffset != -1)
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
@@ -1135,5 +1138,9 @@ public class EvidenceFile implements Serializable, StreamSource {
 	public void setSumVolume(boolean sumVolume) {
 		this.sumVolume = sumVolume;
 	}
+
+    public void setTempStartOffset(long tempStartOffset) {
+        this.tempStartOffset = tempStartOffset;
+    }
 
 }
