@@ -197,7 +197,18 @@ public class FTK42Database extends FTKDatabase {
 					+ schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
 					+ ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
 			PATH_COL_NAME = "objectpath";
-			rset = stmt.executeQuery(sql);
+			try{
+			    rset = stmt.executeQuery(sql);
+			    
+			// FTK 6.0
+			}catch(SQLException e2){
+			    sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, c.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
+	                    + schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
+	                    + ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
+	            PATH_COL_NAME = "objectpath";
+	            rset = stmt.executeQuery(sql);
+			}
+			
 		}
 		
 		rset.setFetchSize(1000);

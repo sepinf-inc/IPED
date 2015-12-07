@@ -134,7 +134,9 @@ public abstract class FTKDatabase {
 	}
 
 	private static String translateFTKToDBVersion(String ftkVersion) {
-		if (ftkVersion.startsWith("5.6"))
+	    if (ftkVersion.startsWith("6.0"))
+            return "ADG6";
+	    if (ftkVersion.startsWith("5.6"))
 			return "ADG510";
 		if (ftkVersion.startsWith("5.1"))
 			return "ADG55";
