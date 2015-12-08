@@ -49,6 +49,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -216,11 +217,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	
 	public void process(EvidenceFile evidence) throws IOException{
 		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
-			|| isToTestEncryption(evidence.getCategorySet()) 
+			|| isToTestEncryption(evidence.getCategorySet())
+			|| checkScanned(evidence.getMediaType())
 			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
 		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
+	}
+	
+	private boolean checkScanned(MediaType mediaType){
+	    return OCRParser.SUPPORTED_TYPES.contains(mediaType);
 	}
 	
 	
@@ -264,6 +270,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			
 			if(metadata.get("EncryptedDocument") != null)
 				evidence.setExtraAttribute("encrypted", "true");
+			
+			String value = metadata.get("OCRCharCount");
+			if(value != null && evidence.getMediaType().getType().equals("image")){
+			    int charCount = Integer.parseInt(value.replace("OCRCharCount", ""));
+			    evidence.setExtraAttribute("OCRCharCount", charCount);
+			    if(charCount >= 100)
+			        evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
+			}
+			    
 
 		}finally{
 			//do nothing

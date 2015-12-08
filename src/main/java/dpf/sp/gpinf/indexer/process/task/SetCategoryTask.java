@@ -52,7 +52,9 @@ public class SetCategoryTask extends AbstractTask{
 	
 	public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
 	public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
+	
 	private static String FOLDER_CATEGORY = "Pastas";
+	public static String SCANNED_CATEGORY = "Possíveis Digitalizações";
 	
 	private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
 	private static TreeSet<String> categories;
@@ -85,6 +87,7 @@ public class SetCategoryTask extends AbstractTask{
 
 		categories = new TreeSet<String>(Collator.getInstance());
 		categories.add(FOLDER_CATEGORY);
+		categories.add(SCANNED_CATEGORY);
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 

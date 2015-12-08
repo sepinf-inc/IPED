@@ -1,9 +1,9 @@
 xx/xx/2015: IPED-3.8
 - Processamento robusto (opcional) contra crashes do TSK via processos auxiliares (AdvancedConfig.txt)
 - Uso de temporários locais com imagens DD (processamento mais rápido pela rede)
+- Substituição do filtro "Possíveis Digitalizações" por categoria
 - Inclui bibliotecas nativas para MacOSX x64
 - Pequena melhoria na velocidade do carving
-- Mantém estado no gerenciador de marcadores
 - Filtra categorias vazias da interface
 - Compatibilização com FTK 6.0
 - Atualização para IcePDF-6.0.1

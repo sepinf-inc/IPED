@@ -25,6 +25,7 @@
 #Textos Temporários Internet
 #Textos em Pasta de Sistema
 #Outros Textos
+#Possíveis Digitalizações
 #Imagens Temporárias Internet
 #Imagens em Pasta de Sistema
 #Outras Imagens
