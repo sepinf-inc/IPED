@@ -6,7 +6,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -22,6 +21,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
     
     int sleuthId;
     String path;
+    SleuthkitClient client;
     long streamId = next.getAndIncrement();
 	private InputStream in;
 	OutputStream os;
@@ -29,26 +29,30 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	MappedByteBuffer mbb;
 	boolean closed = false, empty = true;
 	
-	public SleuthkitClientInputStream(int id, String path, MappedByteBuffer mbb, InputStream in, OutputStream os){
+	public SleuthkitClientInputStream(int id, String path, SleuthkitClient client){
 	    this.sleuthId = id;
 	    this.path = path;
-		this.mbb = mbb;
-		this.in = in;
-		this.os = os;
+	    this.client = client;
+		this.mbb = client.out;
+		this.in = client.is;
+		this.os = client.os;
 	}
 	
 	@Override
     public int read(byte b[], int off, int len) throws IOException {
-		if(closed)
+		
+	    if(closed)
 			throw new IOException("Stream is closed!");
 		
-    	int read = readIn(b, off, len);
+	    synchronized(client){
+	        int read = readIn(b, off, len);
+	        return read;
+        }
     	
-    	return read;
     }
 	
 	private int readIn(byte b[], int off, int len) throws IOException {
-		
+	    
 		if(empty){
 		    byte cmd = sendRead();
 			if(cmd == FLAGS.EOF)
@@ -63,7 +67,6 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 		bufPos += copyLen;
 		if(bufPos == size)
 			empty = true;
-			//sendRead();
 		
 		return copyLen;
 	}
@@ -122,57 +125,66 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 
 	@Override
 	public void seek(long pos) throws IOException {
-		if(closed)
-			throw new IOException("Stream is closed!");
-		
-		//waitServerResponse();
-		mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-		mbb.putLong(13, pos);
-		mbb.put(0, FLAGS.SEEK);
-		empty = true;
-		notifyServer();
-		waitServerResponse();
+	    
+	    if(closed)
+            throw new IOException("Stream is closed!");
+	    
+	    synchronized(client){
+	        mbb.putInt(1, sleuthId);
+	        mbb.putLong(5, streamId);
+	        mbb.putLong(13, pos);
+	        mbb.put(0, FLAGS.SEEK);
+	        empty = true;
+	        notifyServer();
+	        waitServerResponse();
+        }
 		
 	}
 
 	@Override
 	public long position() throws IOException {
+	    
 	    if(closed)
             throw new IOException("Stream is closed!");
 	    
-	    //waitServerResponse();
-	    mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-	    mbb.putInt(0, FLAGS.POSITION);
-	    notifyServer();
-	    waitServerResponse();
-        return mbb.getLong(13); 
+	    synchronized(client){
+	        mbb.putInt(1, sleuthId);
+	        mbb.putLong(5, streamId);
+	        mbb.putInt(0, FLAGS.POSITION);
+	        notifyServer();
+	        waitServerResponse();
+	        return mbb.getLong(13); 
+        }
+	    
 	}
 
 	@Override
 	public long size() throws IOException {
+	    
 	    if(closed)
             throw new IOException("Stream is closed!");
 	    
-	    //waitServerResponse();
-	    mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-        mbb.putInt(0, FLAGS.SIZE);
-        notifyServer();
-        waitServerResponse();
-        return mbb.getLong(13); 
+	    synchronized(client){
+	        mbb.putInt(1, sleuthId);
+	        mbb.putLong(5, streamId);
+	        mbb.putInt(0, FLAGS.SIZE);
+	        notifyServer();
+	        waitServerResponse();
+	        return mbb.getLong(13);
+        }
+	    
 	}
 
 	@Override
 	public int read() throws IOException {
 		if(closed)
 			throw new IOException("Stream is closed!");
+		
 		byte[] b = new byte[1];
 		int i = 0;
 		do{
 			i = read(b);
-		}while(i != 0);
+		}while(i == 0);
 		
 		if(i == -1)
 			return -1;
@@ -180,17 +192,20 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 		return b[0];
 	}
 	
+	@Override
 	public void close() throws IOException{
 	    if(closed)
 	        return;
-		closed = true;
-		//waitServerResponse();
-		mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-		mbb.put(0, FLAGS.CLOSE);
-		empty = true;
-		notifyServer();
-		waitServerResponse();
+	    
+	    synchronized(client){
+	        closed = true;
+	        mbb.putInt(1, sleuthId);
+	        mbb.putLong(5, streamId);
+	        mbb.put(0, FLAGS.CLOSE);
+	        empty = true;
+	        notifyServer();
+	        waitServerResponse();
+        }
 		
 	}
 

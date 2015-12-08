@@ -131,7 +131,7 @@ public class SleuthkitClient {
 	    while(process == null || !isAlive(process))
 	        start();
 	        
-		return new SleuthkitClientInputStream(id, path, out, is, os);
+		return new SleuthkitClientInputStream(id, path, this);
 	}
 	
 	private void finishProcessOnJVMShutdown(final Process p){
