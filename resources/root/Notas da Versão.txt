@@ -1,14 +1,15 @@
 xx/xx/2015: IPED-3.8
 - Processamento robusto (opcional) contra crashes do TSK via processos auxiliares (AdvancedConfig.txt)
 - Uso de temporários locais com imagens DD (processamento mais rápido pela rede)
-- Agrupa setores não alocados não contíguos (carving de fragmentados e menos itens não alocados)
 - Inclui bibliotecas nativas para MacOSX x64
 - Pequena melhoria na velocidade do carving
+- Mantém estado no gerenciador de marcadores
+- Filtra categorias vazias da interface
 - Compatibilização com FTK 6.0
 - Atualização para IcePDF-6.0.1
 Correções:
 - Corrige geração de relatório contendo itens sem hash
-- Mantém opções no gerenciador de marcadores
+- Agrupa setores não alocados não contíguos: carving de fragmentados (regressão 3.7)
 
 01/12/2015: IPED-3.7.3.1
 - Corrige exportação de "Outras Imagens" na configuração de extração automática de dados (3.7)
