@@ -209,13 +209,13 @@
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
-            <version>5.1.1</version>
+            <version>6.0.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
-            <version>5.1.1</version>
+            <version>6.0.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
