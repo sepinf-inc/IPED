@@ -212,12 +212,23 @@
     	<acronym>ISO</acronym>
     	<_comment>UDF CD-ROM filesystem data</_comment>
     	<magic priority="50">
+    		<!--CDROM sector: 2048 -->
       		<match value="NSR02" type="string" offset="32769"/>
       		<match value="NSR02" type="string" offset="34817"/>
       		<match value="NSR02" type="string" offset="36865"/>
       		<match value="NSR03" type="string" offset="32769"/>
       		<match value="NSR03" type="string" offset="34817"/>
       		<match value="NSR03" type="string" offset="36865"/>
+      		<!--CDROM RAW sector: 2352 -->
+      		<match value="NSR02" type="string" offset="37649"/>
+      		<match value="NSR02" type="string" offset="40001"/>
+      		<match value="NSR03" type="string" offset="37649"/>
+      		<match value="NSR03" type="string" offset="40001"/>
+      		<!--CDROM RAW XA sector: 2352 -->
+      		<match value="NSR02" type="string" offset="37657"/>
+      		<match value="NSR02" type="string" offset="40009"/>
+      		<match value="NSR03" type="string" offset="37657"/>
+      		<match value="NSR03" type="string" offset="40009"/>
     	</magic>
   	</mime-type>
   	
