@@ -34,6 +34,8 @@ public class SleuthkitClient {
 	MappedByteBuffer out;
 	OutputStream os;
 	
+	boolean serverError = false;
+	
     /*private static final ThreadLocal<SleuthkitClient> threadLocal =
         new ThreadLocal<SleuthkitClient>() {
             @Override protected SleuthkitClient initialValue() {
@@ -96,28 +98,13 @@ public class SleuthkitClient {
 			
 			is.read();
 			boolean ok = false;
-			while(!(ok = out.get(0) == FLAGS.DONE) && out.get(0) != FLAGS.ERROR)
+			while(!(ok = SleuthkitServer.getByte(out, 0) == FLAGS.DONE) && SleuthkitServer.getByte(out, 0) != FLAGS.ERROR)
 				Thread.sleep(1);
 			
 			if(!ok)
 				throw new Exception("Error starting SleuthkitServer");
 			
-			new Thread(){
-				public void run(){
-					InputStream err = process.getErrorStream();
-					byte[] b = new byte[1024 * 1024];
-					try {
-						int r = 0;
-						while((r = err.read(b)) != -1){
-							logger.info(new String(b, 0, r));
-							//Thread.sleep(0, 1);
-						}
-						
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}.start();
+			logStdErr(process);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -126,7 +113,31 @@ public class SleuthkitClient {
 		}
 	}
 	
+	private void logStdErr(final Process process){
+	    new Thread(){
+            public void run(){
+                InputStream err = process.getErrorStream();
+                byte[] b = new byte[1024 * 1024];
+                try {
+                    int r = 0;
+                    while((r = err.read(b)) != -1){
+                        logger.info(new String(b, 0, r));
+                    }
+                    
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+	}
+	
 	public SeekableInputStream getInputStream(int id, String path) throws IOException{
+	    
+	    if(serverError){
+	        process.destroy();
+	        process = null;
+	        serverError = false;
+	    }
 	    
 	    while(process == null || !isAlive(process))
 	        start();

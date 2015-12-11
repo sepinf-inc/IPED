@@ -10,10 +10,7 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.Queue;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -34,6 +31,8 @@ public class SleuthkitServer {
 		static byte ERROR = 5;
 		static byte EOF = 6;
 		static byte EXCEPTION = 10;
+		//temp state
+		static byte SQLITE_READ = 11;
 		
 		final static boolean isClientCmd(int cmd){
 			return cmd != FLAGS.DONE && cmd != FLAGS.ERROR && cmd != FLAGS.EOF && cmd != FLAGS.EXCEPTION;
@@ -76,7 +75,7 @@ public class SleuthkitServer {
 				
 				java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
 				
-				out.put(0, FLAGS.DONE);
+				commitByte(out, 0, FLAGS.DONE);
 				notify(os);
 				
 				byte[] buf = new byte[8 * 1024 * 1024];
@@ -86,6 +85,7 @@ public class SleuthkitServer {
 					try{
 						byte cmd = waitCmd(out, in);
                         sis = getSis(out);
+                        commitByte(out, 0, FLAGS.SQLITE_READ);
                         
                         if(cmd == FLAGS.SEEK){
                             sis.seek(out.getLong(13));
@@ -97,7 +97,7 @@ public class SleuthkitServer {
                         else if(cmd == FLAGS.READ){
                             int len = readIn(sis, buf);
                             if(len == -1){
-                                out.put(0, FLAGS.EOF);
+                                commitByte(out, 0, FLAGS.EOF);
                                 notify(os);
                                 continue;
                             }else
@@ -110,7 +110,7 @@ public class SleuthkitServer {
                             out.putLong(13, sis.position());    
                         }
                         
-                        out.put(0, FLAGS.DONE);
+                        commitByte(out, 0, FLAGS.DONE);
                         notify(os);
 						
 					} catch (Throwable e) {
@@ -119,14 +119,14 @@ public class SleuthkitServer {
 						out.putInt(13, msgBytes.length);
 						out.position(17);
 						out.put(msgBytes);
-						out.put(0, FLAGS.EXCEPTION);
+						commitByte(out, 0, FLAGS.EXCEPTION);
 						notify(os);
 					}				
 				}
 
 			} catch (Throwable e) {
 				e.printStackTrace(System.err);
-				out.put(0, FLAGS.ERROR);
+				commitByte(out, 0, FLAGS.ERROR);
 			}
 	}
 	
@@ -146,8 +146,9 @@ public class SleuthkitServer {
 	private static byte waitCmd(MappedByteBuffer out, InputStream in) throws Exception{
 	    in.read();
         byte cmd;
-        while(!FLAGS.isClientCmd(cmd = out.get(0)))
+        while(!FLAGS.isClientCmd(cmd = getByte(out, 0)))
             Thread.sleep(1);
+            //Thread.yield();
         return cmd;
 	}
 	
@@ -164,6 +165,16 @@ public class SleuthkitServer {
 	static void notify(OutputStream os) throws IOException{
 		os.write(1);
 		os.flush();
+	}
+	
+	static final void commitByte(MappedByteBuffer mbb, int pos, byte val){
+	    //mbb.put(pos, val);
+        DirectMemory.putByteVolatile(mbb, pos, val);
+	}
+	
+	static final Byte getByte(MappedByteBuffer mbb, int pos){
+	    //return mbb.get(pos);
+	    return DirectMemory.getByteVolatile(mbb, pos);
 	}
 
 }

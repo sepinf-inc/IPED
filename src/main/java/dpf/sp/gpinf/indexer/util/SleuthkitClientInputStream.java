@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.SocketTimeoutException;
 import java.nio.MappedByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,6 +19,8 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitClientInputStream.class);
 	
     private static AtomicLong next = new AtomicLong();
+    
+    private static int TIMEOUT = 10000;
     
     int sleuthId;
     String path;
@@ -74,7 +77,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	private byte sendRead() throws IOException{
 	    mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
-	    mbb.put(0, FLAGS.READ);
+	    SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
 		
 		bufPos = 0;
 		empty = true;
@@ -83,19 +86,45 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	}
 	
 	private byte waitServerResponse() throws IOException{
-	    try {
-            in.read();
-        } catch (IOException e1) {
-            LOGGER.error(getCrashMsg());
-            throw e1;
-        }
-        byte cmd;
-        while(FLAGS.isClientCmd(cmd = mbb.get(0)))
+	    boolean sqliteBusy = true;
+	    while(sqliteBusy)
+    	    try {
+                in.read();
+                sqliteBusy = false;
+                
+    	    } catch(SocketTimeoutException e){
+    	        if(SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ)
+    	            continue;
+    	        
+    	        client.serverError = true;
+    	        LOGGER.error("SocketTimeout aguargando SleuthkitServer: " + path);
+                throw e;
+                
+            } catch (IOException e1) {
+                client.serverError = true;
+                LOGGER.error(getCrashMsg());
+                throw e1;
+            }
+        
+	    byte cmd;
+	    long time = 0;
+        while(FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0)))
             try {
+                if(time == 0) time = System.currentTimeMillis();
                 Thread.sleep(1);
+              //Thread.yield();
+                LOGGER.error("Waiting Server response...");
+                
+                if(System.currentTimeMillis() - time >= TIMEOUT){
+                    client.serverError = true;
+                    LOGGER.error("MemoryReadTimeout aguardando SleuthkitServer: " + path);
+                    throw new IOException("MemoryReadTimeout aguardando SleuthkitServer: " + path);
+                }
+                
             } catch (InterruptedException e) {
                 throw new InterruptedIOException(e.toString());
             }
+        
         if (cmd == FLAGS.EXCEPTION){
             int len = mbb.getInt(13);
             byte[] b = new byte[len];
@@ -133,7 +162,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	        mbb.putInt(1, sleuthId);
 	        mbb.putLong(5, streamId);
 	        mbb.putLong(13, pos);
-	        mbb.put(0, FLAGS.SEEK);
+	        SleuthkitServer.commitByte(mbb, 0, FLAGS.SEEK);
 	        empty = true;
 	        notifyServer();
 	        waitServerResponse();
@@ -150,7 +179,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	    synchronized(client){
 	        mbb.putInt(1, sleuthId);
 	        mbb.putLong(5, streamId);
-	        mbb.putInt(0, FLAGS.POSITION);
+	        SleuthkitServer.commitByte(mbb, 0, FLAGS.POSITION);
 	        notifyServer();
 	        waitServerResponse();
 	        return mbb.getLong(13); 
@@ -167,7 +196,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	    synchronized(client){
 	        mbb.putInt(1, sleuthId);
 	        mbb.putLong(5, streamId);
-	        mbb.putInt(0, FLAGS.SIZE);
+	        SleuthkitServer.commitByte(mbb, 0, FLAGS.SIZE);
 	        notifyServer();
 	        waitServerResponse();
 	        return mbb.getLong(13);
@@ -201,7 +230,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream{
 	        closed = true;
 	        mbb.putInt(1, sleuthId);
 	        mbb.putLong(5, streamId);
-	        mbb.put(0, FLAGS.CLOSE);
+	        SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
 	        empty = true;
 	        notifyServer();
 	        waitServerResponse();
