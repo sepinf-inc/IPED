@@ -226,7 +226,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 				FTK1ReportReader.criarLinkBusca(output);
 
 			this.firePropertyChange("mensagem", "", "Finalizado");
-			LOGGER.info("{} finalizado com sucesso", Versao.APP_EXT);
+			LOGGER.info("{} finalizado.", Versao.APP_EXT);
 			success = true;
 
 		} catch (Throwable e) {
@@ -305,7 +305,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		if (!success)
 			System.out.println("\nERRO!!!");
 		else
-			System.out.println("\n" + Versao.APP_EXT + " finalizado com sucesso.");
+			System.out.println("\n" + Versao.APP_EXT + " finalizado.");
 
 		if (!indexador.nologfile)
 			System.out.println("Consulte o LOG na pasta \"IPED/log\".");

@@ -156,11 +156,11 @@ public class Statistics {
 
 		int discovered = caseData.getDiscoveredEvidences();
 		if (processed != discovered)
-			throw new Exception("Processados " + processed + " itens de " + discovered);
+		    LOGGER.error("Alerta: Processados " + processed + " itens de " + discovered);
 
 		if(!ExportFileTask.hasCategoryToExtract()){
 			if (indexed != discovered - carvedIgnored - ignored)
-				throw new Exception("Indexados " + indexed + " itens de " + (discovered - carvedIgnored - ignored));
+			    LOGGER.error("Alerta: Indexados " + indexed + " itens de " + (discovered - carvedIgnored - ignored));
 		}/*else 
 			if (indexed != extracted)
 				throw new Exception("Indexados " + indexed + " itens de " + extracted);
