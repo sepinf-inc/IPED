@@ -280,8 +280,15 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-    	String reportRoot = "relatorio.htm";
-        if (taskEnabled && caseData.containsReport() && info != null && !new File(reportSubFolder, reportRoot).exists()) {
+    	
+        if (taskEnabled && caseData.containsReport() && info != null) {
+        	
+        	String reportRoot = "relatorio.htm";
+        	if(new File(reportSubFolder.getParentFile(), reportRoot).exists()){
+        		Log.error(taskName, "Relatório HTML não será gerado pois já existe.");
+        		return;
+        	}
+        	
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
