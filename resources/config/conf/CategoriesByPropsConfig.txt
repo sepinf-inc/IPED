@@ -126,7 +126,8 @@ function isFromInternet(e){
 	var path = e.getPath();
 	
 	return 	path.indexOf("Temporary Internet") > -1 || 
-		path.indexOf("Microsoft/Windows/INetCache/") > -1 ||
+		path.indexOf("/Microsoft/Windows/INetCache") > -1 ||
+		path.indexOf("/Microsoft/Windows/INetCookies") > -1 ||
 		path.indexOf("Chrome/User Data/") > -1 ||
 		path.indexOf("Mozilla/Firefox/Profiles") > -1 || 
 		path.indexOf("Apple Computer/Safari") > -1 || 
