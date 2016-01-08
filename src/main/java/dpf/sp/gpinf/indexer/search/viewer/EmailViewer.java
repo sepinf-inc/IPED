@@ -152,7 +152,7 @@ public class EmailViewer extends HtmlViewer {
 				} catch (Exception e2) {
 					try {
 						// Linux Only
-						Runtime.getRuntime().exec(new String[] { "xgd-open", "\"" + file.getCanonicalFile() + "\"" });
+						Runtime.getRuntime().exec(new String[] { "xdg-open", "\"" + file.toURI().toURL() + "\"" });
 					} catch (Exception e3) {
 						e3.printStackTrace();
 					}

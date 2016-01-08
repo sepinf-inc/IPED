@@ -18,12 +18,15 @@
  */
 package dpf.sp.gpinf.indexer.search.viewer;
 
+import java.awt.Desktop;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Set;
+
+import netscape.javascript.JSObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +59,11 @@ public class HtmlViewer extends AbstractViewer {
 	private JFXPanel jfxPanel;
 	private WebView htmlViewer;
 	private static int MAX_SIZE = 10000000;
-	private static String LARGE_FILE_MSG = "<html>Arquivo muito grande para ser exibido internamente!<br>" + "Abra o aquivo com o clique duplo.</html>";
+	
+	private static String LARGE_FILE_MSG = "<html><body>"
+			+ "Arquivo muito grande para ser exibido internamente!<br><br>"
+			+ "<a href=\"\" onclick=\"app.open()\">Abrir externamente</a>"
+			+ "</body></html>";
 
 	WebEngine webEngine;
 
@@ -83,7 +90,6 @@ public class HtmlViewer extends AbstractViewer {
 			public void run() {
 				htmlViewer = new WebView();
 				webEngine = htmlViewer.getEngine();
-				webEngine.setJavaScriptEnabled(false);
 				addHighlighter();
 
 				StackPane root = new StackPane();
@@ -127,17 +133,40 @@ public class HtmlViewer extends AbstractViewer {
 								}
 
 							}
-
+							webEngine.setJavaScriptEnabled(false);
 							webEngine.load(file.toURI().toURL().toString());
 
-						} else
+						} else{
+							webEngine.setJavaScriptEnabled(true);
 							webEngine.loadContent(LARGE_FILE_MSG);
+						}
 
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
 					}
 			}
 		});
+	}
+	
+	public class JavaApplication {
+		public void open() {
+			try {
+				Desktop.getDesktop().open(file.getCanonicalFile());
+			} catch (Exception e) {
+				try {
+					// Windows Only
+					Runtime.getRuntime().exec(new String[] { "rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\"" });
+				} catch (Exception e2) {
+					try {
+						// Linux Only
+						Runtime.getRuntime().exec(new String[] { "xdg-open", "\"" + file.toURI().toURL() + "\"" });
+					} catch (Exception e3) {
+						e3.printStackTrace();
+					}
+				}
+			}
+
+		}
 	}
 
 	volatile Document doc;
@@ -152,8 +181,14 @@ public class HtmlViewer extends AbstractViewer {
 				webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
 					@Override
 					public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
+						
 						if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
+							if(webEngine.isJavaScriptEnabled()){
+								JSObject window = (JSObject) webEngine.executeScript("window");
+								window.setMember("app", new JavaApplication());
+							}
+							
 							doc = webEngine.getDocument();
 							// doc = null;
 
