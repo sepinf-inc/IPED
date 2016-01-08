@@ -25,6 +25,18 @@
       <glob pattern="*.dbase3"/>
    </mime-type>
    
+   <mime-type type="application/x-edb">
+      <_comment>Extensible Storage Engine (ESE) Database File </_comment>
+      <magic priority="60">
+        	<match value="0xEFCDAB89" type="string" offset="4"/>
+      </magic>
+      <glob pattern="*.edb"/>
+   </mime-type>
+   
+   <mime-type type="application/x-edb-table">     
+		<sub-class-of type="text/html"/>
+   </mime-type>
+   
    <mime-type type="message/rfc822">
     <magic priority="60">
       <match value="Relay-Version:" type="stringignorecase" offset="0"/>

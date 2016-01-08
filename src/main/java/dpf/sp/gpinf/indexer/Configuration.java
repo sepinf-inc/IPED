@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
@@ -311,6 +312,9 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			searchThreads = Integer.valueOf(value);
+		
+		if (System.getProperty("os.name").toLowerCase().startsWith("windows"))
+			EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
 		
 
 	}

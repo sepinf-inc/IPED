@@ -220,13 +220,13 @@
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
-            <version>6.0.1</version>
+            <version>6.0.2</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
-            <version>6.0.1</version>
+            <version>6.0.2</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -308,6 +308,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-esedbexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libesedb</artifactId>
+                                    <version>20151213</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-graphicsmagick</id>
                         <phase>package</phase>
                         <goals>
@@ -375,7 +394,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>loaddb-zip</artifactId>
-                                    <version>4.2-iped-patch-0.2</version>
+                                    <version>20160107-iped-patch-0.2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
