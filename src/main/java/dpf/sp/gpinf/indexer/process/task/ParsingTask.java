@@ -226,7 +226,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	private boolean checkScanned(MediaType mediaType){
-	    return OCRParser.SUPPORTED_TYPES.contains(mediaType);
+	    return OCRParser.getSupportedTypes().contains(mediaType);
 	}
 	
 	
