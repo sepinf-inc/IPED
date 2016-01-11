@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.sleuthkit.datamodel.Content;
@@ -40,7 +41,7 @@ public class SleuthkitServer {
 	}
 	
 	static SleuthkitCase sleuthCase;
-	
+	static boolean useUnsafe = true;
 	static HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<Long, SleuthkitInputStream>();
 	
 	public static void main(String args[]){
@@ -146,9 +147,10 @@ public class SleuthkitServer {
 	private static byte waitCmd(MappedByteBuffer out, InputStream in) throws Exception{
 	    in.read();
         byte cmd;
-        while(!FLAGS.isClientCmd(cmd = getByte(out, 0)))
+        while(!FLAGS.isClientCmd(cmd = getByte(out, 0))){
+        	System.err.println("Waiting Client Memory Write...");
             Thread.sleep(1);
-            //Thread.yield();
+        }
         return cmd;
 	}
 	
@@ -168,13 +170,28 @@ public class SleuthkitServer {
 	}
 	
 	static final void commitByte(MappedByteBuffer mbb, int pos, byte val){
-	    //mbb.put(pos, val);
-        DirectMemory.putByteVolatile(mbb, pos, val);
+		if(useUnsafe)
+			try{
+				DirectMemory.putByteVolatile(mbb, pos, val);
+				return;
+				
+			}catch(Throwable e){
+				useUnsafe = false;
+			}
+		
+		mbb.put(pos, val);
+        
 	}
 	
 	static final Byte getByte(MappedByteBuffer mbb, int pos){
-	    //return mbb.get(pos);
-	    return DirectMemory.getByteVolatile(mbb, pos);
+		if(useUnsafe)
+			try{
+				return DirectMemory.getByteVolatile(mbb, pos);
+			}catch(Throwable e){
+				useUnsafe = false;
+			}
+		
+		return mbb.get(pos);
 	}
 
 }

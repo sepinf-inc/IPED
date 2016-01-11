@@ -34,7 +34,7 @@ public class SleuthkitClient {
 	MappedByteBuffer out;
 	OutputStream os;
 	
-	boolean serverError = false;
+	volatile boolean serverError = false;
 	
     /*private static final ThreadLocal<SleuthkitClient> threadLocal =
         new ThreadLocal<SleuthkitClient>() {
@@ -107,9 +107,9 @@ public class SleuthkitClient {
 			logStdErr(process);
 			
 		} catch (Exception e) {
-			e.printStackTrace();
-			if(process != null)
-				process.destroy();
+			//e.printStackTrace();
+			if(process != null) process.destroy();
+			process = null;
 		}
 	}
 	
@@ -133,15 +133,15 @@ public class SleuthkitClient {
 	
 	public SeekableInputStream getInputStream(int id, String path) throws IOException{
 	    
-	    if(serverError){
-	        process.destroy();
+		if(serverError){
+	    	if(process != null) process.destroy();
 	        process = null;
 	        serverError = false;
 	    }
 	    
 	    while(process == null || !isAlive(process))
 	        start();
-	        
+	    
 		return new SleuthkitClientInputStream(id, path, this);
 	}
 	
