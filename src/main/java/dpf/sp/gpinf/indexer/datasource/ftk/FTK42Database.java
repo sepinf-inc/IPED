@@ -57,16 +57,21 @@ public class FTK42Database extends FTKDatabase {
 	protected FTK42Database(Properties properties, String caseName, File report) throws SQLException {
 
 		super(properties, caseName, report);
-
 		schemaBase = schemaVersion;
+		setDatabaseParams(serviceName);
+
+	}
+	
+	private void setDatabaseParams(String databaseName) throws SQLException{
+		
 		if ("oracle".equalsIgnoreCase(databaseType)) {
 			OracleDataSource oSource = new OracleDataSource();
 			oSource.setUser(user);
 			oSource.setPassword(password);
 			oSource.setDriverType(driverType);
-			oSource.setServiceName(serviceName);
 			oSource.setServerName(serverName);
 			oSource.setPortNumber(portNumber);
+			oSource.setServiceName(databaseName);
 
 			ods = oSource;
 
@@ -79,7 +84,7 @@ public class FTK42Database extends FTKDatabase {
 			oSource.setPassword(password);
 			oSource.setServerName(serverName);
 			oSource.setPortNumber(portNumber);
-			oSource.setDatabaseName(serviceName);
+			oSource.setDatabaseName(databaseName);
 
 			ods = oSource;
 
@@ -92,14 +97,13 @@ public class FTK42Database extends FTKDatabase {
 			oSource.setPassword(password);
 			oSource.setServerName(serverName);
 			oSource.setPortNumber(portNumber);
-			oSource.setDatabaseName(serviceName);
+			oSource.setDatabaseName(databaseName);
 
 			ods = oSource;
 
 			schemaPrefix = schemaBase; // Alterado
 			deletedStr = "0"; // Alterado
 		}
-
 	}
 
 	@Override
@@ -297,13 +301,8 @@ public class FTK42Database extends FTKDatabase {
 			if(e.toString().toLowerCase().contains(str)){
 				stmt.close();
 				conn.close();
-				PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
-				oSource.setUser(user);
-				oSource.setPassword(password);
-				oSource.setServerName(serverName);
-				oSource.setPortNumber(portNumber);
-				oSource.setDatabaseName("case_" + schema.toLowerCase());
-				conn = oSource.getConnection();
+				setDatabaseParams("case_" + schema.toLowerCase());
+				conn = ods.getConnection();
 				stmt = conn.createStatement();
 				rset = stmt.executeQuery(sql);
 			}
