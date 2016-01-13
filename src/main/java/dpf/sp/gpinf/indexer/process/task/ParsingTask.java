@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
 
@@ -50,7 +49,6 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -276,7 +274,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			    int charCount = Integer.parseInt(value.replace("OCRCharCount", ""));
 			    evidence.setExtraAttribute("OCRCharCount", charCount);
 			    if(charCount >= 100)
-			        evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
+			        evidence.addCategory(SetCategoryTask.SCANNED_CATEGORY);
 			}
 			    
 
@@ -387,6 +385,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			subItem.setModificationDate(metadata.getDate(TikaCoreProperties.MODIFIED));
 			subItem.setAccessDate(metadata.getDate(ExtraProperties.ACCESSED));
 			subItem.setDeleted(parent.isDeleted());
+			if(metadata.get(ExtraProperties.DELETED) != null)
+				subItem.setDeleted(true);
+			
 			//causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
 			//subItem.setCarved(parent.isCarved());
 			subItem.setSubItem(true);

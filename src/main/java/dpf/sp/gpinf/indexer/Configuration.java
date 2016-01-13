@@ -38,6 +38,7 @@ import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
@@ -117,15 +118,6 @@ public class Configuration {
 		if (indexerTemp != null)
 			indexerTemp.mkdirs();
 		
-		IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
-		Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
-		
-		value = properties.getProperty("TskLoaddbPath");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			SleuthkitReader.setTskPath(configPath + "/" + value);
-		
 		value = properties.getProperty("robustImageReading");
         if (value != null)
             value = value.trim();
@@ -177,12 +169,6 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			RawStringParser.MIN_SIZE = Integer.valueOf(value);
-
-		value = properties.getProperty("TesseractPath");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			OCRParser.TESSERACTFOLDER = configPath + "/" + value;
 
 		value = properties.getProperty("enableOCR");
 		if (value != null)
@@ -280,7 +266,6 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value);
 
-		Runtime.getRuntime().availableProcessors();
 		value = properties.getProperty("galleryThreads");
 		if (value != null)
 			value = value.trim();
@@ -313,10 +298,26 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			searchThreads = Integer.valueOf(value);
 		
-		if (System.getProperty("os.name").toLowerCase().startsWith("windows"))
+		if (System.getProperty("os.name").toLowerCase().startsWith("windows")){
+			
+			value = properties.getProperty("TskLoaddbPath");
+			if (value != null)
+				value = value.trim();
+			if (value != null && !value.isEmpty())
+				SleuthkitReader.setTskPath(configPath + "/" + value);
+			
+			value = properties.getProperty("TesseractPath");
+			if (value != null)
+				value = value.trim();
+			if (value != null && !value.isEmpty())
+				OCRParser.TESSERACTFOLDER = configPath + "/" + value;
+			
+			IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
+			Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
+			
 			EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
-		
-
+			LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
+		}
 	}
 
 }

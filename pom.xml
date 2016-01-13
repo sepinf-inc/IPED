@@ -327,6 +327,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-pffexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libpff</artifactId>
+                                    <version>20131028</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-graphicsmagick</id>
                         <phase>package</phase>
                         <goals>
