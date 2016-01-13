@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer;
 import gpinf.dev.data.CaseData;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -175,19 +177,41 @@ public class CmdLineArgs {
 			
 		}
 
-		if (reportDir == null || !(new File(reportDir, "files")).exists()) {
-			if (reportDir == null || !(new File(reportDir, "Export")).exists())
-				if (dataSource == null || (!dataSource.exists() && !SleuthkitReader.isPhysicalDrive(dataSource)))
+		if (reportDir == null || !(new File(reportDir, "files")).exists())
+			if (reportDir == null || !(new File(reportDir, "Report_files/files")).exists())
+				if (reportDir == null || !(new File(reportDir, "Export")).exists())
+					if (dataSource == null || (!dataSource.exists() && !SleuthkitReader.isPhysicalDrive(dataSource)))
 					printUsageExit();
 			
+		if(outputDir != null && reportDir != null)
+			throw new RuntimeException("Opção -o não deve ser utilizada com relatorios do FTK!");
+		
+		if(new File(reportDir, "Report_files/files").exists()){
+			IndexFiles.getInstance().dataSource.remove(reportDir);
+			IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files"));
+			IndexFiles.getInstance().output = new File(reportDir, "indexador");
 		}
 
 		if (outputDir != null)
-			IndexFiles.getInstance().output = new File(outputDir, "indexador");
+			IndexFiles.getInstance().output = new File(outputDir, "indexador");	
 		else if (reportDir != null)
 			IndexFiles.getInstance().output = new File(reportDir, "indexador");
 		else
 			IndexFiles.getInstance().output = new File(dataSource.getParentFile(), "indexador");
+		
+		File file = outputDir;
+		while (file != null){
+			for(File source : IndexFiles.getInstance().dataSource)
+				try {
+					if(file.getCanonicalPath().equals(source.getCanonicalPath()))
+						throw new RuntimeException("Diretório de saída não pode ser igual ou estar dentro da entrada!");
+					
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			file = file.getParentFile();
+		}
+			
 
 	}
 	
