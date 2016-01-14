@@ -33,8 +33,34 @@
       <glob pattern="*.edb"/>
    </mime-type>
    
-   <mime-type type="application/x-edb-table">     
+   <mime-type type="application/x-edb-table">
+   		<magic priority="70">
+        	<match value="!--EDB Extracted Table--" type="string" offset="7"/>
+      	</magic>
 		<sub-class-of type="text/html"/>
+   </mime-type>
+   
+   <mime-type type="application/x-webcache">     
+		<sub-class-of type="application/x-edb"/>
+		<glob pattern="WebCacheV01*.dat"/>
+   </mime-type>
+   
+   <mime-type type="application/x-webcache-table">     
+		<sub-class-of type="application/x-edb-table"/>
+   </mime-type>
+   
+   <mime-type type="application/x-livecontacts">     
+		<sub-class-of type="application/x-edb"/>
+		<glob pattern="contacts.edb"/>
+		<glob pattern="Contacts.edb"/>
+   </mime-type>
+   
+   <mime-type type="application/x-livecontacts-table">   
+		<sub-class-of type="application/x-edb-table"/>
+		<glob pattern="*-SimpleContact-v*"/>
+		<glob pattern="*-SimpleContactShadow-v*"/>
+		<glob pattern="*-Member-v*"/>
+		<glob pattern="*-MemberShadow-v*"/>
    </mime-type>
    
    <mime-type type="message/rfc822">
@@ -55,9 +81,9 @@
       <match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
       <match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
       <match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
-      <match value="\nMIME-Version:" type="stringignorecase" offset="0:1000"/>
+      <match value="MIME-Version:" type="stringignorecase" offset="0"/>
     </magic>
-    <sub-class-of type="text/plain"/>
+    <sub-class-of type="text/html"/>
     <glob pattern="*.eml"/>
     <glob pattern="*.mime"/>
     <glob pattern="*.mht"/>

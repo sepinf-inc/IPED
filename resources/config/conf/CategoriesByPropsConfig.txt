@@ -99,10 +99,7 @@ function addCategory(e){
 			}
 		} else {
 			var nome = e.getName().toLowerCase();
-			if (nome.equals("contacts.edb")) {
-				e.setCategory("Contatos");
-				
-			} else if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {
+			if (e.getPath().toLowerCase().indexOf("/chrome/user data/") > -1) {
 				if (nome.indexOf(" session") > -1 || 
 	 			   nome.indexOf(" tabs") > -1 ||
 	  			   nome.indexOf("visited links") > -1 ||
