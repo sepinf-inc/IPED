@@ -563,7 +563,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append(">");
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
-            } else if (!reg.isVideo && !reg.isImage && reg.hash != null) {
+            } else if (!reg.isVideo && reg.hash != null) {
                 File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
                 if (view != null) {
                     it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
