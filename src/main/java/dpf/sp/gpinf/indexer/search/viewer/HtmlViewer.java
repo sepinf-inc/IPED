@@ -75,7 +75,7 @@ public class HtmlViewer extends AbstractViewer {
 		return contentType.equals("text/html") || contentType.equals("application/xhtml+xml") || contentType.equals("text/asp") || contentType.equals("text/aspdotnet")
 				|| contentType.equals("message/outlook-pst") || contentType.equals("application/messenger-plus") || contentType.equals("application/outlook-contact")
 				|| contentType.equals("message/x-whatsapp-msg") || contentType.equals("application/x-edb-table") || contentType.equals("application/x-webcache-table")
-				|| contentType.equals("application/x-livecontacts-table");
+				|| contentType.equals("application/x-livecontacts-table") || contentType.equals("application/x-windows-registry-report");
 	}
 
 	public HtmlViewer() {

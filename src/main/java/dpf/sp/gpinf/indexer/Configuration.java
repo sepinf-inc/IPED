@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -318,6 +319,9 @@ public class Configuration {
 			EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
 			LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
 		}
+		
+		RegistryParser.TOOL_PATH = configPath + "/tools/regripper/";
+		
 	}
 
 }

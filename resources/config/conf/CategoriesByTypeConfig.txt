@@ -37,7 +37,7 @@ Contatos = text/x-vcard; application/windows-adress-book; application/outlook-co
 
 Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; message/x-whatsapp-msg
 
-Registro do Windows = application/x-windows-registry
+Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
 Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer
 

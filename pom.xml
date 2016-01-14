@@ -346,6 +346,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-regripper</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>keydet89</groupId>
+                                    <artifactId>regripper</artifactId>
+                                    <version>2.8</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-graphicsmagick</id>
                         <phase>package</phase>
                         <goals>

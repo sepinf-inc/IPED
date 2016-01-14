@@ -55,6 +55,7 @@
 	<parser class="org.gagravarr.tika.OggParser"></parser>
 	<parser class="org.gagravarr.tika.VorbisParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser>
+	<parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
 	<parser class="dpf.sp.gpinf.indexer.parsers.RARParser"></parser>
 	<parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>

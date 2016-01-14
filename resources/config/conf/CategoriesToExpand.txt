@@ -12,6 +12,8 @@ Chats
 Contatos
 Discos ISO
 Histórico de Internet
+Registro do Windows
+
 #Documentos de Texto
 #Planilhas
 #Apresentações
