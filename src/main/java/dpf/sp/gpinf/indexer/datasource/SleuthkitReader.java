@@ -170,6 +170,8 @@ public class SleuthkitReader extends DataSourceReader{
 
 		process.getOutputStream().close();
 		process.waitFor();
+		if(process.exitValue() != 0)
+			throw new Exception("Erro ao testar tsk_loaddb. Execução terminou com erro " + process.exitValue());
 		
 		InputStreamReader reader = new InputStreamReader(process.getInputStream());
 		StringBuilder out = new StringBuilder();
