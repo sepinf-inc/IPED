@@ -211,7 +211,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/casos/4649.13/indexador/lib/search.jar";
+			//codePath = "E:/2101/indexador/lib/search.jar";
 			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
@@ -488,6 +488,7 @@ public class App extends JFrame implements WindowListener {
 			tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 			treeListener = new TreeListener();
 			tree.addTreeSelectionListener(treeListener);
+			tree.addTreeExpansionListener(treeListener);
 			
 			JPanel evidencePanel = new JPanel(new BorderLayout());
 			evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
