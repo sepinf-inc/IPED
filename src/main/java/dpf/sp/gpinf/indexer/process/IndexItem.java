@@ -303,8 +303,10 @@ public class IndexItem {
 					File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
 					if(viewFile != null)
 						evidence.setViewFile(viewFile);
-					if(viewItem)
+					if(viewItem){
 						evidence.setFile(viewFile);
+						evidence.setTempFile(viewFile);
+					}
 				}
 			}
 			

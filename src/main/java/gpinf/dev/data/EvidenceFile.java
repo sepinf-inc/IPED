@@ -565,7 +565,7 @@ public class EvidenceFile implements Serializable, StreamSource {
         	try{
         		stream = new SeekableFileInputStream(file);
         		
-        	//workaround para itens carveados apontando para tmpFile to pai que foi apagado
+        	//workaround para itens carveados apontando para tmpFile do pai que foi apagado
         	}catch(FileNotFoundException fnfe){
         		file = null;
         	}
@@ -620,17 +620,19 @@ public class EvidenceFile implements Serializable, StreamSource {
 	                        throw new IOException("Could not delete temp file " + file.getPath());
 	                }
 	            });
-	        	InputStream in = getBufferedStream();
-	        	try{
+	        	
+	        	try(InputStream in = getBufferedStream()){
 	        		Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-	        	}finally{
-	        		in.close();
 	        	}
 	        	tmpFile = file;
 	        }
 	        	
         }
         return tmpFile;
+    }
+    
+    public void setTempFile(File tempFile){
+    	tmpFile = tempFile;
     }
     
     
