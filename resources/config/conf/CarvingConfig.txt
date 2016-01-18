@@ -93,11 +93,11 @@ EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 
-AVI, video/x-msvideo, 10000, 100000000, RIFF????AVI LIST, null, 4, 4, false
+AVI, video/x-msvideo, 10000, 300000000, RIFF????AVI LIST, null, 4, 4, false
 
 # WMV e WMA, com tratamento específico codificado
-ASF, null, 100000, 100000000, \30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02, ignoreFooter
-ASF, null, 100000, 100000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, null, 40, 8, false
+ASF, null, 100000, 300000000, \30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02, ignoreFooter
+ASF, null, 100000, 300000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, null, 40, 8, false
 
 #PLIST, application/xml, 1000, 1000000, <?xml, </plist>
 
@@ -108,17 +108,17 @@ ASF, null, 100000, 100000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, 
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\ba, \00\00\01\b9
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\b3, \00\00\01\b7
 
-#FLV, video/x-flv, 100000, 10000000, FLV\01\01\00\00\00\09, null
-#FLV, video/x-flv, 100000, 10000000, FLV\01\04\00\00\00\09, null
-#FLV, video/x-flv, 100000, 10000000, FLV\01\05\00\00\00\09, null
+#FLV, video/x-flv, 100000, 50000000, FLV\01\01\00\00\00, null
+#FLV, video/x-flv, 100000, 50000000, FLV\01\04\00\00\00, null
+#FLV, video/x-flv, 100000, 50000000, FLV\01\05\00\00\00, null
 
-#MP4, video/mp4, 100000, 10000000, ????ftypmp41, null
-#MP4, video/mp4, 100000, 10000000, ????ftypmp42, null
-#MP4, video/mp4, 100000, 10000000, ????ftypMSNV, null
-#MP4, video/mp4, 100000, 10000000, ????ftypM4V, null
+#MP4, video/mp4, 100000, 100000000, ????ftypmp41, null
+#MP4, video/mp4, 100000, 100000000, ????ftypmp42, null
+#MP4, video/mp4, 100000, 100000000, ????ftypMSNV, null
+#MP4, video/mp4, 100000, 100000000, ????ftypM4V, null
 #MP4, video/mp4, 100000, 100000000, ????ftypisom, null
 
-#3GP, video/3gpp, 100000, 10000000, ????ftyp3g, null
+#3GP, video/3gpp, 100000, 20000000, ????ftyp3g, null
 
 #MOV, video/quicktime, 100000, 100000000, ????ftypqt\20\20, null
-#MOV, video/quicktime, 100000, 100000000, ????moov, null
+#MOV, video/quicktime, 100000, 10000000, ????moov, null
