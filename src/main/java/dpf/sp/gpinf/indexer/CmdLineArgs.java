@@ -53,6 +53,7 @@ public class CmdLineArgs {
 		{"--append"		, "adiciona indexação a um indice ja existente"},
 		{"--nogui"		, "nao exibe a janela de progresso da indexacao"},
 		{"--nologfile"	, "imprime as mensagem de log na saida padrao"},
+		{"--nopstattachs"	, "não inclui automaticamente no relatorio anexos de emails de PST/OST"},
 	};
 	
 	private Map<String, List<String>> paramMap = new HashMap<String, List<String>>();
