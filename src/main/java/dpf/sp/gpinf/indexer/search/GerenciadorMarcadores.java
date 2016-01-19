@@ -64,8 +64,8 @@ public class GerenciadorMarcadores implements ActionListener {
 
 	JDialog dialog = new JDialog();
 	JLabel msg = new JLabel("Conjunto de dados:");
-	JRadioButton highlighted = new JRadioButton("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
-	JRadioButton checked = new JRadioButton("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
+	JRadioButton highlighted = new JRadioButton();
+	JRadioButton checked = new JRadioButton();
 	ButtonGroup group = new ButtonGroup();
 	JCheckBox duplicates = new JCheckBox();
 	JButton add = new JButton("Adicionar");
@@ -81,6 +81,11 @@ public class GerenciadorMarcadores implements ActionListener {
 	
 	public static void setVisible(){
 	    instance.dialog.setVisible(true);
+	}
+	
+	public static void updateCounters(){
+		instance.highlighted.setText("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
+		instance.checked.setText("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
 	}
 
 	private GerenciadorMarcadores() {
