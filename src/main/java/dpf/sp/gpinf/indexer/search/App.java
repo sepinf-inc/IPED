@@ -98,7 +98,7 @@ public class App extends JFrame implements WindowListener {
 	SleuthkitCase sleuthCase;
 
 	SearchResult results = new SearchResult(0);
-	int[] textSizes, ids, docs;
+	public int[] textSizes, ids, docs;
 
 	int totalItens, lastId, lastSelectedDoc;
 	public Marcadores marcadores;
@@ -489,6 +489,7 @@ public class App extends JFrame implements WindowListener {
 			treeListener = new TreeListener();
 			tree.addTreeSelectionListener(treeListener);
 			tree.addTreeExpansionListener(treeListener);
+			tree.addMouseListener(treeListener);
 			
 			JPanel evidencePanel = new JPanel(new BorderLayout());
 			evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
