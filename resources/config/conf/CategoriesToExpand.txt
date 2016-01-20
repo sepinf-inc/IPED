@@ -12,6 +12,8 @@ Chats
 Contatos
 Discos ISO
 Histórico de Internet
+
+# Gera relatórios de registro:
 Registro do Windows
 
 #Documentos de Texto
