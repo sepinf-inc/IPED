@@ -23,14 +23,16 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.HashSet;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -110,16 +112,16 @@ public class IPEDReader extends DataSourceReader{
 		//Inclui anexos de emails de PST
 		CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (!args.getCmdArgs().containsKey("--nopstattachs")){
-        	StringBuilder query = new StringBuilder();
-    		query.append(IndexItem.PARENTID + ":(");
+        	BooleanQuery query = new BooleanQuery();
     		for (int docID : result.docs) {
     			String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
     			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-    				query.append(App.get().ids[docID] + " ");
+    				query.add(new TermQuery(new Term(IndexItem.PARENTID, Integer.toString(App.get().ids[docID]))), Occur.SHOULD);
     		}
-    		query.append(")");
+    		for (int docID : result.docs)
+    			query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
     		
-    		PesquisarIndice searchPSTAttachs = new PesquisarIndice(PesquisarIndice.getQuery(query.toString()));
+    		PesquisarIndice searchPSTAttachs = new PesquisarIndice(query);
     		result = searchPSTAttachs.pesquisar();
     		insertIntoProcessQueue(result);
         }
