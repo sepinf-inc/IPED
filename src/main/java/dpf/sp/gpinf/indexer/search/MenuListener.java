@@ -202,7 +202,7 @@ public class MenuListener implements ActionListener {
 
 		} else if (e.getSource() == menu.copiarPreview) {
 			AbstractViewer viewer = App.get().compositeViewer.getCurrentViewer();
-			viewer.copyScreen(viewer.getPanel());
+			viewer.copyScreen();
 
 		} else if (e.getSource() == menu.aumentarGaleria) {
 

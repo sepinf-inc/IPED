@@ -97,5 +97,11 @@ public class CompositeCardViewer extends AbstractViewer{
 		if(currentViewer != null)
 			currentViewer.scrollToNextHit(forward);
 	}
+	
+	@Override
+	public void copyScreen() {
+		if(currentViewer != null)
+			currentViewer.copyScreen();
+	}
 
 }
