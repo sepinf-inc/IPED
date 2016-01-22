@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -221,7 +222,12 @@ public class ExportFileTask extends AbstractTask{
 		File result = new File(extractDir, path);
 		File parent = result.getParentFile();
 		if (!parent.exists())
-			parent.mkdirs();
+			try {
+				Files.createDirectories(parent.toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
 		return result;
 	}
 
@@ -245,17 +251,22 @@ public class ExportFileTask extends AbstractTask{
 			
 			synchronized(hashLock){
 				if (!hashFile.exists()) {
-					if (!file.renameTo(hashFile)) {
+					try {
+						Files.move(file.toPath(), hashFile.toPath());
+						changeTargetFile(evidence, hashFile);
+						
+					} catch (IOException e) {
 						// falha ao renomear pode ter sido causada por outra thread
 						// criando arquivo com mesmo hash entre as 2 chamadas acima
 						if (hashFile.exists()) {
 							changeTargetFile(evidence, hashFile);
 							if (!file.delete())
 								LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
-						} else
+						} else{
 							LOGGER.warn("{} Falha ao renomear para o hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex());
-					} else
-						changeTargetFile(evidence, hashFile);
+							e.printStackTrace();
+						}
+					}
 					
 				} else {
 					changeTargetFile(evidence, hashFile);
@@ -306,7 +317,7 @@ public class ExportFileTask extends AbstractTask{
 			}
 					
 		}else {
-			outputFile = new File(extractDir, Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
+			outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext));
 			if (!outputFile.getParentFile().exists())
 				outputFile.getParentFile().mkdirs();
 		}
