@@ -173,25 +173,29 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
+		if (e.isPopupTrigger())
+			showPopupMenu(e);
 		
+	}
+	
+	private void showPopupMenu(MouseEvent e){
+		JPopupMenu menu = new JPopupMenu();
+		
+		JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
+		exportTree.addActionListener(new TreeMenuListener(false));
+		menu.add(exportTree);
+		
+		JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
+		exportTreeChecked.addActionListener(new TreeMenuListener(true));
+		menu.add(exportTreeChecked);
+		
+		menu.show((Component)e.getSource(), e.getX(), e.getY());
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if (e.isPopupTrigger()) {
-			JPopupMenu menu = new JPopupMenu();
-			
-			JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
-			exportTree.addActionListener(new TreeMenuListener(false));
-			menu.add(exportTree);
-			
-			JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
-			exportTreeChecked.addActionListener(new TreeMenuListener(true));
-			menu.add(exportTreeChecked);
-			
-			menu.show((Component)e.getSource(), e.getX(), e.getY());
-		}
+		if (e.isPopupTrigger())
+			showPopupMenu(e);
 		
 	}
 	
