@@ -1,3 +1,9 @@
+27/01/2015: IPED-3.8.1
+- Corrige captura da imagem do visualizador (regressão 3.7)
+- Extrai Feeds Rss de OSTs 2013
+- Melhor controle de timeout nos parsers OST, EDB e Registro
+- Não exibição do menu de exportação em árvore no Linux
+
 20/01/2015: IPED-3.8
 - Processamento robusto contra crashes e travamentos do TSK (opcional em AdvancedConfig.txt, usa mais memória)
 - Atualização Tsk_Loaddb 20160106 (fix para pendrives nao reconhecidos, crashes ntfs, hfs, etc)
