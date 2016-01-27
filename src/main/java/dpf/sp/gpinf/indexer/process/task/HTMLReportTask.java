@@ -285,7 +285,7 @@ public class HTMLReportTask extends AbstractTask {
         	
         	String reportRoot = "relatorio.htm";
         	if(new File(reportSubFolder.getParentFile(), reportRoot).exists()){
-        		Log.error(taskName, "Relatório HTML não será gerado pois já existe.");
+        		Log.error(taskName, "Relatório HTML já existente, atualização do relatório ainda não implementada!");
         		return;
         	}
         	
