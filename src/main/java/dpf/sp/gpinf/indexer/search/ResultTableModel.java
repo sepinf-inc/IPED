@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.TimeZone;
 
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
@@ -36,27 +37,38 @@ public class ResultTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
 	
-	public static String[] fields = {
-		IndexItem.NAME, 
-		IndexItem.TYPE, 
-		IndexItem.LENGTH, 
-		IndexItem.DELETED, 
-		IndexItem.CATEGORY,
-		IndexItem.CREATED,
-		IndexItem.MODIFIED,
-		IndexItem.ACCESSED,
-		IndexItem.HASH,
-		IndexItem.PATH
-	};
-
-	public static String[] columnNames = { "", "", "%", "Marcador"};
+	public static String[] fields;
 	
-	static{
+	private int coldWidths[] = {55, 20, 35, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000};
+	
+	public static String[] fixedCols = { "", "", "%", "Marcador"};
+	private static String[] columnNames = {};
+	
+	public void initCols(){
+		
+		updateCols();
+		
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run(){
+				App.get().resultsModel.fireTableStructureChanged();
+				App.get().resultsTable.getColumnModel().getColumn(2).setCellRenderer(new ProgressCellRenderer());
+				for(int i = 0; i < coldWidths.length; i++)
+					App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(coldWidths[i]);
+			}
+		});
+		
+	}
+	
+	public void updateCols(){
+		
 		ArrayList<String> cols = new ArrayList<String>();
-		for(String col : columnNames)
+		for(String col : fixedCols)
 			cols.add(col);
+		
+		fields = ColumnsManager.getInstance().getLoadedCols();
 		for(String col : fields)
 			cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+		
 		columnNames = cols.toArray(new String[0]);
 	}
 
@@ -86,6 +98,20 @@ public class ResultTableModel extends AbstractTableModel {
 		else
 			return columnNames[col];
 	}
+	
+	public void updateLengthHeader(long mb){
+		for(int i = 0; i < columnNames.length; i++)
+			if(IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])){
+				int col = App.get().resultsTable.convertColumnIndexToView(i);
+				if(mb == -1){
+					App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
+							columnNames[i] + " (...)");
+				}else
+					App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
+							columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)");
+			}
+				
+	}
 
 	@Override
 	public boolean isCellEditable(int row, int col) {
@@ -105,11 +131,9 @@ public class ResultTableModel extends AbstractTableModel {
 
 	@Override
 	public Class<?> getColumnClass(int c) {
-		if (c == 1 /* || c == 13 */)
+		if (c == 1)
 			return Boolean.class;
-		//else if (c == 3)
-		//	return ImageIcon.class;
-		else if (c == 6)
+		else if (columnNames[c].equalsIgnoreCase(IndexItem.LENGTH))
 			return Integer.class;
 		else
 			return String.class;
@@ -140,31 +164,31 @@ public class ResultTableModel extends AbstractTableModel {
 					doc = App.get().searcher.doc(docId);
 				lastDocRead = App.get().results.docs[row];
 
-				int fCol = col - 4;
+				int fCol = col - fixedCols.length;
 				String field = fields[fCol];
 				value = doc.get(field);
 				if(value == null)
 					value = "";
+				if(value.isEmpty())
+					return value;
 				
-				if(fCol >= 5  && fCol <= 7 && !value.isEmpty())
+				try{
 					value = df.format(DateUtil.stringToDate(value));
+					return value;
+					
+				}catch(Exception e){}
 				
-				if(fCol == 2 && !value.isEmpty())
+				if(field.equals(IndexItem.LENGTH))
 					value = NumberFormat.getNumberInstance().format(Long.valueOf(value));
 				
-				if (fCol == 0 || fCol == 1 || fCol == 4 || fCol == 9) {
+				else if(field.equals(IndexItem.CATEGORY))
+					value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+				
+				if (field.equals(IndexItem.NAME)) {
 					TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
 					if (fragments[0].getScore() > 0)
-						value = "<html><nobr>" + fragments[0].toString();
-
-				} else if (fCol == 3)
-					if (Boolean.valueOf(value))
-						value = "X";
-					else
-						value = "";
-
-				if (fCol == 4)
-					value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+						value = "<html><nobr>" + fragments[0].toString() + "</html>";
+				}
 
 			} catch (Exception e) {
 				e.printStackTrace();

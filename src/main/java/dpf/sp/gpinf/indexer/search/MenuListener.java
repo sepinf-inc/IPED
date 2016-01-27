@@ -236,7 +236,11 @@ public class MenuListener implements ActionListener {
 
 		} else if (e.getSource() == menu.gerenciarMarcadores) {
 
-		    GerenciadorMarcadores.setVisible();
+			GerenciadorMarcadores.setVisible();
+
+		} else if (e.getSource() == menu.gerenciarColunas) {
+
+			ColumnsManager.getInstance().setVisible();
 
 		} else if (e.getSource() == menu.gerenciarFiltros) {
 

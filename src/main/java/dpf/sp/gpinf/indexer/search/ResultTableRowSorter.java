@@ -34,8 +34,12 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 		super(new ResultTableSortModel());
 		this.setSortable(0, false);
 		this.setMaxSortKeys(2);
-		for (int i = 1; i < this.getModel().getColumnCount(); i++)
+		for (int i = 1; i < App.get().resultsModel.getColumnCount(); i++)
 			this.setComparator(i, new RowComparator(i));
+	}
+	
+	public void initComparator(int col){
+		this.setComparator(col, new RowComparator(col));
 	}
 	
 	

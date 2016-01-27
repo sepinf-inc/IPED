@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -151,6 +152,8 @@ public class EvidenceFile implements Serializable, StreamSource {
     private HashSet<String> categories = new HashSet<String>();
 
     private String labels;
+    
+    private Metadata metadata;
 
     private boolean timeOut = false;
 
@@ -1144,5 +1147,13 @@ public class EvidenceFile implements Serializable, StreamSource {
     public void setTempStartOffset(long tempStartOffset) {
         this.tempStartOffset = tempStartOffset;
     }
+
+	public Metadata getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(Metadata metadata) {
+		this.metadata = metadata;
+	}
 
 }

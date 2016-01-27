@@ -29,15 +29,28 @@ import java.io.Reader;
 import java.util.Date;
 import java.util.Map.Entry;
 
+import org.apache.lucene.collation.ICUCollationDocValuesField;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DoubleDocValuesField;
+import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.FloatDocValuesField;
+import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.SortedNumericDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.util.BytesRef;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
+
+import com.ibm.icu.text.Collator;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
@@ -91,29 +104,48 @@ public class IndexItem {
 		storedTokenizedNoNormsField.setStored(true);
 	}
 	
+	private static final ICUCollationDocValuesField getCollationDocValue(String field, String value){
+		Collator collator = Collator.getInstance();
+		collator.setStrength(Collator.PRIMARY);
+		ICUCollationDocValuesField cdvf = new ICUCollationDocValuesField(field, collator);
+		cdvf.setStringValue(value);
+		return cdvf;
+	}
+	
 	public static Document Document(EvidenceFile evidence, Reader reader) {
 		Document doc = new Document();
 
 		String value = String.valueOf(evidence.getId());
 		doc.add(new StringField(ID, value, Field.Store.YES));
+		doc.add(new NumericDocValuesField(ID, evidence.getId()));
 
 		value = evidence.getFtkID();
-		if (value != null)
+		if (value != null){
 			doc.add(new StringField(FTKID, value, Field.Store.YES));
-
+			doc.add(new SortedDocValuesField(FTKID, new BytesRef(value)));
+		}
+			
 		value = evidence.getSleuthId();
-		if (value != null)
+		if (value != null){
 			doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
-		
+			doc.add(new NumericDocValuesField(SLEUTHID, Integer.parseInt(value)));
+		}
+			
 		value = evidence.getParentId();
 		if (value == null)
 			if (evidence.getEmailPai() != null)
 				value = String.valueOf(evidence.getEmailPai().getId());
-		if (value != null)
+		if (value != null){
 			doc.add(new StringField(PARENTID, value, Field.Store.YES));
+			try{
+				doc.add(new NumericDocValuesField(PARENTID, Integer.parseInt(value)));
+			}catch(Exception e){
+				doc.add(new SortedDocValuesField(PARENTID, new BytesRef(value)));
+			}
+		}
 		
 		doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
-
+		doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 		
 		value = evidence.getName();
 		if (value == null)
@@ -121,6 +153,7 @@ public class IndexItem {
 		Field nameField = new TextField(NAME, value, Field.Store.YES);
 		nameField.setBoost(1000.0f);
 		doc.add(nameField);
+		doc.add(getCollationDocValue(NAME, value));
 
 		EvidenceFileType fileType = evidence.getType();
 		if (fileType != null)
@@ -128,11 +161,12 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
+		doc.add(getCollationDocValue(TYPE, value));
 		
 		Long length = evidence.getLength();
 		if(length != null){
-			LongField longfield = new LongField(LENGTH, length, Field.Store.YES);
-			doc.add(longfield);
+			doc.add(new LongField(LENGTH, length, Field.Store.YES));
+			doc.add(new NumericDocValuesField(LENGTH, length));
 		}
 		
 		Date date = evidence.getCreationDate();
@@ -141,6 +175,7 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new StringField(CREATED, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(CREATED, new BytesRef(value)));
 
 		date = evidence.getAccessDate();
 		if(date != null)
@@ -148,6 +183,7 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new StringField(ACCESSED, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(ACCESSED, new BytesRef(value)));
 
 		date = evidence.getModDate();
 		if(date != null)
@@ -155,15 +191,20 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new StringField(MODIFIED, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
 
 		value = evidence.getPath();
 		if (value == null)
 			value = "";
 		doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
+		//doc.add(new SortedDocValuesField(PATH, new BytesRef(value)));
+		doc.add(getCollationDocValue(PATH, value));
 
 		doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
+		doc.add(new SortedDocValuesField(EXPORT, new BytesRef(evidence.getFileToIndex())));
 		
 		doc.add(new Field(CATEGORY, evidence.getCategories(), storedTokenizedNoNormsField));
+		doc.add(getCollationDocValue(CATEGORY, evidence.getCategories()));
 
 		MediaType type = evidence.getMediaType();
 		if (type != null)
@@ -171,33 +212,47 @@ public class IndexItem {
 		else
 			value = "";
 		doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
+		doc.add(new SortedDocValuesField(CONTENTTYPE, new BytesRef(value)));
 
-		doc.add(new StringField(TIMEOUT, Boolean.toString(evidence.isTimedOut()), Field.Store.YES));
+		if(evidence.isTimedOut()){
+			doc.add(new StringField(TIMEOUT, Boolean.TRUE.toString(), Field.Store.YES));
+			doc.add(new SortedDocValuesField(TIMEOUT, new BytesRef(Boolean.TRUE.toString())));
+		}
 
 		value = evidence.getHash();
-		if (value != null)
+		if (value != null){
 			doc.add(new Field(HASH, value, storedTokenizedNoNormsField));
+			doc.add(new SortedDocValuesField(HASH, new BytesRef(value)));
+		}
 
 		value = Boolean.toString(evidence.isDuplicate());
 		doc.add(new StringField(DUPLICATE, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(DUPLICATE, new BytesRef(value)));
 
 		value = Boolean.toString(evidence.isDeleted());
 		doc.add(new StringField(DELETED, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(DELETED, new BytesRef(value)));
 		
 		value = Boolean.toString(evidence.hasChildren());
 		doc.add(new StringField(HASCHILD, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(HASCHILD, new BytesRef(value)));
 		
 		value = Boolean.toString(evidence.isDir());
 		doc.add(new StringField(ISDIR, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(ISDIR, new BytesRef(value)));
 		
-		if(evidence.isRoot())
-			doc.add(new StringField(ISROOT, "true", Field.Store.YES));
+		if(evidence.isRoot()){
+			doc.add(new StringField(ISROOT, Boolean.TRUE.toString(), Field.Store.YES));
+			doc.add(new SortedDocValuesField(ISROOT, new BytesRef(Boolean.TRUE.toString())));
+		}
 		
 		value = Boolean.toString(evidence.isCarved());
 		doc.add(new StringField(CARVED, value, Field.Store.YES));
+		doc.add(new SortedDocValuesField(CARVED, new BytesRef(value)));
 		
 		value = Boolean.toString(evidence.isSubItem());
         doc.add(new StringField(SUBITEM, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(SUBITEM, new BytesRef(value)));
 		
 		long off = evidence.getFileOffset();
 		if(off != -1)
@@ -211,10 +266,44 @@ public class IndexItem {
 			if(eValue instanceof Date){
 				value = DateUtil.dateToString((Date)eValue);
 				doc.add(new StringField(entry.getKey(), value, Field.Store.YES));
+				doc.add(new SortedDocValuesField(entry.getKey(), new BytesRef(value)));
+				
+			}else if(eValue instanceof Integer){
+				doc.add(new IntField(entry.getKey(), (Integer)eValue, Field.Store.YES));
+				doc.add(new SortedNumericDocValuesField(entry.getKey(), (Integer)eValue));
+				
+			}else if(eValue instanceof Long){
+				doc.add(new LongField(entry.getKey(), (Long)eValue, Field.Store.YES));
+				doc.add(new SortedNumericDocValuesField(entry.getKey(), (Long)eValue));
+				
+			}else if(eValue instanceof Float){
+				doc.add(new FloatField(entry.getKey(), (Float)eValue, Field.Store.YES));
+				doc.add(new FloatDocValuesField(entry.getKey(), (Float)eValue));
+				
+			}else if(eValue instanceof Double){
+				doc.add(new DoubleField(entry.getKey(), (Double)eValue, Field.Store.YES));
+				doc.add(new DoubleDocValuesField(entry.getKey(), (Double)eValue));
+				
 			}else{
 				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));
+				doc.add(getCollationDocValue(entry.getKey(), eValue.toString()));
 			}
+			
 		}
+		
+		Metadata metadata = evidence.getMetadata();
+		if(metadata != null)
+			for(String key : metadata.names()){
+				StringBuilder strBuilder = new StringBuilder();
+				for(String val : metadata.getValues(key))
+					strBuilder.append(val + " ");
+				String values = strBuilder.toString();
+				doc.add(new Field(key, values, storedTokenizedNoNormsField));
+				//Lucene lança exceção com DocValues grandes
+				if(values.length() > 16000)
+					values = values.substring(values.length() - 16000);
+				doc.add(getCollationDocValue(key, values));
+			}
 
 		return doc;
 	}

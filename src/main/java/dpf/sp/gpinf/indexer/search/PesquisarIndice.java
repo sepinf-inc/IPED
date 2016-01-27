@@ -386,7 +386,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						App.get().resultsTable.getColumnModel().getColumn(App.get().resultsTable.convertColumnIndexToView(6)).setHeaderValue("Tamanho (...)");
+						App.get().resultsModel.updateLengthHeader(-1);
 						App.get().resultsTable.getTableHeader().repaint();
 					}
 				});
@@ -411,8 +411,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						App.get().resultsTable.getColumnModel().getColumn(App.get().resultsTable.convertColumnIndexToView(6)).setHeaderValue(
-								"Tamanho (" + NumberFormat.getNumberInstance().format(volume) + "MB)");
+						App.get().resultsModel.updateLengthHeader(volume);
 						App.get().resultsTable.getTableHeader().repaint();
 					}
 				});

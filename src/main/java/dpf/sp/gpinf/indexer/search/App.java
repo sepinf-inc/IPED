@@ -211,7 +211,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/2101/indexador/lib/search.jar";
+			//codePath = "E:/1note-dell-meta-sdv3/indexador/lib/search.jar";
 			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
@@ -228,7 +228,7 @@ public class App extends JFrame implements WindowListener {
 		}
 
 		(new InicializarBusca()).execute();
-
+		
 	}
 
 	public void destroy() {
@@ -348,26 +348,9 @@ public class App extends JFrame implements WindowListener {
 		resultsScroll = new JScrollPane(resultsTable);
 		resultsTable.setFillsViewportHeight(true);
 		resultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		resultsTable.getColumnModel().getColumn(0).setPreferredWidth(55);
-		resultsTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-		resultsTable.getColumnModel().getColumn(2).setPreferredWidth(35);
-		resultsTable.getColumnModel().getColumn(2).setCellRenderer(new ProgressCellRenderer());
-		resultsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
-		resultsTable.getColumnModel().getColumn(3).setMinWidth(0);
-		resultsTable.getColumnModel().getColumn(4).setPreferredWidth(200);
-		for (int i = 5; i < resultsTable.getColumnModel().getColumnCount() - 1; i++)
-			resultsTable.getColumnModel().getColumn(i).setPreferredWidth(150);
-		isReport = new File(new File(codePath).getParent(), "data/containsReport.flag").exists();
-		if(!isReport)
-			resultsTable.getColumnModel().getColumn(5).setPreferredWidth(50);
-		resultsTable.getColumnModel().getColumn(6).setPreferredWidth(100);
-		resultsTable.getColumnModel().getColumn(7).setPreferredWidth(60);
-		resultsTable.getColumnModel().getColumn(resultsTable.getColumnModel().getColumnCount() - 2).setPreferredWidth(250);
-		resultsTable.getColumnModel().getColumn(resultsTable.getColumnModel().getColumnCount() - 1).setPreferredWidth(2000);
-		resultsTable.setShowGrid(false);
-		resultsTable.setRowSorter(new ResultTableRowSorter());
-		resultsTable.setAutoscrolls(false);
 		resultsTable.setDefaultRenderer(String.class, new TableCellRenderer());
+		resultsTable.setShowGrid(false);
+		resultsTable.setAutoscrolls(false);
 		InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 		inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
 		inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");

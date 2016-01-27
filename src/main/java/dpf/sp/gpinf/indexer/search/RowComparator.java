@@ -18,7 +18,16 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Comparator;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedNumericDocValues;
 
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -27,27 +36,50 @@ public class RowComparator implements Comparator<Integer> {
 	static String[] fields = ResultTableModel.fields;
 	
 	private int col;
-	static private int[][] order = new int[fields.length + 4][];
+	private boolean sortFileExists;
+	private String sortFilePath;
+	private boolean isNum = true;
+	
+	static private int[][] order = new int[fields.length + ResultTableModel.fixedCols.length][];
 	static private int[] loadedCol = { 0, 0 };
 	
+	private static AtomicReader atomicReader;
+	
 	private App app = App.get();
+	
+	private SortedDocValues sdv;
+	private NumericDocValues ndv;
 
 	public RowComparator(int col) {
 		this.col = col;
-		//if(col >= 4)
-		//	loadOrder();
+		if(col >= ResultTableModel.fixedCols.length){
+			fields = ResultTableModel.fields;
+			sortFilePath = App.get().codePath + "/../data/" + fields[col - ResultTableModel.fixedCols.length] + ".sort";
+			sortFileExists = new File(sortFilePath).exists();
+			try {
+				if(atomicReader == null)
+					atomicReader = SlowCompositeReaderWrapper.wrap(app.reader); 
+				sdv = atomicReader.getSortedDocValues(fields[col - ResultTableModel.fixedCols.length]);
+				if(sdv == null)
+					ndv = atomicReader.getNumericDocValues(fields[col - ResultTableModel.fixedCols.length]);
+					 
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public static void dispose() {
-		order[loadedCol[0]] = null;
-		order[loadedCol[1]] = null;
+		//order[loadedCol[0]] = null;
+		//order[loadedCol[1]] = null;
 	}
 
 	private void loadOrder() {
 		order[loadedCol[1]] = null;
 		loadedCol[1] = loadedCol[0];
 		try {
-			order[col] = (int[]) Util.readObject(App.get().codePath + "/../data/" + fields[col - 4] + ".sort");
+			order[col] = (int[]) Util.readObject(sortFilePath);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -62,9 +94,9 @@ public class RowComparator implements Comparator<Integer> {
 		
 		switch(col){
 			case 1:
-				if (app.marcadores.selected[a] == app.marcadores.selected[b])
+				if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
 					return 0;
-				else if (app.marcadores.selected[a] == true)
+				else if (app.marcadores.selected[app.ids[a]] == true)
 					return -1;
 				else
 					return 1;
@@ -72,12 +104,62 @@ public class RowComparator implements Comparator<Integer> {
 				return (int)(app.results.scores[a] - app.results.scores[b]);
 				
 			case 3:
-				return app.marcadores.getLabels(a).compareTo(app.marcadores.getLabels(b));
+				return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
 				
 			default:
-				if (order[col] == null)
-					loadOrder();
-				return order[col][a] - order[col][b];
+				if(sortFileExists){
+					if (order[col] == null)
+						loadOrder();
+					return order[col][app.ids[a]] - order[col][app.ids[b]];
+					
+				}else if(sdv != null){
+					return sdv.getOrd(a) - sdv.getOrd(b);
+					
+				}else if(ndv != null){
+					return Long.compare(ndv.get(a), ndv.get(b));
+					
+				}else{
+					try {
+						Document docA = app.searcher.doc(a);
+						Document docB = app.searcher.doc(b);
+						
+						String valA = docA.get(fields[col - ResultTableModel.fixedCols.length]);
+						String valB = docB.get(fields[col - ResultTableModel.fixedCols.length]);
+						
+						if(valA == null || valA.isEmpty()){
+							if(valB == null || valB.isEmpty())
+								return 0;
+							else
+								return -1;
+						}else
+							if(valB == null || valB.isEmpty())
+								return 1;
+							else{
+								if(isNum)
+									try{
+										long lA = Long.parseLong(valA);
+										long lB = Long.parseLong(valB);
+										if(lA < lB)
+											return -1;
+										else if (lA > lB)
+											return 1;
+										else
+											return 0;
+												
+									}catch(NumberFormatException e){
+										isNum = false;
+									}
+								
+								return valA.compareTo(valB);
+							}
+						
+					} catch (IOException e) {
+						e.printStackTrace();
+						return 0;
+					}
+					
+				}
+				
 		}
 	}
 

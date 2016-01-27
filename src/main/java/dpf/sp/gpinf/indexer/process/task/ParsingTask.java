@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.tika.Tika;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -41,6 +42,7 @@ import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -49,6 +51,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -214,13 +217,22 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
+		if (!evidence.isTimedOut() && ( hasParser(evidence)
+			|| isToBeExpanded(evidence)
 			|| isToTestEncryption(evidence.getCategorySet())
 			|| checkScanned(evidence.getMediaType())
 			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
 		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
+	}
+	
+	private boolean hasParser(EvidenceFile evidence){
+		Parser parser = worker.autoParser.getBestParser(getMetadata(evidence));
+		if(parser instanceof RawStringParser || parser instanceof TXTParser)
+			return false;
+		else
+			return true;
 	}
 	
 	private boolean checkScanned(MediaType mediaType){
@@ -243,6 +255,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		
 		configureTikaContext(evidence);
 		Metadata metadata = getMetadata(evidence);
+		evidence.setMetadata(metadata);
 		
 		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 		reader.startBackgroundParsing();
