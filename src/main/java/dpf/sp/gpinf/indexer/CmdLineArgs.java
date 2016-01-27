@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 
@@ -186,6 +187,11 @@ public class CmdLineArgs {
 			
 		if(outputDir != null && reportDir != null)
 			throw new RuntimeException("Opção -o não deve ser utilizada com relatorios do FTK!");
+		
+		if(IndexFiles.getInstance().dataSource.size() > 1)
+			for(File file : IndexFiles.getInstance().dataSource)
+				if(new IPEDReader(null, null, false).isSupported(file))
+					throw new RuntimeException("Relatórios do IPED não podem ser gerados junto com outras fontes de dados!");
 		
 		if(new File(reportDir, "Report_files/files").exists()){
 			IndexFiles.getInstance().dataSource.remove(reportDir);
