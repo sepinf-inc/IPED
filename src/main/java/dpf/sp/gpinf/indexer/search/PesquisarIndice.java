@@ -356,9 +356,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				App.get().results = this.get();
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().length);
 				App.get().resultsTable.getTableHeader().repaint();
-				if(App.get().results.length < 1 << 24)
+				if(App.get().results.length < 1 << 24){
+					App.get().resultsTable.getRowSorter().allRowsChanged();
 					App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
-				else{
+				}else{
 					App.get().resultsModel.fireTableDataChanged();
 					App.get().galleryModel.fireTableStructureChanged();
 				}

@@ -23,17 +23,23 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -56,6 +62,11 @@ public class IPEDReader extends DataSourceReader{
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
 	static SleuthkitCase sleuthCase;
+	
+	HashSet<Integer> selectedLabels;
+	Marcadores state;
+	File indexDir;
+	String basePath;
 
 	public IPEDReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
@@ -75,9 +86,9 @@ public class IPEDReader extends DataSourceReader{
 		ParsingTask.expandContainers = false;
 		CarveTask.enableCarving = false;
 
-		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
-		File indexDir = state.getIndexDir().getCanonicalFile();
-		String basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
+		state = (Marcadores) Util.readObject(file.getAbsolutePath());
+		indexDir = state.getIndexDir().getCanonicalFile();
+		basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
 		String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
 		
 		synchronized (lock) {
@@ -90,13 +101,51 @@ public class IPEDReader extends DataSourceReader{
 		
 		Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 		
-		HashSet<Integer> selectedLabels = new HashSet<Integer>();
+		selectedLabels = new HashSet<Integer>();
 		App.get().marcadores = state;
-		PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(""));
+		PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
 		SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
+		
+		insertIntoProcessQueue(result);
+		
+		
+		//Inclui anexos de emails de PST
+		CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (!args.getCmdArgs().containsKey("--nopstattachs")){
+        	BooleanQuery query = new BooleanQuery();
+    		for (int docID : result.docs) {
+    			String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
+    			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
+    				query.add(new TermQuery(new Term(IndexItem.PARENTID, Integer.toString(App.get().ids[docID]))), Occur.SHOULD);
+    		}
+    		for (int docID : result.docs)
+    			query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
+    		
+    		PesquisarIndice searchPSTAttachs = new PesquisarIndice(query);
+    		result = searchPSTAttachs.pesquisar();
+    		insertIntoProcessQueue(result);
+        }
+		
+		
+		if(!listOnly){
+			for(int labelId : state.getLabelMap().keySet().toArray(new Integer[0]))
+				if(!selectedLabels.contains(labelId))
+					state.delLabel(labelId);
+			
+			state.resetAndSetIndexDir(new File(output, "index"));
+			state.saveState(new File(output, Marcadores.STATEFILENAME));
+		}
 
-		for (int docID : result.docs) {
+		if (!listOnly)
+			App.get().destroy();
+		
+		return 0;
 
+	}
+	
+	private void insertIntoProcessQueue(SearchResult result) throws Exception {
+		
+		for (int docID : result.docs){
 			Document doc = App.get().reader.document(docID);
 
 			String value = doc.get(IndexItem.LENGTH);
@@ -201,7 +250,7 @@ public class IPEDReader extends DataSourceReader{
 			evidence.setCarved(Boolean.parseBoolean(value));
 			
 			value = doc.get(IndexItem.SUBITEM);
-            evidence.setSubItem(Boolean.parseBoolean(value));
+	        evidence.setSubItem(Boolean.parseBoolean(value));
 			
 			value = doc.get(IndexItem.OFFSET);
 			if(value != null)
@@ -212,20 +261,6 @@ public class IPEDReader extends DataSourceReader{
 			caseData.addEvidenceFile(evidence);
 		}
 		
-		if(!listOnly){
-			for(int labelId : state.getLabelMap().keySet().toArray(new Integer[0]))
-				if(!selectedLabels.contains(labelId))
-					state.delLabel(labelId);
-			
-			state.resetAndSetIndexDir(new File(output, "index"));
-			state.saveState(new File(output, Marcadores.STATEFILENAME));
-		}
-
-		if (!listOnly)
-			App.get().destroy();
-		
-		return 0;
-
 	}
 
 }

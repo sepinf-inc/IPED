@@ -28,7 +28,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -100,7 +99,11 @@ public abstract class AbstractViewer {
 
 	abstract public void scrollToNextHit(boolean forward);
 
-	public void copyScreen(Component comp) {
+	public void copyScreen() {
+		copyScreen(panel);
+	}
+	
+	protected void copyScreen(Component comp){
 		BufferedImage image = new BufferedImage(comp.getWidth(), comp.getHeight(), BufferedImage.TYPE_INT_RGB);
 
 		comp.paint(image.getGraphics());

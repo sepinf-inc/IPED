@@ -1,3 +1,43 @@
+27/01/2015: IPED-3.8.1
+- Corrige captura da imagem do visualizador (regressão 3.7)
+- Extrai Feeds Rss de OSTs 2013
+- Melhor controle de timeout nos parsers OST, EDB e Registro
+- Não exibição do menu de exportação em árvore no Linux
+
+20/01/2015: IPED-3.8
+- Processamento robusto contra crashes e travamentos do TSK (opcional em AdvancedConfig.txt, usa mais memória)
+- Atualização Tsk_Loaddb 20160106 (fix para pendrives nao reconhecidos, crashes ntfs, hfs, etc)
+- Parser para arquivos EDB via libesedb (Contacts.edb, histórico IE10, Windows Mail, Exchange, etc)
+- Parser para registro do Windows (RegRipper)
+- Parser para Outlook OST 2013 e melhor suporte a PST (libpff)
+- Escreve cabeçalhos originais de emails PST ao final do preview
+- Inclui automaticamente no relatório anexos de emails PST (desligável via --nopstattachs)
+- Exportação de itens mantendo estrutura em árvore
+- Uso de temporários locais com imagens DD (maior rapidez pela rede)
+- Substituição do filtro "Possíveis Digitalizações" por Categoria exportável
+- Inclui bibliotecas nativas para MacOSX x64 (contribuição PCF Ivanhoé)
+- Remoção de acentos específica para o português (menos falsos positivos)
+- Opção para abrir externamente visualização HTML mto grande
+- Assinatura e categorização de ISO UDF RAW
+- Compatibilização com FTK 6.0
+- Atualização para IcePDF-6.0.2
+Correções:
+- Agrupa setores não alocados não contíguos para carving de fragmentados (regressão 3.7)
+- Corrige visualização truncada de itens do Ares com valores nulos (PCF Wladimir)
+- Corrige geração de relatório contendo itens sem hash
+- Inconsistência na tabela ao esconder nó da árvore selecionado
+- Atualiza dinamicamente contadores do gerenciador de marcadores
+- Correta detecção de PST cifrado
+
+
+01/12/2015: IPED-3.7.3.1
+- Corrige exportação de "Outras Imagens" na configuração de extração automática de dados (3.7)
+
+27/11/2015: IPED-3.7.3
+- Resumo (incluindo erros) após importar lista de palavras-chave
+- Erro ao descompactar LibreOffice na primeira execução numa máquina (3.6)
+- Não mais inclui duplicatas de tamanho 0 nos marcadores
+
 27/10/2015: IPED-3.7.2
 - Visualizador Html mais rápido, não mais repete tentativas de conexao à Internet
 - Erro ao indexar relatórios de casos do FTK 5.4 em database separado
@@ -8,7 +48,7 @@
 19/10/2015: IPED-3.7.1
 - Reorganização de categorias, marcadores e diretórios em abas
 - ISOs RAW não processados por limitação do 7zip (3.6)
-- ISOs não processados nem espandidos devido a classificação incorreta (3.7)
+- ISOs não processados nem expandidos devido a classificação incorreta (3.7)
 - Corrige visualização de item carveado dentro de subitem (3.7)
 - Incompatibilidade com sleuthkit-4.2 no Linux
 - Contorna desaparecimento do Scrollbar (bug java 1.8_60)

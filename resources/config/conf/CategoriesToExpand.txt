@@ -9,9 +9,13 @@ Arquivos Compactados
 Emails
 Bases de dados
 Chats
+Contatos
 Discos ISO
+Histórico de Internet
 
-#Histórico de Internet
+# Gera relatórios de registro:
+Registro do Windows
+
 #Documentos de Texto
 #Planilhas
 #Apresentações

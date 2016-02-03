@@ -363,6 +363,7 @@ public class Marcadores implements Serializable {
 				App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().totalItens);
 				App.get().checkBox.setSelected(selectedItens > 0);
 				App.get().bookmarksListener.updateModelAndSelection();
+				GerenciadorMarcadores.updateCounters();
 			}
 		});
 

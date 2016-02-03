@@ -317,48 +317,6 @@ public class Util {
 	public static void decompress(File input, File output) {
 
 	}
-
-	public static String tryDecodeUnknowCharset(byte[] data) {
-
-		try {
-
-			int count0 = 0, max = 100;
-			if (data.length < max)
-				max = data.length;
-
-			for (int i = 0; i < max; i++)
-				if (data[i] == 0)
-					count0++;
-			if (count0 * 2 >= max - 3)
-				return new String(data, "UTF-16LE");
-
-			boolean hasUtf8 = false;
-			for (int i = 0; i < max - 1; i++)
-				if (data[i] == (byte) 0xC3 && data[i + 1] >= (byte) 0x80 && data[i + 1] <= (byte) 0xBC) {
-					hasUtf8 = true;
-					break;
-				}
-			if (hasUtf8)
-				return new String(data, "UTF-8");
-
-			return new String(data, "windows-1252");
-
-		} catch (UnsupportedEncodingException e) {
-			return new String(data);
-		}
-
-	}
-
-	public static String tryDecodeMixedCharset(byte[] data) {
-		ToTextContentHandler handler = new ToTextContentHandler();
-		try {
-			new RawStringParser().parse(new ByteArrayInputStream(data), handler, new Metadata(), null);
-			return handler.toString();
-
-		} catch (Exception e) {
-			return new String(data);
-		}
-	}
 	
 	public static File getReadOnlyFile(File file, Document doc) throws IOException{
 		String offsetS = doc.get(IndexItem.OFFSET);
@@ -534,11 +492,7 @@ public class Util {
 	public static void loadNatLibs(String path) {
 		String arch = System.getProperty("os.arch") + File.separator;
 
-		if (System.getProperty("os.name").startsWith("Linux")) {
-			path += File.separator + "Linux" + File.separator + arch;
-			// System.load(path + "libtsk_jni.so");
-
-		} else {
+		if (System.getProperty("os.name").startsWith("Windows")) {
 			path += File.separator + "Win" + File.separator + arch;
 			System.load(new File(path + "msvcp100.dll").getAbsolutePath());
 			System.load(new File(path + "msvcr100.dll").getAbsolutePath());

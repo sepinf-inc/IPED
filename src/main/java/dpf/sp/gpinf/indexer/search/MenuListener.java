@@ -48,6 +48,7 @@ public class MenuListener implements ActionListener {
 
 	public MenuListener(MenuClass menu) {
 		this.menu = menu;
+		fileChooser.setCurrentDirectory(new File(App.get().codePath).getParentFile().getParentFile());
 	}
 
 	private class Filtro extends FileFilter {
@@ -201,7 +202,7 @@ public class MenuListener implements ActionListener {
 
 		} else if (e.getSource() == menu.copiarPreview) {
 			AbstractViewer viewer = App.get().compositeViewer.getCurrentViewer();
-			viewer.copyScreen(viewer.getPanel());
+			viewer.copyScreen();
 
 		} else if (e.getSource() == menu.aumentarGaleria) {
 
@@ -235,7 +236,7 @@ public class MenuListener implements ActionListener {
 
 		} else if (e.getSource() == menu.gerenciarMarcadores) {
 
-			new GerenciadorMarcadores();
+		    GerenciadorMarcadores.setVisible();
 
 		} else if (e.getSource() == menu.gerenciarFiltros) {
 

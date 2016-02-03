@@ -284,8 +284,15 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-    	String reportRoot = "relatorio.htm";
-        if (taskEnabled && caseData.containsReport() && info != null && !new File(reportSubFolder, reportRoot).exists()) {
+    	
+        if (taskEnabled && caseData.containsReport() && info != null) {
+        	
+        	String reportRoot = "relatorio.htm";
+        	if(new File(reportSubFolder.getParentFile(), reportRoot).exists()){
+        		Log.error(taskName, "Relatório HTML já existente, atualização do relatório ainda não implementada!");
+        		return;
+        	}
+        	
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
@@ -333,6 +340,7 @@ public class HTMLReportTask extends AbstractTask {
         reg.ext = evidence.getExt();
         reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | ");
         reg.hash = evidence.getHash();
+        if(reg.hash != null && reg.hash.isEmpty()) reg.hash = null;
         reg.deleted = evidence.isDeleted();
         reg.carved = evidence.isCarved();
         reg.accessed = evidence.getAccessDate();
@@ -574,7 +582,7 @@ public class HTMLReportTask extends AbstractTask {
                     it.append(">");
                     it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
                 }
-            } else if (!reg.isVideo && !reg.isImage && reg.hash != null) {
+            } else if (!reg.isVideo && reg.hash != null) {
                 File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
                 if (view != null) {
                     it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");

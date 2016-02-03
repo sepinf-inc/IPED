@@ -55,7 +55,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     
 	@Override
 	public void valueChanged(ListSelectionEvent evt) {
-
+		
+		GerenciadorMarcadores.updateCounters();
+		
 		if (App.get().resultsTable.getSelectedRowCount() == 0 || evt.getValueIsAdjusting())
 			return;
 

@@ -18,12 +18,19 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -38,11 +45,12 @@ import org.apache.lucene.search.TermQuery;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
-public class TreeListener implements TreeSelectionListener, ActionListener{
+public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener{
 	
 	Query treeQuery, recursiveTreeQuery;
 	boolean rootSelected = false;
 	HashSet<TreePath> selection = new HashSet<TreePath>();
+	private boolean collapsed = false;
 
 	@Override
 	public void valueChanged(TreeSelectionEvent evt) {
@@ -52,6 +60,11 @@ public class TreeListener implements TreeSelectionListener, ActionListener{
 				selection.remove(path);
 			else
 				selection.add(path);
+		
+		if(collapsed){
+			collapsed = false;
+			return;
+		}
 		
 		rootSelected = false;
 		for(TreePath path : selection)
@@ -80,7 +93,6 @@ public class TreeListener implements TreeSelectionListener, ActionListener{
 			}
 		}
 		actionPerformed(null);
-		App.get().appletListener.updateFileListing();
 
 	}
 	
@@ -116,7 +128,6 @@ public class TreeListener implements TreeSelectionListener, ActionListener{
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			//System.out.println("subindo");
 			
 		}while(result.length == 1 && textQuery != null);
 		
@@ -132,12 +143,94 @@ public class TreeListener implements TreeSelectionListener, ActionListener{
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		
 		if((App.get().recursiveTreeList.isSelected() && rootSelected ) || selection.isEmpty())
 			App.get().treeTab.setBackgroundAt(2, App.get().defaultTabColor);
 		else
 			App.get().treeTab.setBackgroundAt(2, App.get().alertColor);
 		
 		App.get().appletListener.updateFileListing();
+		
+	}
+
+	@Override
+	public void treeExpanded(TreeExpansionEvent event) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void treeCollapsed(TreeExpansionEvent event) {
+		collapsed = true;
+		
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (e.isPopupTrigger())
+			showPopupMenu(e);
+		
+	}
+	
+	private void showPopupMenu(MouseEvent e){
+		JPopupMenu menu = new JPopupMenu();
+		
+		JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
+		exportTree.addActionListener(new TreeMenuListener(false));
+		menu.add(exportTree);
+		
+		JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
+		exportTreeChecked.addActionListener(new TreeMenuListener(true));
+		menu.add(exportTreeChecked);
+		
+		menu.show((Component)e.getSource(), e.getX(), e.getY());
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if (e.isPopupTrigger())
+			showPopupMenu(e);
+		
+	}
+	
+	class TreeMenuListener implements ActionListener{
+		
+		boolean onlyChecked = false;
+		
+		TreeMenuListener(boolean onlyChecked){
+			this.onlyChecked = onlyChecked;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			TreePath[] paths = App.get().tree.getSelectionPaths();
+			if(paths == null || paths.length != 1)
+				JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
+			else{
+				Node treeNode = (Node)paths[0].getLastPathComponent();
+				ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked);
+			}
+			
+		}
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
 		
 	}
 

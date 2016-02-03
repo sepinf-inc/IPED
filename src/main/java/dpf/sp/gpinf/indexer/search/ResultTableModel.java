@@ -65,7 +65,7 @@ public class ResultTableModel extends AbstractTableModel {
 	
 	public ResultTableModel(){
 		super();
-		df.setTimeZone(TimeZone.getTimeZone("GMT"));
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 	}
 	 
 

@@ -25,6 +25,48 @@
       <glob pattern="*.dbase3"/>
    </mime-type>
    
+   <mime-type type="application/x-edb">
+      <_comment>Extensible Storage Engine (ESE) Database File </_comment>
+      <magic priority="60">
+        	<match value="0xEFCDAB89" type="string" offset="4"/>
+      </magic>
+      <glob pattern="*.edb"/>
+   </mime-type>
+   
+   <mime-type type="application/x-edb-table">
+   		<magic priority="70">
+        	<match value="!--EDB Extracted Table--" type="string" offset="7"/>
+      	</magic>
+		<sub-class-of type="text/html"/>
+   </mime-type>
+   
+   <mime-type type="application/x-windows-registry-report">
+		<sub-class-of type="text/html"/>
+   </mime-type>
+   
+   <mime-type type="application/x-webcache">     
+		<sub-class-of type="application/x-edb"/>
+		<glob pattern="WebCacheV01*.dat"/>
+   </mime-type>
+   
+   <mime-type type="application/x-webcache-table">     
+		<sub-class-of type="application/x-edb-table"/>
+   </mime-type>
+   
+   <mime-type type="application/x-livecontacts">     
+		<sub-class-of type="application/x-edb"/>
+		<glob pattern="contacts.edb"/>
+		<glob pattern="Contacts.edb"/>
+   </mime-type>
+   
+   <mime-type type="application/x-livecontacts-table">   
+		<sub-class-of type="application/x-edb-table"/>
+		<glob pattern="*-SimpleContact-v*"/>
+		<glob pattern="*-SimpleContactShadow-v*"/>
+		<glob pattern="*-Member-v*"/>
+		<glob pattern="*-MemberShadow-v*"/>
+   </mime-type>
+   
    <mime-type type="message/rfc822">
     <magic priority="60">
       <match value="Relay-Version:" type="stringignorecase" offset="0"/>
@@ -43,9 +85,9 @@
       <match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
       <match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
       <match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
-      <match value="\nMIME-Version:" type="stringignorecase" offset="0:1000"/>
+      <match value="MIME-Version:" type="stringignorecase" offset="0"/>
     </magic>
-    <sub-class-of type="text/plain"/>
+    <sub-class-of type="text/html"/>
     <glob pattern="*.eml"/>
     <glob pattern="*.mime"/>
     <glob pattern="*.mht"/>
@@ -212,12 +254,23 @@
     	<acronym>ISO</acronym>
     	<_comment>UDF CD-ROM filesystem data</_comment>
     	<magic priority="50">
+    		<!--CDROM sector: 2048 -->
       		<match value="NSR02" type="string" offset="32769"/>
       		<match value="NSR02" type="string" offset="34817"/>
       		<match value="NSR02" type="string" offset="36865"/>
       		<match value="NSR03" type="string" offset="32769"/>
       		<match value="NSR03" type="string" offset="34817"/>
       		<match value="NSR03" type="string" offset="36865"/>
+      		<!--CDROM RAW sector: 2352 -->
+      		<match value="NSR02" type="string" offset="37649"/>
+      		<match value="NSR02" type="string" offset="40001"/>
+      		<match value="NSR03" type="string" offset="37649"/>
+      		<match value="NSR03" type="string" offset="40001"/>
+      		<!--CDROM RAW XA sector: 2352 -->
+      		<match value="NSR02" type="string" offset="37657"/>
+      		<match value="NSR02" type="string" offset="40009"/>
+      		<match value="NSR03" type="string" offset="37657"/>
+      		<match value="NSR03" type="string" offset="40009"/>
     	</magic>
   	</mime-type>
   	

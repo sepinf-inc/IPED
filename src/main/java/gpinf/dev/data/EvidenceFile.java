@@ -23,10 +23,12 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -34,7 +36,9 @@ import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
+import dpf.sp.gpinf.indexer.util.SleuthkitServer;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
@@ -54,6 +58,8 @@ import gpinf.util.FormatUtil;
 public class EvidenceFile implements Serializable, StreamSource {
     
 	private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+	
+	public static boolean robustImageReading = false;
     
 	private static class Counter {
 
@@ -183,7 +189,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
     private Content sleuthFile;
 
-    private long startOffset = -1;
+    private long startOffset = -1, tempStartOffset = -1;
 
     private String sleuthId;
 
@@ -539,7 +545,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      * @return InputStream com o conteúdo do arquivo.
      */
     public SeekableInputStream getStream() throws IOException {
-    	if (startOffset == -1 && file != null && !isDir && file.isFile())
+    	if (startOffset == -1 && file != null && file.isFile())
             return new SeekableFileInputStream(file);
     	
         if (tmpFile == null && tis != null && tis.hasFile())
@@ -555,21 +561,29 @@ public class EvidenceFile implements Serializable, StreamSource {
         	}
 
         SeekableInputStream stream = null;
-        if (file != null && !this.isDir && file.isFile())
+        if (file != null && file.isFile())
         	try{
         		stream = new SeekableFileInputStream(file);
         		
-        	//workaround para itens carveados apontando para tmpFile to pai que foi apagado
+        	//workaround para itens carveados apontando para tmpFile do pai que foi apagado
         	}catch(FileNotFoundException fnfe){
         		file = null;
         	}
 
         if (stream == null)
         	if(sleuthFile != null){
-        		stream = new SleuthkitInputStream(sleuthFile);
-
+        	    SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
+        	    if(sleuthcase == null || !robustImageReading){
+        	        stream = new SleuthkitInputStream(sleuthFile);
+        	    }else{
+        	        SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
+                    stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId), pathString);
+        	    }
         	}else
         		return new EmptyInputStream();
+        
+        if (tempStartOffset != -1)
+            return new LimitedSeekableInputStream(stream, tempStartOffset, length);
 
         if (startOffset != -1)
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
@@ -606,17 +620,19 @@ public class EvidenceFile implements Serializable, StreamSource {
 	                        throw new IOException("Could not delete temp file " + file.getPath());
 	                }
 	            });
-	        	InputStream in = getBufferedStream();
-	        	try{
+	        	
+	        	try(InputStream in = getBufferedStream()){
 	        		Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-	        	}finally{
-	        		in.close();
 	        	}
 	        	tmpFile = file;
 	        }
 	        	
         }
         return tmpFile;
+    }
+    
+    public void setTempFile(File tempFile){
+    	tmpFile = tempFile;
     }
     
     
@@ -631,7 +647,7 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public TikaInputStream getTikaStream() throws IOException {
         
-        if (startOffset == -1 && file != null && !this.isDir && file.isFile())
+        if (startOffset == -1 && file != null && file.isFile())
             tis = TikaInputStream.get(file);
         else{
         	if (tmpFile == null && tis != null && tis.hasFile())
@@ -1124,5 +1140,9 @@ public class EvidenceFile implements Serializable, StreamSource {
 	public void setSumVolume(boolean sumVolume) {
 		this.sumVolume = sumVolume;
 	}
+
+    public void setTempStartOffset(long tempStartOffset) {
+        this.tempStartOffset = tempStartOffset;
+    }
 
 }

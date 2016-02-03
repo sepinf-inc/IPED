@@ -37,6 +37,8 @@ import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+
 /**
  * 
  * Classe para descompactar o aplicativo LibreOffice
@@ -114,6 +116,10 @@ public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExt
 				throw new IOException("unable to create directory \"" + parent + "\"");
 			}
 		}
+		
+		if(metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null)
+		    return;
+		
 		// System.out.println("Extracting '"+name+" to " + outputFile);
 		FileOutputStream os = new FileOutputStream(outputFile);
 		IOUtils.copy(inputStream, os);

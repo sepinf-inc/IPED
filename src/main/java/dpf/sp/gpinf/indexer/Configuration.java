@@ -18,6 +18,8 @@
  */
 package dpf.sp.gpinf.indexer;
 
+import gpinf.dev.data.EvidenceFile;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
@@ -34,12 +36,16 @@ import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.search.GalleryModel;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -85,7 +91,6 @@ public class Configuration {
 		
 		configPath = configPathStr;
 
-		Util.loadNatLibs(configPath + "/lib/libewf");
 		System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
 		properties.load(new File(configPath + "/" + CONFIG_FILE));
@@ -94,7 +99,7 @@ public class Configuration {
 		String value;
 
 		File newTmp = null, tmp = new File(System.getProperty("java.io.tmpdir"));
-		// File tmp = new File(configPath + "/tmp");
+		
 		value = properties.getProperty("indexTemp");
 		if (value != null)
 			value = value.trim();
@@ -114,11 +119,11 @@ public class Configuration {
 		if (indexerTemp != null)
 			indexerTemp.mkdirs();
 		
-		value = properties.getProperty("TskLoaddbPath");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			SleuthkitReader.setTskPath(configPath + "/" + value);
+		value = properties.getProperty("robustImageReading");
+        if (value != null)
+            value = value.trim();
+        if (value != null && !value.isEmpty())
+            EvidenceFile.robustImageReading = Boolean.valueOf(value);
 
 		value = properties.getProperty("numThreads");
 		if (value != null)
@@ -165,12 +170,6 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			RawStringParser.MIN_SIZE = Integer.valueOf(value);
-
-		value = properties.getProperty("TesseractPath");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			OCRParser.TESSERACTFOLDER = configPath + "/" + value;
 
 		value = properties.getProperty("enableOCR");
 		if (value != null)
@@ -268,7 +267,6 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value);
 
-		Runtime.getRuntime().availableProcessors();
 		value = properties.getProperty("galleryThreads");
 		if (value != null)
 			value = value.trim();
@@ -301,7 +299,29 @@ public class Configuration {
 		if (value != null && !value.isEmpty())
 			searchThreads = Integer.valueOf(value);
 		
-
+		if (System.getProperty("os.name").toLowerCase().startsWith("windows")){
+			
+			value = properties.getProperty("TskLoaddbPath");
+			if (value != null)
+				value = value.trim();
+			if (value != null && !value.isEmpty())
+				SleuthkitReader.setTskPath(configPath + "/" + value);
+			
+			value = properties.getProperty("TesseractPath");
+			if (value != null)
+				value = value.trim();
+			if (value != null && !value.isEmpty())
+				OCRParser.TESSERACTFOLDER = configPath + "/" + value;
+			
+			IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
+			Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
+			
+			EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
+			LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
+		}
+		
+		RegistryParser.TOOL_PATH = configPath + "/tools/regripper/";
+		
 	}
 
 }

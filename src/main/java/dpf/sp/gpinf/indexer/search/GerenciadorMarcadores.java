@@ -51,17 +51,21 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener {
+    
+    private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
 	JDialog dialog = new JDialog();
 	JLabel msg = new JLabel("Conjunto de dados:");
-	JRadioButton highlighted = new JRadioButton("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
-	JRadioButton checked = new JRadioButton("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
+	JRadioButton highlighted = new JRadioButton();
+	JRadioButton checked = new JRadioButton();
 	ButtonGroup group = new ButtonGroup();
 	JCheckBox duplicates = new JCheckBox();
 	JButton add = new JButton("Adicionar");
@@ -74,8 +78,17 @@ public class GerenciadorMarcadores implements ActionListener {
 	DefaultListModel<String> listModel = new DefaultListModel<String>();
 	JList<String> list = new JList<String>(listModel);
 	JScrollPane scrollList = new JScrollPane(list);
+	
+	public static void setVisible(){
+	    instance.dialog.setVisible(true);
+	}
+	
+	public static void updateCounters(){
+		instance.highlighted.setText("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
+		instance.checked.setText("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
+	}
 
-	public GerenciadorMarcadores() {
+	private GerenciadorMarcadores() {
 
 		dialog.setTitle("Marcadores");
 		dialog.setBounds(0, 0, 450, 450);
@@ -85,7 +98,7 @@ public class GerenciadorMarcadores implements ActionListener {
 		group.add(checked);
 		highlighted.setSelected(true);
 		duplicates.setText("Incluir duplicatas (hash)");
-		duplicates.setSelected(true);
+		duplicates.setSelected(false);
 
 		populateList();
 
@@ -136,9 +149,8 @@ public class GerenciadorMarcadores implements ActionListener {
 		rename.addActionListener(this);
 		novo.addActionListener(this);
 		delete.addActionListener(this);
-
+		
 		dialog.setLocationRelativeTo(App.get());
-		dialog.setVisible(true);
 
 	}
 	
@@ -167,9 +179,11 @@ public class GerenciadorMarcadores implements ActionListener {
 					return;
 				progress.setProgress(++i);
 				String hash = app.searcher.doc(app.docs[id]).get(IndexItem.HASH);
-				if(hash != null) query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
-				query.add(new TermQuery(new Term(IndexItem.ID, id.toString())), Occur.MUST_NOT);
+				if(hash != null)
+				    query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
+				//query.add(new TermQuery(new Term(IndexItem.ID, id.toString())), Occur.MUST_NOT);
 			}
+			query.add(NumericRangeQuery.newLongRange(IndexItem.LENGTH, NumericUtils.PRECISION_STEP_DEFAULT, 0L, 0L, true, true), Occur.MUST_NOT);
 
 			PesquisarIndice task = new PesquisarIndice(query);
 			progress.setTask(task);

@@ -219,14 +219,10 @@ public class IndexItem {
 		return doc;
 	}
 	
-	public static EvidenceFile getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewITem){
+	public static EvidenceFile getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem){
 		
 		try{
-			EvidenceFile evidence;
-			if(viewITem)
-				evidence = getViewItem();
-			else
-				evidence = new EvidenceFile(){
+			EvidenceFile evidence = new EvidenceFile(){
 				public File getFile(){
 					try {
 						return getTempFile();
@@ -307,6 +303,10 @@ public class IndexItem {
 					File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
 					if(viewFile != null)
 						evidence.setViewFile(viewFile);
+					if(viewItem){
+						evidence.setFile(viewFile);
+						evidence.setTempFile(viewFile);
+					}
 				}
 			}
 			
@@ -342,20 +342,6 @@ public class IndexItem {
 		
 		return null;
 		
-	}
-	
-	private static EvidenceFile getViewItem(){
-		EvidenceFile item = new EvidenceFile(){
-			private static final long serialVersionUID = 1L;
-			
-			public File getFile(){
-				return getViewFile();
-			}
-			public SeekableInputStream getStream() throws IOException{
-				return new SeekableFileInputStream(getViewFile());
-			}
-		};
-		return item;
 	}
 
 }

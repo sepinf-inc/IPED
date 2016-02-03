@@ -4,7 +4,7 @@
 #############################################
 
 Documentos = Documentos de Texto; Documentos PDF; Documentos HTML; Documentos RTF; Outros Documentos
-Imagens = Imagens Temporárias Internet; Imagens em Pasta de Sistema; Outras Imagens
+Imagens = Possíveis Digitalizações; Imagens Temporárias Internet; Imagens em Pasta de Sistema; Outras Imagens
 Textos = Textos Temporários Internet; Textos em Pasta de Sistema; Outros Textos
 Atalhos = Atalhos para arquivos; Atalhos para URLs
 Emails e Caixas = Emails; Caixas de Emails

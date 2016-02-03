@@ -87,7 +87,7 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
-	static volatile SleuthkitCase sleuthCase;
+	public static volatile SleuthkitCase sleuthCase;
 
 	public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
 		super(caseData, output, listOnly);
@@ -129,12 +129,12 @@ public class SleuthkitReader extends DataSourceReader{
 			while(read != -1 && (off += read) < header.length)
 				read = fis.read(header, off, header.length - off);
 			
-			if(	matchMagic(magic, header, 32769) ||
-				matchMagic(magic, header, 34817) ||
-				matchMagic(magic, header, 37649) ||
-				matchMagic(magic, header, 37657) ||
-				matchMagic(magic, header, 40001) ||
-				matchMagic(magic, header, 40009) )
+			if(	matchMagic(magic, header, 32769) || //CDROM sector 2048
+				matchMagic(magic, header, 34817) || //CDROM sector 2048
+				matchMagic(magic, header, 37649) || //CDROM RAW sector 2352
+				matchMagic(magic, header, 37657) || //CDROM RAW XA sector 2352
+				matchMagic(magic, header, 40001) || //CDROM RAW sector 2352
+				matchMagic(magic, header, 40009) )  //CDROM RAW XA sector 2352
 				return true;
 			
 		} catch (Exception e) {
@@ -170,6 +170,8 @@ public class SleuthkitReader extends DataSourceReader{
 
 		process.getOutputStream().close();
 		process.waitFor();
+		if(process.exitValue() != 0)
+			throw new Exception("Erro ao testar tsk_loaddb. Execução terminou com erro " + process.exitValue());
 		
 		InputStreamReader reader = new InputStreamReader(process.getInputStream());
 		StringBuilder out = new StringBuilder();

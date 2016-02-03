@@ -497,9 +497,13 @@ public class Manager {
 		
 		if(!IndexFiles.getInstance().appendIndex){
 			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
-			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
 			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/nativeview"), new File(output, "lib/nativeview"));
 			IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/libewf"), new File(output, "lib/libewf"));
+			
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/esedbexport"), new File(output, "tools/esedbexport"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/pffexport"), new File(output, "tools/pffexport"));
+			IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/regripper"), new File(output, "tools/regripper"));
 			if (Configuration.embutirLibreOffice)
 				IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
 

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -14,7 +15,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class KeywordListImporter extends CancelableWorker{
 	
 	ProgressDialog progress;
-	ArrayList<String> keywords, result = new ArrayList<String>();
+	ArrayList<String> keywords, result = new ArrayList<String>(), errors = new ArrayList<String>();
 
 	public KeywordListImporter(File file){
 		
@@ -31,29 +32,38 @@ public class KeywordListImporter extends CancelableWorker{
 	}
 
 	@Override
-	protected Object doInBackground() throws Exception {
-		
-		int i = 0;
-		for(String keyword : keywords){
-			if(this.isCancelled())
-				break;
-			PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(keyword));
-			if(task.pesquisarTodos().length > 0)
-				result.add(keyword);
-			
-			final int j = ++i;
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					progress.setProgress(j);
-				}
-			});
-		}
+	protected Object doInBackground(){
+	    
+	    int i = 0;
+        for(String keyword : keywords){
+            if(this.isCancelled())
+                break;
+            
+            try{
+                PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(keyword));
+                if(task.pesquisarTodos().length > 0)
+                    result.add(keyword);
+                
+                final int j = ++i;
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        progress.setProgress(j);
+                    }
+                });
+                
+            }catch(Exception e){
+                e.printStackTrace();
+                errors.add(keyword);
+            }
+            
+        }
 		
 		return null;
 	}
 	
 	@Override
 	public void done(){
+	    
 		progress.close();
 		
 		if (App.get().marcadores.typedWords.size() == 0)
@@ -65,6 +75,15 @@ public class KeywordListImporter extends CancelableWorker{
 		}
 	
 		App.get().marcadores.saveState();
+		
+		if(errors.size() > 0){
+		    StringBuilder errorTerms = new StringBuilder();
+	        for(String s : errors)
+	            errorTerms.append("\n" + s);
+		    JOptionPane.showMessageDialog(null, "Erro de sintaxe nas seguintes expressões: " + errorTerms);
+		}
+		
+		JOptionPane.showMessageDialog(null, "Importada(s) " + result.size() + " expressão(ões) com ocorrência(s) do total de " + keywords.size());
 	}
 	
 }

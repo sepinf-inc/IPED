@@ -66,6 +66,9 @@ public class ExportCSVTask extends AbstractTask{
 
 	@Override
 	protected  void process(EvidenceFile evidence) throws IOException {
+	    
+	    if (!exportFileProps)
+	        return;
 		
 		String value = evidence.getName();
 		if (value == null)
@@ -109,6 +112,9 @@ public class ExportCSVTask extends AbstractTask{
 		value = Boolean.toString(evidence.isDeleted());
 		list.append("\"" + value.replace("\"", "\"\"") + "\";");
 		
+		value = Boolean.toString(evidence.isCarved());
+        list.append("\"" + value.replace("\"", "\"\"") + "\";");
+		
 		Date date = evidence.getAccessDate();
 		if (date == null)
 			value = "";
@@ -150,7 +156,7 @@ public class ExportCSVTask extends AbstractTask{
 	private static synchronized void flush(StringBuilder list, File output) throws IOException {
 		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
 		if (!headerWritten) {
-			writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
+			writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Recuperado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
 			headerWritten = true;
 		}
 		writer.write(list.toString());

@@ -4,14 +4,19 @@
 
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
-# Caminho relativo para o Sleuthkit tsk_loaddb. Comente caso esteja no PATH do sistema.
-# É distribuída versão para Windows com patch que permite processar os itens antes do término do loaddb. 
+# Caminho relativo para o tsk_loaddb no Windows. Em outros sistemas basta que esteja no PATH.
+# É distribuída versão com patch que permite recuperar arquivos fragmentados e processar os itens antes do fim do tsk_loaddb. 
 # No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
 TskLoaddbPath = tools/tsk/x64/tsk_loaddb
 
 # Número de threads de processamento: "default" utiliza o número de processadores.
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
 numThreads = default
+
+# Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
+# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
+# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
+robustImageReading = false
 
 # Força merge do índice para um único segmento, diminuindo o índice e otimizando a busca a partir de mídias ópticas.
 # É muito custoso, sendo desnecessário caso o índice seja acessado a partir de um HD.
@@ -64,8 +69,8 @@ unallocatedFragSize = 104857600
 
 # Opcionalmente, utilize o parâmetro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado várias vezes)
 
-# Caminho relativo para a pasta do Tesseract
-# Comente caso já esteja no PATH
+# Caminho relativo para a pasta do tesseract no Windows.
+# Em outros sistemas basta que esteja no PATH.
 TesseractPath = tools/tesseract
 
 # Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng

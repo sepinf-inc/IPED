@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>4.2-p01</version>
+            <version>4.2-p02</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -92,6 +92,12 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
+            <version>4.9.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-icu</artifactId>
             <version>4.9.0</version>
             <type>jar</type>
         </dependency>
@@ -198,6 +204,17 @@
 			<artifactId>jul-to-slf4j</artifactId>
 			<version>1.7.12</version>
 		</dependency>
+		<dependency>
+			<groupId>com.mchange</groupId>
+			<artifactId>mchange-commons-java</artifactId>
+			<version>0.2.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mchange</groupId>
+			<artifactId>c3p0</artifactId>
+			<version>0.9.5.2</version>
+		</dependency>
+		
         <!-- FIM: EXTERNAS -->
         <!-- INICIO: VIEWERS -->
         <dependency>
@@ -209,13 +226,13 @@
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
-            <version>5.1.1</version>
+            <version>6.0.2</version>
             <type>jar</type>
         </dependency>
         <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-viewer</artifactId>
-            <version>5.1.1</version>
+            <version>6.0.2</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -297,6 +314,63 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-esedbexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libesedb</artifactId>
+                                    <version>20151213</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-pffexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libpff</artifactId>
+                                    <version>20131028</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-regripper</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>keydet89</groupId>
+                                    <artifactId>regripper</artifactId>
+                                    <version>2.8-p1</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-graphicsmagick</id>
                         <phase>package</phase>
                         <goals>
@@ -364,7 +438,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>loaddb-zip</artifactId>
-                                    <version>4.2-iped-patch2</version>
+                                    <version>20160107-iped-patch-0.2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -383,7 +457,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>0.1</version>
+                                    <version>0.2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>

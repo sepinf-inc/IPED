@@ -53,6 +53,8 @@ public class Worker extends Thread {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 	
+	private static String workerNamePrefix = "Worker-";
+	
 	LinkedBlockingDeque<EvidenceFile> evidences;
 
 	public IndexWriter writer;
@@ -80,7 +82,7 @@ public class Worker extends Thread {
 	}
 
 	public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
-		super("Worker-" + k);
+		super(new ThreadGroup("ProcessingThreadGroup-" + k), workerNamePrefix + k);
 		this.caseData = caseData;
 		this.evidences = caseData.getEvidenceFiles();
 		this.writer = writer;
@@ -88,6 +90,8 @@ public class Worker extends Thread {
 		this.manager = manager;
 		this.stats = manager.stats;
 		baseFilePath = output.getParentFile().getAbsolutePath();
+		
+		if(k == 0) LOGGER.info("Inicializando Tika");
 		
 		config = TikaConfig.getDefaultConfig();
 		detector = config.getDetector();
@@ -110,8 +114,12 @@ public class Worker extends Thread {
 	}
 	
 	private void initTasks() throws Exception{
-		for(AbstractTask task : tasks)
-			task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
+		for(AbstractTask task : tasks){
+		    if(this.getName().equals(workerNamePrefix + 0))
+		        LOGGER.info("Inicializando " + task.getClass().getSimpleName());
+		    task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
+		}
+			
 	}
 	
 	private void finishTasks() throws Exception{
@@ -228,9 +236,9 @@ public class Worker extends Thread {
 		}
 
 		if (evidence == null)
-			LOGGER.info("{} finalizada.", getName());
+			LOGGER.info("{} finalizado.", getName());
 		else
-			LOGGER.info("{} interrompida com {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
+			LOGGER.info("{} interrompido com {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
 	}
 
 }

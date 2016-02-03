@@ -58,9 +58,10 @@ public class CategoryTreeModel implements TreeModel{
 	
 	private void loadHierarchy() throws IOException{
 		
-		HashMap<String, String> categoryTree = new HashMap<String, String>();
+	    //map from child category to parent
+		HashMap<String, String> categoryMap = new HashMap<String, String>();
 		for(String category : App.get().categorias)
-			categoryTree.put(category, rootName);
+		    categoryMap.put(category, rootName);
 		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				new FileInputStream(App.get().codePath + "/../" + CONF_FILE), "UTF-8"));
@@ -72,27 +73,43 @@ public class CategoryTreeModel implements TreeModel{
 			String[] keyValuePair = line.split("=");
 			if (keyValuePair.length == 2) {
 				String category = keyValuePair[0].trim();
-				if(!categoryTree.containsKey(category))
-					categoryTree.put(category, rootName);
+				if(!categoryMap.containsKey(category))
+				    categoryMap.put(category, rootName);
 				String subcats = keyValuePair[1].trim();
 				for (String subcat : subcats.split(";")) {
 					subcat = subcat.trim();
-					categoryTree.put(subcat, category);
+					categoryMap.put(subcat, category);
 				}
 			}
 		}
 		reader.close();
 
-		populateChildren(root, categoryTree);
+		populateChildren(root, categoryMap);
+		
+		filterEmptyCategories(root);
+		
 	}
 	
-	private void populateChildren(Category category, HashMap<String, String> categoryTree){
-		for(String categoryName : categoryTree.keySet())
-			if(categoryTree.get(categoryName).equals(category.name)){
+	private void populateChildren(Category category, HashMap<String, String> categoryMap){
+		for(String categoryName : categoryMap.keySet())
+			if(categoryMap.get(categoryName).equals(category.name)){
 				Category subCat = new Category(categoryName, category);
 				category.children.add(subCat);
-				populateChildren(subCat, categoryTree);
+				populateChildren(subCat, categoryMap);
 			}
+	}
+	
+	private boolean filterEmptyCategories(Category category){
+	    boolean hasItems = false;
+	    if(App.get().categorias.contains(category.name))
+	        hasItems = true;
+	    for(Category child : (TreeSet<Category>)category.children.clone()){
+	        if(filterEmptyCategories(child))
+	            hasItems = true;
+	    }
+	    if(!hasItems && category.parent != null)
+	        category.parent.children.remove(category);
+	    return hasItems;
 	}
 	
 
