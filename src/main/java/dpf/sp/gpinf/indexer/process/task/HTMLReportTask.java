@@ -35,7 +35,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -467,10 +466,12 @@ public class HTMLReportTask extends AbstractTask {
             processaBookmark(marcador, id, modelo, item, true, entriesByLabel.get(marcador));
             idx++;
         }
-        for (String categoria : entriesByCategory.keySet()) {
-            String id = String.format("arq%06d", idx);
-            processaBookmark(categoria, id, modelo, item, false, entriesByCategory.get(categoria));
-            idx++;
+        if (categoriesListEnabled) {
+            for (String categoria : entriesByCategory.keySet()) {
+                String id = String.format("arq%06d", idx);
+                processaBookmark(categoria, id, modelo, item, false, entriesByCategory.get(categoria));
+                idx++;
+            }
         }
     }
 
