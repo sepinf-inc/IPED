@@ -35,7 +35,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -169,6 +168,11 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
+    /**
+     * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
+     */
+    private StringBuilder modeloPerito;
+    
     /** Construtor. */
     public HTMLReportTask(Worker worker) {
         super(worker);
@@ -230,7 +234,7 @@ public class HTMLReportTask extends AbstractTask {
                     if (value != null && value.equalsIgnoreCase("true")) thumbsPageEnabled = true;
 
                     info.cabecalho = properties.getProperty("Cabecalho");
-                    info.classe = properties.getProperty("Classe");
+                    info.classe.add(properties.getProperty("Classe"));
                     info.dataLaudo = properties.getProperty("DataLaudo");
                     info.dataDocumento = properties.getProperty("DataDocumento");
                     info.dataProtocolo = properties.getProperty("DataProtocolo");
@@ -238,8 +242,8 @@ public class HTMLReportTask extends AbstractTask {
                     info.ipl = properties.getProperty("Ipl");
                     info.laudo = properties.getProperty("Laudo");
                     info.material = properties.getProperty("Material");
-                    info.matricula = properties.getProperty("Matricula");
-                    info.perito = properties.getProperty("Perito");
+                    info.matricula.add(properties.getProperty("Matricula"));
+                    info.perito.add(properties.getProperty("Perito"));
                     info.protocolo = properties.getProperty("Protocolo");
                     info.solicitante = properties.getProperty("Solicitante");
                     info.titulo = properties.getProperty("Titulo");
@@ -249,7 +253,7 @@ public class HTMLReportTask extends AbstractTask {
                     throw new RuntimeException("Erro lendo arquivo de configuração da tarefa de geração de relatório HTML:" + confFile.getAbsolutePath());
                 }
 
-                //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se este foi específicado 
+                //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
                 CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
                 if (args != null) {
                     List<String> info = args.getCmdArgs().get("-asap");
@@ -304,7 +308,8 @@ public class HTMLReportTask extends AbstractTask {
             long t = System.currentTimeMillis();
 
             reportSubFolder.mkdirs();
-            
+
+            modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content; 
             processBookmarks(templatesFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) createThumbsPage();
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm"));
@@ -396,9 +401,8 @@ public class HTMLReportTask extends AbstractTask {
         EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1");
         replace(arq.content, "%LAUDO%", info.laudo);
         replace(arq.content, "%DATALAUDO%", info.dataLaudo);
-        replace(arq.content, "%PERITO%", info.perito);
-        replace(arq.content, "%CLASSE%", formatClass());
-        replace(arq.content, "%MAT%", info.matricula);
+        replace(arq.content, "%SIG%", info.perito.size() > 1 ? "s" : "");
+        replace(arq.content, "%PERITOS%", formatPeritos());
         replace(arq.content, "%CABECALHO%", info.cabecalho);
         replace(arq.content, "%TITULO%", info.titulo);
         replace(arq.content, "%IPL%", info.ipl);
@@ -411,14 +415,27 @@ public class HTMLReportTask extends AbstractTask {
         arq.write();
     }
     
-    private String formatClass() {
-    	String s = info.classe;
-    	if (s != null && s.length() == 1) {
-    		char c = s.charAt(0);
-    		if (c >= '1' && c <= '3') s = c + "a Classe";
-    		else if (Character.toUpperCase(c) == 'E') s = "Classe Especial";
+    private String formatPeritos() {
+        StringBuilder ret = new StringBuilder();
+        for (int i = 0; i < info.perito.size(); i++) {
+            if (i > 0) ret.append("<br><br>\n");
+            StringBuilder s = new StringBuilder();
+            s.append(modeloPerito);
+            replace(s, "%PERITO%", info.perito.get(i));
+            replace(s, "%CLASSE%", info.classe.size() > i ? formatClass(info.classe.get(i)) : "");
+            replace(s, "%MAT%", info.matricula.size() > i ? info.matricula.get(i) : "");
+            ret.append(s);
+        }
+        return ret.toString();
+    }
+    
+    private String formatClass(String str) {
+    	if (str != null && str.length() == 1) {
+    		char c = str.charAt(0);
+    		if (c >= '1' && c <= '3') str = c + "a Classe";
+    		else if (Character.toUpperCase(c) == 'E') str = "Classe Especial";
     	}
-    	return s;
+    	return str;
     }
 
     private void processContents(File src, File target) throws Exception {
@@ -475,10 +492,12 @@ public class HTMLReportTask extends AbstractTask {
             processaBookmark(marcador, id, modelo, item, true, entriesByLabel.get(marcador));
             idx++;
         }
-        for (String categoria : entriesByCategory.keySet()) {
-            String id = String.format("arq%06d", idx);
-            processaBookmark(categoria, id, modelo, item, false, entriesByCategory.get(categoria));
-            idx++;
+        if (categoriesListEnabled) {
+            for (String categoria : entriesByCategory.keySet()) {
+                String id = String.format("arq%06d", idx);
+                processaBookmark(categoria, id, modelo, item, false, entriesByCategory.get(categoria));
+                idx++;
+            }
         }
     }
 
@@ -867,27 +886,34 @@ public class HTMLReportTask extends AbstractTask {
         String unidade = "";
         String matDesc = "";
         String matNum = "";
+        info.perito.clear();
+        info.matricula.clear();
+        info.classe.clear();
         while ((str = in.readLine()) != null) {
             String[] s = str.split("=", 2);
             if (s.length < 2) continue;
-            if (s[0].equalsIgnoreCase("Titulo")) info.titulo = s[1];
-            else if (s[0].equalsIgnoreCase("Subtitulo")) subTit = s[1];
-            else if (s[0].equalsIgnoreCase("Unidade")) unidade = s[1];
-            else if (s[0].equalsIgnoreCase("Numero")) numero = s[1];
-            else if (s[0].equalsIgnoreCase("Data")) info.dataLaudo = s[1];
-            else if (s[0].equalsIgnoreCase("PCF1")) {
-                String[] v = s[1].split("\\|");
-                info.perito = v[0];
-                if (v.length >= 2) info.matricula = v[1];
-                if (v.length >= 3) info.classe = v[2];
-            } else if (s[0].equalsIgnoreCase("MATERIAL_DESCR")) matDesc = s[1];
-            else if (s[0].equalsIgnoreCase("MATERIAL_NUMERO")) matNum = s[1];
-            else if (s[0].equalsIgnoreCase("NUMERO_IPL")) info.ipl = s[1];
-            else if (s[0].equalsIgnoreCase("AUTORIDADE")) info.solicitante = s[1];
-            else if (s[0].equalsIgnoreCase("DOCUMENTO")) info.documento = s[1];
-            else if (s[0].equalsIgnoreCase("DATA_DOCUMENTO")) info.dataDocumento = s[1];
-            else if (s[0].equalsIgnoreCase("NUMERO_CRIMINALISTICA")) info.protocolo = s[1];
-            else if (s[0].equalsIgnoreCase("DATA_CRIMINALISTICA")) info.dataProtocolo = s[1];
+            String chave = s[0];
+            String valor = s[1];
+            if (chave.equalsIgnoreCase("Titulo")) info.titulo = valor;
+            else if (chave.equalsIgnoreCase("Subtitulo")) subTit = valor;
+            else if (chave.equalsIgnoreCase("Unidade")) unidade = valor;
+            else if (chave.equalsIgnoreCase("Numero")) numero = valor;
+            else if (chave.equalsIgnoreCase("Data")) info.dataLaudo = valor;
+            else if (chave.toUpperCase().startsWith("PCF")) {
+                String[] v = valor.split("\\|");
+                if (v.length >= 1 && v[0].length() > 0) {
+                    info.perito.add(v[0]);
+                    if (v.length >= 2) info.matricula.add(v[1]);
+                    if (v.length >= 3) info.classe.add(v[2]);
+                }
+            } else if (chave.equalsIgnoreCase("MATERIAL_DESCR")) matDesc = valor;
+            else if (chave.equalsIgnoreCase("MATERIAL_NUMERO")) matNum = valor;
+            else if (chave.equalsIgnoreCase("NUMERO_IPL")) info.ipl = valor;
+            else if (chave.equalsIgnoreCase("AUTORIDADE")) info.solicitante = valor;
+            else if (chave.equalsIgnoreCase("DOCUMENTO")) info.documento = valor;
+            else if (chave.equalsIgnoreCase("DATA_DOCUMENTO")) info.dataDocumento = valor;
+            else if (chave.equalsIgnoreCase("NUMERO_CRIMINALISTICA")) info.protocolo = valor;
+            else if (chave.equalsIgnoreCase("DATA_CRIMINALISTICA")) info.dataProtocolo = valor;
         }
         in.close();
 
@@ -925,7 +951,8 @@ class ReportEntry {
  * Classe auxiliar para armazenar dados utilizado na geração de página com informações do caso.
  */
 class ReportInfo {
-    String laudo, dataLaudo, cabecalho, titulo, perito, classe, matricula, ipl, documento, solicitante, protocolo, dataProtocolo, material, dataDocumento;
+    String laudo, dataLaudo, cabecalho, titulo, ipl, documento, solicitante, protocolo, dataProtocolo, material, dataDocumento;
+    List<String> perito = new ArrayList<String>(), classe = new ArrayList<String>(), matricula = new ArrayList<String>();
 }
 
 /**
