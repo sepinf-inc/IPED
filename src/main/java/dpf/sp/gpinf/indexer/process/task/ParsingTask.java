@@ -86,7 +86,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
-	private static HashSet<String> categoriesToTestEncryption = getCategoriesToTestEncryption();
 
 	private Detector detector;
 	
@@ -146,35 +145,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			len = 0L;
 		metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 		metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+		metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
 		if (evidence.isTimedOut())
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
 		
 		return metadata;
-	}
-	
-	//TODO: Externalizar para arquivo de configuração
-	private static HashSet<String> getCategoriesToTestEncryption(){
-		HashSet<String> set = new HashSet<String>();
-		set.add("Arquivos Compactados");
-		set.add("Documentos PDF");
-		set.add("Documentos de Texto");
-		set.add("Planilhas");
-		set.add("Apresentações");
-		set.add("Outros Documentos");
-		return set;
-	}
-	
-	private boolean isToTestEncryption(HashSet<String> categories) {
-		
-		boolean result = false;
-		for (String category : categories) {
-			if (categoriesToTestEncryption.contains(category)) {
-				result = true;
-				break;
-			}
-		}
-		return result;
 	}
 
 	public static void load(File file) throws FileNotFoundException, IOException {
@@ -203,11 +179,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		}
 		return result;
 	}
-
-	public static boolean isToBeExpanded(EvidenceFile evidence) {
-		return isToBeExpanded(evidence.getCategorySet());
-	}
-
+	
 	private static synchronized void incSubitensDiscovered() {
 		subitensDiscovered++;
 	}
@@ -217,11 +189,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!evidence.isTimedOut() && ( hasParser(evidence)
-			|| isToBeExpanded(evidence)
-			|| isToTestEncryption(evidence.getCategorySet())
-			|| checkScanned(evidence.getMediaType())
-			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
+		if (!evidence.isTimedOut() && hasParser(evidence)){
 		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
@@ -233,10 +201,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			return false;
 		else
 			return true;
-	}
-	
-	private boolean checkScanned(MediaType mediaType){
-	    return OCRParser.getSupportedTypes().contains(mediaType);
 	}
 	
 	
@@ -281,12 +245,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			
 			if(metadata.get("EncryptedDocument") != null)
 				evidence.setExtraAttribute("encrypted", "true");
+			metadata.remove("EncryptedDocument");
 			
-			String value = metadata.get("OCRCharCount");
-			if(value != null && evidence.getMediaType().getType().equals("image")){
-			    int charCount = Integer.parseInt(value.replace("OCRCharCount", ""));
-			    evidence.setExtraAttribute("OCRCharCount", charCount);
-			    if(charCount >= 100)
+			String key = "OCRCharCount";
+			String value = metadata.get(key);
+			if(value != null){
+			    int charCount = Integer.parseInt(value.replace(key, ""));
+			    evidence.setExtraAttribute(key, charCount);
+			    metadata.remove(key);
+			    if(charCount >= 100  && evidence.getMediaType().getType().equals("image"))
 			        evidence.addCategory(SetCategoryTask.SCANNED_CATEGORY);
 			}
 			    
