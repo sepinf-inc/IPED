@@ -61,8 +61,6 @@ public class CaseData implements Serializable {
 	public synchronized void incDiscoveredVolume(Long volume) {
 		if(volume != null)
 			this.discoveredVolume += volume;
-		else
-			this.discoveredVolume += 10000;
 	}
 
 	private long discoveredVolume = 0;

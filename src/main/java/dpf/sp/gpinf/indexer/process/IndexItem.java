@@ -91,6 +91,7 @@ public class IndexItem {
 	public static final String TIMEOUT = "timeout";
 	public static final String CONTENTTYPE = "contentType";
 	public static final String CONTENT = "conteudo";
+	public static final String TREENODE = "treeNode";
 	
 
 	private static FieldType contentField = new FieldType();
@@ -294,6 +295,8 @@ public class IndexItem {
 		Metadata metadata = evidence.getMetadata();
 		if(metadata != null)
 			for(String key : metadata.names()){
+				if(key.contains("Unknown tag"))
+					continue;
 				StringBuilder strBuilder = new StringBuilder();
 				for(String val : metadata.getValues(key))
 					strBuilder.append(val + " ");
@@ -414,6 +417,10 @@ public class IndexItem {
 			value = doc.get(IndexItem.SUBITEM);
 			if (value != null)
 				evidence.setSubItem(Boolean.parseBoolean(value));
+			
+			value = doc.get(IndexItem.HASCHILD);
+			if (value != null)
+				evidence.setHasChildren(Boolean.parseBoolean(value));
 	        
 	        value = doc.get(IndexItem.TIMEOUT);
 	        if (value != null)

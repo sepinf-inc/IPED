@@ -23,6 +23,7 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,8 +107,7 @@ public class IPEDReader extends DataSourceReader{
 		PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
 		SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
 		
-		insertIntoProcessQueue(result);
-		
+		insertIntoProcessQueue(result, false);
 		
 		//Inclui anexos de emails de PST
 		CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -122,9 +122,23 @@ public class IPEDReader extends DataSourceReader{
     			query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
     		
     		PesquisarIndice searchPSTAttachs = new PesquisarIndice(query);
-    		result = searchPSTAttachs.pesquisar();
-    		insertIntoProcessQueue(result);
+    		SearchResult attachs = searchPSTAttachs.pesquisar();
+    		insertIntoProcessQueue(attachs, false);
         }
+        
+        //Inclui pais para visualização em árvore
+        BooleanQuery query = new BooleanQuery();
+        for (int docID : result.docs) {
+            String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+            for(String parentId : parentIds.split(" "))
+                query.add(new TermQuery(new Term(IndexItem.ID, parentId)), Occur.SHOULD);
+        }
+        for (int docID : result.docs)
+            query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
+        
+        PesquisarIndice searchParents = new PesquisarIndice(query);
+        result = searchParents.pesquisar();
+        insertIntoProcessQueue(result, true);
 		
 		
 		if(!listOnly){
@@ -143,7 +157,7 @@ public class IPEDReader extends DataSourceReader{
 
 	}
 	
-	private void insertIntoProcessQueue(SearchResult result) throws Exception {
+	private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
 		
 		for (int docID : result.docs){
 			Document doc = App.get().reader.document(docID);
@@ -155,7 +169,8 @@ public class IPEDReader extends DataSourceReader{
 				
 			if (listOnly){
 				caseData.incDiscoveredEvidences(1);
-				caseData.incDiscoveredVolume(len);
+				if(!treeNode)
+				    caseData.incDiscoveredVolume(len);
 				continue;
 			}
 			
@@ -163,6 +178,8 @@ public class IPEDReader extends DataSourceReader{
 			evidence.setName(doc.get(IndexItem.NAME));
 			
 			evidence.setLength(len);
+			if(treeNode)
+			    evidence.setSumVolume(false);
 			
 			int id = Integer.valueOf(doc.get(IndexItem.ID));
 			evidence.setId(id);
@@ -175,6 +192,13 @@ public class IPEDReader extends DataSourceReader{
 			value = doc.get(IndexItem.PARENTID);
 			if (value != null)
 				evidence.setParentId(value);
+			
+			value = doc.get(IndexItem.PARENTIDs);
+			ArrayList<Integer> parents = new ArrayList<Integer>();
+			for(String parent : value.split(" "))
+			    if(!parent.isEmpty())
+			        parents.add(Integer.parseInt(parent));
+			evidence.addParentIds(parents);
 
 			value = doc.get(IndexItem.TYPE);
 			if (value != null)
@@ -200,16 +224,19 @@ public class IPEDReader extends DataSourceReader{
 			evidence.setPath(doc.get(IndexItem.PATH));
 
 			value = doc.get(IndexItem.EXPORT);
-			if (value != null && !value.isEmpty())
+			if (value != null && !value.isEmpty() && !treeNode)
 				evidence.setFile(Util.getRelativeFile(basePath, value));
 
 			else {
 				value = doc.get(IndexItem.SLEUTHID);
-				if (value != null && !value.isEmpty()) {
+				if (value != null && !value.isEmpty() && !treeNode) {
 					evidence.setSleuthId(value);
 					evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
 				}
 			}
+			
+			if(treeNode)
+				evidence.setExtraAttribute(IndexItem.TREENODE, "true");
 
 			value = doc.get(IndexItem.CONTENTTYPE);
 			if (value != null)
@@ -251,10 +278,17 @@ public class IPEDReader extends DataSourceReader{
 			
 			value = doc.get(IndexItem.SUBITEM);
 	        evidence.setSubItem(Boolean.parseBoolean(value));
+	        
+	        value = doc.get(IndexItem.HASCHILD);
+			evidence.setHasChildren(Boolean.parseBoolean(value));
 			
 			value = doc.get(IndexItem.OFFSET);
 			if(value != null)
 				evidence.setFileOffset(Long.parseLong(value));
+			
+			value = doc.get(IndexItem.ISROOT);
+			if(value != null)
+			    evidence.setRoot(true);
 
 			evidence.setToExtract(true);
 

@@ -126,7 +126,7 @@ public class MenuClass extends JPopupMenu {
 		aumentarGaleria.addActionListener(menuListener);
 		this.add(aumentarGaleria);
 		
-		if(!App.get().isReport){
+		if(!App.get().isFTKReport){
 			navigateToParent = new JMenuItem("Navegar para item pai na árvore");
 			navigateToParent.addActionListener(menuListener);
 			this.add(navigateToParent);

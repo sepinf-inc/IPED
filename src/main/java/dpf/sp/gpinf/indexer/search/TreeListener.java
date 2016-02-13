@@ -115,7 +115,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 					textQuery = IndexItem.FTKID + ":" + parentId;
 				
 				if(textQuery != null){
-					PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+					PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
 					result = task.pesquisar();
 					
 					if(result.length == 1){

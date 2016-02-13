@@ -88,7 +88,7 @@ public class TreeViewModel implements TreeModel{
 			textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
 
 			try {
-				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
 				children = task.pesquisar();
 				Integer[] array = ArrayUtils.toObject(children.docs);
 				Arrays.sort(array, comparator);
@@ -109,7 +109,7 @@ public class TreeViewModel implements TreeModel{
 		root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
 		PesquisarIndice pesquisa;
 		try {
-			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"));
+			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
 			root.children = pesquisa.pesquisar();
 			Integer[] array = ArrayUtils.toObject(root.children.docs);
 			Arrays.sort(array, comparator);

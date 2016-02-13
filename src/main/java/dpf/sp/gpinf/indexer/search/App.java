@@ -148,7 +148,7 @@ public class App extends JFrame implements WindowListener {
 	JPanel topPanel;
 	JPanel multiFilterAlert;
 	boolean disposicaoVertical = false;
-	boolean isReport;
+	boolean isFTKReport;
 
 	ResultTableModel resultsModel;
 	List resultSortKeys;
@@ -211,7 +211,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
 			//codePath = "L:/indexador/lib/Search.htm";
-			//codePath = "E:/1note-dell-meta-sdv3/indexador/lib/search.jar";
+			//codePath = "E:/1pc-hp-blind3/indexador/lib/search.jar";
 			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
@@ -462,7 +462,9 @@ public class App extends JFrame implements WindowListener {
 		treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
 		defaultTabColor = treeTab.getBackgroundAt(0);
 		
-		if(!isReport){
+		isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
+		
+		if(!isFTKReport){
 			recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
 			recursiveTreeList.setSelected(true);
 			
@@ -480,7 +482,9 @@ public class App extends JFrame implements WindowListener {
 			
 			treeTab.add("Evidências", evidencePanel);
 			
-		}else
+		}
+		
+		if(new File(new File(codePath).getParent(), "data/containsReport.flag").exists())
 			treeTab.setSelectedIndex(1);
 
 		status = new JLabel(" ");
@@ -503,7 +507,7 @@ public class App extends JFrame implements WindowListener {
 		menu = new MenuClass();
 
 		appletListener = new AppListener();
-		if(!isReport) recursiveTreeList.addActionListener(treeListener);
+		if(!isFTKReport) recursiveTreeList.addActionListener(treeListener);
 		termo.addActionListener(appletListener);
 		filtro.addActionListener(appletListener);
 		pesquisar.addActionListener(appletListener);
