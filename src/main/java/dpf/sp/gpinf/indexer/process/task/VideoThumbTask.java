@@ -26,6 +26,7 @@ import gpinf.video.VideoThumbsOutputConfig;
 import java.io.File;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -112,12 +113,13 @@ public class VideoThumbTask extends AbstractTask {
 
     /** Objeto estático com total de tempo gasto no processamento de vídeos, em milisegundos. */
     private static final AtomicLong totalTime = new AtomicLong();
+    
+    private static String HAS_THUMB = ImageThumbTask.HAS_THUMB;
 
     /** 
-     * Set com videos em processamento, estático e sincronizado para evitar que duas threads processem
-     * arquivos duplicados simultaneamente.
+     * Mapa com resultado do processamento dos vídeos
      */
-    private static final Set<String> currentVideos = new HashSet<String>();
+    private static final HashMap<String, String> processedVideos = new HashMap<String, String>();
 
     /**
      * Construtor.
@@ -264,10 +266,15 @@ public class VideoThumbTask extends AbstractTask {
         //Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) return;
 
-        //Verifica se há outro vídeo igual em processamento, senão inclui
-        synchronized (currentVideos) {
-            if (currentVideos.contains(evidence.getHash())) return;
-            currentVideos.add(evidence.getHash());
+        //Verifica se outro vídeo igual foi ou está em processamento
+        synchronized (processedVideos) {
+            if (processedVideos.containsKey(evidence.getHash())){
+            	while(processedVideos.get(evidence.getHash()).equals("processing"))
+            		processedVideos.wait();
+            	evidence.setExtraAttribute(HAS_THUMB, processedVideos.get(evidence.getHash()));
+            	return;
+            }else
+            	processedVideos.put(evidence.getHash(), "processing");
         }
 
         //Chama o método de extração de cenas
@@ -277,7 +284,10 @@ public class VideoThumbTask extends AbstractTask {
             if (!mainOutFile.getParentFile().exists()) mainOutFile.getParentFile().mkdirs();
 
             //Já está pasta? Então não é necessário gerar.
-            if (mainOutFile.exists()) return;
+            if (mainOutFile.exists()){
+            	evidence.setExtraAttribute(HAS_THUMB, "true");
+            	return;
+            }
 
             mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
             mainConfig.setOutFile(mainTmpFile);
@@ -286,12 +296,15 @@ public class VideoThumbTask extends AbstractTask {
             VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
             t = System.currentTimeMillis() - t;
             if (r.isSuccess()) {
-                mainTmpFile.renameTo(mainOutFile);
+                if(mainTmpFile.renameTo(mainOutFile))
+                	evidence.setExtraAttribute(HAS_THUMB, "true");
             } else {
+            	evidence.setExtraAttribute(HAS_THUMB, "false");
                 totalFailed.incrementAndGet();
             }
             totalProcessed.incrementAndGet();
             totalTime.addAndGet(t);
+            
         } catch (Exception e) {
         	Log.warning(taskName, e.toString());
         	Log.debug(taskName, e);
@@ -300,9 +313,10 @@ public class VideoThumbTask extends AbstractTask {
             //Tenta apaga possível temporários deixados "perdidos" (no caso normal eles foram renomeados)
             if (mainTmpFile != null && mainTmpFile.exists()) mainTmpFile.delete();
 
-            //Retira do Set de arquivos em processamento
-            synchronized (currentVideos) {
-                currentVideos.remove(evidence.getHash());
+            //Guarda resultado do processamento
+            synchronized (processedVideos) {
+                processedVideos.put(evidence.getHash(), (String)evidence.getExtraAttribute(HAS_THUMB));
+                processedVideos.notifyAll();
             }
         }
     }
