@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map.Entry;
 
 import org.apache.lucene.collation.ICUCollationDocValuesField;
@@ -47,12 +48,14 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import com.ibm.icu.text.Collator;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
@@ -93,6 +96,7 @@ public class IndexItem {
 	public static final String CONTENT = "conteudo";
 	public static final String TREENODE = "treeNode";
 	
+	static HashSet<String> ignoredMetadata = new HashSet<String>();
 
 	private static FieldType contentField = new FieldType();
 	private static FieldType storedTokenizedNoNormsField = new FieldType();
@@ -103,6 +107,15 @@ public class IndexItem {
 		storedTokenizedNoNormsField.setIndexed(true);
 		storedTokenizedNoNormsField.setOmitNorms(true);
 		storedTokenizedNoNormsField.setStored(true);
+		
+		ignoredMetadata.add(Metadata.CONTENT_TYPE);
+		ignoredMetadata.add(Metadata.CONTENT_LENGTH);
+		ignoredMetadata.add(Metadata.RESOURCE_NAME_KEY);
+		ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+		ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
+		ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
+		ignoredMetadata.add("File Name");
+		ignoredMetadata.add("File Size");
 	}
 	
 	private static final ICUCollationDocValuesField getCollationDocValue(String field, String value){
@@ -295,7 +308,7 @@ public class IndexItem {
 		Metadata metadata = evidence.getMetadata();
 		if(metadata != null)
 			for(String key : metadata.names()){
-				if(key.contains("Unknown tag"))
+				if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
 					continue;
 				StringBuilder strBuilder = new StringBuilder();
 				for(String val : metadata.getValues(key))

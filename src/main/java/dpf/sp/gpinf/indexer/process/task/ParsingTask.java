@@ -78,8 +78,11 @@ import gpinf.dev.data.EvidenceFile;
 public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
+	
 	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
 	public static boolean expandContainers = false;
+	
+	public static String ENCRYPTED = "encrypted";
 	
 	// Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
 	private static int NAME_MAX_LEN = 256;
@@ -243,16 +246,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if(extractEmbedded)
 				evidence.setParsed(true);
 			
-			if(metadata.get("EncryptedDocument") != null)
-				evidence.setExtraAttribute("encrypted", "true");
-			metadata.remove("EncryptedDocument");
+			if(metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null)
+				evidence.setExtraAttribute(ENCRYPTED, "true");
+			metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 			
-			String key = "OCRCharCount";
-			String value = metadata.get(key);
+			String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
 			if(value != null){
-			    int charCount = Integer.parseInt(value.replace(key, ""));
-			    evidence.setExtraAttribute(key, charCount);
-			    metadata.remove(key);
+			    int charCount = Integer.parseInt(value);
+			    evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
+			    metadata.remove(OCRParser.OCR_CHAR_COUNT);
 			    if(charCount >= 100  && evidence.getMediaType().getType().equals("image"))
 			        evidence.addCategory(SetCategoryTask.SCANNED_CATEGORY);
 			}

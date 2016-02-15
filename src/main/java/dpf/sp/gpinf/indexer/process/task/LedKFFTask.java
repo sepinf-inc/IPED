@@ -92,7 +92,7 @@ public class LedKFFTask extends AbstractTask {
         if (hash != null && hashArray != null) {
             if (Arrays.binarySearch(hashArray, hash) >= 0)
             	//evidence.addCategory(ledCategory);
-            	evidence.setExtraAttribute("kffstatus", "pedo");
+            	evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo");
         }
 
     }

@@ -40,6 +40,8 @@ public class KFFTask extends AbstractTask{
 	private Logger LOGGER = LoggerFactory.getLogger(KFFTask.class);
     private static String CONF_FILE = "KFFTaskConfig.txt";
     
+    public static String KFF_STATUS = "kffstatus";
+    
     public static int excluded = 0;
     private static Object lock = new Object();
     
@@ -194,7 +196,7 @@ public class KFFTask extends AbstractTask{
             if(attr != null){
                 if(attr > 0 || alertProducts.contains(products.get(-attr)[0]))
                 	//evidence.addCategory(ALERT);
-                	evidence.setExtraAttribute("kffstatus", "alert");
+                	evidence.setExtraAttribute(KFF_STATUS, "alert");
                 else{
                     if(excludeKffIgnorable){
                         evidence.setToIgnore(true);
@@ -204,7 +206,7 @@ public class KFFTask extends AbstractTask{
                         }
                     }else
                         //evidence.addCategory(IGNORE);
-                    	evidence.setExtraAttribute("kffstatus", "ignore");
+                    	evidence.setExtraAttribute(KFF_STATUS, "ignore");
                 }
                 //evidence.setExtraAttribute("kffgroup", kffattr.group);
             }
