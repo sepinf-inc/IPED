@@ -39,6 +39,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -77,6 +78,11 @@ public class ColumnsManager implements ActionListener{
 	        IndexItem.TREENODE,
 	        KFFTask.KFF_STATUS,
 	        KFFTask.KFF_GROUP,
+	        HashTask.MD5,
+	        HashTask.SHA1,
+	        HashTask.SHA256,
+	        HashTask.SHA512,
+	        HashTask.EDONKEY,
 	        ParsingTask.ENCRYPTED,
 	        ImageThumbTask.HAS_THUMB,
 	        OCRParser.OCR_CHAR_COUNT,

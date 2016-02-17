@@ -11,9 +11,9 @@ indexTemp = default
 # são utilizados arquivos temporários para evitar múltiplas descompactações dos itens pela libewf
 indexTempOnSSD = false
 
-# Habilita cálculo de hashes dos arquivos
-# Valores possíveis: md5, sha-1, sha-256 e sha-512
-hash = md5
+# Habilita cálculo de hash dos arquivos. Para calcular vários hashes, utilize ; como separador
+# Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey
+hash = md5;
 
 # Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base. É altamente
 # recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
