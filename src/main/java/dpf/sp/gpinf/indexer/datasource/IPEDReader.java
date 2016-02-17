@@ -136,7 +136,7 @@ public class IPEDReader extends DataSourceReader{
         for (int docID : result.docs)
             query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
         
-        PesquisarIndice searchParents = new PesquisarIndice(query);
+        PesquisarIndice searchParents = new PesquisarIndice(query, true);
         result = searchParents.pesquisar();
         insertIntoProcessQueue(result, true);
 		
