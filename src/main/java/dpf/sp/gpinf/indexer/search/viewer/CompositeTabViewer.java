@@ -40,6 +40,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
@@ -139,6 +140,12 @@ public class CompositeTabViewer extends JPanel implements ChangeListener, Action
 		this.file = file;
 		this.viewFile = viewFile;
 		this.contentType = contentType;
+		if(contentType == null)
+			try {
+				this.contentType = tika.detect(file.getFile());
+			} catch (IOException e) {
+				this.contentType = MediaType.OCTET_STREAM.toString();
+			}
 		this.viewMediaType = getViewType();
 		this.highlightTerms = highlightTerms;
 		

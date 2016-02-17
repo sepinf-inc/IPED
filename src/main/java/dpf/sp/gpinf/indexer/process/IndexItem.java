@@ -305,7 +305,7 @@ public class IndexItem {
 			
 		}
 		
-		Metadata metadata = evidence.getMetadata();
+		/*Metadata metadata = evidence.getMetadata();
 		if(metadata != null)
 			for(String key : metadata.names()){
 				if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
@@ -320,7 +320,7 @@ public class IndexItem {
 					values = values.substring(values.length() - 16000);
 				doc.add(getCollationDocValue(key, values));
 			}
-
+		*/
 		return doc;
 	}
 	
@@ -379,11 +379,13 @@ public class IndexItem {
 
 			evidence.setPath(doc.get(IndexItem.PATH));
 
+			boolean hasFile = false;
 			value = doc.get(IndexItem.EXPORT);
-			if (value != null && !value.isEmpty())
+			if (value != null && !value.isEmpty()){
 				evidence.setFile(Util.getRelativeFile(outputBase.getParent(), value));
+				hasFile = true;
 
-			else {
+			}else {
 				value = doc.get(IndexItem.SLEUTHID);
 				if (value != null && !value.isEmpty()) {
 					evidence.setSleuthId(value);
@@ -406,12 +408,17 @@ public class IndexItem {
 				
 				if(!value.isEmpty()){
 					File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
+					if(viewFile == null && !hasFile && evidence.getSleuthId() == null)
+						viewFile = Util.findFileFromHash(new File(outputBase.getParentFile(), 
+								HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), value);
 					if(viewFile != null)
 						evidence.setViewFile(viewFile);
-					if(viewItem){
+					if(viewItem || (!hasFile && evidence.getSleuthId() == null)){
 						evidence.setFile(viewFile);
 						evidence.setTempFile(viewFile);
+						evidence.setMediaType(null);
 					}
+					
 				}
 			}
 			

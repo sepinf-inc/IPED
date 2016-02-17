@@ -108,7 +108,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 
 		disposeItem(lastItem);
 		lastItem = item;
-		String contentType = item.getMediaType().toString();
+		String contentType = null;
+		if(item.getMediaType() != null)
+			contentType = item.getMediaType().toString();
 		
 		EvidenceFile viewItem = item;
 		
