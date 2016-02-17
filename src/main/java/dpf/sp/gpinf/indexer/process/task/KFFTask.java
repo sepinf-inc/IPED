@@ -41,6 +41,7 @@ public class KFFTask extends AbstractTask{
     private static String CONF_FILE = "KFFTaskConfig.txt";
     
     public static String KFF_STATUS = "kffstatus";
+    public static String KFF_GROUP = "kffgroup";
     
     public static int excluded = 0;
     private static Object lock = new Object();
@@ -145,7 +146,7 @@ public class KFFTask extends AbstractTask{
         }
         reader.close();
         for(File kffFile : kffDir.listFiles()){
-            if(!kffFile.getName().contains("NSRLFile"))
+            if(!kffFile.getName().equals("NSRLFile.txt"))
                 continue;
             long length = kffFile.length();
             long progress = 0;
@@ -153,15 +154,15 @@ public class KFFTask extends AbstractTask{
             ProgressMonitor monitor = new ProgressMonitor(null, "", "Importando " + kffFile.getName(), 0, (int)(length/1000));
             reader = new BufferedReader(new FileReader(kffFile));
             line = reader.readLine();
-            String ignoreStr = "\"\""; 
+            String[] ignoreStrs = {"\"\"", "\"D\""};
             while((line = reader.readLine()) != null){
                 String[] values = line.split(",");
                 KffAttr attr = new KffAttr();
                 attr.group = Integer.valueOf(values[values.length - 3]);
-                if(values[values.length - 1].equals(ignoreStr))
+                if(values[values.length - 1].equals(ignoreStrs[0]) || values[values.length - 1].equals(ignoreStrs[1]))
                 	attr.group *= -1;
-                else
-                	System.out.println(line);
+                //else
+                //	System.out.println(line);
                 
                 HashValue md5 = new HashValue(values[1].substring(1, 33));	
                 HashValue sha1 = new HashValue(values[0].substring(1, 41));
@@ -194,7 +195,8 @@ public class KFFTask extends AbstractTask{
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
         	Integer attr = map.get(hash);
             if(attr != null){
-                if(attr > 0 || alertProducts.contains(products.get(-attr)[0]))
+            	String[] product = products.get(Math.abs(attr));
+            	if(attr > 0 || alertProducts.contains(product[0]))
                 	//evidence.addCategory(ALERT);
                 	evidence.setExtraAttribute(KFF_STATUS, "alert");
                 else{
@@ -208,7 +210,7 @@ public class KFFTask extends AbstractTask{
                         //evidence.addCategory(IGNORE);
                     	evidence.setExtraAttribute(KFF_STATUS, "ignore");
                 }
-                //evidence.setExtraAttribute("kffgroup", kffattr.group);
+                evidence.setExtraAttribute(KFF_GROUP, product[0] + " " + product[1]);
             }
         }
     }
