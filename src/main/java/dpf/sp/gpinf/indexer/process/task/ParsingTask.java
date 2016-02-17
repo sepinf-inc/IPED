@@ -256,7 +256,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			    evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
 			    metadata.remove(OCRParser.OCR_CHAR_COUNT);
 			    if(charCount >= 100  && evidence.getMediaType().getType().equals("image"))
-			        evidence.addCategory(SetCategoryTask.SCANNED_CATEGORY);
+			        evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
 			}
 			    
 
