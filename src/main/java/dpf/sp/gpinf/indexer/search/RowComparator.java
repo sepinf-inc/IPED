@@ -118,47 +118,8 @@ public class RowComparator implements Comparator<Integer> {
 				}else if(ndv != null){
 					return Long.compare(ndv.get(a), ndv.get(b));
 					
-				}else{
-					try {
-						Document docA = app.searcher.doc(a);
-						Document docB = app.searcher.doc(b);
-						
-						String valA = docA.get(fields[col - ResultTableModel.fixedCols.length]);
-						String valB = docB.get(fields[col - ResultTableModel.fixedCols.length]);
-						
-						if(valA == null || valA.isEmpty()){
-							if(valB == null || valB.isEmpty())
-								return 0;
-							else
-								return -1;
-						}else
-							if(valB == null || valB.isEmpty())
-								return 1;
-							else{
-								if(isNum)
-									try{
-										long lA = Long.parseLong(valA);
-										long lB = Long.parseLong(valB);
-										if(lA < lB)
-											return -1;
-										else if (lA > lB)
-											return 1;
-										else
-											return 0;
-												
-									}catch(NumberFormatException e){
-										isNum = false;
-									}
-								
-								return valA.compareTo(valB);
-							}
-						
-					} catch (IOException e) {
-						e.printStackTrace();
-						return 0;
-					}
-					
-				}
+				}else
+					return 0;
 				
 		}
 	}
