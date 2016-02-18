@@ -37,27 +37,26 @@ public class LedKFFTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
 
         synchronized (lock) {
-            if (hashArray != null) return;
+            if (hashArray != null)
+            	return;
 
             //this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
             String hash = confParams.getProperty("hash");
             String ledWkffPath = confParams.getProperty("ledWkffPath");
-            if (ledWkffPath == null || hash == null)
+            if (ledWkffPath == null)
             	return;
             File wkffDir = new File(ledWkffPath);
-            if (!wkffDir.exists()) throw new Exception("Caminho para base de hashes do LED inválido!");
+            if (!wkffDir.exists())
+            	throw new Exception("Caminho para base de hashes do LED inválido!");
 
             int column = -1;
             hash = hash.toLowerCase();
-            if (hash.equals("md5")) column = 0;
-            else if (hash.equals("sha-1") || hash.equals("sha1")) column = 3;
-            else {
-                Log.warning(taskName, "Apenas hashes md5 e sha-1 disponíveis na base do LED.");
-                Log.warning(taskName, "Tipo de hash configurado: " + hash + ".");
-                Log.warning(taskName, "Tarefa DESABILITADA!");
-                hashArray = new HashValue[0];
-                return;
-            }
+            if (hash.contains("md5"))
+            	column = 0;
+            else if (hash.contains("sha-1"))
+            	column = 3;
+            else
+            	throw new Exception("Habilite o hash md5 ou sha-1 para consultar a base do LED!");
 
             IndexFiles.getInstance().firePropertyChange("mensagem", "", "Carregando base de hashes do LED...");
 

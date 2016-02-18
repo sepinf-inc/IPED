@@ -68,12 +68,12 @@ public class KFFTask extends AbstractTask{
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
      
-        String hash = confParams.getProperty("hash");
-        if(hash == null)
+        String hashes = confParams.getProperty("hash");
+        if(hashes == null)
             return;
-        if(hash.equals("md5"))
+        if(hashes.contains("md5"))
             md5 = true;
-        else if(hash.equals("sha-1"))
+        else if(hashes.contains("sha-1"))
             md5 = false;
         
         excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable"));
