@@ -141,8 +141,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		setContext(context);
 	}
 	
-	private Metadata getMetadata(EvidenceFile evidence) {
-		Metadata metadata = new Metadata();
+	private void fillMetadata(EvidenceFile evidence) {
+		Metadata metadata = evidence.getMetadata();
 		Long len = evidence.getLength();
 		if(len == null)
 			len = 0L;
@@ -152,8 +152,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
 		if (evidence.isTimedOut())
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-		
-		return metadata;
 	}
 
 	public static void load(File file) throws FileNotFoundException, IOException {
@@ -192,6 +190,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
+		
+		fillMetadata(evidence);
+		
 		if (!evidence.isTimedOut() && hasParser(evidence)){
 		    new ParsingTask(worker).safeProcess(evidence);
 		}
@@ -199,7 +200,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	private boolean hasParser(EvidenceFile evidence){
-		Parser parser = worker.autoParser.getBestParser(getMetadata(evidence));
+		Parser parser = worker.autoParser.getBestParser(evidence.getMetadata());
 		if(parser instanceof RawStringParser || parser instanceof TXTParser)
 			return false;
 		else
@@ -221,8 +222,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		}
 		
 		configureTikaContext(evidence);
-		Metadata metadata = getMetadata(evidence);
-		evidence.setMetadata(metadata);
+		Metadata metadata = evidence.getMetadata();
 		
 		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 		reader.startBackgroundParsing();
@@ -246,6 +246,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if(extractEmbedded)
 				evidence.setParsed(true);
 			
+			//Ajusta metadados:
 			if(metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null)
 				evidence.setExtraAttribute(ENCRYPTED, "true");
 			metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
@@ -257,6 +258,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			    metadata.remove(OCRParser.OCR_CHAR_COUNT);
 			    if(charCount >= 100  && evidence.getMediaType().getType().equals("image"))
 			        evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
+			}
+			
+			if(evidence.getMediaType().toString().equals("application/vnd.ms-outlook")){
+				String subject = metadata.get(TikaCoreProperties.TITLE);
+				if(subject == null || subject.isEmpty())
+					subject = "[Sem Assunto]";
+				metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 			}
 			    
 
@@ -277,7 +285,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		hasTitle = false;
 		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
 		if (name == null || name.isEmpty()) {
-			name = metadata.get(TikaCoreProperties.TITLE);
+			name = metadata.get(ExtraProperties.MESSAGE_SUBJECT);
+			if (name == null || name.isEmpty())
+				name = metadata.get(TikaCoreProperties.TITLE);
 			if(name != null)
 				hasTitle = true;
 		}
@@ -345,6 +355,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				}
 				return;
 			}
+			
+			subItem.setMetadata(metadata);
 			
 			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
 			if(contentTypeStr != null)

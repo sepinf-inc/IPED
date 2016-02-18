@@ -1149,6 +1149,8 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
 	public Metadata getMetadata() {
+		if(metadata == null)
+			metadata = new Metadata();
 		return metadata;
 	}
 

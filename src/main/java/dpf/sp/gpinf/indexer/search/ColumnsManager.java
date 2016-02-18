@@ -33,11 +33,13 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumn;
 
 import org.apache.tika.metadata.IPTC;
+import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -89,9 +91,14 @@ public class ColumnsManager implements ActionListener{
 	        IndexerDefaultParser.PARSER_EXCEPTION
 	    };
 	
-	String[] indexFields;
+	private String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
 	
-	private String[] colGroups = {"Básicas", "Estendidas", "Metadados"};
+	String[] indexFields = null;
+	
+	private Object[][] colGroups = {
+			{"Básicas", "Estendidas", "Email", "Outras"},
+			{defaultFields, extraFields, email, indexFields}
+	};
 	
 	private static ColumnsManager instance = new ColumnsManager();
 	
@@ -99,7 +106,7 @@ public class ColumnsManager implements ActionListener{
 	
 	private JDialog dialog = new JDialog();
 	private JPanel listPanel = new JPanel();
-	private JComboBox<String> combo;
+	private JComboBox<Object> combo;
 	
 	public static ColumnsManager getInstance(){
 		return instance;
@@ -126,7 +133,7 @@ public class ColumnsManager implements ActionListener{
 		listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 		listPanel.setBackground(Color.WHITE);
 		
-		combo = new JComboBox<String>(colGroups);
+		combo = new JComboBox<Object>(colGroups[0]);
 		
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
@@ -145,10 +152,10 @@ public class ColumnsManager implements ActionListener{
 			loadedFields.add(col);
 		
 		indexFields = LoadIndexFields.addExtraFields(App.get().reader, new String[0]);
+		colGroups[1][colGroups[1].length - 1] = indexFields;
 		
-		Arrays.sort(defaultFields, Collator.getInstance());
-		Arrays.sort(extraFields, Collator.getInstance());
-		Arrays.sort(indexFields, Collator.getInstance());
+		for(Object fields : colGroups[1])
+			Arrays.sort((String[])fields, Collator.getInstance());
 		
 		updateList();
 		
@@ -159,21 +166,25 @@ public class ColumnsManager implements ActionListener{
 	
 	private void updateList(){
 	    listPanel.removeAll();
-	    String[] fields = indexFields;
-	    if(combo.getSelectedIndex() == 0)
-	    	fields = defaultFields;
-	    if(combo.getSelectedIndex() == 1)
-	    	fields = extraFields;
+	    String[] fields = (String[])colGroups[1][combo.getSelectedIndex()];
 	    
         for(String f : fields){
-            if(combo.getSelectedIndex() == 2 && (Arrays.asList(defaultFields).contains(f) || Arrays.asList(extraFields).contains(f)))
-                continue;
-            JCheckBox check = new JCheckBox();
-            check.setText(f);
-            if(loadedFields.contains(f))
-                check.setSelected(true);
-            check.addActionListener(this);
-            listPanel.add(check);
+        	boolean insertField = true;
+            if(combo.getSelectedIndex() == colGroups[0].length - 1){
+            	for(int i = 0; i <= colGroups[1].length - 2; i++)
+            		if(Arrays.asList((String[])colGroups[1][i]).contains(f)){
+            			insertField = false;
+            			break;
+            		}
+            }
+            if(insertField){
+            	JCheckBox check = new JCheckBox();
+                check.setText(f);
+                if(loadedFields.contains(f))
+                    check.setSelected(true);
+                check.addActionListener(this);
+                listPanel.add(check);
+            }
         }
         dialog.revalidate();
         dialog.repaint();

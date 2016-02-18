@@ -305,7 +305,7 @@ public class IndexItem {
 			
 		}
 		
-		/*Metadata metadata = evidence.getMetadata();
+		Metadata metadata = evidence.getMetadata();
 		if(metadata != null)
 			for(String key : metadata.names()){
 				if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
@@ -320,7 +320,7 @@ public class IndexItem {
 					values = values.substring(values.length() - 16000);
 				doc.add(getCollationDocValue(key, values));
 			}
-		*/
+		
 		return doc;
 	}
 	
