@@ -1,0 +1,3 @@
+dpf.sp.gpinf.indexer.util.HtmlEncodingDetector
+org.apache.tika.parser.txt.UniversalEncodingDetector
+org.apache.tika.parser.txt.Icu4jEncodingDetector
