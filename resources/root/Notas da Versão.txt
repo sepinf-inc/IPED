@@ -1,3 +1,22 @@
+XX/02/2015: IPED-3.9
+Melhorias:
+TODO- Integração da Detecção de Nudez em imagens do LED (PCF Wladimir)
+- Exibição dinâmica de colunas e exposição de atributos extras dos itens
+TODO- Metadados dos itens indexados como atributos extras (message-from, message-to, cameraModel, etc)
+- Refatoração da pré-ordenação de propriedades
+- Exibição da árvore de diretórios em relatórios .iped e extrações automáticas
+- Cálculo de vários hashes simultaneamente (md5, sha-N, edonkey)
+TODO- Fragmentação de itens binários grandes diferenciada para carving e indexação
+TODO- Integração do KFFCarving (carving de itens da base do LED)
+TODO- Geração de miniaturas de imagens durante o processamento
+- Atributo extra 'hasThumb' para imagens e vídeos
+Correções:
+- Suporte a arquivos .asap com mais de 1 perito (PCF Wladimir)
+TODO- Suporte a visualização com LibreOffice 5 no Linux
+- Correção na formatação de datas de itens sqlite
+- Adiciona check de versão da libpff
+
+
 27/01/2015: IPED-3.8.1
 - Corrige captura da imagem do visualizador (regressão 3.7)
 - Extrai Feeds Rss de OSTs 2013
