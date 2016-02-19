@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.data.FileGroup;
 

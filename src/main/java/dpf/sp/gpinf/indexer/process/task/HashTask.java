@@ -171,42 +171,5 @@ public class HashTask extends AbstractTask{
 
 		return result.toString();
 	}
-	
-	public static class HashValue implements Comparable<HashValue>, Serializable{
-
-		private static final long serialVersionUID = 1L;
-		
-		byte[] bytes;
-		
-		public HashValue(String hash) {
-			bytes = DatatypeConverter.parseHexBinary(hash);
-		}
-		
-		public String toString(){
-			return DatatypeConverter.printHexBinary(bytes);
-		}
-
-		@Override
-		public int compareTo(HashValue hash) {
-			for (int i = 0; i < bytes.length; i++) {
-				if ((bytes[i] & 0xFF) < (hash.bytes[i] & 0xFF))
-					return -1;
-				else if ((bytes[i] & 0xFF) > (hash.bytes[i] & 0xFF))
-					return 1;
-			}
-			return 0;
-		}
-
-		@Override
-		public boolean equals(Object hash) {
-			return compareTo((HashValue) hash) == 0;
-		}
-
-		@Override
-		public int hashCode() {
-			return bytes[3] & 0xFF | (bytes[2] & 0xFF) << 8 | (bytes[1] & 0xFF) << 16 | (bytes[0] & 0xFF) << 24;
-		}
-		
-	}
 
 }

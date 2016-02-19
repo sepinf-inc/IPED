@@ -14,7 +14,7 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValue;
 
 public class IgnoreHardLinkTask extends AbstractTask{
 	
