@@ -31,6 +31,7 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
@@ -67,7 +68,8 @@ public class ExportCSVTask extends AbstractTask{
 	@Override
 	protected  void process(EvidenceFile evidence) throws IOException {
 	    
-	    if (!exportFileProps)
+	    if (!exportFileProps || (caseData.isIpedReport() && 
+	    		evidence.getExtraAttribute(IndexItem.TREENODE) != null))
 	        return;
 		
 		String value = evidence.getName();

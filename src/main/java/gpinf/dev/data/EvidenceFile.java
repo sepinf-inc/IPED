@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -151,6 +152,8 @@ public class EvidenceFile implements Serializable, StreamSource {
     private HashSet<String> categories = new HashSet<String>();
 
     private String labels;
+    
+    private Metadata metadata;
 
     private boolean timeOut = false;
 
@@ -1144,5 +1147,15 @@ public class EvidenceFile implements Serializable, StreamSource {
     public void setTempStartOffset(long tempStartOffset) {
         this.tempStartOffset = tempStartOffset;
     }
+
+	public Metadata getMetadata() {
+		if(metadata == null)
+			metadata = new Metadata();
+		return metadata;
+	}
+
+	public void setMetadata(Metadata metadata) {
+		this.metadata = metadata;
+	}
 
 }

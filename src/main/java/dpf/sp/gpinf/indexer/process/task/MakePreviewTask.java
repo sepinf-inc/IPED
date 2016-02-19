@@ -48,11 +48,12 @@ public class MakePreviewTask extends AbstractTask{
 				|| contentType.equals("application/x-lnk")
 				|| contentType.equals("application/x-whatsapp-db")
 				|| contentType.equals("application/x-shareaza-searches-dat")
+				|| contentType.equals("application/x-shareaza-library-dat")
 				|| isSupportedTypeCSV(contentType);
 	}
 	
 	private boolean isSupportedTypeCSV(String contentType) {
-		return contentType.equals("application/x-shareaza-library-dat");
+		return false;//contentType.equals("application/x-shareaza-library-dat");
 	}
 
 	@Override

@@ -49,7 +49,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer{
 		int idx = App.get().resultsTable.convertRowIndexToModel(row);
 		int col = App.get().resultsTable.convertColumnIndexToModel(column);
 		
-		if(col == 4){
+		if(App.get().resultsModel.getColumnName(col).equalsIgnoreCase(IndexItem.NAME)){
 			try {
 				int docId = App.get().results.docs[idx];
 				Document doc = App.get().searcher.doc(docId);

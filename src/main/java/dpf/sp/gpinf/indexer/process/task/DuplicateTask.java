@@ -12,7 +12,7 @@ import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValue;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso configurado.

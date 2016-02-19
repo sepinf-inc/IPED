@@ -50,6 +50,7 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.NumericUtils;
@@ -72,6 +73,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	Query query;
 	String queryText;
 	ProgressDialog progressDialog;
+	boolean treeQuery;
 
 	public PesquisarIndice(Query query) {
 		this.query = query;
@@ -79,6 +81,11 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	
 	public PesquisarIndice(String query) {
 		this.queryText = query;
+	}
+	
+	public PesquisarIndice(Query query, boolean treeQuery) {
+		this.query = query;
+		this.treeQuery = treeQuery;
 	}
 
 	private Set<String> getQueryStrings(Query query) {
@@ -172,7 +179,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			numFilters++;
 		}
 		
-		if(!App.get().isReport){
+		if(!App.get().isFTKReport){
 			Query treeQuery = App.get().treeListener.treeQuery;
 			if(App.get().recursiveTreeList.isSelected())
 				treeQuery = App.get().treeListener.recursiveTreeQuery;
@@ -197,10 +204,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 	public static Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
 
-		if (texto.trim().isEmpty() || texto.equals(App.SEARCH_TOOL_TIP)) {
+		if (texto.trim().isEmpty() || texto.equals(App.SEARCH_TOOL_TIP))
 			return new MatchAllDocsQuery();
-
-		} else {
+		
+		else{
 			String[] fields = { IndexItem.NAME, IndexItem.CONTENT };
   
 			  StandardQueryParser parser = new StandardQueryParser(analyzer);
@@ -386,7 +393,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						App.get().resultsTable.getColumnModel().getColumn(App.get().resultsTable.convertColumnIndexToView(6)).setHeaderValue("Tamanho (...)");
+						App.get().resultsModel.updateLengthHeader(-1);
 						App.get().resultsTable.getTableHeader().repaint();
 					}
 				});
@@ -411,8 +418,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						App.get().resultsTable.getColumnModel().getColumn(App.get().resultsTable.convertColumnIndexToView(6)).setHeaderValue(
-								"Tamanho (" + NumberFormat.getNumberInstance().format(volume) + "MB)");
+						App.get().resultsModel.updateLengthHeader(volume);
 						App.get().resultsTable.getTableHeader().repaint();
 					}
 				});
@@ -458,6 +464,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			query = getQueryWithFilter(queryText);
 			App.get().query = query;
 		}
+		
+		if(!treeQuery)
+			query = getNonTreeQuery();
 
 		int maxResults = 1000000;
 		SearchResult searchResult = new SearchResult(0);
@@ -474,6 +483,13 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		} while (scoreDocs.length == maxResults);
 
 		return searchResult;
+	}
+	
+	private Query getNonTreeQuery(){
+		BooleanQuery result = new BooleanQuery();
+		result.add(query, Occur.MUST);
+		result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT);
+		return result;
 	}
 
 	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {

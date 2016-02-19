@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.search.ColumnsManager;
 import dpf.sp.gpinf.indexer.search.ResultTableModel;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -47,7 +48,7 @@ public class PropertiesSorter {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(PropertiesSorter.class); 
 
-	String[] fields = ResultTableModel.fields;
+	String[] fields = ColumnsManager.defaultFields;
 
 	private File output;
 	private int numThreads;

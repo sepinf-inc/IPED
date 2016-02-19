@@ -166,8 +166,8 @@ public class Manager {
 		
 		salvarDocIdToIdMap();
 
-		PropertiesSorter sorter = new PropertiesSorter(output, Configuration.numThreads);
-		sorter.sort();
+		//PropertiesSorter sorter = new PropertiesSorter(output, Configuration.numThreads);
+		//sorter.sort();
 
 		saveViewToOriginalFileMap();
 
@@ -302,6 +302,10 @@ public class Manager {
 
 	private void finalizarIndexacao() throws Exception {
 
+		for (int k = 0; k < workers.length; k++) {
+			workers[k].finish();
+		}
+		
 		if (Configuration.forceMerge) {
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Otimizando Índice...");
 			LOGGER.info("Otimizando Índice...");
@@ -328,10 +332,6 @@ public class Manager {
 			}
 		}
 		
-		for (int k = 0; k < workers.length; k++) {
-			workers[k].finish();
-		}
-		
 		try {
 			IOUtil.deletarDiretorio(Configuration.indexerTemp);
 		} catch (IOException e) {
@@ -340,6 +340,9 @@ public class Manager {
 
 		if (caseData.containsReport())
 			new File(output, "data/containsReport.flag").createNewFile();
+		
+		if (FTK3ReportReader.wasExecuted)
+			new File(output, "data/containsFTKReport.flag").createNewFile();
 
 	}
 

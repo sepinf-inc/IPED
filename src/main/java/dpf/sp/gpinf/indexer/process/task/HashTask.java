@@ -18,15 +18,19 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Properties;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,8 +44,14 @@ import gpinf.dev.data.EvidenceFile;
 public class HashTask extends AbstractTask{
 
 	private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
-	private MessageDigest digest;
-	private String algorithm;	
+	
+	public static String EDONKEY = "edonkey";
+	public static String MD5 = "md5";
+	public static String SHA1 = "sha-1";
+	public static String SHA256 = "sha-256";
+	public static String SHA512 = "sha-512";
+	
+	private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 	
 	public HashTask(Worker worker){
 		super(worker);
@@ -53,8 +63,16 @@ public class HashTask extends AbstractTask{
 		if (value != null)
 			value = value.trim();
 		if (value != null && !value.isEmpty()){
-			this.algorithm = value.toUpperCase();
-			this.digest = MessageDigest.getInstance(algorithm);
+			for(String algorithm : value.split(";")){
+				algorithm = algorithm.trim();
+				MessageDigest digest = null;
+				if(!algorithm.equalsIgnoreCase(EDONKEY))
+					digest = MessageDigest.getInstance(algorithm.toUpperCase());
+				else
+					digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider());
+				digestMap.put(algorithm, digest);
+			}
+			
 		}
 		
 	}
@@ -65,58 +83,32 @@ public class HashTask extends AbstractTask{
 		
 	}
 
-	public static class HashValue implements Comparable<HashValue>, Serializable{
-
-		byte[] bytes;
-
-		/*public HashValue(){
-		    
-		}*/
-		
-		public HashValue(String hash) {
-			bytes = DatatypeConverter.parseHexBinary(hash);
-		}
-		
-		public String toString(){
-			return DatatypeConverter.printHexBinary(bytes);
-		}
-
-		@Override
-		public int compareTo(HashValue hash) {
-			for (int i = 0; i < bytes.length; i++) {
-				if ((bytes[i] & 0xFF) < (hash.bytes[i] & 0xFF))
-					return -1;
-				else if ((bytes[i] & 0xFF) > (hash.bytes[i] & 0xFF))
-					return 1;
-			}
-			return 0;
-		}
-
-		@Override
-		public boolean equals(Object hash) {
-			return compareTo((HashValue) hash) == 0;
-		}
-
-		@Override
-		public int hashCode() {
-			return bytes[3] & 0xFF | (bytes[2] & 0xFF) << 8 | (bytes[1] & 0xFF) << 16 | (bytes[0] & 0xFF) << 24;
-		}
-		
-	}
-
 	public void process(EvidenceFile evidence) {
-
-		if (digest != null && evidence.getHash() == null && !evidence.isQueueEnd()) {
+		
+		if(evidence.isQueueEnd())
+			return;
+		
+		boolean defaultHash = true;
+		for(String algo : digestMap.keySet()){
+			
+			if(evidence.getExtraAttribute(algo) != null)
+				continue;
 			
 			InputStream in = null;
 			try {
 				in = evidence.getBufferedStream();
-				byte[] hash = compute(in);
-				evidence.setHash(getHashString(hash));
+				byte[] hash;
+				if(!algo.equals(EDONKEY))
+					hash = compute(digestMap.get(algo), in);
+				else
+					hash = computeEd2k(in);
 				
-				// save(hash, IOUtil.getRelativePath(output,
-				// evidence.getFile()));
-				// save(hash, evidence.getPath());
+				String hashString = getHashString(hash);
+				
+				evidence.setExtraAttribute(algo, hashString);
+				
+				if(defaultHash)
+					evidence.setHash(hashString);
 
 			} catch (Exception e) {
 				LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
@@ -125,14 +117,13 @@ public class HashTask extends AbstractTask{
 			} finally {
 				IOUtil.closeQuietly(in);
 			}
+			
+			defaultHash = false;
 		}
-		
 
 	}
 	
-	
-
-	public byte[] compute(InputStream in) throws IOException {
+	public byte[] compute(MessageDigest digest, InputStream in) throws IOException {
 		byte[] buf = new byte[1024 * 1024];
 		int len;
 		while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted())
@@ -141,6 +132,37 @@ public class HashTask extends AbstractTask{
 		byte[] hash = digest.digest();
 		return hash;
 	}
+	
+	private byte[] computeEd2k(InputStream in) throws IOException{
+		MessageDigest md4 = digestMap.get(EDONKEY);
+		int CHUNK_SIZE = 9500 * 1024;
+	    byte[] buffer = new byte[8192];
+	    ByteArrayOutputStream out = new ByteArrayOutputStream();
+	    int len = 0, chunk = 0, total = 0;
+	    while ((len = in.read(buffer)) != -1) {
+	        if (chunk + len >= CHUNK_SIZE) {
+	            int offset = CHUNK_SIZE - chunk;
+	            md4.update(buffer, 0, offset);
+	            out.write(md4.digest());
+	            chunk = len - offset;
+	            md4.update(buffer, offset, chunk);
+	        } else {
+	            md4.update(buffer, 0, len);
+	            chunk += len;
+	        }
+	        total += len;
+	    }
+	    if(total == 0 || total % CHUNK_SIZE != 0)
+	    	out.write(md4.digest());
+
+	    if (out.size() > md4.getDigestLength()) {
+	        md4.update(out.toByteArray());
+	        out.reset();
+	        out.write(md4.digest());
+	    }
+	    
+	    return out.toByteArray();
+	}
 
 	public static String getHashString(byte[] hash) {
 		StringBuilder result = new StringBuilder();
@@ -148,6 +170,17 @@ public class HashTask extends AbstractTask{
 			result.append(String.format("%1$02X", b));
 
 		return result.toString();
+	}
+	
+	@Deprecated
+	public static class HashValue extends dpf.sp.gpinf.indexer.util.HashValue{
+
+		private static final long serialVersionUID = 1L;
+		
+		public HashValue(String hash) {
+			super(hash);
+		}
+		
 	}
 
 }

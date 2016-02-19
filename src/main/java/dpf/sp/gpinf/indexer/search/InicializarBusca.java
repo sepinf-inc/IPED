@@ -69,6 +69,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 			ParsingReader.setTextSplitSize(Long.MAX_VALUE);
 			
 			inicializar(App.get().codePath + "/../index");
+			
+			App.get().resultsModel.initCols();
+			App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
 			OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
 			OCRParser.EXECTESS = false;
@@ -101,11 +104,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	@Override
 	public void done() {
 		App.get().marcadores.loadState();
-		App.get().marcadores.atualizarGUI();		
+		App.get().marcadores.atualizarGUI();
 		App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
 		App.get().resultsTable.getTableHeader().repaint();
 		
-		if(!App.get().isReport){
+		if(!App.get().isFTKReport){
 			App.get().tree.setModel(new TreeViewModel());
 			App.get().tree.setLargeModel(true);
 			App.get().tree.setCellRenderer(new TreeCellRenderer());

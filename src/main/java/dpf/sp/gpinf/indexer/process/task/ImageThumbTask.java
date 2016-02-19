@@ -26,7 +26,9 @@ public class ImageThumbTask extends AbstractTask{
 	}
 
 	private static String thumbsFolder = "thumbs";
-    private static String hasThumbProp = "hasThumb";
+	
+    public static String HAS_THUMB = "hasThumb";
+    
     private static int thumbSize = 112;
     
     private boolean taskEnabled = false;
@@ -54,7 +56,7 @@ public class ImageThumbTask extends AbstractTask{
 
         //Já está pasta? Então não é necessário gerar.
         if (thumbFile.exists()){
-            evidence.setExtraAttribute(hasThumbProp, true);
+            evidence.setExtraAttribute(HAS_THUMB, true);
             return;
         }
         
@@ -107,10 +109,10 @@ public class ImageThumbTask extends AbstractTask{
                 }
                 img = ImageUtil.getCenteredImage(img, thumbSize, thumbSize);
                 ImageIO.write(img, "jpeg", thumbFile);
-                evidence.setExtraAttribute(hasThumbProp, true);
+                evidence.setExtraAttribute(HAS_THUMB, true);
                 
             }else
-                evidence.setExtraAttribute(hasThumbProp, false);
+                evidence.setExtraAttribute(HAS_THUMB, false);
                 
         } catch (Exception e) {
             e.printStackTrace();

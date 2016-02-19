@@ -144,9 +144,9 @@ public class CompositeViewerHelper {
 						IApplicationAssistant ass = new ApplicationAssistant(App.get().codePath + "/../lib/nativeview");
 						ILazyApplicationInfo[] ila = ass.getLocalApplications();
 						if (ila.length != 0) {
-							LOGGER.info("Detected LOG {} {}", ila[0].getMajorVersion(), ila[0].getHome());
-							if(ila[0].getMajorVersion() != 4)
-								LOGGER.info("Install LibreOffice4 to enable the Libreoffice viewer!");
+							LOGGER.info("Detected LibreOffice {} {}", ila[0].getMajorVersion(), ila[0].getHome());
+							if(ila[0].getMajorVersion() != 4 && ila[0].getMajorVersion() != 5)
+								LOGGER.info("Install LibreOffice 4/5 to enable the Libreoffice viewer!");
 							else
 								systemLO = ila[0].getHome();
 						}

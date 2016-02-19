@@ -29,7 +29,7 @@ public class MenuClass extends JPopupMenu {
 
 	JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
 			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-			gerenciarFiltros;
+			gerenciarFiltros, gerenciarColunas;
 
 	// JCheckBoxMenuItem changeViewerTab;
 
@@ -74,6 +74,9 @@ public class MenuClass extends JPopupMenu {
 		gerenciarFiltros.addActionListener(menuListener);
 		this.add(gerenciarFiltros);
 		
+		gerenciarColunas = new JMenuItem("Gerenciar Colunas Visíveis");
+		gerenciarColunas.addActionListener(menuListener);
+		this.add(gerenciarColunas);
 		
 		this.addSeparator();
 
@@ -123,7 +126,7 @@ public class MenuClass extends JPopupMenu {
 		aumentarGaleria.addActionListener(menuListener);
 		this.add(aumentarGaleria);
 		
-		if(!App.get().isReport){
+		if(!App.get().isFTKReport){
 			navigateToParent = new JMenuItem("Navegar para item pai na árvore");
 			navigateToParent.addActionListener(menuListener);
 			this.add(navigateToParent);

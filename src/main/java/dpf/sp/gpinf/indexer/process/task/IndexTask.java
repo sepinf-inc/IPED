@@ -72,12 +72,23 @@ public class IndexTask extends AbstractTask{
 	
 	public void process(EvidenceFile evidence) throws IOException{
 		
-		if(!evidence.isToAddToCase() || evidence.isQueueEnd())
+		if(evidence.isQueueEnd())
 			return;
+		
+		String textCache = evidence.getParsedTextCache();
+		
+		if(!evidence.isToAddToCase()){
+			if(evidence.isDir() || evidence.isRoot() || evidence.hasChildren()){
+				textCache = "";
+				evidence.setSleuthId(null);
+            	evidence.setExportedFile(null);
+            	evidence.setExtraAttribute(IndexItem.TREENODE, "true");
+			}else
+				return;
+		}
 			
 		stats.updateLastId(evidence.getId());
 		
-		String textCache = evidence.getParsedTextCache();
 		if (textCache != null) {
 			Document doc;
 			if (indexFileContents)

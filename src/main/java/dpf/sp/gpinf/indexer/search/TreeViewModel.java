@@ -37,21 +37,7 @@ public class TreeViewModel implements TreeModel{
 	private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
 	private Node root;
 	private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
-	private TreeNameComparator comparator = new TreeNameComparator(4);
-	
-	class TreeNameComparator extends RowComparator{
-		
-		private App app = App.get();
-		
-		public TreeNameComparator(int col) {
-			super(col);
-		}
-		
-		@Override
-		final public int compare(Integer a, Integer b) {
-			return super.compare(app.ids[a], app.ids[b]);
-		}
-	}
+	private RowComparator comparator = new RowComparator(4);
 	
 	public class Node{
 		private Document doc;
@@ -102,7 +88,7 @@ public class TreeViewModel implements TreeModel{
 			textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
 
 			try {
-				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
 				children = task.pesquisar();
 				Integer[] array = ArrayUtils.toObject(children.docs);
 				Arrays.sort(array, comparator);
@@ -123,7 +109,7 @@ public class TreeViewModel implements TreeModel{
 		root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
 		PesquisarIndice pesquisa;
 		try {
-			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"));
+			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
 			root.children = pesquisa.pesquisar();
 			Integer[] array = ArrayUtils.toObject(root.children.docs);
 			Arrays.sort(array, comparator);

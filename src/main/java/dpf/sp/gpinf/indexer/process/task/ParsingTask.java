@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.tika.Tika;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -41,6 +42,7 @@ import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -49,6 +51,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -75,15 +78,17 @@ import gpinf.dev.data.EvidenceFile;
 public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtractor {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
+	
 	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
 	public static boolean expandContainers = false;
+	
+	public static String ENCRYPTED = "encrypted";
 	
 	// Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
 	private static int NAME_MAX_LEN = 256;
 
 	public static int subitensDiscovered = 0;
 	private static HashSet<String> categoriesToExpand = new HashSet<String>();
-	private static HashSet<String> categoriesToTestEncryption = getCategoriesToTestEncryption();
 
 	private Detector detector;
 	
@@ -136,42 +141,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		setContext(context);
 	}
 	
-	private Metadata getMetadata(EvidenceFile evidence) {
-		Metadata metadata = new Metadata();
+	private void fillMetadata(EvidenceFile evidence) {
+		Metadata metadata = evidence.getMetadata();
 		Long len = evidence.getLength();
 		if(len == null)
 			len = 0L;
 		metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 		metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+		metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
 		if (evidence.isTimedOut())
 			metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-		
-		return metadata;
-	}
-	
-	//TODO: Externalizar para arquivo de configuração
-	private static HashSet<String> getCategoriesToTestEncryption(){
-		HashSet<String> set = new HashSet<String>();
-		set.add("Arquivos Compactados");
-		set.add("Documentos PDF");
-		set.add("Documentos de Texto");
-		set.add("Planilhas");
-		set.add("Apresentações");
-		set.add("Outros Documentos");
-		return set;
-	}
-	
-	private boolean isToTestEncryption(HashSet<String> categories) {
-		
-		boolean result = false;
-		for (String category : categories) {
-			if (categoriesToTestEncryption.contains(category)) {
-				result = true;
-				break;
-			}
-		}
-		return result;
 	}
 
 	public static void load(File file) throws FileNotFoundException, IOException {
@@ -200,11 +180,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		}
 		return result;
 	}
-
-	public static boolean isToBeExpanded(EvidenceFile evidence) {
-		return isToBeExpanded(evidence.getCategorySet());
-	}
-
+	
 	private static synchronized void incSubitensDiscovered() {
 		subitensDiscovered++;
 	}
@@ -214,17 +190,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
-		if (!evidence.isTimedOut() && (isToBeExpanded(evidence)
-			|| isToTestEncryption(evidence.getCategorySet())
-			|| checkScanned(evidence.getMediaType())
-			|| (CarveTask.ignoreCorrupted && evidence.isCarved() && (ExportFileTask.hasCategoryToExtract() || !IndexTask.indexFileContents) ))){
+		
+		fillMetadata(evidence);
+		
+		if (!evidence.isTimedOut() && hasParser(evidence)){
 		    new ParsingTask(worker).safeProcess(evidence);
 		}
 		
 	}
 	
-	private boolean checkScanned(MediaType mediaType){
-	    return OCRParser.getSupportedTypes().contains(mediaType);
+	private boolean hasParser(EvidenceFile evidence){
+		Parser parser = worker.autoParser.getBestParser(evidence.getMetadata());
+		if(parser instanceof RawStringParser || parser instanceof TXTParser)
+			return false;
+		else
+			return true;
 	}
 	
 	
@@ -242,7 +222,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		}
 		
 		configureTikaContext(evidence);
-		Metadata metadata = getMetadata(evidence);
+		Metadata metadata = evidence.getMetadata();
 		
 		reader = new ParsingReader(worker.autoParser, tis, metadata, context);
 		reader.startBackgroundParsing();
@@ -266,15 +246,25 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			if(extractEmbedded)
 				evidence.setParsed(true);
 			
-			if(metadata.get("EncryptedDocument") != null)
-				evidence.setExtraAttribute("encrypted", "true");
+			//Ajusta metadados:
+			if(metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null)
+				evidence.setExtraAttribute(ENCRYPTED, "true");
+			metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 			
-			String value = metadata.get("OCRCharCount");
-			if(value != null && evidence.getMediaType().getType().equals("image")){
-			    int charCount = Integer.parseInt(value.replace("OCRCharCount", ""));
-			    evidence.setExtraAttribute("OCRCharCount", charCount);
-			    if(charCount >= 100)
-			        evidence.addCategory(SetCategoryTask.SCANNED_CATEGORY);
+			String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
+			if(value != null){
+			    int charCount = Integer.parseInt(value);
+			    evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
+			    metadata.remove(OCRParser.OCR_CHAR_COUNT);
+			    if(charCount >= 100  && evidence.getMediaType().getType().equals("image"))
+			        evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
+			}
+			
+			if(evidence.getMediaType().toString().equals("application/vnd.ms-outlook")){
+				String subject = metadata.get(TikaCoreProperties.TITLE);
+				if(subject == null || subject.isEmpty())
+					subject = "[Sem Assunto]";
+				metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 			}
 			    
 
@@ -295,7 +285,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		hasTitle = false;
 		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
 		if (name == null || name.isEmpty()) {
-			name = metadata.get(TikaCoreProperties.TITLE);
+			name = metadata.get(ExtraProperties.MESSAGE_SUBJECT);
+			if (name == null || name.isEmpty())
+				name = metadata.get(TikaCoreProperties.TITLE);
 			if(name != null)
 				hasTitle = true;
 		}
@@ -363,6 +355,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 				}
 				return;
 			}
+			
+			subItem.setMetadata(metadata);
 			
 			String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
 			if(contentTypeStr != null)
