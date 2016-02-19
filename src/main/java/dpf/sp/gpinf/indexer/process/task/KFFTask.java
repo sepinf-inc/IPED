@@ -21,9 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
 
 /**
  * Tarefa de KFF com implementação simples utilizando base local, sem servidor de banco de dados.
@@ -191,7 +190,7 @@ public class KFFTask extends AbstractTask{
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
          
-    	HashValue hash = evidence.getHashValue();
+    	HashValue hash = new HashValue(evidence.getHash());
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
         	Integer attr = map.get(hash);
             if(attr != null){
