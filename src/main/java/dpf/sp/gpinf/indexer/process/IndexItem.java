@@ -284,11 +284,11 @@ public class IndexItem {
 				
 			}else if(eValue instanceof Integer){
 				doc.add(new IntField(entry.getKey(), (Integer)eValue, Field.Store.YES));
-				doc.add(new SortedNumericDocValuesField(entry.getKey(), (Integer)eValue));
+				doc.add(new NumericDocValuesField(entry.getKey(), (Integer)eValue));
 				
 			}else if(eValue instanceof Long){
 				doc.add(new LongField(entry.getKey(), (Long)eValue, Field.Store.YES));
-				doc.add(new SortedNumericDocValuesField(entry.getKey(), (Long)eValue));
+				doc.add(new NumericDocValuesField(entry.getKey(), (Long)eValue));
 				
 			}else if(eValue instanceof Float){
 				doc.add(new FloatField(entry.getKey(), (Float)eValue, Field.Store.YES));
