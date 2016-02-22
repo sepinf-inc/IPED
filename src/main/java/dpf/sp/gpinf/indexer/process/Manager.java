@@ -166,9 +166,6 @@ public class Manager {
 		
 		salvarDocIdToIdMap();
 
-		//PropertiesSorter sorter = new PropertiesSorter(output, Configuration.numThreads);
-		//sorter.sort();
-
 		saveViewToOriginalFileMap();
 
 		filtrarPalavrasChave();
