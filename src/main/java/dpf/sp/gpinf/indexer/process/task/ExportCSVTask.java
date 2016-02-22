@@ -68,8 +68,7 @@ public class ExportCSVTask extends AbstractTask{
 	@Override
 	protected  void process(EvidenceFile evidence) throws IOException {
 	    
-	    if (!exportFileProps || (caseData.isIpedReport() && 
-	    		evidence.getExtraAttribute(IndexItem.TREENODE) != null))
+	    if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase()))
 	        return;
 		
 		String value = evidence.getName();

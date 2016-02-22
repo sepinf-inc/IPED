@@ -235,8 +235,10 @@ public class IPEDReader extends DataSourceReader{
 				}
 			}
 			
-			if(treeNode)
+			if(treeNode){
 				evidence.setExtraAttribute(IndexItem.TREENODE, "true");
+				evidence.setAddToCase(false);
+			}
 
 			value = doc.get(IndexItem.CONTENTTYPE);
 			if (value != null)
