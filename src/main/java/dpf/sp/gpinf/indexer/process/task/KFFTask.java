@@ -190,7 +190,9 @@ public class KFFTask extends AbstractTask{
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
          
-    	HashValue hash = new HashValue(evidence.getHash());
+    	HashValue hash = null;
+    	if(evidence.getHash() != null && !evidence.getHash().isEmpty())
+    		hash = new HashValue(evidence.getHash());
         if(map != null && hash != null && !evidence.isDir() && !evidence.isRoot()){
         	Integer attr = map.get(hash);
             if(attr != null){
