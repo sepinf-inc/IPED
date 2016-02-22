@@ -26,6 +26,12 @@ hash = md5;
 # Necessário utilizar hash md5 ou sha-1.
 #ledWkffPath = E:/LED/V1.17.00/pedo/wkff
 
+# Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
+# Caso configurado, cria um atributo "die" para cada imagem com uma pontuação de 0 a 1000 (para ordenação e/ou filtro).
+# Quanto maior esse valor, maior a probabilidade de conter nudez/pornografia infantil.
+# Necessário apontar para arquivo de dados presente no LED versão 1.20 ou superior.
+#ledDie = E:/LED/V1.20.00/pedo/die/rfdie.dat
+
 # Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
 
