@@ -96,7 +96,7 @@ public class ExportFileTree extends CancelableWorker {
     			String parentIdStr = doc.get(IndexItem.PARENTID);
     			int parentId = Integer.parseInt(parentIdStr);
                 String textQuery = IndexItem.ID + ":" + parentId;
-                PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+                PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
                 SearchResult parent = task.pesquisar();
                 if(parent.length == 0)
                 	return null;
