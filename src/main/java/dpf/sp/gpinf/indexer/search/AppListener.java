@@ -41,7 +41,9 @@ public class AppListener implements ActionListener, MouseListener {
 		
 		App.get().textViewer.textTable.scrollRectToVisible(new Rectangle());
 		App.get().hitsTable.scrollRectToVisible(new Rectangle());
-		App.get().resultsTable.scrollRectToVisible(new Rectangle());
+		Rectangle a = App.get().resultsTable.getVisibleRect();
+        a.setBounds(a.x, 0, a.width, a.height);
+        App.get().resultsTable.scrollRectToVisible(a);
 		App.get().gallery.scrollRectToVisible(new Rectangle());
 
 		App.get().results = new SearchResult(0);
