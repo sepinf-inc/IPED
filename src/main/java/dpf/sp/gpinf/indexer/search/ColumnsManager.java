@@ -90,7 +90,8 @@ public class ColumnsManager implements ActionListener{
 	        ImageThumbTask.HAS_THUMB,
 	        OCRParser.OCR_CHAR_COUNT,
 	        IndexerDefaultParser.PARSER_EXCEPTION,
-	        DIETask.DIE_SCORE
+	        DIETask.DIE_SCORE,
+	        DIETask.DIE_CLASS
 	    };
 	
 	private String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};

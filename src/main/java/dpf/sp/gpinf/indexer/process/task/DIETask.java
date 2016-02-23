@@ -50,8 +50,11 @@ public class DIETask extends AbstractTask {
     /** Nome da tarefa. */
     private static final String taskName = "Detecção de Imagens Explícitas (DIE)";
 
-    /** Nome do atributo incluído com o resultado da detecção. */
-    public static String DIE_SCORE = "die";
+    /** Nome do atributo incluído com o resultado (score de 1 a 1000) da detecção. */
+    public static String DIE_SCORE = "scoreNudez";
+
+    /** Nome do atributo incluído com a classificação (de 1 a 5) do resultado da detecção. */
+    public static String DIE_CLASS = "classeNudez";
 
     /** Indica se a tarefa está habilitada ou não. */
     private static boolean taskEnabled = false;
@@ -150,7 +153,12 @@ public class DIETask extends AbstractTask {
             if (features != null) {
                 double p = predictor.predict(features);
                 int score = (int) Math.round(p * 1000);
+                if (score < 1) score = 1;
                 evidence.setExtraAttribute(DIE_SCORE, score);
+                int classe = score / 200 + 1;
+                if (classe > 5) classe = 5;
+                else if (classe < 1) classe = 1;
+                evidence.setExtraAttribute(DIE_CLASS, classe);
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();
