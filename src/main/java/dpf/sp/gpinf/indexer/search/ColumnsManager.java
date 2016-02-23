@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
@@ -88,7 +89,9 @@ public class ColumnsManager implements ActionListener{
 	        ParsingTask.ENCRYPTED,
 	        ImageThumbTask.HAS_THUMB,
 	        OCRParser.OCR_CHAR_COUNT,
-	        IndexerDefaultParser.PARSER_EXCEPTION
+	        IndexerDefaultParser.PARSER_EXCEPTION,
+	        DIETask.DIE_SCORE,
+	        DIETask.DIE_CLASS
 	    };
 	
 	private String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};

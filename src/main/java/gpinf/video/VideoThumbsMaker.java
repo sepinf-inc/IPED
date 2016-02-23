@@ -86,6 +86,7 @@ public class VideoThumbsMaker {
 
         boolean fixed = false;
         File lnk = null;
+        String videoStream = null;
         for (int step = 0; step <= 1; step++) {
             ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
             if (firstCall) {
@@ -119,6 +120,9 @@ public class VideoThumbsMaker {
 
                 Dimension dimension = getDimension(info);
                 result.setDimension(dimension);
+
+                String s = getVideoStream(info);
+                if (s != null) videoStream = s;
 
                 if (result.getVideoDuration() > 0 && result.getDimension() != null) break;
             }
@@ -172,10 +176,15 @@ public class VideoThumbsMaker {
         }
         if (scaled) cmds.addAll(Arrays.asList(new String[] {"-sws","0","-vf",scale}));
 
+        if (videoStream != null) {
+            cmds.add("-vid");
+            cmds.add(videoStream);
+        }
+
         String ssVal = String.valueOf(result.getVideoDuration() < 5000 ? 0 : Math.max(frequency / 2, 1));
         cmds.addAll(Arrays.asList(new String[] {"-vo","jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape,"-ao","null","-ss",ssVal,"-sstep",String.valueOf(frequency),"-frames",String.valueOf(maxThumbs + 1),in.getPath()}));
 
-        for (int step = 0; step <= 1; step++) {
+        for (int step = 0; step <= 2; step++) {
             ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
             files = subTmp.listFiles(new FileFilter() {
                 public boolean accept(File pathname) {
@@ -227,6 +236,15 @@ public class VideoThumbsMaker {
                 if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) break;
             }
             if (step == 0) {
+                int pos = cmds.indexOf("-vid");
+                if (pos < 0) step++;
+                else {
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
+                    continue;
+                }
+            }
+            if (step == 1) {
                 int pos = cmds.indexOf("-sstep");
                 cmds.remove(pos + 1);
                 cmds.remove(pos);
@@ -383,6 +401,18 @@ public class VideoThumbsMaker {
         String s = info.substring(p1 + s1.length(), p2);
         if (s.isEmpty() || !Character.isDigit(s.charAt(0))) return -1;
         return (long) (1000 * Double.parseDouble(s));
+    }
+
+    private String getVideoStream(String info) throws Exception {
+        String s1 = "Video stream found, -vid ";
+        int p1 = info.indexOf(s1);
+        if (p1 < 0) return null;
+        int p2 = info.indexOf('\n', p1);
+        if (p2 < 0) return null;
+        String s = info.substring(p1 + s1.length(), p2);
+        if (s.length() != 1) return null;
+        if (!Character.isDigit(s.charAt(0))) return null;
+        return s;
     }
 
     private Dimension getDimension(String info) throws Exception {

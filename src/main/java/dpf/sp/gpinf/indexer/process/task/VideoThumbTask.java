@@ -24,13 +24,10 @@ import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 
 import java.io.File;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -246,11 +243,12 @@ public class VideoThumbTask extends AbstractTask {
      */
     public void finish() throws Exception {
         synchronized (finished) {
-            if (!finished.get()) {
+            if (taskEnabled && !finished.get()) {
                 finished.set(true);
                 Log.info(taskName, "Total de Vídeos Processados: " + totalProcessed);
                 Log.info(taskName, "Total de Vídeos Não Processados (MPlayer não conseguiu extrair cenas): " + totalFailed);
-                Log.info(taskName, "Tempo Total do Processamento de Vídeos (em segundos): " + ((totalTime.longValue() + 500) / 1000));
+                Log.info(taskName, "Tempo Total da Tarefa (em segundos): " + (totalTime.longValue() / (1000 * Configuration.numThreads)));
+                Log.info(taskName, "Tempo de Processamento Médio por Vídeo (em milisegundos): " + (totalTime.longValue() / (totalProcessed.longValue() + totalFailed.longValue())));
             }
         }
     }
@@ -295,14 +293,13 @@ public class VideoThumbTask extends AbstractTask {
             long t = System.currentTimeMillis();
             VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
             t = System.currentTimeMillis() - t;
-            if (r.isSuccess()) {
-                if(mainTmpFile.renameTo(mainOutFile))
-                	evidence.setExtraAttribute(HAS_THUMB, "true");
+            if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
+                evidence.setExtraAttribute(HAS_THUMB, "true");
+                totalProcessed.incrementAndGet();
             } else {
             	evidence.setExtraAttribute(HAS_THUMB, "false");
                 totalFailed.incrementAndGet();
             }
-            totalProcessed.incrementAndGet();
             totalTime.addAndGet(t);
             
         } catch (Exception e) {
