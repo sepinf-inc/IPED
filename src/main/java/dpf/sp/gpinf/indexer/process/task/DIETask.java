@@ -129,7 +129,9 @@ public class DIETask extends AbstractTask {
                 Log.info(taskName, "Total de Imagens Processadas: " + totalProcessed);
                 Log.info(taskName, "Total de Imagens Não Processadas: " + totalFailed);
                 Log.info(taskName, "Tempo Total de Processamento (em segundos): " + (totalTime.longValue() / (1000 * Configuration.numThreads)));
-                Log.info(taskName, "Tempo de Processamento Médio por Imagem (em milisegundos): " + (totalTime.longValue() / (totalProcessed.longValue() + totalFailed.longValue())));
+                long total = totalProcessed.longValue() + totalFailed.longValue();
+                if(total != 0)
+                	Log.info(taskName, "Tempo de Processamento Médio por Imagem (em milisegundos): " + (totalTime.longValue() / total));
                 finished.set(true);
             }
         }
