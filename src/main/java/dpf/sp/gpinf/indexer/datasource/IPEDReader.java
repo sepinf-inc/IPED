@@ -32,6 +32,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
@@ -116,10 +117,10 @@ public class IPEDReader extends DataSourceReader{
     		for (int docID : result.docs) {
     			String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
     			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-    				query.add(new TermQuery(new Term(IndexItem.PARENTID, Integer.toString(App.get().ids[docID]))), Occur.SHOULD);
+    				query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.SHOULD);
     		}
     		for (int docID : result.docs)
-    			query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
+    			query.add(NumericRangeQuery.newIntRange(IndexItem.ID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.MUST_NOT);
     		
     		PesquisarIndice searchPSTAttachs = new PesquisarIndice(query);
     		SearchResult attachs = searchPSTAttachs.pesquisar();
@@ -131,10 +132,11 @@ public class IPEDReader extends DataSourceReader{
         for (int docID : result.docs) {
             String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
             for(String parentId : parentIds.split(" "))
-                query.add(new TermQuery(new Term(IndexItem.ID, parentId)), Occur.SHOULD);
+                query.add(NumericRangeQuery.newIntRange(IndexItem.ID, Integer.parseInt(parentId), Integer.parseInt(parentId), true, true), Occur.SHOULD);
+            
         }
         for (int docID : result.docs)
-            query.add(new TermQuery(new Term(IndexItem.ID, Integer.toString(App.get().ids[docID]))), Occur.MUST_NOT);
+            query.add(NumericRangeQuery.newIntRange(IndexItem.ID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.MUST_NOT);
         
         PesquisarIndice searchParents = new PesquisarIndice(query, true);
         result = searchParents.pesquisar();

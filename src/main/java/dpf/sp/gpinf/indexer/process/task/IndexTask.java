@@ -21,6 +21,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -314,7 +315,8 @@ public class IndexTask extends AbstractTask{
             for (int docID : result.docs) {
                 String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
                 for(String parentId : parentIds.split(" "))
-                    query.add(new TermQuery(new Term(IndexItem.ID, parentId)), Occur.MUST_NOT);
+                    query.add(NumericRangeQuery.newIntRange(IndexItem.ID, Integer.parseInt(parentId), Integer.parseInt(parentId), true, true), Occur.MUST_NOT);
+                
             }
             worker.writer.deleteDocuments(query);
             

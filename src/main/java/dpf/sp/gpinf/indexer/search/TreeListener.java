@@ -37,6 +37,8 @@ import javax.swing.tree.TreePath;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -78,7 +80,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 			recursiveTreeQuery = null;
 			
 		}else{
-			treeQuery = new BooleanQuery();
+			String treeQueryStr = "parentId:(";
 			recursiveTreeQuery = new BooleanQuery();
 			
 			for(TreePath path : selection){
@@ -88,8 +90,16 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 				if (parentId == null)
 					parentId = doc.get(IndexItem.ID);
 				
-				((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
+				treeQueryStr += parentId + " ";
+				//((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
 				((BooleanQuery)recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
+			}
+			
+			treeQueryStr += ")";
+			try {
+				treeQuery = PesquisarIndice.getQuery(treeQueryStr);
+			} catch (ParseException | QueryNodeException e) {
+				e.printStackTrace();
 			}
 		}
 		actionPerformed(null);
