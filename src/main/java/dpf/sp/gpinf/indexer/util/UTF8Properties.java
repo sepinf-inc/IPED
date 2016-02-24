@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 
@@ -32,8 +33,10 @@ public class UTF8Properties extends Properties {
     
     public synchronized void store(File file) throws IOException {
     	OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
-        for(Map.Entry<Object,Object> entry : this.entrySet()){
-        	writer.write(entry.getKey() + " = " + entry.getValue());
+    	Object[] keys = this.keySet().toArray();
+    	Arrays.sort(keys);
+        for(Object key : keys){
+        	writer.write(key + " = " + this.get(key));
         	writer.write("\r\n");
         }
         writer.close();
