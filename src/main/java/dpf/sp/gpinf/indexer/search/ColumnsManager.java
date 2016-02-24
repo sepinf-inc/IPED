@@ -47,6 +47,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -91,29 +92,15 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        IndexItem.SUBITEM,
 	        IndexItem.TIMEOUT,
 	        IndexItem.TREENODE,
-	        KFFTask.KFF_STATUS,
-	        KFFTask.KFF_GROUP,
-	        HashTask.MD5,
-	        HashTask.SHA1,
-	        HashTask.SHA256,
-	        HashTask.SHA512,
-	        HashTask.EDONKEY,
-	        ParsingTask.ENCRYPTED,
-	        ImageThumbTask.HAS_THUMB,
-	        OCRParser.OCR_CHAR_COUNT,
-	        IndexerDefaultParser.PARSER_EXCEPTION,
-	        DIETask.DIE_SCORE,
-	        DIETask.DIE_CLASS
+	        IndexerDefaultParser.PARSER_EXCEPTION
 	    };
 	
 	private static String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
 	
 	String[] indexFields = null;
 	
-	private Object[][] colGroups = {
-			{"Básicas", "Avançadas", "Email", "Outras"},
-			{defaultFields, extraFields, email, indexFields}
-	};
+	private String[] groupNames = {"Básicas", "Avançadas", "Email", "Outras"};
+	private String[][] fieldGroups;
 	
 	ColumnState colState = new ColumnState();
     	
@@ -175,7 +162,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 		listPanel.setBackground(Color.WHITE);
 		
-		combo = new JComboBox<Object>(colGroups[0]);
+		combo = new JComboBox<Object>(groupNames);
 		
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
@@ -207,11 +194,23 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    colState.initialWidths = defaultWidths;
 		}
 		
-		indexFields = LoadIndexFields.addExtraFields(App.get().reader, new String[0]);
-		colGroups[1][colGroups[1].length - 1] = indexFields;
+		try {
+			ArrayList<String> extraAttrs = new ArrayList<String>();
+			HashSet<String> extraAttr = (HashSet<String>)Util.readObject(App.get().codePath + "/../data/" + IndexTask.extraAttrFilename);
+			extraAttrs.addAll(Arrays.asList(extraFields));
+			extraAttrs.addAll(extraAttr);
+			extraFields = extraAttrs.toArray(new String[0]);
+			
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
 		
-		for(Object fields : colGroups[1])
-			Arrays.sort((String[])fields, Collator.getInstance());
+		indexFields = LoadIndexFields.addExtraFields(App.get().reader, new String[0]);
+		
+		fieldGroups = new String[][] {defaultFields, extraFields, email, indexFields};
+		
+		for(String[] fields : fieldGroups)
+			Arrays.sort(fields, Collator.getInstance());
 		
 		updateList();
 		
@@ -222,13 +221,13 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	private void updateList(){
 	    listPanel.removeAll();
-	    String[] fields = (String[])colGroups[1][combo.getSelectedIndex()];
+	    String[] fields = fieldGroups[combo.getSelectedIndex()];
 	    
         for(String f : fields){
         	boolean insertField = true;
-            if(combo.getSelectedIndex() == colGroups[0].length - 1){
-            	for(int i = 0; i <= colGroups[1].length - 2; i++)
-            		if(Arrays.asList((String[])colGroups[1][i]).contains(f)){
+            if(combo.getSelectedIndex() == groupNames.length - 1){
+            	for(int i = 0; i < fieldGroups.length - 1; i++)
+            		if(Arrays.asList(fieldGroups[i]).contains(f)){
             			insertField = false;
             			break;
             		}
