@@ -12,6 +12,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,6 +60,8 @@ import gpinf.util.FormatUtil;
 public class EvidenceFile implements Serializable, StreamSource {
     
 	private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+	
+	private static HashSet<String> extraAttributeSet = new HashSet<String>(); 
 	
 	public static boolean robustImageReading = false;
     
@@ -145,10 +148,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     /** Nome e caminho relativo que o arquivo para visualização. */
     private File viewFile;
 
-    private EvidenceFile emailPai;
-
-    private List<EvidenceFile> attachments = new ArrayList<EvidenceFile>();
-
     private HashSet<String> categories = new HashSet<String>();
 
     private String labels;
@@ -199,15 +198,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     private TikaInputStream tis;
 
     static final int BUF_LEN = 8 * 1024 * 1024;
-
-    /**
-     * Adiciona um anexo. Utilizado apenas em reports do FTK1.
-     * 
-     * @param attachment anexo do item/email atual
-     */
-    public void addAttachment(EvidenceFile attachment) {
-        this.attachments.add(attachment);
-    }
 
     /**
      * Adiciona o item a uma categoria.
@@ -268,13 +258,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * @return lista de anexos do item. Funciona apenas com reports do FTK1
-     */
-    public List<EvidenceFile> getAttachments() {
-        return this.attachments;
-    }
-
-    /**
      * @return um BufferedInputStream com o conteúdo do item
      * @throws IOException
      */
@@ -321,14 +304,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * 
-     * @return o item pai. Funciona apenas com reports do FTK1.
-     */
-    public EvidenceFile getEmailPai() {
-        return emailPai;
-    }
-
-    /**
      * @return nome e caminho relativo ao caso com que o arquivo de evidência em
      *         si foi exportado
      */
@@ -362,6 +337,10 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public Map<String, Object> getExtraAttributeMap() {
         return this.extraAttributes;
+    }
+    
+    public static HashSet<String> getAllExtraAttributes(){
+        return extraAttributeSet;
     }
 
     /**
@@ -863,15 +842,6 @@ public class EvidenceFile implements Serializable, StreamSource {
     }
 
     /**
-     * Define o email pai do item. Usado apenas em reports do FTK1.
-     * 
-     * @param pai email pai
-     */
-    public void setEmailPai(EvidenceFile pai) {
-        emailPai = pai;
-    }
-
-    /**
      * Define o caminho para o arquivo do item, no caso de processamento de pastas
      * e para subitens extraídos.
      * 
@@ -898,6 +868,10 @@ public class EvidenceFile implements Serializable, StreamSource {
      */
     public void setExtraAttribute(String key, Object value) {
         this.extraAttributes.put(key, value);
+        
+        synchronized(extraAttributeSet){
+            extraAttributeSet.add(key);
+        }
     }
 
     /**
