@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Map.Entry;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
@@ -29,6 +30,7 @@ import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class RowComparator implements Comparator<Integer> {
@@ -36,54 +38,59 @@ public class RowComparator implements Comparator<Integer> {
 	static String[] fields = ResultTableModel.fields;
 	
 	private int col;
-	private boolean sortFileExists;
-	private String sortFilePath;
-	private boolean isNum = true;
-	
-	static private int[][] order = new int[fields.length + ResultTableModel.fixedCols.length][];
-	static private int[] loadedCol = { 0, 0 };
+	private boolean bookmarkCol = false;
+	private boolean scoreCol = false;
 	
 	private static AtomicReader atomicReader;
 	
 	private App app = App.get();
 	
-	private SortedDocValues sdv;
+	protected SortedDocValues sdv;
 	private NumericDocValues ndv;
 
 	public RowComparator(int col) {
 		this.col = col;
+		
 		if(col >= ResultTableModel.fixedCols.length){
+		    col -= ResultTableModel.fixedCols.length;
 			fields = ResultTableModel.fields;
-			sortFilePath = App.get().codePath + "/../data/" + fields[col - ResultTableModel.fixedCols.length] + ".sort";
-			sortFileExists = new File(sortFilePath).exists();
-			try {
-				if(atomicReader == null)
-					atomicReader = SlowCompositeReaderWrapper.wrap(app.reader); 
-				sdv = atomicReader.getSortedDocValues(fields[col - ResultTableModel.fixedCols.length]);
-				if(sdv == null)
-					ndv = atomicReader.getNumericDocValues(fields[col - ResultTableModel.fixedCols.length]);
-					 
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			
+			if(fields[col].equals(ResultTableModel.BOOKMARK_COL))
+			    bookmarkCol = true;
+			
+			else if(fields[col].equals(ResultTableModel.SCORE_COL))
+                scoreCol = true;
+			
+			else
+			    loadDocValues(fields[col]);
 		}
 	}
-
-	public static void dispose() {
-		//order[loadedCol[0]] = null;
-		//order[loadedCol[1]] = null;
+	
+	public RowComparator(String indexedField){
+	    loadDocValues(indexedField);
 	}
-
-	private void loadOrder() {
-		order[loadedCol[1]] = null;
-		loadedCol[1] = loadedCol[0];
-		try {
-			order[col] = (int[]) Util.readObject(sortFilePath);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		loadedCol[0] = col;
+	
+	private void loadDocValues(String indexedField){
+	    try {
+            if(atomicReader == null)
+                atomicReader = SlowCompositeReaderWrapper.wrap(app.reader);
+            
+            if(IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)){
+            	ndv = atomicReader.getNumericDocValues(indexedField);
+            	
+            }if(ndv == null){
+            	sdv = atomicReader.getSortedDocValues(indexedField);
+            	if(sdv == null)
+                	sdv = atomicReader.getSortedDocValues("_" + indexedField);
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
+	
+	public boolean isStringComparator(){
+	    return sdv != null || bookmarkCol;
 	}
 
 	@Override
@@ -92,36 +99,31 @@ public class RowComparator implements Comparator<Integer> {
 		if(Thread.currentThread().isInterrupted())
 			throw new RuntimeException("Ordenação cancelada.");
 		
-		switch(col){
-			case 1:
-				if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
-					return 0;
-				else if (app.marcadores.selected[app.ids[a]] == true)
-					return -1;
-				else
-					return 1;
-			case 2:
-				return (int)(app.results.scores[a] - app.results.scores[b]);
-				
-			case 3:
-				return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
-				
-			default:
-				if(sortFileExists){
-					if (order[col] == null)
-						loadOrder();
-					return order[col][app.ids[a]] - order[col][app.ids[b]];
-					
-				}else if(sdv != null){
-					return sdv.getOrd(a) - sdv.getOrd(b);
-					
-				}else if(ndv != null){
-					return Long.compare(ndv.get(a), ndv.get(b));
-					
-				}else
-					return 0;
-				
-		}
+		if(scoreCol)
+            return (int)(app.results.scores[a] - app.results.scores[b]);
+		
+		a = app.results.docs[a];
+		b = app.results.docs[b];
+		
+		if(col == 1){
+		    if (app.marcadores.selected[app.ids[a]] == app.marcadores.selected[app.ids[b]])
+                return 0;
+            else if (app.marcadores.selected[app.ids[a]] == true)
+                return -1;
+            else
+                return 1;
+		
+		}else if(bookmarkCol)
+            return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
+        
+		else if(sdv != null)
+            return sdv.getOrd(a) - sdv.getOrd(b);
+            
+        else if(ndv != null)
+            return Long.compare(ndv.get(a), ndv.get(b));
+		
+        else
+            return 0;
 	}
 
 }

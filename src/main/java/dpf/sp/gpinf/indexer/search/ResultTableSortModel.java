@@ -24,8 +24,6 @@ public class ResultTableSortModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
 
-	private App app = App.get();
-
 	@Override
 	public int getColumnCount() {
 		return 1000;
@@ -38,9 +36,6 @@ public class ResultTableSortModel extends AbstractTableModel {
 
 	@Override
 	final public Integer getValueAt(int row, int col) {
-		if (col == 2)
-			return row;
-		else
-			return app.results.docs[row];
+		return row;
 	}
 }

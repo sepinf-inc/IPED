@@ -37,6 +37,7 @@ import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableRowSorter;
 
 import org.apache.lucene.document.Document;
 
@@ -241,7 +242,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         //Provisoriamente as colunas estão fixas 
         //(colunas onde a comparação de String não funcionaria, porque ordenação é numérica ou de Data)
-        if (sortCol == 1 || sortCol == 2 || sortCol == 6 || sortCol == 7 || sortCol == 9 || sortCol == 10 || sortCol == 11) return;
+        if (!((RowComparator)((TableRowSorter)table.getRowSorter()).getComparator(sortCol)).isStringComparator())
+            return;
 
         long t = System.currentTimeMillis();
         if (t - lastKeyTime > 500) lastKeyString = "";

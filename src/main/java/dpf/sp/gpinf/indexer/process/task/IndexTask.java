@@ -5,10 +5,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Properties;
 import java.util.Set;
 
@@ -40,6 +44,7 @@ import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
@@ -60,6 +65,8 @@ public class IndexTask extends AbstractTask{
 
 	public static boolean indexFileContents = true;
 	public static boolean indexUnallocated = false;
+	
+	public static String extraAttrFilename = "extraAttributes.dat";
 	
 	private List<IdLenPair> textSizes;
 	private Set<Integer> splitedIds;
@@ -260,6 +267,8 @@ public class IndexTask extends AbstractTask{
 			caseData.putCaseObject(SPLITED_IDS, splitedIds);
 		}
 		
+		IndexItem.loadMetadataTypes(confDir);
+		
 	}
 
 	@SuppressWarnings("unchecked")
@@ -267,17 +276,25 @@ public class IndexTask extends AbstractTask{
 	public void finish() throws Exception {
 		
 		textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
-		if(textSizes != null)
+		if(textSizes != null){
 			salvarTamanhoTextosExtraidos();
+			
+			salvarDocsFragmentados();
+			
+			saveExtraAttributes();
+			
+			IndexItem.saveMetadataTypes(new File(output, "conf"));
+			
+			removeEmptyTreeNodes();
+		}
 		caseData.putCaseObject(TEXT_SIZES, null);
 		
-		splitedIds = (Set<Integer>) caseData.getCaseObject(SPLITED_IDS);
-		if(splitedIds != null)
-			salvarDocsFragmentados();
-		caseData.putCaseObject(SPLITED_IDS, null);
-		
-		removeEmptyTreeNodes();
-		
+	}
+	
+	private void saveExtraAttributes() throws IOException{
+		File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
+		HashSet<String> extraAttr = EvidenceFile.getAllExtraAttributes();
+        Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
 	}
 	
 	private void removeEmptyTreeNodes(){

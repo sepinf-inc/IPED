@@ -7,6 +7,9 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,11 +49,20 @@ import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.util.Util;
 
-public class ColumnsManager implements ActionListener{
+public class ColumnsManager implements ActionListener, Serializable{
+    
+    private static final long serialVersionUID = 1057562688829969313L;
+
+    private static File lastCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
+    
+    private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000);
 	
-	public static String[] defaultFields =
-		{
+	private static String[] defaultFields =
+		{ 
+	        ResultTableModel.SCORE_COL,
+            ResultTableModel.BOOKMARK_COL,
 			IndexItem.NAME,
 			IndexItem.TYPE, 
 			IndexItem.LENGTH, 
@@ -63,7 +75,7 @@ public class ColumnsManager implements ActionListener{
 			IndexItem.PATH
 		};
 	
-	private String[] extraFields = 
+	private static String[] extraFields = 
 	    {
 	        IndexItem.CARVED,
 	        IndexItem.CONTENTTYPE,
@@ -94,19 +106,22 @@ public class ColumnsManager implements ActionListener{
 	        DIETask.DIE_CLASS
 	    };
 	
-	private String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
+	private static String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
 	
 	String[] indexFields = null;
 	
 	private Object[][] colGroups = {
-			{"Básicas", "Estendidas", "Email", "Outras"},
+			{"Básicas", "Avançadas", "Email", "Outras"},
 			{defaultFields, extraFields, email, indexFields}
 	};
 	
+	ColumnState colState = new ColumnState();
+    	
 	private static ColumnsManager instance = new ColumnsManager();
 	
 	private ArrayList<String> loadedFields = new ArrayList<String>();
-	
+
+		
 	private JDialog dialog = new JDialog();
 	private JPanel listPanel = new JPanel();
 	private JComboBox<Object> combo;
@@ -122,6 +137,30 @@ public class ColumnsManager implements ActionListener{
 	public String[] getLoadedCols(){
 		String[] cols = loadedFields.toArray(new String[0]);
 		return cols;
+	}
+	
+	static class ColumnState implements Serializable{
+	    
+        private static final long serialVersionUID = 1L;
+        List<Integer> initialWidths = new ArrayList<Integer>();
+	    ArrayList<String> visibleFields = new ArrayList<String>();
+	}
+	
+	public void saveColumnsState(){
+	    ColumnState cs = new ColumnState();
+	    for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
+	        TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+	        if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){    
+                cs.visibleFields.add(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length));
+                cs.initialWidths.add(tc.getWidth());
+            }
+	    }
+	    try {
+            Util.writeObject(cs, lastCols.getAbsolutePath());
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
 	}
 	
 	private ColumnsManager(){
@@ -151,8 +190,22 @@ public class ColumnsManager implements ActionListener{
 		JScrollPane scrollList = new JScrollPane(listPanel);
 		panel.add(scrollList, BorderLayout.CENTER);
 		
-		for(String col : defaultFields)
-			loadedFields.add(col);
+		boolean lastColsOk = false;
+		if(lastCols.exists()){
+		    try {
+		        colState = (ColumnState)Util.readObject(lastCols.getAbsolutePath());
+                loadedFields = (ArrayList<String>)colState.visibleFields.clone();
+                lastColsOk = true;
+            } catch (ClassNotFoundException | IOException e) {
+                e.printStackTrace();
+            }
+		}
+		if(!lastColsOk){
+		    for(String col : defaultFields)
+		        loadedFields.add(col);
+		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();
+		    colState.initialWidths = defaultWidths;
+		}
 		
 		indexFields = LoadIndexFields.addExtraFields(App.get().reader, new String[0]);
 		colGroups[1][colGroups[1].length - 1] = indexFields;
@@ -183,7 +236,7 @@ public class ColumnsManager implements ActionListener{
             if(insertField){
             	JCheckBox check = new JCheckBox();
                 check.setText(f);
-                if(loadedFields.contains(f))
+                if(colState.visibleFields.contains(f))
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
@@ -202,6 +255,7 @@ public class ColumnsManager implements ActionListener{
 	        JCheckBox source = (JCheckBox)e.getSource();
 	        int modelIdx = loadedFields.indexOf(source.getText());
 	        if(source.isSelected()){
+	            colState.visibleFields.add(source.getText());
 	            if(modelIdx == -1){
 	                loadedFields.add(source.getText());
 	                App.get().resultsModel.updateCols();
@@ -210,14 +264,24 @@ public class ColumnsManager implements ActionListener{
 	            }else
 	                modelIdx += ResultTableModel.fixedCols.length;
 	            
-	            App.get().resultsTable.addColumn(new TableColumn(modelIdx));
+	            TableColumn tc = new TableColumn(modelIdx);
+	            App.get().resultsTable.addColumn(tc);
+	            setColumnRenderer(tc);
 	        }else{
+	            colState.visibleFields.remove(source.getText());
 	            modelIdx += ResultTableModel.fixedCols.length;
 	            int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
 	            App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
 	        }
+	        
+	        saveColumnsState();
 	    }
 		
+	}
+	
+	public void setColumnRenderer(TableColumn tc){
+	    if(ResultTableModel.SCORE_COL.equals(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length)))
+            tc.setCellRenderer(new ProgressCellRenderer());
 	}
 
 }

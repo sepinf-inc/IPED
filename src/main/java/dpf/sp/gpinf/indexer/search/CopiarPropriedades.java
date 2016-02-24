@@ -58,13 +58,8 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
 
 		ArrayList<String> fields = new ArrayList<String>();
-		fields.add(IndexItem.ID);
-		fields.add(IndexItem.PARENTID);
-		fields.add("marcador");
-		for (String field : ((ResultTableModel) App.get().resultsTable.getModel()).fields)
+		for (String field : ResultTableModel.fields)
 			fields.add(field);
-		fields.add(IndexItem.EXPORT);
-		
 
 		for (int col = 0; col < fields.size(); col++)
 			writer.write("\"" + fields.get(col).toUpperCase() + "\"" + ";");
@@ -80,7 +75,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 				Document doc = App.get().searcher.doc(docId);
 				for (int col = 0; col < fields.size(); col++) {
 					String value, field = fields.get(col);
-					if(!field.equals("marcador"))
+					if(!field.equals(ResultTableModel.BOOKMARK_COL))
 						value = doc.get(fields.get(col));
 					else
 						value = App.get().marcadores.getLabels(app.ids[docId]);

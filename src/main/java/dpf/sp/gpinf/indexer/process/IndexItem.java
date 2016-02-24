@@ -26,9 +26,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.collation.ICUCollationDocValuesField;
 import org.apache.lucene.document.Document;
@@ -60,6 +65,7 @@ import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -96,10 +102,17 @@ public class IndexItem {
 	public static final String CONTENT = "conteudo";
 	public static final String TREENODE = "treeNode";
 	
+	public static String attrTypesFilename = "metadataTypes.txt";
+	
 	static HashSet<String> ignoredMetadata = new HashSet<String>();
+	
+	private static volatile boolean guessMetaTypes = false;
+	
+	private static Map<String, Class> typesMap = new ConcurrentHashMap<String, Class>();
 
 	private static FieldType contentField = new FieldType();
 	private static FieldType storedTokenizedNoNormsField = new FieldType();
+	private static Collator collator;
 	
 	static {
 		contentField.setIndexed(true);
@@ -107,6 +120,10 @@ public class IndexItem {
 		storedTokenizedNoNormsField.setIndexed(true);
 		storedTokenizedNoNormsField.setOmitNorms(true);
 		storedTokenizedNoNormsField.setStored(true);
+		
+		collator = Collator.getInstance();
+		collator.setStrength(Collator.PRIMARY);
+		collator.freeze();
 		
 		ignoredMetadata.add(Metadata.CONTENT_TYPE);
 		ignoredMetadata.add(Metadata.CONTENT_LENGTH);
@@ -118,9 +135,33 @@ public class IndexItem {
 		ignoredMetadata.add("File Size");
 	}
 	
+	public static Map<String, Class> getMetadataTypes(){
+	    return typesMap;
+	}
+	
+	public static void saveMetadataTypes(File confDir) throws IOException{
+		File metadataTypesFile = new File(confDir, attrTypesFilename); 
+		UTF8Properties props = new UTF8Properties();
+		for(Entry<String, Class> e : typesMap.entrySet())
+			props.setProperty(e.getKey(), e.getValue().getCanonicalName());
+		props.store(metadataTypesFile);
+	}
+	
+	public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException{
+		
+		if(IndexItem.getMetadataTypes().size() != 0)
+			return;
+		
+		File metadataTypesFile = new File(confDir, attrTypesFilename);
+		if(metadataTypesFile.exists()){
+		    UTF8Properties props = new UTF8Properties();
+			props.load(metadataTypesFile);
+			for(String key : props.stringPropertyNames())
+				typesMap.put(key, Class.forName(props.getProperty(key)));
+		}
+	}
+	
 	private static final ICUCollationDocValuesField getCollationDocValue(String field, String value){
-		Collator collator = Collator.getInstance();
-		collator.setStrength(Collator.PRIMARY);
 		ICUCollationDocValuesField cdvf = new ICUCollationDocValuesField(field, collator);
 		cdvf.setStringValue(value);
 		return cdvf;
@@ -129,11 +170,10 @@ public class IndexItem {
 	public static Document Document(EvidenceFile evidence, Reader reader) {
 		Document doc = new Document();
 
-		String value = String.valueOf(evidence.getId());
-		doc.add(new StringField(ID, value, Field.Store.YES));
+		doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
 		doc.add(new NumericDocValuesField(ID, evidence.getId()));
 
-		value = evidence.getFtkID();
+		String value = evidence.getFtkID();
 		if (value != null){
 			doc.add(new StringField(FTKID, value, Field.Store.YES));
 			doc.add(new SortedDocValuesField(FTKID, new BytesRef(value)));
@@ -141,19 +181,17 @@ public class IndexItem {
 			
 		value = evidence.getSleuthId();
 		if (value != null){
-			doc.add(new StringField(SLEUTHID, value, Field.Store.YES));
+			doc.add(new IntField(SLEUTHID, Integer.parseInt(value), Field.Store.YES));
 			doc.add(new NumericDocValuesField(SLEUTHID, Integer.parseInt(value)));
 		}
 			
 		value = evidence.getParentId();
-		if (value == null)
-			if (evidence.getEmailPai() != null)
-				value = String.valueOf(evidence.getEmailPai().getId());
 		if (value != null){
-			doc.add(new StringField(PARENTID, value, Field.Store.YES));
 			try{
+				doc.add(new IntField(PARENTID, Integer.parseInt(value), Field.Store.YES));
 				doc.add(new NumericDocValuesField(PARENTID, Integer.parseInt(value)));
 			}catch(Exception e){
+				doc.add(new StringField(PARENTID, value, Field.Store.YES));
 				doc.add(new SortedDocValuesField(PARENTID, new BytesRef(value)));
 			}
 		}
@@ -275,53 +313,161 @@ public class IndexItem {
 		if (reader != null)
 			doc.add(new Field(CONTENT, reader, contentField));
 		
+		if(typesMap.size() == 0)
+			guessMetaTypes = true;
+		
 		for(Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()){
-			Object eValue = entry.getValue();
-			if(eValue instanceof Date){
-				value = DateUtil.dateToString((Date)eValue);
-				doc.add(new StringField(entry.getKey(), value, Field.Store.YES));
-				doc.add(new SortedDocValuesField(entry.getKey(), new BytesRef(value)));
-				
-			}else if(eValue instanceof Integer){
-				doc.add(new IntField(entry.getKey(), (Integer)eValue, Field.Store.YES));
-				doc.add(new NumericDocValuesField(entry.getKey(), (Integer)eValue));
-				
-			}else if(eValue instanceof Long){
-				doc.add(new LongField(entry.getKey(), (Long)eValue, Field.Store.YES));
-				doc.add(new NumericDocValuesField(entry.getKey(), (Long)eValue));
-				
-			}else if(eValue instanceof Float){
-				doc.add(new FloatField(entry.getKey(), (Float)eValue, Field.Store.YES));
-				doc.add(new FloatDocValuesField(entry.getKey(), (Float)eValue));
-				
-			}else if(eValue instanceof Double){
-				doc.add(new DoubleField(entry.getKey(), (Double)eValue, Field.Store.YES));
-				doc.add(new DoubleDocValuesField(entry.getKey(), (Double)eValue));
-				
-			}else{
-				doc.add(new Field(entry.getKey(), eValue.toString(), storedTokenizedNoNormsField));
-				doc.add(getCollationDocValue(entry.getKey(), eValue.toString()));
-			}
-			
+			if(!typesMap.containsKey(entry.getKey()))
+				typesMap.put(entry.getKey(), entry.getValue().getClass());
+			addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false);
 		}
 		
 		Metadata metadata = evidence.getMetadata();
-		if(metadata != null)
-			for(String key : metadata.names()){
-				if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
-					continue;
-				StringBuilder strBuilder = new StringBuilder();
-				for(String val : metadata.getValues(key))
-					strBuilder.append(val + " ");
-				String values = strBuilder.toString();
-				doc.add(new Field(key, values, storedTokenizedNoNormsField));
-				//Lucene lança exceção com DocValues grandes
-				if(values.length() > 16000)
-					values = values.substring(values.length() - 16000);
-				doc.add(getCollationDocValue(key, values));
-			}
+        if(metadata != null){
+        	if(guessMetaTypes)
+        		guessMetadataTypes(evidence.getMetadata());
+        	else
+                addMetadataToDoc(doc, evidence.getMetadata()); 
+        }
+		
 		
 		return doc;
+	}
+	
+	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadata){
+		boolean isString = false;
+	    if(oValue instanceof Date){
+            String value = DateUtil.dateToString((Date)oValue);
+            doc.add(new StringField(key, value, Field.Store.YES));
+            doc.add(new SortedDocValuesField(key, new BytesRef(value)));
+            
+        }else if(oValue instanceof Byte){
+            doc.add(new IntField(key, (Byte)oValue, Field.Store.YES));
+            doc.add(new NumericDocValuesField(key, (Byte)oValue));
+            
+        }else if(oValue instanceof Integer){
+            doc.add(new IntField(key, (Integer)oValue, Field.Store.YES));
+            doc.add(new NumericDocValuesField(key, (Integer)oValue));
+            
+        }else if(oValue instanceof Long){
+            doc.add(new LongField(key, (Long)oValue, Field.Store.YES));
+            doc.add(new NumericDocValuesField(key, (Long)oValue));
+            
+        }else if(oValue instanceof Float){
+            doc.add(new FloatField(key, (Float)oValue, Field.Store.YES));
+            doc.add(new FloatDocValuesField(key, (Float)oValue));
+            
+        }else if(oValue instanceof Double){
+            doc.add(new DoubleField(key, (Double)oValue, Field.Store.YES));
+            doc.add(new DoubleDocValuesField(key, (Double)oValue));
+            
+        }else{
+        	doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
+        	isString = true;
+        }
+	    
+	    if(isMetadata || isString){
+	    	String value = oValue.toString();
+	        if(value.length() > 16000)
+	            value = value.substring(value.length() - 16000);
+	        doc.add(getCollationDocValue("_" + key, value));
+	    }
+	    
+	}
+	
+	private static void addMetadataToDoc(Document doc, Metadata metadata){
+	    for(String key : metadata.names()){
+            if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
+                continue;
+            String value = metadata.get(key).trim();
+            if(metadata.getValues(key).length > 1){
+            	StringBuilder strBuilder = new StringBuilder();
+            	for(String val : metadata.getValues(key))
+                    strBuilder.append(val + " ");
+            	value = strBuilder.toString().trim();
+            }
+            if(value.isEmpty())
+            	continue;
+            
+            Object oValue = value;
+            Class type = typesMap.get(key); 
+            if(type != null && !type.equals(String.class))
+            	try{
+            		if(type.equals(Integer.class))
+                        oValue = Integer.valueOf(value);
+                    else if(type.equals(Long.class))
+                        oValue = Long.valueOf(value);
+                    else if(type.equals(Float.class))
+                        oValue = Float.valueOf(value);
+                    else if(type.equals(Double.class))
+                        oValue = Double.valueOf(value);
+            		
+            	}catch(NumberFormatException e){
+            		//e.printStackTrace();
+            		typesMap.put(key, String.class);
+            		//oValue = null;
+            	}
+            
+            //if(oValue != null)
+            addExtraAttributeToDoc(doc, key, oValue, true);
+            
+        }
+	}
+	
+	private static void guessMetadataTypes(Metadata metadata){
+	    
+	    for(String key : metadata.names()){
+            if(key.contains("Unknown tag") || ignoredMetadata.contains(key))
+                continue;
+            if(metadata.getValues(key).length > 1){
+                typesMap.put(key, String.class);
+                continue;
+            }
+            String val = metadata.get(key);
+            if(typesMap.get(key) == null || !typesMap.get(key).equals(String.class)){
+                int type = 0;
+                while(type <= 4)
+                    try{
+                        switch(type){
+                        case 0:
+                            if(typesMap.get(key) == null || typesMap.get(key).equals(Integer.class)){
+                                Integer.parseInt(val);
+                                typesMap.put(key, Integer.class);
+                                break;
+                            }
+                        case 1:
+                            if(typesMap.get(key) == null || typesMap.get(key).equals(Integer.class) 
+                            || typesMap.get(key).equals(Long.class)){
+                                Long.parseLong(val);
+                                typesMap.put(key, Long.class);
+                                break;
+                            }
+                        case 2:
+                            if(typesMap.get(key) == null || typesMap.get(key).equals(Float.class)){
+                                Float.parseFloat(val);
+                                typesMap.put(key, Float.class);
+                                break;
+                            }
+                        case 3:
+                            if(typesMap.get(key) == null || typesMap.get(key).equals(Float.class) 
+                            || typesMap.get(key).equals(Double.class)){
+                                Double.parseDouble(val);
+                                typesMap.put(key, Double.class);
+                                break;
+                            }
+                        case 4:
+                            typesMap.put(key, String.class);
+                        }
+                        type = 100;
+                        
+                    }catch(NumberFormatException e){
+                        type++;
+                    }
+            }
+                
+                
+        }
+	    
 	}
 	
 	public static EvidenceFile getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem){

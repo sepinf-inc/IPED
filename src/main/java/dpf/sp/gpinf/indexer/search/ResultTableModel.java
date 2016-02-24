@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
@@ -37,25 +39,41 @@ public class ResultTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
 	
+	public static String BOOKMARK_COL = "marcador";
+	public static String SCORE_COL = "score";
+	
 	public static String[] fields;
 	
-	private int coldWidths[] = {55, 20, 35, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000};
+	private static int fixedColdWidths[] = {55, 20};
+	public static String[] fixedCols = { "", ""};
 	
-	public static String[] fixedCols = { "", "", "%", "Marcador"};
 	private static String[] columnNames = {};
 	
 	public void initCols(){
 		
-		updateCols();
-		
-		SwingUtilities.invokeLater(new Runnable(){
-			public void run(){
-				App.get().resultsModel.fireTableStructureChanged();
-				App.get().resultsTable.getColumnModel().getColumn(2).setCellRenderer(new ProgressCellRenderer());
-				for(int i = 0; i < coldWidths.length; i++)
-					App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(coldWidths[i]);
-			}
-		});
+		try {
+            SwingUtilities.invokeAndWait(new Runnable(){
+            	public void run(){
+            	    
+            	    updateCols();
+            		App.get().resultsModel.fireTableStructureChanged();
+            		
+            		for(int i = 0; i < fixedColdWidths.length; i++)
+            			App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(fixedColdWidths[i]);
+            		
+            		for(int i = 0; i < ColumnsManager.getInstance().colState.initialWidths.size(); i++){
+            		    TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
+            		    tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
+            		    
+            		    ColumnsManager.getInstance().setColumnRenderer(tc);
+            		}
+                        
+            	}
+            });
+        } catch (InvocationTargetException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 		
 	}
 	
@@ -151,21 +169,22 @@ public class ResultTableModel extends AbstractTableModel {
 		else if (col == 1)
 			return app.marcadores.selected[app.ids[app.results.docs[row]]];
 
-		else if (col == 2)
-			return app.results.scores[row];
-
-		else if (col == 3)
-			return app.marcadores.getLabels(app.ids[app.results.docs[row]]);
-		
 		else
 			try {
+			    int fCol = col - fixedCols.length;
+                String field = fields[fCol];
+                
+                if(field.equals(SCORE_COL))
+                    return app.results.scores[row];
+                
+                if(field.equals(BOOKMARK_COL))
+                    return app.marcadores.getLabels(app.ids[app.results.docs[row]]);
+                
 				int docId = App.get().results.docs[row];
 				if (App.get().results.docs[row] != lastDocRead)
 					doc = App.get().searcher.doc(docId);
 				lastDocRead = App.get().results.docs[row];
-
-				int fCol = col - fixedCols.length;
-				String field = fields[fCol];
+				
 				value = doc.get(field);
 				if(value == null)
 					value = "";

@@ -41,6 +41,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
@@ -108,10 +109,7 @@ public class App extends JFrame implements WindowListener {
 	Set<String> highlightTerms = new HashSet<String>();
 
 	Set<Integer> splitedDocs;
-	// HashMap<Integer,Integer> viewToRawFileMap;
-	// HashMap<Integer,Integer> rawToViewFileMap;
 	VersionsMap viewToRawMap;
-	// int[] categoryMap;
 
 	public IndexReader reader;
 	public IndexSearcher searcher;
@@ -210,7 +208,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
-			//codePath = "E:/1unknown55467/indexador/lib/search.jar";
+			//codePath = "E:/1ocr7/indexador/lib/search.jar";
 			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
@@ -232,6 +230,8 @@ public class App extends JFrame implements WindowListener {
 
 	public void destroy() {
 		try {
+		    if(this.resultsTable != null)
+		        ColumnsManager.getInstance().saveColumnsState();
 			reader.close();
 			if (compositeViewer != null)
 				compositeViewer.dispose();

@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +40,7 @@ import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -189,6 +189,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 				App.get().docs[App.get().ids[i]] = i;
 			if (new File(index + "/../data/alternativeToOriginals.ids").exists())
 				App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
+			IndexItem.loadMetadataTypes(new File(index + "/../conf"));
 			App.get().marcadores = new Marcadores(index + "/..");
 
 			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);

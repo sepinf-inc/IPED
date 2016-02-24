@@ -25,6 +25,7 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -68,6 +69,8 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
+	
+	private static HashMap<String,NumericConfig> numericConfigMap;
 	
 	volatile static int numFilters = 0;
 	Query query;
@@ -217,12 +220,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  parser.setFuzzyMinSim(0.7f);
 			  parser.setDateResolution(DateTools.Resolution.SECOND);
 			  parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
-			  
-			  DecimalFormat nf = new DecimalFormat();
-			  NumericConfig config = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.LONG);
-			  HashMap<String,NumericConfig> numericConfigMap = new HashMap<String,NumericConfig>();
-			  numericConfigMap.put(IndexItem.LENGTH, config);
-			  parser.setNumericConfigMap(numericConfigMap);
+			  parser.setNumericConfigMap(getNumericConfigMap());
 			  
 			  //remove acentos, pois StandardQueryParser não normaliza wildcardQueries
 			  if(analyzer != spaceAnalyzer){
@@ -236,6 +234,38 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			  return parser.parse(texto, null);
 		}
 
+	}
+	
+	private static HashMap<String,NumericConfig> getNumericConfigMap(){
+		
+		  if(numericConfigMap != null)
+			  return numericConfigMap;
+			
+		  numericConfigMap = new HashMap<String,NumericConfig>();
+		
+		  DecimalFormat nf = new DecimalFormat();
+		  NumericConfig configLong = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.LONG);
+		  NumericConfig configInt = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.INT);
+		  NumericConfig configFloat = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.FLOAT);
+		  NumericConfig configDouble = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.DOUBLE);
+		  
+		  numericConfigMap.put(IndexItem.LENGTH, configLong);
+		  numericConfigMap.put(IndexItem.ID, configInt);
+		  numericConfigMap.put(IndexItem.SLEUTHID, configInt);
+		  if(!App.get().isFTKReport)
+			  numericConfigMap.put(IndexItem.PARENTID, configInt);
+		  
+		  for(Entry<String, Class> e : IndexItem.getMetadataTypes().entrySet())
+			  if(e.getValue().equals(Integer.class) || e.getValue().equals(Byte.class))
+				  numericConfigMap.put(e.getKey(), configInt);
+			  else if(e.getValue().equals(Long.class))
+				  numericConfigMap.put(e.getKey(), configLong);
+			  else if(e.getValue().equals(Float.class))
+				  numericConfigMap.put(e.getKey(), configFloat);
+			  else if(e.getValue().equals(Double.class))
+				  numericConfigMap.put(e.getKey(), configDouble);
+		  
+		  return numericConfigMap;
 	}
 	  
 	  public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames) throws Exception{

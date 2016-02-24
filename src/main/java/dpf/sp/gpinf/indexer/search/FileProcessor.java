@@ -93,8 +93,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> {
 	private void process() {
 
 		LOGGER.info(doc.get(IndexItem.PATH));
-
-		RowComparator.dispose();
 		
 		if (listSubItens) {
 			// listRelatedItens();
