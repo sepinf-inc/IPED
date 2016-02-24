@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -15,6 +14,11 @@ import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -30,6 +34,10 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.search.InicializarBusca;
+import dpf.sp.gpinf.indexer.search.PesquisarIndice;
+import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -268,6 +276,35 @@ public class IndexTask extends AbstractTask{
 			salvarDocsFragmentados();
 		caseData.putCaseObject(SPLITED_IDS, null);
 		
+		removeEmptyTreeNodes();
+		
+	}
+	
+	private void removeEmptyTreeNodes(){
+	    
+	    if(!caseData.containsReport() || caseData.isIpedReport())
+	        return;
+	    
+	    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Excluindo nós da árvore vazios");
+        LOGGER.info("Excluindo nós da árvore vazios");
+	    
+        try{
+            InicializarBusca.inicializar(output.getAbsolutePath() + "/index", worker.writer);
+            PesquisarIndice searchAll = new PesquisarIndice(new MatchAllDocsQuery());
+            SearchResult result = searchAll.pesquisarTodos();
+            BooleanQuery query = new BooleanQuery();
+            query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST);
+            for (int docID : result.docs) {
+                String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+                for(String parentId : parentIds.split(" "))
+                    query.add(new TermQuery(new Term(IndexItem.ID, parentId)), Occur.MUST_NOT);
+            }
+            worker.writer.deleteDocuments(query);
+            
+        }catch(Exception e){
+            LOGGER.warn("Erro ao excluir nós da árvore vazios", e);
+        }
+        
 	}
 	
 	private void salvarTamanhoTextosExtraidos() throws Exception {

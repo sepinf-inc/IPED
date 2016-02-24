@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.concurrent.Executors;
 import javax.swing.SwingWorker;
 
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -162,10 +164,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	}
 
 	
-	public static void inicializar(String index) {
+	public static void inicializar(String index, IndexWriter writer) {
 		try {
 			Directory directory = FSDirectory.open(new File(index));
-			App.get().reader = DirectoryReader.open(directory);
+			if(writer == null)
+			    App.get().reader = DirectoryReader.open(directory);
+			else
+			    App.get().reader = DirectoryReader.open(writer, false);
+			
 			if(Configuration.searchThreads > 1){
 				App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
 				App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
@@ -190,6 +196,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void inicializar(String index){
+	    inicializar(index, null);
 	}
 
 }
