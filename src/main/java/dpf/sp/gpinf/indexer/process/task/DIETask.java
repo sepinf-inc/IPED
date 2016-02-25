@@ -26,6 +26,8 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.imageio.ImageIO;
+
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
@@ -35,6 +37,7 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.die.Die;
 import gpinf.die.RandomForestPredictor;
@@ -145,12 +148,17 @@ public class DIETask extends AbstractTask {
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
         //Verifica se está habilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()) return;
+        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) return;
 
         //Chama o método de detecção
         try {
             long t = System.currentTimeMillis();
-            BufferedImage img = getBufferedImage(evidence);
+            File thumbFile = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), evidence.getHash(), "jpg");
+            BufferedImage img;
+            if(thumbFile.exists())
+            	img = ImageIO.read(thumbFile);
+            else
+            	img = getBufferedImage(evidence);
             List<Float> features = Die.extractFeatures(img);
             if (features != null) {
                 double p = predictor.predict(features);

@@ -106,8 +106,11 @@ searchThreads = 1
 # Utiliza GraphicsMagick ao invés de ImageMagick para renderizar imagens não suportadas pela JVM.
 useGM = true
 
-# Timeout(s) para aguardar conversão externa entre formatos de imagem via IM/GM.
-imgConvTimeout = 5
+# Timeout(s) para aguardar conversão externa entre formatos de imagem via GraphicsMagick.
+imgConvTimeout = 10
+
+# Tamanho das miniaturas das imagens geradas no processamento, caso habilitado.
+imgThumbSize = 160
 
 # Número de threads de geração de miniaturas na galeria. "default" utiliza o número de processadores.
 # Diminua o valor caso haja problemas de consumo de memória.

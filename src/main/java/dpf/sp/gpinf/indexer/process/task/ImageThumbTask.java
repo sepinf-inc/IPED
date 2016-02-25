@@ -2,6 +2,9 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -22,20 +25,22 @@ public class ImageThumbTask extends AbstractTask{
     
     public ImageThumbTask(Worker worker) {
 		super(worker);
-		// TODO Auto-generated constructor stub
 	}
 
-	private static String thumbsFolder = "thumbs";
+	public static String thumbsFolder = "thumbs";
+	
+	private static String enableProperty = "enableImageThumbs";
 	
     public static String HAS_THUMB = "hasThumb";
     
-    private static int thumbSize = 112;
+    private static int thumbSize = 160;
     
     private boolean taskEnabled = false;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        taskEnabled = Boolean.valueOf(confParams.getProperty("enableImageThumbs"));
+        taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
+        thumbSize = Integer.valueOf(confParams.getProperty("imgThumbSize"));
     }
 
     @Override
@@ -54,9 +59,12 @@ public class ImageThumbTask extends AbstractTask{
         if (!thumbFile.getParentFile().exists())
             thumbFile.getParentFile().mkdirs();
 
-        //Já está pasta? Então não é necessário gerar.
+        //Já está na pasta? Então não é necessário gerar.
         if (thumbFile.exists()){
-            evidence.setExtraAttribute(HAS_THUMB, true);
+        	if(thumbFile.length() != 0)
+        		evidence.setExtraAttribute(HAS_THUMB, true);
+        	else
+        		evidence.setExtraAttribute(HAS_THUMB, false);
             return;
         }
         
@@ -75,6 +83,7 @@ public class ImageThumbTask extends AbstractTask{
     
     private void createImageThumb(EvidenceFile evidence, File thumbFile) {
 
+    	File tmp = null;
         try {
             GalleryValue value = new GalleryValue(null, null, -1);
             BufferedImage img = null;
@@ -87,39 +96,47 @@ public class ImageThumbTask extends AbstractTask{
                 }
             }
             if (img == null) {
-                final int sampleFactor = 3;
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try{
-                    img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor, value);
+                    img = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize, value);
                 }finally{
                     IOUtil.closeQuietly(stream);
                 }
-                if (img == null) {
-                    stream = evidence.getBufferedStream();
-                    try{
-                        img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
-                    }finally{
-                        IOUtil.closeQuietly(stream);
-                    }
+            }
+            if (img == null) {
+            	BufferedInputStream stream = evidence.getBufferedStream();
+                try{
+                    img = new GraphicsMagicConverter().getImage(stream, thumbSize);
+                }finally{
+                    IOUtil.closeQuietly(stream);
                 }
             }
-            if (img != null) {
-                if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
-                    img = resizeThumb(img);
-                }
-                img = ImageUtil.getCenteredImage(img, thumbSize, thumbSize);
-                ImageIO.write(img, "jpeg", thumbFile);
-                evidence.setExtraAttribute(HAS_THUMB, true);
+            
+            tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder));
+            
+            if(img != null){
+                if(img.getWidth() > thumbSize || img.getHeight() > thumbSize)
+                	img = resizeThumb(img, thumbSize);
+                img = ImageUtil.getOpaqueImage(img);
                 
-            }else
-                evidence.setExtraAttribute(HAS_THUMB, false);
+                ImageIO.write(img, "jpg", tmp);
+            }
                 
         } catch (Exception e) {
             e.printStackTrace();
+            
+        }finally{
+        	if(tmp != null && !tmp.renameTo(thumbFile))
+        		tmp.delete();
+            
+            if (thumbFile.exists() && thumbFile.length() != 0)
+            	evidence.setExtraAttribute(HAS_THUMB, true);
+            else
+            	evidence.setExtraAttribute(HAS_THUMB, false);
         }
     }
     
-    private BufferedImage resizeThumb(BufferedImage img) {
+    private static BufferedImage resizeThumb(BufferedImage img, int thumbSize) {
         int width = img.getWidth();
         int height = img.getHeight();
         if (width > height) {

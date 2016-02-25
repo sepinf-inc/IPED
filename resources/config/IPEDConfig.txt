@@ -27,9 +27,7 @@ hash = md5;
 #ledWkffPath = E:/LED/V1.20.00/pedo/wkff
 
 # Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
-# Caso configurado, cria um atributo "scoreNudez" para cada imagem com uma score de 1 a 1000 (para ordenação e/ou filtro).
-# Quanto maior esse valor, maior a probabilidade de conter nudez/pornografia.
-# Também cria outro atributo ("classeNudez") com uma escala menos granular, de 1 a 5.
+# Caso configurado, para cada imagem cria os atributos "scoreNudez" (1 a 1000) e classeNudez (1 a 5) para ordenação e/ou filtro.
 # Necessário apontar para arquivo de dados presente no LED versão 1.20 ou superior.
 #ledDie = E:/LED/V1.20.00/pedo/die/rfdie.dat
 
@@ -72,6 +70,10 @@ indexUnallocated = false
 # sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
 # configurados no arquivo conf/CarvingConfig.txt
 enableCarving = false
+
+# Habilita a geração de miniaturas das imagens durante o processamento.
+# Pode deixar o processamento bem mais lento, porém torna a visualização na galeria muito rápida.
+enableImageThumbs = true
 
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt

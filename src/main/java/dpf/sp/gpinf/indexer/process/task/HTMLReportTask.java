@@ -334,7 +334,7 @@ public class HTMLReportTask extends AbstractTask {
         ReportEntry reg = new ReportEntry();
         reg.name = evidence.getName();
         reg.export = evidence.getExportedFile();
-        reg.isImage = isImageType(evidence.getMediaType());
+        reg.isImage = ImageThumbTask.isImageType(evidence.getMediaType());
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
         reg.ext = evidence.getExt();
@@ -371,9 +371,14 @@ public class HTMLReportTask extends AbstractTask {
                 if (currentFiles.contains(evidence.getHash())) return;
                 currentFiles.add(evidence.getHash());
             }
-            File thumbFile = getThumbFile(reg.hash);
-            if (reg.isImage) createImageThumb(evidence, thumbFile);
-            else if (reg.isVideo) createVideoThumb(reg, thumbFile);
+            File thumbFile;
+            if (reg.isImage){
+            	thumbFile = getImageThumbFile(reg.hash);
+            	if(!thumbFile.exists()) createImageThumb(evidence, thumbFile);
+            }else if (reg.isVideo){
+            	thumbFile = getVideoStripeFile(reg.hash);
+            	if(!thumbFile.exists()) createVideoStripe(reg, thumbFile);
+            }
 
             //Retira do Set de arquivos em processamento
             synchronized (currentFiles) {
@@ -538,7 +543,7 @@ public class HTMLReportTask extends AbstractTask {
             it.append(item);
 
             if (reg.isImage && imageThumbsEnabled && reg.hash != null) {
-                File thumbFile = getThumbFile(reg.hash);
+                File thumbFile = getImageThumbFile(reg.hash);
                 if (thumbFile.exists()) {
                     it.append("<table width=\"100%\"><tr><td>");
 
@@ -550,11 +555,13 @@ public class HTMLReportTask extends AbstractTask {
                     }
                     img.append("<img src=\"");
                     img.append(getRelativePath(thumbFile, reportSubFolder));
-                    img.append("\" width=\"");
-                    img.append(thumbSize);
-                    img.append("\" height=\"");
-                    img.append(thumbSize);
-                    img.append("\"/>");
+                    img.append("\" ");
+                    BufferedImage image = ImageIO.read(thumbFile);
+                    if(image.getWidth() >= image.getHeight())
+                    	img.append("width=\"").append(thumbSize).append("\"");
+                    else
+                    	img.append("height=\"").append(thumbSize).append("\"");
+                    img.append("/>");
                     if (reg.export != null) img.append("</a>");
 
                     it.append(img);
@@ -568,7 +575,7 @@ public class HTMLReportTask extends AbstractTask {
                 }
             } else if (reg.isVideo && videoThumbsEnabled && reg.hash != null) {
                 File videoThumbsFile = getVideoThumbsFile(reg.hash);
-                File stripeFile = getThumbFile(reg.hash);
+                File stripeFile = getVideoStripeFile(reg.hash);
                 if (stripeFile.exists()) {
                     Dimension dim = ImageUtil.getImageFileDimension(stripeFile);
                     it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Cenas Extraídas do Vídeo</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
@@ -635,8 +642,14 @@ public class HTMLReportTask extends AbstractTask {
         ef.write();
     }
 
-    private File getThumbFile(String hash) {
+    private File getVideoStripeFile(String hash) {
         File file = Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg");
+        if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
+        return file;
+    }
+    
+    private File getImageThumbFile(String hash) {
+        File file = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), hash, "jpg");
         if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
         return file;
     }
@@ -696,7 +709,7 @@ public class HTMLReportTask extends AbstractTask {
         }
     }
 
-    private void createVideoThumb(ReportEntry reg, File thumbFile) {
+    private void createVideoStripe(ReportEntry reg, File thumbFile) {
         if (!thumbFile.getParentFile().exists()) thumbFile.getParentFile().mkdirs();
         createStripeFile(getVideoThumbsFile(reg.hash), thumbFile);
     }
@@ -783,13 +796,6 @@ public class HTMLReportTask extends AbstractTask {
 
     private String formatNumber(Long val) {
         return val == null ? "-" : longFormat.format(val);
-    }
-
-    /**
-     * Verifica se é imagem.
-     */
-    public static boolean isImageType(MediaType mediaType) {
-        return mediaType.getType().equals("image") || mediaType.toString().endsWith("msmetafile") || mediaType.toString().endsWith("x-emf");
     }
 
     /** 

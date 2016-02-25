@@ -79,7 +79,7 @@ public class ImageUtil {
      * Redimensiona um imagem numa área determinada. 
      */
     public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH) {
-        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_RGB);
+        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics2D = bufferedImage.createGraphics();
         // graphics2D.setComposite(AlphaComposite.Src);
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -157,7 +157,7 @@ public class ImageUtil {
             return image;
 
         } catch (Exception e) {
-            // e.printStackTrace();
+            //e.printStackTrace();
 
         } finally {
             if (reader != null) reader.dispose();
@@ -169,17 +169,21 @@ public class ImageUtil {
     }
 
     public static BufferedImage trim(BufferedImage img) {
+    	if(img == null)
+    		return null;
 
         double WHITE_TOLERANCE = 20;
         int[] pixels = new int[0];
 
         int w = img.getWidth();
         int h = img.getHeight();
+        if(w <= 2 || h <= 2)
+        	return img;
         if (pixels.length < w * h) pixels = new int[w * h];
         img.getRGB(0, 0, w, h, pixels, 0, w);
         Rectangle rc = new Rectangle(1, 1, w - 2, h - 2);
         for (int dir = 0; dir <= 1; dir++) {
-            while (rc.height > 0) {
+            while (rc.height > 1) {
                 int off = (dir == 0 ? rc.y : rc.y + rc.height - 1) * w;
                 int sum = 0;
                 for (int x = rc.x; x < rc.width + rc.x; x++) {
@@ -195,7 +199,7 @@ public class ImageUtil {
             }
         }
         for (int dir = 0; dir <= 1; dir++) {
-            while (rc.width > 0) {
+            while (rc.width > 1) {
                 int off = dir == 0 ? rc.x : rc.x + rc.width - 1;
                 int sum = 0;
                 for (int y = rc.y; y < rc.height + rc.y; y++) {
@@ -247,6 +251,18 @@ public class ImageUtil {
         g2.setColor(Color.WHITE);
         g2.fillRect(0, 0, w, h);
         g2.drawImage(img, x, y, null);
+        g2.dispose();
+        return out;
+    }
+    
+    public static BufferedImage getOpaqueImage(BufferedImage img) {
+    	int w = img.getWidth();
+    	int h = img.getHeight();
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);
+        Graphics2D g2 = (Graphics2D) out.getGraphics();
+        g2.setColor(Color.WHITE);
+        g2.fillRect(0, 0, w, h);
+        g2.drawImage(img, 0, 0, null);
         g2.dispose();
         return out;
     }

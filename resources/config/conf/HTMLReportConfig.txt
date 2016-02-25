@@ -25,7 +25,7 @@ ItemsPerPage = 100
 # Habilita/Desabilita inclusão de miniaturas de imagem no relatório.
 EnableImageThumbs = true
 
-# Tamanho, em pixels, da miniatura de imagens, caso a geração das mesmas esteja habilitada.
+# Tamanho, em pixels, das miniaturas das imagens no relatório, caso a inclusão das mesmas esteja habilitada.
 ThumbSize = 112
 
 # Habilita/Desabilita inclusão de miniaturas/imagens de cenas extraídas de vídeos.

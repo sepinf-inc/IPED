@@ -36,6 +36,7 @@ public class TaskInstaller {
 		tasks.add(new ParsingTask(worker));
 		tasks.add(new ExportFileTask(worker));
 		tasks.add(new MakePreviewTask(worker));
+		tasks.add(new ImageThumbTask(worker));
 		tasks.add(new VideoThumbTask(worker));
 		tasks.add(new DIETask(worker));
 		tasks.add(new HTMLReportTask(worker));

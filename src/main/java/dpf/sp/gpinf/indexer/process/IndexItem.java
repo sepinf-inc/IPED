@@ -62,6 +62,7 @@ import com.ibm.icu.text.Collator;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
@@ -555,8 +556,7 @@ public class IndexItem {
 				if(!value.isEmpty()){
 					File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
 					if(viewFile == null && !hasFile && evidence.getSleuthId() == null)
-						viewFile = Util.findFileFromHash(new File(outputBase.getParentFile(), 
-								HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName), value);
+						viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
 					if(viewFile != null)
 						evidence.setViewFile(viewFile);
 					if(viewItem || (!hasFile && evidence.getSleuthId() == null)){

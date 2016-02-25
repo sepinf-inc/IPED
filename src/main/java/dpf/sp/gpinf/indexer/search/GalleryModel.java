@@ -43,6 +43,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -77,7 +78,7 @@ public class GalleryModel extends AbstractTableModel {
 	}
 	
 	private boolean isSupportedImage(String mediaType){
-		return mediaType.startsWith("image") || mediaType.endsWith("msmetafile") || mediaType.endsWith("x-emf");
+		return ImageThumbTask.isImageType(MediaType.parse(mediaType));
 	}
 	
 	private boolean isSupportedVideo(String mediaType){
@@ -140,7 +141,7 @@ public class GalleryModel extends AbstractTableModel {
 					String export = doc.get(IndexItem.EXPORT);
 					if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
 
-						image = getThumbFromReport(export);
+						image = getThumbFromFTKReport(export);
 						if (image == null) {
 							File file = Util.getRelativeFile(App.get().codePath + "/../..", export);
 							stream = Util.getStream(file, doc);
@@ -151,8 +152,7 @@ public class GalleryModel extends AbstractTableModel {
 						stream = Util.getSleuthStream(App.get().sleuthCase, doc);
 					
 					if (stream != null)
-						stream.mark(1000000);
-					
+						stream.mark(10000000);
 						
 					if (image == null && stream != null && doc.get(IndexItem.CONTENTTYPE).equals("image/jpeg")) {
 						image = ImageUtil.getThumb(new CloseShieldInputStream(stream), value);
@@ -172,7 +172,7 @@ public class GalleryModel extends AbstractTableModel {
 						value.icon = errorIcon;
 
 				} catch (Exception e) {
-					//e.printStackTrace();
+					e.printStackTrace();
 					value.icon = errorIcon;
 
 				} finally {
@@ -213,7 +213,7 @@ public class GalleryModel extends AbstractTableModel {
 		if(isVideo)
 			baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
 		else
-			baseFolder = new File(baseFolder.getParentFile(), HTMLReportTask.reportSubFolderName + "/" + HTMLReportTask.thumbsFolderName);
+			baseFolder = new File(baseFolder, ImageThumbTask.thumbsFolder);
 		
 		File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
 		if(hashFile.exists()){
@@ -224,7 +224,7 @@ public class GalleryModel extends AbstractTableModel {
 		return null;
 	}
 
-	private BufferedImage getThumbFromReport(String export) {
+	private BufferedImage getThumbFromFTKReport(String export) {
 
 		BufferedImage image = null;
 		try {
@@ -241,34 +241,6 @@ public class GalleryModel extends AbstractTableModel {
 			if (i1 > -1) {
 				String thumbPath = export.substring(0, i1) + "thumbnails/" + nome;
 				file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath);
-
-			// Report FTK 1.8
-			} else if ((i1 = export.indexOf("Export/")) > -1) {
-
-				if (!thumbPathCached)
-					synchronized (this) {
-						if (!thumbPathCached) {
-							SwingUtilities.invokeLater(new Runnable() {
-								@Override
-								public void run() {
-									App.get().dialogBar.setVisible(true);
-								}
-							});
-							String thumbPath = export.substring(0, i1) + "Thumbnails";
-							file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath).getCanonicalFile();
-							if (file.exists())
-								loadThumbPaths(file);
-							thumbPathCached = true;
-							SwingUtilities.invokeLater(new Runnable() {
-								@Override
-								public void run() {
-									App.get().dialogBar.setVisible(false);
-								}
-							});
-						}
-					}
-				file = thumbPathCache.get(nome);
-
 			}
 			if (file != null && file.exists()) {
 				image = ImageIO.read(file);
@@ -279,18 +251,6 @@ public class GalleryModel extends AbstractTableModel {
 		}
 
 		return image;
-	}
-
-	private HashMap<String, File> thumbPathCache = new HashMap<String, File>();
-	private boolean thumbPathCached = false;
-
-	private void loadThumbPaths(File file) {
-
-		for (File subFile : file.listFiles())
-			if (subFile.isDirectory())
-				loadThumbPaths(subFile);
-			else
-				thumbPathCache.put(subFile.getName(), subFile);
 	}
 
 }
