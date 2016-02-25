@@ -237,7 +237,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 		} catch (Exception e) {
 			//LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
 		}
-    	if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
+    	if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
 			if (!file.delete())
 				LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
 		}
