@@ -120,13 +120,27 @@ public class Statistics {
 		lastId = id;
 	}
 
-	public void logarEstatisticas() throws Exception {
+	public void logarEstatisticas(Manager manager) throws Exception {
 
 		int processed = getProcessed();
 		int extracted = ExportFileTask.getSubitensExtracted();
 		int activeFiles = getActiveProcessed();
 		int carvedIgnored = getCorruptCarveIgnored();
 		int ignored = getIgnored();
+		
+		long totalTime = 0;
+		Worker[] workers = manager.getWorkers();
+		long[] taskTimes = new long[workers[0].tasks.size()];
+		for(Worker worker : workers)
+			for(int i = 0; i < taskTimes.length; i++){
+				taskTimes[i] += worker.tasks.get(i).getTaskTime();
+				totalTime += taskTimes[i];
+			}
+		totalTime = totalTime / (1000000 * Configuration.numThreads);
+		for(int i = 0; i < taskTimes.length; i++){
+			long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
+			LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + "\t-\tTempo de execução: " + sec + "s (" + (100 * sec)/totalTime + "%)");
+		}
 		
 		LOGGER.info("Divisões de arquivo: {}", getSplits());
 		LOGGER.info("Timeouts: {}", getTimeouts());

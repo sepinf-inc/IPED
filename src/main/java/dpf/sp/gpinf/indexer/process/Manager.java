@@ -29,7 +29,6 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
@@ -129,6 +128,10 @@ public class Manager {
 		OCRParser.OUTPUT_BASE = output;
 
 	}
+	
+	Worker[] getWorkers(){
+		return workers;
+	}
 
 	public void process() throws Exception {
 
@@ -172,7 +175,7 @@ public class Manager {
 
 		configurarCategorias();
 
-		stats.logarEstatisticas();
+		stats.logarEstatisticas(this);
 
 	}
 

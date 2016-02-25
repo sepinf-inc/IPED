@@ -197,8 +197,12 @@ public class Worker extends Thread {
 		if (evidences.size() == 0)
 			evidences.addFirst(evidence);
 		// caso contrário processa o item no worker atual
-		else
+		else{
+			long t = System.nanoTime()/1000;
 			process(evidence);
+			this.runningTask.decrementTaskTime(System.nanoTime()/1000 - t);
+		}
+			
 	}
 
 	@Override

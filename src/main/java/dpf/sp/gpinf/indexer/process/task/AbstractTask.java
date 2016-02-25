@@ -5,6 +5,7 @@ import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
@@ -55,6 +56,16 @@ public abstract class AbstractTask {
 	 * Próxima tarefa que será executada no pipeline.
 	 */
 	protected AbstractTask nextTask;
+	
+	public long taskTime;
+	
+	public long getTaskTime(){
+		return taskTime;
+	}
+	
+	public void decrementTaskTime(long delta){
+		taskTime -= delta;
+	}
 	
 	/**
 	 * Define a próxima tarefa no pipeline.
@@ -120,8 +131,11 @@ public abstract class AbstractTask {
 			worker.evidence = evidence;
 		
 		if(!evidence.isToIgnore() || processIgnoredItem()){
+			long t = System.nanoTime()/1000;
 			processMonitorTimeout(evidence);
+			taskTime += System.nanoTime()/1000 - t;
 		}
+		
 		sendToNextTask(evidence);
 		
 		worker.runningTask = prevTask;
