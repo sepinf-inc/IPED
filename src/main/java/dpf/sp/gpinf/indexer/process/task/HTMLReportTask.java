@@ -544,7 +544,7 @@ public class HTMLReportTask extends AbstractTask {
 
             if (reg.isImage && imageThumbsEnabled && reg.hash != null) {
                 File thumbFile = getImageThumbFile(reg.hash);
-                if (thumbFile.exists()) {
+                if (thumbFile.exists() && thumbFile.length() > 0) {
                     it.append("<table width=\"100%\"><tr><td>");
 
                     StringBuilder img = new StringBuilder();
@@ -557,17 +557,18 @@ public class HTMLReportTask extends AbstractTask {
                     img.append(getRelativePath(thumbFile, reportSubFolder));
                     img.append("\" ");
                     BufferedImage image = ImageIO.read(thumbFile);
-                    if(image.getWidth() >= image.getHeight())
-                    	img.append("width=\"").append(thumbSize).append("\"");
-                    else
-                    	img.append("height=\"").append(thumbSize).append("\"");
+                    if(image != null && (image.getWidth() > thumbSize || image.getHeight() > thumbSize))
+	                    if(image.getWidth() >= image.getHeight()){
+	                    	img.append("width=\"").append(thumbSize).append("\"");
+	                    }else
+	                    	img.append("height=\"").append(thumbSize).append("\"");
                     img.append("/>");
                     if (reg.export != null) img.append("</a>");
 
                     it.append(img);
                     it.append("</td></tr></table>\n");
 
-                    if (isLabel) {
+                    if (isLabel || entriesByLabel.size() == 0) {
                         List<String> l = imageThumbsByLabel.get(name);
                         if (l == null) imageThumbsByLabel.put(name, l = new ArrayList<String>());
                         l.add(img.toString());
@@ -815,7 +816,7 @@ public class HTMLReportTask extends AbstractTask {
 
         for (String bookmark : imageThumbsByLabel.keySet()) {
             List<String> l = imageThumbsByLabel.get(bookmark);
-            addBookmarkTitle(sb, bookmark, l.size());
+            addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty());
             int cnt = 0;
             for (String s : l) {
                 n++;
@@ -828,7 +829,7 @@ public class HTMLReportTask extends AbstractTask {
                     n = 0;
                     sb.delete(0, sb.length());
                     if (++cnt < l.size()) {
-                        addBookmarkTitle(sb, bookmark, l.size());
+                        addBookmarkTitle(sb, bookmark, l.size(), !entriesByLabel.isEmpty());
                     }
                 }
             }
@@ -862,8 +863,10 @@ public class HTMLReportTask extends AbstractTask {
         return "miniaturas_" + (page / 100) + "" + (page % 100 / 10) + "" + page % 10 + ".htm";
     }
 
-    private void addBookmarkTitle(StringBuilder sb, String bookmark, int size) {
-        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\"> Marcador: ");
+    private void addBookmarkTitle(StringBuilder sb, String bookmark, int size, boolean isLabel) {
+        sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">");
+        if(isLabel) sb.append("Marcador: ");
+        else sb.append("Categoria: ");
         sb.append(bookmark);
         sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">Contagem de arquivos: </span>");
         sb.append(size);
