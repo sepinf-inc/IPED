@@ -46,10 +46,6 @@ public class HashTask extends AbstractTask{
 	private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
 	
 	public static String EDONKEY = "edonkey";
-	public static String MD5 = "md5";
-	public static String SHA1 = "sha-1";
-	public static String SHA256 = "sha-256";
-	public static String SHA512 = "sha-512";
 	
 	private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 	
@@ -88,70 +84,75 @@ public class HashTask extends AbstractTask{
 		if(evidence.isQueueEnd())
 			return;
 		
-		boolean defaultHash = true;
-		for(String algo : digestMap.keySet()){
+		if(evidence.getHash() != null || digestMap.isEmpty())
+			return;
+		
+		InputStream in = null;
+		try {
+			in = evidence.getBufferedStream();
+			byte[] buf = new byte[1024 * 1024];
+			int len;
+			while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted())
+				for(String algo : digestMap.keySet()){
+					if(!algo.equals(EDONKEY))
+						digestMap.get(algo).update(buf, 0, len);
+					else
+						updateEd2k(buf, len);
+				}
 			
-			if(evidence.getExtraAttribute(algo) != null)
-				continue;
-			
-			InputStream in = null;
-			try {
-				in = evidence.getBufferedStream();
+			boolean defaultHash = true;
+			for(String algo : digestMap.keySet()){
 				byte[] hash;
 				if(!algo.equals(EDONKEY))
-					hash = compute(digestMap.get(algo), in);
+					hash = digestMap.get(algo).digest();
 				else
-					hash = computeEd2k(in);
+					hash = digestEd2k();
 				
 				String hashString = getHashString(hash);
-				
 				evidence.setExtraAttribute(algo, hashString);
 				
 				if(defaultHash)
 					evidence.setHash(hashString);
-
-			} catch (Exception e) {
-				LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
-				//e.printStackTrace();
-				
-			} finally {
-				IOUtil.closeQuietly(in);
+				defaultHash = false;
 			}
 			
-			defaultHash = false;
+
+		} catch (Exception e) {
+			if(e instanceof IOException)
+				evidence.setExtraAttribute("ioError", "true");
+			
+			LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+			//e.printStackTrace();
+			
+		} finally {
+			IOUtil.closeQuietly(in);
 		}
 
 	}
 	
-	public byte[] compute(MessageDigest digest, InputStream in) throws IOException {
-		byte[] buf = new byte[1024 * 1024];
-		int len;
-		while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted())
-			digest.update(buf, 0, len);
-
-		byte[] hash = digest.digest();
-		return hash;
+	private static int CHUNK_SIZE = 9500 * 1024;
+	private int chunk = 0, total = 0;
+	private ByteArrayOutputStream out = new ByteArrayOutputStream();
+	
+	private void updateEd2k(byte[] buffer, int len) throws IOException{
+		
+		MessageDigest md4 = digestMap.get(EDONKEY);
+		if (chunk + len >= CHUNK_SIZE) {
+            int offset = CHUNK_SIZE - chunk;
+            md4.update(buffer, 0, offset);
+            out.write(md4.digest());
+            chunk = len - offset;
+            md4.update(buffer, offset, chunk);
+        } else {
+            md4.update(buffer, 0, len);
+            chunk += len;
+        }
+        total += len;
 	}
 	
-	private byte[] computeEd2k(InputStream in) throws IOException{
+	private byte[] digestEd2k() throws IOException{
+		
 		MessageDigest md4 = digestMap.get(EDONKEY);
-		int CHUNK_SIZE = 9500 * 1024;
-	    byte[] buffer = new byte[8192];
-	    ByteArrayOutputStream out = new ByteArrayOutputStream();
-	    int len = 0, chunk = 0, total = 0;
-	    while ((len = in.read(buffer)) != -1) {
-	        if (chunk + len >= CHUNK_SIZE) {
-	            int offset = CHUNK_SIZE - chunk;
-	            md4.update(buffer, 0, offset);
-	            out.write(md4.digest());
-	            chunk = len - offset;
-	            md4.update(buffer, offset, chunk);
-	        } else {
-	            md4.update(buffer, 0, len);
-	            chunk += len;
-	        }
-	        total += len;
-	    }
 	    if(total == 0 || total % CHUNK_SIZE != 0)
 	    	out.write(md4.digest());
 
@@ -161,7 +162,12 @@ public class HashTask extends AbstractTask{
 	        out.write(md4.digest());
 	    }
 	    
-	    return out.toByteArray();
+	    byte[] ed2k = out.toByteArray();
+	    
+	    chunk = 0; total = 0;
+		out = new ByteArrayOutputStream();
+	    
+	    return ed2k;
 	}
 
 	public static String getHashString(byte[] hash) {
