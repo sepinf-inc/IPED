@@ -275,6 +275,12 @@ public class Configuration {
 		else
 			GalleryModel.GALLERY_THREADS = Runtime.getRuntime().availableProcessors();
 		
+		value = properties.getProperty("imgThumbSize");
+		if (value != null)
+			value = value.trim();
+		if (value != null && !value.isEmpty())
+			GalleryModel.thumbSize = Integer.valueOf(value);
+		
 		value = properties.getProperty("indexTempOnSSD");
 		if (value != null)
 			value = value.trim();

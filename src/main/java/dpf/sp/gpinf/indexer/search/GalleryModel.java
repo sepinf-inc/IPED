@@ -41,6 +41,8 @@ import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
 
+import com.sun.javafx.iio.ImageStorage.ImageType;
+
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -54,12 +56,13 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class GalleryModel extends AbstractTableModel {
 
 	public int colCount = 10;
-	public static int size = 150;
+	public static int thumbSize = 160;
 	public static int GALLERY_THREADS;
 
 	public Map<Integer, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<Integer, GalleryValue>());
 	private int maxCacheSize = 1000;
 	private ErrorIcon errorIcon = new ErrorIcon();
+	private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
 	private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
 	private ExecutorService executor;
 
@@ -135,8 +138,15 @@ public class GalleryModel extends AbstractTableModel {
 						return;
 
 					String hash = doc.get(IndexItem.HASH);
-					if(hash != null)
+					if(hash != null){
 						image = getViewImage(hash, !isSupportedImage(mediaType));
+						/*if(image != null)
+							if(image.getWidth() < thumbSize - 1 && image.getHeight() < thumbSize - 1){
+								value.originalW = image.getWidth();
+								value.originalH = image.getHeight();
+							}
+						*/
+					}
 					
 					String export = doc.get(IndexItem.EXPORT);
 					if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
@@ -160,15 +170,15 @@ public class GalleryModel extends AbstractTableModel {
 					}
 
 					if (image == null && stream != null) {
-						image = ImageUtil.getSubSampledImage(stream, size, size, value);
+						image = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize, value);
 						stream.reset();
 					}
 					
 					if(image == null && stream != null){
-						image = new GraphicsMagicConverter().getImage(stream, size);
+						image = new GraphicsMagicConverter().getImage(stream, thumbSize);
 					}
 					 
-					if (image == null)
+					if (image == null || image == errorImg)
 						value.icon = errorIcon;
 
 				} catch (Exception e) {
@@ -184,7 +194,9 @@ public class GalleryModel extends AbstractTableModel {
 					}
 				}
 
-				value.image = image;
+				if(image != errorImg)
+					value.image = image;
+				
 				cache.put(id, value);
 
 				SwingUtilities.invokeLater(new Runnable() {
@@ -218,10 +230,13 @@ public class GalleryModel extends AbstractTableModel {
 		File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
 		if(hashFile.exists()){
 			BufferedImage image = ImageIO.read(hashFile);
-			return ImageUtil.trim(image);
-		}
-					
-		return null;
+			if(image == null)
+				return errorImg;
+			else
+				return image;
+			
+		}else
+			return null;
 	}
 
 	private BufferedImage getThumbFromFTKReport(String export) {
