@@ -44,6 +44,8 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.HashTask;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
@@ -260,16 +262,32 @@ public class IPEDReader extends DataSourceReader{
 					
 					//Copia resultado prévio do OCR
 					String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
-		            File ocrDir = new File(indexDir.getParentFile(), ocrPrefix);
-		            File destDir = new File(output, ocrPrefix);
-		            if(ocrDir.exists()){
-		                destDir.mkdirs();
-		                for(String name : ocrDir.list())
+		            File ocrSrc = new File(indexDir.getParentFile(), ocrPrefix);
+		            File ocrDst = new File(output, ocrPrefix);
+		            if(ocrSrc.exists()){
+		                ocrDst.mkdirs();
+		                for(String name : ocrSrc.list())
 		                    if(name.equals(value + ".txt") || name.startsWith(value + "-child"))
-		                        IOUtil.copiaArquivo(new File(ocrDir, name), new File(destDir, name));
+		                        IOUtil.copiaArquivo(new File(ocrSrc, name), new File(ocrDst, name));
+		            }
+		            
+		            //Copia miniaturas
+		            File thumbSrc = Util.getFileFromHash(new File(indexDir.getParentFile(), ImageThumbTask.thumbsFolder), value, "jpg");
+		            File thumbDst = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), value, "jpg");
+		            if(thumbSrc.exists()){
+		                thumbDst.getParentFile().mkdirs();
+		                IOUtil.copiaArquivo(thumbSrc, thumbDst);
 		            }
 				}
 			}
+			
+			String[] hashes = {"md5", "sha-1", "sha-256", "sha-512", HashTask.EDONKEY};
+			for(String hash : hashes){
+				value = doc.get(hash);
+				if(value != null)
+					evidence.setExtraAttribute(hash, value);
+			}
+			
 			
 			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));
