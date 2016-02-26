@@ -66,7 +66,7 @@ public class IgnoreHardLinkTask extends AbstractTask{
 			else
 				hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
 			
-			HashValue hash = evidence.getHashValue();
+			//HashValue hash = evidence.getHashValue();
 			Object value = null;
 			boolean ignore = false;
 			
@@ -78,7 +78,8 @@ public class IgnoreHardLinkTask extends AbstractTask{
 				}
 				
 				if(hardLinkMap.containsKey(hardLink)){
-					value = hardLinkMap.get(hardLink);
+					ignore = true;
+					/*value = hardLinkMap.get(hardLink);
 					if(((Integer)evidence.getId()).equals(value)){
 						hardLinkMap.put(hardLink, hash);
 						lock.notifyAll();
@@ -88,20 +89,21 @@ public class IgnoreHardLinkTask extends AbstractTask{
 							lock.wait();
 							value = hardLinkMap.get(hardLink);
 						}
-					}
+					}*/
+					
 				}else{
-					hardLinkMap.put(hardLink, evidence.getId());
-					//evidence.setExtraAttribute("firstHardLink", "true");
+					//hardLinkMap.put(hardLink, evidence.getId());
+					hardLinkMap.put(hardLink, null);
 				}
 			}
 			
 			if(ignore){
 				evidence.setSleuthFile(null);
 				evidence.setExtraAttribute("ignoredHardLink", "true");
-				if(value == null)
+				//if(value == null)
 					evidence.setHash("");
-				else
-					evidence.setHash(((HashValue)value).toString());
+				//else
+				//	evidence.setHash(((HashValue)value).toString());
 			}
 			
 		}

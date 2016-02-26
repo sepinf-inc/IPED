@@ -23,7 +23,7 @@ public class TaskInstaller {
 		tasks.add(new TempFileTask(worker));
 		tasks.add(new HashTask(worker));
 		//Nova tarefa IgnoreHardLinkTask após HashTask para armazenar hash dos arquivos
-		tasks.add(new IgnoreHardLinkTask(worker));
+		//tasks.add(new IgnoreHardLinkTask(worker));
 		
 		tasks.add(new SignatureTask(worker));
 		tasks.add(new SetTypeTask(worker));

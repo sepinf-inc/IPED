@@ -50,7 +50,7 @@ extraCharsToIndex =
 convertCharsToLowerCase = true
 
 # Não re-processa hard links apontando para itens já processados. Os hard links são adicionados ao caso,
-# porém seu conteúdo não é processado (indexado, expandido, carveado, etc), mas aproveita o hash já calculado.
+# porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
 # Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
 ignoreHardLinks = false
 
