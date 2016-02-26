@@ -134,12 +134,12 @@ public class Statistics {
 		for(Worker worker : workers)
 			for(int i = 0; i < taskTimes.length; i++){
 				taskTimes[i] += worker.tasks.get(i).getTaskTime();
-				totalTime += taskTimes[i];
+				totalTime += worker.tasks.get(i).getTaskTime();
 			}
 		totalTime = totalTime / (1000000 * Configuration.numThreads);
 		for(int i = 0; i < taskTimes.length; i++){
 			long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
-			LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + "\t-\tTempo de execução: " + sec + "s (" + (100 * sec)/totalTime + "%)");
+			LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + ":\tTempo de execução:\t" + sec + "s (" + (100 * sec)/totalTime + "%)");
 		}
 		
 		LOGGER.info("Divisões de arquivo: {}", getSplits());
