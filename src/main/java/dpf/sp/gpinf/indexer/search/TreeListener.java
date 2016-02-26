@@ -52,7 +52,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 	Query treeQuery, recursiveTreeQuery;
 	boolean rootSelected = false;
 	HashSet<TreePath> selection = new HashSet<TreePath>();
-	private boolean collapsed = false;
+	private long collapsedTime = 0;
 
 	@Override
 	public void valueChanged(TreeSelectionEvent evt) {
@@ -63,8 +63,8 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 			else
 				selection.add(path);
 		
-		if(collapsed){
-			collapsed = false;
+		if(System.currentTimeMillis() - collapsedTime < 200){
+			collapsedTime = 0;
 			return;
 		}
 		
@@ -171,7 +171,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
 	@Override
 	public void treeCollapsed(TreeExpansionEvent event) {
-		collapsed = true;
+		collapsedTime = System.currentTimeMillis();
 		
 	}
 
