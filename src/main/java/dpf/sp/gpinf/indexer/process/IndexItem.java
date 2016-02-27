@@ -110,6 +110,7 @@ public class IndexItem {
 	private static volatile boolean guessMetaTypes = false;
 	
 	private static Map<String, Class> typesMap = new ConcurrentHashMap<String, Class>();
+	private static Map<String, Class> newtypesMap = new ConcurrentHashMap<String, Class>();
 
 	private static FieldType contentField = new FieldType();
 	private static FieldType storedTokenizedNoNormsField = new FieldType();
@@ -141,6 +142,9 @@ public class IndexItem {
 	}
 	
 	public static void saveMetadataTypes(File confDir) throws IOException{
+		for(String key : newtypesMap.keySet())
+			if(!typesMap.containsKey(key))
+				typesMap.put(key, newtypesMap.get(key));
 		File metadataTypesFile = new File(confDir, attrTypesFilename); 
 		UTF8Properties props = new UTF8Properties();
 		for(Entry<String, Class> e : typesMap.entrySet())
@@ -335,7 +339,7 @@ public class IndexItem {
 		return doc;
 	}
 	
-	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadata){
+	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isNewMetadataKey){
 		boolean isString = false;
 	    if(oValue instanceof Date){
             String value = DateUtil.dateToString((Date)oValue);
@@ -363,15 +367,21 @@ public class IndexItem {
             doc.add(new DoubleDocValuesField(key, (Double)oValue));
             
         }else{
-        	doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
         	isString = true;
         }
 	    
-	    if(isMetadata || isString){
+	    if(isNewMetadataKey || isString){
+	    	doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
 	    	String value = oValue.toString();
 	        if(value.length() > 16000)
 	            value = value.substring(value.length() - 16000);
-	        doc.add(getCollationDocValue("_" + key, value));
+	        /*
+	         * utilizar docvalue de outro tipo com mesmo nome provoca erro,
+	         * entao usamos o prefixo "_" no nome para diferenciar
+	         */
+	        String keyPrefix  = "";
+	        if(isNewMetadataKey) keyPrefix = "_";
+	        doc.add(getCollationDocValue(keyPrefix + key, value));
 	    }
 	    
 	}
@@ -391,26 +401,26 @@ public class IndexItem {
             	continue;
             
             Object oValue = value;
-            Class type = typesMap.get(key); 
-            if(type != null && !type.equals(String.class))
+            Class type = typesMap.get(key);
+            if(type == null || !type.equals(String.class))
             	try{
-            		if(type.equals(Integer.class))
+            		if(type == null || type.equals(Double.class)){
+                        oValue = Double.valueOf(value);
+                        if(type == null)
+                        	newtypesMap.put(key, Double.class);
+            		}else if(type.equals(Integer.class))
                         oValue = Integer.valueOf(value);
-                    else if(type.equals(Long.class))
-                        oValue = Long.valueOf(value);
                     else if(type.equals(Float.class))
                         oValue = Float.valueOf(value);
-                    else if(type.equals(Double.class))
-                        oValue = Double.valueOf(value);
+                    else if(type.equals(Long.class))
+                        oValue = Long.valueOf(value);
             		
             	}catch(NumberFormatException e){
-            		//e.printStackTrace();
-            		typesMap.put(key, String.class);
-            		//oValue = null;
+            		if(type == null)
+            			typesMap.put(key, String.class);
             	}
             
-            //if(oValue != null)
-            addExtraAttributeToDoc(doc, key, oValue, true);
+            addExtraAttributeToDoc(doc, key, oValue, type == null);
             
         }
 	}
