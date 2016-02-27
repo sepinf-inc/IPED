@@ -107,6 +107,7 @@ public class ImageThumbTask extends AbstractTask{
             	BufferedInputStream stream = evidence.getBufferedStream();
                 try{
                     img = new GraphicsMagicConverter().getImage(stream, thumbSize);
+                    value = null;
                 }finally{
                     IOUtil.closeQuietly(stream);
                 }
@@ -115,8 +116,8 @@ public class ImageThumbTask extends AbstractTask{
             tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder));
             
             if(img != null){
-                if(img.getWidth() > thumbSize || img.getHeight() > thumbSize)
-                	img = resizeThumb(img, thumbSize);
+                if(value != null && (value.originalW > thumbSize || value.originalH > thumbSize))
+                	img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
                 img = ImageUtil.getOpaqueImage(img);
                 
                 ImageIO.write(img, "jpg", tmp);
@@ -134,19 +135,6 @@ public class ImageThumbTask extends AbstractTask{
             else
             	evidence.setExtraAttribute(HAS_THUMB, false);
         }
-    }
-    
-    private static BufferedImage resizeThumb(BufferedImage img, int thumbSize) {
-        int width = img.getWidth();
-        int height = img.getHeight();
-        if (width > height) {
-            height = height * thumbSize / width;
-            width = thumbSize;
-        } else {
-            width = width * thumbSize / height;
-            height = thumbSize;
-        }
-        return ImageUtil.resizeImage(img, width, height);
     }
 
 }

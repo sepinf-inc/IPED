@@ -140,12 +140,12 @@ public class GalleryModel extends AbstractTableModel {
 					String hash = doc.get(IndexItem.HASH);
 					if(hash != null){
 						image = getViewImage(hash, !isSupportedImage(mediaType));
-						/*if(image != null)
-							if(image.getWidth() < thumbSize - 1 && image.getHeight() < thumbSize - 1){
+						int resizeTolerance = 4;
+						if(image != null)
+							if(image.getWidth() < thumbSize - resizeTolerance && image.getHeight() < thumbSize - resizeTolerance){
 								value.originalW = image.getWidth();
 								value.originalH = image.getHeight();
 							}
-						*/
 					}
 					
 					String export = doc.get(IndexItem.EXPORT);
