@@ -30,6 +30,7 @@ import gpinf.dev.data.CaseData;
 public class Statistics {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
+	private static Statistics instance = null;
 	
 	CaseData caseData;
 	File indexDir;
@@ -45,8 +46,19 @@ public class Statistics {
 	int corruptCarveIgnored = 0;
 	int ignored = 0;
 	int previousIndexedFiles = 0;
+	int ioerrors = 0;
 	
-	public Statistics(CaseData caseData, File indexDir){
+	public static Statistics get(CaseData caseData, File indexDir){
+		if(instance == null)
+			instance = new Statistics(caseData, indexDir);
+		return instance;
+	}
+	
+	public static Statistics get(){
+		return instance;
+	}
+	
+	private Statistics(CaseData caseData, File indexDir){
 		this.caseData = caseData;
 		this.indexDir = indexDir;
 	}
@@ -73,6 +85,14 @@ public class Statistics {
 
 	synchronized public int getProcessed() {
 		return processed;
+	}
+	
+	synchronized public void incIoErrors() {
+		ioerrors++;
+	}
+
+	synchronized public int getIoErrors() {
+		return ioerrors;
 	}
 
 	synchronized public void incActiveProcessed() {
@@ -123,7 +143,7 @@ public class Statistics {
 	public void logarEstatisticas(Manager manager) throws Exception {
 
 		int processed = getProcessed();
-		int extracted = ExportFileTask.getSubitensExtracted();
+		int extracted = ExportFileTask.getItensExtracted();
 		int activeFiles = getActiveProcessed();
 		int carvedIgnored = getCorruptCarveIgnored();
 		int ignored = getIgnored();
@@ -139,14 +159,15 @@ public class Statistics {
 		totalTime = totalTime / (1000000 * Configuration.numThreads);
 		for(int i = 0; i < taskTimes.length; i++){
 			long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
-			LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + ":\tTempo de execução:\t" + sec + "s (" + (100 * sec)/totalTime + "%)");
+			LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + ":\tTempo de execução:\t" + sec + "s (" + Math.round((100f * sec)/totalTime) + "%)");
 		}
 		
 		LOGGER.info("Divisões de arquivo: {}", getSplits());
 		LOGGER.info("Timeouts: {}", getTimeouts());
 		LOGGER.info("Exceções de parsing: {}", IndexerDefaultParser.parsingErrors);
+		LOGGER.info("Erros de leitura de I/O: {}", this.getIoErrors());
 		LOGGER.info("Subitens descobertos: {}", ParsingTask.getSubitensDiscovered());
-		LOGGER.info("Itens extraídos: {}", extracted);
+		LOGGER.info("Itens exportados: {}", extracted);
 		LOGGER.info("Itens de Carving: {}", CarveTask.getItensCarved());
 		LOGGER.info("Carvings corrompidos ignorados: {}", carvedIgnored);
 		LOGGER.info("Itens ignorados: {}", ignored);

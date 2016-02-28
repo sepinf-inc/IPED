@@ -58,7 +58,7 @@ public class ExportFileTask extends AbstractTask{
 	private static String SUBITEM_DIR = "subitens";
 	
 	private static HashSet<String> categoriesToExtract = new HashSet<String>();
-	public static int subDirCounter = 0, subitensExtracted = 0;
+	public static int subDirCounter = 0, itensExtracted = 0;
 	private static File subDir;
 	
 	private static boolean computeHash = false;
@@ -70,12 +70,12 @@ public class ExportFileTask extends AbstractTask{
 		super(worker);
 	}
 
-	public static synchronized void incSubitensExtracted() {
-		subitensExtracted++;
+	public static synchronized void incItensExtracted() {
+		itensExtracted++;
 	}
 
-	public static int getSubitensExtracted() {
-		return subitensExtracted;
+	public static int getItensExtracted() {
+		return itensExtracted;
 	}
 	
 	private void setExtractDir(){
@@ -139,7 +139,7 @@ public class ExportFileTask extends AbstractTask{
             }else
             	extract(evidence);
             
-            incSubitensExtracted();
+            incItensExtracted();
             copyViewFile(evidence);
         }
 		
@@ -154,7 +154,7 @@ public class ExportFileTask extends AbstractTask{
 				evidence.setExportedFile(null);
 				evidence.setDeleteFile(true);
 			}
-			incSubitensExtracted();
+			incItensExtracted();
 		}
 		
 		if (hasCategoryToExtract() && !evidence.isToExtract())
@@ -362,7 +362,7 @@ public class ExportFileTask extends AbstractTask{
 		if (value != null && !value.isEmpty())
 			computeHash = true;
 		
-		subitensExtracted = 0;
+		itensExtracted = 0;
 		subDirCounter = 0;
 		
 		hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);

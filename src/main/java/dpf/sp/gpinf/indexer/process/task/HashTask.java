@@ -118,9 +118,10 @@ public class HashTask extends AbstractTask{
 			
 
 		} catch (Exception e) {
-			if(e instanceof IOException)
+			if(e instanceof IOException){
 				evidence.setExtraAttribute("ioError", "true");
-			
+				stats.incIoErrors();
+			}
 			LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 			//e.printStackTrace();
 			

@@ -199,8 +199,9 @@ public class Worker extends Thread {
 		// caso contrário processa o item no worker atual
 		else{
 			long t = System.nanoTime()/1000;
+			AbstractTask task = this.runningTask;
 			process(evidence);
-			this.runningTask.decrementTaskTime(System.nanoTime()/1000 - t);
+			task.addSubitemProcessingTime(System.nanoTime()/1000 - t);
 		}
 			
 	}

@@ -57,14 +57,14 @@ public abstract class AbstractTask {
 	 */
 	protected AbstractTask nextTask;
 	
-	public long taskTime;
+	private long taskTime, subitemProcessingTime;
 	
 	public long getTaskTime(){
 		return taskTime;
 	}
 	
-	public void decrementTaskTime(long delta){
-		taskTime -= delta;
+	public void addSubitemProcessingTime(long time){
+		subitemProcessingTime += time;
 	}
 	
 	/**
@@ -133,7 +133,8 @@ public abstract class AbstractTask {
 		if(!evidence.isToIgnore() || processIgnoredItem()){
 			long t = System.nanoTime()/1000;
 			processMonitorTimeout(evidence);
-			taskTime += System.nanoTime()/1000 - t;
+			taskTime += System.nanoTime()/1000 - t - subitemProcessingTime;
+			subitemProcessingTime = 0;
 		}
 		
 		sendToNextTask(evidence);

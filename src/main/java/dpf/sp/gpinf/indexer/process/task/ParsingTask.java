@@ -318,8 +318,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 		TemporaryResources tmp = new TemporaryResources();
 		String subitemPath = null;
 		try {
-			incSubitensDiscovered();
-			
 			ItemInfo itemInfo = context.get(ItemInfo.class);
 			itemInfo.incChild();
 			
@@ -401,6 +399,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 					}
 					*/
 					worker.processNewItem(subItem);
+					incSubitensDiscovered();
 	
 				}finally{
 					//despausa contador de timeout do pai somente após processar subitem

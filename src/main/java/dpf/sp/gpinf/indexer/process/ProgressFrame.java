@@ -22,6 +22,7 @@ import gpinf.dev.data.EvidenceFile;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -30,15 +31,24 @@ import java.text.NumberFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 
 /**
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos itens sendo processados.
@@ -47,31 +57,46 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
 	private static final long serialVersionUID = -1130342847618772236L;
 	private JProgressBar progressBar;
-	private JLabel list;
+	private JLabel tasks, itens, stats;
 	int indexed = 0, discovered = 0;
 	long rate = 0;
 	int volume, taskSize;
 	private SwingWorker task;
 	private Date indexStart;
-	private HashMap<Integer, String> itens = new HashMap<Integer, String>();
 	private Worker[] workers;
 	private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
 
 	public ProgressFrame(SwingWorker task) {
 		super(Versao.APP_NAME);
 
-		this.setBounds(0, 0, 600, 300);
+		this.setBounds(0, 0, 800, 400);
 		this.setLocationRelativeTo(null);
 		this.task = task;
 
 		progressBar = new JProgressBar(0, 1);
-		progressBar.setPreferredSize(new Dimension(600, 50));
+		progressBar.setPreferredSize(new Dimension(600, 40));
 		progressBar.setStringPainted(true);
 		progressBar.setString("Inicializando...");
+		
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 
-		list = new JLabel();
-		list.setVerticalAlignment(SwingConstants.TOP);
-		JScrollPane scrollPane = new JScrollPane(list);
+		tasks = new JLabel();
+		itens = new JLabel();
+		stats = new JLabel();
+		tasks.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		stats.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		itens.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		stats.setAlignmentY(TOP_ALIGNMENT);
+		itens.setAlignmentY(TOP_ALIGNMENT);
+		tasks.setAlignmentY(TOP_ALIGNMENT);
+		
+		panel.add(stats);
+		panel.add(Box.createRigidArea(new Dimension(1,0)));
+		panel.add(tasks);
+		panel.add(Box.createRigidArea(new Dimension(1,0)));
+		panel.add(itens);
+		JScrollPane scrollPane = new JScrollPane(panel);
 
 		this.getContentPane().add(progressBar, BorderLayout.NORTH);
 		this.getContentPane().add(scrollPane, BorderLayout.CENTER);
@@ -99,7 +124,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		if ("processed".equals(evt.getPropertyName())) {
 			indexed = (Integer) evt.getNewValue();
 			updateString();
-			list.setText(getItemList());
+			tasks.setText(getTaskTimes());
+			itens.setText(getItemList());
+			stats.setText(getStats());
 			
 		} else if ("taskSize".equals(evt.getPropertyName())) {
 			taskSize = (Integer) evt.getNewValue() ;
@@ -111,7 +138,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			
 		} else if ("mensagem".equals(evt.getPropertyName())) {
 			progressBar.setString((String) evt.getNewValue());
-			list.setText("");
+			tasks.setText(getTaskTimes());
+			itens.setText(getItemList());
+			stats.setText(getStats());
 			
 		} else if ("progresso".equals(evt.getPropertyName())) {
 			if (indexStart == null)
@@ -133,25 +162,139 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	private String getItemList() {
 		if (workers == null)
 			return "";
-
-		String msg = "<html>Processando: " + rate + " GB/h<br>";
+		StringBuilder msg = new StringBuilder();
+		msg.append("<html>Itens em processamento:<br>");
+		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
 		for (int i = 0; i < workers.length; i++) {
+			if(!workers[i].isAlive())
+				continue;
+			msg.append("<tr><td>");
+			msg.append(workers[i].getName());
+			msg.append("</td><td>");
+			AbstractTask task = workers[i].runningTask;
+			if(task != null) msg.append(task.getClass().getSimpleName());
+			else msg.append("Aguardando item...");
+			msg.append("</td><td>");
 			EvidenceFile evidence = workers[i].evidence;
 			if (evidence != null){
-				AbstractTask task = workers[i].runningTask;
-				String taskName = "";
-				if(task != null)
-					taskName = task.getClass().getSimpleName() + ": ";
 				String len = "";
 				if(evidence.getLength() != null)
 					len = " (" + sizeFormat.format(evidence.getLength()) + " bytes)";
-				msg += workers[i].getName() + " - " + taskName + evidence.getPath() +  len  + "<br>";
-			}
-				
+				msg.append(evidence.getPath() + len);
+			}else
+				msg.append("Aguardando item...");
+			msg.append("</td></tr>");
 		}
+		msg.append("</table>");
 
-		return msg;
+		return msg.toString();
 
+	}
+	
+	private String getTaskTimes(){
+		if (workers == null)
+			return "";
+		StringBuilder msg = new StringBuilder();
+		msg.append("<html>Tempos de execução por tarefa:<br>");
+		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
+		long totalTime = 0;
+		long[] taskTimes = new long[workers[0].tasks.size()];
+		for(Worker worker : workers)
+			for(int i = 0; i < taskTimes.length; i++){
+				taskTimes[i] += worker.tasks.get(i).getTaskTime();
+				totalTime += worker.tasks.get(i).getTaskTime();
+			}
+		totalTime = totalTime / (1000000 * Configuration.numThreads);
+		for(int i = 0; i < taskTimes.length; i++){
+			long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
+			msg.append("<tr><td>");
+			msg.append(workers[0].tasks.get(i).getClass().getSimpleName());
+			msg.append("</td><td>");
+			msg.append(sec + "s (" + Math.round((100f * sec)/totalTime) + "%)");
+			msg.append("</td></tr>");
+		}
+		msg.append("</table>");
+		return msg.toString();
+	}
+	
+	private String getStats(){
+		if(Statistics.get() == null) return "";
+		StringBuilder msg = new StringBuilder();
+		msg.append("<html>Estatísticas:<br>");
+		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
+		msg.append("<tr><td>");
+		msg.append("Velocidade média");
+		msg.append("</td><td>");
+		msg.append(rate + " GB/h");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens descobertos");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().caseData.getDiscoveredEvidences());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Volume descoberto");
+		msg.append("</td><td>");
+		long discoveredVol = Statistics.get().caseData.getDiscoveredVolume() / (1 << 20);
+		msg.append(NumberFormat.getNumberInstance().format(discoveredVol) + " MB");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens processados");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getProcessed());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Volume processado");
+		msg.append("</td><td>");
+		msg.append(NumberFormat.getNumberInstance().format(Statistics.get().getVolume() / (1 << 20)) + " MB");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens ativos processados");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getActiveProcessed());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Subitens extraídos");
+		msg.append("</td><td>");
+		msg.append(ParsingTask.getSubitensDiscovered());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens recuperados via carving");
+		msg.append("</td><td>");
+		msg.append(CarveTask.getItensCarved());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Carvings corrompidos ignorados");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getCorruptCarveIgnored());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens exportados");
+		msg.append("</td><td>");
+		msg.append(ExportFileTask.getItensExtracted());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens ignorados");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getIgnored());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Erros de parsing");
+		msg.append("</td><td>");
+		msg.append(IndexerDefaultParser.parsingErrors);
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Erros de IO");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getIoErrors());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Timeouts");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getTimeouts());
+		msg.append("</td></tr>");
+		msg.append("</table>");
+		return msg.toString();
 	}
 
 	@Override

@@ -123,7 +123,7 @@ public class Manager {
 		if (indexTemp == null || IndexFiles.getInstance().appendIndex)
 			indexTemp = indexDir;
 
-		stats = new Statistics(caseData, indexDir);
+		stats = Statistics.get(caseData, indexDir);
 		
 		OCRParser.OUTPUT_BASE = output;
 
