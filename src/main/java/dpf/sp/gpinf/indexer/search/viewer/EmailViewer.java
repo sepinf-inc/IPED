@@ -167,10 +167,10 @@ public class EmailViewer extends HtmlViewer {
 		PlatformImpl.runLater(new Runnable() {
 			@Override
 			public void run() {
-				webEngine.setJavaScriptEnabled(true);
 				webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
 					@Override
 					public void changed(ObservableValue<? extends State> ov, State t, State t1) {
+						webEngine.setJavaScriptEnabled(true);
 						if (t1 == Worker.State.SUCCEEDED || t1 == Worker.State.FAILED) {
 
 							JSObject window = (JSObject) webEngine.executeScript("window");
