@@ -4,6 +4,7 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -57,14 +58,19 @@ public abstract class AbstractTask {
 	 */
 	protected AbstractTask nextTask;
 	
-	private long taskTime, subitemProcessingTime;
+	private long taskTime;
+	
+	private HashMap<Integer, Long> subitemProcessingTime = new HashMap<Integer, Long>();
 	
 	public long getTaskTime(){
 		return taskTime;
 	}
 	
 	public void addSubitemProcessingTime(long time){
-		subitemProcessingTime += time;
+		Long prevTime = subitemProcessingTime.get(worker.evidence.getId());
+		if(prevTime == null) prevTime = 0L;
+		prevTime += time;
+		subitemProcessingTime.put(worker.evidence.getId(), prevTime);
 	}
 	
 	/**
@@ -133,8 +139,9 @@ public abstract class AbstractTask {
 		if(!evidence.isToIgnore() || processIgnoredItem()){
 			long t = System.nanoTime()/1000;
 			processMonitorTimeout(evidence);
-			taskTime += System.nanoTime()/1000 - t - subitemProcessingTime;
-			subitemProcessingTime = 0;
+			Long subitensTime =  subitemProcessingTime.remove(evidence.getId());
+			if(subitensTime == null) subitensTime = 0L;
+			taskTime += System.nanoTime()/1000 - t - subitensTime;
 		}
 		
 		sendToNextTask(evidence);

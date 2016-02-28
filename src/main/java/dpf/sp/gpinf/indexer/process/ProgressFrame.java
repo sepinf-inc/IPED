@@ -28,6 +28,7 @@ import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -59,12 +60,14 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	private JProgressBar progressBar;
 	private JLabel tasks, itens, stats;
 	int indexed = 0, discovered = 0;
-	long rate = 0;
+	long rate = 0, instantRate;
 	int volume, taskSize;
+	long secsToEnd;
 	private SwingWorker task;
 	private Date indexStart;
 	private Worker[] workers;
 	private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
+	private SimpleDateFormat df = new SimpleDateFormat("dd/MM HH:mm:ss");
 
 	public ProgressFrame(SwingWorker task) {
 		super(Versao.APP_NAME);
@@ -111,7 +114,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			msg = "Localizados " + discovered + " arquivos";
 
 		if (taskSize != 0 && indexStart != null) {
-			long secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime()) / (((long) volume + 1) * 1000);
+			secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime()) / (((long) volume + 1) * 1000);
 			msg += " - Término em " + secsToEnd / 60 + "m " + secsToEnd % 60 + "s";
 		}
 		progressBar.setString(msg);
@@ -120,6 +123,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
+		if (indexStart == null)
+			indexStart = new Date();
 		
 		if ("processed".equals(evt.getPropertyName())) {
 			indexed = (Integer) evt.getNewValue();
@@ -143,15 +148,15 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			stats.setText(getStats());
 			
 		} else if ("progresso".equals(evt.getPropertyName())) {
-			if (indexStart == null)
-				indexStart = new Date();
+			long prevVolume = volume;
 			volume = (Integer) evt.getNewValue();
 			if (taskSize != 0)
 				progressBar.setValue((volume));
 			
 			Date now = new Date();
 			long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
-			rate = (long)volume * 1000000L * 3600L / (1024L * 1024L * 1024L * interval);
+			rate = (long)volume * 1000000L * 3600L / ((1 << 30) * interval);
+			instantRate = (long)(volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
 			
 		} else if ("workers".equals(evt.getPropertyName())) {
 			workers = (Worker[]) evt.getNewValue();
@@ -210,7 +215,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			msg.append("<tr><td>");
 			msg.append(workers[0].tasks.get(i).getClass().getSimpleName());
 			msg.append("</td><td>");
-			msg.append(sec + "s (" + Math.round((100f * sec)/totalTime) + "%)");
+			msg.append(sec + "s (" + (100 * sec)/totalTime + "%)");
 			msg.append("</td></tr>");
 		}
 		msg.append("</table>");
@@ -223,9 +228,24 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append("<html>Estatísticas:<br>");
 		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
 		msg.append("<tr><td>");
+		msg.append("Início");
+		msg.append("</td><td>");
+		msg.append(df.format(indexStart));
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Término estimado");
+		msg.append("</td><td>");
+		msg.append(secsToEnd == 0 ? "-" : secsToEnd/60 + "m " + secsToEnd%60 + "s");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
 		msg.append("Velocidade média");
 		msg.append("</td><td>");
 		msg.append(rate + " GB/h");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Velocidade atual");
+		msg.append("</td><td>");
+		msg.append(instantRate + " GB/h");
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
 		msg.append("Itens descobertos");
@@ -259,12 +279,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append(ParsingTask.getSubitensDiscovered());
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
-		msg.append("Itens recuperados via carving");
+		msg.append("Itens de carving");
 		msg.append("</td><td>");
 		msg.append(CarveTask.getItensCarved());
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
-		msg.append("Carvings corrompidos ignorados");
+		msg.append("Carvings ignorados");
 		msg.append("</td><td>");
 		msg.append(Statistics.get().getCorruptCarveIgnored());
 		msg.append("</td></tr>");
