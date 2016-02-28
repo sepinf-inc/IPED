@@ -210,6 +210,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 				totalTime += worker.tasks.get(i).getTaskTime();
 			}
 		totalTime = totalTime / (1000000 * Configuration.numThreads);
+		if(totalTime == 0) totalTime = 1;
 		for(int i = 0; i < taskTimes.length; i++){
 			long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
 			msg.append("<tr><td>");
