@@ -36,7 +36,7 @@
 	<parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
 	<parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
 	<parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
-	<parser class="org.apache.tika.parser.microsoft.OfficeParser"></parser>
+	<parser class="org.apache.tika.parser.microsoft.OfficeParserPatched"></parser>
 	<parser class="org.apache.tika.parser.microsoft.TNEFParser"></parser>
 	<parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"></parser>
 	<parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
