@@ -69,7 +69,17 @@ public class GraphicsMagicConverter {
 		}
 		
 	}
+	
 	public BufferedImage getImage(final InputStream in,final int resolution){
+		try {
+			return getImage(in, resolution, false);
+			
+		} catch (TimeoutException e) {
+			return null;
+		}
+	}
+	
+	public BufferedImage getImage(final InputStream in,final int resolution, boolean throwTimeout) throws TimeoutException{
 	
 		
 		if(!errorDisplayed)
@@ -118,9 +128,11 @@ public class GraphicsMagicConverter {
 						}
 		 				
 		 		} catch (TimeoutException e) {
-		 			Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP, probably the image is corrupted.");
 		 			convertTask.cancel(true);
-		 			
+		 			if(throwTimeout)
+		 				throw e;
+		 			else
+		 				Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP.");
 		 		}
 				
 				return s2b.getImage();

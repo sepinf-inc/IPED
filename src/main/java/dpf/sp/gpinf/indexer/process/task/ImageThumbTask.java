@@ -9,6 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
 
@@ -19,6 +20,7 @@ import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ImageThumbTask extends AbstractTask{
@@ -27,11 +29,13 @@ public class ImageThumbTask extends AbstractTask{
 		super(worker);
 	}
 
-	public static String thumbsFolder = "thumbs";
+	public static final String thumbsFolder = "thumbs";
 	
-	private static String enableProperty = "enableImageThumbs";
+	private static final String enableProperty = "enableImageThumbs";
 	
-    public static String HAS_THUMB = "hasThumb";
+    public static final String HAS_THUMB = "hasThumb";
+    
+    public static final String THUMB_TIMEOUT = "imgThumbTimeout";
     
     private static int thumbSize = 160;
     
@@ -106,8 +110,14 @@ public class ImageThumbTask extends AbstractTask{
             if (img == null) {
             	BufferedInputStream stream = evidence.getBufferedStream();
                 try{
-                    img = new GraphicsMagicConverter().getImage(stream, thumbSize);
+                    img = new GraphicsMagicConverter().getImage(stream, thumbSize, true);
                     value = null;
+                }catch(TimeoutException e){
+                	stats.incTimeouts();
+                	evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
+                	Log.warning(getClass().getSimpleName(), "Timeout ao gerar miniatura via GraphicsMagick: "
+                			+ evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+                	
                 }finally{
                     IOUtil.closeQuietly(stream);
                 }
@@ -124,7 +134,8 @@ public class ImageThumbTask extends AbstractTask{
             }
                 
         } catch (Exception e) {
-            e.printStackTrace();
+        	Log.warning(getClass().getSimpleName(), "Erro ao gerar miniatura: "
+        			+ evidence.getPath() + "(" + evidence.getLength() + " bytes)");
             
         }finally{
         	if(tmp != null && !tmp.renameTo(thumbFile))
