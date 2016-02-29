@@ -164,13 +164,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	}
 
 	
-	public static void inicializar(String index, IndexWriter writer) {
+	public static void inicializar(String index) {
 		try {
 			Directory directory = FSDirectory.open(new File(index));
-			if(writer == null)
-			    App.get().reader = DirectoryReader.open(directory);
-			else
-			    App.get().reader = DirectoryReader.open(writer, false);
+			App.get().reader = DirectoryReader.open(directory);
 			
 			if(Configuration.searchThreads > 1){
 				App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
@@ -199,8 +196,4 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 		}
 	}
 	
-	public static void inicializar(String index){
-	    inicializar(index, null);
-	}
-
 }
