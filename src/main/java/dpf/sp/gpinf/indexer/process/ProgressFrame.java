@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.process;
 import gpinf.dev.data.EvidenceFile;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.WindowEvent;
@@ -68,6 +69,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	private Worker[] workers;
 	private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
 	private SimpleDateFormat df = new SimpleDateFormat("dd/MM HH:mm:ss");
+	
+	private class RestrictedSizeLabel extends JLabel{
+		public Dimension getMaximumSize(){
+			return this.getPreferredSize();
+		}
+	}
 
 	public ProgressFrame(SwingWorker task) {
 		super(Versao.APP_NAME);
@@ -81,12 +88,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		progressBar.setStringPainted(true);
 		progressBar.setString("Inicializando...");
 		
-		JPanel panel = new JPanel();
+		JPanel panel = new JPanel();//new FlowLayout(FlowLayout.LEADING));
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 
-		tasks = new JLabel();
-		itens = new JLabel();
-		stats = new JLabel();
+		tasks = new RestrictedSizeLabel();
+		itens = new RestrictedSizeLabel();
+		stats = new RestrictedSizeLabel();
 		tasks.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		stats.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		itens.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -95,9 +102,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		tasks.setAlignmentY(TOP_ALIGNMENT);
 		
 		panel.add(stats);
-		panel.add(Box.createRigidArea(new Dimension(1,0)));
 		panel.add(tasks);
-		panel.add(Box.createRigidArea(new Dimension(1,0)));
 		panel.add(itens);
 		JScrollPane scrollPane = new JScrollPane(panel);
 
@@ -170,9 +175,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		StringBuilder msg = new StringBuilder();
 		msg.append("<html>Itens em processamento:<br>");
 		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
+		boolean hasWorkerAlive = false;
 		for (int i = 0; i < workers.length; i++) {
 			if(!workers[i].isAlive())
 				continue;
+			hasWorkerAlive = true;
 			msg.append("<tr><td>");
 			msg.append(workers[i].getName());
 			msg.append("</td><td>");
@@ -191,7 +198,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			msg.append("</td></tr>");
 		}
 		msg.append("</table>");
-
+		if(!hasWorkerAlive)
+			return "";
 		return msg.toString();
 
 	}
