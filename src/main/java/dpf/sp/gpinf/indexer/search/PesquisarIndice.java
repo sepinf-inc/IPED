@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.awt.Dialog.ModalityType;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -341,43 +342,53 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	@Override
 	public SearchResult doInBackground() {
 		
-		SearchResult result = null;
-		try {
-			progressDialog = new ProgressDialog(App.get(), this, true);
-				
-			result = pesquisar();
+		synchronized(this.getClass()){
+			
+			if (this.isCancelled())
+				return null;
+			
+			SearchResult result = null;
+			try {
+				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
+					
+				result = pesquisar();
+				System.out.println("searched!");
 
-			String filtro = App.get().filtro.getSelectedItem().toString();
-			if (filtro.equals(App.FILTRO_SELECTED)){
-				result = filtrarSelecionados(result);
-				numFilters++;
+				String filtro = App.get().filtro.getSelectedItem().toString();
+				if (filtro.equals(App.FILTRO_SELECTED)){
+					result = filtrarSelecionados(result);
+					numFilters++;
+				}
+				
+				HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
+				if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
+					numFilters++;
+					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
+						if(bookmarkSelection.size() == 1)
+							result = filtrarSemMarcadores(result);
+						else{
+							bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
+							result = filtrarSemEComMarcadores(result, bookmarkSelection);
+						}
+					}else
+						result = filtrarMarcadores(result, bookmarkSelection);
+					
+				}
+				 
+				countVolume(result);
+
+				App.get().highlightTerms = getQueryStrings();
+
+			} catch (Throwable e) {
+				e.printStackTrace();
+				return new SearchResult(0);
+				
 			}
 			
-			HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
-			if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
-				numFilters++;
-				if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
-					if(bookmarkSelection.size() == 1)
-						result = filtrarSemMarcadores(result);
-					else{
-						bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-						result = filtrarSemEComMarcadores(result, bookmarkSelection);
-					}
-				}else
-					result = filtrarMarcadores(result, bookmarkSelection);
-				
-			}
-			 
-			countVolume(result);
-
-			App.get().highlightTerms = getQueryStrings();
-
-		} catch (Throwable e) {
-			e.printStackTrace();
-			return new SearchResult(0);
+			return result;
 		}
 		
-		return result;
+		
 	}
 
 	@Override
@@ -463,9 +474,10 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 	@Override
 	public boolean doCancel(boolean mayInterruptIfRunning) {
-
+		
 		try {
-			LOGGER.info("Pesquisa cancelada!");
+			LOGGER.error("Pesquisa cancelada!");
+			RowComparator.closeAtomicReader();
 			App.get().reader.close();
 			String index = App.get().codePath + "/../index";
 			Directory directory = FSDirectory.open(new File(index));
@@ -479,7 +491,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
 		return cancel(mayInterruptIfRunning);
 	}
 

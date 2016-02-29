@@ -41,7 +41,7 @@ public class RowComparator implements Comparator<Integer> {
 	private boolean bookmarkCol = false;
 	private boolean scoreCol = false;
 	
-	private static AtomicReader atomicReader;
+	private volatile static AtomicReader atomicReader;
 	
 	private App app = App.get();
 	
@@ -87,6 +87,12 @@ public class RowComparator implements Comparator<Integer> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+	}
+	
+	public static void closeAtomicReader() throws IOException{
+		if(atomicReader != null)
+			atomicReader.close();
+		atomicReader = null;
 	}
 	
 	public boolean isStringComparator(){
