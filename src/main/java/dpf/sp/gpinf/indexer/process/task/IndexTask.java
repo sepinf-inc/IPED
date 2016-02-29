@@ -315,17 +315,32 @@ public class IndexTask extends AbstractTask{
         try{
         	App.get().reader = DirectoryReader.open(worker.writer, false);
 			App.get().searcher = new IndexSearcher(App.get().reader);
+            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
             PesquisarIndice searchAll = new PesquisarIndice(new MatchAllDocsQuery());
             SearchResult result = searchAll.pesquisarTodos();
-            BooleanQuery query = new BooleanQuery();
-            query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST);
+            
+            boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
             for (int docID : result.docs) {
                 String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
                 for(String parentId : parentIds.split(" "))
-                    query.add(NumericRangeQuery.newIntRange(IndexItem.ID, Integer.parseInt(parentId), Integer.parseInt(parentId), true, true), Occur.MUST_NOT);
-                
+                	doNotDelete[Integer.parseInt(parentId)] = true;
             }
-            worker.writer.deleteDocuments(query);
+            
+            BooleanQuery query;
+            int startId = 0, interval = 1000, endId = interval;
+            while(startId <= stats.getLastId()){
+            	if(endId > stats.getLastId())
+            		endId = stats.getLastId();
+            	query = new BooleanQuery();
+                query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST);
+                query.add(NumericRangeQuery.newIntRange(IndexItem.ID, startId, endId, true, true), Occur.MUST);
+            	for(int i = startId; i <= endId; i++)
+            		if(doNotDelete[i])
+            			query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.MUST_NOT);
+            	worker.writer.deleteDocuments(query);
+        		startId = endId + 1;
+        		endId += interval;
+            }
             
         }catch(Exception e){
             LOGGER.warn("Erro ao excluir nós da árvore vazios", e);
