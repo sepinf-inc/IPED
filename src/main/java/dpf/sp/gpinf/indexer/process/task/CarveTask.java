@@ -154,6 +154,8 @@ public class CarveTask extends AbstractTask{
 	}
 	
 	public void process(EvidenceFile evidence) {
+		if(!enableCarving)
+			return;
 		//Nova instancia pois o mesmo objeto é reusado e nao é imutável
 		new CarveTask(worker).safeProcess(evidence);
 	}
@@ -163,8 +165,7 @@ public class CarveTask extends AbstractTask{
 		this.evidence = evidence;
 		MediaType type = evidence.getMediaType();
 		
-		if (!enableCarving || evidence.isCarved() ||
-			(TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type)))
+		if (evidence.isCarved() || (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type)))
 			return;
 		
 		InputStream tis = null;

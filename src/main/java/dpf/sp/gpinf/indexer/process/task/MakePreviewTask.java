@@ -26,6 +26,8 @@ public class MakePreviewTask extends AbstractTask{
 	public static String viewFolder = "view";
 	
 	private Parser parser = new AutoDetectParser();
+	
+	private static boolean enableFileParsing = true;
 
 	public MakePreviewTask(Worker worker) {
 		super(worker);
@@ -33,6 +35,9 @@ public class MakePreviewTask extends AbstractTask{
 
 	@Override
 	public void init(Properties confParams, File confDir) throws Exception {
+		String value = confParams.getProperty(ParsingTask.ENABLE_PARSING);
+		if(value != null & !value.trim().isEmpty())
+			enableFileParsing = Boolean.valueOf(value.trim());
 	}
 
 	@Override
@@ -58,6 +63,9 @@ public class MakePreviewTask extends AbstractTask{
 
 	@Override
 	protected void process(EvidenceFile evidence) throws Exception {
+		
+		if(!enableFileParsing)
+			return;
 		
 		String mediaType = evidence.getMediaType().toString();
 		if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())

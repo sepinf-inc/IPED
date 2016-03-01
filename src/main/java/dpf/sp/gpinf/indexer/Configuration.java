@@ -54,9 +54,10 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class Configuration {
 
-	public static String CONFIG_FILE = "IPEDConfig.txt";
-	public static String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
-	public static String PARSER_CONFIG = "ParserConfig.xml";
+	public static final String CONFIG_FILE = "IPEDConfig.txt";
+	public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
+	public static final String PARSER_CONFIG = "ParserConfig.xml";
+	private static final String FASTMODE_CONFIG = "conf/FastModeConfig.txt";
 
 	public static UTF8Properties properties = new UTF8Properties();
 	public static File indexTemp, indexerTemp;
@@ -78,11 +79,15 @@ public class Configuration {
 	public static boolean addFatOrphans = true;
 	public static long minOrphanSizeToIgnore = -1;
 	public static int searchThreads = 1;
+	
+	public static void getConfiguration(String configPath) throws Exception{
+		getConfiguration(configPath, false);
+	}
 
 	/**
 	 * LÃª as configuraÃ§Ãµes a partir do caminho informado.
 	 */
-	public static void getConfiguration(String configPathStr) throws Exception {
+	public static void getConfiguration(String configPathStr, boolean fastmode) throws Exception {
 
 		// DataSource.testConnection(configPathStr);
 		LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
@@ -93,7 +98,11 @@ public class Configuration {
 
 		System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
-		properties.load(new File(configPath + "/" + CONFIG_FILE));
+		if(fastmode)
+			properties.load(new File(configPath + "/" + FASTMODE_CONFIG));
+		else
+			properties.load(new File(configPath + "/" + CONFIG_FILE));
+		
 		properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE));
 
 		String value;

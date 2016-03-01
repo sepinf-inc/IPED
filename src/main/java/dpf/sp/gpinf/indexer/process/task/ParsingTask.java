@@ -79,10 +79,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
 	private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 	
-	public static String EXPAND_CONFIG = "CategoriesToExpand.txt";
-	public static boolean expandContainers = false;
+	public static final String EXPAND_CONFIG = "CategoriesToExpand.txt";
+	public static final String ENABLE_PARSING = "enableFileParsing";
+	public static final String ENCRYPTED = "encrypted";
 	
-	public static String ENCRYPTED = "encrypted";
+	public static boolean expandContainers = false;
+	private static boolean enableFileParsing = true;
 	
 	// Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
 	private static int NAME_MAX_LEN = 256;
@@ -190,6 +192,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	
 	public void process(EvidenceFile evidence) throws IOException{
+		
+		if(!enableFileParsing)
+			return;
 		
 		fillMetadata(evidence);
 		
@@ -435,6 +440,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			expandContainers = Boolean.valueOf(value);
+		
+		value = confProps.getProperty(ENABLE_PARSING);
+		if(value != null & !value.trim().isEmpty())
+			enableFileParsing = Boolean.valueOf(value.trim());
 		
 		subitensDiscovered = 0;
 		

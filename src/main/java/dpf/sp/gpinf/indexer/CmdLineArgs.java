@@ -55,6 +55,7 @@ public class CmdLineArgs {
 		{"--nogui"		, "nao exibe a janela de progresso da indexacao"},
 		{"--nologfile"	, "imprime as mensagem de log na saida padrao"},
 		{"--nopstattachs"	, "não inclui automaticamente no relatorio anexos de emails de PST/OST"},
+		{"--fastmode"		, "habilita modo de processamento minimo, para rapida execucao em locais de busca"},
 	};
 	
 	private Map<String, List<String>> paramMap = new HashMap<String, List<String>>();

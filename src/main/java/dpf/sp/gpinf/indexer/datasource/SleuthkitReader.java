@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
@@ -84,6 +85,7 @@ public class SleuthkitReader extends DataSourceReader{
 	private static volatile Thread waitLoadDbThread;
 	private String deviceName;
 	private boolean isISO9660 = false;
+	private boolean fastmode = false;
 	
 	//Referência estática para a JVM não finalizar o objeto que será usado futuramente
 	//via referência interna ao JNI para acessar os itens do caso
@@ -194,6 +196,10 @@ public class SleuthkitReader extends DataSourceReader{
 	public int read(File image) throws Exception {
 		
 		checkTSKVersion();
+		
+		CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName());
+		if(args.getCmdArgs().containsKey("--fastmode"))
+			fastmode = true;
 		
 		firstId = null;
 		lastId = null;
@@ -371,7 +377,7 @@ public class SleuthkitReader extends DataSourceReader{
 	*/
 	private void readItensInOffsetOrder(long start, long last) throws Exception{
 		
-		if(!listOnly){
+		if(!fastmode && !listOnly){
 			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Ordenando pelo offset: id " + start + " a " + last);
 			LOGGER.info("Ordenando pelo offset: id " + start + " a " + last);
 		}
@@ -385,7 +391,7 @@ public class SleuthkitReader extends DataSourceReader{
 			}
 		    ItemStart item = new ItemStart();
 		    item.id = (int)k;
-		    if(!listOnly){
+		    if(!fastmode && !listOnly){
 		    	List<TskFileRange> rangeList = sleuthCase.getFileRanges(k);
 			    if(rangeList != null && !rangeList.isEmpty())
 			    	item.start = rangeList.get(0).getByteStart();
@@ -476,7 +482,7 @@ public class SleuthkitReader extends DataSourceReader{
 	
 	private void recurseIntoContent(Content content, Content parent) throws Exception{
 		
-		addContent(content, parent);
+		addContent(content, parent.getId());
 		Content unallocFolder = null;
 		for(Content child : content.getChildren()){
 			//Processa não alocado no final

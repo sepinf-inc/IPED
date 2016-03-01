@@ -215,7 +215,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
 			LOGGER.info(Versao.APP_NAME);
 
-			Configuration.getConfiguration(configPath);
+			boolean fastmode = cmdLineParams.getCmdArgs().containsKey("--fastmode");
+			Configuration.getConfiguration(configPath, fastmode);
 
 			Manager manager = new Manager(dataSource, output, palavrasChave);
 			cmdLineParams.saveIntoCaseData(manager.getCaseData());

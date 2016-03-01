@@ -11,7 +11,7 @@ indexTemp = default
 # são utilizados arquivos temporários para evitar múltiplas descompactações dos itens pela libewf
 indexTempOnSSD = false
 
-# Habilita cálculo de hash dos arquivos. Para calcular vários hashes, utilize ; como separador
+# Habilita cálculo de hash dos arquivos. Para calcular vários hashes utilize ; como separador
 # Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey
 hash = md5;
 
@@ -43,6 +43,10 @@ exportFileProps = true
 
 # Processa a assinatura dos arquivos
 processFileSignatures = true
+
+# Habilita o parsing do conteúdo dos arquivos. Necessário para diversas outras funções como
+# expansão de conteineres, detecção de cifrados, indexação do conteúdo, etc.
+enableFileParsing = true
 
 # Expande containers, como arquivos compactados, caixas de e-mails, emails e documentos office.
 # Os tipos de arquivo a expandir podem ser alterados no arquivo conf/CategoriesToExpand.txt
