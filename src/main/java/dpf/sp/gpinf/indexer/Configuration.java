@@ -263,32 +263,6 @@ public class Configuration {
 			value = value.trim();
 		if (value != null && !value.isEmpty())
 			unallocatedFragSize = Long.valueOf(value);
-
-		value = properties.getProperty("useGM");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			GraphicsMagicConverter.USE_GM = Boolean.valueOf(value);
-
-		value = properties.getProperty("imgConvTimeout");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value);
-
-		value = properties.getProperty("galleryThreads");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.equalsIgnoreCase("default"))
-			GalleryModel.GALLERY_THREADS = Integer.valueOf(value);
-		else
-			GalleryModel.GALLERY_THREADS = Runtime.getRuntime().availableProcessors();
-		
-		value = properties.getProperty("imgThumbSize");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			GalleryModel.thumbSize = Integer.valueOf(value);
 		
 		value = properties.getProperty("indexTempOnSSD");
 		if (value != null)

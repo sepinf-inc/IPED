@@ -2,9 +2,6 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
-import java.awt.AlphaComposite;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -21,6 +18,7 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ImageThumbTask extends AbstractTask{
@@ -37,14 +35,44 @@ public class ImageThumbTask extends AbstractTask{
     
     public static final String THUMB_TIMEOUT = "imgThumbTimeout";
     
-    private static int thumbSize = 160;
+    private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
+    
+    public int thumbSize = 160;
+    
+    public int galleryThreads = 1;
     
     private boolean taskEnabled = false;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
-        thumbSize = Integer.valueOf(confParams.getProperty("imgThumbSize"));
+        
+    	taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
+        
+        UTF8Properties properties = new UTF8Properties();
+        File confFile = new File(confDir, TASK_CONFIG_FILE);
+        properties.load(confFile);
+        
+        String value = properties.getProperty("externalConversion");
+		if (value != null && !value.trim().isEmpty())
+			GraphicsMagicConverter.enabled = Boolean.valueOf(value.trim());
+        
+        value = properties.getProperty("useGM");
+		if (value != null && !value.trim().isEmpty())
+			GraphicsMagicConverter.USE_GM = Boolean.valueOf(value.trim());
+
+		value = properties.getProperty("imgConvTimeout");
+		if (value != null && !value.trim().isEmpty())
+			GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
+
+		value = properties.getProperty("galleryThreads");
+		if (value != null && !value.trim().equalsIgnoreCase("default"))
+			galleryThreads = Integer.valueOf(value.trim());
+		else
+			galleryThreads = Runtime.getRuntime().availableProcessors();
+		
+		value = properties.getProperty("imgThumbSize");
+		if (value != null && !value.trim().isEmpty())
+			thumbSize = Integer.valueOf(value.trim());
     }
 
     @Override

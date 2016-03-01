@@ -43,6 +43,7 @@ import org.apache.tika.mime.MediaType;
 
 import com.sun.javafx.iio.ImageStorage.ImageType;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -56,8 +57,9 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class GalleryModel extends AbstractTableModel {
 
 	public int colCount = 10;
-	public static int thumbSize = 160;
-	public static int GALLERY_THREADS;
+	private int thumbSize = 160;
+	private int galleryThreads = 1;
+	ImageThumbTask imgThumbTask;
 
 	public Map<Integer, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<Integer, GalleryValue>());
 	private int maxCacheSize = 1000;
@@ -95,7 +97,19 @@ public class GalleryModel extends AbstractTableModel {
 
 	@Override
 	public Object getValueAt(final int row, final int col) {
-
+		
+		if(imgThumbTask == null)
+			try {
+				imgThumbTask = new ImageThumbTask(null);
+				imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf"));
+				thumbSize = imgThumbTask.thumbSize;
+				galleryThreads = imgThumbTask.galleryThreads;
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		
+		
 		int idx = row * colCount + col;
 		if (idx >= App.get().results.length)
 			return new GalleryValue("", null, -1);
@@ -122,7 +136,7 @@ public class GalleryModel extends AbstractTableModel {
 			return new GalleryValue(doc.get(IndexItem.NAME), unsupportedIcon, id);
 		
 		if(executor == null)
-			executor = Executors.newFixedThreadPool(GALLERY_THREADS);
+			executor = Executors.newFixedThreadPool(galleryThreads);
 
 		executor.execute(new Runnable() {
 			public void run() {

@@ -44,6 +44,7 @@ public class GraphicsMagicConverter {
 	//static PooledGMService service;
 	public static boolean USE_GM = true;
 	public static int TIMEOUT = 5;
+	public static boolean enabled = true;
 	
 	static String ERROR_MSG = "FileNotFoundException: gm";
 	static boolean errorDisplayed = false;
@@ -80,7 +81,9 @@ public class GraphicsMagicConverter {
 	}
 	
 	public BufferedImage getImage(final InputStream in,final int resolution, boolean throwTimeout) throws TimeoutException{
-	
+		
+		if(!enabled)
+			return null;
 		
 		if(!errorDisplayed)
 			{
