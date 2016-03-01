@@ -132,10 +132,7 @@ public abstract class AbstractTask {
 		
 		AbstractTask prevTask = worker.runningTask; 
 		worker.runningTask = this;
-		EvidenceFile prevEvidence = worker.evidence;
-		if(!evidence.isQueueEnd())
-			worker.evidence = evidence;
-		
+
 		if(!evidence.isToIgnore() || processIgnoredItem()){
 			long t = System.nanoTime()/1000;
 			processMonitorTimeout(evidence);
@@ -147,7 +144,6 @@ public abstract class AbstractTask {
 		sendToNextTask(evidence);
 		
 		worker.runningTask = prevTask;
-		worker.evidence = prevEvidence;
 		
 		// ESTATISTICAS
 		if((nextTask == null) && !evidence.isQueueEnd()){

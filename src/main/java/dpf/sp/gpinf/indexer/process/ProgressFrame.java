@@ -185,7 +185,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			msg.append("</td><td>");
 			AbstractTask task = workers[i].runningTask;
 			if(task != null) msg.append(task.getClass().getSimpleName());
-			else msg.append("Aguardando item...");
+			else msg.append("-");
 			msg.append("</td><td>");
 			EvidenceFile evidence = workers[i].evidence;
 			if (evidence != null){

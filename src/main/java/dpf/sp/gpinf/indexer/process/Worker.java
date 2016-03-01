@@ -155,8 +155,9 @@ public class Worker extends Thread {
 	 */
 	public void process(EvidenceFile evidence) {
 		
-		//EvidenceFile prevEvidence = this.evidence;
-		//this.evidence = evidence;
+		EvidenceFile prevEvidence = this.evidence;
+		if(!evidence.isQueueEnd())
+			this.evidence = evidence;
 		
 		try {
 
@@ -182,7 +183,7 @@ public class Worker extends Thread {
 
 		}
 
-		//this.evidence = prevEvidence;
+		this.evidence = prevEvidence;
 
 	}
 
