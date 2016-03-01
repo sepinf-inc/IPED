@@ -129,8 +129,8 @@ public class ExportFileTask extends AbstractTask{
 	public void process(EvidenceFile evidence) {
 		
 		// Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
-	    if (caseData.isIpedReport() || (!evidence.isSubItem() && 
-                (isToBeExtracted(evidence) || evidence.isToExtract()))) {
+	    if ((caseData.isIpedReport() && evidence.isToAddToCase()) || 
+	    	 (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract()))) {
 	    	
             evidence.setToExtract(true);
             if(doNotExport(evidence)){
