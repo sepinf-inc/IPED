@@ -23,6 +23,7 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -107,42 +108,18 @@ public class IPEDReader extends DataSourceReader{
 		
 		selectedLabels = new HashSet<Integer>();
 		App.get().marcadores = state;
+		
+		//Inclui itens selecionados no relatório
 		PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
 		SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
 		
 		insertIntoProcessQueue(result, false);
 		
 		//Inclui anexos de emails de PST
-		CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (!args.getCmdArgs().containsKey("--nopstattachs")){
-        	BooleanQuery query = new BooleanQuery();
-    		for (int docID : result.docs) {
-    			String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
-    			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-    				query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.SHOULD);
-    		}
-    		for (int docID : result.docs)
-    			query.add(NumericRangeQuery.newIntRange(IndexItem.ID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.MUST_NOT);
-    		
-    		PesquisarIndice searchPSTAttachs = new PesquisarIndice(query);
-    		SearchResult attachs = searchPSTAttachs.pesquisar();
-    		insertIntoProcessQueue(attachs, false);
-        }
+		insertPSTAttachs(result);
         
         //Inclui pais para visualização em árvore
-        BooleanQuery query = new BooleanQuery();
-        for (int docID : result.docs) {
-            String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
-            for(String parentId : parentIds.split(" "))
-                query.add(NumericRangeQuery.newIntRange(IndexItem.ID, Integer.parseInt(parentId), Integer.parseInt(parentId), true, true), Occur.SHOULD);
-            
-        }
-        for (int docID : result.docs)
-            query.add(NumericRangeQuery.newIntRange(IndexItem.ID, App.get().ids[docID], App.get().ids[docID], true, true), Occur.MUST_NOT);
-        
-        PesquisarIndice searchParents = new PesquisarIndice(query, true);
-        result = searchParents.pesquisar();
-        insertIntoProcessQueue(result, true);
+		insertParentTreeNodes(result);
 		
 		
 		if(!listOnly){
@@ -159,6 +136,72 @@ public class IPEDReader extends DataSourceReader{
 		
 		return 0;
 
+	}
+	
+	private void insertParentTreeNodes(SearchResult result) throws Exception{
+		boolean[] isParentToAdd = new boolean[App.get().lastId + 1];
+        for (int docID : result.docs) {
+            String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+            for(String parentId : parentIds.split(" "))
+            	isParentToAdd[Integer.parseInt(parentId)] = true;
+        }
+        for (int docID : result.docs) {
+            String id = App.get().reader.document(docID).get(IndexItem.ID);
+            isParentToAdd[Integer.parseInt(id)] = false;
+        }
+        int num = 0;
+        BooleanQuery query = new BooleanQuery();
+        for(int i = 0; i <= App.get().lastId; i++){
+        	if(isParentToAdd[i]){
+        		query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
+        		num++;
+        	}
+        	if(num == 1000 || i == App.get().lastId){
+        		PesquisarIndice searchParents = new PesquisarIndice(query, true);
+                result = searchParents.pesquisar();
+                insertIntoProcessQueue(result, true);
+                query = new BooleanQuery();
+                num = 0;
+        	}
+        }
+	}
+	
+	private void insertPSTAttachs(SearchResult result) throws Exception{
+		CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (!args.getCmdArgs().containsKey("--nopstattachs")){
+        	boolean[] isSelectedPSTEmail = new boolean[App.get().lastId + 1];
+    		for (int docID : result.docs) {
+    			String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
+    			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
+    				isSelectedPSTEmail[Integer.parseInt(App.get().reader.document(docID).get(IndexItem.ID))] = true;
+    		}
+    		boolean[] isAttachToAdd = new boolean[App.get().lastId + 1];
+    		for (int id = 0; id <= App.get().lastId; id++){
+    			Document doc = App.get().reader.document(App.get().docs[id]);
+    			if(doc != null && doc.get(IndexItem.PARENTID) != null)
+	    			if(isSelectedPSTEmail[Integer.parseInt(doc.get(IndexItem.PARENTID))])
+	    				isAttachToAdd[id] = true;
+    		}
+    		for (int docID : result.docs){
+    			String id = App.get().reader.document(docID).get(IndexItem.ID);
+    			isAttachToAdd[Integer.parseInt(id)] = false;
+    		}
+    		int num = 0;
+            BooleanQuery query = new BooleanQuery();
+            for(int i = 0; i <= App.get().lastId; i++){
+            	if(isAttachToAdd[i]){
+            		query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
+            		num++;
+            	}
+            	if(num == 1000 || i == App.get().lastId){
+            		PesquisarIndice searchAttachs = new PesquisarIndice(query);
+            		SearchResult attachs = searchAttachs.pesquisar();
+                    insertIntoProcessQueue(attachs, false);
+                    query = new BooleanQuery();
+                    num = 0;
+            	}
+            }
+        }
 	}
 	
 	private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
