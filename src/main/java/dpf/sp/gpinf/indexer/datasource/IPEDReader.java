@@ -36,6 +36,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -49,6 +50,7 @@ import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.search.ColumnsManager;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
@@ -331,6 +333,12 @@ public class IPEDReader extends DataSourceReader{
 					evidence.setExtraAttribute(hash, value);
 			}
 			
+			//armazena metadados de emails, necessário para emails de PST
+			for(String key : ColumnsManager.email){
+				value = doc.get(key);
+				if(value != null)
+					evidence.getMetadata().set(key, value);
+			}
 			
 			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));
