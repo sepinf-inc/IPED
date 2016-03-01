@@ -1,21 +1,29 @@
-XX/02/2015: IPED-3.9
+01/03/2015: IPED-3.9
 Melhorias:
-TODO- Integração da Detecção de Nudez em imagens do LED (PCF Wladimir)
-- Exibição dinâmica de colunas e exposição de atributos extras dos itens
-TODO- Metadados dos itens indexados como atributos extras (message-from, message-to, cameraModel, etc)
+- Integração da Detecção de Imagens Explícitas (DIE) do LED (contribuição PCF Wladimir)
+- Exposição de atributos/colunas extras: id, parentId, contentType, kffstatus, kffgroup, hasThumb, ocrCharCount, etc
+- Metadados dos itens indexados como atributos (message-from, message-to, message-subject, author, cameraModel, etc)
+- Exibição dinâmica de colunas, salva disposição e tamanho definidos pelo usuário
 - Refatoração da pré-ordenação de propriedades
+- Geração de miniaturas de imagens durante o processamento (possivelmente lento!)
 - Exibição da árvore de diretórios em relatórios .iped e extrações automáticas
-- Cálculo de vários hashes simultaneamente (md5, sha-N, edonkey)
-TODO- Fragmentação de itens binários grandes diferenciada para carving e indexação
-TODO- Integração do KFFCarving (carving de itens da base do LED)
-TODO- Geração de miniaturas de imagens durante o processamento
-- Atributo extra 'hasThumb' para imagens e vídeos
-Correções:
-- Suporte a arquivos .asap com mais de 1 perito (PCF Wladimir)
-TODO- Suporte a visualização com LibreOffice 5 no Linux
-- Correção na formatação de datas de itens sqlite
+- Cálculo de múltiplos hashes simultaneamente (md5, sha-N, edonkey)
+- Destaque de registros known.met, shareH/L.dat e Library1.dat com hits na base do LED (metadado kffHits)
+- Inclusão da Galeria no relatório HTML de casos sem marcadores
 - Adiciona check de versão da libpff
+- Novas Estatísticas em tempo real do processamento
+- Nova opção "--fastmode" para rápida execução em locais de busca (no geral leva poucos minutos)
+Correções:
+- Corrige clique em nó da árvore a após colapsar outro nó (3.8)
+- Bloqueio de novos filtros/pesquisas antes de retornar da pesquisa atual
+- Links para anexos EML deixaram de funcionar (3.8)
 
+
+18/02/2015: IPED-3.8.2
+- Suporte a arquivos .asap com mais de 1 perito (PCF Wladimir)
+- Correção na formatação de datas de itens sqlite
+- Não classifica possíveis digitalizações em outras categorias
+- Correta detecção de codificação de relatórios html do UFED mal formados
 
 27/01/2015: IPED-3.8.1
 - Corrige captura da imagem do visualizador (regressão 3.7)
