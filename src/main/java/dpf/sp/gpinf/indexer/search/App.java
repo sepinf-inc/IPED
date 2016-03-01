@@ -101,7 +101,8 @@ public class App extends JFrame implements WindowListener {
 	SearchResult results = new SearchResult(0);
 	public int[] textSizes, ids, docs;
 
-	int totalItens, lastId, lastSelectedDoc;
+	int totalItens, lastSelectedDoc;
+	public int lastId;
 	public Marcadores marcadores;
 	FilterManager filterManager;
 	ArrayList<String> palavrasChave, categorias;
@@ -111,8 +112,8 @@ public class App extends JFrame implements WindowListener {
 	Set<Integer> splitedDocs;
 	VersionsMap viewToRawMap;
 
-	public IndexReader reader;
-	public IndexSearcher searcher;
+	public volatile IndexReader reader;
+	public volatile IndexSearcher searcher;
 	public ExecutorService searchExecutorService;
 	Analyzer analyzer;
 	Query query;
@@ -208,7 +209,7 @@ public class App extends JFrame implements WindowListener {
 			//codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
 			//codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
 			//codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
-			//codePath = "E:/1ocr7/indexador/lib/search.jar";
+			//codePath = "E:/1-1973/indexador/lib/search.jar";
 			
 			codePath = codePath.substring(0, codePath.lastIndexOf('/'));
 
