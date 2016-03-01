@@ -237,9 +237,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append("<html>Estatísticas:<br>");
 		msg.append("<table cellspacing=0 cellpadding=1 border=1>");
 		msg.append("<tr><td>");
-		msg.append("Início");
+		msg.append("Tempo decorrido");
 		msg.append("</td><td>");
-		msg.append(df.format(indexStart));
+		long time = (System.currentTimeMillis() - indexStart.getTime())/1000;
+		msg.append(time / 3600 + "h " + (time / 60) % 60 + "m " + time % 60 + "s");
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
 		msg.append("Término estimado");
