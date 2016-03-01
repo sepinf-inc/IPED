@@ -342,6 +342,10 @@ public class EvidenceFile implements Serializable, StreamSource {
     public static HashSet<String> getAllExtraAttributes(){
         return extraAttributeSet;
     }
+    
+    public static void setExtraAttributeSet(HashSet<String> attributeSet){
+    	extraAttributeSet = attributeSet;
+    }
 
     /**
      * 

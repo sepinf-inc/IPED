@@ -73,7 +73,7 @@ public class IndexTask extends AbstractTask{
 	public static boolean indexFileContents = true;
 	public static boolean indexUnallocated = false;
 	
-	public static String extraAttrFilename = "extraAttributes.dat";
+	public static final String extraAttrFilename = "extraAttributes.dat";
 	
 	private List<IdLenPair> textSizes;
 	private Set<Integer> splitedIds;
@@ -274,7 +274,9 @@ public class IndexTask extends AbstractTask{
 			caseData.putCaseObject(SPLITED_IDS, splitedIds);
 		}
 		
+		IndexItem.loadMetadataTypes(new File(output, "conf"));
 		IndexItem.loadMetadataTypes(confDir);
+		loadExtraAttributes();
 		
 	}
 
@@ -302,6 +304,14 @@ public class IndexTask extends AbstractTask{
 		File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
 		HashSet<String> extraAttr = EvidenceFile.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
+	}
+	
+	private void loadExtraAttributes() throws ClassNotFoundException, IOException{
+		if(EvidenceFile.getAllExtraAttributes().size() > 0)
+			return;
+		File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
+		if(extraAttributtesFile.exists())
+			EvidenceFile.setExtraAttributeSet((HashSet<String>)Util.readObject(extraAttributtesFile.getAbsolutePath()));
 	}
 	
 	private void removeEmptyTreeNodes(){

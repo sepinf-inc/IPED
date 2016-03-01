@@ -103,7 +103,7 @@ public class IndexItem {
 	public static final String CONTENT = "conteudo";
 	public static final String TREENODE = "treeNode";
 	
-	public static String attrTypesFilename = "metadataTypes.txt";
+	public static final String attrTypesFilename = "metadataTypes.txt";
 	
 	static HashSet<String> ignoredMetadata = new HashSet<String>();
 	
@@ -154,7 +154,7 @@ public class IndexItem {
 	
 	public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException{
 		
-		if(IndexItem.getMetadataTypes().size() != 0)
+		if(typesMap.size() != 0)
 			return;
 		
 		File metadataTypesFile = new File(confDir, attrTypesFilename);
