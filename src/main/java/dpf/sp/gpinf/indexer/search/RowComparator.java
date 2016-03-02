@@ -29,6 +29,7 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
+import org.apache.lucene.util.Bits;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -47,6 +48,7 @@ public class RowComparator implements Comparator<Integer> {
 	
 	protected SortedDocValues sdv;
 	private NumericDocValues ndv;
+	private Bits docsWithField;
 
 	public RowComparator(int col) {
 		this.col = col;
@@ -77,6 +79,7 @@ public class RowComparator implements Comparator<Integer> {
             
             if(IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)){
             	ndv = atomicReader.getNumericDocValues(indexedField);
+            	docsWithField = atomicReader.getDocsWithField(indexedField);
             	
             }if(ndv == null){
             	sdv = atomicReader.getSortedDocValues(indexedField);
@@ -123,12 +126,20 @@ public class RowComparator implements Comparator<Integer> {
             return app.marcadores.getLabels(app.ids[a]).compareTo(app.marcadores.getLabels(app.ids[b]));
         
 		else if(sdv != null)
-            return sdv.getOrd(a) - sdv.getOrd(b);
-            
-        else if(ndv != null)
-            return Long.compare(ndv.get(a), ndv.get(b));
+			return sdv.getOrd(a) - sdv.getOrd(b);
 		
-        else
+        else if(ndv != null){
+        	if(docsWithField.get(a)){
+        		if(docsWithField.get(b))
+        			return Long.compare(ndv.get(a), ndv.get(b));
+        		else
+        			return 1;
+        	}else 
+        		if(docsWithField.get(b))
+        			return -1;
+        		else
+        			return 0;
+        }else
             return 0;
 	}
 
