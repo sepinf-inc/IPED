@@ -352,7 +352,6 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 					
 				result = pesquisar();
-				System.out.println("searched!");
 
 				String filtro = App.get().filtro.getSelectedItem().toString();
 				if (filtro.equals(App.FILTRO_SELECTED)){

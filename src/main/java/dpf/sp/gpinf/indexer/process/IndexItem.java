@@ -339,7 +339,7 @@ public class IndexItem {
 		return doc;
 	}
 	
-	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isNewMetadataKey){
+	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey){
 		boolean isString = false;
 	    if(oValue instanceof Date){
             String value = DateUtil.dateToString((Date)oValue);
@@ -370,7 +370,7 @@ public class IndexItem {
         	isString = true;
         }
 	    
-	    if(isNewMetadataKey || isString){
+	    if(isMetadataKey || isString){
 	    	doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
 	    	String value = oValue.toString();
 	        if(value.length() > 16000)
@@ -380,7 +380,7 @@ public class IndexItem {
 	         * entao usamos o prefixo "_" no nome para diferenciar
 	         */
 	        String keyPrefix  = "";
-	        if(isNewMetadataKey) keyPrefix = "_";
+	        if(isMetadataKey) keyPrefix = "_";
 	        doc.add(getCollationDocValue(keyPrefix + key, value));
 	    }
 	    
@@ -420,7 +420,7 @@ public class IndexItem {
             			typesMap.put(key, String.class);
             	}
             
-            addExtraAttributeToDoc(doc, key, oValue, type == null);
+            addExtraAttributeToDoc(doc, key, oValue, true);
             
         }
 	}
