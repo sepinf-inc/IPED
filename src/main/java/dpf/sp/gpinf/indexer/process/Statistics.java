@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
+import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 
@@ -218,12 +219,12 @@ public class Statistics {
 			args.append(arg + " ");
 		LOGGER.info("Argumentos: {}{}", args.toString(), System.getProperty("sun.java.command"));
 
-		/*
-		 * System.out.println(new Date() + "\t[INFO]\t" + "ConfiguraÃ§Ãµes:");
-		 * for(Entry<Object, Object> entry :
-		 * Configuration.properties.entrySet()){ System.out.println(new Date() +
-		 * "\t[INFO]\t" + entry.getKey() + " = " + entry.getValue()); }
-		 */
+		StringBuilder options = new StringBuilder();
+		options.append("Configurações: ");
+		for(Entry<Object, Object> entry : Configuration.properties.entrySet())
+			options.append(entry.getKey() + "=" + entry.getValue() + " | ");
+		LOGGER.info(options.toString());
+		
 		int minMemPerThread = 200;
 		if (maxMemory / Configuration.numThreads < minMemPerThread) {
 			String memoryAlert = "Pouca memória disponível: menos de " + minMemPerThread + "MB por thread de processamento." + "\nIsso pode causar lentidão e erros de parsing de arquivos complexos."
