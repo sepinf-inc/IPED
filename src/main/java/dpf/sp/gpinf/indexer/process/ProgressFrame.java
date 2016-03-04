@@ -120,7 +120,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
 		if (taskSize != 0 && indexStart != null) {
 			secsToEnd = ((long) taskSize - (long) volume) * ((new Date()).getTime() - indexStart.getTime()) / (((long) volume + 1) * 1000);
-			msg += " - Término em " + secsToEnd / 60 + "m " + secsToEnd % 60 + "s";
+			msg += " - Término em " + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s";
 		}
 		progressBar.setString(msg);
 
@@ -185,7 +185,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 			msg.append("</td><td>");
 			AbstractTask task = workers[i].runningTask;
 			if(task != null) msg.append(task.getClass().getSimpleName());
-			else msg.append("-");
+			else msg.append("  -  ");
 			msg.append("</td><td>");
 			EvidenceFile evidence = workers[i].evidence;
 			if (evidence != null){
@@ -245,7 +245,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append("<tr><td>");
 		msg.append("Término estimado");
 		msg.append("</td><td>");
-		msg.append(secsToEnd == 0 ? "-" : secsToEnd/60 + "m " + secsToEnd%60 + "s");
+		msg.append(secsToEnd == 0 ? "-" : secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " + secsToEnd % 60 + "s");
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
 		msg.append("Velocidade média");
@@ -258,25 +258,25 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append(instantRate + " GB/h");
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
-		msg.append("Itens descobertos");
-		msg.append("</td><td>");
-		msg.append(Statistics.get().caseData.getDiscoveredEvidences());
-		msg.append("</td></tr>");
-		msg.append("<tr><td>");
 		msg.append("Volume descoberto");
 		msg.append("</td><td>");
 		long discoveredVol = Statistics.get().caseData.getDiscoveredVolume() / (1 << 20);
 		msg.append(NumberFormat.getNumberInstance().format(discoveredVol) + " MB");
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
-		msg.append("Itens processados");
-		msg.append("</td><td>");
-		msg.append(Statistics.get().getProcessed());
-		msg.append("</td></tr>");
-		msg.append("<tr><td>");
 		msg.append("Volume processado");
 		msg.append("</td><td>");
 		msg.append(NumberFormat.getNumberInstance().format(Statistics.get().getVolume() / (1 << 20)) + " MB");
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens descobertos");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().caseData.getDiscoveredEvidences());
+		msg.append("</td></tr>");
+		msg.append("<tr><td>");
+		msg.append("Itens processados");
+		msg.append("</td><td>");
+		msg.append(Statistics.get().getProcessed());
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
 		msg.append("Itens ativos processados");
