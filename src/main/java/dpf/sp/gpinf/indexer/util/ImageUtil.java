@@ -256,6 +256,7 @@ public class ImageUtil {
     }
     
     public static BufferedImage getOpaqueImage(BufferedImage img) {
+        if (img.getType() == BufferedImage.TYPE_3BYTE_BGR) return img;
     	int w = img.getWidth();
     	int h = img.getHeight();
         BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_3BYTE_BGR);

@@ -36,7 +36,9 @@ public class ImageThumbTask extends AbstractTask{
     public static final String THUMB_TIMEOUT = "imgThumbTimeout";
     
     private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
-    
+
+    private static final int samplingRatio = 1;
+
     public int thumbSize = 160;
     
     public int galleryThreads = 1;
@@ -130,7 +132,7 @@ public class ImageThumbTask extends AbstractTask{
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try{
-                    img = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize, value);
+                    img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio, value);
                 }finally{
                     IOUtil.closeQuietly(stream);
                 }
@@ -138,7 +140,7 @@ public class ImageThumbTask extends AbstractTask{
             if (img == null) {
             	BufferedInputStream stream = evidence.getBufferedStream();
                 try{
-                    img = new GraphicsMagicConverter().getImage(stream, thumbSize, true);
+                    img = new GraphicsMagicConverter().getImage(stream, thumbSize * samplingRatio, true);
                     value = null;
                 }catch(TimeoutException e){
                 	stats.incTimeouts();
@@ -154,7 +156,7 @@ public class ImageThumbTask extends AbstractTask{
             tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder));
             
             if(img != null){
-                if(value != null && (value.originalW > thumbSize || value.originalH > thumbSize))
+                if(value != null && (value.originalW > thumbSize || value.originalH > thumbSize) && Math.max(img.getWidth(), img.getHeight()) != thumbSize)
                 	img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
                 img = ImageUtil.getOpaqueImage(img);
                 
