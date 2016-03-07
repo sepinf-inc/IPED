@@ -37,7 +37,7 @@ public class ImageThumbTask extends AbstractTask{
     
     private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
 
-    private static final int samplingRatio = 1;
+    private static final int samplingRatio = 3;
 
     public int thumbSize = 160;
     
