@@ -30,7 +30,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -39,7 +38,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
-import gpinf.die.Die;
+import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 
 /**
@@ -49,6 +48,9 @@ import gpinf.die.RandomForestPredictor;
 public class DIETask extends AbstractTask {
     /** Instância da classe reponsável pelo processo de detecção. */
     private static RandomForestPredictor predictor;
+
+    /** Instância da classe reponsável pela extração de features. */
+    private static AbstractDie die;
 
     /** Nome da tarefa. */
     private static final String taskName = "Detecção de Imagens Explícitas (DIE)";
@@ -114,6 +116,14 @@ public class DIETask extends AbstractTask {
                     init.set(true);
                     return;
                 }
+                //Cria objeto responsável pela extração de features
+                die = AbstractDie.loadImplementation(dieDat);
+                if (die == null) {
+                    Log.error(taskName, "Erro inicializando classe do DIE: " + dieDat.getAbsolutePath());
+                    Log.info(taskName, "Tarefa desabilitada.");
+                    init.set(true);
+                    return;
+                }
                 taskEnabled = true;
                 Log.info(taskName, "Tarefa habilitada.");
                 Log.info(taskName, "Árvores carregadas: " + predictor.size());
@@ -158,7 +168,7 @@ public class DIETask extends AbstractTask {
             	img = ImageIO.read(thumbFile);
             else
             	img = getBufferedImage(evidence);
-            List<Float> features = Die.extractFeatures(img);
+            List<Float> features = die.extractFeatures(img);
             if (features != null) {
                 double p = predictor.predict(features);
                 int score = (int) Math.round(p * 1000);
@@ -206,7 +216,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = ImageUtil.getSubSampledImage(stream, Die.size, Die.size, value);
+                    img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize(), value);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
@@ -214,7 +224,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = new GraphicsMagicConverter().getImage(stream, Die.size);
+                    img = new GraphicsMagicConverter().getImage(stream, die.getExpectedImageSize());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

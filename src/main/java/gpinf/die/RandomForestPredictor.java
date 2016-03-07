@@ -1,12 +1,9 @@
 package gpinf.die;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.util.List;
 
 public class RandomForestPredictor {
@@ -14,49 +11,19 @@ public class RandomForestPredictor {
     private final int[] nodeLeft;
     private final short[] splitFeature;
     private final float[] value;
-    private int trees, free;
-    private static final int version = 6;
-
-    public RandomForestPredictor(int maxTrees) {
-        roots = new int[maxTrees];
-        int maxNodes = maxTrees * 32768;
-        nodeLeft = new int[maxNodes];
-        splitFeature = new short[maxNodes];
-        value = new float[maxNodes];
-    }
+    private int trees;
+    private static final int version = 12100;
 
     private RandomForestPredictor(int trees, int nodes) {
         this.trees = trees;
-        this.free = nodes;
         roots = new int[trees];
         nodeLeft = new int[nodes];
         splitFeature = new short[nodes];
         value = new float[nodes];
     }
 
-    public synchronized void add(ClassificationNode root) {
-        int rt = roots[trees++] = free;
-        free++;
-        expand(root, rt);
-    }
-
     public int size() {
         return trees;
-    }
-
-    private void expand(ClassificationNode node, int pos) {
-        if (node.left == null) {
-            nodeLeft[pos] = -1;
-            splitFeature[pos] = -1;
-            value[pos] = node.getValue();
-        } else {
-            int l = nodeLeft[pos] = free;
-            free += 2;
-            splitFeature[pos] = (short) node.splitFeature;
-            value[pos] = node.splitVal;
-            expand(node.left, l);
-            expand(node.right, l + 1);
-        }
     }
 
     public double predict(List<Float> lFeatures) {
@@ -85,24 +52,10 @@ public class RandomForestPredictor {
         }
     }
 
-    public void save(File file) throws Exception {
-        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-        out.writeInt(version);
-        out.writeInt(trees);
-        for (int i = 0; i < trees; i++) {
-            out.writeInt(roots[i]);
-        }
-        out.writeInt(free);
-        for (int i = 0; i < free; i++) {
-            out.writeShort(splitFeature[i]);
-            out.writeInt(nodeLeft[i]);
-            out.writeFloat(value[i]);
-        }
-        out.close();
-    }
-
     public static RandomForestPredictor load(File file, int maxTrees) throws Exception {
         DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        int skip = in.readInt();
+        in.skipBytes(skip);
         int ver = in.readInt();
         if (ver != version) {
             in.close();

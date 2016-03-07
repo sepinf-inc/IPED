@@ -24,12 +24,12 @@ hash = md5;
 # Diretório contendo a base de hashes do LED. Caso configurado, os arquivos com hashes
 # existentes na base são adicionados a uma categoria "Hash com Alerta (PI)"
 # Necessário utilizar hash md5 ou sha-1.
-#ledWkffPath = E:/LED/V1.20.00/pedo/wkff
+#ledWkffPath = E:/LED/V1.21.00/pedo/wkff
 
 # Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
 # Caso configurado, para cada imagem cria os atributos "scoreNudez" (1 a 1000) e classeNudez (1 a 5) para ordenação e/ou filtro.
-# Necessário apontar para arquivo de dados presente no LED versão 1.20 ou superior.
-#ledDie = E:/LED/V1.20.00/pedo/die/rfdie.dat
+# Necessário apontar para arquivo de dados presente no LED versão 1.21 ou superior.
+#ledDie = E:/LED/V1.21.00/pedo/die/rfdie.dat
 
 # Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
