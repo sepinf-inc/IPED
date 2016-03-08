@@ -93,7 +93,7 @@ maxPDFTextSize2OCR = 100
 
 # Biblioteca para conversão de PDFs para imagem antes do OCR.
 # Valores possíveis: pdfbox (mais rápido) ou icepdf (teoricamente mais estável)
-pdfToImgLib = pdfbox
+pdfToImgLib = icepdf
 
 ########################################################################
 # Configurações da Pesquisa
