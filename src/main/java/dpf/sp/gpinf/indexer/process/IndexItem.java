@@ -397,9 +397,9 @@ public class IndexItem {
                     strBuilder.append(val + " ");
             	value = strBuilder.toString().trim();
             }
+            value = value.trim();
             if(value.isEmpty())
             	continue;
-            
             Object oValue = value;
             Class type = typesMap.get(key);
             if(type == null || !type.equals(String.class))
