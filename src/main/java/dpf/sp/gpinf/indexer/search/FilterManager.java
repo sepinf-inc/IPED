@@ -52,10 +52,10 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 	
 	public void loadFilters(){
 		try {
-			filters.load(defaultFilter);
-			
 			if(userFilters.exists())
 				filters.load(userFilters);
+			
+			filters.load(defaultFilter);
 			
 		} catch (IOException e) {
 			e.printStackTrace();
