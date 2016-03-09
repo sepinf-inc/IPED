@@ -218,12 +218,6 @@
         <!-- FIM: EXTERNAS -->
         <!-- INICIO: VIEWERS -->
         <dependency>
-            <groupId>org.im4java</groupId>
-            <artifactId>im4java</artifactId>
-            <version>1.4.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>org.icepdf</groupId>
             <artifactId>icepdf-core</artifactId>
             <version>6.0.2</version>

@@ -31,6 +31,8 @@ public class ImageThumbTask extends AbstractTask{
 	
 	private static final String enableProperty = "enableImageThumbs";
 	
+	private static final String externalToolPath = "externalToolPath";
+	
     public static final String HAS_THUMB = "hasThumb";
     
     public static final String THUMB_TIMEOUT = "imgThumbTimeout";
@@ -53,15 +55,18 @@ public class ImageThumbTask extends AbstractTask{
         UTF8Properties properties = new UTF8Properties();
         File confFile = new File(confDir, TASK_CONFIG_FILE);
         properties.load(confFile);
-        
-        String value = properties.getProperty("externalConversion");
+		
+        String value = properties.getProperty("externalConversionTool");
+		if (value != null && !value.trim().isEmpty()){
+			if(!value.trim().equals("graphicsmagick"))
+				GraphicsMagicConverter.USE_GM = false;
+		}else
+			GraphicsMagicConverter.enabled = false;
+		
+		value = properties.getProperty(externalToolPath);
 		if (value != null && !value.trim().isEmpty())
-			GraphicsMagicConverter.enabled = Boolean.valueOf(value.trim());
+			GraphicsMagicConverter.toolPathWin = new File(confDir.getParentFile(), value.trim()).getCanonicalPath();
         
-        value = properties.getProperty("useGM");
-		if (value != null && !value.trim().isEmpty())
-			GraphicsMagicConverter.USE_GM = Boolean.valueOf(value.trim());
-
 		value = properties.getProperty("imgConvTimeout");
 		if (value != null && !value.trim().isEmpty())
 			GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
@@ -145,7 +150,7 @@ public class ImageThumbTask extends AbstractTask{
                 }catch(TimeoutException e){
                 	stats.incTimeouts();
                 	evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
-                	Log.warning(getClass().getSimpleName(), "Timeout ao gerar miniatura via GraphicsMagick: "
+                	Log.warning(getClass().getSimpleName(), "Timeout ao gerar miniatura externamente: "
                 			+ evidence.getPath() + "(" + evidence.getLength() + " bytes)");
                 	
                 }finally{

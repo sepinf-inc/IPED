@@ -2,11 +2,14 @@
 # Configuração da extração de miniaturas de imagens
 ###########################################################################
 
-# Habilita o uso do GraphicsMagick/ImageMagick para ler formatos de imagens não suportadas pelo Java. 
-externalConversion = true
+# Usa o "graphicsmagick" ou "imagemagick" para ler dezenas de formatos de imagens não suportadas pelo Java (possivelmente lento).
+# O ImageMagick suporta mais formatos, porém o GraphicsMagick decodifica melhor JPGs parciais de carving. 
+# Comente para desabilitar a decodificação externa de formatos.
+externalConversionTool = graphicsmagick
 
-# Utiliza GraphicsMagick ao invés de ImageMagick para renderizar imagens não suportadas pela JVM.
-useGM = true
+# Caminho relativo para pasta do graphicsmagick/imagemagick. 
+# Usado apenas em ambiente Windows, em outros sistemas apenas inclua a ferramenta no PATH.
+externalToolPath = tools/graphicsmagick
 
 # Timeout(s) para aguardar conversão externa entre formatos de imagem via GraphicsMagick.
 imgConvTimeout = 10

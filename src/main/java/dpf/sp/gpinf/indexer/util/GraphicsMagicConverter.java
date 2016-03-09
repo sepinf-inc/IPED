@@ -22,53 +22,75 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.io.OutputStream;
 import java.util.concurrent.TimeoutException;
 
-import javax.swing.JOptionPane;
-
-import org.im4java.core.ConvertCmd;
-import org.im4java.core.IM4JavaException;
-import org.im4java.core.IMOperation;
-import org.im4java.core.Stream2BufferedImage;
-import org.im4java.process.Pipe;
-import org.im4java.process.ProcessStarter;
-import org.im4java.process.ProcessTask;
+import javax.imageio.ImageIO;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.search.App;
 
 public class GraphicsMagicConverter {
 	
-	//static PooledGMService service;
+	private static final String RESOLUTION = "resolution";
+	private static final String TMP_DIR = "MAGICK_TMPDIR";
+	private static final String[] CMD = {"gm", "convert", "-sample", RESOLUTION, "-", "bmp:-"};
+	private static final String tmpDirName = "gm-im_temp";
+	
 	public static boolean USE_GM = true;
-	public static int TIMEOUT = 5;
+	public static int TIMEOUT = 10;
 	public static boolean enabled = true;
+	public static String toolPathWin = "";
 	
-	static String ERROR_MSG = "FileNotFoundException: gm";
-	static boolean errorDisplayed = false;
+	private static File tmpDir;
 	
-	 
+	private BufferedImage result;
+	
 	static{
 		try{
-			if(System.getProperty("os.name").startsWith("Windows")){
-				String path = Configuration.configPath + "/tools/graphicsmagick";
-				if(!new File(path).exists())
-					path = Configuration.configPath + "/../tools/graphicsmagick";
-				ProcessStarter.setGlobalSearchPath(path);
-			}
+			if(!System.getProperty("os.name").startsWith("Windows"))
+				toolPathWin = "";
 			
-			//ProcessStarter.setGlobalSearchPath(path);
-			/*GMConnectionPoolConfig config = new GMConnectionPoolConfig();
-			config.setGMPath(path + "\\gm.exe");
-			service = new PooledGMService(config);
-			*/
-			
+			tmpDir = new File(Configuration.indexerTemp, tmpDirName);
+			tmpDir.mkdirs();
+			startTmpDirCleaner();
+				
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+	
+	private static void startTmpDirCleaner(){
+		Thread t = new Thread(){
+			public void run(){
+				while(true){
+					File[] subFiles = tmpDir.listFiles();
+					if(subFiles != null)
+						for(File tmp : subFiles)
+							tmp.delete();
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+						break;
+					}
+				}
+			}
+		};
+		t.setDaemon(true);
+		t.start();
+	}
 		
+	private String[] getCmd(int resolution){
+		int cmdOffset = 0;
+	    if(!USE_GM) cmdOffset = 1;
+	    String[] cmd = new String[CMD.length - cmdOffset];
+	    for(int i = 0; i < cmd.length; i++){
+	        cmd[i] = CMD[i + cmdOffset];
+	        if(!toolPathWin.isEmpty() && i == 0)
+	        	cmd[0] = toolPathWin + "/" + cmd[0];
+	        if(cmd[i].equals(RESOLUTION))
+	        	cmd[i] = String.valueOf(resolution);
+	    }
+	    return cmd;
 	}
 	
 	public BufferedImage getImage(final InputStream in,final int resolution){
@@ -80,69 +102,104 @@ public class GraphicsMagicConverter {
 		}
 	}
 	
-	public BufferedImage getImage(final InputStream in,final int resolution, boolean throwTimeout) throws TimeoutException{
+	public BufferedImage getImage(InputStream in, int resolution, boolean throwTimeout) throws TimeoutException{
 		
 		if(!enabled)
 			return null;
-		
-		if(!errorDisplayed)
-			{
-				final Stream2BufferedImage s2b = new Stream2BufferedImage();
+	    
+	    ProcessBuilder pb = new ProcessBuilder();
+	    pb.environment().put(TMP_DIR, tmpDir.getAbsolutePath());
+	    pb.command(getCmd(resolution));
+	    Process p = null;
+	    try {
+			p = pb.start();
+		} catch (IOException e1) {
+			Log.error("GraphicsMagicConverter", "Erro ao executar graphicsMagick/imageMagick. "
+        			+ "Verifique se está instalado ou se o caminho está configurado corretamente!");
+		}
+	    if(p != null){
+	    	sendInputStream(in, p);
+            ignoreErrorStream(p);
+            Thread t = getResultThread(p);
+            t.start();
+            try {
+				t.join(TIMEOUT * 1000);
 				
-				IMOperation op = new IMOperation();
-				op.addImage("-");
-				if(resolution > 0)
-					op.resize(resolution);
-				op.addImage("bmp:-");
-		
-				Pipe pipeIn  = new Pipe(in, null);
+				if(result == null && t.isAlive() && throwTimeout)
+	                throw new TimeoutException();
+	            else
+	            	Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP.");
 				
-				ConvertCmd convert = new ConvertCmd(USE_GM);
-				convert.setInputProvider(pipeIn);
-				convert.setOutputConsumer(s2b);
-
-				ProcessTask convertTask = null;
-				try {
-					convertTask = convert.getProcessTask(op);
-					
-					Thread convertThread = new Thread(convertTask);
-					convertThread.start();
-					 
-					convertTask.get(TIMEOUT, TimeUnit.SECONDS);
-					
-					
-				} catch (IOException e1) {
-					e1.printStackTrace();
-					
-				} catch (IM4JavaException e1) {
-					e1.printStackTrace();
-					
-				} catch (InterruptedException e) {
-		        	 convertTask.cancel(true);
-		           	
-		         } catch (ExecutionException e) {
-		        	 
-		        	 synchronized(ERROR_MSG){
-							if(!errorDisplayed  && e.toString().contains(ERROR_MSG)){
-								e.printStackTrace();
-								JOptionPane.showMessageDialog(null, "Não foi possível executar GraphicsMagick. Verifique se está instalado!");
-								errorDisplayed = true;
-							}
-						}
-		 				
-		 		} catch (TimeoutException e) {
-		 			convertTask.cancel(true);
-		 			if(throwTimeout)
-		 				throw e;
-		 			else
-		 				Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP.");
-		 		}
+			} catch (InterruptedException e) {
 				
-				return s2b.getImage();
-				
-			}
-		
-		return null;
-		
+			}finally{
+	        	p.destroy();
+	        }
+	    }   
+	    
+	    return result;
 	}
+	
+	private Thread getResultThread(final Process p){
+	    return new Thread(){
+            @Override
+            public void run(){
+            	InputStream in = p.getInputStream();
+                try {
+                    result = ImageIO.read(in);
+                    
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                }finally{
+                	IOUtil.closeQuietly(in);
+                }
+            }
+        };
+	}
+	
+	private void ignoreErrorStream(final Process p){
+	    new Thread(){
+	        @Override
+	        public void run(){
+	        	InputStream in = p.getErrorStream();
+	            int i = 0;
+	            byte[] buf = new byte[8192];
+	            try {
+	                while(i != -1)
+	                	i = in.read(buf);
+	                
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                } finally{
+                	IOUtil.closeQuietly(in);
+                }
+	        }
+	        
+	    }.start();
+	}
+	
+	
+	private void sendInputStream(final InputStream in, final Process p){
+	    new Thread(){
+	        @Override
+	        public void run(){
+	            OutputStream out = p.getOutputStream();
+	            int i = 0;
+	            byte[] buf = new byte[64 * 1024];
+	            try {
+	                while(i != -1){
+	                    out.write(buf, 0, i);
+	                    out.flush();
+	                    i = in.read(buf);
+	                }
+                } catch (IOException e) {
+                    //e.printStackTrace();
+                }finally{
+                	IOUtil.closeQuietly(out);
+                }
+	        }
+	        
+	    }.start();
+	}
+	
 }
