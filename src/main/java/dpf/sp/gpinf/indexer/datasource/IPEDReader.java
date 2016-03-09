@@ -233,8 +233,9 @@ public class IPEDReader extends DataSourceReader{
 			int id = Integer.valueOf(doc.get(IndexItem.ID));
 			evidence.setId(id);
 			
-			for(int labelId : state.getLabelIds(id))
-				selectedLabels.add(labelId);
+			if(!treeNode)
+				for(int labelId : state.getLabelIds(id))
+					selectedLabels.add(labelId);
 			
 			evidence.setLabels(state.getLabels(id));
 
@@ -362,8 +363,6 @@ public class IPEDReader extends DataSourceReader{
 			value = doc.get(IndexItem.ISROOT);
 			if(value != null)
 			    evidence.setRoot(true);
-
-			evidence.setToExtract(true);
 
 			caseData.addEvidenceFile(evidence);
 		}
