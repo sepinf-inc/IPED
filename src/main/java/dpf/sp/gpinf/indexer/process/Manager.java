@@ -385,31 +385,37 @@ public class Manager {
 
 	}
 
-	private void filtrarPalavrasChave() throws Exception {
-		LOGGER.info("Filtrando palavras-chave...");
-		IndexFiles.getInstance().firePropertyChange("mensagem", "", "Filtrando palavras-chave...");
-		ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
+	private void filtrarPalavrasChave(){
+		
+		try{
+			LOGGER.info("Filtrando palavras-chave...");
+			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Filtrando palavras-chave...");
+			ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
 
-		if (palavras.size() != 0) {
-			InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
-			ArrayList<String> palavrasFinais = new ArrayList<String>();
-			for (String palavra : palavras) {
-				if (Thread.interrupted()) {
-					App.get().destroy();
-					throw new InterruptedException("Indexação cancelada!");
+			if (palavras.size() != 0) {
+				InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
+				ArrayList<String> palavrasFinais = new ArrayList<String>();
+				for (String palavra : palavras) {
+					if (Thread.interrupted()) {
+						App.get().destroy();
+						throw new InterruptedException("Indexação cancelada!");
+					}
+
+					PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(palavra));
+					if (pesquisa.pesquisarTodos().length > 0)
+						palavrasFinais.add(palavra);
 				}
-
-				PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(palavra));
-				if (pesquisa.pesquisarTodos().length > 0)
-					palavrasFinais.add(palavra);
-			}
-			// fecha o Ã­ndice
-			App.get().destroy();
-			Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
-			int filtradas = palavras.size() - palavrasFinais.size();
-			LOGGER.info("Filtradas {} palavras-chave.", filtradas);
-		} else
-			LOGGER.info("Nenhuma palavra-chave pré-configurada para filtrar.");
+				// fecha o Ã­ndice
+				App.get().destroy();
+				Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
+				int filtradas = palavras.size() - palavrasFinais.size();
+				LOGGER.info("Filtradas {} palavras-chave.", filtradas);
+			} else
+				LOGGER.info("Nenhuma palavra-chave pré-configurada para filtrar.");
+			
+		}catch(Exception e){
+			LOGGER.error("Erro ao filtrar palavras-chave", e);
+		}
 
 	}
 
