@@ -175,6 +175,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		panel.add(topPanel, BorderLayout.NORTH);
 		
 		JScrollPane scrollList = new JScrollPane(listPanel);
+		scrollList.getVerticalScrollBar().setUnitIncrement(10);
 		panel.add(scrollList, BorderLayout.CENTER);
 		
 		boolean lastColsOk = false;

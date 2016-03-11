@@ -314,7 +314,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 		msg.append(IndexerDefaultParser.parsingErrors);
 		msg.append("</td></tr>");
 		msg.append("<tr><td>");
-		msg.append("Erros de IO");
+		msg.append("Erros de Leitura");
 		msg.append("</td><td>");
 		msg.append(Statistics.get().getIoErrors());
 		msg.append("</td></tr>");
