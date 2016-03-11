@@ -44,8 +44,8 @@ exportFileProps = true
 # Processa a assinatura dos arquivos
 processFileSignatures = true
 
-# Habilita o parsing do conteúdo dos arquivos. Necessário para diversas outras funções como
-# expansão de conteineres, detecção de cifrados, indexação do conteúdo, etc.
+# Habilita a tarefa de parsing do conteúdo dos arquivos. Necessário para diversas outras funções como
+# expansão de conteineres, detecção de cifrados, indexação de metadados, geração de preview, etc.
 enableFileParsing = true
 
 # Expande containers, como arquivos compactados, caixas de e-mails, emails e documentos office.

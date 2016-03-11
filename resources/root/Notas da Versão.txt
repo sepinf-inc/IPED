@@ -1,14 +1,14 @@
-01/03/2015: IPED-3.9
+09/03/2015: IPED-3.9-final
 Melhorias:
 - Integração da Detecção de Imagens Explícitas (DIE) do LED (contribuição PCF Wladimir)
 - Exposição de atributos/colunas extras: id, parentId, contentType, kffstatus, kffgroup, hasThumb, ocrCharCount, etc
-- Metadados dos itens indexados como atributos (message-from, message-to, message-subject, author, cameraModel, etc)
+- Metadados dos itens indexados como atributos/colunas (message-from, message-to, message-subject, author, cameraModel, etc)
 - Exibição dinâmica de colunas, salva disposição e tamanho definidos pelo usuário
 - Refatoração da pré-ordenação de propriedades
-- Geração de miniaturas de imagens durante o processamento (possivelmente lento!)
+- Geração de miniaturas de imagens durante o processamento (possivelmente lento)
 - Exibição da árvore de diretórios em relatórios .iped e extrações automáticas
 - Cálculo de múltiplos hashes simultaneamente (md5, sha-N, edonkey)
-- Destaque de registros known.met, shareH/L.dat e Library1.dat com hits na base do LED (metadado kffHits)
+- Destaque de registros known.met, shareH/L.dat e Library1.dat com hits na base do LED (+metadado kffHits)
 - Inclusão da Galeria no relatório HTML de casos sem marcadores
 - Adiciona check de versão da libpff
 - Novas Estatísticas em tempo real do processamento
@@ -17,6 +17,8 @@ Correções:
 - Corrige clique em nó da árvore a após colapsar outro nó (3.8)
 - Bloqueio de novos filtros/pesquisas antes de retornar da pesquisa atual
 - Links para anexos EML deixaram de funcionar (3.8)
+- Altera lib padrão de conversão de PDF para PNG durante OCR para ICEPDF (mais estável)
+- Configura e limpa periodicamente pasta temp do graphicsmagick durante geração de thumbs
 
 
 18/02/2015: IPED-3.8.2
