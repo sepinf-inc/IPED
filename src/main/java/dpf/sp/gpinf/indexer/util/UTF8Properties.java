@@ -26,7 +26,10 @@ public class UTF8Properties extends Properties {
         while ((str = in.readLine()) != null) {
             if (str.isEmpty() || str.charAt(0) == '#') continue;
             int pos = str.indexOf('=');
-            if (pos > 0) super.put(str.substring(0, pos).trim(), str.substring(pos + 1).trim());
+            while(pos > 0 && str.charAt(pos - 1) == '\\')
+            	pos = str.indexOf('=', pos + 1);
+            if (pos > 0)
+            	super.put(str.substring(0, pos).replace("\\=", "=").trim(), str.substring(pos + 1).replace("\\=", "=").trim());
         }
         in.close();
     }
@@ -36,7 +39,7 @@ public class UTF8Properties extends Properties {
     	Object[] keys = this.keySet().toArray();
     	Arrays.sort(keys);
         for(Object key : keys){
-        	writer.write(key + " = " + this.get(key));
+        	writer.write(key.toString().replace("=", "\\=") + " = " + this.get(key).toString().replace("=", "\\="));
         	writer.write("\r\n");
         }
         writer.close();
