@@ -1,3 +1,6 @@
+14/03/2015: IPED-3.9.1
+- Alguns casos não eram abertos devido a erro de leitura e sintaxe no arquivo conf/metadatatypes.txt 
+
 09/03/2015: IPED-3.9-final
 Melhorias:
 - Integração da Detecção de Imagens Explícitas (DIE) do LED (contribuição PCF Wladimir)
