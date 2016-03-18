@@ -39,10 +39,10 @@ public class TextHighlighter {
 		if (text == null)
 			return new TextFragment[0];
 		// App.get().analyzer = new StandardASCIIAnalyzer(Versao.current);
-		TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().analyzer);
-		QueryScorer scorer = new QueryScorer(App.get().query, fieldName);
+		TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().getAnalyzer());
+		QueryScorer scorer = new QueryScorer(App.get().getQuery(), fieldName);
 		Fragmenter fragmenter;
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.HIGHLIGHT_START_TAG, App.HIGHLIGHT_END_TAG);
+		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.get().getParams().HIGHLIGHT_START_TAG, App.get().getParams().HIGHLIGHT_END_TAG);
 		int fragmentNumber = 1;
 		if (fragmentSize != 0) {
 			fragmenter = new SimpleFragmenter(fragmentSize);

@@ -23,9 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Map.Entry;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -37,7 +35,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.search.viewer.AbstractViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 
 public class MenuListener implements ActionListener {
 
@@ -152,8 +150,8 @@ public class MenuListener implements ActionListener {
 		} else if (e.getSource() == menu.copiarMarcados) {
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 			for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-				if (App.get().marcadores.selected[App.get().ids[docId]] && 
-				        !App.get().viewToRawMap.isView(App.get().ids[docId]))
+				if (App.get().marcadores.selected[App.get().getIDs()[docId]] && 
+				        !App.get().viewToRawMap.isView(App.get().getIDs()[docId]))
 					uniqueSelectedIds.add(docId);
 
 			}
@@ -169,7 +167,7 @@ public class MenuListener implements ActionListener {
 		} else if (e.getSource() == menu.exportarMarcados) {
 			ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 			for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-				if (App.get().marcadores.selected[App.get().ids[docId]])
+				if (App.get().marcadores.selected[App.get().getIDs()[docId]])
 					uniqueSelectedIds.add(docId);
 			}
 			fileChooser.setFileFilter(defaultFilter);
@@ -201,7 +199,7 @@ public class MenuListener implements ActionListener {
 			App.get().marcadores.askAndSaveState();
 
 		} else if (e.getSource() == menu.copiarPreview) {
-			AbstractViewer viewer = App.get().compositeViewer.getCurrentViewer();
+                        Viewer viewer = App.get().getParams().compositeViewer.getCurrentViewer();
 			viewer.copyScreen();
 
 		} else if (e.getSource() == menu.aumentarGaleria) {

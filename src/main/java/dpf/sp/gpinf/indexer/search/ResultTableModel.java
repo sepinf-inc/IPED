@@ -143,7 +143,7 @@ public class ResultTableModel extends AbstractTableModel {
 
 	@Override
 	public void setValueAt(Object value, int row, int col) {
-		app.marcadores.setValueAtId(value, app.ids[app.results.docs[row]], col, true);
+		app.marcadores.setValueAtId(value, app.getIDs()[app.results.docs[row]], col, true);
 
 	}
 
@@ -167,7 +167,7 @@ public class ResultTableModel extends AbstractTableModel {
 			value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
 		else if (col == 1)
-			return app.marcadores.selected[app.ids[app.results.docs[row]]];
+			return app.marcadores.selected[app.getIDs()[app.results.docs[row]]];
 
 		else
 			try {
@@ -178,7 +178,7 @@ public class ResultTableModel extends AbstractTableModel {
                     return app.results.scores[row];
                 
                 if(field.equals(BOOKMARK_COL))
-                    return app.marcadores.getLabels(app.ids[app.results.docs[row]]);
+                    return app.marcadores.getLabels(app.getIDs()[app.results.docs[row]]);
                 
 				int docId = App.get().results.docs[row];
 				if (App.get().results.docs[row] != lastDocRead)

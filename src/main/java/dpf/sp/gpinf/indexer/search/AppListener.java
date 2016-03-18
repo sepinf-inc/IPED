@@ -18,154 +18,154 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.awt.Color;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.List;
 
 import javax.swing.JOptionPane;
-import javax.swing.RowSorter.SortKey;
-import javax.swing.UIManager;
-
-import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
 
 public class AppListener implements ActionListener, MouseListener {
 
-	volatile boolean clearSearchBox = false;
-	
-	public void updateFileListing(){
-		
-		App.get().textViewer.textTable.scrollRectToVisible(new Rectangle());
-		App.get().hitsTable.scrollRectToVisible(new Rectangle());
-		Rectangle a = App.get().resultsTable.getVisibleRect();
+    volatile boolean clearSearchBox = false;
+
+    public void updateFileListing() {
+
+        App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
+        App.get().hitsTable.scrollRectToVisible(new Rectangle());
+        Rectangle a = App.get().resultsTable.getVisibleRect();
         a.setBounds(a.x, 0, a.width, a.height);
         App.get().resultsTable.scrollRectToVisible(a);
-		App.get().gallery.scrollRectToVisible(new Rectangle());
+        App.get().gallery.scrollRectToVisible(new Rectangle());
 
-		App.get().results = new SearchResult(0);
-		App.get().lastSelectedDoc = -1;
-		App.get().resultsModel.fireTableDataChanged();
-		if(App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty()))
-			App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
-		App.get().resultsTable.setRowSorter(null);
-		App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
-		App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
-		App.get().status.setText(" ");
+        App.get().results = new SearchResult(0);
+        App.get().lastSelectedDoc = -1;
+        App.get().resultsModel.fireTableDataChanged();
+        if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
+            App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
+        }
+        App.get().resultsTable.setRowSorter(null);
+        App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+        App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
+        App.get().status.setText(" ");
 
-		App.get().compositeViewer.clear();
+        App.get().compositeViewer.clear();
 
-		App.get().subItemModel.results = new SearchResult(0);
-		App.get().subItemModel.fireTableDataChanged();
-		App.get().parentItemModel.results = new SearchResult(0);
-		App.get().parentItemModel.fireTableDataChanged();
-		while (App.get().tabbedHits.getTabCount() > 1)
-			App.get().tabbedHits.removeTabAt(1);
+        App.get().subItemModel.results = new SearchResult(0);
+        App.get().subItemModel.fireTableDataChanged();
+        App.get().parentItemModel.results = new SearchResult(0);
+        App.get().parentItemModel.fireTableDataChanged();
+        while (App.get().tabbedHits.getTabCount() > 1) {
+            App.get().tabbedHits.removeTabAt(1);
+        }
 
-		String texto = "";
-		if (App.get().termo.getSelectedItem() != null) {
-			texto = App.get().termo.getSelectedItem().toString();
-			if (texto.equals(Marcadores.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
-				texto = "";
-				clearSearchBox = true;
-				App.get().termo.setSelectedItem("");
-			}
-			App.get().marcadores.addToTypedWordList(texto);
+        String texto = "";
+        if (App.get().termo.getSelectedItem() != null) {
+            texto = App.get().termo.getSelectedItem().toString();
+            if (texto.equals(Marcadores.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
+                texto = "";
+                clearSearchBox = true;
+                App.get().termo.setSelectedItem("");
+            }
+            App.get().marcadores.addToTypedWordList(texto);
 
-		}
+        }
 
-		try {
-			PesquisarIndice task = new PesquisarIndice(texto);
-			task.execute();
+        try {
+            PesquisarIndice task = new PesquisarIndice(texto);
+            task.execute();
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent evt) {
+    @Override
+    public void actionPerformed(ActionEvent evt) {
 
-		if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged"))) {
+        if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged"))) {
 
-			if(App.get().filtro.getSelectedIndex() == 0)
-				App.get().filtro.setBackground(App.get().filterManager.defaultColor);
-			else
-				App.get().filtro.setBackground(App.get().alertColor);
-			
-			updateFileListing();
-			
-		}
+            if (App.get().filtro.getSelectedIndex() == 0) {
+                App.get().filtro.setBackground(App.get().filterManager.defaultColor);
+            } else {
+                App.get().filtro.setBackground(App.get().alertColor);
+            }
 
-		if (evt.getSource() == App.get().ajuda) {
-			FileProcessor exibirAjuda = new FileProcessor(-1, false);
-			exibirAjuda.execute();
-		}
+            updateFileListing();
 
-		if (evt.getSource() == App.get().opcoes) {
-			App.get().menu.show(App.get(), App.get().opcoes.getX(), App.get().opcoes.getHeight());
-		}
+        }
 
-		if (evt.getSource() == App.get().checkBox) {
-			if (App.get().marcadores.selectedItens > 0) {
-				int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
-				if (result == JOptionPane.YES_OPTION){
-					App.get().marcadores.selectedItens = 0;
-					for (int i = 0; i < App.get().marcadores.selected.length; i++)
-						App.get().marcadores.selected[i] = false;
-				}
-			} else {
-				App.get().marcadores.selectedItens = App.get().totalItens;
-				for (int i = 0; i < App.get().marcadores.selected.length; i++)
-					App.get().marcadores.selected[i] = true;
-			}
+        if (evt.getSource() == App.get().ajuda) {
+            FileProcessor exibirAjuda = new FileProcessor(-1, false);
+            exibirAjuda.execute();
+        }
 
-			App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-			App.get().marcadores.saveState();
-			App.get().marcadores.atualizarGUI();
-		}
+        if (evt.getSource() == App.get().opcoes) {
+            App.get().menu.show(App.get(), App.get().opcoes.getX(), App.get().opcoes.getHeight());
+        }
 
-		clearSearchBox = false;
+        if (evt.getSource() == App.get().checkBox) {
+            if (App.get().marcadores.selectedItens > 0) {
+                int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    App.get().marcadores.selectedItens = 0;
+                    for (int i = 0; i < App.get().marcadores.selected.length; i++) {
+                        App.get().marcadores.selected[i] = false;
+                    }
+                }
+            } else {
+                App.get().marcadores.selectedItens = App.get().totalItens;
+                for (int i = 0; i < App.get().marcadores.selected.length; i++) {
+                    App.get().marcadores.selected[i] = true;
+                }
+            }
 
-	}
+            App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
+            App.get().marcadores.saveState();
+            App.get().marcadores.atualizarGUI();
+        }
 
-	@Override
-	public void mouseClicked(MouseEvent arg0) {
+        clearSearchBox = false;
 
-	}
+    }
 
-	@Override
-	public void mouseEntered(MouseEvent arg0) {
+    @Override
+    public void mouseClicked(MouseEvent arg0) {
 
-	}
+    }
 
-	@Override
-	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+    @Override
+    public void mouseEntered(MouseEvent arg0) {
 
-	}
+    }
 
-	@Override
-	public void mousePressed(MouseEvent evt) {
+    @Override
+    public void mouseExited(MouseEvent arg0) {
+        // TODO Auto-generated method stub
 
-		CompositeViewerHelper.releaseLOFocus();
+    }
 
-		Object termo = App.get().termo.getSelectedItem();
-		if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {
+    @Override
+    public void mousePressed(MouseEvent evt) {
 
-			clearSearchBox = true;
-			App.get().termo.setSelectedItem("");
-		}
+        ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
 
-	}
+        Object termo = App.get().termo.getSelectedItem();
+        if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {
 
-	@Override
-	public void mouseReleased(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+            clearSearchBox = true;
+            App.get().termo.setSelectedItem("");
+        }
 
-	}
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent arg0) {
+        // TODO Auto-generated method stub
+
+    }
 
 }

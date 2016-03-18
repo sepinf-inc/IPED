@@ -116,7 +116,7 @@ public class GalleryModel extends AbstractTableModel {
 
 		idx = App.get().resultsTable.convertRowIndexToModel(idx);
 		final int docId = App.get().results.docs[idx];
-		final int id = App.get().ids[docId];
+		final int id = App.get().getIDs()[docId];
 
 		synchronized (cache) {
 			if (cache.containsKey(id))

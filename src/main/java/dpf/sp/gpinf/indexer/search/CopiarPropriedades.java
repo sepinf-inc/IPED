@@ -78,7 +78,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 					if(!field.equals(ResultTableModel.BOOKMARK_COL))
 						value = doc.get(fields.get(col));
 					else
-						value = App.get().marcadores.getLabels(app.ids[docId]);
+						value = App.get().marcadores.getLabels(app.getIDs()[docId]);
 					if (value == null)
 						value = "";
 					if (field.equals(IndexItem.CATEGORY))

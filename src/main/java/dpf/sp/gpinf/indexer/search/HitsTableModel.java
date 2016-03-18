@@ -36,8 +36,8 @@ public class HitsTableModel extends AbstractTableModel {
 	@Override
 	public int getRowCount() {
 
-		if (App.get().textViewer != null && App.get().textViewer.textParser != null)
-			return App.get().textViewer.textParser.sortedHits.size();
+		if (App.get().getTextViewer() != null && App.get().getTextViewer().textParser != null)
+			return App.get().getTextViewer().textParser.sortedHits.size();
 
 		return 0;
 	}
@@ -53,8 +53,8 @@ public class HitsTableModel extends AbstractTableModel {
 			if (col == 0)
 				return row + 1;
 			else {
-				long hitOff = App.get().textViewer.textParser.hits.get(row);
-				int hitLen = App.get().textViewer.textParser.sortedHits.get(hitOff)[0];
+				long hitOff = App.get().getTextViewer().textParser.hits.get(row);
+				int hitLen = App.get().getTextViewer().textParser.sortedHits.get(hitOff)[0];
 
 				ByteBuffer data = ByteBuffer.allocate(hitLen);
 				int nread;

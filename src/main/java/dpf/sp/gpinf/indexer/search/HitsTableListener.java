@@ -51,39 +51,39 @@ public class HitsTableListener implements ListSelectionListener {
 			int row = App.get().hitsTable.getSelectedRow();
 			if (row != -1 && row != lastSelectedRow) {
 
-				long hitOff = App.get().textViewer.textParser.hits.get(row);
-				int[] hit = App.get().textViewer.textParser.sortedHits.get(hitOff);
+				long hitOff = App.get().getTextViewer().textParser.hits.get(row);
+				int[] hit = App.get().getTextViewer().textParser.sortedHits.get(hitOff);
 				int hitLen = hit[0];
 
 				int startViewRow = hit[1];
-				long viewRowOff = App.get().textViewer.textParser.viewRows.get(startViewRow);
+				long viewRowOff = App.get().getTextViewer().textParser.viewRows.get(startViewRow);
 				if (startViewRow == App.MAX_LINES)
 					startViewRow += (int) (hitOff - viewRowOff) / App.MAX_LINE_SIZE;
 
 				int endViewRow = hit[2];
-				viewRowOff = App.get().textViewer.textParser.viewRows.get(endViewRow);
+				viewRowOff = App.get().getTextViewer().textParser.viewRows.get(endViewRow);
 				if (endViewRow == App.MAX_LINES)
 					endViewRow += (int) (hitOff + hitLen - viewRowOff) / App.MAX_LINE_SIZE;
 
 				int viewRow = startViewRow;
 				do {
-					String line = App.get().textViewer.textViewerModel.getValueAt(viewRow, 0).toString();
+					String line = App.get().getTextViewer().textViewerModel.getValueAt(viewRow, 0).toString();
 					int index1, index2, x = 0, width = 0;
-					if ((index1 = line.indexOf(App.HIGHLIGHT_START_TAG)) != -1) {
+					if ((index1 = line.indexOf(App.get().getParams().HIGHLIGHT_START_TAG)) != -1) {
 						String text = line.substring(0, index1);
 						x = getWidth(text) - 100;
-						index2 = line.indexOf(App.HIGHLIGHT_END_TAG);
-						text = line.substring(index1, index2 - App.HIGHLIGHT_START_TAG.length());
-						width = App.get().getFontMetrics(App.get().textViewer.textTable.getFont()).stringWidth(text) + 150;
-						Rectangle rect = App.get().textViewer.textTable.getCellRect(viewRow, 0, true);
+						index2 = line.indexOf(App.get().getParams().HIGHLIGHT_END_TAG);
+						text = line.substring(index1, index2 - App.get().getParams().HIGHLIGHT_START_TAG.length());
+						width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont()).stringWidth(text) + 150;
+						Rectangle rect = App.get().getTextViewer().textTable.getCellRect(viewRow, 0, true);
 						rect.setBounds(x, rect.y, width, rect.height);
-						App.get().textViewer.textTable.scrollRectToVisible(rect);
+						App.get().getTextViewer().textTable.scrollRectToVisible(rect);
 					}
 
 				} while (++viewRow <= endViewRow);
 
-				if (App.get().textViewer.textParser.firstHitAutoSelected)
-					App.get().compositeViewer.changeToViewer(App.get().textViewer);
+				if (App.get().getTextViewer().textParser.firstHitAutoSelected)
+					App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
 
 			}
 			lastSelectedRow = row;

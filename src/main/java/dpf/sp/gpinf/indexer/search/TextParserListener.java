@@ -59,7 +59,7 @@ public class TextParserListener implements PropertyChangeListener {
 				} catch (Exception e) {
 				}
 
-			App.get().tabbedHits.setTitleAt(0, App.get().textViewer.textParser.hits.size() + " Ocorrências");
+			App.get().tabbedHits.setTitleAt(0, App.get().getTextViewer().textParser.hits.size() + " Ocorrências");
 
 		}
 

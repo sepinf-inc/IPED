@@ -137,7 +137,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 		}
 
 		selectedIndex = lsm.getMinSelectionIndex();
-		App.get().textViewer.textTable.scrollRectToVisible(new Rectangle());
+		App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
 		FileProcessor parsingTask = new FileProcessor(results.docs[selectedIndex], false);
 		parsingTask.execute();

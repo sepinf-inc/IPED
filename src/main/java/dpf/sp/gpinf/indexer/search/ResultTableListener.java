@@ -42,7 +42,7 @@ import javax.swing.table.TableRowSorter;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.viewer.CompositeViewerHelper;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
@@ -105,7 +105,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 			if (App.get().results.docs[selectedDoc] != App.get().lastSelectedDoc) {
 
 				App.get().hitsTable.scrollRectToVisible(new Rectangle());
-				App.get().textViewer.textTable.scrollRectToVisible(new Rectangle());
+				App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 				App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
 				while (App.get().tabbedHits.getTabCount() > 1)
 					App.get().tabbedHits.removeTabAt(1);
@@ -168,7 +168,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		CompositeViewerHelper.releaseLOFocus();
+            ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
 	}
 
 	@Override
@@ -203,7 +203,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int selCol = App.get().resultsTable.getSelectedColumn();
             if (selCol < 0) return;
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
-			value = value.replace("<html><nobr>", "").replace(App.HIGHLIGHT_START_TAG, "").replace(App.HIGHLIGHT_END_TAG, "");
+			value = value.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, "");
 			StringSelection selection = new StringSelection(value);
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(selection, selection);
@@ -282,7 +282,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace(App.HIGHLIGHT_START_TAG, "").replace(App.HIGHLIGHT_END_TAG, "");
+        return cell.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, "");
     }
 
 }

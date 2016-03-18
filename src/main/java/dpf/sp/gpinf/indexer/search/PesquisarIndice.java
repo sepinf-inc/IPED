@@ -130,7 +130,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 	private Set<String> getQueryStrings() {
 		Query query = null;
-		if (App.get().query != null)
+		if (App.get().getQuery() != null)
 			try {
 				Object termo = App.get().termo.getSelectedItem();
 				String queryStr = termo != null ? termo.toString() : "";
@@ -142,9 +142,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 		Set<String> result = getQueryStrings(query);
 
-		if (App.get().query != null)
+		if (App.get().getQuery() != null)
 			try {
-				query = App.get().query.rewrite(App.get().reader);
+				query = App.get().getQuery().rewrite(App.get().reader);
 				result.addAll(getQueryStrings(query));
 
 			} catch (IOException e) {
@@ -173,7 +173,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			numFilters++;
 		}
 		
-		Query result = getQuery(texto, App.get().analyzer);
+		Query result = getQuery(texto, App.get().getAnalyzer());
 		
 		if(App.get().categoryListener.query != null){
 			BooleanQuery boolQuery = new BooleanQuery();
@@ -203,7 +203,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	}
 
 	public static Query getQuery(String texto) throws ParseException, QueryNodeException {
-		return getQuery(texto, App.get().analyzer);
+		return getQuery(texto, App.get().getAnalyzer());
 	}
 
 	public static Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
@@ -272,7 +272,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames) throws Exception{
 		  
 		  	Marcadores marcadores = App.get().marcadores;
-		  	int[] ids = App.get().ids;
+		  	int[] ids = App.get().getIDs();
 		  	
 		  	int[] labelIds = new int[labelNames.size()];
 		  	int i = 0;
@@ -293,7 +293,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarSemEComMarcadores(SearchResult result, Set<String> labelNames) throws Exception{
 		  
 		  	Marcadores marcadores = App.get().marcadores;
-		  	int[] ids = App.get().ids;
+		  	int[] ids = App.get().getIDs();
 		  	
 		  	int[] labelIds = new int[labelNames.size()];
 		  	int i = 0;
@@ -314,7 +314,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarSemMarcadores(SearchResult result){
 		  	Marcadores marcadores = App.get().marcadores;
 			int removed = 0;
-			int[] ids = App.get().ids;
+			int[] ids = App.get().getIDs();
 			for (int i = 0; i < result.length; i++)
 				if (marcadores.hasLabel(ids[result.docs[i]])) {
 					result.docs[i] = -1;
@@ -328,7 +328,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	  public SearchResult filtrarSelecionados(SearchResult result) throws Exception {
 
 			Marcadores marcadores = App.get().marcadores;
-			int[] ids = App.get().ids;
+			int[] ids = App.get().getIDs();
 			int removed = 0;
 			for (int i = 0; i < result.length; i++)
 				if (!marcadores.selected[ids[result.docs[i]]]) {
@@ -503,7 +503,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		
 		if(query == null){
 			query = getQueryWithFilter(queryText);
-			App.get().query = query;
+			App.get().setQuery(query);
 		}
 		
 		if(!treeQuery)
@@ -536,7 +536,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
 		int frags = 0;
-		int[] ids = App.get().ids;
+		int[] ids = App.get().getIDs();
 		Set<Integer> splitedIds = App.get().splitedDocs;
 		for (int i = 0; i < prevResult.length; i++) {
 			int id = ids[prevResult.docs[i]];
@@ -562,7 +562,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		int versions = 0;
 		App app = App.get();
 		for (int i = 0; i < prevResult.length; i++) {
-		    int id = app.ids[prevResult.docs[i]];
+		    int id = app.getIDs()[prevResult.docs[i]];
 			Integer original = app.viewToRawMap.getRaw(id);
 			if (original == null) {
 				if (app.viewToRawMap.isRaw(id)) {

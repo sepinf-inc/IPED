@@ -118,14 +118,14 @@ public class TextParser extends CancelableWorker {
 				return null;
 
 			progressMonitor = new ProgressDialog(App.get(), parsingTask);
-			if(App.get().textSizes.length > id)
-				progressMonitor.setMaximum(App.get().textSizes[id] * 1000L);
+			if(App.get().getTextSizes().length > id)
+				progressMonitor.setMaximum(App.get().getTextSizes()[id] * 1000L);
 
 			sortedHits = new TreeMap<Long, int[]>();
 			hits = new ArrayList<Long>();
 			viewRows = new ArrayList<Long>();
 			App.get().hitsModel.fireTableDataChanged();
-			App.get().textViewer.textViewerModel.fireTableDataChanged();
+			App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
 			parseText();
 		}
@@ -135,7 +135,7 @@ public class TextParser extends CancelableWorker {
 	
 	private ParseContext getTikaContext() throws Exception{
 		ParseContext context = new ParseContext();
-		context.set(Parser.class, (Parser) App.get().autoParser);
+		context.set(Parser.class, (Parser) App.get().getAutoParser());
 		context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
 		
 		ParsingTask expander = new ParsingTask(context);
@@ -171,7 +171,7 @@ public class TextParser extends CancelableWorker {
 			ParseContext context = getTikaContext();
 			is = item.getTikaStream();
 
-			textReader = new ParsingReader((Parser) App.get().autoParser, is, metadata, context);
+			textReader = new ParsingReader((Parser) App.get().getAutoParser(), is, metadata, context);
 			textReader.startBackgroundParsing();
 
 			tmp.dispose();
@@ -268,11 +268,11 @@ public class TextParser extends CancelableWorker {
 
 						// atualiza viewer permitindo rolar para o hit
 						if (viewRows.size() - 1 < App.MAX_LINES) {
-							App.get().textViewer.textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
+							App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
 							lastRowInserted = viewRows.size() - 2;
 						} else {
 							int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / App.MAX_LINE_SIZE);
-							App.get().textViewer.textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
+							App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
 							lastRowInserted = line;
 						}
 
@@ -288,18 +288,18 @@ public class TextParser extends CancelableWorker {
 				}
 				// atualiza viewer
 				if (viewRows.size() - 1 < App.MAX_LINES) {
-					App.get().textViewer.textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
+					App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
 					lastRowInserted = viewRows.size() - 2;
 				} else {
 					int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / App.MAX_LINE_SIZE);
-					App.get().textViewer.textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
+					App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
 					lastRowInserted = line;
 				}
 			}
 			if (lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
 				viewRows.add(parsedFile.size());
 				lastRowInserted++;
-				App.get().textViewer.textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
+				App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
 			}
 
 			textReader.reallyClose();
