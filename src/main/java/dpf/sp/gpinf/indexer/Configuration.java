@@ -121,12 +121,16 @@ public class Configuration {
 					tmp = newTmp;
 			}
 			indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
-			System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+			if(!indexerTemp.mkdirs()){
+				tmp = new File(System.getProperty("java.io.tmpdir"));
+				indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+				indexerTemp.mkdirs();
+			}
+			if(indexerTemp.exists())
+				System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
 			if (tmp == newTmp)
 				indexTemp = new File(indexerTemp, "index");
 		}
-		if (indexerTemp != null)
-			indexerTemp.mkdirs();
 		
 		value = properties.getProperty("robustImageReading");
         if (value != null)
