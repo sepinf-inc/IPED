@@ -125,10 +125,12 @@ public class GraphicsMagicConverter {
             try {
 				t.join(TIMEOUT * 1000);
 				
-				if(result == null && t.isAlive() && throwTimeout)
-	                throw new TimeoutException();
-	            else
-	            	Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP.");
+				if(result == null && t.isAlive()){
+					if(throwTimeout)
+						throw new TimeoutException();
+					else
+						Log.warning("GraphicsMagicConverter", "Timeout while converting image to BMP.");
+				}
 				
 			} catch (InterruptedException e) {
 				
