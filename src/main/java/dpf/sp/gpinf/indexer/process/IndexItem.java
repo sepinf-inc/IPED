@@ -407,14 +407,19 @@ public class IndexItem {
 
   private static void addMetadataToDoc(Document doc, Metadata metadata) {
     for (String key : metadata.names()) {
-      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
+      if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
       }
-      String value = metadata.get(key).trim();
+      String value = metadata.get(key);
+      if (value == null) {
+        continue;
+      }
       if (metadata.getValues(key).length > 1) {
         StringBuilder strBuilder = new StringBuilder();
         for (String val : metadata.getValues(key)) {
-          strBuilder.append(val + " ");
+          if (val != null) {
+            strBuilder.append(val + " ");
+          }
         }
         value = strBuilder.toString().trim();
       }
