@@ -120,13 +120,17 @@ public class Configuration {
         }
       }
       ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
-      System.setProperty("java.io.tmpdir", ConstantsViewer.indexerTemp.getAbsolutePath());
+      if (!ConstantsViewer.indexerTemp.mkdirs()) {
+        tmp = new File(System.getProperty("java.io.tmpdir"));
+        ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+        ConstantsViewer.indexerTemp.mkdirs();
+      }
+      if (ConstantsViewer.indexerTemp.exists()) {
+        System.setProperty("java.io.tmpdir", ConstantsViewer.indexerTemp.getAbsolutePath());
+      }
       if (tmp == newTmp) {
         indexTemp = new File(ConstantsViewer.indexerTemp, "index");
       }
-    }
-    if (ConstantsViewer.indexerTemp != null) {
-      ConstantsViewer.indexerTemp.mkdirs();
     }
 
     value = properties.getProperty("robustImageReading");
