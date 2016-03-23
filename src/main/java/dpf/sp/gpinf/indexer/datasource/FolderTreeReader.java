@@ -65,7 +65,7 @@ public class FolderTreeReader extends DataSourceReader {
 
   }
 
-  private EvidenceFile getEvidence(File file) throws IOException {
+  private EvidenceFile getEvidence(File file) {
     if (listOnly) {
       caseData.incDiscoveredEvidences(1);
       caseData.incDiscoveredVolume(file.length());
@@ -78,8 +78,12 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceFile.setName(evidenceName);
       }
 
-      String relativePath = Util.getRelativePath(output, file);
-      evidenceFile.setExportedFile(relativePath);
+      evidenceFile.setFile(file);
+      try {
+        String relativePath = Util.getRelativePath(output, file);
+        evidenceFile.setExportedFile(relativePath);
+      } catch (IOException e) {
+      }
 
       String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
       evidenceFile.setPath(path);
@@ -106,38 +110,36 @@ public class FolderTreeReader extends DataSourceReader {
     }
 
     @Override
-    public FileVisitResult visitFile(Path path, BasicFileAttributes attr) throws IOException {
+    public FileVisitResult visitFile(Path path, BasicFileAttributes attr) {
       if (Thread.interrupted()) {
         return FileVisitResult.TERMINATE;
       }
 
-      try {
-        EvidenceFile evidenceFile = getEvidence(path.toFile());
-        if (evidenceFile != null) {
-          evidenceFile.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
-          evidenceFile.setCreationDate(new Date(attr.creationTime().toMillis()));
-          evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
-          evidenceFile.setLength(attr.size());
-          if (!parentIds.isEmpty()) {
-            evidenceFile.setParentId(parentIds.getLast().toString());
-            evidenceFile.addParentIds(parentIds);
-          } else {
-            evidenceFile.setRoot(true);
-          }
-
-          if (attr.isDirectory()) {
-            evidenceFile.setIsDir(true);
-            parentIds.addLast(evidenceFile.getId());
-          }
-
-          caseData.addEvidenceFile(evidenceFile);
+      EvidenceFile evidenceFile = getEvidence(path.toFile());
+      if (evidenceFile != null) {
+        if (!parentIds.isEmpty()) {
+          evidenceFile.setParentId(parentIds.getLast().toString());
+          evidenceFile.addParentIds(parentIds);
+        } else {
+          evidenceFile.setRoot(true);
         }
-      } catch (InterruptedException e) {
-        return FileVisitResult.TERMINATE;
 
-      } catch (IOException e) {
-        System.err.println(new Date() + "\t[ALERTA]\t" + "Indexação ignorada: " + path.toFile().getAbsolutePath() + " " + e.toString());
-        return FileVisitResult.CONTINUE;
+        if (attr.isDirectory()) {
+          evidenceFile.setIsDir(true);
+          parentIds.addLast(evidenceFile.getId());
+        }
+
+        evidenceFile.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
+        evidenceFile.setCreationDate(new Date(attr.creationTime().toMillis()));
+        evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
+        evidenceFile.setLength(attr.size());
+
+        try {
+          caseData.addEvidenceFile(evidenceFile);
+
+        } catch (InterruptedException e) {
+          return FileVisitResult.TERMINATE;
+        }
       }
 
       return FileVisitResult.CONTINUE;
