@@ -67,12 +67,12 @@ enableOCR = false
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
 addUnallocated = false
 
-# Indexa o espaço não alocado adicionado. Necessário habilitar "indexUnknownFiles".
+# Indexa o espaço não alocado adicionado. Necessário habilitar "addUnallocated" e "indexUnknownFiles".
 indexUnallocated = false
 
-# Habilita o carving. Por padrão o carving é bastante inclusivo, sendo executado sobre não alocado e 
-# sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar e a recuperar, podem ser
-# configurados no arquivo conf/CarvingConfig.txt
+# Habilita o carving. Necessário habilitar "addUnallocated" para vasculhar áreas não alocadas.
+# Por padrão o carving é executado sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar
+# e a recuperar, podem ser configurados em conf/CarvingConfig.txt
 enableCarving = false
 
 # Habilita a geração de miniaturas das imagens durante o processamento.
