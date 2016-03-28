@@ -595,7 +595,7 @@ public class LibreOfficeViewer extends Viewer {
                                         XCell xCell;
                                         try {
                                             xCell = xCellRange.getCellByPosition(ri, rj);
-                                        } catch (com.sun.star.lang.IndexOutOfBoundsException e) {
+                                        } catch (IndexOutOfBoundsException e) {
                                             if (rj == 0) {
                                                 riOutBound = true;
                                             }

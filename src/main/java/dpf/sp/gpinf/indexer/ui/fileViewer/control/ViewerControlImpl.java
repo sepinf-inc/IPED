@@ -82,7 +82,8 @@ public class ViewerControlImpl implements ViewerControl {
                         public void run() {
                             
                             params.compositeViewer.addViewer(new HexViewer());
-                            params.compositeViewer.addViewer(new TextViewer(params));
+                            params.textViewer = new TextViewer(params);
+                            params.compositeViewer.addViewer(params.textViewer);
                             params.compositeViewer.addViewer(viewersRepository);
 
                             viewersRepository.addViewer(new ImageViewer());
