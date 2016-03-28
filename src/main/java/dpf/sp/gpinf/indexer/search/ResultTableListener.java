@@ -103,12 +103,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     if (viewIndex != -1) {
       int selectedDoc = App.get().resultsTable.convertRowIndexToModel(viewIndex);
-      Object obj1 = App.get().results;
-      Object obj2 = App.get().getParams().lastSelectedDoc;
-      Object obj3 = App.get().hitsTable;
-      Object obj4 = App.get().getTextViewer();
-      Object obj5 = App.get().getTextViewer().textTable;
-      Object obj6 = App.get().tabbedHits;
       if (App.get().results.docs[selectedDoc] != App.get().getParams().lastSelectedDoc) {
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());

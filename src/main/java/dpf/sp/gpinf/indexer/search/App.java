@@ -222,12 +222,11 @@ public class App extends JFrame implements WindowListener {
     try {
       URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
       codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
-
       //codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
 
