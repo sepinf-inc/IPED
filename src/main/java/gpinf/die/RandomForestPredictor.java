@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class RandomForestPredictor {
@@ -29,10 +31,18 @@ public class RandomForestPredictor {
     public double predict(List<Float> lFeatures) {
         float[] features = toArr(lFeatures);
         double ret = 0;
+        List<Double> l = new ArrayList<Double>();
         for (int root : roots) {
-            ret += classify(root, features);
+            l.add(classify(root, features));
         }
-        return ret / trees;
+        Collections.sort(l);
+        int cnt = 0;
+        int border = (int) (l.size() * 0.05); 
+        for (int i = border; i < l.size() - border; i++) {
+            ret += l.get(i);
+            cnt++;
+        }
+        return ret / cnt;
     }
 
     private static float[] toArr(List<Float> l) {
