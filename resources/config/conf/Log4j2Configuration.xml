@@ -3,6 +3,7 @@
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="IPED-%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
+            <PackageRegexpFilter regex=".*org\.icepdf.*" onMatch="DENY" onMismatch="ACCEPT"/>
         </Console>
         <File name="LogFile" fileName="${sys:logFilePath}/IPED-${sys:logFileDate}.log"
               immediateFlush="true" append="true" bufferSize="4096">
