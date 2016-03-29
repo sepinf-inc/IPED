@@ -1,3 +1,11 @@
+29/03/2015: IPED-3.9.2
+- Corrige raro NullPoiterException que fazia processamento abortar (3.9)
+- Falsos alertas no log de timeout ao gerar miniaturas (3.9)
+- Remoção de mensagens de erro da icepdf do Console
+- Melhor proteção contra erros de IO durante varredura de diretórios
+- Descarta PDFs de carving com zero páginas
+- Pequena melhoria na detecção de nudez (PCF Wladimir)
+
 14/03/2015: IPED-3.9.1
 - Alguns casos não eram abertos devido a erro de leitura e sintaxe no arquivo conf/metadatatypes.txt 
 
