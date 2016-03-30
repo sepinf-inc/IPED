@@ -290,9 +290,9 @@ public class IPEDReader extends DataSourceReader{
 				evidence.setAddToCase(false);
 			}
 
-			value = doc.get(IndexItem.CONTENTTYPE);
-			if (value != null)
-				evidence.setMediaType(MediaType.parse(value));
+			String mimetype = doc.get(IndexItem.CONTENTTYPE);
+			if (mimetype != null)
+				evidence.setMediaType(MediaType.parse(mimetype));
 
 			evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
@@ -335,11 +335,12 @@ public class IPEDReader extends DataSourceReader{
 			}
 			
 			//armazena metadados de emails, necessário para emails de PST
-			for(String key : ColumnsManager.email){
-				value = doc.get(key);
-				if(value != null)
-					evidence.getMetadata().set(key, value);
-			}
+			if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
+				for(String key : ColumnsManager.email){
+					value = doc.get(key);
+					if(value != null)
+						evidence.getMetadata().set(key, value);
+				}
 			
 			value = doc.get(IndexItem.DELETED);
 			evidence.setDeleted(Boolean.parseBoolean(value));
