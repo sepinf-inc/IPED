@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014, Wladimir Luiz Caldas Leite
+ * Copyright 2012-2016, Wladimir Luiz Caldas Leite
  * 
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
@@ -39,7 +39,6 @@ import javax.imageio.ImageWriter;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
-import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
 
@@ -109,15 +108,15 @@ public class ImageUtil {
                             int th = img.getHeight();
                             int x = 0;
                             int y = 0;
-                            while (iw * th >= ih * tw && th > 20) {
+                            while (iw * th > ih * tw && th > 20) {
                                 y++;
                                 th -= 2;
                             }
-                            while (iw * th <= ih * tw && tw > 20) {
+                            while (iw * th < ih * tw && tw > 20) {
                                 x++;
                                 tw -= 2;
                             }
-                            img = img.getSubimage(x, y, tw, th);
+                            if (x > 0 || y > 0) img = img.getSubimage(x, y, tw, th);
                         }
 
                     } catch (Exception e) {}
