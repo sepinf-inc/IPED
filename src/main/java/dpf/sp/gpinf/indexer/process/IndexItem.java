@@ -105,6 +105,8 @@ public class IndexItem {
 
   public static final String attrTypesFilename = "metadataTypes.txt";
 
+  private static final int MAX_DOCVALUE_SIZE = 16000;
+
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
   private static volatile boolean guessMetaTypes = false;
@@ -265,7 +267,9 @@ public class IndexItem {
       value = "";
     }
     doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
-    //doc.add(new SortedDocValuesField(PATH, new BytesRef(value)));
+    if (value.length() > MAX_DOCVALUE_SIZE) {
+      value = value.substring(0, MAX_DOCVALUE_SIZE);
+    }
     doc.add(getCollationDocValue(PATH, value));
 
     doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
@@ -389,8 +393,8 @@ public class IndexItem {
     if (isMetadataKey || isString) {
       doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
       String value = oValue.toString();
-      if (value.length() > 16000) {
-        value = value.substring(value.length() - 16000);
+      if (value.length() > MAX_DOCVALUE_SIZE) {
+        value = value.substring(0, MAX_DOCVALUE_SIZE);
       }
       /*
        * utilizar docvalue de outro tipo com mesmo nome provoca erro,
@@ -541,7 +545,7 @@ public class IndexItem {
         evidence.setId(Integer.valueOf(value));
       }
 
-      //evidence.setLabels(state.getLabels(id));
+			//evidence.setLabels(state.getLabels(id));
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
         evidence.setParentId(value);
