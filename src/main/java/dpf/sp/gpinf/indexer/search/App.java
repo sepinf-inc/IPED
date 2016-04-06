@@ -72,6 +72,7 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
+import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -558,6 +559,8 @@ public class App extends JFrame implements WindowListener {
                 return false;
             }
         });
+        
+        new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
     }
 
     private void zoomFont(Component c, int inc) {

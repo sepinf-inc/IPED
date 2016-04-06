@@ -100,7 +100,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	String[] indexFields = null;
 	
 	private String[] groupNames = {"Básicas", "Avançadas", "Email", "Outras"};
-	private String[][] fieldGroups;
+	public String[][] fieldGroups;
 	
 	ColumnState colState = new ColumnState();
     	
