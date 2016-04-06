@@ -143,6 +143,7 @@ public class ColumnsManager implements ActionListener, Serializable{
             }
 	    }
 	    try {
+	    	lastCols.getParentFile().mkdirs();
             Util.writeObject(cs, lastCols.getAbsolutePath());
         } catch (IOException e1) {
             // TODO Auto-generated catch block
