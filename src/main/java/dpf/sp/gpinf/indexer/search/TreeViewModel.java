@@ -37,12 +37,15 @@ public class TreeViewModel implements TreeModel {
   private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
   private Node root;
   private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
-  private RowComparator comparator = new RowComparator(IndexItem.NAME) {
-    @Override
-    public int compare(Integer a, Integer b) {
-      return sdv.getOrd(a) - sdv.getOrd(b);
-    }
-  };
+
+  private RowComparator getComparator() {
+    return new RowComparator(IndexItem.NAME) {
+      @Override
+      public int compare(Integer a, Integer b) {
+        return sdv.getOrd(a) - sdv.getOrd(b);
+      }
+    };
+  }
 
   public class Node {
 
@@ -101,7 +104,7 @@ public class TreeViewModel implements TreeModel {
         PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
         children = task.pesquisar();
         Integer[] array = ArrayUtils.toObject(children.docs);
-        Arrays.sort(array, comparator);
+        Arrays.sort(array, getComparator());
         children.docs = ArrayUtils.toPrimitive(array);
         children.scores = null;
 
@@ -122,7 +125,7 @@ public class TreeViewModel implements TreeModel {
       pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
       root.children = pesquisa.pesquisar();
       Integer[] array = ArrayUtils.toObject(root.children.docs);
-      Arrays.sort(array, comparator);
+      Arrays.sort(array, getComparator());
       root.children.docs = ArrayUtils.toPrimitive(array);
       root.children.scores = null;
 
