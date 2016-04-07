@@ -105,7 +105,7 @@ public class IndexItem {
 
   public static final String attrTypesFilename = "metadataTypes.txt";
 
-  private static final int MAX_DOCVALUE_SIZE = 16000;
+  private static final int MAX_DOCVALUE_SIZE = 4096;
 
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
@@ -361,6 +361,14 @@ public class IndexItem {
 
   private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey) {
     boolean isString = false;
+
+    /* utilizar docvalue de outro tipo com mesmo nome provoca erro,
+     * entao usamos um prefixo no nome para diferenciar
+     */
+    String keyPrefix = "";
+    if (isMetadataKey) {
+      keyPrefix = "_num_";
+    }
     if (oValue instanceof Date) {
       String value = DateUtil.dateToString((Date) oValue);
       doc.add(new StringField(key, value, Field.Store.YES));
@@ -384,7 +392,7 @@ public class IndexItem {
 
     } else if (oValue instanceof Double) {
       doc.add(new DoubleField(key, (Double) oValue, Field.Store.YES));
-      doc.add(new DoubleDocValuesField(key, (Double) oValue));
+      doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
 
     } else {
       isString = true;
@@ -396,11 +404,6 @@ public class IndexItem {
       if (value.length() > MAX_DOCVALUE_SIZE) {
         value = value.substring(0, MAX_DOCVALUE_SIZE);
       }
-      /*
-       * utilizar docvalue de outro tipo com mesmo nome provoca erro,
-       * entao usamos o prefixo "_" no nome para diferenciar
-       */
-      String keyPrefix = "";
       if (isMetadataKey) {
         keyPrefix = "_";
       }
@@ -433,7 +436,10 @@ public class IndexItem {
       }
       Object oValue = value;
       Class type = typesMap.get(key);
-      if (type == null || !type.equals(String.class)) {
+
+      if (type == null || !type.equals(String.class
+      )) {
+
         try {
           if (type == null || type.equals(Double.class)) {
             oValue = Double.valueOf(value);
@@ -465,15 +471,21 @@ public class IndexItem {
     for (String key : metadata.names()) {
       if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
+
       }
       if (metadata.getValues(key).length > 1) {
-        typesMap.put(key, String.class);
+        typesMap.put(key, String.class
+        );
+
         continue;
       }
       String val = metadata.get(key);
-      if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class)) {
+
+      if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class
+      )) {
         int type = 0;
-        while (type <= 4) {
+        while (type
+            <= 4) {
           try {
             switch (type) {
               case 0:
@@ -545,7 +557,7 @@ public class IndexItem {
         evidence.setId(Integer.valueOf(value));
       }
 
-			//evidence.setLabels(state.getLabels(id));
+      //evidence.setLabels(state.getLabels(id));
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
         evidence.setParentId(value);
