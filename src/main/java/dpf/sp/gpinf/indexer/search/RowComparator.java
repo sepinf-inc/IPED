@@ -80,6 +80,10 @@ public class RowComparator implements Comparator<Integer> {
             if(IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)){
             	ndv = atomicReader.getNumericDocValues(indexedField);
             	docsWithField = atomicReader.getDocsWithField(indexedField);
+            	if(ndv == null){
+            		ndv = atomicReader.getNumericDocValues("_num_" + indexedField);
+                	docsWithField = atomicReader.getDocsWithField("_num_" + indexedField);
+            	}
             	
             }if(ndv == null){
             	sdv = atomicReader.getSortedDocValues(indexedField);

@@ -105,7 +105,7 @@ public class IndexItem {
 	
 	public static final String attrTypesFilename = "metadataTypes.txt";
 	
-	private static final int MAX_DOCVALUE_SIZE = 16000;
+	private static final int MAX_DOCVALUE_SIZE = 4096;
 	
 	static HashSet<String> ignoredMetadata = new HashSet<String>();
 	
@@ -344,6 +344,13 @@ public class IndexItem {
 	
 	private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey){
 		boolean isString = false;
+		
+		/* utilizar docvalue de outro tipo com mesmo nome provoca erro,
+         * entao usamos um prefixo no nome para diferenciar
+         */
+		String keyPrefix  = "";
+        if(isMetadataKey) keyPrefix = "_num_";
+        
 	    if(oValue instanceof Date){
             String value = DateUtil.dateToString((Date)oValue);
             doc.add(new StringField(key, value, Field.Store.YES));
@@ -367,7 +374,7 @@ public class IndexItem {
             
         }else if(oValue instanceof Double){
             doc.add(new DoubleField(key, (Double)oValue, Field.Store.YES));
-            doc.add(new DoubleDocValuesField(key, (Double)oValue));
+            doc.add(new DoubleDocValuesField(keyPrefix + key, (Double)oValue));
             
         }else{
         	isString = true;
@@ -378,12 +385,8 @@ public class IndexItem {
 	    	String value = oValue.toString();
 	        if(value.length() > MAX_DOCVALUE_SIZE)
 	            value = value.substring(0, MAX_DOCVALUE_SIZE);
-	        /*
-	         * utilizar docvalue de outro tipo com mesmo nome provoca erro,
-	         * entao usamos o prefixo "_" no nome para diferenciar
-	         */
-	        String keyPrefix  = "";
-	        if(isMetadataKey) keyPrefix = "_";
+	        if(isMetadataKey)
+	        	keyPrefix = "_";
 	        doc.add(getCollationDocValue(keyPrefix + key, value));
 	    }
 	    
