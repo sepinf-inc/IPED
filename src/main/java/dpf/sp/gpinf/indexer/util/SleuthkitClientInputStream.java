@@ -267,6 +267,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
       empty = true;
       notifyServer();
       waitServerResponse();
+      client.removeStream(streamId);
     }
 
   }

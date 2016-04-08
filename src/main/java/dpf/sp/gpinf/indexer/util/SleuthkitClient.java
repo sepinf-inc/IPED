@@ -9,6 +9,9 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,6 +39,10 @@ public class SleuthkitClient {
   OutputStream os;
 
   volatile boolean serverError = false;
+
+  private static final int max_streams = 10000;
+  private volatile int openedStreams = 0;
+  private Set<Long> currentStreams = Collections.synchronizedSet(new HashSet<Long>());
 
   /*private static final ThreadLocal<SleuthkitClient> threadLocal =
    new ThreadLocal<SleuthkitClient>() {
@@ -137,19 +144,30 @@ public class SleuthkitClient {
 
   public SeekableInputStream getInputStream(int id, String path) throws IOException {
 
-    if (serverError) {
+    if (serverError || (openedStreams > max_streams && currentStreams.size() == 0)) {
       if (process != null) {
         process.destroy();
       }
       process = null;
       serverError = false;
+      openedStreams = 0;
+      currentStreams.clear();
     }
 
     while (process == null || !isAlive(process)) {
       start();
     }
 
-    return new SleuthkitClientInputStream(id, path, this);
+    SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
+
+    currentStreams.add(stream.streamId);
+    openedStreams++;
+
+    return stream;
+  }
+
+  void removeStream(long streamID) {
+    currentStreams.remove(streamID);
   }
 
   private void finishProcessOnJVMShutdown(final Process p) {
