@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -393,7 +394,15 @@ public class IndexItem {
 	}
 	
 	private static void addMetadataToDoc(Document doc, Metadata metadata){
-	    for(String key : metadata.names()){
+		
+		//previne mto raro ConcurrentModificationException
+		String[] names = null;
+		while(names == null)
+			try{
+				names = metadata.names();
+			}catch(ConcurrentModificationException e){}
+		
+	    for(String key : names){
             if(key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key))
                 continue;
             String value = metadata.get(key);
