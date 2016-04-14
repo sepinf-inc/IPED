@@ -395,6 +395,9 @@ public class IndexItem {
 	
 	private static void addMetadataToDoc(Document doc, Metadata metadata){
 		
+		MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
+        boolean isHtml = MediaType.TEXT_HTML.equals(mimetype) || MediaType.application("xhtml+xml").equals(mimetype);
+		
 		//previne mto raro ConcurrentModificationException
 		String[] names = null;
 		while(names == null)
@@ -420,6 +423,10 @@ public class IndexItem {
             	continue;
             Object oValue = value;
             Class type = typesMap.get(key);
+            
+            if(type == null && isHtml)
+            	continue;
+            		
             if(type == null || !type.equals(String.class))
             	try{
             		if(type == null || type.equals(Double.class)){
