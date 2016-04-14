@@ -68,7 +68,7 @@ public class MakePreviewTask extends AbstractTask{
 			return;
 		
 		String mediaType = evidence.getMediaType().toString();
-		if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase())
+		if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty() || !isSupportedType(mediaType) || !evidence.isToAddToCase())
 			return;
 		
 		String ext = "html";
