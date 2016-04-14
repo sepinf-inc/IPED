@@ -40,8 +40,8 @@ public class SleuthkitClient {
 	volatile boolean serverError = false;
 	
 	private static final int max_streams = 10000;
-	private volatile int openedStreams = 0;
-	private Set<Long> currentStreams = Collections.synchronizedSet(new HashSet<Long>());
+	private int openedStreams = 0;
+	private Set<Long> currentStreams = new HashSet<Long>();
 	
     /*private static final ThreadLocal<SleuthkitClient> threadLocal =
         new ThreadLocal<SleuthkitClient>() {
@@ -138,12 +138,14 @@ public class SleuthkitClient {
         }.start();
 	}
 	
-	public SeekableInputStream getInputStream(int id, String path) throws IOException{
+	public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException{
 	    
 		if(serverError || (openedStreams > max_streams && currentStreams.size() == 0)){
 	    	if(process != null)
 	    		process.destroy();
 	        process = null;
+	        if(!serverError)
+	        	logger.info("Restarting SleuthkitServer to clean possible resource leaks.");
 	        serverError = false;
 	        openedStreams = 0;
 	        currentStreams.clear();
@@ -160,7 +162,7 @@ public class SleuthkitClient {
 		return stream;
 	}
 	
-	void removeStream(long streamID){
+	synchronized void removeStream(long streamID){
 		currentStreams.remove(streamID);
 	}
 	
