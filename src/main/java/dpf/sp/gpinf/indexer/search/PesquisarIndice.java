@@ -495,7 +495,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
     try {
       LOGGER.error("Pesquisa cancelada!");
-      RowComparator.closeAtomicReader();
+      RowComparator.resetComparators();
       App.get().reader.close();
       String index = App.get().codePath + "/../index";
       Directory directory = FSDirectory.open(new File(index));

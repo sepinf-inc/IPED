@@ -18,25 +18,18 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
-import java.util.Map.Entry;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.util.Bits;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.Util;
 
 public class RowComparator implements Comparator<Integer> {
-
-  static String[] fields = ResultTableModel.fields;
 
   private int col;
   private boolean bookmarkCol = false;
@@ -53,9 +46,9 @@ public class RowComparator implements Comparator<Integer> {
   public RowComparator(int col) {
     this.col = col;
 
-    if (col >= ResultTableModel.fixedCols.length) {
+    if (col >= ResultTableModel.fixedCols.length) {      
       col -= ResultTableModel.fixedCols.length;
-      fields = ResultTableModel.fields;
+      String[] fields = ResultTableModel.fields;
 
       if (fields[col].equals(ResultTableModel.BOOKMARK_COL)) {
         bookmarkCol = true;

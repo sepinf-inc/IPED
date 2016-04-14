@@ -19,6 +19,8 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.awt.Dialog;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.RowSorter;
@@ -30,6 +32,8 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 
+  private static HashMap<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
+
   public ResultTableRowSorter() {
     super(new ResultTableSortModel());
     this.setSortable(0, false);
@@ -40,13 +44,27 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
   }
 
   public void initComparator(int col) {
-    this.setComparator(col, new RowComparator(col));
+    RowComparator comp = comparatorCache.get(col);
+    if (comp == null) {
+      comp = new RowComparator(col);
+      comparatorCache.put(col, comp);
+    }
+    this.setComparator(col, comp);
+  }
+
+  public static void resetComparators() throws IOException {
+    comparatorCache.clear();
+    RowComparator.closeAtomicReader();
   }
 
   public void setSortKeys(final List<? extends SortKey> sortKeys) {
+    if (sortKeys == null) {
+      super.setSortKeys(null);
+    } else {
 
-    BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
-    backgroundSort.execute();
+      BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
+      backgroundSort.execute();
+    }
 
   }
 
