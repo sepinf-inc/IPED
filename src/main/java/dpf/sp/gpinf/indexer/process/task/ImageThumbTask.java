@@ -178,7 +178,7 @@ public class ImageThumbTask extends AbstractTask {
         ImageIO.write(img, "jpg", tmp);
       }
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       Log.warning(getClass().getSimpleName(), "Erro ao gerar miniatura: "
           + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
 
