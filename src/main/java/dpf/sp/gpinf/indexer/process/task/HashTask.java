@@ -87,7 +87,8 @@ public class HashTask extends AbstractTask {
       return;
     }
 
-    if (evidence.getHash() != null || digestMap.isEmpty()) {
+    if (evidence.getHash() != null || digestMap.isEmpty()
+        || evidence.getExtraAttribute(IgnoreHardLinkTask.IGNORE_HARDLINK_ATTR) != null) {
       return;
     }
 

@@ -18,6 +18,8 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
+  public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink";
+
   private static Map<Long, Map<HardLink, Object>> fileSystemMap = new HashMap<Long, Map<HardLink, Object>>();
   private static Object lock = new Object();
   private boolean taskEnabled = false;
@@ -70,8 +72,6 @@ public class IgnoreHardLinkTask extends AbstractTask {
         hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
       }
 
-      //HashValue hash = evidence.getHashValue();
-      Object value = null;
       boolean ignore = false;
 
       synchronized (lock) {
@@ -83,31 +83,14 @@ public class IgnoreHardLinkTask extends AbstractTask {
 
         if (hardLinkMap.containsKey(hardLink)) {
           ignore = true;
-          /*value = hardLinkMap.get(hardLink);
-           if(((Integer)evidence.getId()).equals(value)){
-           hardLinkMap.put(hardLink, hash);
-           lock.notifyAll();
-           }else{
-           ignore = true;
-           while(value instanceof Integer){
-           lock.wait();
-           value = hardLinkMap.get(hardLink);
-           }
-           }*/
-
         } else {
-          //hardLinkMap.put(hardLink, evidence.getId());
           hardLinkMap.put(hardLink, null);
         }
       }
 
       if (ignore) {
         evidence.setSleuthFile(null);
-        evidence.setExtraAttribute("ignoredHardLink", "true");
-        //if(value == null)
-        evidence.setHash("");
-        //else
-        //	evidence.setHash(((HashValue)value).toString());
+        evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true");
       }
 
     }
