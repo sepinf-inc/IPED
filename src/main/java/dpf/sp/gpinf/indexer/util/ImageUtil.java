@@ -155,7 +155,7 @@ public class ImageUtil {
 
             return image;
 
-        } catch (Exception e) {
+        } catch (Throwable e) {
             //e.printStackTrace();
 
         } finally {
