@@ -32,8 +32,11 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 
+<<<<<<< HEAD
   private static HashMap<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
 
+=======
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   public ResultTableRowSorter() {
     super(new ResultTableSortModel());
     this.setSortable(0, false);
@@ -44,6 +47,7 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
   }
 
   public void initComparator(int col) {
+<<<<<<< HEAD
     RowComparator comp = comparatorCache.get(col);
     if (comp == null) {
       comp = new RowComparator(col);
@@ -65,6 +69,15 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
       BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
       backgroundSort.execute();
     }
+=======
+    this.setComparator(col, new RowComparator(col));
+  }
+
+  public void setSortKeys(final List<? extends SortKey> sortKeys) {
+
+    BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
+    backgroundSort.execute();
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
   }
 

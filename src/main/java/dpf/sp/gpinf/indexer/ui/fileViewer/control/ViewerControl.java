@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+<<<<<<< HEAD
  * Controle da interface gráfica de visualização dos dados
  *
  * @author Marcelo Silva
@@ -289,4 +290,67 @@ public class ViewerControl implements IViewerControl {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
+=======
+ * Interface com as funcionalidades da interface gráfica de visualização de dados.
+ *
+ * @author Marcelo Silva
+ */
+public interface ViewerControl {
+
+  /**
+   * Inicializa todos os visualizadores de arquivos disponíveis antigo 'addViewers da classe
+   * CompositeViewerHelper'
+   *
+   * @param params Conjunto de parâmetros do aplicativo principal de pesquisa
+   * @param exibirAjuda Componente que acessa o arquivo de ajuda do visualizador
+   */
+  public void createViewers(final AppSearchParams params,
+      final FileProcessor exibirAjuda);
+
+  /**
+   * Reinicializa a biblioteca LibreOffice. Método recomendado de ser utilizado após uma atualização
+   * de layout
+   */
+  public void restartLibreOffice();
+
+  /**
+   * Libera o focus da biblioteca LibreOffice.
+   */
+  public void releaseLibreOfficeFocus();
+
+  /**
+   * Adicionar um visualizador específico na interface gráfica
+   *
+   * @param viewer
+   */
+  public void addViewer(Viewer viewer);
+
+  /**
+   * Inicializa todos os visualizadores de arquivos disponíveis
+   */
+  public void initViewers();
+
+  /**
+   * Carrega os dados do arquivo no visualizador específico, incluindo o destaque do texto
+   * selecionado
+   *
+   * @param file
+   * @param viewFile
+   * @param contentType
+   * @param highlightTerms
+   */
+  public void loadFile(StreamSource file,
+      StreamSource viewFile, String contentType,
+      Set<String> highlightTerms);
+
+  /**
+   * Carrega os dados do arquivo no visualizador específico, incluindo o destaque do texto
+   * selecionado
+   *
+   * @param file
+   * @param contentType
+   * @param highlightTerms
+   */
+  public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 }

@@ -76,7 +76,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     try {
       // ImageIO.setUseCache(false);
+<<<<<<< HEAD
       IViewerControl viewerControl = ViewerControl.getInstance();
+=======
+      ViewerControl viewerControl = ViewerControlImpl.getInstance();
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       Configuration.getConfiguration(App.get().codePath + "/..");
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
@@ -98,7 +102,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       viewerControl.createViewers(this.appSearchParams,
           exibirAjuda);
       this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
+<<<<<<< HEAD
       App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
+=======
+      App.get().setTextViewer(this.appSearchParams.textViewer);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       // lista todos os itens
       App.get().setQuery(PesquisarIndice.getQuery(""));

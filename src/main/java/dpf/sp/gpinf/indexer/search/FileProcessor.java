@@ -30,8 +30,14 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
+<<<<<<< HEAD
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
+=======
+import dpf.sp.gpinf.indexer.util.Util;
+
+public class FileProcessor extends CancelableWorker<Void, Void> {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
   private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
@@ -45,7 +51,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   public FileProcessor(int docId, boolean listSubItens) {
     this.listSubItens = listSubItens;
 
+<<<<<<< HEAD
     App.get().getSearchParams().lastSelectedDoc = docId;
+=======
+    App.get().lastSelectedDoc = docId;
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
     if (parsingTask != null) {
       parsingTask.cancel(true);
@@ -117,7 +127,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
     }
 
+<<<<<<< HEAD
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+=======
+    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
   }
 

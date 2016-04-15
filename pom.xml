@@ -3,15 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-<<<<<<< HEAD
-<<<<<<< HEAD
-    <version>3.10</version>
-=======
-    <version>3.9.2</version>
->>>>>>> b9e8915... pom.xml -> 3.9.2
-=======
-    <version>3.9.3</version>
->>>>>>> 94978b8... pom.xml -> 3.9.3
+    <version>4.0</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,6 +70,16 @@
             <version>3.9</version>
         </dependency>
         <dependency>
+<<<<<<< HEAD
+=======
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-utils</artifactId>
+            <version>0.5</version>
+        </dependency>
+        <!-- FIM DEPENDÊNCIAS INTERNAS -->
+        <!-- INICIO: EXTERNAS -->
+        <dependency>
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>1.10</version>
@@ -173,6 +175,58 @@
             <groupId>org.mapdb</groupId>
             <artifactId>mapdb</artifactId>
             <version>1.0.6</version>
+<<<<<<< HEAD
+=======
+        </dependency>
+        <dependency>
+            <groupId>com.levigo.jbig2</groupId>
+            <artifactId>levigo-jbig2-imageio</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency> 
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>mchange-commons-java</artifactId>
+            <version>0.2.10</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.5.2</version>
+        </dependency>
+		
+        <!-- FIM: EXTERNAS -->
+        <!-- INICIO: VIEWERS -->
+        <dependency>
+            <groupId>org.icepdf</groupId>
+            <artifactId>icepdf-core</artifactId>
+            <version>6.0.2</version>
+            <type>jar</type>
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         </dependency>
         <dependency>
             <groupId>com.levigo.jbig2</groupId>
@@ -245,6 +299,7 @@
             <version>5.1.1</version>
         </dependency>
         <dependency>
+<<<<<<< HEAD
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
             <version>0.3</version>
@@ -253,9 +308,20 @@
             <groupId>org.openoffice</groupId>
             <artifactId>bootstrap-connector</artifactId>
             <version>0.1.1</version>
+=======
+            <groupId>org.libreoffice</groupId>
+            <artifactId>ridl</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>unoil</artifactId>
+            <version>5.1.1</version>
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         </dependency>
         
         <dependency>
+<<<<<<< HEAD
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-viewer</artifactId>
             <version>4.0</version>
@@ -264,6 +330,36 @@
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
             <version>4.0</version>
+=======
+            <groupId>org.libreoffice</groupId>
+            <artifactId>juh</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>jurt</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>officebean</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>unoloader</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>libre-office</groupId>
+            <artifactId>noa-libre</artifactId>
+            <version>0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openoffice</groupId>
+            <artifactId>bootstrap-connector</artifactId>
+            <version>0.1.1</version>
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         </dependency>
     </dependencies>
     <build>
@@ -417,6 +513,48 @@
                         </configuration>
                     </execution>
                     <execution>
+<<<<<<< HEAD
+=======
+                        <id>copy-libreoffice</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>libreoffice</artifactId>
+                                    <version>1.0.4</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <destFileName>libreoffice.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-nativeview</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libre-office</groupId>
+                                    <artifactId>nativeview-dll</artifactId>
+                                    <version>1.0.0</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${lib.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>                    
+                    <execution>
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
                         <id>copy-dependencies</id>
                         <phase>package</phase>
                         <goals>

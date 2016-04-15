@@ -267,7 +267,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
       empty = true;
       notifyServer();
       waitServerResponse();
+<<<<<<< HEAD
       client.removeStream(streamId);
+=======
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     }
 
   }

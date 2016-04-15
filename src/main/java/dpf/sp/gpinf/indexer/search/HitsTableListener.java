@@ -51,18 +51,31 @@ public class HitsTableListener implements ListSelectionListener {
       int row = App.get().hitsTable.getSelectedRow();
       if (row != -1 && row != lastSelectedRow) {
 
+<<<<<<< HEAD
         long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
         int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
         int hitLen = hit[0];
 
         int startViewRow = hit[1];
         long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
+=======
+        long hitOff = App.get().getTextViewer().textParser.hits.get(row);
+        int[] hit = App.get().getTextViewer().textParser.sortedHits.get(hitOff);
+        int hitLen = hit[0];
+
+        int startViewRow = hit[1];
+        long viewRowOff = App.get().getTextViewer().textParser.viewRows.get(startViewRow);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         if (startViewRow == App.MAX_LINES) {
           startViewRow += (int) (hitOff - viewRowOff) / App.MAX_LINE_SIZE;
         }
 
         int endViewRow = hit[2];
+<<<<<<< HEAD
         viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
+=======
+        viewRowOff = App.get().getTextViewer().textParser.viewRows.get(endViewRow);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         if (endViewRow == App.MAX_LINES) {
           endViewRow += (int) (hitOff + hitLen - viewRowOff) / App.MAX_LINE_SIZE;
         }
@@ -84,7 +97,11 @@ public class HitsTableListener implements ListSelectionListener {
 
         } while (++viewRow <= endViewRow);
 
+<<<<<<< HEAD
         if (App.get().getTextViewer().textParser.getFirstHitAutoSelected()) {
+=======
+        if (App.get().getTextViewer().textParser.firstHitAutoSelected) {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
           App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
         }
 

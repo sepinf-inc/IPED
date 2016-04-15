@@ -56,7 +56,11 @@ public class Configuration {
   private static final String FASTMODE_CONFIG = "conf/FastModeConfig.txt";
 
   public static UTF8Properties properties = new UTF8Properties();
+<<<<<<< HEAD
   public static File indexTemp;
+=======
+  public static File indexTemp, indexerTemp;
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   public static int numThreads;
   public static int textSplitSize = 10000000;
   public static int textOverlapSize = 10000;
@@ -110,7 +114,11 @@ public class Configuration {
     if (value != null) {
       value = value.trim();
     }
+<<<<<<< HEAD
     if (ConstantsViewer.indexerTemp == null) {
+=======
+    if (indexerTemp == null) {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       if (value != null && !value.equalsIgnoreCase("default")) {
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
@@ -119,6 +127,7 @@ public class Configuration {
           tmp = newTmp;
         }
       }
+<<<<<<< HEAD
       ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
       if (!ConstantsViewer.indexerTemp.mkdirs()) {
         tmp = new File(System.getProperty("java.io.tmpdir"));
@@ -132,6 +141,17 @@ public class Configuration {
         indexTemp = new File(ConstantsViewer.indexerTemp, "index");
       }
     }
+=======
+      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+      if (tmp == newTmp) {
+        indexTemp = new File(indexerTemp, "index");
+      }
+    }
+    if (indexerTemp != null) {
+      indexerTemp.mkdirs();
+    }
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
     value = properties.getProperty("robustImageReading");
     if (value != null) {
@@ -361,8 +381,13 @@ public class Configuration {
         OCRParser.TESSERACTFOLDER = configPath + "/" + value;
       }
 
+<<<<<<< HEAD
       IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(ConstantsViewer.indexerTemp, "libewf"), true);
       Util.loadNatLibs(new File(ConstantsViewer.indexerTemp, "libewf").getAbsolutePath());
+=======
+      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
+      Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";

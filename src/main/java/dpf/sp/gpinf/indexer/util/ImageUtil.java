@@ -112,6 +112,7 @@ public class ImageUtil {
               int th = img.getHeight();
               int x = 0;
               int y = 0;
+<<<<<<< HEAD
               while (iw * th > ih * tw && th > 20) {
                 y++;
                 th -= 2;
@@ -123,6 +124,17 @@ public class ImageUtil {
               if (x > 0 || y > 0) {
                 img = img.getSubimage(x, y, tw, th);
               }
+=======
+              while (iw * th >= ih * tw && th > 20) {
+                y++;
+                th -= 2;
+              }
+              while (iw * th <= ih * tw && tw > 20) {
+                x++;
+                tw -= 2;
+              }
+              img = img.getSubimage(x, y, tw, th);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
             }
 
           } catch (Exception e) {
@@ -159,6 +171,7 @@ public class ImageUtil {
           sampling = h0 / h;
         }
       }
+<<<<<<< HEAD
 
       params.setSourceSubsampling(sampling, sampling, 0, 0);
       BufferedImage image = reader.read(0, params);
@@ -167,6 +180,17 @@ public class ImageUtil {
 
     } catch (Throwable e) {
       //e.printStackTrace();
+=======
+
+      params.setSourceSubsampling(sampling, sampling, 0, 0);
+      BufferedImage image = reader.read(0, params);
+
+      return image;
+
+    } catch (Exception e) {
+      //e.printStackTrace();
+
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     } finally {
       if (reader != null) {
         reader.dispose();
@@ -222,6 +246,7 @@ public class ImageUtil {
         for (int y = rc.y; y < rc.height + rc.y; y++) {
           int pixel = pixels[off + y * w];
           sum += 255 - red(pixel) + 255 - green(pixel) + 255 - blue(pixel);
+<<<<<<< HEAD
         }
         if (sum < WHITE_TOLERANCE * rc.height) {
           if (dir == 0) {
@@ -231,6 +256,17 @@ public class ImageUtil {
         } else {
           break;
         }
+=======
+        }
+        if (sum < WHITE_TOLERANCE * rc.height) {
+          if (dir == 0) {
+            rc.x++;
+          }
+          rc.width--;
+        } else {
+          break;
+        }
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       }
     }
     return img.getSubimage(rc.x, rc.y, rc.width, rc.height);

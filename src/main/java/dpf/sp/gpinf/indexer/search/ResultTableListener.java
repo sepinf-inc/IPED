@@ -103,7 +103,17 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     if (viewIndex != -1) {
       int selectedDoc = App.get().resultsTable.convertRowIndexToModel(viewIndex);
+<<<<<<< HEAD
       if (App.get().results.docs[selectedDoc] != App.get().getParams().lastSelectedDoc) {
+=======
+      Object obj1 = App.get().results;
+      Object obj2 = App.get().lastSelectedDoc;
+      Object obj3 = App.get().hitsTable;
+      Object obj4 = App.get().getTextViewer();
+      Object obj5 = App.get().getTextViewer().textTable;
+      Object obj6 = App.get().tabbedHits;
+      if (App.get().results.docs[selectedDoc] != App.get().lastSelectedDoc) {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
@@ -173,7 +183,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
   @Override
   public void mouseClicked(MouseEvent e) {
+<<<<<<< HEAD
     ViewerControl.getInstance().releaseLibreOfficeFocus();
+=======
+    ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   }
 
   @Override

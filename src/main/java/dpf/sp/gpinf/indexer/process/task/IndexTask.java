@@ -355,10 +355,16 @@ public class IndexTask extends AbstractTask {
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
       for (int docID : result.docs) {
         String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+<<<<<<< HEAD
         if(!parentIds.trim().isEmpty())
           for (String parentId : parentIds.trim().split(" ")) {
             doNotDelete[Integer.parseInt(parentId)] = true;
           }
+=======
+        for (String parentId : parentIds.split(" ")) {
+          doNotDelete[Integer.parseInt(parentId)] = true;
+        }
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       }
 
       BooleanQuery query;

@@ -390,7 +390,11 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
         countVolume(result);
 
+<<<<<<< HEAD
         App.get().getParams().highlightTerms = getQueryStrings();
+=======
+        App.get().highlightTerms = getQueryStrings();
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       } catch (Throwable e) {
         e.printStackTrace();
@@ -495,7 +499,11 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
     try {
       LOGGER.error("Pesquisa cancelada!");
+<<<<<<< HEAD
       RowComparator.resetComparators();
+=======
+      RowComparator.closeAtomicReader();
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       App.get().reader.close();
       String index = App.get().codePath + "/../index";
       Directory directory = FSDirectory.open(new File(index));

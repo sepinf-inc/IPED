@@ -100,7 +100,11 @@ public class ColumnsManager implements ActionListener, Serializable {
   String[] indexFields = null;
 
   private String[] groupNames = {"Básicas", "Avançadas", "Email", "Outras"};
+<<<<<<< HEAD
   public String[][] fieldGroups;
+=======
+  private String[][] fieldGroups;
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
   ColumnState colState = new ColumnState();
 
@@ -142,7 +146,10 @@ public class ColumnsManager implements ActionListener, Serializable {
       }
     }
     try {
+<<<<<<< HEAD
       lastCols.getParentFile().mkdirs();
+=======
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       Util.writeObject(cs, lastCols.getAbsolutePath());
     } catch (IOException e1) {
       // TODO Auto-generated catch block

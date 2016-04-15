@@ -37,6 +37,7 @@ public class TreeViewModel implements TreeModel {
   private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
   private Node root;
   private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
+<<<<<<< HEAD
 
   private RowComparator getComparator() {
     return new RowComparator(IndexItem.NAME) {
@@ -46,6 +47,14 @@ public class TreeViewModel implements TreeModel {
       }
     };
   }
+=======
+  private RowComparator comparator = new RowComparator(IndexItem.NAME) {
+    @Override
+    public int compare(Integer a, Integer b) {
+      return sdv.getOrd(a) - sdv.getOrd(b);
+    }
+  };
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
   public class Node {
 
@@ -104,7 +113,11 @@ public class TreeViewModel implements TreeModel {
         PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
         children = task.pesquisar();
         Integer[] array = ArrayUtils.toObject(children.docs);
+<<<<<<< HEAD
         Arrays.sort(array, getComparator());
+=======
+        Arrays.sort(array, comparator);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         children.docs = ArrayUtils.toPrimitive(array);
         children.scores = null;
 
@@ -125,7 +138,11 @@ public class TreeViewModel implements TreeModel {
       pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
       root.children = pesquisa.pesquisar();
       Integer[] array = ArrayUtils.toObject(root.children.docs);
+<<<<<<< HEAD
       Arrays.sort(array, getComparator());
+=======
+      Arrays.sort(array, comparator);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       root.children.docs = ArrayUtils.toPrimitive(array);
       root.children.scores = null;
 

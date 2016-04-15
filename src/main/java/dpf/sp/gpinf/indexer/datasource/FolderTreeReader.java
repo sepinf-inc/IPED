@@ -65,7 +65,11 @@ public class FolderTreeReader extends DataSourceReader {
 
   }
 
+<<<<<<< HEAD
   private EvidenceFile getEvidence(File file) {
+=======
+  private EvidenceFile getEvidence(File file) throws IOException {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     if (listOnly) {
       caseData.incDiscoveredEvidences(1);
       caseData.incDiscoveredVolume(file.length());
@@ -78,12 +82,17 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceFile.setName(evidenceName);
       }
 
+<<<<<<< HEAD
       evidenceFile.setFile(file);
       try {
         String relativePath = Util.getRelativePath(output, file);
         evidenceFile.setExportedFile(relativePath);
       } catch (IOException e) {
       }
+=======
+      String relativePath = Util.getRelativePath(output, file);
+      evidenceFile.setExportedFile(relativePath);
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
       evidenceFile.setPath(path);
@@ -110,11 +119,16 @@ public class FolderTreeReader extends DataSourceReader {
     }
 
     @Override
+<<<<<<< HEAD
     public FileVisitResult visitFile(Path path, BasicFileAttributes attr) {
+=======
+    public FileVisitResult visitFile(Path path, BasicFileAttributes attr) throws IOException {
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       if (Thread.interrupted()) {
         return FileVisitResult.TERMINATE;
       }
 
+<<<<<<< HEAD
       EvidenceFile evidenceFile = getEvidence(path.toFile());
       if (evidenceFile != null) {
         if (!parentIds.isEmpty()) {
@@ -140,6 +154,35 @@ public class FolderTreeReader extends DataSourceReader {
         } catch (InterruptedException e) {
           return FileVisitResult.TERMINATE;
         }
+=======
+      try {
+        EvidenceFile evidenceFile = getEvidence(path.toFile());
+        if (evidenceFile != null) {
+          evidenceFile.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
+          evidenceFile.setCreationDate(new Date(attr.creationTime().toMillis()));
+          evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
+          evidenceFile.setLength(attr.size());
+          if (!parentIds.isEmpty()) {
+            evidenceFile.setParentId(parentIds.getLast().toString());
+            evidenceFile.addParentIds(parentIds);
+          } else {
+            evidenceFile.setRoot(true);
+          }
+
+          if (attr.isDirectory()) {
+            evidenceFile.setIsDir(true);
+            parentIds.addLast(evidenceFile.getId());
+          }
+
+          caseData.addEvidenceFile(evidenceFile);
+        }
+      } catch (InterruptedException e) {
+        return FileVisitResult.TERMINATE;
+
+      } catch (IOException e) {
+        System.err.println(new Date() + "\t[ALERTA]\t" + "Indexação ignorada: " + path.toFile().getAbsolutePath() + " " + e.toString());
+        return FileVisitResult.CONTINUE;
+>>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       }
 
       return FileVisitResult.CONTINUE;
