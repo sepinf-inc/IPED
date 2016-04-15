@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.ConstantsViewer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
@@ -63,7 +64,7 @@ public class SleuthkitClient {
 
     int port = portStart.getAndIncrement();
 
-    String pipePath = Configuration.indexerTemp + "/pipe-" + port;
+    String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
 
     String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M",
       SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};

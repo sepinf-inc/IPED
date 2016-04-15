@@ -42,7 +42,7 @@ import javax.swing.table.TableRowSorter;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
@@ -179,7 +179,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
+    ViewerControl.getInstance().releaseLibreOfficeFocus();
   }
 
   @Override

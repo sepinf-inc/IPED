@@ -45,8 +45,10 @@ import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -75,7 +77,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     try {
       // ImageIO.setUseCache(false);
-      ViewerControl viewerControl = ViewerControlImpl.getInstance();
+      IViewerControl viewerControl = ViewerControl.getInstance();
 
       Configuration.getConfiguration(App.get().codePath + "/..");
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
@@ -97,7 +99,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       viewerControl.createViewers(this.appSearchParams,
           exibirAjuda);
       this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-      App.get().setTextViewer(this.appSearchParams.textViewer);
+      App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
 
       // lista todos os itens
       App.get().setQuery(PesquisarIndice.getQuery(""));

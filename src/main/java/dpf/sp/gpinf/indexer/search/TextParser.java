@@ -34,22 +34,23 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
-public class TextParser extends CancelableWorker {
+public class TextParser extends CancelableWorker implements ITextParser {
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -57,25 +58,27 @@ public class TextParser extends CancelableWorker {
   volatile int id;
   private EvidenceFile item;
   private volatile InputStream is;
-  protected ProgressDialog progressMonitor;
+  private ProgressDialog progressMonitor;
 
   private static Object lock = new Object();
   private TemporaryResources tmp;
-  public static FileChannel parsedFile;
-  public boolean firstHitAutoSelected = false;
+  private static FileChannel parsedFile;
+  private boolean firstHitAutoSelected = false;
+  AppSearchParams appSearchParams = null;
 
   // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
   // sortedHits
-  public TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
+  private TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
 
   // contém offset dos hits
-  public ArrayList<Long> hits = new ArrayList<Long>();
+  private ArrayList<Long> hits = new ArrayList<Long>();
 
   // contém offset das quebras de linha do preview
-  public ArrayList<Long> viewRows = new ArrayList<Long>();
+  private ArrayList<Long> viewRows = new ArrayList<Long>();
 
-  public TextParser(StreamSource content, String contentType, TemporaryResources tmp) {
+  public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
     try {
+      this.appSearchParams = params;
       this.content = content;
       this.contentType = contentType;
       this.tmp = tmp;
@@ -97,7 +100,68 @@ public class TextParser extends CancelableWorker {
     }
 
   }
+  
+  @Override
+  public FileChannel getParsedFile() {
+    return parsedFile;
+  }
+  
+  @Override
+  public void setParsedFile(FileChannel file) {
+    parsedFile = file;
+  }
 
+  @Override
+  public TreeMap<Long, int[]> getSortedHits() {
+    return this.sortedHits;
+  }
+  
+  @Override
+  public void setSortedHits(TreeMap<Long, int[]> hits) {
+    this.sortedHits = hits;
+  }
+  
+  @Override
+  public ArrayList<Long> getHits() {
+    return this.hits;
+  }
+  
+  @Override
+  public void setHits(ArrayList<Long> hits) {
+    this.hits = hits;
+  }
+
+  @Override
+  public ArrayList<Long> getViewRows() {
+    return this.viewRows;
+  }
+  
+  @Override
+  public void setViewRows(ArrayList<Long> viewRows) {
+    this.viewRows = viewRows;
+  }
+
+  @Override
+  public ProgressDialog getProgressMonitor() {
+    return this.progressMonitor;
+  }
+  
+  @Override
+  public void setProgressMonitor(ProgressDialog monitor) {
+    this.progressMonitor = monitor;
+  }
+  
+  @Override
+  public boolean getFirstHitAutoSelected() {
+    return this.firstHitAutoSelected;
+  }
+  
+  @Override
+  public void setFirstHitAutoSelected(boolean val) {
+    this.firstHitAutoSelected = val;
+  }
+  
+  
   @Override
   public void done() {
     try {
@@ -130,7 +194,7 @@ public class TextParser extends CancelableWorker {
       sortedHits = new TreeMap<Long, int[]>();
       hits = new ArrayList<Long>();
       viewRows = new ArrayList<Long>();
-      App.get().hitsModel.fireTableDataChanged();
+      appSearchParams.hitsModel.fireTableDataChanged();
       App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
       parseText();
@@ -291,7 +355,7 @@ public class TextParser extends CancelableWorker {
             }
 
             // atualiza lista de hits
-            App.get().hitsModel.fireTableRowsInserted(numHits, numHits);
+            appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
             this.firePropertyChange("hits", numHits, numHits + 1);
           }
 

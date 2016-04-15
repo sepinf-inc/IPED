@@ -21,9 +21,7 @@ package dpf.sp.gpinf.indexer;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.Date;
-import java.util.Properties;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
@@ -43,8 +41,6 @@ import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
-import dpf.sp.gpinf.indexer.search.GalleryModel;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -60,7 +56,7 @@ public class Configuration {
   private static final String FASTMODE_CONFIG = "conf/FastModeConfig.txt";
 
   public static UTF8Properties properties = new UTF8Properties();
-  public static File indexTemp, indexerTemp;
+  public static File indexTemp;
   public static int numThreads;
   public static int textSplitSize = 10000000;
   public static int textOverlapSize = 10000;
@@ -114,7 +110,7 @@ public class Configuration {
     if (value != null) {
       value = value.trim();
     }
-    if (indexerTemp == null) {
+    if (ConstantsViewer.indexerTemp == null) {
       if (value != null && !value.equalsIgnoreCase("default")) {
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
@@ -123,14 +119,14 @@ public class Configuration {
           tmp = newTmp;
         }
       }
-      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
-      System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+      ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      System.setProperty("java.io.tmpdir", ConstantsViewer.indexerTemp.getAbsolutePath());
       if (tmp == newTmp) {
-        indexTemp = new File(indexerTemp, "index");
+        indexTemp = new File(ConstantsViewer.indexerTemp, "index");
       }
     }
-    if (indexerTemp != null) {
-      indexerTemp.mkdirs();
+    if (ConstantsViewer.indexerTemp != null) {
+      ConstantsViewer.indexerTemp.mkdirs();
     }
 
     value = properties.getProperty("robustImageReading");
@@ -361,8 +357,8 @@ public class Configuration {
         OCRParser.TESSERACTFOLDER = configPath + "/" + value;
       }
 
-      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
-      Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
+      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(ConstantsViewer.indexerTemp, "libewf"), true);
+      Util.loadNatLibs(new File(ConstantsViewer.indexerTemp, "libewf").getAbsolutePath());
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";

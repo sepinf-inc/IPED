@@ -18,11 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import dpf.sp.gpinf.indexer.IFileProcessor;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.io.IOException;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
@@ -30,11 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.Util;
 
-public class FileProcessor extends CancelableWorker<Void, Void> {
+public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
 
   private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 

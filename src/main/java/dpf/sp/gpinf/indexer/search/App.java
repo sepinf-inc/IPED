@@ -79,9 +79,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HitsTable;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -136,7 +137,7 @@ public class App extends JFrame implements WindowListener {
   HitsTable parentItemTable;
   JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
-  ViewerControl viewerControl = ViewerControlImpl.getInstance();
+  IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
 
   public JTabbedPane tabbedHits, resultTab, treeTab;
@@ -150,7 +151,6 @@ public class App extends JFrame implements WindowListener {
 
   ResultTableModel resultsModel;
   List resultSortKeys;
-  public HitsTableModel hitsModel = new HitsTableModel();
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
@@ -185,6 +185,7 @@ public class App extends JFrame implements WindowListener {
   private App() {
     this.appSearchParams = new AppSearchParams();
     this.appSearchParams.mainFrame = (JFrame) this;
+    this.appSearchParams.viewerControl = ViewerControl.getInstance();    
     this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
     this.appSearchParams.HIGHLIGHT_END_TAG = "</font>";
     this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
@@ -269,7 +270,7 @@ public class App extends JFrame implements WindowListener {
   }
 
   public TextViewer getTextViewer() {
-    return this.appSearchParams.textViewer;
+    return (TextViewer) this.appSearchParams.textViewer;
   }
 
   public void setTextViewer(TextViewer textViewer) {
@@ -381,7 +382,7 @@ public class App extends JFrame implements WindowListener {
     termo.setMaximumRowCount(30);
 
     pesquisar = new JButton("Pesquisar");
-    opcoes = new JButton("OpÃ§Ãµes");
+    opcoes = new JButton("Opções");
     ajuda = new JButton("Ajuda");
     checkBox = new JCheckBox("0");
 
@@ -403,7 +404,7 @@ public class App extends JFrame implements WindowListener {
     topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
     multiFilterAlert = new JPanel();
-    JLabel alertLabel = new JLabel("MÃºltiplos Filtros Ativos");
+    JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
     multiFilterAlert.add(alertLabel);
     alertLabel.setBackground(alertColor);
     alertLabel.setOpaque(true);
@@ -473,7 +474,7 @@ public class App extends JFrame implements WindowListener {
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
 
-    hitsTable = new HitsTable(hitsModel);
+    hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
     JScrollPane hitsScroll = new JScrollPane(hitsTable);
     hitsTable.setFillsViewportHeight(true);
@@ -505,7 +506,7 @@ public class App extends JFrame implements WindowListener {
     parentItemTable.setShowGrid(false);
 
     tabbedHits = new JTabbedPane();
-    tabbedHits.addTab("OcorrÃªncias", hitsScroll);
+    tabbedHits.addTab("Ocorrências", hitsScroll);
     appSearchParams.tabbedHits = tabbedHits;
 
     compositeViewer = new CompositeViewer();
@@ -548,7 +549,7 @@ public class App extends JFrame implements WindowListener {
     isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
 
     if (!isFTKReport) {
-      recursiveTreeList = new JCheckBox("Listagem recursiva de diretÃ³rios");
+      recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
       recursiveTreeList.setSelected(true);
 
       tree = new JTree(new Object[0]);
@@ -563,7 +564,7 @@ public class App extends JFrame implements WindowListener {
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-      treeTab.add("EvidÃªncias", evidencePanel);
+      treeTab.add("Evidências", evidencePanel);
 
     }
 

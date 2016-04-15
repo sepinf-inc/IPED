@@ -18,7 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
+import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -151,7 +151,7 @@ public class AppListener implements ActionListener, MouseListener {
   @Override
   public void mousePressed(MouseEvent evt) {
 
-    ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
+    ViewerControl.getInstance().releaseLibreOfficeFocus();
 
     Object termo = App.get().termo.getSelectedItem();
     if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {

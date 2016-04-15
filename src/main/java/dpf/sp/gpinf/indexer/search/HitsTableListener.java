@@ -51,18 +51,18 @@ public class HitsTableListener implements ListSelectionListener {
       int row = App.get().hitsTable.getSelectedRow();
       if (row != -1 && row != lastSelectedRow) {
 
-        long hitOff = App.get().getTextViewer().textParser.hits.get(row);
-        int[] hit = App.get().getTextViewer().textParser.sortedHits.get(hitOff);
+        long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
+        int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
         int hitLen = hit[0];
 
         int startViewRow = hit[1];
-        long viewRowOff = App.get().getTextViewer().textParser.viewRows.get(startViewRow);
+        long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
         if (startViewRow == App.MAX_LINES) {
           startViewRow += (int) (hitOff - viewRowOff) / App.MAX_LINE_SIZE;
         }
 
         int endViewRow = hit[2];
-        viewRowOff = App.get().getTextViewer().textParser.viewRows.get(endViewRow);
+        viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
         if (endViewRow == App.MAX_LINES) {
           endViewRow += (int) (hitOff + hitLen - viewRowOff) / App.MAX_LINE_SIZE;
         }
@@ -84,7 +84,7 @@ public class HitsTableListener implements ListSelectionListener {
 
         } while (++viewRow <= endViewRow);
 
-        if (App.get().getTextViewer().textParser.firstHitAutoSelected) {
+        if (App.get().getTextViewer().textParser.getFirstHitAutoSelected()) {
           App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
         }
 
