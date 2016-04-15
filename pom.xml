@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.9</version>
+    <version>4.0</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,7 +17,7 @@
     </properties>
     
     <repositories>
-    	<repository>
+        <repository>
             <id>internal</id>
             <name>Archiva SEPINF - Internal</name>
             <url>http://10.61.242.12:8081/repository/internal/</url>
@@ -27,17 +27,17 @@
             <name>Archiva SEPINF - Snapshot</name>
             <url>http://10.61.242.12:8081/repository/snapshots/</url>
         </repository>
-    	<repository>
-      		<id>central</id>
-      		<name>Maven Repository Switchboard</name>
-      		<layout>default</layout>
-      		<url>http://repo1.maven.org/maven2</url>
-    	</repository>
-    	<repository>
-    		<id>jbig2.googlecode</id>
-    		<name>JBIG2 ImageIO-Plugin repository at googlecode.com</name>
-    		<url>http://jbig2-imageio.googlecode.com/svn/maven-repository</url>
-  		</repository>
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <layout>default</layout>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+            <id>jbig2.googlecode</id>
+            <name>JBIG2 ImageIO-Plugin repository at googlecode.com</name>
+            <url>http://jbig2-imageio.googlecode.com/svn/maven-repository</url>
+        </repository>
     </repositories>
         
     <dependencies>
@@ -61,20 +61,20 @@
             <type>jar</type>
         </dependency>
         <dependency>
-        	<groupId>gpinf.iped</groupId>
-        	<artifactId>iped-ahocorasick</artifactId>
-        	<version>1.0</version>
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-ahocorasick</artifactId>
+            <version>1.0</version>
         </dependency>
         <dependency>
-        	<groupId>gpinf.iped</groupId>
-    		<artifactId>iped-parsers-impl</artifactId>
-    		<version>3.9</version>
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-parsers-impl</artifactId>
+            <version>3.9</version>
         </dependency>
         <dependency>
-        <groupId>gpinf.iped</groupId>
-    		<artifactId>iped-utils</artifactId>
-    		<version>0.5</version>
-    	</dependency>
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-utils</artifactId>
+            <version>0.5</version>
+        </dependency>
         <!-- FIM DEPENDÊNCIAS INTERNAS -->
         <!-- INICIO: EXTERNAS -->
         <dependency>
@@ -119,31 +119,31 @@
             <version>1.10</version>
             <type>jar</type>
             <exclusions>
-        		<exclusion>
-          			<groupId>com.pff</groupId>
-    				<artifactId>java-libpst</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>edu.ucar</groupId>
-          			<artifactId>*</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>org.apache.opennlp</groupId>
-          			<artifactId>*</artifactId>
-        		</exclusion>
-        		<exclusion>
-					<groupId>org.apache.sis.core</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.sis.storage</groupId>
-					<artifactId>sis-netcdf</artifactId>
-				</exclusion>
-        		<exclusion>
-          			<groupId>com.google.guava</groupId>
-          			<artifactId>guava</artifactId>
-        		</exclusion>
-      		</exclusions>
+                <exclusion>
+                    <groupId>com.pff</groupId>
+                    <artifactId>java-libpst</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.opennlp</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sis.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sis.storage</groupId>
+                    <artifactId>sis-netcdf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -170,50 +170,50 @@
             <type>jar</type>
         </dependency>
         <dependency>
-    		<groupId>org.mapdb</groupId>
-    		<artifactId>mapdb</artifactId>
-    		<version>1.0.6</version>
-		</dependency>
-		<dependency>
-  			<groupId>com.levigo.jbig2</groupId>
-  			<artifactId>levigo-jbig2-imageio</artifactId>
-  			<version>1.6.3</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-			<version>2.3</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>2.3</version>
-		</dependency>
-		<dependency> 
-  			<groupId>org.apache.logging.log4j</groupId>
-  			<artifactId>log4j-slf4j-impl</artifactId>
-  			<version>2.3</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.12</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>jul-to-slf4j</artifactId>
-			<version>1.7.12</version>
-		</dependency>
-		<dependency>
-			<groupId>com.mchange</groupId>
-			<artifactId>mchange-commons-java</artifactId>
-			<version>0.2.10</version>
-		</dependency>
-		<dependency>
-			<groupId>com.mchange</groupId>
-			<artifactId>c3p0</artifactId>
-			<version>0.9.5.2</version>
-		</dependency>
+            <groupId>org.mapdb</groupId>
+            <artifactId>mapdb</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.levigo.jbig2</groupId>
+            <artifactId>levigo-jbig2-imageio</artifactId>
+            <version>1.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency> 
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jul-to-slf4j</artifactId>
+            <version>1.7.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>mchange-commons-java</artifactId>
+            <version>0.2.10</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>0.9.5.2</version>
+        </dependency>
 		
         <!-- FIM: EXTERNAS -->
         <!-- INICIO: VIEWERS -->
@@ -248,33 +248,45 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>ridl</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>unoil</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>juh</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>jurt</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>officebean</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.libreoffice</groupId>
+            <artifactId>unoloader</artifactId>
+            <version>5.1.1</version>
+        </dependency>
+        <dependency>
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
             <version>0.3</version>
-            <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>unoil</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
+            <groupId>org.openoffice</groupId>
+            <artifactId>bootstrap-connector</artifactId>
+            <version>0.1.1</version>
         </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>ridl</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>jurt</artifactId>
-            <version>1.0.4</version>
-            <type>jar</type>
-            <scope>provided</scope>
-        </dependency>
-        <!-- FIM: VIEWERS -->
     </dependencies>
     <build>
         <plugins>
@@ -497,26 +509,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution>
-                    <execution>
-                        <id>unpack-noalibre-lib</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>libre-office</groupId>
-                                    <artifactId>noalibre-lib</artifactId>
-                                    <version>4.0.4</version>
-                                    <type>zip</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${lib.dir}</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
+                    </execution>                    
                     <execution>
                         <id>copy-dependencies</id>
                         <phase>package</phase>
@@ -538,7 +531,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                        	<classifier>sources</classifier>
+                            <classifier>sources</classifier>
                             <outputDirectory>${release.dir}/sources</outputDirectory>
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
@@ -601,7 +594,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>
-                                     <Class-Path>conf/CustomSignatures.jar</Class-Path>
+                                    <Class-Path>conf/CustomSignatures.jar</Class-Path>
                                 </manifestEntries>
                             </archive>
                         </configuration>
@@ -612,7 +605,7 @@
                             <goal>jar</goal>
                         </goals>
                         <configuration>
-                        	<finalName>iped-search-app</finalName>
+                            <finalName>iped-search-app</finalName>
                             <outputDirectory>${lib.dir}</outputDirectory>
                             <forceCreation>true</forceCreation>
                             <archive>                                
@@ -623,7 +616,7 @@
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>
-                                     <Class-Path>../conf/CustomSignatures.jar</Class-Path>
+                                    <Class-Path>../conf/CustomSignatures.jar</Class-Path>
                                 </manifestEntries>
                             </archive>
                         </configuration>

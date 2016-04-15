@@ -49,282 +49,297 @@ import dpf.sp.gpinf.indexer.util.TimeConverter;
  */
 public class FTK42Database extends FTKDatabase {
 
-	String schema; // Alterado
-	String schemaBase; // Alterado
-	String schemaPrefix; // Alterado
-	String deletedStr; // Alterado
+  String schema; // Alterado
+  String schemaBase; // Alterado
+  String schemaPrefix; // Alterado
+  String deletedStr; // Alterado
 
-	protected FTK42Database(Properties properties, String caseName, File report) throws SQLException {
+  protected FTK42Database(Properties properties, String caseName, File report) throws SQLException {
 
-		super(properties, caseName, report);
-		schemaBase = schemaVersion;
-		setDatabaseParams(serviceName);
+    super(properties, caseName, report);
+    schemaBase = schemaVersion;
+    setDatabaseParams(serviceName);
 
-	}
-	
-	private void setDatabaseParams(String databaseName) throws SQLException{
-		
-		if ("oracle".equalsIgnoreCase(databaseType)) {
-			OracleDataSource oSource = new OracleDataSource();
-			oSource.setUser(user);
-			oSource.setPassword(password);
-			oSource.setDriverType(driverType);
-			oSource.setServerName(serverName);
-			oSource.setPortNumber(portNumber);
-			oSource.setServiceName(databaseName);
+  }
 
-			ods = oSource;
+  private void setDatabaseParams(String databaseName) throws SQLException {
 
-			schemaPrefix = schemaBase; // Alterado
-			deletedStr = "0"; // Alterado
+    if ("oracle".equalsIgnoreCase(databaseType)) {
+      OracleDataSource oSource = new OracleDataSource();
+      oSource.setUser(user);
+      oSource.setPassword(password);
+      oSource.setDriverType(driverType);
+      oSource.setServerName(serverName);
+      oSource.setPortNumber(portNumber);
+      oSource.setServiceName(databaseName);
 
-		} else if ("postgreSQL".equalsIgnoreCase(databaseType)) {
-			org.postgresql.ds.PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
-			oSource.setUser(user);
-			oSource.setPassword(password);
-			oSource.setServerName(serverName);
-			oSource.setPortNumber(portNumber);
-			oSource.setDatabaseName(databaseName);
+      ods = oSource;
 
-			ods = oSource;
+      schemaPrefix = schemaBase; // Alterado
+      deletedStr = "0"; // Alterado
 
-			schemaPrefix = serviceName + "_" + schemaBase; // Alterado
-			deletedStr = "false"; // Alterado
+    } else if ("postgreSQL".equalsIgnoreCase(databaseType)) {
+      org.postgresql.ds.PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
+      oSource.setUser(user);
+      oSource.setPassword(password);
+      oSource.setServerName(serverName);
+      oSource.setPortNumber(portNumber);
+      oSource.setDatabaseName(databaseName);
 
-		} else if ("sqlserver".equalsIgnoreCase(databaseType)) {
-			SQLServerDataSource oSource = new SQLServerDataSource();
-			oSource.setUser(user);
-			oSource.setPassword(password);
-			oSource.setServerName(serverName);
-			oSource.setPortNumber(portNumber);
-			oSource.setDatabaseName(databaseName);
+      ods = oSource;
 
-			ods = oSource;
+      schemaPrefix = serviceName + "_" + schemaBase; // Alterado
+      deletedStr = "false"; // Alterado
 
-			schemaPrefix = schemaBase; // Alterado
-			deletedStr = "0"; // Alterado
-		}
-	}
+    } else if ("sqlserver".equalsIgnoreCase(databaseType)) {
+      SQLServerDataSource oSource = new SQLServerDataSource();
+      oSource.setUser(user);
+      oSource.setPassword(password);
+      oSource.setServerName(serverName);
+      oSource.setPortNumber(portNumber);
+      oSource.setDatabaseName(databaseName);
 
-	@Override
-	protected void loadTableSpace() throws SQLException {
+      ods = oSource;
 
-		schema = schemaPrefix + "_" + String.format("%04d", getCaseID(conn)); // Alterado
+      schemaPrefix = schemaBase; // Alterado
+      deletedStr = "0"; // Alterado
+    }
+  }
 
-	}
+  @Override
+  protected void loadTableSpace() throws SQLException {
 
-	private int getCaseID(Connection conn) throws SQLException {
+    schema = schemaPrefix + "_" + String.format("%04d", getCaseID(conn)); // Alterado
 
-		int caseID;
-		Statement stmt = conn.createStatement();
-		String sql = "select CASEID from " + schemaBase + ".CMN_CASES where CASENAME='" + caso + "'"; // Alterado
+  }
 
-		ResultSet rset;
-		try {
-			rset = stmt.executeQuery(sql);
-		} catch (SQLException e) {
-			throw new SQLException("Versão detectada/configurada do FTK pode estar incorreta!");
-		}
+  private int getCaseID(Connection conn) throws SQLException {
 
-		// Se não retornou nada no ResultSet, sai
-		if (!rset.next())
-			throw new SQLException("Nome do caso não encontrado no banco: " + sql + ". Conectou-se ao banco correto?");
+    int caseID;
+    Statement stmt = conn.createStatement();
+    String sql = "select CASEID from " + schemaBase + ".CMN_CASES where CASENAME='" + caso + "'"; // Alterado
 
-		caseID = rset.getInt(1);
+    ResultSet rset;
+    try {
+      rset = stmt.executeQuery(sql);
+    } catch (SQLException e) {
+      throw new SQLException("Versão detectada/configurada do FTK pode estar incorreta!");
+    }
 
-		if (rset.next())
-			throw new SQLException("Nome do caso duplicado no banco. Remova o caso com mesmo nome que o atual.");
+    // Se não retornou nada no ResultSet, sai
+    if (!rset.next()) {
+      throw new SQLException("Nome do caso não encontrado no banco: " + sql + ". Conectou-se ao banco correto?");
+    }
 
-		// Close the RseultSet
-		rset.close();
-		rset = null;
+    caseID = rset.getInt(1);
 
-		// Close the Statement
-		stmt.close();
-		stmt = null;
+    if (rset.next()) {
+      throw new SQLException("Nome do caso duplicado no banco. Remova o caso com mesmo nome que o atual.");
+    }
 
-		return caseID;
-	}
+    // Close the RseultSet
+    rset.close();
+    rset = null;
 
-	private Map<Integer, ArrayList<String>> getFileToBookmarksMap(String objectIDs) throws Exception {
+    // Close the Statement
+    stmt.close();
+    stmt = null;
 
-		Statement stmt = conn.createStatement();
-		String sql = "select a.OBJECTID, a.BOOKMARKID from " + schema + ".FTK_BOOKMARKOBJECTS a where a.OBJECTID in (" + objectIDs + ") AND a.ISDELETED = " + deletedStr; // Alterado
+    return caseID;
+  }
 
-		ResultSet rset = stmt.executeQuery(sql);
-		rset.setFetchSize(1000);
+  private Map<Integer, ArrayList<String>> getFileToBookmarksMap(String objectIDs) throws Exception {
 
-		HashMap<Integer, ArrayList<String>> result = new HashMap<Integer, ArrayList<String>>();
+    Statement stmt = conn.createStatement();
+    String sql = "select a.OBJECTID, a.BOOKMARKID from " + schema + ".FTK_BOOKMARKOBJECTS a where a.OBJECTID in (" + objectIDs + ") AND a.ISDELETED = " + deletedStr; // Alterado
 
-		while (rset.next()) {
-			int fileId = rset.getInt("OBJECTID");
-			ArrayList<String> bookmarkNames = result.get(fileId);
-			if (bookmarkNames == null)
-				bookmarkNames = new ArrayList<String>();
-			String bookmark = bookmarksMap.get(rset.getString("BOOKMARKID"));
-			if (bookmark != null)
-				bookmarkNames.add(bookmark);
-			result.put(fileId, bookmarkNames);
-		}
+    ResultSet rset = stmt.executeQuery(sql);
+    rset.setFetchSize(1000);
 
-		return result;
-	}
+    HashMap<Integer, ArrayList<String>> result = new HashMap<Integer, ArrayList<String>>();
 
-	@Override
-	protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
-		StringBuffer fileIds = new StringBuffer();
-		int i = 1;
-		for (Integer ID : fileList.keySet()) {
-			fileIds.append(ID);
-			if (i++ < fileList.size())
-				fileIds.append(",");
-		}
-		String objectIDs = fileIds.toString();
+    while (rset.next()) {
+      int fileId = rset.getInt("OBJECTID");
+      ArrayList<String> bookmarkNames = result.get(fileId);
+      if (bookmarkNames == null) {
+        bookmarkNames = new ArrayList<String>();
+      }
+      String bookmark = bookmarksMap.get(rset.getString("BOOKMARKID"));
+      if (bookmark != null) {
+        bookmarkNames.add(bookmark);
+      }
+      result.put(fileId, bookmarkNames);
+    }
 
-		// obtém nomes dos bookmarks de cada item
-		Map<Integer, ArrayList<String>> fileToBookmarkMap = getFileToBookmarksMap(objectIDs);
+    return result;
+  }
 
-		// Create a Statement
-		Statement stmt = conn.createStatement();
-		String sql = "select a.objectid, c.parentid, c.objectname, b.md5, a.filecategory, a.filepath, a.isdeleted, a.isfromfreespace, a.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
-				+ schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
-				+ ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")"; // ALTERADO
+  @Override
+  protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
+    StringBuffer fileIds = new StringBuffer();
+    int i = 1;
+    for (Integer ID : fileList.keySet()) {
+      fileIds.append(ID);
+      if (i++ < fileList.size()) {
+        fileIds.append(",");
+      }
+    }
+    String objectIDs = fileIds.toString();
 
-		ResultSet rset;
-		String PATH_COL_NAME = "filepath";
-		try{
-			rset = stmt.executeQuery(sql);
-			
-		//Tratamento p/ FTK 5.6
-		}catch(SQLException e){
-			sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, a.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
-					+ schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
-					+ ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
-			PATH_COL_NAME = "objectpath";
-			try{
-			    rset = stmt.executeQuery(sql);
-			    
-			// FTK 6.0
-			}catch(SQLException e2){
-			    sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, c.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
-	                    + schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
-	                    + ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
-	            PATH_COL_NAME = "objectpath";
-	            rset = stmt.executeQuery(sql);
-			}
-			
-		}
-		
-		rset.setFetchSize(1000);
+    // obtém nomes dos bookmarks de cada item
+    Map<Integer, ArrayList<String>> fileToBookmarkMap = getFileToBookmarksMap(objectIDs);
 
-		int addedEvidences = 0;
-		while (rset.next()) {
-			ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID"));
-			for (String path : paths) {
-				EvidenceFile evidenceFile = new EvidenceFile();
-				int ftkId = rset.getInt("OBJECTID");
-				evidenceFile.setFtkID(caso + "-" + ftkId);
-				int parentId = rset.getInt("PARENTID");
-				evidenceFile.setParentId(caso + "-" + parentId);
-				evidenceFile.setName(rset.getString("OBJECTNAME"));
-				evidenceFile.setExportedFile(path);
-				evidenceFile.setPath(rset.getString(PATH_COL_NAME)); // Alterado
-				if(rset.getBoolean("ISDELETED") || rset.getBoolean("ISFROMFREESPACE"))
-					evidenceFile.setDeleted(true);
-				String hash = rset.getString("md5");
-				if (hash != null)
-					evidenceFile.setHash(hash);
-				long logicalSize = rset.getLong("LOGICALSIZE");
-				if (logicalSize > -1)
-					evidenceFile.setLength(logicalSize);
-				String fileType = FTK42FileTypes.getTypeDesc(rset.getInt("FILECATEGORY"));
-				if (fileType != null)
-					evidenceFile.setType(new GenericFileType(fileType)); // Alterado
-				long createdDate = rset.getLong("CREATIONDATEFT"); // Alterado
-				if (createdDate > 0)
-					evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
-				long modifiedDate = rset.getLong("MODIFICATIONDATEFT"); // Alterado
-				if (modifiedDate > 0)
-					evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
-				long accessedDate = rset.getLong("ACCESSDATEFT"); // Alterado
-				if (accessedDate > 0)
-					evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
-				else {
-					String fatDate = rset.getString("FATACCESSDATE"); // Alterado
-					if (fatDate != null) {
-						Calendar calendar = new GregorianCalendar();
-						calendar.clear();
-						calendar.set(Integer.parseInt(fatDate.substring(0, 4)), Integer.parseInt(fatDate.substring(5, 7)) - 1, Integer.parseInt(fatDate.substring(8, 10)));
-						evidenceFile.setAccessDate(calendar.getTime());
-					}
-				}
+    // Create a Statement
+    Statement stmt = conn.createStatement();
+    String sql = "select a.objectid, c.parentid, c.objectname, b.md5, a.filecategory, a.filepath, a.isdeleted, a.isfromfreespace, a.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
+        + schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
+        + ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")"; // ALTERADO
 
-				ArrayList<String> bookmarks = fileToBookmarkMap.get(rset.getInt("OBJECTID"));
-				if (bookmarks != null)
-					for (String bookmarkName : bookmarks)
-						evidenceFile.addCategory(bookmarkName);
+    ResultSet rset;
+    String PATH_COL_NAME = "filepath";
+    try {
+      rset = stmt.executeQuery(sql);
 
-				caseData.addEvidenceFile(evidenceFile);
-			}
+      //Tratamento p/ FTK 5.6
+    } catch (SQLException e) {
+      sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, a.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
+          + schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
+          + ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
+      PATH_COL_NAME = "objectpath";
+      try {
+        rset = stmt.executeQuery(sql);
 
-			addedEvidences++;
-		}
-		// Close the ResultSet
-		rset.close();
-		rset = null;
-		// Close the Statement
-		stmt.close();
-		stmt = null;
+        // FTK 6.0
+      } catch (SQLException e2) {
+        sql = "select a.objectid, c.parentid, c.objectname, b.md5, c.filecategory, c.objectpath, a.isdeleted, a.isfromfreespace, c.logicalsize, a.creationdateft, a.modificationdateft, a.accessdateft, a.fataccessdate from "
+            + schema + ".CMN_OBJECTFILES a INNER JOIN " + schema + ".CMN_OBJECTS c ON c.objectid = a.objectid LEFT OUTER JOIN " + schema
+            + ".CMN_OBJECTHASHES b on b.objectid = a.objectid where a.objectid in (" + objectIDs + ")";
+        PATH_COL_NAME = "objectpath";
+        rset = stmt.executeQuery(sql);
+      }
 
-		if (fileList.size() != addedEvidences)
-			throw new Exception("Encontrados " + addedEvidences + " de " + fileList.size() + " ID's dos arquivos no banco. O nome do caso pode estar incorreto!");
-	}
+    }
 
-	@Override
-	protected Map<String, String> getBookmarksMap(File report) throws Exception {
+    rset.setFetchSize(1000);
 
-		HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
-		HashMap<String, String> result = new HashMap<String, String>();
+    int addedEvidences = 0;
+    while (rset.next()) {
+      ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID"));
+      for (String path : paths) {
+        EvidenceFile evidenceFile = new EvidenceFile();
+        int ftkId = rset.getInt("OBJECTID");
+        evidenceFile.setFtkID(caso + "-" + ftkId);
+        int parentId = rset.getInt("PARENTID");
+        evidenceFile.setParentId(caso + "-" + parentId);
+        evidenceFile.setName(rset.getString("OBJECTNAME"));
+        evidenceFile.setExportedFile(path);
+        evidenceFile.setPath(rset.getString(PATH_COL_NAME)); // Alterado
+        if (rset.getBoolean("ISDELETED") || rset.getBoolean("ISFROMFREESPACE")) {
+          evidenceFile.setDeleted(true);
+        }
+        String hash = rset.getString("md5");
+        if (hash != null) {
+          evidenceFile.setHash(hash);
+        }
+        long logicalSize = rset.getLong("LOGICALSIZE");
+        if (logicalSize > -1) {
+          evidenceFile.setLength(logicalSize);
+        }
+        String fileType = FTK42FileTypes.getTypeDesc(rset.getInt("FILECATEGORY"));
+        if (fileType != null) {
+          evidenceFile.setType(new GenericFileType(fileType)); // Alterado
+        }
+        long createdDate = rset.getLong("CREATIONDATEFT"); // Alterado
+        if (createdDate > 0) {
+          evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
+        }
+        long modifiedDate = rset.getLong("MODIFICATIONDATEFT"); // Alterado
+        if (modifiedDate > 0) {
+          evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
+        }
+        long accessedDate = rset.getLong("ACCESSDATEFT"); // Alterado
+        if (accessedDate > 0) {
+          evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
+        } else {
+          String fatDate = rset.getString("FATACCESSDATE"); // Alterado
+          if (fatDate != null) {
+            Calendar calendar = new GregorianCalendar();
+            calendar.clear();
+            calendar.set(Integer.parseInt(fatDate.substring(0, 4)), Integer.parseInt(fatDate.substring(5, 7)) - 1, Integer.parseInt(fatDate.substring(8, 10)));
+            evidenceFile.setAccessDate(calendar.getTime());
+          }
+        }
 
-		Statement stmt = conn.createStatement();
-		String sql;
-		ResultSet rset = null;
+        ArrayList<String> bookmarks = fileToBookmarkMap.get(rset.getInt("OBJECTID"));
+        if (bookmarks != null) {
+          for (String bookmarkName : bookmarks) {
+            evidenceFile.addCategory(bookmarkName);
+          }
+        }
 
-		sql = "select a.BOOKMARKID, a.BOOKMARKNAME from " + schema + ".FTK_BOOKMARKS a";
+        caseData.addEvidenceFile(evidenceFile);
+      }
 
-		try{
-			rset = stmt.executeQuery(sql);
-			
-		}catch(Exception e){
-			
-			String str = (schema + ".FTK_BOOKMARKS").toLowerCase();
-			if(e.toString().toLowerCase().contains(str)){
-				stmt.close();
-				conn.close();
-				setDatabaseParams("case_" + schema.toLowerCase());
-				conn = ods.getConnection();
-				stmt = conn.createStatement();
-				rset = stmt.executeQuery(sql);
-			}
-		}
-		
-		rset.setFetchSize(1000);
+      addedEvidences++;
+    }
+    // Close the ResultSet
+    rset.close();
+    rset = null;
+    // Close the Statement
+    stmt.close();
+    stmt = null;
 
-		while (rset.next()) {
-			String bookName = rset.getString(2);
-			if (bookmarks.contains(bookName))
-				result.put(rset.getString(1), bookName);
-		}
+    if (fileList.size() != addedEvidences) {
+      throw new Exception("Encontrados " + addedEvidences + " de " + fileList.size() + " ID's dos arquivos no banco. O nome do caso pode estar incorreto!");
+    }
+  }
 
-		// Close the ResultSet
-		rset.close();
-		rset = null;
+  @Override
+  protected Map<String, String> getBookmarksMap(File report) throws Exception {
 
-		// Close the Statement
-		stmt.close();
-		stmt = null;
+    HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
+    HashMap<String, String> result = new HashMap<String, String>();
 
-		return result;
-	}
+    Statement stmt = conn.createStatement();
+    String sql;
+    ResultSet rset = null;
+
+    sql = "select a.BOOKMARKID, a.BOOKMARKNAME from " + schema + ".FTK_BOOKMARKS a";
+
+    try {
+      rset = stmt.executeQuery(sql);
+
+    } catch (Exception e) {
+
+      String str = (schema + ".FTK_BOOKMARKS").toLowerCase();
+      if (e.toString().toLowerCase().contains(str)) {
+        stmt.close();
+        conn.close();
+        setDatabaseParams("case_" + schema.toLowerCase());
+        conn = ods.getConnection();
+        stmt = conn.createStatement();
+        rset = stmt.executeQuery(sql);
+      }
+    }
+
+    rset.setFetchSize(1000);
+
+    while (rset.next()) {
+      String bookName = rset.getString(2);
+      if (bookmarks.contains(bookName)) {
+        result.put(rset.getString(1), bookName);
+      }
+    }
+
+    // Close the ResultSet
+    rset.close();
+    rset = null;
+
+    // Close the Statement
+    stmt.close();
+    stmt = null;
+
+    return result;
+  }
 
 }

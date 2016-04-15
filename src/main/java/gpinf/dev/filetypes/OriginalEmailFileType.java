@@ -7,20 +7,20 @@ import java.util.List;
 
 public class OriginalEmailFileType extends EvidenceFileType {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
 
-	@Override
-	public String getLongDescr() {
-		return "E-mail de Origem";
-	}
+  @Override
+  public String getLongDescr() {
+    return "E-mail de Origem";
+  }
 
-	@Override
-	public void processFiles(File baseDir, List<EvidenceFile> evidenceFiles) {
-		// TODO Auto-generated method stub
+  @Override
+  public void processFiles(File baseDir, List<EvidenceFile> evidenceFiles) {
+    // TODO Auto-generated method stub
 
-	}
+  }
 
 }

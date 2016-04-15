@@ -17,28 +17,30 @@ import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
 
-	public static TextFragment[] getHighlightedFrags(AppSearchParams params,
-                boolean breakOnNewLine,                 
-                String text, 
-                String fieldName) throws Exception {
+  public static TextFragment[] getHighlightedFrags(AppSearchParams params,
+      boolean breakOnNewLine,
+      String text,
+      String fieldName) throws Exception {
 
-		if (text == null)
-			return new TextFragment[0];
-		TokenStream stream = TokenSources.getTokenStream(fieldName, text, params.analyzer);
-		QueryScorer scorer = new QueryScorer(params.query, fieldName);
-		Fragmenter fragmenter;
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(params.HIGHLIGHT_START_TAG, params.HIGHLIGHT_END_TAG);
-		int fragmentNumber = 1;
-		if (params.FRAG_SIZE != 0) {
-			fragmenter = new SimpleFragmenter(params.FRAG_SIZE);
-			fragmentNumber += text.length() / params.FRAG_SIZE;
-		} else
-			fragmenter = new NullFragmenter();
-		Encoder encoder = new LuceneSimpleHTMLEncoder();
-		Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
-		highlighter.setTextFragmenter(fragmenter);
-		highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
-		return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
-	}
+    if (text == null) {
+      return new TextFragment[0];
+    }
+    TokenStream stream = TokenSources.getTokenStream(fieldName, text, params.analyzer);
+    QueryScorer scorer = new QueryScorer(params.query, fieldName);
+    Fragmenter fragmenter;
+    SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(params.HIGHLIGHT_START_TAG, params.HIGHLIGHT_END_TAG);
+    int fragmentNumber = 1;
+    if (params.FRAG_SIZE != 0) {
+      fragmenter = new SimpleFragmenter(params.FRAG_SIZE);
+      fragmentNumber += text.length() / params.FRAG_SIZE;
+    } else {
+      fragmenter = new NullFragmenter();
+    }
+    Encoder encoder = new LuceneSimpleHTMLEncoder();
+    Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
+    highlighter.setTextFragmenter(fragmenter);
+    highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
+    return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
+  }
 
 }

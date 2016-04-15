@@ -30,46 +30,46 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
-public class TableCellRenderer extends DefaultTableCellRenderer{
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	
-	private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
-	private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
-	private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+public class TableCellRenderer extends DefaultTableCellRenderer {
 
-	@Override
-	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-		
-		DefaultTableCellRenderer result = (DefaultTableCellRenderer)super.getTableCellRendererComponent(table,  value,  isSelected,  hasFocus,  row,  column);
-		
-		int idx = App.get().resultsTable.convertRowIndexToModel(row);
-		int col = App.get().resultsTable.convertColumnIndexToModel(column);
-		
-		if(App.get().resultsModel.getColumnName(col).equalsIgnoreCase(IndexItem.NAME)){
-			try {
-				int docId = App.get().results.docs[idx];
-				Document doc = App.get().searcher.doc(docId);
-				if(Boolean.valueOf(doc.get(IndexItem.ISDIR)))
-					result.setIcon(folderIcon);
-				
-				else if(Boolean.valueOf(doc.get(IndexItem.ISROOT)))
-					result.setIcon(diskIcon);
-				else
-					result.setIcon(fileIcon);
-				
-			} catch (IOException e) {
-				result.setIcon(null);
-			}
-		
-		}else
-			result.setIcon(null);
-		
-		
-		return result;
-	}
-	
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+
+  private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
+  private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
+  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+
+  @Override
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+    DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+    int idx = App.get().resultsTable.convertRowIndexToModel(row);
+    int col = App.get().resultsTable.convertColumnIndexToModel(column);
+
+    if (App.get().resultsModel.getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
+      try {
+        int docId = App.get().results.docs[idx];
+        Document doc = App.get().searcher.doc(docId);
+        if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+          result.setIcon(folderIcon);
+        } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
+          result.setIcon(diskIcon);
+        } else {
+          result.setIcon(fileIcon);
+        }
+
+      } catch (IOException e) {
+        result.setIcon(null);
+      }
+
+    } else {
+      result.setIcon(null);
+    }
+
+    return result;
+  }
+
 }

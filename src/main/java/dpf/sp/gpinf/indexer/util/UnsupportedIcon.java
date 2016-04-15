@@ -27,27 +27,27 @@ import javax.swing.ImageIcon;
 
 public class UnsupportedIcon extends ImageIcon {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private int width = 60;
-	private int height = 20;
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
+  private int width = 60;
+  private int height = 20;
 
-	@Override
-	public void paintIcon(Component c, Graphics g, int x, int y) {
-		Graphics2D g2d = (Graphics2D) g.create();
-		g2d.setColor(Color.RED);
-		g2d.drawString("Indisponivel", x, y + 10);
+  @Override
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    Graphics2D g2d = (Graphics2D) g.create();
+    g2d.setColor(Color.RED);
+    g2d.drawString("Indisponivel", x, y + 10);
 
-		g2d.dispose();
-	}
+    g2d.dispose();
+  }
 
-	public int getIconWidth() {
-		return width;
-	}
+  public int getIconWidth() {
+    return width;
+  }
 
-	public int getIconHeight() {
-		return height;
-	}
+  public int getIconHeight() {
+    return height;
+  }
 }

@@ -47,201 +47,209 @@ import org.apache.lucene.search.TermQuery;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
-public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener{
-	
-	Query treeQuery, recursiveTreeQuery;
-	boolean rootSelected = false;
-	HashSet<TreePath> selection = new HashSet<TreePath>();
-	private long collapsedTime = 0;
+public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener {
 
-	@Override
-	public void valueChanged(TreeSelectionEvent evt) {
-		
-		for(TreePath path : evt.getPaths())
-			if(selection.contains(path))
-				selection.remove(path);
-			else
-				selection.add(path);
-		
-		if(System.currentTimeMillis() - collapsedTime < 200){
-			collapsedTime = 0;
-			return;
-		}
-		
-		rootSelected = false;
-		for(TreePath path : selection)
-			if(((Node)path.getLastPathComponent()).docId == -1){
-				rootSelected = true;
-				break;
-			}
-		
-		if(rootSelected  || selection.isEmpty()){
-			treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
-			recursiveTreeQuery = null;
-			
-		}else{
-			String treeQueryStr = "parentId:(";
-			recursiveTreeQuery = new BooleanQuery();
-			
-			for(TreePath path : selection){
-				Document doc = ((Node)path.getLastPathComponent()).getDoc();
-				
-				String parentId = doc.get(IndexItem.FTKID);
-				if (parentId == null)
-					parentId = doc.get(IndexItem.ID);
-				
-				treeQueryStr += parentId + " ";
-				//((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
-				((BooleanQuery)recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
-			}
-			
-			treeQueryStr += ")";
-			try {
-				treeQuery = PesquisarIndice.getQuery(treeQueryStr);
-			} catch (ParseException | QueryNodeException e) {
-				e.printStackTrace();
-			}
-		}
-		actionPerformed(null);
+  Query treeQuery, recursiveTreeQuery;
+  boolean rootSelected = false;
+  HashSet<TreePath> selection = new HashSet<TreePath>();
+  private long collapsedTime = 0;
 
-	}
-	
-	public void navigateToParent(int docId){
-		
-		LinkedList<Node> path = new LinkedList<Node>(); 
-		SearchResult result = new SearchResult(0);
-		String textQuery = null;
-		do{
-			try {
-				Document doc = App.get().reader.document(docId);
-				
-				textQuery = null;
-				String parentId = doc.get(IndexItem.PARENTID);
-				if(parentId != null)
-					textQuery = IndexItem.ID + ":" + parentId;
+  @Override
+  public void valueChanged(TreeSelectionEvent evt) {
 
-				String ftkId = doc.get(IndexItem.FTKID);
-				if (ftkId != null)
-					textQuery = IndexItem.FTKID + ":" + parentId;
-				
-				if(textQuery != null){
-					PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
-					result = task.pesquisar();
-					
-					if(result.length == 1){
-						docId = result.docs[0];
-						path.addFirst(((TreeViewModel)App.get().tree.getModel()).new Node(docId));
-					}
-				}
-			
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-		}while(result.length == 1 && textQuery != null);
-		
-		path.addFirst((Node)App.get().tree.getModel().getRoot());
-		
-		TreePath treePath = new TreePath(path.toArray());
-		App.get().tree.setExpandsSelectedPaths(true);
-		App.get().tree.setSelectionPath(treePath);
-		App.get().tree.scrollPathToVisible(treePath);
-		
-		App.get().treeTab.setSelectedIndex(2);
-	}
+    for (TreePath path : evt.getPaths()) {
+      if (selection.contains(path)) {
+        selection.remove(path);
+      } else {
+        selection.add(path);
+      }
+    }
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		
-		if((App.get().recursiveTreeList.isSelected() && rootSelected ) || selection.isEmpty())
-			App.get().treeTab.setBackgroundAt(2, App.get().defaultTabColor);
-		else
-			App.get().treeTab.setBackgroundAt(2, App.get().alertColor);
-		
-		App.get().appletListener.updateFileListing();
-		
-	}
+    if (System.currentTimeMillis() - collapsedTime < 200) {
+      collapsedTime = 0;
+      return;
+    }
 
-	@Override
-	public void treeExpanded(TreeExpansionEvent event) {
-		// TODO Auto-generated method stub
-		
-	}
+    rootSelected = false;
+    for (TreePath path : selection) {
+      if (((Node) path.getLastPathComponent()).docId == -1) {
+        rootSelected = true;
+        break;
+      }
+    }
 
-	@Override
-	public void treeCollapsed(TreeExpansionEvent event) {
-		collapsedTime = System.currentTimeMillis();
-		
-	}
+    if (rootSelected || selection.isEmpty()) {
+      treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
+      recursiveTreeQuery = null;
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    } else {
+      String treeQueryStr = "parentId:(";
+      recursiveTreeQuery = new BooleanQuery();
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		if (e.isPopupTrigger())
-			showPopupMenu(e);
-		
-	}
-	
-	private void showPopupMenu(MouseEvent e){
-		JPopupMenu menu = new JPopupMenu();
-		
-		JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
-		exportTree.addActionListener(new TreeMenuListener(false));
-		menu.add(exportTree);
-		
-		JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
-		exportTreeChecked.addActionListener(new TreeMenuListener(true));
-		menu.add(exportTreeChecked);
-		
-		menu.show((Component)e.getSource(), e.getX(), e.getY());
-	}
+      for (TreePath path : selection) {
+        Document doc = ((Node) path.getLastPathComponent()).getDoc();
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		if (e.isPopupTrigger())
-			showPopupMenu(e);
-		
-	}
-	
-	class TreeMenuListener implements ActionListener{
-		
-		boolean onlyChecked = false;
-		
-		TreeMenuListener(boolean onlyChecked){
-			this.onlyChecked = onlyChecked;
-		}
+        String parentId = doc.get(IndexItem.FTKID);
+        if (parentId == null) {
+          parentId = doc.get(IndexItem.ID);
+        }
 
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			
-			TreePath[] paths = App.get().tree.getSelectionPaths();
-			if(paths == null || paths.length != 1)
-				JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
-			else{
-				Node treeNode = (Node)paths[0].getLastPathComponent();
-				ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked);
-			}
-			
-		}
-		
-	}
+        treeQueryStr += parentId + " ";
+        //((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
+        ((BooleanQuery) recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
+      }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+      treeQueryStr += ")";
+      try {
+        treeQuery = PesquisarIndice.getQuery(treeQueryStr);
+      } catch (ParseException | QueryNodeException e) {
+        e.printStackTrace();
+      }
+    }
+    actionPerformed(null);
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+  }
+
+  public void navigateToParent(int docId) {
+
+    LinkedList<Node> path = new LinkedList<Node>();
+    SearchResult result = new SearchResult(0);
+    String textQuery = null;
+    do {
+      try {
+        Document doc = App.get().reader.document(docId);
+
+        textQuery = null;
+        String parentId = doc.get(IndexItem.PARENTID);
+        if (parentId != null) {
+          textQuery = IndexItem.ID + ":" + parentId;
+        }
+
+        String ftkId = doc.get(IndexItem.FTKID);
+        if (ftkId != null) {
+          textQuery = IndexItem.FTKID + ":" + parentId;
+        }
+
+        if (textQuery != null) {
+          PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+          result = task.pesquisar();
+
+          if (result.length == 1) {
+            docId = result.docs[0];
+            path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
+          }
+        }
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+    } while (result.length == 1 && textQuery != null);
+
+    path.addFirst((Node) App.get().tree.getModel().getRoot());
+
+    TreePath treePath = new TreePath(path.toArray());
+    App.get().tree.setExpandsSelectedPaths(true);
+    App.get().tree.setSelectionPath(treePath);
+    App.get().tree.scrollPathToVisible(treePath);
+
+    App.get().treeTab.setSelectedIndex(2);
+  }
+
+  @Override
+  public void actionPerformed(ActionEvent e) {
+
+    if ((App.get().recursiveTreeList.isSelected() && rootSelected) || selection.isEmpty()) {
+      App.get().treeTab.setBackgroundAt(2, App.get().defaultTabColor);
+    } else {
+      App.get().treeTab.setBackgroundAt(2, App.get().alertColor);
+    }
+
+    App.get().appletListener.updateFileListing();
+
+  }
+
+  @Override
+  public void treeExpanded(TreeExpansionEvent event) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void treeCollapsed(TreeExpansionEvent event) {
+    collapsedTime = System.currentTimeMillis();
+
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent e) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+    if (e.isPopupTrigger()) {
+      showPopupMenu(e);
+    }
+
+  }
+
+  private void showPopupMenu(MouseEvent e) {
+    JPopupMenu menu = new JPopupMenu();
+
+    JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
+    exportTree.addActionListener(new TreeMenuListener(false));
+    menu.add(exportTree);
+
+    JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
+    exportTreeChecked.addActionListener(new TreeMenuListener(true));
+    menu.add(exportTreeChecked);
+
+    menu.show((Component) e.getSource(), e.getX(), e.getY());
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    if (e.isPopupTrigger()) {
+      showPopupMenu(e);
+    }
+
+  }
+
+  class TreeMenuListener implements ActionListener {
+
+    boolean onlyChecked = false;
+
+    TreeMenuListener(boolean onlyChecked) {
+      this.onlyChecked = onlyChecked;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+      TreePath[] paths = App.get().tree.getSelectionPaths();
+      if (paths == null || paths.length != 1) {
+        JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
+      } else {
+        Node treeNode = (Node) paths[0].getLastPathComponent();
+        ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked);
+      }
+
+    }
+
+  }
+
+  @Override
+  public void mouseEntered(MouseEvent e) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void mouseExited(MouseEvent e) {
+    // TODO Auto-generated method stub
+
+  }
 
 }

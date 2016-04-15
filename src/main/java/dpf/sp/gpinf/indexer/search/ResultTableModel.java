@@ -37,185 +37,197 @@ import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class ResultTableModel extends AbstractTableModel {
 
-	private static final long serialVersionUID = 1L;
-	
-	public static String BOOKMARK_COL = "marcador";
-	public static String SCORE_COL = "score";
-	
-	public static String[] fields;
-	
-	private static int fixedColdWidths[] = {55, 20};
-	public static String[] fixedCols = { "", ""};
-	
-	private static String[] columnNames = {};
-	
-	public void initCols(){
-		
-		try {
-            SwingUtilities.invokeAndWait(new Runnable(){
-            	public void run(){
-            	    
-            	    updateCols();
-            		App.get().resultsModel.fireTableStructureChanged();
-            		
-            		for(int i = 0; i < fixedColdWidths.length; i++)
-            			App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(fixedColdWidths[i]);
-            		
-            		for(int i = 0; i < ColumnsManager.getInstance().colState.initialWidths.size(); i++){
-            		    TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
-            		    tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
-            		    
-            		    ColumnsManager.getInstance().setColumnRenderer(tc);
-            		}
-                        
-            	}
-            });
-        } catch (InvocationTargetException | InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+  private static final long serialVersionUID = 1L;
+
+  public static String BOOKMARK_COL = "marcador";
+  public static String SCORE_COL = "score";
+
+  public static String[] fields;
+
+  private static int fixedColdWidths[] = {55, 20};
+  public static String[] fixedCols = {"", ""};
+
+  private static String[] columnNames = {};
+
+  public void initCols() {
+
+    try {
+      SwingUtilities.invokeAndWait(new Runnable() {
+        public void run() {
+
+          updateCols();
+          App.get().resultsModel.fireTableStructureChanged();
+
+          for (int i = 0; i < fixedColdWidths.length; i++) {
+            App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(fixedColdWidths[i]);
+          }
+
+          for (int i = 0; i < ColumnsManager.getInstance().colState.initialWidths.size(); i++) {
+            TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
+            tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
+
+            ColumnsManager.getInstance().setColumnRenderer(tc);
+          }
+
         }
-		
-	}
-	
-	public void updateCols(){
-		
-		ArrayList<String> cols = new ArrayList<String>();
-		for(String col : fixedCols)
-			cols.add(col);
-		
-		fields = ColumnsManager.getInstance().getLoadedCols();
-		for(String col : fields)
-			cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
-		
-		columnNames = cols.toArray(new String[0]);
-	}
+      });
+    } catch (InvocationTargetException | InterruptedException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
 
-	
-	private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
-	
-	public ResultTableModel(){
-		super();
-		df.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
-	 
+  }
 
-	@Override
-	public int getColumnCount() {
-		return columnNames.length;
-	}
+  public void updateCols() {
 
-	@Override
-	public int getRowCount() {
-		return App.get().results.length;
-	}
+    ArrayList<String> cols = new ArrayList<String>();
+    for (String col : fixedCols) {
+      cols.add(col);
+    }
 
-	@Override
-	public String getColumnName(int col) {
-		if (col == 0)
-			return String.valueOf(App.get().results.length);
-		else
-			return columnNames[col];
-	}
-	
-	public void updateLengthHeader(long mb){
-		for(int i = 0; i < columnNames.length; i++)
-			if(IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])){
-				int col = App.get().resultsTable.convertColumnIndexToView(i);
-				if(mb == -1){
-					App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-							columnNames[i] + " (...)");
-				}else
-					App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-							columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)");
-			}
-				
-	}
+    fields = ColumnsManager.getInstance().getLoadedCols();
+    for (String col : fields) {
+      cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
+    }
 
-	@Override
-	public boolean isCellEditable(int row, int col) {
-		if (col == 1)
-			return true;
-		else
-			return false;
-	}
-	
-	App app = App.get();
+    columnNames = cols.toArray(new String[0]);
+  }
 
-	@Override
-	public void setValueAt(Object value, int row, int col) {
-		app.marcadores.setValueAtId(value, app.getIDs()[app.results.docs[row]], col, true);
+  private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
 
-	}
+  public ResultTableModel() {
+    super();
+    df.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
 
-	@Override
-	public Class<?> getColumnClass(int c) {
-		if (c == 1)
-			return Boolean.class;
-		else if (columnNames[c].equalsIgnoreCase(IndexItem.LENGTH))
-			return Integer.class;
-		else
-			return String.class;
-	}
+  @Override
+  public int getColumnCount() {
+    return columnNames.length;
+  }
 
-	private Document doc;
-	private int lastDocRead = -1;
+  @Override
+  public int getRowCount() {
+    return App.get().results.length;
+  }
 
-	@Override
-	public Object getValueAt(int row, int col) {
-		String value;
-		if (col == 0)
-			value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+  @Override
+  public String getColumnName(int col) {
+    if (col == 0) {
+      return String.valueOf(App.get().results.length);
+    } else {
+      return columnNames[col];
+    }
+  }
 
-		else if (col == 1)
-			return app.marcadores.selected[app.getIDs()[app.results.docs[row]]];
+  public void updateLengthHeader(long mb) {
+    for (int i = 0; i < columnNames.length; i++) {
+      if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
+        int col = App.get().resultsTable.convertColumnIndexToView(i);
+        if (mb == -1) {
+          App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
+              columnNames[i] + " (...)");
+        } else {
+          App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
+              columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)");
+        }
+      }
+    }
 
-		else
-			try {
-			    int fCol = col - fixedCols.length;
-                String field = fields[fCol];
-                
-                if(field.equals(SCORE_COL))
-                    return app.results.scores[row];
-                
-                if(field.equals(BOOKMARK_COL))
-                    return app.marcadores.getLabels(app.getIDs()[app.results.docs[row]]);
-                
-				int docId = App.get().results.docs[row];
-				if (App.get().results.docs[row] != lastDocRead)
-					doc = App.get().searcher.doc(docId);
-				lastDocRead = App.get().results.docs[row];
-				
-				value = doc.get(field);
-				if(value == null)
-					value = "";
-				if(value.isEmpty())
-					return value;
-				
-				try{
-					value = df.format(DateUtil.stringToDate(value));
-					return value;
-					
-				}catch(Exception e){}
-				
-				if(field.equals(IndexItem.LENGTH))
-					value = NumberFormat.getNumberInstance().format(Long.valueOf(value));
-				
-				else if(field.equals(IndexItem.CATEGORY))
-					value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
-				
-				if (field.equals(IndexItem.NAME)) {
-					TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
-					if (fragments[0].getScore() > 0)
-						value = "<html><nobr>" + fragments[0].toString() + "</html>";
-				}
+  }
 
-			} catch (Exception e) {
-				e.printStackTrace();
-				return "ERRO";
-			}
+  @Override
+  public boolean isCellEditable(int row, int col) {
+    if (col == 1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
-		return value;
+  App app = App.get();
 
-	}
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+    app.marcadores.setValueAtId(value, app.getIDs()[app.results.docs[row]], col, true);
+
+  }
+
+  @Override
+  public Class<?> getColumnClass(int c) {
+    if (c == 1) {
+      return Boolean.class;
+    } else if (columnNames[c].equalsIgnoreCase(IndexItem.LENGTH)) {
+      return Integer.class;
+    } else {
+      return String.class;
+    }
+  }
+
+  private Document doc;
+  private int lastDocRead = -1;
+
+  @Override
+  public Object getValueAt(int row, int col) {
+    String value;
+    if (col == 0) {
+      value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+    } else if (col == 1) {
+      return app.marcadores.selected[app.getIDs()[app.results.docs[row]]];
+    } else {
+      try {
+        int fCol = col - fixedCols.length;
+        String field = fields[fCol];
+
+        if (field.equals(SCORE_COL)) {
+          return app.results.scores[row];
+        }
+
+        if (field.equals(BOOKMARK_COL)) {
+          return app.marcadores.getLabels(app.getIDs()[app.results.docs[row]]);
+        }
+
+        int docId = App.get().results.docs[row];
+        if (App.get().results.docs[row] != lastDocRead) {
+          doc = App.get().searcher.doc(docId);
+        }
+        lastDocRead = App.get().results.docs[row];
+
+        value = doc.get(field);
+        if (value == null) {
+          value = "";
+        }
+        if (value.isEmpty()) {
+          return value;
+        }
+
+        try {
+          value = df.format(DateUtil.stringToDate(value));
+          return value;
+
+        } catch (Exception e) {
+        }
+
+        if (field.equals(IndexItem.LENGTH)) {
+          value = NumberFormat.getNumberInstance().format(Long.valueOf(value));
+        } else if (field.equals(IndexItem.CATEGORY)) {
+          value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+        }
+
+        if (field.equals(IndexItem.NAME)) {
+          TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
+          if (fragments[0].getScore() > 0) {
+            value = "<html><nobr>" + fragments[0].toString() + "</html>";
+          }
+        }
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        return "ERRO";
+      }
+    }
+
+    return value;
+
+  }
 
 }

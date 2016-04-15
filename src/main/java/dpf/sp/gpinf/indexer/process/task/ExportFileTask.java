@@ -46,334 +46,351 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
 /**
- * Responsável por extrair subitens de containers.
- * Também exporta itens ativos em casos de extração automática de dados ou
- * em casos de extração de itens selecionados após análise.
+ * Responsável por extrair subitens de containers. Também exporta itens ativos em casos de extração
+ * automática de dados ou em casos de extração de itens selecionados após análise.
  */
-public class ExportFileTask extends AbstractTask{
+public class ExportFileTask extends AbstractTask {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
-	public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
-	public static String EXTRACT_DIR = "Exportados";
-	private static String SUBITEM_DIR = "subitens";
-	
-	private static HashSet<String> categoriesToExtract = new HashSet<String>();
-	public static int subDirCounter = 0, itensExtracted = 0;
-	private static File subDir;
-	
-	private static boolean computeHash = false;
-	private File extractDir;
-	private HashMap<HashValue, HashValue> hashMap;
-	private List<String> noContentLabels;
+  private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
+  public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
+  public static String EXTRACT_DIR = "Exportados";
+  private static String SUBITEM_DIR = "subitens";
 
-	public ExportFileTask(Worker worker) {
-		super(worker);
-	}
+  private static HashSet<String> categoriesToExtract = new HashSet<String>();
+  public static int subDirCounter = 0, itensExtracted = 0;
+  private static File subDir;
 
-	public static synchronized void incItensExtracted() {
-		itensExtracted++;
-	}
+  private static boolean computeHash = false;
+  private File extractDir;
+  private HashMap<HashValue, HashValue> hashMap;
+  private List<String> noContentLabels;
 
-	public static int getItensExtracted() {
-		return itensExtracted;
-	}
-	
-	private void setExtractDir(){
-		if(output != null){
-			if(caseData.containsReport())
-				this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
-			else
-				this.extractDir = new File(output, SUBITEM_DIR);
-		}
-	}
+  public ExportFileTask(Worker worker) {
+    super(worker);
+  }
 
-	public static void load(File file) throws FileNotFoundException, IOException {
+  public static synchronized void incItensExtracted() {
+    itensExtracted++;
+  }
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-		String line = reader.readLine();
-		while ((line = reader.readLine()) != null) {
-			if (line.trim().startsWith("#") || line.trim().isEmpty())
-				continue;
-			categoriesToExtract.add(line.trim());
-		}
-		reader.close();
-	}
+  public static int getItensExtracted() {
+    return itensExtracted;
+  }
 
-	private static synchronized File getSubDir(File extractDir) {
-		if (subDirCounter % 1000 == 0) {
-			subDir = new File(extractDir, Integer.toString(subDirCounter / 1000));
-			if (!subDir.exists())
-				subDir.mkdirs();
-		}
-		subDirCounter++;
-		return subDir;
-	}
+  private void setExtractDir() {
+    if (output != null) {
+      if (caseData.containsReport()) {
+        this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+      } else {
+        this.extractDir = new File(output, SUBITEM_DIR);
+      }
+    }
+  }
 
-	public static boolean hasCategoryToExtract() {
-		return categoriesToExtract.size() > 0;
-	}
+  public static void load(File file) throws FileNotFoundException, IOException {
 
-	public static boolean isToBeExtracted(EvidenceFile evidence) {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    String line = reader.readLine();
+    while ((line = reader.readLine()) != null) {
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) {
+        continue;
+      }
+      categoriesToExtract.add(line.trim());
+    }
+    reader.close();
+  }
 
-		boolean result = false;
-		for (String category : evidence.getCategorySet()) {
-			if (categoriesToExtract.contains(category)) {
-				result = true;
-				break;
-			}
-		}
+  private static synchronized File getSubDir(File extractDir) {
+    if (subDirCounter % 1000 == 0) {
+      subDir = new File(extractDir, Integer.toString(subDirCounter / 1000));
+      if (!subDir.exists()) {
+        subDir.mkdirs();
+      }
+    }
+    subDirCounter++;
+    return subDir;
+  }
 
-		return result;
-	}
+  public static boolean hasCategoryToExtract() {
+    return categoriesToExtract.size() > 0;
+  }
 
-	public void process(EvidenceFile evidence) {
-		
-		// Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
-	    if ((caseData.isIpedReport() && evidence.isToAddToCase()) || 
-	    	 (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract()))) {
-	    	
-            evidence.setToExtract(true);
-            if(doNotExport(evidence)){
-            	evidence.setSleuthId(null);
-            	evidence.setExportedFile(null);
-            }else
-            	extract(evidence);
-            
-            incItensExtracted();
-            copyViewFile(evidence);
+  public static boolean isToBeExtracted(EvidenceFile evidence) {
+
+    boolean result = false;
+    for (String category : evidence.getCategorySet()) {
+      if (categoriesToExtract.contains(category)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  public void process(EvidenceFile evidence) {
+
+    // Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
+    if ((caseData.isIpedReport() && evidence.isToAddToCase())
+        || (!evidence.isSubItem() && (isToBeExtracted(evidence) || evidence.isToExtract()))) {
+
+      evidence.setToExtract(true);
+      if (doNotExport(evidence)) {
+        evidence.setSleuthId(null);
+        evidence.setExportedFile(null);
+      } else {
+        extract(evidence);
+      }
+
+      incItensExtracted();
+      copyViewFile(evidence);
+    }
+
+    //Renomeia subitem caso deva ser exportado
+    if (!caseData.isIpedReport() && evidence.isSubItem()
+        && (evidence.isToExtract() || !hasCategoryToExtract() || isToBeExtracted(evidence))) {
+
+      evidence.setToExtract(true);
+      if (!doNotExport(evidence)) {
+        renameToHash(evidence);
+      } else {
+        evidence.setExportedFile(null);
+        evidence.setDeleteFile(true);
+      }
+      incItensExtracted();
+    }
+
+    if (hasCategoryToExtract() && !evidence.isToExtract()) {
+      evidence.setAddToCase(false);
+    }
+
+  }
+
+  private boolean doNotExport(EvidenceFile evidence) {
+    if (noContentLabels == null) {
+      CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+      noContentLabels = args.getCmdArgs().get("-nocontent");
+      if (noContentLabels == null) {
+        noContentLabels = Collections.emptyList();
+      }
+    }
+    for (String noContentLabel : noContentLabels) {
+      if (evidence.getLabels() != null && !evidence.getLabels().isEmpty()) {
+        for (String label : evidence.getLabels().split(" \\| ")) {
+          if (label.equalsIgnoreCase(noContentLabel)) {
+            return true;
+          }
         }
-		
-		//Renomeia subitem caso deva ser exportado
-		if (!caseData.isIpedReport() && evidence.isSubItem() && 
-			(evidence.isToExtract() || !hasCategoryToExtract() || isToBeExtracted(evidence))) {
-			
-			evidence.setToExtract(true);
-			if(!doNotExport(evidence))
-				renameToHash(evidence);
-			else{
-				evidence.setExportedFile(null);
-				evidence.setDeleteFile(true);
-			}
-			incItensExtracted();
-		}
-		
-		if (hasCategoryToExtract() && !evidence.isToExtract())
-			evidence.setAddToCase(false);
-		
-	}
-	
-	private boolean doNotExport(EvidenceFile evidence){
-		if(noContentLabels == null){
-			CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName());
-			noContentLabels = args.getCmdArgs().get("-nocontent");
-			if(noContentLabels == null)
-				noContentLabels = Collections.emptyList();
-		}
-		for(String noContentLabel : noContentLabels){
-			if(evidence.getLabels() != null && !evidence.getLabels().isEmpty()){
-				for(String label : evidence.getLabels().split(" \\| ")){
-					if(label.equalsIgnoreCase(noContentLabel))
-						return true;
-				}
-					
-			}else
-				for(String category : evidence.getCategorySet())
-					if(category.equalsIgnoreCase(noContentLabel))
-						return true;
-		}
-		return false;
-	}
-	
-	public void extract(EvidenceFile evidence) {
-		InputStream is = null;
-		try {
-			is = evidence.getBufferedStream();
-			extractFile(is, evidence);
-			evidence.setFileOffset(-1);
 
-		} catch (IOException e) {
-			LOGGER.warn("{} Erro ao extrair {} \t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      } else {
+        for (String category : evidence.getCategorySet()) {
+          if (category.equalsIgnoreCase(noContentLabel)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
-		} finally {
-			IOUtil.closeQuietly(is);
-		}
-	}
-	
-	private void copyViewFile(EvidenceFile evidence){
-		File viewFile = evidence.getViewFile();
-		if(viewFile != null){
-			String viewName = viewFile.getName();
-			File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName);
-			destFile.getParentFile().mkdirs();
-			try {
-				IOUtil.copiaArquivo(viewFile, destFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
+  public void extract(EvidenceFile evidence) {
+    InputStream is = null;
+    try {
+      is = evidence.getBufferedStream();
+      extractFile(is, evidence);
+      evidence.setFileOffset(-1);
 
-	private File getHashFile(String hash, String ext) {
-		String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext);
-		if(extractDir == null)
-			setExtractDir();
-		File result = new File(extractDir, path);
-		File parent = result.getParentFile();
-		if (!parent.exists())
-			try {
-				Files.createDirectories(parent.toPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-		return result;
-	}
+    } catch (IOException e) {
+      LOGGER.warn("{} Erro ao extrair {} \t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
 
-	public void renameToHash(EvidenceFile evidence) {
+    } finally {
+      IOUtil.closeQuietly(is);
+    }
+  }
 
-		String hash = evidence.getHash();
-		if (hash != null && !hash.isEmpty()) {
-			File file = evidence.getFile();
-			String ext = evidence.getType().getLongDescr();
-			if(!ext.isEmpty())
-				ext = "." + ext;
-			
-			File hashFile = getHashFile(hash, ext);
-			
-			HashValue hashVal = new HashValue(hash);
-			HashValue hashLock;
-			synchronized (hashMap) {
-				hashLock = hashMap.get(hashVal);
-			}
-			
-			
-			synchronized(hashLock){
-				if (!hashFile.exists()) {
-					try {
-						Files.move(file.toPath(), hashFile.toPath());
-						changeTargetFile(evidence, hashFile);
-						
-					} catch (IOException e) {
-						// falha ao renomear pode ter sido causada por outra thread
-						// criando arquivo com mesmo hash entre as 2 chamadas acima
-						if (hashFile.exists()) {
-							changeTargetFile(evidence, hashFile);
-							if (!file.delete())
-								LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
-						} else{
-							LOGGER.warn("{} Falha ao renomear para o hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex());
-							e.printStackTrace();
-						}
-					}
-					
-				} else {
-					changeTargetFile(evidence, hashFile);
-					if (!file.delete())
-						LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
-				}
-			}
-			
+  private void copyViewFile(EvidenceFile evidence) {
+    File viewFile = evidence.getViewFile();
+    if (viewFile != null) {
+      String viewName = viewFile.getName();
+      File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName);
+      destFile.getParentFile().mkdirs();
+      try {
+        IOUtil.copiaArquivo(viewFile, destFile);
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
 
-		}
+  private File getHashFile(String hash, String ext) {
+    String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext);
+    if (extractDir == null) {
+      setExtractDir();
+    }
+    File result = new File(extractDir, path);
+    File parent = result.getParentFile();
+    if (!parent.exists()) {
+      try {
+        Files.createDirectories(parent.toPath());
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
 
-	}
+    return result;
+  }
 
-	private void changeTargetFile(EvidenceFile evidence, File file) {
-		String relativePath;
-		try {
-			relativePath = Util.getRelativePath(output, file);
-			evidence.setExportedFile(relativePath);
-			evidence.setFile(file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+  public void renameToHash(EvidenceFile evidence) {
 
-	public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
+    String hash = evidence.getHash();
+    if (hash != null && !hash.isEmpty()) {
+      File file = evidence.getFile();
+      String ext = evidence.getType().getLongDescr();
+      if (!ext.isEmpty()) {
+        ext = "." + ext;
+      }
 
-		String hash;
-		File outputFile = null;
-		Object hashLock = new Object();
-		
-		String ext = "";
-		if(evidence.getType() != null)
-			ext = evidence.getType().getLongDescr();
-		if(!ext.isEmpty())
-			ext = "." + ext;
-		
-		if(extractDir == null)
-			setExtractDir();
-		
-		if (!computeHash)
-			outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
+      File hashFile = getHashFile(hash, ext);
 
-		else if ((hash = evidence.getHash()) != null && !hash.isEmpty()){
-			outputFile = getHashFile(hash, ext);
-			HashValue hashVal = new HashValue(hash);
-			synchronized (hashMap) {
-				hashLock = hashMap.get(hashVal);
-			}
-					
-		}else {
-			outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext));
-			if (!outputFile.getParentFile().exists())
-				outputFile.getParentFile().mkdirs();
-		}
-		
-		
-		synchronized(hashLock){
-			if (outputFile.createNewFile()) {
-				BufferedOutputStream bos = null;
-				try {
-					bos = new BufferedOutputStream(new FileOutputStream(outputFile));
-					BufferedInputStream bis = new BufferedInputStream(inputStream);
-					IOUtil.copiaArquivo(bis, bos);
+      HashValue hashVal = new HashValue(hash);
+      HashValue hashLock;
+      synchronized (hashMap) {
+        hashLock = hashMap.get(hashVal);
+      }
 
-				} catch (IOException e) {
-					//e.printStackTrace();
-					LOGGER.warn("{} Erro ao extrair {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      synchronized (hashLock) {
+        if (!hashFile.exists()) {
+          try {
+            Files.move(file.toPath(), hashFile.toPath());
+            changeTargetFile(evidence, hashFile);
 
-				} finally {
-					if (bos != null)
-						bos.close();
-				}
-			}
-		}
-		
-		String relativePath = Util.getRelativePath(output, outputFile);
-		evidence.setExportedFile(relativePath);
-		evidence.setFile(outputFile);
-		if (evidence.isSubItem())
-			evidence.setLength(outputFile.length());
+          } catch (IOException e) {
+            // falha ao renomear pode ter sido causada por outra thread
+            // criando arquivo com mesmo hash entre as 2 chamadas acima
+            if (hashFile.exists()) {
+              changeTargetFile(evidence, hashFile);
+              if (!file.delete()) {
+                LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+              }
+            } else {
+              LOGGER.warn("{} Falha ao renomear para o hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex());
+              e.printStackTrace();
+            }
+          }
 
-	}
+        } else {
+          changeTargetFile(evidence, hashFile);
+          if (!file.delete()) {
+            LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+          }
+        }
+      }
 
-	@Override
-	public void init(Properties confProps, File confDir) throws Exception {
-		load(new File(confDir, EXTRACT_CONFIG));
-		
-		if(hasCategoryToExtract())
-			caseData.setContainsReport(true);
-		
-		String value = confProps.getProperty("hash");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			computeHash = true;
-		
-		itensExtracted = 0;
-		subDirCounter = 0;
-		
-		hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
-		
-	}
+    }
 
-	@Override
-	public void finish() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-	
+  }
+
+  private void changeTargetFile(EvidenceFile evidence, File file) {
+    String relativePath;
+    try {
+      relativePath = Util.getRelativePath(output, file);
+      evidence.setExportedFile(relativePath);
+      evidence.setFile(file);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
+
+    String hash;
+    File outputFile = null;
+    Object hashLock = new Object();
+
+    String ext = "";
+    if (evidence.getType() != null) {
+      ext = evidence.getType().getLongDescr();
+    }
+    if (!ext.isEmpty()) {
+      ext = "." + ext;
+    }
+
+    if (extractDir == null) {
+      setExtractDir();
+    }
+
+    if (!computeHash) {
+      outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
+    } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
+      outputFile = getHashFile(hash, ext);
+      HashValue hashVal = new HashValue(hash);
+      synchronized (hashMap) {
+        hashLock = hashMap.get(hashVal);
+      }
+
+    } else {
+      outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext));
+      if (!outputFile.getParentFile().exists()) {
+        outputFile.getParentFile().mkdirs();
+      }
+    }
+
+    synchronized (hashLock) {
+      if (outputFile.createNewFile()) {
+        BufferedOutputStream bos = null;
+        try {
+          bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+          BufferedInputStream bis = new BufferedInputStream(inputStream);
+          IOUtil.copiaArquivo(bis, bos);
+
+        } catch (IOException e) {
+          //e.printStackTrace();
+          LOGGER.warn("{} Erro ao extrair {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+
+        } finally {
+          if (bos != null) {
+            bos.close();
+          }
+        }
+      }
+    }
+
+    String relativePath = Util.getRelativePath(output, outputFile);
+    evidence.setExportedFile(relativePath);
+    evidence.setFile(outputFile);
+    if (evidence.isSubItem()) {
+      evidence.setLength(outputFile.length());
+    }
+
+  }
+
+  @Override
+  public void init(Properties confProps, File confDir) throws Exception {
+    load(new File(confDir, EXTRACT_CONFIG));
+
+    if (hasCategoryToExtract()) {
+      caseData.setContainsReport(true);
+    }
+
+    String value = confProps.getProperty("hash");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+      computeHash = true;
+    }
+
+    itensExtracted = 0;
+    subDirCounter = 0;
+
+    hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+
+  }
+
+  @Override
+  public void finish() throws Exception {
+    // TODO Auto-generated method stub
+
+  }
 
 }

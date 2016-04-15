@@ -50,165 +50,165 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControlImpl;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
-    private AppSearchParams appSearchParams = null;
-    
-    public InicializarBusca(AppSearchParams params) {
-        this.appSearchParams = params;
-    }
-    
-    @Override
-    protected void process(List<Integer> chunks) {
-        // App.get().setSize(1350, 500);
+  private AppSearchParams appSearchParams = null;
 
-        App.get().dialogBar.setLocationRelativeTo(App.get());
+  public InicializarBusca(AppSearchParams params) {
+    this.appSearchParams = params;
+  }
 
-        if (!this.isDone()) {
-            App.get().dialogBar.setVisible(true);
-        }
+  @Override
+  protected void process(List<Integer> chunks) {
+    // App.get().setSize(1350, 500);
 
+    App.get().dialogBar.setLocationRelativeTo(App.get());
+
+    if (!this.isDone()) {
+      App.get().dialogBar.setVisible(true);
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    protected Void doInBackground() {
-        publish(0);
+  }
 
-        try {
-            // ImageIO.setUseCache(false);
-            ViewerControl viewerControl = ViewerControlImpl.getInstance();
+  @SuppressWarnings("unchecked")
+  @Override
+  protected Void doInBackground() {
+    publish(0);
 
-            Configuration.getConfiguration(App.get().codePath + "/..");
-            ParsingReader.setTextSplitSize(Long.MAX_VALUE);
+    try {
+      // ImageIO.setUseCache(false);
+      ViewerControl viewerControl = ViewerControlImpl.getInstance();
 
-            inicializar(App.get().codePath + "/../index");
+      Configuration.getConfiguration(App.get().codePath + "/..");
+      ParsingReader.setTextSplitSize(Long.MAX_VALUE);
 
-            App.get().resultsModel.initCols();
-            App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+      inicializar(App.get().codePath + "/../index");
 
-            OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
-            OCRParser.EXECTESS = false;
+      App.get().resultsModel.initCols();
+      App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
-            IndexerDefaultParser autoParser = new IndexerDefaultParser();
-            autoParser.setFallback(Configuration.fallBackParser);
-            autoParser.setErrorParser(Configuration.errorParser);
-            App.get().setAutoParser(autoParser);            
+      OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
+      OCRParser.EXECTESS = false;
 
-            FileProcessor exibirAjuda = new FileProcessor(-1, false);
-            viewerControl.createViewers(this.appSearchParams, 
-                    exibirAjuda);         
-            this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-            App.get().setTextViewer( this.appSearchParams.textViewer );
+      IndexerDefaultParser autoParser = new IndexerDefaultParser();
+      autoParser.setFallback(Configuration.fallBackParser);
+      autoParser.setErrorParser(Configuration.errorParser);
+      App.get().setAutoParser(autoParser);
 
-            // lista todos os itens
-            App.get().setQuery( PesquisarIndice.getQuery("") );
-            PesquisarIndice pesquisa = new PesquisarIndice(App.get().getQuery());
-            App.get().results = pesquisa.pesquisar();
-            App.get().totalItens = App.get().results.length;
-            pesquisa.countVolume(App.get().results);
-            App.get().resultsModel.fireTableDataChanged();
+      FileProcessor exibirAjuda = new FileProcessor(-1, false);
+      viewerControl.createViewers(this.appSearchParams,
+          exibirAjuda);
+      this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
+      App.get().setTextViewer(this.appSearchParams.textViewer);
 
-            updateImagePaths();
+      // lista todos os itens
+      App.get().setQuery(PesquisarIndice.getQuery(""));
+      PesquisarIndice pesquisa = new PesquisarIndice(App.get().getQuery());
+      App.get().results = pesquisa.pesquisar();
+      App.get().totalItens = App.get().results.length;
+      pesquisa.countVolume(App.get().results);
+      App.get().resultsModel.fireTableDataChanged();
 
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+      updateImagePaths();
 
-        return null;
+    } catch (Throwable e) {
+      e.printStackTrace();
     }
 
-    @Override
-    public void done() {
-        App.get().marcadores.loadState();
-        App.get().marcadores.atualizarGUI();
-        App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
-        App.get().resultsTable.getTableHeader().repaint();
+    return null;
+  }
 
-        if (!App.get().isFTKReport) {
-            App.get().tree.setModel(new TreeViewModel());
-            App.get().tree.setLargeModel(true);
-            App.get().tree.setCellRenderer(new TreeCellRenderer());
-        }
+  @Override
+  public void done() {
+    App.get().marcadores.loadState();
+    App.get().marcadores.atualizarGUI();
+    App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
+    App.get().resultsTable.getTableHeader().repaint();
+
+    if (!App.get().isFTKReport) {
+      App.get().tree.setModel(new TreeViewModel());
+      App.get().tree.setLargeModel(true);
+      App.get().tree.setCellRenderer(new TreeCellRenderer());
     }
+  }
 
-    private void updateImagePaths() throws Exception {
-        File tmpCase = null, sleuthFile = new File(App.get().codePath + "/../../sleuth.db");
-        if (sleuthFile.exists()) {
-            App.get().sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
-            char letter = App.get().codePath.charAt(0);
-            Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
-            for (Long id : imgPaths.keySet()) {
-                List<String> paths = imgPaths.get(id);
-                ArrayList<String> newPaths = new ArrayList<String>();
-                for (String path : paths) {
-                    if (new File(path).exists()) {
-                        break;
-                    } else {
-                        String newPath = letter + path.substring(1);
-                        if (new File(newPath).exists()) {
-                            newPaths.add(newPath);
-                        } else {
-                            File file = new File(path);
-                            String relPath = "";
-                            do {
-                                relPath = File.separator + file.getName() + relPath;
-                                newPath = sleuthFile.getParent() + relPath;
-                                file = file.getParentFile();
-
-                            } while (file != null && !new File(newPath).exists());
-
-                            if (new File(newPath).exists()) {
-                                newPaths.add(newPath);
-                            }
-                        }
-                    }
-                }
-                if (newPaths.size() > 0) {
-                    if (tmpCase == null && !sleuthFile.canWrite()) {
-                        tmpCase = File.createTempFile("iped-", ".db");
-                        tmpCase.deleteOnExit();
-                        App.get().sleuthCase.close();
-                        IOUtil.copiaArquivo(sleuthFile, tmpCase);
-                        App.get().sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
-                    }
-                    App.get().sleuthCase.setImagePaths(id, newPaths);
-                }
-            }
-        }
-    }
-
-    public static void inicializar(String index) {
-        try {
-            Directory directory = FSDirectory.open(new File(index));
-            App.get().reader = DirectoryReader.open(directory);
-
-            if (Configuration.searchThreads > 1) {
-                App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
-                App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+  private void updateImagePaths() throws Exception {
+    File tmpCase = null, sleuthFile = new File(App.get().codePath + "/../../sleuth.db");
+    if (sleuthFile.exists()) {
+      App.get().sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+      char letter = App.get().codePath.charAt(0);
+      Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
+      for (Long id : imgPaths.keySet()) {
+        List<String> paths = imgPaths.get(id);
+        ArrayList<String> newPaths = new ArrayList<String>();
+        for (String path : paths) {
+          if (new File(path).exists()) {
+            break;
+          } else {
+            String newPath = letter + path.substring(1);
+            if (new File(newPath).exists()) {
+              newPaths.add(newPath);
             } else {
-                App.get().searcher = new IndexSearcher(App.get().reader);
-            }
+              File file = new File(path);
+              String relPath = "";
+              do {
+                relPath = File.separator + file.getName() + relPath;
+                newPath = sleuthFile.getParent() + relPath;
+                file = file.getParentFile();
 
-            App.get().searcher.setSimilarity(new IndexerSimilarity());
-            App.get().setAnalyzer(AppAnalyzer.get());
-            App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
-            App.get().setTextSizes( (int[]) Util.readObject(index + "/../data/texts.size") );
-            App.get().lastId = App.get().getTextSizes().length - 1;
-            App.get().setIDs( (int[]) Util.readObject(index + "/../data/ids.map") );
-            App.get().setDocs( new int[App.get().lastId + 1]);
-            for (int i = 0; i < App.get().getIDs().length; i++) {
-                App.get().getDocs()[App.get().getIDs()[i]] = i;
-            }
-            if (new File(index + "/../data/alternativeToOriginals.ids").exists()) {
-                App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
-            }
-            IndexItem.loadMetadataTypes(new File(index + "/../conf"));
-            App.get().marcadores = new Marcadores(index + "/..");
+              } while (file != null && !new File(newPath).exists());
 
-            BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-
-        } catch (Exception e) {
-            e.printStackTrace();
+              if (new File(newPath).exists()) {
+                newPaths.add(newPath);
+              }
+            }
+          }
         }
+        if (newPaths.size() > 0) {
+          if (tmpCase == null && !sleuthFile.canWrite()) {
+            tmpCase = File.createTempFile("iped-", ".db");
+            tmpCase.deleteOnExit();
+            App.get().sleuthCase.close();
+            IOUtil.copiaArquivo(sleuthFile, tmpCase);
+            App.get().sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
+          }
+          App.get().sleuthCase.setImagePaths(id, newPaths);
+        }
+      }
     }
+  }
+
+  public static void inicializar(String index) {
+    try {
+      Directory directory = FSDirectory.open(new File(index));
+      App.get().reader = DirectoryReader.open(directory);
+
+      if (Configuration.searchThreads > 1) {
+        App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
+        App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
+      } else {
+        App.get().searcher = new IndexSearcher(App.get().reader);
+      }
+
+      App.get().searcher.setSimilarity(new IndexerSimilarity());
+      App.get().setAnalyzer(AppAnalyzer.get());
+      App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
+      App.get().setTextSizes((int[]) Util.readObject(index + "/../data/texts.size"));
+      App.get().lastId = App.get().getTextSizes().length - 1;
+      App.get().setIDs((int[]) Util.readObject(index + "/../data/ids.map"));
+      App.get().setDocs(new int[App.get().lastId + 1]);
+      for (int i = 0; i < App.get().getIDs().length; i++) {
+        App.get().getDocs()[App.get().getIDs()[i]] = i;
+      }
+      if (new File(index + "/../data/alternativeToOriginals.ids").exists()) {
+        App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
+      }
+      IndexItem.loadMetadataTypes(new File(index + "/../conf"));
+      App.get().marcadores = new Marcadores(index + "/..");
+
+      BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
 }

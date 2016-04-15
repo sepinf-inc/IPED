@@ -28,23 +28,24 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.TreeViewModel.Node;
 
-public class TreeCellRenderer extends DefaultTreeCellRenderer{
+public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
-	private static final long serialVersionUID = 1L;
-	
-	private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+  private static final long serialVersionUID = 1L;
 
-	public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus){
-		
-		Node node = (Node)value;
-		boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) && node.docId != -1;
-		DefaultTreeCellRenderer result = (DefaultTreeCellRenderer)super.getTreeCellRendererComponent(tree, value, selected, expanded, notDir, row, hasFocus);
-		
-		if(notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT)))
-			result.setIcon(diskIcon);
-			
-		return result;
-			
-	}
-	
+  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+
+  public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+
+    Node node = (Node) value;
+    boolean notDir = !Boolean.valueOf(node.getDoc().get(IndexItem.ISDIR)) && node.docId != -1;
+    DefaultTreeCellRenderer result = (DefaultTreeCellRenderer) super.getTreeCellRendererComponent(tree, value, selected, expanded, notDir, row, hasFocus);
+
+    if (notDir && Boolean.valueOf(node.getDoc().get(IndexItem.ISROOT))) {
+      result.setIcon(diskIcon);
+    }
+
+    return result;
+
+  }
+
 }

@@ -41,186 +41,208 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
  * Nome não pode ser alterado, pois é utilizada pelo ASAP para testar a conexão ao banco.
  */
 public abstract class FTKDatabase {
-	
-	public static String FTKDatabaseConfig = "conf/FTKDatabaseConfig.txt";
-	/*
-	 * Dados para conexÃ£o com o banco Oracle
-	 */
-	String user;
-	String password;
-	String driverType;
-	String serviceName;
-	String serverName;
-	int portNumber;
-	String caso;
-	String databaseType;
 
-	static String schemaVersion = "";
-	File report;
+  public static String FTKDatabaseConfig = "conf/FTKDatabaseConfig.txt";
+  /*
+   * Dados para conexÃ£o com o banco Oracle
+   */
+  String user;
+  String password;
+  String driverType;
+  String serviceName;
+  String serverName;
+  int portNumber;
+  String caso;
+  String databaseType;
 
-	/*
-	 * Objeto para conexÃ£o com o banco
-	 */
-	javax.sql.DataSource ods;
+  static String schemaVersion = "";
+  File report;
 
-	Connection conn;
-	Map<String, String> bookmarksMap;
+  /*
+   * Objeto para conexÃ£o com o banco
+   */
+  javax.sql.DataSource ods;
 
-	public static FTKDatabase get(String caseName, File report) throws Exception {
+  Connection conn;
+  Map<String, String> bookmarksMap;
 
-		Properties properties = new Properties();
-		properties.load(new FileInputStream(Configuration.configPath + "/" + FTKDatabaseConfig));
-		schemaVersion = properties.getProperty("VersaoFTK");
+  public static FTKDatabase get(String caseName, File report) throws Exception {
 
-		if (schemaVersion.equalsIgnoreCase("auto")) {
-			String version = FTK3ReportReader.getFTKVersion(report);
-			schemaVersion = translateFTKToDBVersion(version);
-			if (schemaVersion == null)
-				throw new Exception("Nova Versão do FTK detectada. Defina manualmente a versão do schema de dados em 'VersaoFTK' no IndexerConfig.txt.");
-		}
+    Properties properties = new Properties();
+    properties.load(new FileInputStream(Configuration.configPath + "/" + FTKDatabaseConfig));
+    schemaVersion = properties.getProperty("VersaoFTK");
 
-		if (schemaVersion.compareTo("42") > 0)
-			return new FTK42Database(properties, caseName, report);
-		else
-			return new FTK3Database(properties, caseName, report);
+    if (schemaVersion.equalsIgnoreCase("auto")) {
+      String version = FTK3ReportReader.getFTKVersion(report);
+      schemaVersion = translateFTKToDBVersion(version);
+      if (schemaVersion == null) {
+        throw new Exception("Nova Versão do FTK detectada. Defina manualmente a versão do schema de dados em 'VersaoFTK' no IndexerConfig.txt.");
+      }
+    }
 
-	}
+    if (schemaVersion.compareTo("42") > 0) {
+      return new FTK42Database(properties, caseName, report);
+    } else {
+      return new FTK3Database(properties, caseName, report);
+    }
 
-	public static boolean testConnection(String configPathStr) throws SQLException, FileNotFoundException, IOException {
+  }
 
-		Properties props = new Properties();
-		props.load(new FileInputStream(configPathStr + "/" + FTKDatabaseConfig));
-		schemaVersion = props.getProperty("VersaoFTK");
-		FTKDatabase dataSrc;
-		if (schemaVersion.equalsIgnoreCase("auto")) {
-			dataSrc = new FTK42Database(props, "", null);
-			Connection conn = dataSrc.ods.getConnection();
-			conn.close();
-			return true;
-		} else {
-			if (schemaVersion.compareTo("42") > 0)
-				dataSrc = new FTK42Database(props, "", null);
-			else
-				dataSrc = new FTK3Database(props, "", null);
+  public static boolean testConnection(String configPathStr) throws SQLException, FileNotFoundException, IOException {
 
-			dataSrc.conn = dataSrc.ods.getConnection();
-			try {
-				dataSrc.loadTableSpace();
-				dataSrc.conn.close();
-				return false;
+    Properties props = new Properties();
+    props.load(new FileInputStream(configPathStr + "/" + FTKDatabaseConfig));
+    schemaVersion = props.getProperty("VersaoFTK");
+    FTKDatabase dataSrc;
+    if (schemaVersion.equalsIgnoreCase("auto")) {
+      dataSrc = new FTK42Database(props, "", null);
+      Connection conn = dataSrc.ods.getConnection();
+      conn.close();
+      return true;
+    } else {
+      if (schemaVersion.compareTo("42") > 0) {
+        dataSrc = new FTK42Database(props, "", null);
+      } else {
+        dataSrc = new FTK3Database(props, "", null);
+      }
 
-			} catch (SQLException e) {
-				dataSrc.conn.close();
-				if (e.toString().contains("Nome do caso"))
-					return true;
-				else
-					throw e;
-			}
+      dataSrc.conn = dataSrc.ods.getConnection();
+      try {
+        dataSrc.loadTableSpace();
+        dataSrc.conn.close();
+        return false;
 
-		}
+      } catch (SQLException e) {
+        dataSrc.conn.close();
+        if (e.toString().contains("Nome do caso")) {
+          return true;
+        } else {
+          throw e;
+        }
+      }
 
-	}
+    }
 
-	protected FTKDatabase(Properties properties, String caseName, File report) {
-		this.report = report;
-		user = properties.getProperty("User");
-		password = properties.getProperty("Password");
-		driverType = properties.getProperty("DriverType");
-		serviceName = properties.getProperty("ServiceName");
-		serverName = properties.getProperty("ServerName");
-		portNumber = Integer.parseInt(properties.getProperty("PortNumber"));
-		databaseType = properties.getProperty("DatabaseType");
-		caso = caseName;
-	}
+  }
 
-	private static String translateFTKToDBVersion(String ftkVersion) {
-	    if (ftkVersion.startsWith("6.0"))
-            return "ADG6";
-	    if (ftkVersion.startsWith("5.6"))
-			return "ADG510";
-		if (ftkVersion.startsWith("5.1"))
-			return "ADG55";
-		if (ftkVersion.startsWith("5.0"))
-			return "ADG54";
-		if (ftkVersion.startsWith("4.2"))
-			return "ADG53";
-		if (ftkVersion.startsWith("4.1"))
-			return "42";
-		if (ftkVersion.startsWith("4.0"))
-			return "41";
-		if (ftkVersion.startsWith("3.4"))
-			return "40";
-		if (ftkVersion.startsWith("3.3"))
-			return "33";
-		if (ftkVersion.startsWith("3.2"))
-			return "32";
-		if (ftkVersion.startsWith("3.1"))
-			return "31";
-		if (ftkVersion.startsWith("30"))
-			return "30";
+  protected FTKDatabase(Properties properties, String caseName, File report) {
+    this.report = report;
+    user = properties.getProperty("User");
+    password = properties.getProperty("Password");
+    driverType = properties.getProperty("DriverType");
+    serviceName = properties.getProperty("ServiceName");
+    serverName = properties.getProperty("ServerName");
+    portNumber = Integer.parseInt(properties.getProperty("PortNumber"));
+    databaseType = properties.getProperty("DatabaseType");
+    caso = caseName;
+  }
 
-		return null;
-	}
+  private static String translateFTKToDBVersion(String ftkVersion) {
+    if (ftkVersion.startsWith("6.0")) {
+      return "ADG6";
+    }
+    if (ftkVersion.startsWith("5.6")) {
+      return "ADG510";
+    }
+    if (ftkVersion.startsWith("5.1")) {
+      return "ADG55";
+    }
+    if (ftkVersion.startsWith("5.0")) {
+      return "ADG54";
+    }
+    if (ftkVersion.startsWith("4.2")) {
+      return "ADG53";
+    }
+    if (ftkVersion.startsWith("4.1")) {
+      return "42";
+    }
+    if (ftkVersion.startsWith("4.0")) {
+      return "41";
+    }
+    if (ftkVersion.startsWith("3.4")) {
+      return "40";
+    }
+    if (ftkVersion.startsWith("3.3")) {
+      return "33";
+    }
+    if (ftkVersion.startsWith("3.2")) {
+      return "32";
+    }
+    if (ftkVersion.startsWith("3.1")) {
+      return "31";
+    }
+    if (ftkVersion.startsWith("30")) {
+      return "30";
+    }
 
-	public void getCaseData(CaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
+    return null;
+  }
 
-		conn = ods.getConnection();
+  public void getCaseData(CaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
 
-		loadTableSpace();
-		bookmarksMap = getBookmarksMap(report);
-		for (String bookmark : bookmarksMap.values())
-			caseData.addBookmark(new FileGroup(bookmark, "", ""));
+    conn = ods.getConnection();
 
-		HashMap<Integer, ArrayList<String>> fileList = new HashMap<Integer, ArrayList<String>>();
-		lerListaDeArquivos(caseData, path, file, fileList, ADList);
-		if (fileList.size() > 0)
-			addFileListToCaseData(caseData, fileList);
+    loadTableSpace();
+    bookmarksMap = getBookmarksMap(report);
+    for (String bookmark : bookmarksMap.values()) {
+      caseData.addBookmark(new FileGroup(bookmark, "", ""));
+    }
 
-		conn.close();
+    HashMap<Integer, ArrayList<String>> fileList = new HashMap<Integer, ArrayList<String>>();
+    lerListaDeArquivos(caseData, path, file, fileList, ADList);
+    if (fileList.size() > 0) {
+      addFileListToCaseData(caseData, fileList);
+    }
 
-	}
+    conn.close();
 
-	private void lerListaDeArquivos(CaseData caseData, String path, File file, Map<Integer, ArrayList<String>> fileList, Set<Integer> ADList) throws Exception {
-		String[] names = file.list();
-		if (names != null)
-			for (int k = 0; k < names.length; k++) {
-				if (Thread.interrupted())
-					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+  }
 
-				File subFile = new File(file, names[k]);
-				if (subFile.isDirectory())
-					lerListaDeArquivos(caseData, path + "/" + names[k], subFile, fileList, ADList);
-				else {
-					int id;
-					try {
-						if (names[k].contains("."))
-							id = Integer.valueOf(names[k].substring(0, names[k].indexOf(".")));
-						else
-							id = Integer.valueOf(names[k]);
-					} catch (NumberFormatException e) {
-						throw new NumberFormatException("ID do arquivo '" + path + "/" + names[k] + "' não identificado. Os arquivos foram exportados usando o ID como nomenclatura?");
-					}
-					if (names[k].contains("[AD]") || !ADList.contains(id)) {
-						ArrayList<String> paths = fileList.get(id);
-						if (paths == null)
-							paths = new ArrayList<String>();
+  private void lerListaDeArquivos(CaseData caseData, String path, File file, Map<Integer, ArrayList<String>> fileList, Set<Integer> ADList) throws Exception {
+    String[] names = file.list();
+    if (names != null) {
+      for (int k = 0; k < names.length; k++) {
+        if (Thread.interrupted()) {
+          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+        }
 
-						paths.add(path + "/" + names[k]);
-						fileList.put(id, paths);
+        File subFile = new File(file, names[k]);
+        if (subFile.isDirectory()) {
+          lerListaDeArquivos(caseData, path + "/" + names[k], subFile, fileList, ADList);
+        } else {
+          int id;
+          try {
+            if (names[k].contains(".")) {
+              id = Integer.valueOf(names[k].substring(0, names[k].indexOf(".")));
+            } else {
+              id = Integer.valueOf(names[k]);
+            }
+          } catch (NumberFormatException e) {
+            throw new NumberFormatException("ID do arquivo '" + path + "/" + names[k] + "' não identificado. Os arquivos foram exportados usando o ID como nomenclatura?");
+          }
+          if (names[k].contains("[AD]") || !ADList.contains(id)) {
+            ArrayList<String> paths = fileList.get(id);
+            if (paths == null) {
+              paths = new ArrayList<String>();
+            }
 
-						if (fileList.size() % 1000 == 0) {
-							addFileListToCaseData(caseData, fileList);
-							fileList.clear();
-						}
-					}
-				}
-			}
+            paths.add(path + "/" + names[k]);
+            fileList.put(id, paths);
 
-	}
+            if (fileList.size() % 1000 == 0) {
+              addFileListToCaseData(caseData, fileList);
+              fileList.clear();
+            }
+          }
+        }
+      }
+    }
 
-	abstract protected Map<String, String> getBookmarksMap(File report) throws Exception;
+  }
 
-	abstract protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception;
+  abstract protected Map<String, String> getBookmarksMap(File report) throws Exception;
 
-	abstract protected void loadTableSpace() throws SQLException;
+  abstract protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception;
+
+  abstract protected void loadTableSpace() throws SQLException;
 }

@@ -40,289 +40,349 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
- * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de 
- * arquivos de vídeo.
+ * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de arquivos de vídeo.
+ *
  * @author Wladimir Leite
  */
 public class VideoThumbTask extends AbstractTask {
-    /** Instância da classe reponsável pelo processo de geração de thumbs. */
-    private VideoThumbsMaker videoThumbsMaker;
 
-    /** Lista de configurações de extração a serem geradas por vídeo. */
-    private List<VideoThumbsOutputConfig> configs;
+  /**
+   * Instância da classe reponsável pelo processo de geração de thumbs.
+   */
+  private VideoThumbsMaker videoThumbsMaker;
 
-    /** Nome da tarefa. */
-    private static final String taskName = "Extração de Cenas de Vídeos";
+  /**
+   * Lista de configurações de extração a serem geradas por vídeo.
+   */
+  private List<VideoThumbsOutputConfig> configs;
 
-    /** Configuração principal de extração de cenas. */
-    private VideoThumbsOutputConfig mainConfig;
+  /**
+   * Nome da tarefa.
+   */
+  private static final String taskName = "Extração de Cenas de Vídeos";
 
-    /** Pasta de saída das imagens. */
-    private File baseFolder;
+  /**
+   * Configuração principal de extração de cenas.
+   */
+  private VideoThumbsOutputConfig mainConfig;
 
-    /** Pasta temporária, utilizada como saído do MPlayer na extração de frames. */
-    private File tmpFolder;
+  /**
+   * Pasta de saída das imagens.
+   */
+  private File baseFolder;
 
-    /** Nome do arquivo temporário de miniatura gerado. Após conclusão será renomeado pra nome definitivo. */
-    private String tempSuffix;
+  /**
+   * Pasta temporária, utilizada como saído do MPlayer na extração de frames.
+   */
+  private File tmpFolder;
 
-    /** Indica se a tarefa está habilitada ou não. */
-    private static boolean taskEnabled = false;
+  /**
+   * Nome do arquivo temporário de miniatura gerado. Após conclusão será renomeado pra nome
+   * definitivo.
+   */
+  private String tempSuffix;
 
-    /** Constante com o nome utilizado para o arquivo de propriedades. */
-    private static final String configFileName = "VideoThumbsConfig.txt";
+  /**
+   * Indica se a tarefa está habilitada ou não.
+   */
+  private static boolean taskEnabled = false;
 
-    /** Executável, incluindo caminho do MPlayer. */
-    private static String mplayer = "mplayer";
+  /**
+   * Constante com o nome utilizado para o arquivo de propriedades.
+   */
+  private static final String configFileName = "VideoThumbsConfig.txt";
 
-    /** Largura da imagem das cenas geradas. */
-    private static int width = 200;
+  /**
+   * Executável, incluindo caminho do MPlayer.
+   */
+  private static String mplayer = "mplayer";
 
-    /** Número de colunas. */
-    private static int columns = 3;
+  /**
+   * Largura da imagem das cenas geradas.
+   */
+  private static int width = 200;
 
-    /** Número de linhas. */
-    private static int rows = 6;
+  /**
+   * Número de colunas.
+   */
+  private static int columns = 3;
 
-    /** Timeout da primeira execução do MPlayer. É maior para tratar possível processamento de fontes. */
-    private static int timeoutFirst = 180000;
+  /**
+   * Número de linhas.
+   */
+  private static int rows = 6;
 
-    /** Timeout na chamada de obtenção de propriedades do vídeo. */
-    private static int timeoutInfo = 10000;
+  /**
+   * Timeout da primeira execução do MPlayer. É maior para tratar possível processamento de fontes.
+   */
+  private static int timeoutFirst = 180000;
 
-    /** Timeout na chamada normal de processamento do vídeo. */
-    private static int timeoutProcess = 15000;
+  /**
+   * Timeout na chamada de obtenção de propriedades do vídeo.
+   */
+  private static int timeoutInfo = 10000;
 
-    /** Opção de redirecionamento da saída do MPlayer para o log, apenas para depuração de problemas. */
-    private static boolean verbose = false;
+  /**
+   * Timeout na chamada normal de processamento do vídeo.
+   */
+  private static int timeoutProcess = 15000;
 
-    /** Objeto estático de inicialização. Necessário para garantir que seja feita apenas uma vez. */
-    private static final AtomicBoolean init = new AtomicBoolean(false);
+  /**
+   * Opção de redirecionamento da saída do MPlayer para o log, apenas para depuração de problemas.
+   */
+  private static boolean verbose = false;
 
-    /** Objeto estático para sincronizar finalização. */
-    private static final AtomicBoolean finished = new AtomicBoolean(false);
+  /**
+   * Objeto estático de inicialização. Necessário para garantir que seja feita apenas uma vez.
+   */
+  private static final AtomicBoolean init = new AtomicBoolean(false);
 
-    /** Objeto estático com total de videos processados . */
-    private static final AtomicLong totalProcessed = new AtomicLong();
+  /**
+   * Objeto estático para sincronizar finalização.
+   */
+  private static final AtomicBoolean finished = new AtomicBoolean(false);
 
-    /** Objeto estático com total de videos que falharam. */
-    private static final AtomicLong totalFailed = new AtomicLong();
+  /**
+   * Objeto estático com total de videos processados .
+   */
+  private static final AtomicLong totalProcessed = new AtomicLong();
 
-    /** Objeto estático com total de tempo gasto no processamento de vídeos, em milisegundos. */
-    private static final AtomicLong totalTime = new AtomicLong();
-    
-    private static String HAS_THUMB = ImageThumbTask.HAS_THUMB;
+  /**
+   * Objeto estático com total de videos que falharam.
+   */
+  private static final AtomicLong totalFailed = new AtomicLong();
 
-    /** 
-     * Mapa com resultado do processamento dos vídeos
-     */
-    private static final HashMap<String, String> processedVideos = new HashMap<String, String>();
+  /**
+   * Objeto estático com total de tempo gasto no processamento de vídeos, em milisegundos.
+   */
+  private static final AtomicLong totalTime = new AtomicLong();
 
-    /**
-     * Construtor.
-     */
-    public VideoThumbTask(Worker worker) {
-        super(worker);
-    }
+  private static String HAS_THUMB = ImageThumbTask.HAS_THUMB;
 
-    /**
-     * Inicializa a tarefa de processamento de vídeos.
-     * Carrega configurações sobre o tamanho/layout a ser gerado e camimnho do MPlayer,
-     * que é o programa responsável pela extração de frames.
-     */
-    @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        //Instância objeto responsável pela extração de frames e inicializa parâmetros de utilização
-        videoThumbsMaker = new VideoThumbsMaker();
+  /**
+   * Mapa com resultado do processamento dos vídeos
+   */
+  private static final HashMap<String, String> processedVideos = new HashMap<String, String>();
 
-        //Inicializa pasta temporarária e sufixo de arquivos temporários
-        tmpFolder = new File(System.getProperty("java.io.tmpdir"));
-        tempSuffix = Thread.currentThread().getId() + ".tmp";
+  /**
+   * Construtor.
+   */
+  public VideoThumbTask(Worker worker) {
+    super(worker);
+  }
 
-        //Inicialização sincronizada
-        synchronized (init) {
-            if (!init.get()) {
-                //Verifica se tarefa está habilitada
-                String value = confParams.getProperty("enableVideoThumbs");
-                if (value != null && value.trim().equalsIgnoreCase("true")) {
-                    taskEnabled = true;
-                } else {
-                    Log.info(taskName, "Tarefa desabilitada.");
-                    init.set(true);
-                    return;
-                }
+  /**
+   * Inicializa a tarefa de processamento de vídeos. Carrega configurações sobre o tamanho/layout a
+   * ser gerado e camimnho do MPlayer, que é o programa responsável pela extração de frames.
+   */
+  @Override
+  public void init(Properties confParams, File confDir) throws Exception {
+    //Instância objeto responsável pela extração de frames e inicializa parâmetros de utilização
+    videoThumbsMaker = new VideoThumbsMaker();
 
-                //Lê parâmetros do arquivo de configuração
-                UTF8Properties properties = new UTF8Properties();
-                File confFile = new File(confDir, configFileName);
-                try {
-                    properties.load(confFile);
+    //Inicializa pasta temporarária e sufixo de arquivos temporários
+    tmpFolder = new File(System.getProperty("java.io.tmpdir"));
+    tempSuffix = Thread.currentThread().getId() + ".tmp";
 
-                    //Caminho do MPlayer
-                    value = properties.getProperty("MPlayer");
-                    if (value != null) mplayer = value.trim();
-
-                    //Layout
-                    value = properties.getProperty("Layout");
-                    if (value != null) {
-                        String[] vals = value.trim().split(",");
-                        if (vals.length == 3) {
-                            width = Integer.parseInt(vals[0].trim());
-                            columns = Integer.parseInt(vals[1].trim());
-                            rows = Integer.parseInt(vals[2].trim());
-                        }
-                    }
-
-                    //Verbose do MPlayer
-                    value = properties.getProperty("Verbose");
-                    if (value != null && value.trim().equalsIgnoreCase("true")) verbose = true;
-
-                    //Timeouts
-                    value = properties.getProperty("Timeouts");
-                    if (value != null) {
-                        String[] vals = value.trim().split(",");
-                        if (vals.length == 3) {
-                            timeoutFirst = 1000 * Integer.parseInt(vals[0].trim());
-                            timeoutInfo = 1000 * Integer.parseInt(vals[1].trim());
-                            timeoutProcess = 1000 * Integer.parseInt(vals[2].trim());
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.error(taskName, "Erro lendo arquivo de configuração: " + confFile.getAbsolutePath());
-                    taskEnabled = false;
-                    init.set(true);
-                    throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
-                }
-
-                //Configura o caminho do MPlayer, juntando com caminho da pasta principal caso tenha sido utilizado caminho relativo. 
-                if (mplayer.indexOf('/') >= 0 || mplayer.indexOf('\\') >= 0) {
-                    String codePath = Configuration.configPath;
-                    mplayer = new File(codePath).getAbsolutePath() + "/" + mplayer;
-                }
-                videoThumbsMaker.setMPlayer(mplayer);
-
-                //Testa se o MPlayer está funcionando
-                String vmp = videoThumbsMaker.getVersion();
-                if (vmp == null) {
-                    Log.error(taskName, "MPLAYER NÃO PODE SER EXECUTADO!");
-                    Log.error(taskName, "MPlyer Configurado = " + mplayer);
-                    Log.error(taskName, "Verifique o caminho e tente executá-lo diretamente na linha de comando.");
-                    taskEnabled = false;
-                    init.set(true);
-                    throw new RuntimeException("Erro na extração de cenas de vídeos: MPlayer não pode ser executado!");
-                }
-                Log.info(taskName, "Tarefa habilitada.");
-                Log.info(taskName, "Versão do MPLAYER utilizada: " + vmp);
-                init.set(true);
-            }
+    //Inicialização sincronizada
+    synchronized (init) {
+      if (!init.get()) {
+        //Verifica se tarefa está habilitada
+        String value = confParams.getProperty("enableVideoThumbs");
+        if (value != null && value.trim().equalsIgnoreCase("true")) {
+          taskEnabled = true;
+        } else {
+          Log.info(taskName, "Tarefa desabilitada.");
+          init.set(true);
+          return;
         }
 
-        //Não continua se tarefa foi desabilitada
-        if (!taskEnabled) return;
-
-        //Inicializa parâmetros
-        videoThumbsMaker.setMPlayer(mplayer);
-        videoThumbsMaker.setVerbose(verbose);
-        videoThumbsMaker.setTimeoutFirstCall(timeoutFirst);
-        videoThumbsMaker.setTimeoutProcess(timeoutProcess);
-        videoThumbsMaker.setTimeoutInfo(timeoutInfo);
-
-        //Cria configurações de extração de cenas
-        configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, width, columns, rows, 2));
-
-        //Inicializa diretório de saída
-        baseFolder = new File(output, "view");
-        if (!baseFolder.exists()) baseFolder.mkdirs();
-    }
-
-    /**
-     * Finalização da tarefa. 
-     * Apenas grava algumas informações sobre o processamento no Log.
-     */
-    public void finish() throws Exception {
-        synchronized (finished) {
-            if (taskEnabled && !finished.get()) {
-                finished.set(true);
-                Log.info(taskName, "Total de Vídeos Processados: " + totalProcessed);
-                Log.info(taskName, "Total de Vídeos Não Processados (MPlayer não conseguiu extrair cenas): " + totalFailed);
-                long total = totalProcessed.longValue() + totalFailed.longValue();
-                if(total != 0)
-                	Log.info(taskName, "Tempo de Processamento Médio por Vídeo (em milisegundos): " + (totalTime.longValue() / total));
-            }
-        }
-    }
-
-    /**
-     * Método principal do processamento. 
-     * Primeiramente verifica se o tipo de arquivo é vídeo.
-     * Depois chama método da classe, informando o caminho do arquivo de entrada e 
-     * caminho completo de destino.    
-     */
-    @Override
-    protected void process(EvidenceFile evidence) throws Exception {
-        //Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) return;
-
-        //Verifica se outro vídeo igual foi ou está em processamento
-        synchronized (processedVideos) {
-            if (processedVideos.containsKey(evidence.getHash())){
-            	while(processedVideos.get(evidence.getHash()).equals("processing"))
-            		processedVideos.wait();
-            	evidence.setExtraAttribute(HAS_THUMB, processedVideos.get(evidence.getHash()));
-            	return;
-            }else
-            	processedVideos.put(evidence.getHash(), "processing");
-        }
-
-        //Chama o método de extração de cenas
-        File mainTmpFile = null;
+        //Lê parâmetros do arquivo de configuração
+        UTF8Properties properties = new UTF8Properties();
+        File confFile = new File(confDir, configFileName);
         try {
-            File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg");
-            if (!mainOutFile.getParentFile().exists()) mainOutFile.getParentFile().mkdirs();
+          properties.load(confFile);
 
-            //Já está pasta? Então não é necessário gerar.
-            if (mainOutFile.exists()){
-            	evidence.setExtraAttribute(HAS_THUMB, "true");
-            	return;
+          //Caminho do MPlayer
+          value = properties.getProperty("MPlayer");
+          if (value != null) {
+            mplayer = value.trim();
+          }
+
+          //Layout
+          value = properties.getProperty("Layout");
+          if (value != null) {
+            String[] vals = value.trim().split(",");
+            if (vals.length == 3) {
+              width = Integer.parseInt(vals[0].trim());
+              columns = Integer.parseInt(vals[1].trim());
+              rows = Integer.parseInt(vals[2].trim());
             }
+          }
 
-            mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
-            mainConfig.setOutFile(mainTmpFile);
+          //Verbose do MPlayer
+          value = properties.getProperty("Verbose");
+          if (value != null && value.trim().equalsIgnoreCase("true")) {
+            verbose = true;
+          }
 
-            long t = System.currentTimeMillis();
-            VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
-            t = System.currentTimeMillis() - t;
-            if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
-                evidence.setExtraAttribute(HAS_THUMB, "true");
-                totalProcessed.incrementAndGet();
-            } else {
-            	evidence.setExtraAttribute(HAS_THUMB, "false");
-                totalFailed.incrementAndGet();
+          //Timeouts
+          value = properties.getProperty("Timeouts");
+          if (value != null) {
+            String[] vals = value.trim().split(",");
+            if (vals.length == 3) {
+              timeoutFirst = 1000 * Integer.parseInt(vals[0].trim());
+              timeoutInfo = 1000 * Integer.parseInt(vals[1].trim());
+              timeoutProcess = 1000 * Integer.parseInt(vals[2].trim());
             }
-            totalTime.addAndGet(t);
-            
+          }
         } catch (Exception e) {
-        	Log.warning(taskName, e.toString());
-        	Log.debug(taskName, e);
-        	
-        } finally {
-            //Tenta apaga possível temporários deixados "perdidos" (no caso normal eles foram renomeados)
-            if (mainTmpFile != null && mainTmpFile.exists()) mainTmpFile.delete();
-
-            //Guarda resultado do processamento
-            synchronized (processedVideos) {
-                processedVideos.put(evidence.getHash(), (String)evidence.getExtraAttribute(HAS_THUMB));
-                processedVideos.notifyAll();
-            }
+          e.printStackTrace();
+          Log.error(taskName, "Erro lendo arquivo de configuração: " + confFile.getAbsolutePath());
+          taskEnabled = false;
+          init.set(true);
+          throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
         }
+
+        //Configura o caminho do MPlayer, juntando com caminho da pasta principal caso tenha sido utilizado caminho relativo. 
+        if (mplayer.indexOf('/') >= 0 || mplayer.indexOf('\\') >= 0) {
+          String codePath = Configuration.configPath;
+          mplayer = new File(codePath).getAbsolutePath() + "/" + mplayer;
+        }
+        videoThumbsMaker.setMPlayer(mplayer);
+
+        //Testa se o MPlayer está funcionando
+        String vmp = videoThumbsMaker.getVersion();
+        if (vmp == null) {
+          Log.error(taskName, "MPLAYER NÃO PODE SER EXECUTADO!");
+          Log.error(taskName, "MPlyer Configurado = " + mplayer);
+          Log.error(taskName, "Verifique o caminho e tente executá-lo diretamente na linha de comando.");
+          taskEnabled = false;
+          init.set(true);
+          throw new RuntimeException("Erro na extração de cenas de vídeos: MPlayer não pode ser executado!");
+        }
+        Log.info(taskName, "Tarefa habilitada.");
+        Log.info(taskName, "Versão do MPLAYER utilizada: " + vmp);
+        init.set(true);
+      }
     }
 
-    /**
-     * Verifica se é vídeo.
-     */
-    public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia");
+    //Não continua se tarefa foi desabilitada
+    if (!taskEnabled) {
+      return;
     }
+
+    //Inicializa parâmetros
+    videoThumbsMaker.setMPlayer(mplayer);
+    videoThumbsMaker.setVerbose(verbose);
+    videoThumbsMaker.setTimeoutFirstCall(timeoutFirst);
+    videoThumbsMaker.setTimeoutProcess(timeoutProcess);
+    videoThumbsMaker.setTimeoutInfo(timeoutInfo);
+
+    //Cria configurações de extração de cenas
+    configs = new ArrayList<VideoThumbsOutputConfig>();
+    configs.add(mainConfig = new VideoThumbsOutputConfig(null, width, columns, rows, 2));
+
+    //Inicializa diretório de saída
+    baseFolder = new File(output, "view");
+    if (!baseFolder.exists()) {
+      baseFolder.mkdirs();
+    }
+  }
+
+  /**
+   * Finalização da tarefa. Apenas grava algumas informações sobre o processamento no Log.
+   */
+  public void finish() throws Exception {
+    synchronized (finished) {
+      if (taskEnabled && !finished.get()) {
+        finished.set(true);
+        Log.info(taskName, "Total de Vídeos Processados: " + totalProcessed);
+        Log.info(taskName, "Total de Vídeos Não Processados (MPlayer não conseguiu extrair cenas): " + totalFailed);
+        long total = totalProcessed.longValue() + totalFailed.longValue();
+        if (total != 0) {
+          Log.info(taskName, "Tempo de Processamento Médio por Vídeo (em milisegundos): " + (totalTime.longValue() / total));
+        }
+      }
+    }
+  }
+
+  /**
+   * Método principal do processamento. Primeiramente verifica se o tipo de arquivo é vídeo. Depois
+   * chama método da classe, informando o caminho do arquivo de entrada e caminho completo de
+   * destino.
+   */
+  @Override
+  protected void process(EvidenceFile evidence) throws Exception {
+    //Verifica se está desabilitado e se o tipo de arquivo é tratado
+    if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
+      return;
+    }
+
+    //Verifica se outro vídeo igual foi ou está em processamento
+    synchronized (processedVideos) {
+      if (processedVideos.containsKey(evidence.getHash())) {
+        while (processedVideos.get(evidence.getHash()).equals("processing")) {
+          processedVideos.wait();
+        }
+        evidence.setExtraAttribute(HAS_THUMB, processedVideos.get(evidence.getHash()));
+        return;
+      } else {
+        processedVideos.put(evidence.getHash(), "processing");
+      }
+    }
+
+    //Chama o método de extração de cenas
+    File mainTmpFile = null;
+    try {
+      File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg");
+      if (!mainOutFile.getParentFile().exists()) {
+        mainOutFile.getParentFile().mkdirs();
+      }
+
+      //Já está pasta? Então não é necessário gerar.
+      if (mainOutFile.exists()) {
+        evidence.setExtraAttribute(HAS_THUMB, "true");
+        return;
+      }
+
+      mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
+      mainConfig.setOutFile(mainTmpFile);
+
+      long t = System.currentTimeMillis();
+      VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
+      t = System.currentTimeMillis() - t;
+      if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
+        evidence.setExtraAttribute(HAS_THUMB, "true");
+        totalProcessed.incrementAndGet();
+      } else {
+        evidence.setExtraAttribute(HAS_THUMB, "false");
+        totalFailed.incrementAndGet();
+      }
+      totalTime.addAndGet(t);
+
+    } catch (Exception e) {
+      Log.warning(taskName, e.toString());
+      Log.debug(taskName, e);
+
+    } finally {
+      //Tenta apaga possível temporários deixados "perdidos" (no caso normal eles foram renomeados)
+      if (mainTmpFile != null && mainTmpFile.exists()) {
+        mainTmpFile.delete();
+      }
+
+      //Guarda resultado do processamento
+      synchronized (processedVideos) {
+        processedVideos.put(evidence.getHash(), (String) evidence.getExtraAttribute(HAS_THUMB));
+        processedVideos.notifyAll();
+      }
+    }
+  }
+
+  /**
+   * Verifica se é vídeo.
+   */
+  public static boolean isVideoType(MediaType mediaType) {
+    return mediaType.getType().equals("video") || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia");
+  }
 }

@@ -24,9 +24,9 @@ import org.apache.lucene.util.Version;
  * Classe que contém as constantes da aplicação.
  */
 public class Versao {
-	
-	public static Version current = Version.LUCENE_4_9;
-	public static String APP_VERSION = "3.9.1";
-	public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION;
-	public static String APP_EXT = "IPED";
+
+  public static Version current = Version.LUCENE_4_9;
+  public static String APP_VERSION = "3.9.1";
+  public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION;
+  public static String APP_EXT = "IPED";
 }

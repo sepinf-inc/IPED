@@ -22,32 +22,32 @@ import org.apache.lucene.search.ScoreDoc;
 
 public class SearchResult {
 
-	public int length = 0;
-	public int[] docs;
-	public float[] scores;
+  public int length = 0;
+  public int[] docs;
+  public float[] scores;
 
-	public SearchResult(int num) {
-		this.length = num;
-		docs = new int[num];
-		scores = new float[num];
-	}
+  public SearchResult(int num) {
+    this.length = num;
+    docs = new int[num];
+    scores = new float[num];
+  }
 
-	public SearchResult addResults(ScoreDoc[] scoreDocs) {
+  public SearchResult addResults(ScoreDoc[] scoreDocs) {
 
-		SearchResult result = new SearchResult(length + scoreDocs.length);
+    SearchResult result = new SearchResult(length + scoreDocs.length);
 
-		for (int i = 0; i < result.length; i++) {
-			if (i < this.length) {
-				result.docs[i] = this.docs[i];
-				result.scores[i] = this.scores[i];
-			} else {
-				result.docs[i] = scoreDocs[i - this.length].doc;
-				result.scores[i] = scoreDocs[i - this.length].score;
-			}
-		}
+    for (int i = 0; i < result.length; i++) {
+      if (i < this.length) {
+        result.docs[i] = this.docs[i];
+        result.scores[i] = this.scores[i];
+      } else {
+        result.docs[i] = scoreDocs[i - this.length].doc;
+        result.scores[i] = scoreDocs[i - this.length].score;
+      }
+    }
 
-		return result;
+    return result;
 
-	}
+  }
 
 }

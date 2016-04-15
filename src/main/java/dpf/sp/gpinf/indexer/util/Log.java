@@ -23,28 +23,30 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Classe auxiliar com métodos para impressão no console de mensagens de log.
+ *
  * @author Wladimir
  */
 public class Log {
-	private static Logger LOGGER = LoggerFactory.getLogger(Log.class);
-	
-    public static void error(String source, String msg) {
-    	LOGGER.error("[{}]\t{}", source, msg);
-    }
-    
-    public static void debug(String source, Throwable t) {
-    	LOGGER.debug("[" + source + "]\t{}", t);
-    }
 
-    public static void warning(String source, String msg) {
-    	LOGGER.warn("[{}]\t{}", source, msg);
-    }
+  private static Logger LOGGER = LoggerFactory.getLogger(Log.class);
 
-    public static void alert(String source, String msg) {
-    	LOGGER.warn("[{}]\t{}", source, msg);
-    }
+  public static void error(String source, String msg) {
+    LOGGER.error("[{}]\t{}", source, msg);
+  }
 
-    public static void info(String source, String msg) {
-    	LOGGER.info("[{}]\t{}", source, msg);
-    }
+  public static void debug(String source, Throwable t) {
+    LOGGER.debug("[" + source + "]\t{}", t);
+  }
+
+  public static void warning(String source, String msg) {
+    LOGGER.warn("[{}]\t{}", source, msg);
+  }
+
+  public static void alert(String source, String msg) {
+    LOGGER.warn("[{}]\t{}", source, msg);
+  }
+
+  public static void info(String source, String msg) {
+    LOGGER.info("[{}]\t{}", source, msg);
+  }
 }

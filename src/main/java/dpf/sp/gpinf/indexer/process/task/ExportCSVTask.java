@@ -37,149 +37,166 @@ import dpf.sp.gpinf.indexer.process.Worker;
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
-public class ExportCSVTask extends AbstractTask{
+public class ExportCSVTask extends AbstractTask {
 
-	private static int MAX_MEM_SIZE = 1000000;
-	private static String CSV_NAME = "Lista de Arquivos.csv";
-	
-	public static boolean exportFileProps = false;
-	public static volatile boolean headerWritten = false;
-	
-	private StringBuilder list = new StringBuilder();
+  private static int MAX_MEM_SIZE = 1000000;
+  private static String CSV_NAME = "Lista de Arquivos.csv";
 
-	public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
-		super(worker);
-		this.output = new File(output.getParentFile(), CSV_NAME);
-		if(output.exists() && !IndexFiles.getInstance().appendIndex)
-			Files.delete(output.toPath());
-	}
-	
-	/**
-	 * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados
-	 * no arquivo CSV.
-	 * 
-	 * @return true
-	 */
-	@Override
-	protected boolean processIgnoredItem(){
-		return true;
-	}
+  public static boolean exportFileProps = false;
+  public static volatile boolean headerWritten = false;
 
-	@Override
-	protected  void process(EvidenceFile evidence) throws IOException {
-	    
-	    if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase()))
-	        return;
-		
-		String value = evidence.getName();
-		if (value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getFileToIndex();
-		if (!value.isEmpty()  && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore())
-			value = "=HIPERLINK(\"\"" + value + "\"\";\"\"Abrir\"\")";
-		else
-			value = "";
-		list.append("\"" + value + "\";");
-		
-		Long length = evidence.getLength();
-		if (length == null)
-			value = "";
-		else
-			value = length.toString();
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getExt();
-		if(value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getLabels();
-		if (value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | ");
-		if (value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getHash();
-		if (value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = Boolean.toString(evidence.isDeleted());
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = Boolean.toString(evidence.isCarved());
-        list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		Date date = evidence.getAccessDate();
-		if (date == null)
-			value = "";
-		else
-			value = date.toString();
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		date = evidence.getModDate();
-		if (date == null)
-			value = "";
-		else
-			value = date.toString();
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		date = evidence.getCreationDate();
-		if (date == null)
-			value = "";
-		else
-			value = date.toString();
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		value = evidence.getPath();
-		if (value == null)
-			value = "";
-		list.append("\"" + value.replace("\"", "\"\"") + "\";");
-		
-		list.append("\r\n");
+  private StringBuilder list = new StringBuilder();
 
-		if (list.length() > MAX_MEM_SIZE)
-			flush();
+  public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
+    super(worker);
+    this.output = new File(output.getParentFile(), CSV_NAME);
+    if (output.exists() && !IndexFiles.getInstance().appendIndex) {
+      Files.delete(output.toPath());
+    }
+  }
 
-	}
+  /**
+   * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados no arquivo
+   * CSV.
+   *
+   * @return true
+   */
+  @Override
+  protected boolean processIgnoredItem() {
+    return true;
+  }
 
-	public void flush() throws IOException {
-		flush(list, output);
-		list = new StringBuilder();
-	}
+  @Override
+  protected void process(EvidenceFile evidence) throws IOException {
 
-	private static synchronized void flush(StringBuilder list, File output) throws IOException {
-		OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
-		if (!headerWritten) {
-			writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Recuperado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
-			headerWritten = true;
-		}
-		writer.write(list.toString());
-		writer.close();
-	}
-	
-	public void finish() throws IOException{
-		if (exportFileProps)
-			flush();
-	}
+    if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
+      return;
+    }
 
-	@Override
-	public void init(Properties confProps, File confDir) throws Exception {
-		
-		String value = confProps.getProperty("exportFileProps");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty())
-			exportFileProps = Boolean.valueOf(value);
-		
-		headerWritten = false;
-		
-	}
+    String value = evidence.getName();
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getFileToIndex();
+    if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
+      value = "=HIPERLINK(\"\"" + value + "\"\";\"\"Abrir\"\")";
+    } else {
+      value = "";
+    }
+    list.append("\"" + value + "\";");
+
+    Long length = evidence.getLength();
+    if (length == null) {
+      value = "";
+    } else {
+      value = length.toString();
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getExt();
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getLabels();
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | ");
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getHash();
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = Boolean.toString(evidence.isDeleted());
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = Boolean.toString(evidence.isCarved());
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    Date date = evidence.getAccessDate();
+    if (date == null) {
+      value = "";
+    } else {
+      value = date.toString();
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    date = evidence.getModDate();
+    if (date == null) {
+      value = "";
+    } else {
+      value = date.toString();
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    date = evidence.getCreationDate();
+    if (date == null) {
+      value = "";
+    } else {
+      value = date.toString();
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    value = evidence.getPath();
+    if (value == null) {
+      value = "";
+    }
+    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+
+    list.append("\r\n");
+
+    if (list.length() > MAX_MEM_SIZE) {
+      flush();
+    }
+
+  }
+
+  public void flush() throws IOException {
+    flush(list, output);
+    list = new StringBuilder();
+  }
+
+  private static synchronized void flush(StringBuilder list, File output) throws IOException {
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
+    if (!headerWritten) {
+      writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Recuperado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
+      headerWritten = true;
+    }
+    writer.write(list.toString());
+    writer.close();
+  }
+
+  public void finish() throws IOException {
+    if (exportFileProps) {
+      flush();
+    }
+  }
+
+  @Override
+  public void init(Properties confProps, File confDir) throws Exception {
+
+    String value = confProps.getProperty("exportFileProps");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+      exportFileProps = Boolean.valueOf(value);
+    }
+
+    headerWritten = false;
+
+  }
 
 }

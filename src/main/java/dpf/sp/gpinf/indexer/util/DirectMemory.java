@@ -8,25 +8,25 @@ import sun.misc.Unsafe;
 @SuppressWarnings("restriction")
 public class DirectMemory {
 
-    private static Unsafe unsafe;
-    
-    static{
-        try {
-            Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
-            singleoneInstanceField.setAccessible(true);
-            unsafe = (Unsafe) singleoneInstanceField.get(null);
-            
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        
+  private static Unsafe unsafe;
+
+  static {
+    try {
+      Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
+      singleoneInstanceField.setAccessible(true);
+      unsafe = (Unsafe) singleoneInstanceField.get(null);
+
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    
-    public static void putByteVolatile(MappedByteBuffer bb, long pos, byte val) {
-        unsafe.putByteVolatile(null, ((sun.nio.ch.DirectBuffer)bb).address() + pos, val);
-    }
-    
-    public static byte getByteVolatile(MappedByteBuffer bb, long pos) {
-        return unsafe.getByteVolatile(null, ((sun.nio.ch.DirectBuffer)bb).address() + pos);
-    }
+
+  }
+
+  public static void putByteVolatile(MappedByteBuffer bb, long pos, byte val) {
+    unsafe.putByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos, val);
+  }
+
+  public static byte getByteVolatile(MappedByteBuffer bb, long pos) {
+    return unsafe.getByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos);
+  }
 }

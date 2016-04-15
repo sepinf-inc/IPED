@@ -21,42 +21,43 @@ package dpf.sp.gpinf.indexer.util;
 import java.net.SocketPermission;
 import java.security.Permission;
 
-public class AppSecurityManager extends SecurityManager{
-	
-	SecurityManager manager;
-	Permission socketPerm = new SocketPermission("localhost:8100", "connect, resolve");
-    Permission socketPerm2 = new SocketPermission("[0:0:0:0:0:0:0:1]:8100", "connect,resolve");
-    String javaFXString = "accessClassInPackage.com.sun.javafx";
-	
-	public AppSecurityManager(){
-		super();
-		manager = System.getSecurityManager();
-	}
-	
-	@Override
-	public void checkPermission(Permission perm){
-		checkPermission(perm, null);
+public class AppSecurityManager extends SecurityManager {
 
-	}
-	
-	@Override
-	public void checkPermission(Permission perm, Object context){
-		if(perm instanceof SocketPermission){
-    		if(socketPerm.implies(perm))
-    			return;
-    		else
-    			if(socketPerm2.implies(perm))
-    				return;
-    			else
-    				throw new SecurityException("Acesso a Internet bloqueado!");
-    	}else
-    		return;
-		
-    		/*if(context == null)
-    			manager.checkPermission(perm);
-    		else
-    			manager.checkPermission(perm, context);
-		*/
-	}
+  SecurityManager manager;
+  Permission socketPerm = new SocketPermission("localhost:8100", "connect, resolve");
+  Permission socketPerm2 = new SocketPermission("[0:0:0:0:0:0:0:1]:8100", "connect,resolve");
+  String javaFXString = "accessClassInPackage.com.sun.javafx";
+
+  public AppSecurityManager() {
+    super();
+    manager = System.getSecurityManager();
+  }
+
+  @Override
+  public void checkPermission(Permission perm) {
+    checkPermission(perm, null);
+
+  }
+
+  @Override
+  public void checkPermission(Permission perm, Object context) {
+    if (perm instanceof SocketPermission) {
+      if (socketPerm.implies(perm)) {
+        return;
+      } else if (socketPerm2.implies(perm)) {
+        return;
+      } else {
+        throw new SecurityException("Acesso a Internet bloqueado!");
+      }
+    } else {
+      return;
+    }
+
+    /*if(context == null)
+     manager.checkPermission(perm);
+     else
+     manager.checkPermission(perm, context);
+     */
+  }
 
 }

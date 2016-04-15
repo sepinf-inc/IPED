@@ -34,93 +34,96 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
 
 /**
- *  Responsável por instanciar e executar o contador e o produtor de itens do caso
- *  que adiciona os itens a fila de processamento. Podem obter os itens de diversas
- *  fontes de dados: pastas, relatórios do FTK, imagens forenses ou casos do IPED.
- *  
- */  
+ * Responsável por instanciar e executar o contador e o produtor de itens do caso que adiciona os
+ * itens a fila de processamento. Podem obter os itens de diversas fontes de dados: pastas,
+ * relatórios do FTK, imagens forenses ou casos do IPED.
+ *
+ */
 public class ItemProducer extends Thread {
-	
-	private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
-	private final CaseData caseData;
-	private final boolean listOnly;
-	private List<File> datasources;
-	private File output;
-	private Manager manager;
-	private DataSourceReader currentReader;
-	private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
+  private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
-	public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output) throws Exception {
-		this.caseData = caseData;
-		this.listOnly = listOnly;
-		this.datasources = datasources;
-		this.output = output;
-		this.manager = manager;
-		
-		installDataSourceReaders();
-	}
-	
-	private void installDataSourceReaders() throws Exception{
-		
-		Class<? extends DataSourceReader>[] readerList = new Class[]{
-				FTK3ReportReader.class,
-				SleuthkitReader.class,
-				IPEDReader.class,
-				FolderTreeReader.class	//deve ser o último
-		};
-		
-		for(Class<? extends DataSourceReader> srcReader : readerList){
-			Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
-	        sourceReaders.add(constr.newInstance(caseData, output, listOnly));
-		}
-	}
-	
-	public String currentDirectory(){
-		if(currentReader != null)
-			return currentReader.currentDirectory();
-		else
-			return null;
-	}
+  private final CaseData caseData;
+  private final boolean listOnly;
+  private List<File> datasources;
+  private File output;
+  private Manager manager;
+  private DataSourceReader currentReader;
+  private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
 
-	@Override
-	public void run() {
-		try {
-			for (File source : datasources) {
-				if (Thread.interrupted())
-					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+  public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output) throws Exception {
+    this.caseData = caseData;
+    this.listOnly = listOnly;
+    this.datasources = datasources;
+    this.output = output;
+    this.manager = manager;
 
-				if (listOnly) {
-					IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
-					LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
-				}
+    installDataSourceReaders();
+  }
 
-				int alternativeFiles = 0;
-				for(DataSourceReader srcReader: sourceReaders){
-					if(srcReader.isSupported(source)){
-						currentReader = srcReader;
-						alternativeFiles += srcReader.read(source);
-						break;
-					}
-						
-				}
-				caseData.incAlternativeFiles(alternativeFiles);
-			}
-			if (!listOnly) {
-				 EvidenceFile evidence = new EvidenceFile();
-				 evidence.setQueueEnd(true);
-				 //caseData.addEvidenceFile(evidence);
-				 
-			} else {
-				IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int)(caseData.getDiscoveredVolume()/1000000));
-				LOGGER.info("Localizados {} itens", caseData.getDiscoveredEvidences());
-			}
+  private void installDataSourceReaders() throws Exception {
 
-		} catch (Exception e) {
-			if (manager.exception == null)
-				manager.exception = e;
-		}
+    Class<? extends DataSourceReader>[] readerList = new Class[]{
+      FTK3ReportReader.class,
+      SleuthkitReader.class,
+      IPEDReader.class,
+      FolderTreeReader.class //deve ser o último
+    };
 
-	}
-	
+    for (Class<? extends DataSourceReader> srcReader : readerList) {
+      Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
+      sourceReaders.add(constr.newInstance(caseData, output, listOnly));
+    }
+  }
+
+  public String currentDirectory() {
+    if (currentReader != null) {
+      return currentReader.currentDirectory();
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public void run() {
+    try {
+      for (File source : datasources) {
+        if (Thread.interrupted()) {
+          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+        }
+
+        if (listOnly) {
+          IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
+          LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
+        }
+
+        int alternativeFiles = 0;
+        for (DataSourceReader srcReader : sourceReaders) {
+          if (srcReader.isSupported(source)) {
+            currentReader = srcReader;
+            alternativeFiles += srcReader.read(source);
+            break;
+          }
+
+        }
+        caseData.incAlternativeFiles(alternativeFiles);
+      }
+      if (!listOnly) {
+        EvidenceFile evidence = new EvidenceFile();
+        evidence.setQueueEnd(true);
+        //caseData.addEvidenceFile(evidence);
+
+      } else {
+        IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int) (caseData.getDiscoveredVolume() / 1000000));
+        LOGGER.info("Localizados {} itens", caseData.getDiscoveredEvidences());
+      }
+
+    } catch (Exception e) {
+      if (manager.exception == null) {
+        manager.exception = e;
+      }
+    }
+
+  }
+
 }

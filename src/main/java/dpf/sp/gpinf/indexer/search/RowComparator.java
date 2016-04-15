@@ -36,111 +36,117 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class RowComparator implements Comparator<Integer> {
 
-	static String[] fields = ResultTableModel.fields;
-	
-	private int col;
-	private boolean bookmarkCol = false;
-	private boolean scoreCol = false;
-	
-	private volatile static AtomicReader atomicReader;
-	
-	private App app = App.get();
-	
-	protected SortedDocValues sdv;
-	private NumericDocValues ndv;
-	private Bits docsWithField;
+  static String[] fields = ResultTableModel.fields;
 
-	public RowComparator(int col) {
-		this.col = col;
-		
-		if(col >= ResultTableModel.fixedCols.length){
-		    col -= ResultTableModel.fixedCols.length;
-			fields = ResultTableModel.fields;
-			
-			if(fields[col].equals(ResultTableModel.BOOKMARK_COL))
-			    bookmarkCol = true;
-			
-			else if(fields[col].equals(ResultTableModel.SCORE_COL))
-                scoreCol = true;
-			
-			else
-			    loadDocValues(fields[col]);
-		}
-	}
-	
-	public RowComparator(String indexedField){
-	    loadDocValues(indexedField);
-	}
-	
-	private void loadDocValues(String indexedField){
-	    try {
-            if(atomicReader == null)
-                atomicReader = SlowCompositeReaderWrapper.wrap(app.reader);
-            
-            if(IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)){
-            	ndv = atomicReader.getNumericDocValues(indexedField);
-            	docsWithField = atomicReader.getDocsWithField(indexedField);
-            	
-            }if(ndv == null){
-            	sdv = atomicReader.getSortedDocValues(indexedField);
-            	if(sdv == null)
-                	sdv = atomicReader.getSortedDocValues("_" + indexedField);
-            }
-            
-        } catch (IOException e) {
-            e.printStackTrace();
+  private int col;
+  private boolean bookmarkCol = false;
+  private boolean scoreCol = false;
+
+  private volatile static AtomicReader atomicReader;
+
+  private App app = App.get();
+
+  protected SortedDocValues sdv;
+  private NumericDocValues ndv;
+  private Bits docsWithField;
+
+  public RowComparator(int col) {
+    this.col = col;
+
+    if (col >= ResultTableModel.fixedCols.length) {
+      col -= ResultTableModel.fixedCols.length;
+      fields = ResultTableModel.fields;
+
+      if (fields[col].equals(ResultTableModel.BOOKMARK_COL)) {
+        bookmarkCol = true;
+      } else if (fields[col].equals(ResultTableModel.SCORE_COL)) {
+        scoreCol = true;
+      } else {
+        loadDocValues(fields[col]);
+      }
+    }
+  }
+
+  public RowComparator(String indexedField) {
+    loadDocValues(indexedField);
+  }
+
+  private void loadDocValues(String indexedField) {
+    try {
+      if (atomicReader == null) {
+        atomicReader = SlowCompositeReaderWrapper.wrap(app.reader);
+      }
+
+      if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
+        ndv = atomicReader.getNumericDocValues(indexedField);
+        docsWithField = atomicReader.getDocsWithField(indexedField);
+
+      }
+      if (ndv == null) {
+        sdv = atomicReader.getSortedDocValues(indexedField);
+        if (sdv == null) {
+          sdv = atomicReader.getSortedDocValues("_" + indexedField);
         }
-	}
-	
-	public static void closeAtomicReader() throws IOException{
-		if(atomicReader != null)
-			atomicReader.close();
-		atomicReader = null;
-	}
-	
-	public boolean isStringComparator(){
-	    return sdv != null || bookmarkCol;
-	}
+      }
 
-	@Override
-	public int compare(Integer a, Integer b) {
-		
-		if(Thread.currentThread().isInterrupted())
-			throw new RuntimeException("Ordenação cancelada.");
-		
-		if(scoreCol)
-            return (int)(app.results.scores[a] - app.results.scores[b]);
-		
-		a = app.results.docs[a];
-		b = app.results.docs[b];
-		
-		if(col == 1){
-		    if (app.marcadores.selected[app.getIDs()[a]] == app.marcadores.selected[app.getIDs()[b]])
-                return 0;
-            else if (app.marcadores.selected[app.getIDs()[a]] == true)
-                return -1;
-            else
-                return 1;
-		
-		}else if(bookmarkCol)
-            return app.marcadores.getLabels(app.getIDs()[a]).compareTo(app.marcadores.getLabels(app.getIDs()[b]));
-        
-		else if(sdv != null)
-			return sdv.getOrd(a) - sdv.getOrd(b);
-		
-        else if(ndv != null){
-        	if(docsWithField.get(a)){
-        		if(docsWithField.get(b))
-        			return Long.compare(ndv.get(a), ndv.get(b));
-        		else
-        			return 1;
-        	}else 
-        		if(docsWithField.get(b))
-        			return -1;
-        		else
-        			return 0;
-        }else
-            return 0;
-	}
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void closeAtomicReader() throws IOException {
+    if (atomicReader != null) {
+      atomicReader.close();
+    }
+    atomicReader = null;
+  }
+
+  public boolean isStringComparator() {
+    return sdv != null || bookmarkCol;
+  }
+
+  @Override
+  public int compare(Integer a, Integer b) {
+
+    if (Thread.currentThread().isInterrupted()) {
+      throw new RuntimeException("Ordenação cancelada.");
+    }
+
+    if (scoreCol) {
+      return (int) (app.results.scores[a] - app.results.scores[b]);
+    }
+
+    a = app.results.docs[a];
+    b = app.results.docs[b];
+
+    if (col == 1) {
+      if (app.marcadores.selected[app.getIDs()[a]] == app.marcadores.selected[app.getIDs()[b]]) {
+        return 0;
+      } else if (app.marcadores.selected[app.getIDs()[a]] == true) {
+        return -1;
+      } else {
+        return 1;
+      }
+
+    } else if (bookmarkCol) {
+      return app.marcadores.getLabels(app.getIDs()[a]).compareTo(app.marcadores.getLabels(app.getIDs()[b]));
+    } else if (sdv != null) {
+      return sdv.getOrd(a) - sdv.getOrd(b);
+    } else if (ndv != null) {
+      if (docsWithField.get(a)) {
+        if (docsWithField.get(b)) {
+          return Long.compare(ndv.get(a), ndv.get(b));
+        } else {
+          return 1;
+        }
+      } else if (docsWithField.get(b)) {
+        return -1;
+      } else {
+        return 0;
+      }
+    } else {
+      return 0;
+    }
+  }
 
 }

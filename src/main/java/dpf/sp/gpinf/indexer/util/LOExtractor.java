@@ -40,111 +40,115 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 
 /**
- * 
+ *
  * Classe para descompactar o aplicativo LibreOffice
  *
  */
 public class LOExtractor extends CancelableWorker implements EmbeddedDocumentExtractor {
 
-	private Parser parser = new AutoDetectParser();
-	private File output, input;
-	private CancelableWorker worker;
-	private ProgressDialog progressMonitor;
-	private int progress = 0, numSubitens = 6419;// TODO obter número de itens automaticamente
-	private volatile boolean completed = false;
+  private Parser parser = new AutoDetectParser();
+  private File output, input;
+  private CancelableWorker worker;
+  private ProgressDialog progressMonitor;
+  private int progress = 0, numSubitens = 6419;// TODO obter número de itens automaticamente
+  private volatile boolean completed = false;
 
-	public LOExtractor(String input, String output) {
-		this.output = new File(output);
-		this.input = new File(input);
-		this.worker = this;
-	}
+  public LOExtractor(String input, String output) {
+    this.output = new File(output);
+    this.input = new File(input);
+    this.worker = this;
+  }
 
-	public boolean decompressLO() {
+  public boolean decompressLO() {
 
-		try {
-			if (output.exists()) {
-				if (IOUtil.countSubFiles(output) >= numSubitens)
-					return true;
-				else
-					IOUtil.deletarDiretorio(output);
-			}
+    try {
+      if (output.exists()) {
+        if (IOUtil.countSubFiles(output) >= numSubitens) {
+          return true;
+        } else {
+          IOUtil.deletarDiretorio(output);
+        }
+      }
 
-			if (input.exists()) {
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						progressMonitor = new ProgressDialog(null, worker);
-						progressMonitor.setMaximum(numSubitens);
-						progressMonitor.setNote("Descompactando LibreOffice...");
-					}
-				});
+      if (input.exists()) {
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            progressMonitor = new ProgressDialog(null, worker);
+            progressMonitor.setMaximum(numSubitens);
+            progressMonitor.setNote("Descompactando LibreOffice...");
+          }
+        });
 
-				ParseContext context = new ParseContext();
-				context.set(EmbeddedDocumentExtractor.class, this);
-				parser.parse(new FileInputStream(input), new ToTextContentHandler(), new Metadata(), context);
+        ParseContext context = new ParseContext();
+        context.set(EmbeddedDocumentExtractor.class, this);
+        parser.parse(new FileInputStream(input), new ToTextContentHandler(), new Metadata(), context);
 
-				if (!progressMonitor.isCanceled())
-					progressMonitor.close();
+        if (!progressMonitor.isCanceled()) {
+          progressMonitor.close();
+        }
 
-				if (isCompleted())
-					return true;
-				else
-					IOUtil.deletarDiretorio(output);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+        if (isCompleted()) {
+          return true;
+        } else {
+          IOUtil.deletarDiretorio(output);
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
 
-		return false;
+    return false;
 
-	}
+  }
 
-	@Override
-	public boolean shouldParseEmbedded(Metadata metadata) {
-		return !this.isCancelled();
-	}
+  @Override
+  public boolean shouldParseEmbedded(Metadata metadata) {
+    return !this.isCancelled();
+  }
 
-	@Override
-	public void parseEmbedded(InputStream inputStream, ContentHandler contentHandler, Metadata metadata, boolean outputHtml) throws SAXException, IOException {
+  @Override
+  public void parseEmbedded(InputStream inputStream, ContentHandler contentHandler, Metadata metadata, boolean outputHtml) throws SAXException, IOException {
 
-		String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
-		File outputFile = new File(output, name);
-		File parent = outputFile.getParentFile();
+    String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
+    File outputFile = new File(output, name);
+    File parent = outputFile.getParentFile();
 
-		if (!parent.exists()) {
-			if (!parent.mkdirs()) {
-				throw new IOException("unable to create directory \"" + parent + "\"");
-			}
-		}
-		
-		if(metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null)
-		    return;
-		
-		// System.out.println("Extracting '"+name+" to " + outputFile);
-		FileOutputStream os = new FileOutputStream(outputFile);
-		IOUtils.copy(inputStream, os);
-		os.close();
+    if (!parent.exists()) {
+      if (!parent.mkdirs()) {
+        throw new IOException("unable to create directory \"" + parent + "\"");
+      }
+    }
 
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				progressMonitor.setProgress(++progress);
-				if (progress == numSubitens) {
-					completed = true;
-				}
-			}
-		});
+    if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
+      return;
+    }
 
-	}
+    // System.out.println("Extracting '"+name+" to " + outputFile);
+    FileOutputStream os = new FileOutputStream(outputFile);
+    IOUtils.copy(inputStream, os);
+    os.close();
 
-	@Override
-	protected Void doInBackground() throws Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        progressMonitor.setProgress(++progress);
+        if (progress == numSubitens) {
+          completed = true;
+        }
+      }
+    });
 
-	public boolean isCompleted() {
-		return completed;
-	}
+  }
+
+  @Override
+  protected Void doInBackground() throws Exception {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  public boolean isCompleted() {
+    return completed;
+  }
 
 }

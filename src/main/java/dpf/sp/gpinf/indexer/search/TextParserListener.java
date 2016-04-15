@@ -25,47 +25,48 @@ import javax.swing.SwingUtilities;
 
 public class TextParserListener implements PropertyChangeListener {
 
-	TextParser fileParser;
+  TextParser fileParser;
 
-	public TextParserListener(TextParser parser) {
-		fileParser = parser;
-	}
+  public TextParserListener(TextParser parser) {
+    fileParser = parser;
+  }
 
-	@Override
-	public void propertyChange(final PropertyChangeEvent evt) {
-		// if(progressMonitor.isCanceled())
-		// this.cancel(false);
+  @Override
+  public void propertyChange(final PropertyChangeEvent evt) {
+    // if(progressMonitor.isCanceled())
+    // this.cancel(false);
 
-		if ("progress" == evt.getPropertyName()) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					fileParser.progressMonitor.setProgress((Long) evt.getNewValue());
-				}
-			});
+    if ("progress" == evt.getPropertyName()) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          fileParser.progressMonitor.setProgress((Long) evt.getNewValue());
+        }
+      });
 
-		}
+    }
 
-		if ("hits".equals(evt.getPropertyName())) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					fileParser.progressMonitor.setNote("Encontradas " + evt.getNewValue() + " ocorrências");
-				}
-			});
+    if ("hits".equals(evt.getPropertyName())) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          fileParser.progressMonitor.setNote("Encontradas " + evt.getNewValue() + " ocorrências");
+        }
+      });
 
-			if ((Integer) evt.getNewValue() == 1)
-				try {
-					App.get().hitsTable.setRowSelectionInterval(0, 0);
-					fileParser.firstHitAutoSelected = true;
-				} catch (Exception e) {
-				}
+      if ((Integer) evt.getNewValue() == 1) {
+        try {
+          App.get().hitsTable.setRowSelectionInterval(0, 0);
+          fileParser.firstHitAutoSelected = true;
+        } catch (Exception e) {
+        }
+      }
 
-			App.get().tabbedHits.setTitleAt(0, App.get().getTextViewer().textParser.hits.size() + " Ocorrências");
+      App.get().tabbedHits.setTitleAt(0, App.get().getTextViewer().textParser.hits.size() + " Ocorrências");
 
-		}
+    }
 
-		// if(!App.get().resultsTable.hasFocus() &&
-		// !App.get().topPanel.hasFocus() && !App.get().tabbedHits.hasFocus())
-		// while(!App.get().resultsTable.requestFocusInWindow());
-	}
+    // if(!App.get().resultsTable.hasFocus() &&
+    // !App.get().topPanel.hasFocus() && !App.get().tabbedHits.hasFocus())
+    // while(!App.get().resultsTable.requestFocusInWindow());
+  }
 
 }

@@ -35,124 +35,133 @@ import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FileProcessor extends CancelableWorker<Void, Void> {
-	
-	private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
-	private static int STATUS_LENGTH = 200;
-	private volatile static FileProcessor parsingTask;
-	private static Object lock = new Object(), lock2 = new Object();
-	private Document doc;
-	private boolean listSubItens;
-	private static volatile EvidenceFile lastItem;
+  private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
-	public FileProcessor(int docId, boolean listSubItens) {
-		this.listSubItens = listSubItens;
+  private static int STATUS_LENGTH = 200;
+  private volatile static FileProcessor parsingTask;
+  private static Object lock = new Object(), lock2 = new Object();
+  private Document doc;
+  private boolean listSubItens;
+  private static volatile EvidenceFile lastItem;
 
-		App.get().lastSelectedDoc = docId;
+  public FileProcessor(int docId, boolean listSubItens) {
+    this.listSubItens = listSubItens;
 
-		if (parsingTask != null) {
-			parsingTask.cancel(true);
-		}
-		parsingTask = this;
+    App.get().lastSelectedDoc = docId;
 
-		if (docId >= 0) {
-			try {
-				doc = App.get().searcher.doc(docId);
+    if (parsingTask != null) {
+      parsingTask.cancel(true);
+    }
+    parsingTask = this;
 
-				String status = doc.get(IndexItem.PATH);
-				if (status.length() > STATUS_LENGTH)
-					status = "..." + status.substring(status.length() - STATUS_LENGTH);
-				App.get().status.setText(status);
+    if (docId >= 0) {
+      try {
+        doc = App.get().searcher.doc(docId);
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			doc = new Document();
-			doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
-		}
-	}
+        String status = doc.get(IndexItem.PATH);
+        if (status.length() > STATUS_LENGTH) {
+          status = "..." + status.substring(status.length() - STATUS_LENGTH);
+        }
+        App.get().status.setText(status);
 
-	@Override
-	protected Void doInBackground() {
-		
-		synchronized (lock) {
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      doc = new Document();
+      doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+    }
+  }
 
-			if (this.isCancelled())
-				return null;
+  @Override
+  protected Void doInBackground() {
 
-			process();
+    synchronized (lock) {
 
-		}
-		return null;
-	}
+      if (this.isCancelled()) {
+        return null;
+      }
 
-	private void process() {
+      process();
 
-		LOGGER.info(doc.get(IndexItem.PATH));
-		
-		if (listSubItens) {
-			// listRelatedItens();
-			App.get().subItemModel.listSubItens(doc);
-			if (Thread.currentThread().isInterrupted())
-				return;
-			App.get().parentItemModel.listParents(doc);
-		}
-		
-		EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
+    }
+    return null;
+  }
 
-		disposeItem(lastItem);
-		lastItem = item;
-		String contentType = null;
-		if(item.getMediaType() != null)
-			contentType = item.getMediaType().toString();
-		
-		EvidenceFile viewItem = item;
-		
-		if(item.getViewFile() != null)
-			viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
+  private void process() {
 
-		App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+    LOGGER.info(doc.get(IndexItem.PATH));
 
-	}
-	
-	private void disposeItem(final EvidenceFile itemToDispose){
-		if (itemToDispose != null)
-			new Thread() {
-				public void run() {
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {}
-					itemToDispose.dispose();
-				}
-			}.start();
-	}
+    if (listSubItens) {
+      // listRelatedItens();
+      App.get().subItemModel.listSubItens(doc);
+      if (Thread.currentThread().isInterrupted()) {
+        return;
+      }
+      App.get().parentItemModel.listParents(doc);
+    }
 
-	private Thread listTask;
+    EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
 
-	private void listRelatedItens() {
-		if (listTask != null)
-			listTask.interrupt();
+    disposeItem(lastItem);
+    lastItem = item;
+    String contentType = null;
+    if (item.getMediaType() != null) {
+      contentType = item.getMediaType().toString();
+    }
 
-		listTask = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				synchronized (lock2) {
-					App.get().subItemModel.listSubItens(doc);
-					if (Thread.currentThread().isInterrupted())
-						return;
-					App.get().parentItemModel.listParents(doc);
-				}
+    EvidenceFile viewItem = item;
 
-			}
-		});
-		synchronized (lock2) {
-			listTask.start();
-		}
+    if (item.getViewFile() != null) {
+      viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
+    }
 
-	}
+    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+
+  }
+
+  private void disposeItem(final EvidenceFile itemToDispose) {
+    if (itemToDispose != null) {
+      new Thread() {
+        public void run() {
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+          }
+          itemToDispose.dispose();
+        }
+      }.start();
+    }
+  }
+
+  private Thread listTask;
+
+  private void listRelatedItens() {
+    if (listTask != null) {
+      listTask.interrupt();
+    }
+
+    listTask = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (lock2) {
+          App.get().subItemModel.listSubItens(doc);
+          if (Thread.currentThread().isInterrupted()) {
+            return;
+          }
+          App.get().parentItemModel.listParents(doc);
+        }
+
+      }
+    });
+    synchronized (lock2) {
+      listTask.start();
+    }
+
+  }
 
 }
