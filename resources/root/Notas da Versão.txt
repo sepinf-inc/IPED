@@ -1,12 +1,13 @@
-08/04/2015: IPED-3.9.3
-- Corrige interrupção do processamento devido a tamanho excessivo e repetição de atributos
+15/04/2015: IPED-3.9.3
+- Autocompletar com nome de colunas via tab na caixa de pesquisa (PCF Wladimir)
+- Proteção contra leaks de memória ao usar robustImageReading via reinicialização do SleuthkitServer a cada 10mil itens
+- Corrige interrupções do processamento devido a motivos diversos
 - Corrige duplicação de remetentes e destinatários de emails EML no relatório
 - Corrige expansão da árvore após cancelamento de pesquisa
 - Corrige leitura da primeira linha da configuração de exportação automática de dados
 - Layout das colunas não era salvo no Linux
-- Pequena melhoria na detecção de nudez (PCF Wladimir)
-- Autocompletar com nome de colunas via tab na caixa de pesquisa (PCF Wladimir)
-- Proteção contra leaks de memória via reinicialização do SleuthkitServer a cada 10mil itens
+- Corrige lentidão de filtros e ordenações em casos grandes
+- Não indexa metadados novos, possivelmente corrompidos, de itens HTML
 
 29/03/2015: IPED-3.9.2
 - Corrige raro NullPoiterException que fazia processamento abortar (3.9)
