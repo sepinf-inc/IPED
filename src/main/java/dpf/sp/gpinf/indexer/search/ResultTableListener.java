@@ -184,10 +184,14 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
   @Override
   public void mouseClicked(MouseEvent e) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     ViewerControl.getInstance().releaseLibreOfficeFocus();
 =======
     ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    ViewerControl.getInstance().releaseLibreOfficeFocus();
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   }
 
   @Override

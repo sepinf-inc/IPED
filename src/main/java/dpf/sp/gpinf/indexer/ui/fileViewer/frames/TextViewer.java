@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 import dpf.sp.gpinf.indexer.search.TextParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import java.util.Set;
 
@@ -30,73 +31,16 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.TextParser;
 public class TextViewer extends Viewer implements KeyListener, MouseListener {
 
   public static Font font = new Font("Courier New", Font.PLAIN, 11);
+=======
+import dpf.sp.gpinf.indexer.util.StreamSource;
+import java.util.Set;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
-  public JTable textTable;
-  public TextViewerModel textViewerModel;
-  private JScrollPane viewerScroll;
-  public TextParser textParser;
-  private TemporaryResources tmp;
-  private AppSearchParams appSearchParams;
 
+public class TextViewer extends ATextViewer {
+  
   public TextViewer(AppSearchParams params) {
-    super(new GridLayout());
-    appSearchParams = params;
-    textViewerModel = new TextViewerModel();
-    textTable = new JTable(textViewerModel);
-    textTable.setFont(font);
-    // textTable.getColumnModel().getColumn(0).setCellRenderer(new
-    // ViewerCellRenderer());
-    viewerScroll = new JScrollPane(textTable);
-    textTable.setFillsViewportHeight(true);
-    textTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    textTable.getColumnModel().getColumn(0).setPreferredWidth(2000);
-    textTable.setShowGrid(false);
-    textTable.setBackground(Color.WHITE);
-    textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
-    textTable.addKeyListener(this);
-    textTable.addMouseListener(this);
-    this.getPanel().add(viewerScroll);
-  }
-
-  @Override
-  public String getName() {
-    return "Texto";
-  }
-
-  @Override
-  public boolean isSupportedType(String contentType) {
-    return true;
-  }
-
-  @Override
-  public void init() {
-    tmp = new TemporaryResources();
-
-  }
-
-  @Override
-  public void dispose() {
-    try {
-      tmp.dispose();
-    } catch (TikaException e) {
-      e.printStackTrace();
-    }
-
-  }
-
-  @Override
-  public void loadFile(StreamSource content, Set<String> highlightTerms) {
-    if (content == null && textParser != null) {
-      textParser.cancel(false);
-
-      textParser.sortedHits = new TreeMap<Long, int[]>();
-      textParser.hits = new ArrayList<Long>();
-      textParser.viewRows = new ArrayList<Long>();
-
-      App.get().hitsModel.fireTableDataChanged();
-      textViewerModel.fireTableDataChanged();
-
-    }
+    super(params);
   }
 
   @Override
@@ -111,6 +55,7 @@ public class TextViewer extends Viewer implements KeyListener, MouseListener {
 
   }
 
+<<<<<<< HEAD
   public class TextViewerModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
@@ -303,4 +248,6 @@ public class TextViewer extends Viewer implements KeyListener, MouseListener {
   }
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 }

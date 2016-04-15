@@ -147,10 +147,14 @@ public class App extends JFrame implements WindowListener {
   JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   IViewerControl viewerControl = ViewerControl.getInstance();
 =======
   ViewerControl viewerControl = ViewerControlImpl.getInstance();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  IViewerControl viewerControl = ViewerControl.getInstance();
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   public CompositeViewer compositeViewer;
 
   public JTabbedPane tabbedHits, resultTab, treeTab;
@@ -170,9 +174,12 @@ public class App extends JFrame implements WindowListener {
   ResultTableModel resultsModel;
   List resultSortKeys;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   public HitsTableModel hitsModel = new HitsTableModel();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
@@ -208,9 +215,13 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams = new AppSearchParams();
     this.appSearchParams.mainFrame = (JFrame) this;
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.appSearchParams.viewerControl = ViewerControl.getInstance();    
 =======
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    this.appSearchParams.viewerControl = ViewerControl.getInstance();    
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
     this.appSearchParams.HIGHLIGHT_END_TAG = "</font>";
     this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
@@ -318,10 +329,14 @@ public class App extends JFrame implements WindowListener {
 
   public TextViewer getTextViewer() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return (TextViewer) this.appSearchParams.textViewer;
 =======
     return this.appSearchParams.textViewer;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    return (TextViewer) this.appSearchParams.textViewer;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   }
 
   public void setTextViewer(TextViewer textViewer) {
@@ -434,10 +449,14 @@ public class App extends JFrame implements WindowListener {
 
     pesquisar = new JButton("Pesquisar");
 <<<<<<< HEAD
+<<<<<<< HEAD
     opcoes = new JButton("Opções");
 =======
     opcoes = new JButton("OpÃ§Ãµes");
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    opcoes = new JButton("Opções");
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     ajuda = new JButton("Ajuda");
     checkBox = new JCheckBox("0");
 
@@ -460,10 +479,14 @@ public class App extends JFrame implements WindowListener {
 
     multiFilterAlert = new JPanel();
 <<<<<<< HEAD
+<<<<<<< HEAD
     JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
 =======
     JLabel alertLabel = new JLabel("MÃºltiplos Filtros Ativos");
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     multiFilterAlert.add(alertLabel);
     alertLabel.setBackground(alertColor);
     alertLabel.setOpaque(true);
@@ -534,10 +557,14 @@ public class App extends JFrame implements WindowListener {
     resultTab.addTab("Galeria", galleryScroll);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     hitsTable = new HitsTable(appSearchParams.hitsModel);
 =======
     hitsTable = new HitsTable(hitsModel);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    hitsTable = new HitsTable(appSearchParams.hitsModel);
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     appSearchParams.hitsTable = hitsTable;
     JScrollPane hitsScroll = new JScrollPane(hitsTable);
     hitsTable.setFillsViewportHeight(true);
@@ -578,10 +605,14 @@ public class App extends JFrame implements WindowListener {
 
     tabbedHits = new JTabbedPane();
 <<<<<<< HEAD
+<<<<<<< HEAD
     tabbedHits.addTab("Ocorrências", hitsScroll);
 =======
     tabbedHits.addTab("OcorrÃªncias", hitsScroll);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    tabbedHits.addTab("Ocorrências", hitsScroll);
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     appSearchParams.tabbedHits = tabbedHits;
 
     compositeViewer = new CompositeViewer();
@@ -625,10 +656,14 @@ public class App extends JFrame implements WindowListener {
 
     if (!isFTKReport) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
 =======
       recursiveTreeList = new JCheckBox("Listagem recursiva de diretÃ³rios");
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       recursiveTreeList.setSelected(true);
 
       tree = new JTree(new Object[0]);
@@ -644,10 +679,14 @@ public class App extends JFrame implements WindowListener {
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       treeTab.add("Evidências", evidencePanel);
 =======
       treeTab.add("EvidÃªncias", evidencePanel);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      treeTab.add("Evidências", evidencePanel);
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
     }
 

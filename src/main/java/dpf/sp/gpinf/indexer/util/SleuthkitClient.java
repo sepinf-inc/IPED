@@ -75,10 +75,14 @@ public class SleuthkitClient {
     int port = portStart.getAndIncrement();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
 =======
     String pipePath = Configuration.indexerTemp + "/pipe-" + port;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
     String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M",
       SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};

@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
@@ -70,6 +73,7 @@ public class TextParserListener implements PropertyChangeListener {
 	}
 
 }
+<<<<<<< HEAD
 =======
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
@@ -144,3 +148,5 @@ public class TextParserListener implements PropertyChangeListener {
 
 }
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.

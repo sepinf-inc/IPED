@@ -57,10 +57,14 @@ public class Configuration {
 
   public static UTF8Properties properties = new UTF8Properties();
 <<<<<<< HEAD
+<<<<<<< HEAD
   public static File indexTemp;
 =======
   public static File indexTemp, indexerTemp;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  public static File indexTemp;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   public static int numThreads;
   public static int textSplitSize = 10000000;
   public static int textOverlapSize = 10000;
@@ -115,10 +119,14 @@ public class Configuration {
       value = value.trim();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (ConstantsViewer.indexerTemp == null) {
 =======
     if (indexerTemp == null) {
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    if (ConstantsViewer.indexerTemp == null) {
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       if (value != null && !value.equalsIgnoreCase("default")) {
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
@@ -127,6 +135,7 @@ public class Configuration {
           tmp = newTmp;
         }
       }
+<<<<<<< HEAD
 <<<<<<< HEAD
       ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
       if (!ConstantsViewer.indexerTemp.mkdirs()) {
@@ -144,12 +153,16 @@ public class Configuration {
 =======
       indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
       System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+=======
+      ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      System.setProperty("java.io.tmpdir", ConstantsViewer.indexerTemp.getAbsolutePath());
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       if (tmp == newTmp) {
-        indexTemp = new File(indexerTemp, "index");
+        indexTemp = new File(ConstantsViewer.indexerTemp, "index");
       }
     }
-    if (indexerTemp != null) {
-      indexerTemp.mkdirs();
+    if (ConstantsViewer.indexerTemp != null) {
+      ConstantsViewer.indexerTemp.mkdirs();
     }
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
@@ -382,12 +395,17 @@ public class Configuration {
       }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(ConstantsViewer.indexerTemp, "libewf"), true);
       Util.loadNatLibs(new File(ConstantsViewer.indexerTemp, "libewf").getAbsolutePath());
 =======
       IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
       Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(ConstantsViewer.indexerTemp, "libewf"), true);
+      Util.loadNatLibs(new File(ConstantsViewer.indexerTemp, "libewf").getAbsolutePath());
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";

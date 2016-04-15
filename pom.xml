@@ -71,6 +71,7 @@
         </dependency>
         <dependency>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
@@ -80,6 +81,8 @@
         <!-- INICIO: EXTERNAS -->
         <dependency>
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
             <version>1.10</version>
@@ -218,6 +221,7 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.5.2</version>
         </dependency>
+<<<<<<< HEAD
 		
         <!-- FIM: EXTERNAS -->
         <!-- INICIO: VIEWERS -->
@@ -298,6 +302,8 @@
             <artifactId>unoloader</artifactId>
             <version>5.1.1</version>
         </dependency>
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
         <dependency>
 <<<<<<< HEAD
             <groupId>libre-office</groupId>
@@ -360,6 +366,17 @@
             <artifactId>bootstrap-connector</artifactId>
             <version>0.1.1</version>
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+        </dependency>
+        
+        <dependency>
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-viewer</artifactId>
+            <version>4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>gpinf.iped</groupId>
+            <artifactId>iped-utils</artifactId>
+            <version>4.0</version>
         </dependency>
     </dependencies>
     <build>
@@ -514,6 +531,7 @@
                     </execution>
                     <execution>
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                         <id>copy-libreoffice</id>
                         <phase>package</phase>
@@ -555,6 +573,8 @@
                     </execution>                    
                     <execution>
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
                         <id>copy-dependencies</id>
                         <phase>package</phase>
                         <goals>

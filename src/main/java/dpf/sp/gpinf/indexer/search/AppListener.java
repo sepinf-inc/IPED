@@ -160,10 +160,14 @@ public class AppListener implements ActionListener, MouseListener {
   public void mousePressed(MouseEvent evt) {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     ViewerControl.getInstance().releaseLibreOfficeFocus();
 =======
     ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    ViewerControl.getInstance().releaseLibreOfficeFocus();
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
     Object termo = App.get().termo.getSelectedItem();
     if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {

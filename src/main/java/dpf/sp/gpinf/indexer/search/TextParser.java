@@ -51,10 +51,14 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 public class TextParser extends CancelableWorker implements ITextParser {
 =======
 public class TextParser extends CancelableWorker {
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+public class TextParser extends CancelableWorker implements ITextParser {
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -62,6 +66,7 @@ public class TextParser extends CancelableWorker {
   volatile int id;
   private EvidenceFile item;
   private volatile InputStream is;
+<<<<<<< HEAD
 <<<<<<< HEAD
   private ProgressDialog progressMonitor;
 
@@ -86,25 +91,33 @@ public class TextParser extends CancelableWorker {
       this.appSearchParams = params;
 =======
   protected ProgressDialog progressMonitor;
+=======
+  private ProgressDialog progressMonitor;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
   private static Object lock = new Object();
   private TemporaryResources tmp;
-  public static FileChannel parsedFile;
-  public boolean firstHitAutoSelected = false;
+  private static FileChannel parsedFile;
+  private boolean firstHitAutoSelected = false;
+  AppSearchParams appSearchParams = null;
 
   // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
   // sortedHits
-  public TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
+  private TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
 
   // contém offset dos hits
-  public ArrayList<Long> hits = new ArrayList<Long>();
+  private ArrayList<Long> hits = new ArrayList<Long>();
 
   // contém offset das quebras de linha do preview
-  public ArrayList<Long> viewRows = new ArrayList<Long>();
+  private ArrayList<Long> viewRows = new ArrayList<Long>();
 
-  public TextParser(StreamSource content, String contentType, TemporaryResources tmp) {
+  public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
     try {
+<<<<<<< HEAD
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      this.appSearchParams = params;
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       this.content = content;
       this.contentType = contentType;
       this.tmp = tmp;
@@ -127,6 +140,9 @@ public class TextParser extends CancelableWorker {
 
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   
   @Override
   public FileChannel getParsedFile() {
@@ -157,6 +173,7 @@ public class TextParser extends CancelableWorker {
   public void setHits(ArrayList<Long> hits) {
     this.hits = hits;
   }
+<<<<<<< HEAD
 
   @Override
   public ArrayList<Long> getViewRows() {
@@ -194,6 +211,41 @@ public class TextParser extends CancelableWorker {
 
   @Override
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+
+  @Override
+  public ArrayList<Long> getViewRows() {
+    return this.viewRows;
+  }
+  
+  @Override
+  public void setViewRows(ArrayList<Long> viewRows) {
+    this.viewRows = viewRows;
+  }
+
+  @Override
+  public ProgressDialog getProgressMonitor() {
+    return this.progressMonitor;
+  }
+  
+  @Override
+  public void setProgressMonitor(ProgressDialog monitor) {
+    this.progressMonitor = monitor;
+  }
+  
+  @Override
+  public boolean getFirstHitAutoSelected() {
+    return this.firstHitAutoSelected;
+  }
+  
+  @Override
+  public void setFirstHitAutoSelected(boolean val) {
+    this.firstHitAutoSelected = val;
+  }
+  
+  
+  @Override
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   public void done() {
     try {
       if (is != null) {
@@ -226,10 +278,14 @@ public class TextParser extends CancelableWorker {
       hits = new ArrayList<Long>();
       viewRows = new ArrayList<Long>();
 <<<<<<< HEAD
+<<<<<<< HEAD
       appSearchParams.hitsModel.fireTableDataChanged();
 =======
       App.get().hitsModel.fireTableDataChanged();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      appSearchParams.hitsModel.fireTableDataChanged();
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
       parseText();
@@ -391,10 +447,14 @@ public class TextParser extends CancelableWorker {
 
             // atualiza lista de hits
 <<<<<<< HEAD
+<<<<<<< HEAD
             appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
 =======
             App.get().hitsModel.fireTableRowsInserted(numHits, numHits);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+            appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
+>>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
             this.firePropertyChange("hits", numHits, numHits + 1);
           }
 
