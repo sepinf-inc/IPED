@@ -107,13 +107,17 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
       if (App.get().results.docs[selectedDoc] != App.get().getParams().lastSelectedDoc) {
 =======
       Object obj1 = App.get().results;
-      Object obj2 = App.get().lastSelectedDoc;
+      Object obj2 = App.get().getParams().lastSelectedDoc;
       Object obj3 = App.get().hitsTable;
       Object obj4 = App.get().getTextViewer();
       Object obj5 = App.get().getTextViewer().textTable;
       Object obj6 = App.get().tabbedHits;
+<<<<<<< HEAD
       if (App.get().results.docs[selectedDoc] != App.get().lastSelectedDoc) {
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+      if (App.get().results.docs[selectedDoc] != App.get().getParams().lastSelectedDoc) {
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());

@@ -43,10 +43,14 @@ public class AppListener implements ActionListener, MouseListener {
 
     App.get().results = new SearchResult(0);
 <<<<<<< HEAD
+<<<<<<< HEAD
     App.get().getParams().lastSelectedDoc = -1;
 =======
     App.get().lastSelectedDoc = -1;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    App.get().getParams().lastSelectedDoc = -1;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     App.get().resultsModel.fireTableDataChanged();
     if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
       App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();

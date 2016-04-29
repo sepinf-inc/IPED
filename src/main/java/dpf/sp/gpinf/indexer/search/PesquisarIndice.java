@@ -391,10 +391,14 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
         countVolume(result);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         App.get().getParams().highlightTerms = getQueryStrings();
 =======
         App.get().highlightTerms = getQueryStrings();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+        App.get().getParams().highlightTerms = getQueryStrings();
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
       } catch (Throwable e) {
         e.printStackTrace();

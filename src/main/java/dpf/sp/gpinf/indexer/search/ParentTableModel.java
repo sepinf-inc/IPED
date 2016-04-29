@@ -180,10 +180,14 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
         @Override
         public void run() {
 <<<<<<< HEAD
+<<<<<<< HEAD
           App.get().tabbedHits.addTab("1 Item de Origem", App.get().getParams().parentItemScroll);
 =======
           App.get().tabbedHits.addTab("1 Item de Origem", App.get().parentItemScroll);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+          App.get().tabbedHits.addTab("1 Item de Origem", App.get().getParams().parentItemScroll);
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
         }
       });
     }

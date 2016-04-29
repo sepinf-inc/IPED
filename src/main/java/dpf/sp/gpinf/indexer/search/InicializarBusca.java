@@ -48,9 +48,12 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 >>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
+=======
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {

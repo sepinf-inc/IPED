@@ -106,20 +106,28 @@ public class App extends JFrame implements WindowListener {
   SearchResult results = new SearchResult(0);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   int totalItens;
 =======
   int totalItens, lastSelectedDoc;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  int totalItens;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   public int lastId;
   public Marcadores marcadores;
   FilterManager filterManager;
   ArrayList<String> palavrasChave, categorias;
   HashSet<String> keywordSet = new HashSet<String>();
 <<<<<<< HEAD
+<<<<<<< HEAD
   private Set<String> highlightTerms;
 =======
   Set<String> highlightTerms = new HashSet<String>();
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  private Set<String> highlightTerms;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
   Set<Integer> splitedDocs;
   VersionsMap viewToRawMap;
@@ -160,11 +168,16 @@ public class App extends JFrame implements WindowListener {
   public JTabbedPane tabbedHits, resultTab, treeTab;
   Color defaultTabColor;
 <<<<<<< HEAD
+<<<<<<< HEAD
   private JScrollPane subItemScroll, parentItemScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
 =======
   JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  private JScrollPane subItemScroll, parentItemScroll;
+  JScrollPane viewerScroll, resultsScroll, galleryScroll;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
@@ -230,9 +243,13 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.MAX_HITS = MAX_HITS;
     this.appSearchParams.MAX_LINE_SIZE = MAX_LINE_SIZE;
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.appSearchParams.highlightTerms = new HashSet<String>();
 =======
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    this.appSearchParams.highlightTerms = new HashSet<String>();
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   }
 
   public static final App get() {
@@ -253,7 +270,14 @@ public class App extends JFrame implements WindowListener {
     return applet;
   }
 
+<<<<<<< HEAD
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+  public AppSearchParams getSearchParams() {
+    return this.appSearchParams;
+  }
+       
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   public static void main(String[] args) {
     App.get().init();
   }
@@ -578,9 +602,13 @@ public class App extends JFrame implements WindowListener {
     subItemTable = new HitsTable(subItemModel);
     subItemScroll = new JScrollPane(subItemTable);
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.appSearchParams.subItemScroll = subItemScroll;
 =======
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    this.appSearchParams.subItemScroll = subItemScroll;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     subItemTable.setFillsViewportHeight(true);
     subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     subItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -592,9 +620,13 @@ public class App extends JFrame implements WindowListener {
     parentItemTable = new HitsTable(parentItemModel);
     parentItemScroll = new JScrollPane(parentItemTable);
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.appSearchParams.parentItemScroll = parentItemScroll;
 =======
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    this.appSearchParams.parentItemScroll = parentItemScroll;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     parentItemTable.setFillsViewportHeight(true);
     parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -696,9 +728,13 @@ public class App extends JFrame implements WindowListener {
 
     status = new JLabel(" ");
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.appSearchParams.status = status;
 =======
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    this.appSearchParams.status = status;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
     this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);

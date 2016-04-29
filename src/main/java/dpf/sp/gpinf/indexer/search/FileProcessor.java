@@ -57,10 +57,14 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     this.listSubItens = listSubItens;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     App.get().getSearchParams().lastSelectedDoc = docId;
 =======
     App.get().lastSelectedDoc = docId;
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    App.get().getSearchParams().lastSelectedDoc = docId;
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
     if (parsingTask != null) {
       parsingTask.cancel(true);
@@ -133,10 +137,14 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
 =======
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
 >>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+=======
+    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+>>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
   }
 
