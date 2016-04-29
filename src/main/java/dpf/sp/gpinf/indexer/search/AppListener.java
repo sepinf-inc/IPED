@@ -42,7 +42,7 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().gallery.scrollRectToVisible(new Rectangle());
 
     App.get().results = new SearchResult(0);
-    App.get().lastSelectedDoc = -1;
+    App.get().getParams().lastSelectedDoc = -1;
     App.get().resultsModel.fireTableDataChanged();
     if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
       App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();

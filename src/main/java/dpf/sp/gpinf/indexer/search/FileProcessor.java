@@ -45,7 +45,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   public FileProcessor(int docId, boolean listSubItens) {
     this.listSubItens = listSubItens;
 
-    App.get().lastSelectedDoc = docId;
+    App.get().getSearchParams().lastSelectedDoc = docId;
 
     if (parsingTask != null) {
       parsingTask.cancel(true);
@@ -117,7 +117,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
     }
 
-    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
 
   }
 

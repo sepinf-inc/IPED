@@ -104,13 +104,13 @@ public class App extends JFrame implements WindowListener {
 
   SearchResult results = new SearchResult(0);
 
-  int totalItens, lastSelectedDoc;
+  int totalItens;
   public int lastId;
   public Marcadores marcadores;
   FilterManager filterManager;
   ArrayList<String> palavrasChave, categorias;
   HashSet<String> keywordSet = new HashSet<String>();
-  Set<String> highlightTerms = new HashSet<String>();
+  private Set<String> highlightTerms;
 
   Set<Integer> splitedDocs;
   VersionsMap viewToRawMap;
@@ -142,7 +142,8 @@ public class App extends JFrame implements WindowListener {
 
   public JTabbedPane tabbedHits, resultTab, treeTab;
   Color defaultTabColor;
-  JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
+  private JScrollPane subItemScroll, parentItemScroll;
+  JScrollPane viewerScroll, resultsScroll, galleryScroll;
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
@@ -193,6 +194,7 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.MAX_LINES = MAX_LINES;
     this.appSearchParams.MAX_HITS = MAX_HITS;
     this.appSearchParams.MAX_LINE_SIZE = MAX_LINE_SIZE;
+    this.appSearchParams.highlightTerms = new HashSet<String>();
   }
 
   public static final App get() {
@@ -203,6 +205,10 @@ public class App extends JFrame implements WindowListener {
     return applet;
   }
 
+  public AppSearchParams getSearchParams() {
+    return this.appSearchParams;
+  }
+       
   public static void main(String[] args) {
     App.get().init();
   }
@@ -487,6 +493,7 @@ public class App extends JFrame implements WindowListener {
 
     subItemTable = new HitsTable(subItemModel);
     subItemScroll = new JScrollPane(subItemTable);
+    this.appSearchParams.subItemScroll = subItemScroll;
     subItemTable.setFillsViewportHeight(true);
     subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     subItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -497,6 +504,7 @@ public class App extends JFrame implements WindowListener {
 
     parentItemTable = new HitsTable(parentItemModel);
     parentItemScroll = new JScrollPane(parentItemTable);
+    this.appSearchParams.parentItemScroll = parentItemScroll;
     parentItemTable.setFillsViewportHeight(true);
     parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -573,6 +581,7 @@ public class App extends JFrame implements WindowListener {
     }
 
     status = new JLabel(" ");
+    this.appSearchParams.status = status;
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
     this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);

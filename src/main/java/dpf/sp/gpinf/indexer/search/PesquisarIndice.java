@@ -390,7 +390,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
         countVolume(result);
 
-        App.get().highlightTerms = getQueryStrings();
+        App.get().getParams().highlightTerms = getQueryStrings();
 
       } catch (Throwable e) {
         e.printStackTrace();
