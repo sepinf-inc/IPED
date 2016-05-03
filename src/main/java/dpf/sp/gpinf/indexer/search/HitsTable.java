@@ -23,18 +23,18 @@ import javax.swing.table.AbstractTableModel;
 
 public class HitsTable extends JTable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
 
-	public HitsTable(AbstractTableModel tableModel) {
-		super(tableModel);
-	}
+  public HitsTable(AbstractTableModel tableModel) {
+    super(tableModel);
+  }
 
-	@Override
-	public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
-		super.changeSelection(rowIndex, 0, toggle, extend);
-	}
+  @Override
+  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    super.changeSelection(rowIndex, 0, toggle, extend);
+  }
 
 }

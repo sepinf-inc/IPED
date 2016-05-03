@@ -39,7 +39,7 @@ public class TextParserListener implements PropertyChangeListener {
 		if ("progress" == evt.getPropertyName()) {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					fileParser.progressMonitor.setProgress((Long) evt.getNewValue());
+					fileParser.getProgressMonitor().setProgress((Long) evt.getNewValue());
 				}
 			});
 
@@ -48,18 +48,18 @@ public class TextParserListener implements PropertyChangeListener {
 		if ("hits".equals(evt.getPropertyName())) {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					fileParser.progressMonitor.setNote("Encontradas " + evt.getNewValue() + " ocorrências");
+					fileParser.getProgressMonitor().setNote("Encontradas " + evt.getNewValue() + " ocorrências");
 				}
 			});
 
 			if ((Integer) evt.getNewValue() == 1)
 				try {
 					App.get().hitsTable.setRowSelectionInterval(0, 0);
-					fileParser.firstHitAutoSelected = true;
+					fileParser.setFirstHitAutoSelected(true);
 				} catch (Exception e) {
 				}
 
-			App.get().tabbedHits.setTitleAt(0, App.get().textViewer.textParser.hits.size() + " Ocorrências");
+			App.get().tabbedHits.setTitleAt(0, fileParser.getHits().size() + " Ocorrências");
 
 		}
 

@@ -24,52 +24,53 @@ import javax.swing.table.AbstractTableModel;
 
 public class HitsTableModel extends AbstractTableModel {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	private String[] columnNames = { "", "Ocorrências no conteúdo" };
+  private String[] columnNames = {"", "Ocorrências no conteúdo"};
 
-	@Override
-	public int getColumnCount() {
-		return columnNames.length;
-	}
+  @Override
+  public int getColumnCount() {
+    return columnNames.length;
+  }
 
-	@Override
-	public int getRowCount() {
+  @Override
+  public int getRowCount() {
 
-		if (App.get().textViewer != null && App.get().textViewer.textParser != null)
-			return App.get().textViewer.textParser.sortedHits.size();
+    if (App.get().getTextViewer() != null && App.get().getTextViewer().textParser != null) {
+      return App.get().getTextViewer().textParser.getSortedHits().size();
+    }
 
-		return 0;
-	}
+    return 0;
+  }
 
-	@Override
-	public String getColumnName(int col) {
-		return columnNames[col];
-	}
+  @Override
+  public String getColumnName(int col) {
+    return columnNames[col];
+  }
 
-	@Override
-	public Object getValueAt(int row, int col) {
-		try {
-			if (col == 0)
-				return row + 1;
-			else {
-				long hitOff = App.get().textViewer.textParser.hits.get(row);
-				int hitLen = App.get().textViewer.textParser.sortedHits.get(hitOff)[0];
+  @Override
+  public Object getValueAt(int row, int col) {
+    try {
+      if (col == 0) {
+        return row + 1;
+      } else {
+        long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
+        int hitLen = App.get().getTextViewer().textParser.getSortedHits().get(hitOff)[0];
 
-				ByteBuffer data = ByteBuffer.allocate(hitLen);
-				int nread;
-				do {
-					nread = TextParser.parsedFile.read(data, hitOff);
-					hitOff += nread;
-				} while (nread != -1 && data.hasRemaining());
+        ByteBuffer data = ByteBuffer.allocate(hitLen);
+        int nread;
+        do {
+          nread = App.get().getTextViewer().textParser.getParsedFile().read(data, hitOff);
+          hitOff += nread;
+        } while (nread != -1 && data.hasRemaining());
 
-				data.flip();
-				return "<html><body>" + (new String(data.array(), "windows-1252")) + "</body></html>";
-			}
-		} catch (Exception e) {
-			// e.printStackTrace();
-			return "";
-		}
+        data.flip();
+        return "<html><body>" + (new String(data.array(), "windows-1252")) + "</body></html>";
+      }
+    } catch (Exception e) {
+      // e.printStackTrace();
+      return "";
+    }
 
-	}
+  }
 }

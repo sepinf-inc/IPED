@@ -26,25 +26,26 @@ import javax.swing.SwingConstants;
 import javax.swing.table.TableCellRenderer;
 
 class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 
-	ProgressCellRenderer() {
-		super(SwingConstants.HORIZONTAL);
-		setBorderPainted(false);
-		setMaximum(100);
-		setStringPainted(true);
-	}
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
 
-	@Override
-	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-		// int i = (int)Math.ceil(100*(Float)value/((Float)value + 1));
-		int i = (int) Math.ceil((Float) value);
-		this.setValue(i);
+  ProgressCellRenderer() {
+    super(SwingConstants.HORIZONTAL);
+    setBorderPainted(false);
+    setMaximum(100);
+    setStringPainted(true);
+  }
 
-		return this;
-	}
+  @Override
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+    // int i = (int)Math.ceil(100*(Float)value/((Float)value + 1));
+    int i = (int) Math.ceil((Float) value);
+    this.setValue(i);
+
+    return this;
+  }
 
 }

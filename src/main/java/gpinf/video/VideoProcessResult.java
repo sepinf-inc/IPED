@@ -22,63 +22,65 @@ import java.awt.Dimension;
 import java.io.File;
 
 /**
- * Classe de armazenamento de dados do resultado de saída do processo de 
- * geração de imagens com cenas extraídas de vídeos. 
+ * Classe de armazenamento de dados do resultado de saída do processo de geração de imagens com
+ * cenas extraídas de vídeos.
+ *
  * @author Wladimir Leite
  */
 public class VideoProcessResult {
-    private long videoDuration;
-    private Dimension dimension;
-    private boolean success;
-    private long processingTime;
-    private File file;
-    private File subTemp;
 
-    public File getFile() {
-        return file;
-    }
+  private long videoDuration;
+  private Dimension dimension;
+  private boolean success;
+  private long processingTime;
+  private File file;
+  private File subTemp;
 
-    public void setFile(File file) {
-        this.file = file;
-    }
+  public File getFile() {
+    return file;
+  }
 
-    public File getSubTemp() {
-        return subTemp;
-    }
+  public void setFile(File file) {
+    this.file = file;
+  }
 
-    public void setSubTemp(File subTemp) {
-        this.subTemp = subTemp;
-    }
+  public File getSubTemp() {
+    return subTemp;
+  }
 
-    public long getVideoDuration() {
-        return videoDuration;
-    }
+  public void setSubTemp(File subTemp) {
+    this.subTemp = subTemp;
+  }
 
-    public void setVideoDuration(long videoDuration) {
-        this.videoDuration = videoDuration;
-    }
+  public long getVideoDuration() {
+    return videoDuration;
+  }
 
-    public long getProcessingTime() {
-        return processingTime;
-    }
+  public void setVideoDuration(long videoDuration) {
+    this.videoDuration = videoDuration;
+  }
 
-    public void setProcessingTime(long processingTime) {
-        this.processingTime = processingTime;
-    }
+  public long getProcessingTime() {
+    return processingTime;
+  }
 
-    public Dimension getDimension() {
-        return dimension;
-    }
+  public void setProcessingTime(long processingTime) {
+    this.processingTime = processingTime;
+  }
 
-    public void setDimension(Dimension dimension) {
-        this.dimension = dimension;
-    }
+  public Dimension getDimension() {
+    return dimension;
+  }
 
-    public boolean isSuccess() {
-        return success;
-    }
+  public void setDimension(Dimension dimension) {
+    this.dimension = dimension;
+  }
 
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
+  public boolean isSuccess() {
+    return success;
+  }
+
+  public void setSuccess(boolean success) {
+    this.success = success;
+  }
 }

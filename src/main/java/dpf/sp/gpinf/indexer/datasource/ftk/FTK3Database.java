@@ -44,216 +44,232 @@ import dpf.sp.gpinf.indexer.util.TimeConverter;
  * Classe que obtém informações do banco de dados do FTK3 até o FTK4.1.
  */
 public class FTK3Database extends FTKDatabase {
-	private String tableSpace;
-	private String tableSpaceBase;
 
-	protected FTK3Database(Properties properties, String caseName, File report) throws SQLException {
+  private String tableSpace;
+  private String tableSpaceBase;
 
-		super(properties, caseName, report);
+  protected FTK3Database(Properties properties, String caseName, File report) throws SQLException {
 
-		tableSpaceBase = "FTK_" + schemaVersion;
+    super(properties, caseName, report);
 
-		if ("oracle".equalsIgnoreCase(databaseType)) {
-			OracleDataSource oSource = new OracleDataSource();
-			oSource.setUser(user);
-			oSource.setPassword(password);
-			oSource.setDriverType(driverType);
-			oSource.setServiceName(serviceName);
-			oSource.setServerName(serverName);
-			oSource.setPortNumber(portNumber);
+    tableSpaceBase = "FTK_" + schemaVersion;
 
-			ods = oSource;
-		} else if ("postgreSQL".equalsIgnoreCase(databaseType)) {
-			org.postgresql.ds.PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
-			oSource.setUser(user);
-			oSource.setPassword(password);
-			oSource.setServerName(serverName);
-			oSource.setPortNumber(portNumber);
-			oSource.setDatabaseName(serviceName);
+    if ("oracle".equalsIgnoreCase(databaseType)) {
+      OracleDataSource oSource = new OracleDataSource();
+      oSource.setUser(user);
+      oSource.setPassword(password);
+      oSource.setDriverType(driverType);
+      oSource.setServiceName(serviceName);
+      oSource.setServerName(serverName);
+      oSource.setPortNumber(portNumber);
 
-			ods = oSource;
+      ods = oSource;
+    } else if ("postgreSQL".equalsIgnoreCase(databaseType)) {
+      org.postgresql.ds.PGSimpleDataSource oSource = new org.postgresql.ds.PGSimpleDataSource();
+      oSource.setUser(user);
+      oSource.setPassword(password);
+      oSource.setServerName(serverName);
+      oSource.setPortNumber(portNumber);
+      oSource.setDatabaseName(serviceName);
 
-		} else if ("sqlserver".equalsIgnoreCase(databaseType)) {
-			throw new SQLException("Banco 'sqlserver' incompatível com versão do FTK configurada.");
-		}
+      ods = oSource;
 
-	}
+    } else if ("sqlserver".equalsIgnoreCase(databaseType)) {
+      throw new SQLException("Banco 'sqlserver' incompatível com versão do FTK configurada.");
+    }
 
-	@Override
-	protected void loadTableSpace() throws SQLException {
+  }
 
-		tableSpace = tableSpaceBase + "_C" + getCaseID(conn);
+  @Override
+  protected void loadTableSpace() throws SQLException {
 
-	}
+    tableSpace = tableSpaceBase + "_C" + getCaseID(conn);
 
-	private int getCaseID(Connection conn) throws SQLException {
+  }
 
-		int caseID;
-		ResultSet rset;
-		Statement stmt = conn.createStatement();
-		String sql = "select CASEID from " + tableSpaceBase + ".CASES where CASENAME='" + caso + "'";
+  private int getCaseID(Connection conn) throws SQLException {
 
-		try {
-			rset = stmt.executeQuery(sql);
-		} catch (SQLException e) {
-			throw new SQLException("Versão detectada/configurada do FTK pode estar incorreta!");
-		}
+    int caseID;
+    ResultSet rset;
+    Statement stmt = conn.createStatement();
+    String sql = "select CASEID from " + tableSpaceBase + ".CASES where CASENAME='" + caso + "'";
 
-		// Se não retornou nada no ResultSet, sai
-		if (!rset.next())
-			throw new SQLException("Nome do caso não encontrado no banco: " + sql + ". Conectou-se ao banco correto?");
+    try {
+      rset = stmt.executeQuery(sql);
+    } catch (SQLException e) {
+      throw new SQLException("Versão detectada/configurada do FTK pode estar incorreta!");
+    }
 
-		caseID = rset.getInt(1);
+    // Se não retornou nada no ResultSet, sai
+    if (!rset.next()) {
+      throw new SQLException("Nome do caso não encontrado no banco: " + sql + ". Conectou-se ao banco correto?");
+    }
 
-		if (rset.next())
-			throw new SQLException("Nome do caso duplicado no banco. Remova o caso com mesmo nome que o atual.");
+    caseID = rset.getInt(1);
 
-		// Close the RseultSet
-		rset.close();
-		rset = null;
+    if (rset.next()) {
+      throw new SQLException("Nome do caso duplicado no banco. Remova o caso com mesmo nome que o atual.");
+    }
 
-		// Close the Statement
-		stmt.close();
-		stmt = null;
+    // Close the RseultSet
+    rset.close();
+    rset = null;
 
-		return caseID;
-	}
+    // Close the Statement
+    stmt.close();
+    stmt = null;
 
-	private Map<Integer, ArrayList<String>> getFileToBookmarksMap(String objectIDs) throws Exception {
+    return caseID;
+  }
 
-		Statement stmt = conn.createStatement();
-		String sql = "select a.OBJECTID, a.BOOKMARK_ID from " + tableSpace + ".BOOKMARK_FILES a where a.OBJECTID in (" + objectIDs + ") AND a.DELETED=0";
-		ResultSet rset = stmt.executeQuery(sql);
-		rset.setFetchSize(1000);
+  private Map<Integer, ArrayList<String>> getFileToBookmarksMap(String objectIDs) throws Exception {
 
-		HashMap<Integer, ArrayList<String>> result = new HashMap<Integer, ArrayList<String>>();
+    Statement stmt = conn.createStatement();
+    String sql = "select a.OBJECTID, a.BOOKMARK_ID from " + tableSpace + ".BOOKMARK_FILES a where a.OBJECTID in (" + objectIDs + ") AND a.DELETED=0";
+    ResultSet rset = stmt.executeQuery(sql);
+    rset.setFetchSize(1000);
 
-		while (rset.next()) {
-			int fileId = rset.getInt("OBJECTID");
-			ArrayList<String> bookmarkNames = result.get(fileId);
-			if (bookmarkNames == null)
-				bookmarkNames = new ArrayList<String>();
-			String bookmark = bookmarksMap.get(rset.getString("BOOKMARK_ID"));
-			if (bookmark != null)
-				bookmarkNames.add(bookmark);
-			result.put(fileId, bookmarkNames);
-		}
+    HashMap<Integer, ArrayList<String>> result = new HashMap<Integer, ArrayList<String>>();
 
-		return result;
-	}
+    while (rset.next()) {
+      int fileId = rset.getInt("OBJECTID");
+      ArrayList<String> bookmarkNames = result.get(fileId);
+      if (bookmarkNames == null) {
+        bookmarkNames = new ArrayList<String>();
+      }
+      String bookmark = bookmarksMap.get(rset.getString("BOOKMARK_ID"));
+      if (bookmark != null) {
+        bookmarkNames.add(bookmark);
+      }
+      result.put(fileId, bookmarkNames);
+    }
 
-	@Override
-	protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
-		StringBuffer fileIds = new StringBuffer();
-		int i = 1;
-		for (Integer ID : fileList.keySet()) {
-			fileIds.append(ID);
-			if (i++ < fileList.size())
-				fileIds.append(",");
-		}
-		String objectIDs = fileIds.toString();
+    return result;
+  }
 
-		// obtém nomes dos bookmarks de cada item
-		Map<Integer, ArrayList<String>> fileToBookmarkMap = getFileToBookmarksMap(objectIDs);
+  @Override
+  protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
+    StringBuffer fileIds = new StringBuffer();
+    int i = 1;
+    for (Integer ID : fileList.keySet()) {
+      fileIds.append(ID);
+      if (i++ < fileList.size()) {
+        fileIds.append(",");
+      }
+    }
+    String objectIDs = fileIds.toString();
 
-		// Create a Statement
-		Statement stmt = conn.createStatement();
-		String sql = "select a.objectid, a.parentid, a.md5hash, a.deleted, a.isfromfreespace, a.objectname, b.name, a.path, a.logicalsize, a.createddate, a.modifieddate, a.last_accesseddate, a.fatlastaccesseddateasstring from "
-				+ tableSpace + ".OBJECTS a,  " + tableSpaceBase + ".CATEGORY_NAMES b where a.filecategory=b.value and a.objectid in (" + objectIDs + ")";
-		ResultSet rset = stmt.executeQuery(sql);
-		rset.setFetchSize(1000);
+    // obtém nomes dos bookmarks de cada item
+    Map<Integer, ArrayList<String>> fileToBookmarkMap = getFileToBookmarksMap(objectIDs);
 
-		int addedEvidences = 0;
-		while (rset.next()) {
-			ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID"));
-			for (String path : paths) {
-				EvidenceFile evidenceFile = new EvidenceFile();
-				int ftkId = rset.getInt("OBJECTID");
-				evidenceFile.setFtkID(caso + "-" + ftkId);
-				int parentId = rset.getInt("PARENTID");
-				evidenceFile.setParentId(caso + "-" + parentId);
-				evidenceFile.setName(rset.getString("OBJECTNAME"));
-				evidenceFile.setExportedFile(path);
-				evidenceFile.setPath(rset.getString("PATH"));
-				if("Y".equals(rset.getString("DELETED")) || "Y".equals(rset.getString("ISFROMFREESPACE")))
-					evidenceFile.setDeleted(true);
-				byte[] hash = rset.getBytes("md5hash");
-				if (hash != null)
-					evidenceFile.setHash(HashTask.getHashString(hash));
-				long logicalSize = rset.getLong("LOGICALSIZE");
-				if (logicalSize > -1)
-					evidenceFile.setLength(logicalSize);
-				String fileType = rset.getString("NAME");
-				if (fileType != null)
-					evidenceFile.setType(new GenericFileType(fileType));
-				long createdDate = rset.getLong("CREATEDDATE");
-				if (createdDate > 0)
-					evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
-				long modifiedDate = rset.getLong("modifieddate");
-				if (modifiedDate > 0)
-					evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
-				long accessedDate = rset.getLong("last_accesseddate");
-				if (accessedDate > 0)
-					evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
-				else {
-					String fatDate = rset.getString("fatlastaccesseddateasstring");
-					if (fatDate != null) {
-						Calendar calendar = new GregorianCalendar();
-						calendar.clear();
-						calendar.set(Integer.parseInt(fatDate.substring(0, 4)), Integer.parseInt(fatDate.substring(5, 7)) - 1, Integer.parseInt(fatDate.substring(8, 10)));
-						evidenceFile.setAccessDate(calendar.getTime());
-					}
-				}
+    // Create a Statement
+    Statement stmt = conn.createStatement();
+    String sql = "select a.objectid, a.parentid, a.md5hash, a.deleted, a.isfromfreespace, a.objectname, b.name, a.path, a.logicalsize, a.createddate, a.modifieddate, a.last_accesseddate, a.fatlastaccesseddateasstring from "
+        + tableSpace + ".OBJECTS a,  " + tableSpaceBase + ".CATEGORY_NAMES b where a.filecategory=b.value and a.objectid in (" + objectIDs + ")";
+    ResultSet rset = stmt.executeQuery(sql);
+    rset.setFetchSize(1000);
 
-				ArrayList<String> bookmarks = fileToBookmarkMap.get(rset.getInt("OBJECTID"));
-				if (bookmarks != null)
-					for (String bookmarkName : bookmarks)
-						evidenceFile.addCategory(bookmarkName);
+    int addedEvidences = 0;
+    while (rset.next()) {
+      ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID"));
+      for (String path : paths) {
+        EvidenceFile evidenceFile = new EvidenceFile();
+        int ftkId = rset.getInt("OBJECTID");
+        evidenceFile.setFtkID(caso + "-" + ftkId);
+        int parentId = rset.getInt("PARENTID");
+        evidenceFile.setParentId(caso + "-" + parentId);
+        evidenceFile.setName(rset.getString("OBJECTNAME"));
+        evidenceFile.setExportedFile(path);
+        evidenceFile.setPath(rset.getString("PATH"));
+        if ("Y".equals(rset.getString("DELETED")) || "Y".equals(rset.getString("ISFROMFREESPACE"))) {
+          evidenceFile.setDeleted(true);
+        }
+        byte[] hash = rset.getBytes("md5hash");
+        if (hash != null) {
+          evidenceFile.setHash(HashTask.getHashString(hash));
+        }
+        long logicalSize = rset.getLong("LOGICALSIZE");
+        if (logicalSize > -1) {
+          evidenceFile.setLength(logicalSize);
+        }
+        String fileType = rset.getString("NAME");
+        if (fileType != null) {
+          evidenceFile.setType(new GenericFileType(fileType));
+        }
+        long createdDate = rset.getLong("CREATEDDATE");
+        if (createdDate > 0) {
+          evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
+        }
+        long modifiedDate = rset.getLong("modifieddate");
+        if (modifiedDate > 0) {
+          evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
+        }
+        long accessedDate = rset.getLong("last_accesseddate");
+        if (accessedDate > 0) {
+          evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
+        } else {
+          String fatDate = rset.getString("fatlastaccesseddateasstring");
+          if (fatDate != null) {
+            Calendar calendar = new GregorianCalendar();
+            calendar.clear();
+            calendar.set(Integer.parseInt(fatDate.substring(0, 4)), Integer.parseInt(fatDate.substring(5, 7)) - 1, Integer.parseInt(fatDate.substring(8, 10)));
+            evidenceFile.setAccessDate(calendar.getTime());
+          }
+        }
 
-				caseData.addEvidenceFile(evidenceFile);
-			}
-			addedEvidences++;
-		}
-		rset.close();
-		stmt.close();
+        ArrayList<String> bookmarks = fileToBookmarkMap.get(rset.getInt("OBJECTID"));
+        if (bookmarks != null) {
+          for (String bookmarkName : bookmarks) {
+            evidenceFile.addCategory(bookmarkName);
+          }
+        }
 
-		if (fileList.size() != addedEvidences)
-			throw new Exception("Encontrados " + addedEvidences + " de " + fileList.size() + " ID's dos arquivos no banco. O nome do caso pode estar incorreto!");
-	}
+        caseData.addEvidenceFile(evidenceFile);
+      }
+      addedEvidences++;
+    }
+    rset.close();
+    stmt.close();
 
-	@Override
-	protected Map<String, String> getBookmarksMap(File report) throws Exception {
+    if (fileList.size() != addedEvidences) {
+      throw new Exception("Encontrados " + addedEvidences + " de " + fileList.size() + " ID's dos arquivos no banco. O nome do caso pode estar incorreto!");
+    }
+  }
 
-		HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
-		Connection conn = ods.getConnection();
-		HashMap<String, String> result = new HashMap<String, String>();
+  @Override
+  protected Map<String, String> getBookmarksMap(File report) throws Exception {
 
-		Statement stmt = conn.createStatement();
-		;
-		String sql;
-		ResultSet rset;
+    HashSet<String> bookmarks = FTK3ReportReader.getBookmarks(report);
+    Connection conn = ods.getConnection();
+    HashMap<String, String> result = new HashMap<String, String>();
 
-		sql = "select a.BOOKMARK_ID, a.BOOKMARK_NAME from " + tableSpace + ".BOOKMARKS a";
+    Statement stmt = conn.createStatement();
+    ;
+    String sql;
+    ResultSet rset;
 
-		rset = stmt.executeQuery(sql);
-		rset.setFetchSize(1000);
+    sql = "select a.BOOKMARK_ID, a.BOOKMARK_NAME from " + tableSpace + ".BOOKMARKS a";
 
-		while (rset.next()) {
-			String bookName = rset.getString(2);
-			if (bookmarks.contains(bookName))
-				result.put(rset.getString(1), bookName);
-		}
+    rset = stmt.executeQuery(sql);
+    rset.setFetchSize(1000);
 
-		// Close the ResultSet
-		rset.close();
-		rset = null;
+    while (rset.next()) {
+      String bookName = rset.getString(2);
+      if (bookmarks.contains(bookName)) {
+        result.put(rset.getString(1), bookName);
+      }
+    }
 
-		// Close the Statement
-		stmt.close();
-		stmt = null;
+    // Close the ResultSet
+    rset.close();
+    rset = null;
 
-		conn.close();
-		return result;
-	}
+    // Close the Statement
+    stmt.close();
+    stmt = null;
+
+    conn.close();
+    return result;
+  }
 
 }

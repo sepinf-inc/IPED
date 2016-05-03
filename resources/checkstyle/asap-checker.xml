@@ -42,15 +42,15 @@
     <!-- Checks that each Java package has a Javadoc file used for commenting. -->
     <!-- See http://checkstyle.sf.net/config_javadoc.html#JavadocPackage       -->
     <module name="JavadocPackage">
-      <property name="allowLegacy" value="false"/>
-	<property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="warning"/>
+        <property name="allowLegacy" value="false"/>
+        <property name="severity"
+                  value="${checkstyle.javadoc.severity}"
+                  default="warning"/>
     </module>
 
     <!-- Checks whether files end with a new line.                        -->
     <!-- See http://checkstyle.sf.net/config_misc.html#NewlineAtEndOfFile -->
-<!--    <module name="NewlineAtEndOfFile"/> -->
+    <!--    <module name="NewlineAtEndOfFile"/> -->
 
     <!-- Checks that property files contain the same keys.         -->
     <!-- See http://checkstyle.sf.net/config_misc.html#Translation -->
@@ -73,27 +73,27 @@
 
     <module name="TreeWalker">
 
-	<module name="FileContentsHolder"/>
+        <module name="FileContentsHolder"/>
 
         <property name="cacheFile" value="${checkstyle.cache.file}"/>
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
- <module name="JavadocMethod">
-<property name="scope" value="public"/>
-	<property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="error"/>
-</module>
+        <module name="JavadocMethod">
+            <property name="scope" value="public"/>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="error"/>
+        </module>
         <module name="JavadocType"/>
 
 
         <module name="JavadocVariable">
-<property name="scope" value="public"/>
-	<property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="error"/>
-</module>
+            <property name="scope" value="public"/>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="error"/>
+        </module>
         <module name="JavadocStyle"/>
 
 
@@ -113,15 +113,15 @@
         <!-- Checks for Headers                                -->
         <!-- See http://checkstyle.sf.net/config_header.html   -->
         <!-- <module name="Header">                            -->
-            <!-- The follow property value demonstrates the ability     -->
-            <!-- to have access to ANT properties. In this case it uses -->
-            <!-- the ${basedir} property to allow Checkstyle to be run  -->
-            <!-- from any directory within a project. See property      -->
-            <!-- expansion,                                             -->
-            <!-- http://checkstyle.sf.net/config.html#properties        -->
-            <!-- <property                                              -->
-            <!--     name="headerFile"                                  -->
-            <!--     value="${basedir}/java.header"/>                   -->
+        <!-- The follow property value demonstrates the ability     -->
+        <!-- to have access to ANT properties. In this case it uses -->
+        <!-- the ${basedir} property to allow Checkstyle to be run  -->
+        <!-- from any directory within a project. See property      -->
+        <!-- expansion,                                             -->
+        <!-- http://checkstyle.sf.net/config.html#properties        -->
+        <!-- <property                                              -->
+        <!--     name="headerFile"                                  -->
+        <!--     value="${basedir}/java.header"/>                   -->
         <!-- </module> -->
 
 
@@ -136,8 +136,8 @@
         <!-- Checks for Size Violations.                    -->
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
         <module name="LineLength">
-<property name="ignorePattern" value=".//GEN."/>
-</module>
+            <property name="ignorePattern" value=".//GEN."/>
+        </module>
         <module name="MethodLength"/>
         <module name="ParameterNumber"/>
 
@@ -152,15 +152,15 @@
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter">
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="ignore"/>
-</module>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="ignore"/>
+        </module>
         <module name="WhitespaceAround">
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="ignore"/>
-</module>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="ignore"/>
+        </module>
 
 
         <!-- Modifier Checks                                    -->
@@ -180,23 +180,23 @@
 
         <!-- Checks for common coding problems               -->
         <!-- See http://checkstyle.sf.net/config_coding.html -->
-<!--        <module name="AvoidInlineConditionals">
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="warning"/>
-</module> -->
+        <!--        <module name="AvoidInlineConditionals">
+          <property name="severity"
+                       value="${checkstyle.javadoc.severity}"
+                       default="warning"/>
+        </module> -->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="HiddenField"/>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
         <module name="MagicNumber">
-           <property name="ignoreNumbers" value="9999, 10, 100, 1000, 0, 1, -1, 2, 1024, 255, 256"/>
+            <property name="ignoreNumbers" value="9999, 10, 100, 1000, 0, 1, -1, 2, 1024, 255, 256"/>
 
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="warning"/>
-</module>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="warning"/>
+        </module>
         <module name="MissingSwitchDefault"/>
         <module name="RedundantThrows"/>
         <module name="SimplifyBooleanExpression"/>
@@ -205,39 +205,39 @@
         <!-- Checks for class design                         -->
         <!-- See http://checkstyle.sf.net/config_design.html -->
         <module name="DesignForExtension">
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="warning"/>
-</module>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="warning"/>
+        </module>
         <module name="FinalClass"/>
         <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
         <module name="VisibilityModifier">
-<property name="protectedAllowed" value="false"/>
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="ignore"/>
-</module>
+            <property name="protectedAllowed" value="false"/>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="ignore"/>
+        </module>
 
 
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
         <module name="ArrayTypeStyle"/>
         <module name="FinalParameters">
-  <property name="severity"
-               value="${checkstyle.javadoc.severity}"
-               default="warning"/>
-</module>
+            <property name="severity"
+                      value="${checkstyle.javadoc.severity}"
+                      default="warning"/>
+        </module>
         <module name="TodoComment"/>
         <module name="UpperEll"/>
 
     </module>
 
 
-<module name="SuppressionCommentFilter">
-    <property name="offCommentFormat" value="BEGIN GENERATED CODE"/>
-    <property name="onCommentFormat" value="END GENERATED CODE"/>
-</module>
+    <module name="SuppressionCommentFilter">
+        <property name="offCommentFormat" value="BEGIN GENERATED CODE"/>
+        <property name="onCommentFormat" value="END GENERATED CODE"/>
+    </module>
 
 </module>
 

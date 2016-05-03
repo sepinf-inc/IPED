@@ -33,28 +33,30 @@ import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
 
 public class TextHighlighter {
 
-	// Highlight dos fragmentos
-	public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName, int fragmentSize) throws Exception {
+  // Highlight dos fragmentos
+  public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName, int fragmentSize) throws Exception {
 
-		if (text == null)
-			return new TextFragment[0];
-		// App.get().analyzer = new StandardASCIIAnalyzer(Versao.current);
-		TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().analyzer);
-		QueryScorer scorer = new QueryScorer(App.get().query, fieldName);
-		Fragmenter fragmenter;
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.HIGHLIGHT_START_TAG, App.HIGHLIGHT_END_TAG);
-		int fragmentNumber = 1;
-		if (fragmentSize != 0) {
-			fragmenter = new SimpleFragmenter(fragmentSize);
-			fragmentNumber += text.length() / fragmentSize;
-		} else
-			fragmenter = new NullFragmenter();
-		Encoder encoder = new LuceneSimpleHTMLEncoder();
-		// Encoder encoder = new DefaultEncoder();
-		Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
-		highlighter.setTextFragmenter(fragmenter);
-		highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
-		return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
-	}
+    if (text == null) {
+      return new TextFragment[0];
+    }
+    // App.get().analyzer = new StandardASCIIAnalyzer(Versao.current);
+    TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().getAnalyzer());
+    QueryScorer scorer = new QueryScorer(App.get().getQuery(), fieldName);
+    Fragmenter fragmenter;
+    SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.get().getParams().HIGHLIGHT_START_TAG, App.get().getParams().HIGHLIGHT_END_TAG);
+    int fragmentNumber = 1;
+    if (fragmentSize != 0) {
+      fragmenter = new SimpleFragmenter(fragmentSize);
+      fragmentNumber += text.length() / fragmentSize;
+    } else {
+      fragmenter = new NullFragmenter();
+    }
+    Encoder encoder = new LuceneSimpleHTMLEncoder();
+    // Encoder encoder = new DefaultEncoder();
+    Highlighter highlighter = new Highlighter(formatter, encoder, scorer);
+    highlighter.setTextFragmenter(fragmenter);
+    highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
+    return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
+  }
 
 }

@@ -4,55 +4,60 @@ import java.io.Serializable;
 
 /**
  * Classe que define uma propriedade, composta pelo par (nome para valor).
- * 
+ *
  * @author Wladimir Leite (GPINF/SP)
  */
 public class Property implements Serializable {
-	/** Identificador utilizado para serialização da classe */
-	private static final long serialVersionUID = 80014119327L;
 
-	/** Nome da propriedade. */
-	private final String name;
+  /**
+   * Identificador utilizado para serialização da classe
+   */
+  private static final long serialVersionUID = 80014119327L;
 
-	/** Valor da propriedade. */
-	private final String value;
+  /**
+   * Nome da propriedade.
+   */
+  private final String name;
 
-	/**
-	 * Cria nova propriedade.
-	 * 
-	 * @param name
-	 *            nome da propriedade
-	 * @param value
-	 *            valor correspondente
-	 */
-	public Property(final String name, final String value) {
-		this.name = name;
-		this.value = value;
-	}
+  /**
+   * Valor da propriedade.
+   */
+  private final String value;
 
-	/**
-	 * Retorna representação em texto da propriedade.
-	 */
-	@Override
-	public String toString() {
-		return name + ": " + value;
-	}
+  /**
+   * Cria nova propriedade.
+   *
+   * @param name nome da propriedade
+   * @param value valor correspondente
+   */
+  public Property(final String name, final String value) {
+    this.name = name;
+    this.value = value;
+  }
 
-	/**
-	 * Obtém nome da propriedade.
-	 * 
-	 * @return nome da propriedade
-	 */
-	public String getName() {
-		return name;
-	}
+  /**
+   * Retorna representação em texto da propriedade.
+   */
+  @Override
+  public String toString() {
+    return name + ": " + value;
+  }
 
-	/**
-	 * Obtém valor da propriedade.
-	 * 
-	 * @return valor correspondente da propriedade
-	 */
-	public String getValue() {
-		return value;
-	}
+  /**
+   * Obtém nome da propriedade.
+   *
+   * @return nome da propriedade
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * Obtém valor da propriedade.
+   *
+   * @return valor correspondente da propriedade
+   */
+  public String getValue() {
+    return value;
+  }
 }

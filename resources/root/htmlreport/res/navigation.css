@@ -7,19 +7,19 @@
 
 a.sectionLinks:link, a.sectionLinks:visited 
 {
-  display: block;
-  border-top: 1px solid #ffffff;
-  border-bottom: 1px solid #cccccc;
-  background-image: url(bg_nav.jpg);
-  font-weight: bold;
-  padding: 3px 0px 3px 10px;
-  color: #21536A;
+    display: block;
+    border-top: 1px solid #ffffff;
+    border-bottom: 1px solid #cccccc;
+    background-image: url(bg_nav.jpg);
+    font-weight: bold;
+    padding: 3px 0px 3px 10px;
+    color: #21536A;
 }
 a.sectionLinks:hover
 {
-  border-top: 1px solid #cccccc;
-  background-color: #e2e4e1;
-  background-image: none;
-  font-weight: bold;
-  text-decoration: none;
+    border-top: 1px solid #cccccc;
+    background-color: #e2e4e1;
+    background-image: none;
+    font-weight: bold;
+    text-decoration: none;
 }

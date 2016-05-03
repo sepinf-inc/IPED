@@ -32,152 +32,158 @@ import org.apache.lucene.document.StoredField;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
-public class TreeViewModel implements TreeModel{
-	
-	private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
-	private Node root;
-	private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
-	
-	private RowComparator getComparator(){
-		return new RowComparator(IndexItem.NAME){
-			@Override
-		    public int compare(Integer a, Integer b) {
-		        return sdv.getOrd(a) - sdv.getOrd(b);
-		    }
-		};
-	}
-	
-	public class Node{
-		private Document doc;
-		int docId;
-		private SearchResult children;
-		boolean first = true;
-		
-		public Node(int docId){
-			this.docId = docId;
-		}
-		
-		public Document getDoc(){
-			if(doc == null)
-				if(docId != -1)
-					try {
-						this.doc = App.get().reader.document(docId);
-						
-					} catch (IOException e) {
-						//e.printStackTrace();
-					}
-			return doc;
-		}
-		
-		public String toString(){
-			if(first){
-				first = false;
-				return FIRST_STRING;
-			}
-			
-			return getDoc().get(IndexItem.NAME);
-		}
-		
-		public SearchResult getChildren(){
-			if(children == null)
-				listSubItens(getDoc());
-			
-			return children;
-		}
-		
-		private void listSubItens(Document doc) {
-			
-			String parentId = doc.get(IndexItem.FTKID);
-			if (parentId == null)
-				parentId = doc.get(IndexItem.ID);
-			
-			String textQuery = IndexItem.PARENTID + ":" + parentId;
-			
-			textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
+public class TreeViewModel implements TreeModel {
 
-			try {
-				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
-				children = task.pesquisar();
-				Integer[] array = ArrayUtils.toObject(children.docs);
-				Arrays.sort(array, getComparator());
-				children.docs = ArrayUtils.toPrimitive(array);
-				children.scores = null;
+  private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
+  private Node root;
+  private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
 
-			} catch (Exception e) {
-				children = new SearchResult(0);
-				e.printStackTrace();
-			}
+  private RowComparator getComparator() {
+    return new RowComparator(IndexItem.NAME) {
+      @Override
+      public int compare(Integer a, Integer b) {
+        return sdv.getOrd(a) - sdv.getOrd(b);
+      }
+    };
+  }
 
-		}
-	}
-	
-	public TreeViewModel(){
-		root = new Node(-1);
-		root.doc = new Document();
-		root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
-		PesquisarIndice pesquisa;
-		try {
-			pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
-			root.children = pesquisa.pesquisar();
-			Integer[] array = ArrayUtils.toObject(root.children.docs);
-			Arrays.sort(array, getComparator());
-			root.children.docs = ArrayUtils.toPrimitive(array);
-			root.children.scores = null;
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	
-	@Override
-	public void addTreeModelListener(TreeModelListener l) {
-		treeModelListeners.addElement(l);
-		
-	}
+  public class Node {
 
-	@Override
-	public Object getChild(Object parent, int index) {
-		return new Node(((Node)parent).getChildren().docs[index]);
-	}
+    private Document doc;
+    int docId;
+    private SearchResult children;
+    boolean first = true;
 
-	@Override
-	public int getChildCount(Object parent) {
-		return ((Node)parent).getChildren().length;
-	}
+    public Node(int docId) {
+      this.docId = docId;
+    }
 
-	@Override
-	public int getIndexOfChild(Object parent, Object child) {
-		
-		Node childNode = (Node)child;
-		for(int i = 0; i < ((Node)parent).getChildren().docs.length; i++)
-			if(childNode.docId == ((Node)parent).getChildren().docs[i])
-				return i;
-		
-		return -1;
-	}
+    public Document getDoc() {
+      if (doc == null) {
+        if (docId != -1) {
+          try {
+            this.doc = App.get().reader.document(docId);
 
-	@Override
-	public Object getRoot() {
-		return root;
-	}
+          } catch (IOException e) {
+            //e.printStackTrace();
+          }
+        }
+      }
+      return doc;
+    }
 
-	@Override
-	public boolean isLeaf(Object node) {
-		return false;
-	}
+    public String toString() {
+      if (first) {
+        first = false;
+        return FIRST_STRING;
+      }
 
-	@Override
-	public void removeTreeModelListener(TreeModelListener l) {
-		treeModelListeners.removeElement(l);
-		
-	}
+      return getDoc().get(IndexItem.NAME);
+    }
 
-	@Override
-	public void valueForPathChanged(TreePath path, Object newValue) {
-		// TODO Auto-generated method stub
-		
-	}
+    public SearchResult getChildren() {
+      if (children == null) {
+        listSubItens(getDoc());
+      }
+
+      return children;
+    }
+
+    private void listSubItens(Document doc) {
+
+      String parentId = doc.get(IndexItem.FTKID);
+      if (parentId == null) {
+        parentId = doc.get(IndexItem.ID);
+      }
+
+      String textQuery = IndexItem.PARENTID + ":" + parentId;
+
+      textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
+
+      try {
+        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+        children = task.pesquisar();
+        Integer[] array = ArrayUtils.toObject(children.docs);
+        Arrays.sort(array, getComparator());
+        children.docs = ArrayUtils.toPrimitive(array);
+        children.scores = null;
+
+      } catch (Exception e) {
+        children = new SearchResult(0);
+        e.printStackTrace();
+      }
+
+    }
+  }
+
+  public TreeViewModel() {
+    root = new Node(-1);
+    root.doc = new Document();
+    root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
+    PesquisarIndice pesquisa;
+    try {
+      pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
+      root.children = pesquisa.pesquisar();
+      Integer[] array = ArrayUtils.toObject(root.children.docs);
+      Arrays.sort(array, getComparator());
+      root.children.docs = ArrayUtils.toPrimitive(array);
+      root.children.scores = null;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  @Override
+  public void addTreeModelListener(TreeModelListener l) {
+    treeModelListeners.addElement(l);
+
+  }
+
+  @Override
+  public Object getChild(Object parent, int index) {
+    return new Node(((Node) parent).getChildren().docs[index]);
+  }
+
+  @Override
+  public int getChildCount(Object parent) {
+    return ((Node) parent).getChildren().length;
+  }
+
+  @Override
+  public int getIndexOfChild(Object parent, Object child) {
+
+    Node childNode = (Node) child;
+    for (int i = 0; i < ((Node) parent).getChildren().docs.length; i++) {
+      if (childNode.docId == ((Node) parent).getChildren().docs[i]) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  @Override
+  public Object getRoot() {
+    return root;
+  }
+
+  @Override
+  public boolean isLeaf(Object node) {
+    return false;
+  }
+
+  @Override
+  public void removeTreeModelListener(TreeModelListener l) {
+    treeModelListeners.removeElement(l);
+
+  }
+
+  @Override
+  public void valueForPathChanged(TreePath path, Object newValue) {
+    // TODO Auto-generated method stub
+
+  }
 
 }

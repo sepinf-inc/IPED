@@ -6,13 +6,13 @@
             <PackageRegexpFilter regex=".*org\.icepdf.*" onMatch="DENY" onMismatch="ACCEPT"/>
         </Console>
         <File name="LogFile" fileName="${sys:logFilePath}/IPED-${sys:logFileDate}.log"
-        	immediateFlush="true" append="true" bufferSize="4096">
+              immediateFlush="true" append="true" bufferSize="4096">
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
         </File>
     </Appenders>
     <Loggers>
         <Root level="info">
-        	<AppenderRef ref="Console" level="error"/>
+            <AppenderRef ref="Console" level="error"/>
             <AppenderRef ref="LogFile" />
         </Root>
     </Loggers>

@@ -25,114 +25,109 @@ import javax.swing.JPopupMenu;
 
 public class MenuClass extends JPopupMenu {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
-			carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-			gerenciarFiltros, gerenciarColunas;
+  JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
+      carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
+      gerenciarFiltros, gerenciarColunas;
 
-	// JCheckBoxMenuItem changeViewerTab;
+  // JCheckBoxMenuItem changeViewerTab;
+  public MenuClass() {
+    super();
 
-	public MenuClass() {
-		super();
+    ActionListener menuListener = new MenuListener(this);
 
-		ActionListener menuListener = new MenuListener(this);
+    marcarSelecionados = new JMenuItem("Selecionar itens destacados");
+    marcarSelecionados.addActionListener(menuListener);
+    this.add(marcarSelecionados);
 
-		
-		marcarSelecionados = new JMenuItem("Selecionar itens destacados");
-		marcarSelecionados.addActionListener(menuListener);
-		this.add(marcarSelecionados);
+    desmarcarSelecionados = new JMenuItem("Remover seleção dos itens destacados");
+    desmarcarSelecionados.addActionListener(menuListener);
+    this.add(desmarcarSelecionados);
 
-		desmarcarSelecionados = new JMenuItem("Remover seleção dos itens destacados");
-		desmarcarSelecionados.addActionListener(menuListener);
-		this.add(desmarcarSelecionados);
+    /*lerSelecionados = new JMenuItem("Marcar selecionados como lido");
+     lerSelecionados.addActionListener(menuListener);
+     this.add(lerSelecionados);
 
-		/*lerSelecionados = new JMenuItem("Marcar selecionados como lido");
-		lerSelecionados.addActionListener(menuListener);
-		this.add(lerSelecionados);
+     deslerSelecionados = new JMenuItem("Marcar selecionados como novo");
+     deslerSelecionados.addActionListener(menuListener);
+     this.add(deslerSelecionados);
+     */
+    //this.addSeparator();
+    carregarMarcadores = new JMenuItem("Carregar marcadores");
+    carregarMarcadores.addActionListener(menuListener);
+    this.add(carregarMarcadores);
 
-		deslerSelecionados = new JMenuItem("Marcar selecionados como novo");
-		deslerSelecionados.addActionListener(menuListener);
-		this.add(deslerSelecionados);
-		*/
+    salvarMarcadores = new JMenuItem("Salvar marcadores");
+    salvarMarcadores.addActionListener(menuListener);
+    this.add(salvarMarcadores);
 
-		//this.addSeparator();
+    gerenciarMarcadores = new JMenuItem("Gerenciar Marcadores");
+    gerenciarMarcadores.addActionListener(menuListener);
+    this.add(gerenciarMarcadores);
 
-		carregarMarcadores = new JMenuItem("Carregar marcadores");
-		carregarMarcadores.addActionListener(menuListener);
-		this.add(carregarMarcadores);
-		
-		salvarMarcadores = new JMenuItem("Salvar marcadores");
-		salvarMarcadores.addActionListener(menuListener);
-		this.add(salvarMarcadores);
-		
-		gerenciarMarcadores = new JMenuItem("Gerenciar Marcadores");
-		gerenciarMarcadores.addActionListener(menuListener);
-		this.add(gerenciarMarcadores);
-		
-		gerenciarFiltros = new JMenuItem("Gerenciar Filtros");
-		gerenciarFiltros.addActionListener(menuListener);
-		this.add(gerenciarFiltros);
-		
-		gerenciarColunas = new JMenuItem("Gerenciar Colunas Visíveis");
-		gerenciarColunas.addActionListener(menuListener);
-		this.add(gerenciarColunas);
-		
-		this.addSeparator();
+    gerenciarFiltros = new JMenuItem("Gerenciar Filtros");
+    gerenciarFiltros.addActionListener(menuListener);
+    this.add(gerenciarFiltros);
 
-		exportarSelecionados = new JMenuItem("Exportar itens destacados");
-		exportarSelecionados.addActionListener(menuListener);
-		this.add(exportarSelecionados);
+    gerenciarColunas = new JMenuItem("Gerenciar Colunas Visíveis");
+    gerenciarColunas.addActionListener(menuListener);
+    this.add(gerenciarColunas);
 
-		exportarMarcados = new JMenuItem("Exportar itens selecionados");
-		exportarMarcados.addActionListener(menuListener);
-		this.add(exportarMarcados);
+    this.addSeparator();
 
-		this.addSeparator();
+    exportarSelecionados = new JMenuItem("Exportar itens destacados");
+    exportarSelecionados.addActionListener(menuListener);
+    this.add(exportarSelecionados);
 
-		copiarSelecionados = new JMenuItem("Exportar propriedades dos itens destacados");
-		copiarSelecionados.addActionListener(menuListener);
-		this.add(copiarSelecionados);
+    exportarMarcados = new JMenuItem("Exportar itens selecionados");
+    exportarMarcados.addActionListener(menuListener);
+    this.add(exportarMarcados);
 
-		copiarMarcados = new JMenuItem("Exportar propriedades dos itens selecionados");
-		copiarMarcados.addActionListener(menuListener);
-		this.add(copiarMarcados);
+    this.addSeparator();
 
-		this.addSeparator();
-		
-		importarPalavras = new JMenuItem("Importar lista de palavras-chave");
-		importarPalavras.addActionListener(menuListener);
-		this.add(importarPalavras);
-		
-		limparBuscas = new JMenuItem("Limpar expressões pesquisadas");
-		limparBuscas.addActionListener(menuListener);
-		this.add(limparBuscas);
-		
-		exportTerms = new JMenuItem("Exportar lista de termos indexados");
-		exportTerms.addActionListener(menuListener);
-		this.add(exportTerms);
-		
-		this.addSeparator();
-		
-		disposicao = new JMenuItem("Alterar disposição vertical/horizontal");
-		disposicao.addActionListener(menuListener);
-		this.add(disposicao);
+    copiarSelecionados = new JMenuItem("Exportar propriedades dos itens destacados");
+    copiarSelecionados.addActionListener(menuListener);
+    this.add(copiarSelecionados);
 
-		copiarPreview = new JMenuItem("Copiar imagem do visualizador");
-		copiarPreview.addActionListener(menuListener);
-		this.add(copiarPreview);
-		
-		aumentarGaleria = new JMenuItem("Alterar nº colunas da galeria");
-		aumentarGaleria.addActionListener(menuListener);
-		this.add(aumentarGaleria);
-		
-		if(!App.get().isFTKReport){
-			navigateToParent = new JMenuItem("Navegar para item pai na árvore");
-			navigateToParent.addActionListener(menuListener);
-			this.add(navigateToParent);
-		}
-		
-		
-	}
+    copiarMarcados = new JMenuItem("Exportar propriedades dos itens selecionados");
+    copiarMarcados.addActionListener(menuListener);
+    this.add(copiarMarcados);
+
+    this.addSeparator();
+
+    importarPalavras = new JMenuItem("Importar lista de palavras-chave");
+    importarPalavras.addActionListener(menuListener);
+    this.add(importarPalavras);
+
+    limparBuscas = new JMenuItem("Limpar expressões pesquisadas");
+    limparBuscas.addActionListener(menuListener);
+    this.add(limparBuscas);
+
+    exportTerms = new JMenuItem("Exportar lista de termos indexados");
+    exportTerms.addActionListener(menuListener);
+    this.add(exportTerms);
+
+    this.addSeparator();
+
+    disposicao = new JMenuItem("Alterar disposição vertical/horizontal");
+    disposicao.addActionListener(menuListener);
+    this.add(disposicao);
+
+    copiarPreview = new JMenuItem("Copiar imagem do visualizador");
+    copiarPreview.addActionListener(menuListener);
+    this.add(copiarPreview);
+
+    aumentarGaleria = new JMenuItem("Alterar nº colunas da galeria");
+    aumentarGaleria.addActionListener(menuListener);
+    this.add(aumentarGaleria);
+
+    if (!App.get().isFTKReport) {
+      navigateToParent = new JMenuItem("Navegar para item pai na árvore");
+      navigateToParent.addActionListener(menuListener);
+      this.add(navigateToParent);
+    }
+
+  }
 
 }

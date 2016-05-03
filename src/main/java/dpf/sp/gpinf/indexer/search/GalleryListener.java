@@ -36,153 +36,159 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
-	private GalleryCellEditor cellEditor;
+  private GalleryCellEditor cellEditor;
 
-	@Override
-	public void valueChanged(ListSelectionEvent e) {
+  @Override
+  public void valueChanged(ListSelectionEvent e) {
 
-		if (App.get().resultTab.getSelectedIndex() == 1 && !e.getValueIsAdjusting()) {
-			App.get().resultsTable.clearSelection();
-			App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
-			int[] selRows = App.get().gallery.getSelectedCells();
-            int start = 0;
-            while(start < selRows.length){
-                int i = start + 1;
-                while(i < selRows.length && selRows[i] - selRows[i - 1] == 1)
-                    i++;
-                App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
-                start = i;
+    if (App.get().resultTab.getSelectedIndex() == 1 && !e.getValueIsAdjusting()) {
+      App.get().resultsTable.clearSelection();
+      App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
+      int[] selRows = App.get().gallery.getSelectedCells();
+      int start = 0;
+      while (start < selRows.length) {
+        int i = start + 1;
+        while (i < selRows.length && selRows[i] - selRows[i - 1] == 1) {
+          i++;
+        }
+        App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
+        start = i;
+      }
+      App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
+    }
+
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent arg0) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void mouseEntered(MouseEvent arg0) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void mouseExited(MouseEvent arg0) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void mousePressed(MouseEvent evt) {
+    if (evt.isPopupTrigger()) {
+      App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+
+    }
+
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent evt) {
+
+    if (evt.getClickCount() == 2) {
+
+      new Thread() {
+        public void run() {
+          int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
+          File file = null;
+          try {
+            Document doc = App.get().searcher.doc(docId);
+
+            String export = doc.get(IndexItem.EXPORT);
+            if (export != null && !export.isEmpty()) {
+              file = Util.getRelativeFile(App.get().codePath + "/../..", export);
+              file = Util.getReadOnlyFile(file, doc);
+
+            } else {
+              file = Util.extractSleuthFile(App.get().sleuthCase, doc);
             }
-			App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
-		}
 
-	}
+            if (file != null) {
+              Desktop.getDesktop().open(file.getCanonicalFile());
+            }
 
-	@Override
-	public void mouseClicked(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+          } catch (Exception e) {
+            // e.printStackTrace();
+            try {
+              if (System.getProperty("os.name").startsWith("Windows")) {
+                Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""});
+              } else {
+                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()});
+              }
 
-	}
+            } catch (Exception e2) {
+              e2.printStackTrace();
+              CopiarArquivos.salvarArquivo(docId);
+            }
+          }
+        }
+      }.start();
 
-	@Override
-	public void mouseEntered(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+    } else if (evt.isPopupTrigger()) {
+      App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
 
-	}
+    }
 
-	@Override
-	public void mouseExited(MouseEvent arg0) {
-		// TODO Auto-generated method stub
+  }
 
-	}
+  private boolean shiftDown = false, ctrlDown = false;
 
-	@Override
-	public void mousePressed(MouseEvent evt) {
-		if (evt.isPopupTrigger()) {
-			App.get().menu.show((Component)evt.getSource(), evt.getX(), evt.getY());
+  @Override
+  public void keyPressed(KeyEvent evt) {
 
-		}
+    if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
+      cellEditor.stopCellEditing();
+      int col = App.get().resultsTable.convertColumnIndexToView(1);
+      int firstRow = App.get().resultsTable.getSelectedRow();
+      boolean value = true;
+      if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
+        value = false;
+      }
 
-	}
+      App.get().marcadores.multiSetting = true;
+      for (Integer row : App.get().resultsTable.getSelectedRows()) {
+        App.get().resultsTable.setValueAt(value, row, col);
+      }
+      App.get().marcadores.multiSetting = false;
+      App.get().marcadores.saveState();
+      App.get().marcadores.atualizarGUI();
 
-	@Override
-	public void mouseReleased(MouseEvent evt) {
+    } else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
+      shiftDown = true;
 
-		if (evt.getClickCount() == 2) {
+    } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
+      ctrlDown = true;
+    }
 
-			new Thread() {
-				public void run() {
-					int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
-					File file = null;
-					try {
-						Document doc = App.get().searcher.doc(docId);
+  }
 
-						String export = doc.get(IndexItem.EXPORT);
-						if (export != null && !export.isEmpty()) {
-							file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-							file = Util.getReadOnlyFile(file, doc);
+  @Override
+  public void keyReleased(KeyEvent evt) {
 
-						} else
-							file = Util.extractSleuthFile(App.get().sleuthCase, doc);
+    if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
+      shiftDown = false;
 
-						if (file != null)
-							Desktop.getDesktop().open(file.getCanonicalFile());
+    } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
+      ctrlDown = false;
+    }
 
-					} catch (Exception e) {
-						// e.printStackTrace();
-						try {
-							if (System.getProperty("os.name").startsWith("Windows"))
-								Runtime.getRuntime().exec(new String[] { "rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\"" });
-							else
-								Runtime.getRuntime().exec(new String[] { "xdg-open", file.toURI().toURL().toString() });
-							
-						} catch (Exception e2) {
-							e2.printStackTrace();
-							CopiarArquivos.salvarArquivo(docId);
-						}
-					}
-				}
-			}.start();
+  }
 
-		} else if (evt.isPopupTrigger()) {
-			App.get().menu.show((Component)evt.getSource(), evt.getX(), evt.getY());
+  @Override
+  public void keyTyped(KeyEvent arg0) {
+    // TODO Auto-generated method stub
 
-		}
+  }
 
-	}
+  public void setCellEditor(GalleryCellEditor cellEditor) {
+    this.cellEditor = cellEditor;
+  }
 
-	private boolean shiftDown = false, ctrlDown = false;
-
-	@Override
-	public void keyPressed(KeyEvent evt) {
-
-		if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-			cellEditor.stopCellEditing();
-			int col = App.get().resultsTable.convertColumnIndexToView(1);
-			int firstRow = App.get().resultsTable.getSelectedRow();
-			boolean value = true;
-			if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col))
-				value = false;
-
-			App.get().marcadores.multiSetting = true;
-			for (Integer row : App.get().resultsTable.getSelectedRows())
-				App.get().resultsTable.setValueAt(value, row, col);
-			App.get().marcadores.multiSetting = false;
-			App.get().marcadores.saveState();
-			App.get().marcadores.atualizarGUI();
-
-		} else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-			shiftDown = true;
-
-		} else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-			ctrlDown = true;
-		}
-
-	}
-
-	@Override
-	public void keyReleased(KeyEvent evt) {
-
-		if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-			shiftDown = false;
-
-		} else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-			ctrlDown = false;
-		}
-
-	}
-
-	@Override
-	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void setCellEditor(GalleryCellEditor cellEditor) {
-		this.cellEditor = cellEditor;
-	}
-
-	public GalleryCellEditor getCellEditor() {
-		return cellEditor;
-	}
+  public GalleryCellEditor getCellEditor() {
+    return cellEditor;
+  }
 }

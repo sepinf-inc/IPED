@@ -41,154 +41,164 @@ import gpinf.dev.data.EvidenceFile;
 /**
  * Classe para calcular e manipular hashes.
  */
-public class HashTask extends AbstractTask{
+public class HashTask extends AbstractTask {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
-	
-	public static String EDONKEY = "edonkey";
-	
-	private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
-	
-	public HashTask(Worker worker){
-		super(worker);
-	}
-	
-	@Override
-	public void init(Properties confProps, File confDir) throws Exception {
-		String value = confProps.getProperty("hash");
-		if (value != null)
-			value = value.trim();
-		if (value != null && !value.isEmpty()){
-			for(String algorithm : value.split(";")){
-				algorithm = algorithm.trim();
-				MessageDigest digest = null;
-				if(!algorithm.equalsIgnoreCase(EDONKEY))
-					digest = MessageDigest.getInstance(algorithm.toUpperCase());
-				else
-					digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider());
-				digestMap.put(algorithm, digest);
-			}
-			
-		}
-		
-	}
+  private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
 
-	@Override
-	public void finish() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
+  public static String EDONKEY = "edonkey";
 
-	public void process(EvidenceFile evidence) {
-		
-		if(evidence.isQueueEnd())
-			return;
-		
-		if(evidence.getHash() != null || digestMap.isEmpty() ||
-		   evidence.getExtraAttribute(IgnoreHardLinkTask.IGNORE_HARDLINK_ATTR) != null)
-			return;
-		
-		InputStream in = null;
-		try {
-			in = evidence.getBufferedStream();
-			byte[] buf = new byte[1024 * 1024];
-			int len;
-			while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted())
-				for(String algo : digestMap.keySet()){
-					if(!algo.equals(EDONKEY))
-						digestMap.get(algo).update(buf, 0, len);
-					else
-						updateEd2k(buf, len);
-				}
-			
-			boolean defaultHash = true;
-			for(String algo : digestMap.keySet()){
-				byte[] hash;
-				if(!algo.equals(EDONKEY))
-					hash = digestMap.get(algo).digest();
-				else
-					hash = digestEd2k();
-				
-				String hashString = getHashString(hash);
-				evidence.setExtraAttribute(algo, hashString);
-				
-				if(defaultHash)
-					evidence.setHash(hashString);
-				defaultHash = false;
-			}
-			
+  private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 
-		} catch (Exception e) {
-			if(e instanceof IOException){
-				evidence.setExtraAttribute("ioError", "true");
-				stats.incIoErrors();
-			}
-			LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
-			//e.printStackTrace();
-			
-		} finally {
-			IOUtil.closeQuietly(in);
-		}
+  public HashTask(Worker worker) {
+    super(worker);
+  }
 
-	}
-	
-	private static int CHUNK_SIZE = 9500 * 1024;
-	private int chunk = 0, total = 0;
-	private ByteArrayOutputStream out = new ByteArrayOutputStream();
-	
-	private void updateEd2k(byte[] buffer, int len) throws IOException{
-		
-		MessageDigest md4 = digestMap.get(EDONKEY);
-		if (chunk + len >= CHUNK_SIZE) {
-            int offset = CHUNK_SIZE - chunk;
-            md4.update(buffer, 0, offset);
-            out.write(md4.digest());
-            chunk = len - offset;
-            md4.update(buffer, offset, chunk);
+  @Override
+  public void init(Properties confProps, File confDir) throws Exception {
+    String value = confProps.getProperty("hash");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+      for (String algorithm : value.split(";")) {
+        algorithm = algorithm.trim();
+        MessageDigest digest = null;
+        if (!algorithm.equalsIgnoreCase(EDONKEY)) {
+          digest = MessageDigest.getInstance(algorithm.toUpperCase());
         } else {
-            md4.update(buffer, 0, len);
-            chunk += len;
+          digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider());
         }
-        total += len;
-	}
-	
-	private byte[] digestEd2k() throws IOException{
-		
-		MessageDigest md4 = digestMap.get(EDONKEY);
-	    if(total == 0 || total % CHUNK_SIZE != 0)
-	    	out.write(md4.digest());
+        digestMap.put(algorithm, digest);
+      }
 
-	    if (out.size() > md4.getDigestLength()) {
-	        md4.update(out.toByteArray());
-	        out.reset();
-	        out.write(md4.digest());
-	    }
-	    
-	    byte[] ed2k = out.toByteArray();
-	    
-	    chunk = 0; total = 0;
-		out = new ByteArrayOutputStream();
-	    
-	    return ed2k;
-	}
+    }
 
-	public static String getHashString(byte[] hash) {
-		StringBuilder result = new StringBuilder();
-		for (byte b : hash)
-			result.append(String.format("%1$02X", b));
+  }
 
-		return result.toString();
-	}
-	
-	@Deprecated
-	public static class HashValue extends dpf.sp.gpinf.indexer.util.HashValue{
+  @Override
+  public void finish() throws Exception {
+    // TODO Auto-generated method stub
 
-		private static final long serialVersionUID = 1L;
-		
-		public HashValue(String hash) {
-			super(hash);
-		}
-		
-	}
+  }
+
+  public void process(EvidenceFile evidence) {
+
+    if (evidence.isQueueEnd()) {
+      return;
+    }
+
+    if (evidence.getHash() != null || digestMap.isEmpty()
+        || evidence.getExtraAttribute(IgnoreHardLinkTask.IGNORE_HARDLINK_ATTR) != null) {
+      return;
+    }
+
+    InputStream in = null;
+    try {
+      in = evidence.getBufferedStream();
+      byte[] buf = new byte[1024 * 1024];
+      int len;
+      while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+        for (String algo : digestMap.keySet()) {
+          if (!algo.equals(EDONKEY)) {
+            digestMap.get(algo).update(buf, 0, len);
+          } else {
+            updateEd2k(buf, len);
+          }
+        }
+      }
+
+      boolean defaultHash = true;
+      for (String algo : digestMap.keySet()) {
+        byte[] hash;
+        if (!algo.equals(EDONKEY)) {
+          hash = digestMap.get(algo).digest();
+        } else {
+          hash = digestEd2k();
+        }
+
+        String hashString = getHashString(hash);
+        evidence.setExtraAttribute(algo, hashString);
+
+        if (defaultHash) {
+          evidence.setHash(hashString);
+        }
+        defaultHash = false;
+      }
+
+    } catch (Exception e) {
+      if (e instanceof IOException) {
+        evidence.setExtraAttribute("ioError", "true");
+        stats.incIoErrors();
+      }
+      LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      //e.printStackTrace();
+
+    } finally {
+      IOUtil.closeQuietly(in);
+    }
+
+  }
+
+  private static int CHUNK_SIZE = 9500 * 1024;
+  private int chunk = 0, total = 0;
+  private ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+  private void updateEd2k(byte[] buffer, int len) throws IOException {
+
+    MessageDigest md4 = digestMap.get(EDONKEY);
+    if (chunk + len >= CHUNK_SIZE) {
+      int offset = CHUNK_SIZE - chunk;
+      md4.update(buffer, 0, offset);
+      out.write(md4.digest());
+      chunk = len - offset;
+      md4.update(buffer, offset, chunk);
+    } else {
+      md4.update(buffer, 0, len);
+      chunk += len;
+    }
+    total += len;
+  }
+
+  private byte[] digestEd2k() throws IOException {
+
+    MessageDigest md4 = digestMap.get(EDONKEY);
+    if (total == 0 || total % CHUNK_SIZE != 0) {
+      out.write(md4.digest());
+    }
+
+    if (out.size() > md4.getDigestLength()) {
+      md4.update(out.toByteArray());
+      out.reset();
+      out.write(md4.digest());
+    }
+
+    byte[] ed2k = out.toByteArray();
+
+    chunk = 0;
+    total = 0;
+    out = new ByteArrayOutputStream();
+
+    return ed2k;
+  }
+
+  public static String getHashString(byte[] hash) {
+    StringBuilder result = new StringBuilder();
+    for (byte b : hash) {
+      result.append(String.format("%1$02X", b));
+    }
+
+    return result.toString();
+  }
+
+  @Deprecated
+  public static class HashValue extends dpf.sp.gpinf.indexer.util.HashValue {
+
+    private static final long serialVersionUID = 1L;
+
+    public HashValue(String hash) {
+      super(hash);
+    }
+
+  }
 
 }

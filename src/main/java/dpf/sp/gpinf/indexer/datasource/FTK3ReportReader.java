@@ -37,174 +37,187 @@ import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 
-public class FTK3ReportReader extends DataSourceReader{
-	
-	private Set<Integer> ADList = new HashSet<Integer>();
-	public static boolean wasExecuted = false;
-	private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportReader.class);
+public class FTK3ReportReader extends DataSourceReader {
 
-	public FTK3ReportReader(CaseData caseData, File output, boolean listOnly) {
-		super(caseData, output, listOnly);
-	}
-	
-	@Override
-	public boolean isSupported(File source) {
-		return (new File(source, "files")).exists() && bookmarkExists(source);
-	}
+  private Set<Integer> ADList = new HashSet<Integer>();
+  public static boolean wasExecuted = false;
+  private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportReader.class);
 
-	public int read(File report) throws Exception {
-		
-		caseData.setContainsReport(true);
-		wasExecuted = true;
-		
-		String relativePath = Util.getRelativePath(output, report);
-		if (!relativePath.isEmpty())
-			relativePath += "/";
+  public FTK3ReportReader(CaseData caseData, File output, boolean listOnly) {
+    super(caseData, output, listOnly);
+  }
 
-		int alternativeFiles = 0;
-		if (listOnly)
-			lerListaDeArquivos(new File(report, "files"));
+  @Override
+  public boolean isSupported(File source) {
+    return (new File(source, "files")).exists() && bookmarkExists(source);
+  }
 
-		if (!listOnly) {
-			String caseName = getFTK3CaseName(report);
-			
-			IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
-			LOGGER.info("Obtendo propriedades do banco...");
-			
-			FTKDatabase ds = FTKDatabase.get(caseName, report);
-			ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
-		}
+  public int read(File report) throws Exception {
 
-		return alternativeFiles;
-	}
+    caseData.setContainsReport(true);
+    wasExecuted = true;
 
-	private int lerListaDeArquivos(File file) throws Exception {
+    String relativePath = Util.getRelativePath(output, report);
+    if (!relativePath.isEmpty()) {
+      relativePath += "/";
+    }
 
-		int alternativeFiles = 0;
-		String[] names = file.list();
-		if (names != null)
-			for (int i = 0; i < names.length; i++) {
-				if (Thread.interrupted())
-					throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+    int alternativeFiles = 0;
+    if (listOnly) {
+      lerListaDeArquivos(new File(report, "files"));
+    }
 
-				File subFile = new File(file, names[i]);
-				if (subFile.isDirectory())
-					alternativeFiles += lerListaDeArquivos(subFile);
-				else {
-					// TODO contagem de descobertos e alternativos falha caso só
-					// haja versão de visualização do arquivo
-					// realizar contagem correta utilizará mais memória
+    if (!listOnly) {
+      String caseName = getFTK3CaseName(report);
+
+      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
+      LOGGER.info("Obtendo propriedades do banco...");
+
+      FTKDatabase ds = FTKDatabase.get(caseName, report);
+      ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
+    }
+
+    return alternativeFiles;
+  }
+
+  private int lerListaDeArquivos(File file) throws Exception {
+
+    int alternativeFiles = 0;
+    String[] names = file.list();
+    if (names != null) {
+      for (int i = 0; i < names.length; i++) {
+        if (Thread.interrupted()) {
+          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+        }
+
+        File subFile = new File(file, names[i]);
+        if (subFile.isDirectory()) {
+          alternativeFiles += lerListaDeArquivos(subFile);
+        } else {
+          // TODO contagem de descobertos e alternativos falha caso só
+          // haja versão de visualização do arquivo
+          // realizar contagem correta utilizará mais memória
 					/*
-					 * if(names[i].contains(".[AD].")){ if(listOnly)
-					 * alternativeFiles++; else try{ int id =
-					 * Integer.valueOf(names[i].substring(0,
-					 * names[i].indexOf("."))); ADList.add(id);
-					 * }catch(NumberFormatException e){ throw new
-					 * NumberFormatException("ID do arquivo '" +
-					 * subFile.getPath() +
-					 * "' não identificado. Os arquivos foram exportados usando o ID como nomenclatura?"
-					 * ); } }else if(listOnly){
-					 */
-					caseData.incDiscoveredEvidences(1);
-					//IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
-					caseData.incDiscoveredVolume(subFile.length());
-					// }
+           * if(names[i].contains(".[AD].")){ if(listOnly)
+           * alternativeFiles++; else try{ int id =
+           * Integer.valueOf(names[i].substring(0,
+           * names[i].indexOf("."))); ADList.add(id);
+           * }catch(NumberFormatException e){ throw new
+           * NumberFormatException("ID do arquivo '" +
+           * subFile.getPath() +
+           * "' não identificado. Os arquivos foram exportados usando o ID como nomenclatura?"
+           * ); } }else if(listOnly){
+           */
+          caseData.incDiscoveredEvidences(1);
+          //IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences());
+          caseData.incDiscoveredVolume(subFile.length());
+          // }
 
-				}
-			}
-		return alternativeFiles;
-	}
+        }
+      }
+    }
+    return alternativeFiles;
+  }
 
-	public static boolean bookmarkExists(File report) {
-		boolean hasBookmark = false;
-		for (String fileName : report.list()) {
-			if (fileName.contains("Bookmark_bk_ID")) {
-				hasBookmark = true;
-				break;
-			}
-		}
-		return hasBookmark;
-	}
+  public static boolean bookmarkExists(File report) {
+    boolean hasBookmark = false;
+    for (String fileName : report.list()) {
+      if (fileName.contains("Bookmark_bk_ID")) {
+        hasBookmark = true;
+        break;
+      }
+    }
+    return hasBookmark;
+  }
 
-	public static String getFTKVersion(File report) throws Exception {
-		String version = "";
-		if ((new File(report, "CaseInfo.html")).exists()) {
-			File file = new File(report, "CaseInfo.html");
-			Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-			String contents = "";
-			char[] buf = new char[(int) file.length()];
-			int count;
-			while ((count = reader.read(buf)) != -1)
-				contents += new String(buf, 0, count);
-			reader.close();
+  public static String getFTKVersion(File report) throws Exception {
+    String version = "";
+    if ((new File(report, "CaseInfo.html")).exists()) {
+      File file = new File(report, "CaseInfo.html");
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+      String contents = "";
+      char[] buf = new char[(int) file.length()];
+      int count;
+      while ((count = reader.read(buf)) != -1) {
+        contents += new String(buf, 0, count);
+      }
+      reader.close();
 
-			String str = "Versão</td><td>Versão do AccessData Forensic Toolkit: ";
-			if (contents.contains(str)) {
-				int start = contents.indexOf(str) + str.length();
-				version = contents.substring(start, contents.indexOf("</td>", start));
-			} else
-				throw new Exception("'Versão' não encontrada em CaseInfo.html. O relatório está em português?");
-		} else
-			throw new FileNotFoundException("'CaseInfo.html' não encontrado. Defina manualmente 'versaoFTK' nas configurações.");
+      String str = "Versão</td><td>Versão do AccessData Forensic Toolkit: ";
+      if (contents.contains(str)) {
+        int start = contents.indexOf(str) + str.length();
+        version = contents.substring(start, contents.indexOf("</td>", start));
+      } else {
+        throw new Exception("'Versão' não encontrada em CaseInfo.html. O relatório está em português?");
+      }
+    } else {
+      throw new FileNotFoundException("'CaseInfo.html' não encontrado. Defina manualmente 'versaoFTK' nas configurações.");
+    }
 
-		LOGGER.info("Detectado relatório gerado pelo FTK {}", version);
-		return version;
-	}
+    LOGGER.info("Detectado relatório gerado pelo FTK {}", version);
+    return version;
+  }
 
-	public static HashSet<String> getBookmarks(File report) throws Exception {
-		HashSet<String> bookmarks = new HashSet<String>();
-		File file = new File(report, "Bookmarks.html");
-		if (file.exists()) {
-			Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-			String contents = "";
-			char[] buf = new char[(int) file.length()];
-			int count;
-			while ((count = reader.read(buf)) != -1)
-				contents += new String(buf, 0, count);
-			reader.close();
+  public static HashSet<String> getBookmarks(File report) throws Exception {
+    HashSet<String> bookmarks = new HashSet<String>();
+    File file = new File(report, "Bookmarks.html");
+    if (file.exists()) {
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+      String contents = "";
+      char[] buf = new char[(int) file.length()];
+      int count;
+      while ((count = reader.read(buf)) != -1) {
+        contents += new String(buf, 0, count);
+      }
+      reader.close();
 
-			String str1 = ".html\"><span";
-			String str2 = "</span>";
-			int off = 0, idx1 = 0, idx2 = 0;
-			while ((off = contents.indexOf(str1, idx2)) != -1) {
-				idx1 = contents.indexOf(">", off + str1.length()) + 1;
-				idx2 = contents.indexOf(str2, idx1);
-				String bookmark = contents.substring(idx1, idx2);
-				bookmarks.add(bookmark);
-			}
+      String str1 = ".html\"><span";
+      String str2 = "</span>";
+      int off = 0, idx1 = 0, idx2 = 0;
+      while ((off = contents.indexOf(str1, idx2)) != -1) {
+        idx1 = contents.indexOf(">", off + str1.length()) + 1;
+        idx2 = contents.indexOf(str2, idx1);
+        String bookmark = contents.substring(idx1, idx2);
+        bookmarks.add(bookmark);
+      }
 
-			if (bookmarks.size() == 0)
-				throw new Exception("Bookmarks não encontrados em " + file.getAbsolutePath());
-			else
-				LOGGER.info("Detectados {} bookmarks no relatório.", bookmarks.size());
+      if (bookmarks.size() == 0) {
+        throw new Exception("Bookmarks não encontrados em " + file.getAbsolutePath());
+      } else {
+        LOGGER.info("Detectados {} bookmarks no relatório.", bookmarks.size());
+      }
 
-		} else
-			throw new FileNotFoundException(file.getName() + " não encontrado!");
+    } else {
+      throw new FileNotFoundException(file.getName() + " não encontrado!");
+    }
 
-		return bookmarks;
-	}
+    return bookmarks;
+  }
 
-	public String getFTK3CaseName(File report) throws Exception {
-		File file = new File(report, "CaseInfo.html");
-		if (file.exists() && bookmarkExists(report)) {
-			Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-			String contents = "";
-			char[] buf = new char[(int) file.length()];
-			int count;
-			while ((count = reader.read(buf)) != -1)
-				contents += new String(buf, 0, count);
+  public String getFTK3CaseName(File report) throws Exception {
+    File file = new File(report, "CaseInfo.html");
+    if (file.exists() && bookmarkExists(report)) {
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+      String contents = "";
+      char[] buf = new char[(int) file.length()];
+      int count;
+      while ((count = reader.read(buf)) != -1) {
+        contents += new String(buf, 0, count);
+      }
 
-			reader.close();
-			String str = "Nome do caso</td><td>";
-			if (contents.contains(str)) {
-				int start = contents.indexOf(str) + str.length();
-				String caseName = contents.substring(start, contents.indexOf("</td>", start));
-				LOGGER.info("Detectado caso {}", caseName);
-				return caseName;
-			} else
-				throw new Exception("Nome do caso não encontrado em CaseInfo.html. O relatório está em português?");
-		}else
-			throw new Exception("Arquivo necessário não encontrado: CaseInfo.html");
-	}
+      reader.close();
+      String str = "Nome do caso</td><td>";
+      if (contents.contains(str)) {
+        int start = contents.indexOf(str) + str.length();
+        String caseName = contents.substring(start, contents.indexOf("</td>", start));
+        LOGGER.info("Detectado caso {}", caseName);
+        return caseName;
+      } else {
+        throw new Exception("Nome do caso não encontrado em CaseInfo.html. O relatório está em português?");
+      }
+    } else {
+      throw new Exception("Arquivo necessário não encontrado: CaseInfo.html");
+    }
+  }
 
 }

@@ -38,107 +38,113 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
-	ArrayList<Integer> uniqueIds;
-	File dir, subdir;
-	ProgressMonitor progressMonitor;
+  ArrayList<Integer> uniqueIds;
+  File dir, subdir;
+  ProgressMonitor progressMonitor;
 
-	public CopiarArquivos(File dir, ArrayList<Integer> uniqueIds) {
-		this.dir = dir;
-		this.subdir = dir;
-		this.uniqueIds = uniqueIds;
+  public CopiarArquivos(File dir, ArrayList<Integer> uniqueIds) {
+    this.dir = dir;
+    this.subdir = dir;
+    this.uniqueIds = uniqueIds;
 
-		progressMonitor = new ProgressMonitor(App.get(), "", "", 0, uniqueIds.size());
-		this.addPropertyChangeListener(this);
-	}
+    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, uniqueIds.size());
+    this.addPropertyChangeListener(this);
+  }
 
-	private String addExtension(String srcName, String dstName) {
-		int srcExtIndex;
-		if ((srcExtIndex = srcName.lastIndexOf('.')) > -1) {
-			String srcExt = srcName.substring(srcExtIndex);
-			if (!dstName.endsWith(srcExt)) {
-				if (srcName.endsWith(".[AD]" + srcExt))
-					srcExt = ".[AD]" + srcExt;
-				dstName += srcExt;
-			}
-		}
-		return dstName;
-	}
+  private String addExtension(String srcName, String dstName) {
+    int srcExtIndex;
+    if ((srcExtIndex = srcName.lastIndexOf('.')) > -1) {
+      String srcExt = srcName.substring(srcExtIndex);
+      if (!dstName.endsWith(srcExt)) {
+        if (srcName.endsWith(".[AD]" + srcExt)) {
+          srcExt = ".[AD]" + srcExt;
+        }
+        dstName += srcExt;
+      }
+    }
+    return dstName;
+  }
 
-	@Override
-	protected Boolean doInBackground() throws Exception {
-		int progress = 0, subdirCount = 1;
-		for (Integer docId : uniqueIds) {
-			try {
-				if (progress % 1000 == 0 && progress > 0) {
-					do{
-						subdir = new File(dir, Integer.toString(subdirCount++));
-					}while(!subdir.mkdir());
-				}
+  @Override
+  protected Boolean doInBackground() throws Exception {
+    int progress = 0, subdirCount = 1;
+    for (Integer docId : uniqueIds) {
+      try {
+        if (progress % 1000 == 0 && progress > 0) {
+          do {
+            subdir = new File(dir, Integer.toString(subdirCount++));
+          } while (!subdir.mkdir());
+        }
 
-				Document doc = App.get().searcher.doc(docId);
-				String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
-				String export = doc.get(IndexItem.EXPORT);
+        Document doc = App.get().searcher.doc(docId);
+        String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
+        String export = doc.get(IndexItem.EXPORT);
 
-				InputStream in;
-				if (export != null && !export.isEmpty()) {
-					File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
-					if(doc.get(IndexItem.OFFSET) == null)
-						dstName = addExtension(src.getName(), dstName);
-					in = Util.getStream(src, doc);
-				} else
-					in = Util.getSleuthStream(App.get().sleuthCase, doc);
+        InputStream in;
+        if (export != null && !export.isEmpty()) {
+          File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
+          if (doc.get(IndexItem.OFFSET) == null) {
+            dstName = addExtension(src.getName(), dstName);
+          }
+          in = Util.getStream(src, doc);
+        } else {
+          in = Util.getSleuthStream(App.get().sleuthCase, doc);
+        }
 
-				File dst = new File(subdir, dstName);
-				int num = 1;
-				while (dst.exists())
-					dst = new File(subdir, Util.concat(dstName, num++));
+        File dst = new File(subdir, dstName);
+        int num = 1;
+        while (dst.exists()) {
+          dst = new File(subdir, Util.concat(dstName, num++));
+        }
 
-				BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
+        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
 
-				IOUtil.copiaArquivo(in, out);
+        IOUtil.copiaArquivo(in, out);
 
-				in.close();
-				out.close();
+        in.close();
+        out.close();
 
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+      } catch (Exception e1) {
+        e1.printStackTrace();
+      }
 
-			this.firePropertyChange("progress", progress, ++progress);
+      this.firePropertyChange("progress", progress, ++progress);
 
-			if (this.isCancelled())
-				break;
-		}
+      if (this.isCancelled()) {
+        break;
+      }
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-		if ("progress" == evt.getPropertyName()) {
-			int progress = (Integer) evt.getNewValue();
-			progressMonitor.setProgress(progress);
-			progressMonitor.setNote("Copiando " + progress + " de " + uniqueIds.size());
-		}
-		if (progressMonitor.isCanceled())
-			this.cancel(true);
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if ("progress" == evt.getPropertyName()) {
+      int progress = (Integer) evt.getNewValue();
+      progressMonitor.setProgress(progress);
+      progressMonitor.setNote("Copiando " + progress + " de " + uniqueIds.size());
+    }
+    if (progressMonitor.isCanceled()) {
+      this.cancel(true);
+    }
 
-	}
+  }
 
-	public static void salvarArquivo(int docId) {
-		try {
-			ArrayList<Integer> uniqueDoc = new ArrayList<Integer>();
-			uniqueDoc.add(docId);
-			JFileChooser fileChooser = new JFileChooser();
-			fileChooser.setFileFilter(null);
-			fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-				File dir = fileChooser.getSelectedFile();
-				(new CopiarArquivos(dir, uniqueDoc)).execute();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+  public static void salvarArquivo(int docId) {
+    try {
+      ArrayList<Integer> uniqueDoc = new ArrayList<Integer>();
+      uniqueDoc.add(docId);
+      JFileChooser fileChooser = new JFileChooser();
+      fileChooser.setFileFilter(null);
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+        File dir = fileChooser.getSelectedFile();
+        (new CopiarArquivos(dir, uniqueDoc)).execute();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
 }

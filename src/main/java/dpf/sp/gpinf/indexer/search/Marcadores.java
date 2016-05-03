@@ -39,371 +39,389 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4728708012271393485L;
-	/**
-	 * 
-	 */
-	public static String HISTORY_DIV = "-----------------------Histórico-----------------------";
-	
-	public static String EXT = "." + Versao.APP_EXT.toLowerCase();
-	public static String STATEFILENAME = "marcadores" + EXT;
-	static int labelBits = Byte.SIZE;
+  /**
+   *
+   */
+  private static final long serialVersionUID = -4728708012271393485L;
+  /**
+   *
+   */
+  public static String HISTORY_DIV = "-----------------------Histórico-----------------------";
 
-	boolean[] selected, read;
-	ArrayList<byte[]> labels;
-	int selectedItens = 0;
-	TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
+  public static String EXT = "." + Versao.APP_EXT.toLowerCase();
+  public static String STATEFILENAME = "marcadores" + EXT;
+  static int labelBits = Byte.SIZE;
 
-	LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
-	private File indexDir;
-	File stateFile, cookie;
-	public boolean multiSetting = false;
+  boolean[] selected, read;
+  ArrayList<byte[]> labels;
+  int selectedItens = 0;
+  TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
 
-	private static JFileChooser fileChooser;
-	private static SearchStateFilter filtro;
+  LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
+  private File indexDir;
+  File stateFile, cookie;
+  public boolean multiSetting = false;
 
-	public Marcadores(final String basePath) {
-		selected = new boolean[App.get().lastId + 1];
-		//read = new boolean[App.get().lastId + 1];
-		labels = new ArrayList<byte[]>();
-		indexDir = new File(basePath, "index");
-		long date = indexDir.lastModified();
-		cookie = new File(Configuration.javaTmpDir, "indexer" + date + EXT);
-		stateFile = new File(basePath, STATEFILENAME);
-		try {
-			stateFile = stateFile.getCanonicalFile();
-		} catch (IOException e) {}
-			
+  private static JFileChooser fileChooser;
+  private static SearchStateFilter filtro;
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				fileChooser = new JFileChooser();
-				fileChooser.setCurrentDirectory(new File(basePath));
-				filtro = new SearchStateFilter();
-			}
-		});
+  public Marcadores(final String basePath) {
+    selected = new boolean[App.get().lastId + 1];
+    //read = new boolean[App.get().lastId + 1];
+    labels = new ArrayList<byte[]>();
+    indexDir = new File(basePath, "index");
+    long date = indexDir.lastModified();
+    cookie = new File(Configuration.javaTmpDir, "indexer" + date + EXT);
+    stateFile = new File(basePath, STATEFILENAME);
+    try {
+      stateFile = stateFile.getCanonicalFile();
+    } catch (IOException e) {
+    }
 
-	}
-	
-	public void resetAndSetIndexDir(File indexDir){
-		//read = null;
-		selected = null;
-		selectedItens = 0;
-		typedWords = new LinkedHashSet<String>();
-		this.indexDir = indexDir;
-	}
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File(basePath));
+        filtro = new SearchStateFilter();
+      }
+    });
 
-	public File getIndexDir() {
-		return indexDir;
-	}
-	
-	public TreeMap<Integer, String> getLabelMap(){
-		return labelNames;
-	}
+  }
 
-	public String getLabels(int id) {
+  public void resetAndSetIndexDir(File indexDir) {
+    //read = null;
+    selected = null;
+    selectedItens = 0;
+    typedWords = new LinkedHashSet<String>();
+    this.indexDir = indexDir;
+  }
 
-		ArrayList<Integer> labelIds = getLabelIds(id);
-		String result = "";
-		for (int i = 0; i < labelIds.size(); i++) {
-			result += labelNames.get(labelIds.get(i));
-			if (i < labelIds.size() - 1)
-				result += " | ";
-		}
+  public File getIndexDir() {
+    return indexDir;
+  }
 
-		return result;
-	}
-	
-	public ArrayList<Integer> getLabelIds(int id){
-		ArrayList<Integer> labelIds = new ArrayList<Integer>();
-		if (labelNames.size() > 0)
-			for (int i : labelNames.keySet()) {
-				if(hasLabel(id, i))
-					labelIds.add(i);
-			}
-		
-		return labelIds;
-	}
+  public TreeMap<Integer, String> getLabelMap() {
+    return labelNames;
+  }
 
+  public String getLabels(int id) {
 
-	public void addLabel(ArrayList<Integer> ids, int label) {
-		int labelOrder = label / labelBits;
-		int labelMod = label % labelBits;
-		for (int i = 0; i < ids.size(); i++) {
-			int id = ids.get(i);
-			labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] | (1 << labelMod));
-		}
+    ArrayList<Integer> labelIds = getLabelIds(id);
+    String result = "";
+    for (int i = 0; i < labelIds.size(); i++) {
+      result += labelNames.get(labelIds.get(i));
+      if (i < labelIds.size() - 1) {
+        result += " | ";
+      }
+    }
 
-	}
-	
-	public final boolean hasLabel(int id){
-		boolean hasLabel = false;
-		for(byte[] b : labels){
-			hasLabel = b[id] != 0;
-			if(hasLabel)
-				return true;
-		}
-		return hasLabel;
-	}
-	
-	public final byte[] getLabelBits(int[] labelids){
-		byte[] bits = new byte[labels.size()];  
-		for(int label : labelids)
-			bits[label / labelBits] |= (int) Math.pow(2, label % labelBits);
-		
-		return bits;
-	}
-	
-	public final boolean hasLabel(int id, byte[] labelbits){
-		boolean hasLabel = false;
-		for(int i = 0; i < labelbits.length; i++){
-			hasLabel = (labels.get(i)[id] & labelbits[i]) != 0;
-			if(hasLabel)
-				return true;
-		}
-		return hasLabel;
-	}
-	
-	public final boolean hasLabel(int id, int label) {
-		int p = (int) Math.pow(2, label % labelBits);
-		int bit = labels.get(label / labelBits)[id] & p;
-		return bit != 0;
+    return result;
+  }
 
-	}
+  public ArrayList<Integer> getLabelIds(int id) {
+    ArrayList<Integer> labelIds = new ArrayList<Integer>();
+    if (labelNames.size() > 0) {
+      for (int i : labelNames.keySet()) {
+        if (hasLabel(id, i)) {
+          labelIds.add(i);
+        }
+      }
+    }
 
-	public void removeLabel(ArrayList<Integer> ids, int label) {
-		int labelOrder = label / labelBits;
-		int labelMod = label % labelBits;
-		for (int i = 0; i < ids.size(); i++) {
-			int id = ids.get(i);
-			labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] & (~(1 << labelMod)));
-		}
+    return labelIds;
+  }
 
-	}
+  public void addLabel(ArrayList<Integer> ids, int label) {
+    int labelOrder = label / labelBits;
+    int labelMod = label % labelBits;
+    for (int i = 0; i < ids.size(); i++) {
+      int id = ids.get(i);
+      labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] | (1 << labelMod));
+    }
 
-	public int newLabel(String labelName) {
-		
-		int labelId = -1;
-		if (labelNames.size() > 0)
-			for (int i = 0; i <= labelNames.lastKey(); i++)
-				if (labelNames.get(i) == null) {
-					labelId = i;
-					break;
-				}
+  }
 
-		if (labelId == -1 && labelNames.size() % labelBits == 0) {
-			byte[] newLabels = new byte[App.get().lastId + 1];
-			labels.add(newLabels);
-		}
-		if (labelId == -1)
-			labelId = labelNames.size();
+  public final boolean hasLabel(int id) {
+    boolean hasLabel = false;
+    for (byte[] b : labels) {
+      hasLabel = b[id] != 0;
+      if (hasLabel) {
+        return true;
+      }
+    }
+    return hasLabel;
+  }
 
-		labelNames.put(labelId, labelName);
+  public final byte[] getLabelBits(int[] labelids) {
+    byte[] bits = new byte[labels.size()];
+    for (int label : labelids) {
+      bits[label / labelBits] |= (int) Math.pow(2, label % labelBits);
+    }
 
-		return labelId;
-	}
+    return bits;
+  }
 
-	public void delLabel(int label) {
-		
-		labelNames.remove(label);
-		
-		int labelOrder = label / labelBits;
-		int labelMod = label % labelBits;
-		for (int i = 0; i < labels.get(labelOrder).length; i++) {
-			labels.get(labelOrder)[i] = (byte) (labels.get(labelOrder)[i] & (~(1 << labelMod)));
-		}
-	}
-	
-	public void changeLabel(int labelId, String newLabel){
-		labelNames.put(labelId, newLabel);
-	}
+  public final boolean hasLabel(int id, byte[] labelbits) {
+    boolean hasLabel = false;
+    for (int i = 0; i < labelbits.length; i++) {
+      hasLabel = (labels.get(i)[id] & labelbits[i]) != 0;
+      if (hasLabel) {
+        return true;
+      }
+    }
+    return hasLabel;
+  }
 
-	public int getLabelId(String labelName) {
-		for (int i : labelNames.keySet())
-			if (labelNames.get(i).equals(labelName))
-				return i;
+  public final boolean hasLabel(int id, int label) {
+    int p = (int) Math.pow(2, label % labelBits);
+    int bit = labels.get(label / labelBits)[id] & p;
+    return bit != 0;
 
-		return -1;
-	}
-	
-	private boolean canCreateFile(File dir){
-		boolean result;
-		File test = new File(dir, "writeTest");
-		try {
-			result = test.createNewFile();
-			
-		} catch (IOException e) {
-			result = false;
-		}
-		test.delete();
-		
-		return result;
-	}
+  }
 
-	public void saveState() {
-		try {			
-			if(stateFile.canWrite() || (!stateFile.exists() && canCreateFile(stateFile.getParentFile())))
-				saveState(stateFile);
-			else
-				saveState(cookie);
+  public void removeLabel(ArrayList<Integer> ids, int label) {
+    int labelOrder = label / labelBits;
+    int labelMod = label % labelBits;
+    for (int i = 0; i < ids.size(); i++) {
+      int id = ids.get(i);
+      labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] & (~(1 << labelMod)));
+    }
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+  }
 
-	public void saveState(File file) throws IOException {
-		Util.writeObject(this, file.getAbsolutePath());
-	}
+  public int newLabel(String labelName) {
 
-	public void askAndSaveState() {
-		fileChooser.setFileFilter(filtro);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-			File file = fileChooser.getSelectedFile();
-			if (!file.getName().endsWith(EXT))
-				file = new File(file.getPath() + EXT);
+    int labelId = -1;
+    if (labelNames.size() > 0) {
+      for (int i = 0; i <= labelNames.lastKey(); i++) {
+        if (labelNames.get(i) == null) {
+          labelId = i;
+          break;
+        }
+      }
+    }
 
-			try {
-				saveState(file);
-				JOptionPane.showMessageDialog(App.get(), "Marcadores salvos com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+    if (labelId == -1 && labelNames.size() % labelBits == 0) {
+      byte[] newLabels = new byte[App.get().lastId + 1];
+      labels.add(newLabels);
+    }
+    if (labelId == -1) {
+      labelId = labelNames.size();
+    }
 
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao salvar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
-			}
+    labelNames.put(labelId, labelName);
 
-		}
-	}
+    return labelId;
+  }
 
-	public void addToTypedWordList(String texto) {
+  public void delLabel(int label) {
 
-		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !typedWords.contains(texto) && !App.get().keywordSet.contains(texto)) {
+    labelNames.remove(label);
 
-			if (typedWords.size() == 0)
-				App.get().termo.addItem(HISTORY_DIV);
+    int labelOrder = label / labelBits;
+    int labelMod = label % labelBits;
+    for (int i = 0; i < labels.get(labelOrder).length; i++) {
+      labels.get(labelOrder)[i] = (byte) (labels.get(labelOrder)[i] & (~(1 << labelMod)));
+    }
+  }
 
-			typedWords.add(texto);
-			App.get().termo.addItem(texto);
-			saveState();
-		}
-	}
+  public void changeLabel(int labelId, String newLabel) {
+    labelNames.put(labelId, newLabel);
+  }
 
-	public void loadState() {
-		try {
-			if (cookie.exists() && (!stateFile.exists() || cookie.lastModified() > stateFile.lastModified()))
-				loadState(cookie);
-			
-			else if(stateFile.exists())
-				loadState(stateFile);
+  public int getLabelId(String labelName) {
+    for (int i : labelNames.keySet()) {
+      if (labelNames.get(i).equals(labelName)) {
+        return i;
+      }
+    }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    return -1;
+  }
 
-	public void loadState(File file) throws IOException, ClassNotFoundException {
+  private boolean canCreateFile(File dir) {
+    boolean result;
+    File test = new File(dir, "writeTest");
+    try {
+      result = test.createNewFile();
 
-		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
-		
-		if(state.selected != null /*&&  state.read != null*/){
-			System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
-			//System.arraycopy(state.read, 0, this.read, 0, state.read.length);
-		}
-		
-		for(byte[] array : state.labels){
-			byte[] newArray = new byte[App.get().lastId + 1];
-			int len = Math.min(newArray.length, array.length);
-			System.arraycopy(array, 0, newArray, 0, len);
-			this.labels.add(newArray);
-		}
-		
-		this.typedWords = state.typedWords;
-		this.selectedItens = state.selectedItens;
-		this.labelNames = state.labelNames;
+    } catch (IOException e) {
+      result = false;
+    }
+    test.delete();
 
-		if (App.get().termo != null) {
-			if (typedWords.size() != 0)
-				App.get().termo.addItem(HISTORY_DIV);
-			for (String text : typedWords) {
-				App.get().termo.addItem(text);
-			}
-			atualizarGUI();
-		}
+    return result;
+  }
 
-	}
+  public void saveState() {
+    try {
+      if (stateFile.canWrite() || (!stateFile.exists() && canCreateFile(stateFile.getParentFile()))) {
+        saveState(stateFile);
+      } else {
+        saveState(cookie);
+      }
 
-	public void askAndLoadState() {
-		fileChooser.setFileFilter(filtro);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-			File file = fileChooser.getSelectedFile();
-			try {
-				loadState(file);
-				JOptionPane.showMessageDialog(App.get(), "Marcadores carregados com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
 
-			} catch (Exception e1) {
-				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao carregar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
-			}
-		}
-	}
+  public void saveState(File file) throws IOException {
+    Util.writeObject(this, file.getAbsolutePath());
+  }
 
-	public void atualizarGUI() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				if (App.get().resultsTable.getRowCount() > 0) {
-					App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
-					App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
-				}
-				App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().totalItens);
-				App.get().checkBox.setSelected(selectedItens > 0);
-				App.get().bookmarksListener.updateModelAndSelection();
-				GerenciadorMarcadores.updateCounters();
-			}
-		});
+  public void askAndSaveState() {
+    fileChooser.setFileFilter(filtro);
+    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+      File file = fileChooser.getSelectedFile();
+      if (!file.getName().endsWith(EXT)) {
+        file = new File(file.getPath() + EXT);
+      }
 
-	}
+      try {
+        saveState(file);
+        JOptionPane.showMessageDialog(App.get(), "Marcadores salvos com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
 
-	public void setValueAtId(Object value, int id, int col, boolean changeCount) {
-		boolean[] array;
-		if (col == 1) {
-			array = selected;
-			if ((Boolean) value != selected[id] && changeCount) {
-				if ((Boolean) value)
-					selectedItens++;
-				else
-					selectedItens--;
-			}
-			// seta valor nos outros fragmentos
-			try {
-				array[id] = (Boolean) value;
-				setValueAtOtherVersion(value, id, col, array);
+      } catch (IOException e1) {
+        e1.printStackTrace();
+        JOptionPane.showMessageDialog(App.get(), "Erro ao salvar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
+      }
 
-				if (!multiSetting) {
-					if (col == 1)
-						saveState();
-					atualizarGUI();
-				}
+    }
+  }
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
+  public void addToTypedWordList(String texto) {
 
-	// seta valor na outra versao
-	private void setValueAtOtherVersion(Object value, int doc, int col, boolean[] array) {
-		Integer id2 = App.get().viewToRawMap.getRaw(doc);
-		if (id2 != null && array[id2] != (Boolean) value)
-			setValueAtId(value, id2, col, false);
-		id2 = App.get().viewToRawMap.getView(doc);
-		if (id2 != null && array[id2] != (Boolean) value)
-			setValueAtId(value, id2, col, false);
-	}
+    if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !typedWords.contains(texto) && !App.get().keywordSet.contains(texto)) {
+
+      if (typedWords.size() == 0) {
+        App.get().termo.addItem(HISTORY_DIV);
+      }
+
+      typedWords.add(texto);
+      App.get().termo.addItem(texto);
+      saveState();
+    }
+  }
+
+  public void loadState() {
+    try {
+      if (cookie.exists() && (!stateFile.exists() || cookie.lastModified() > stateFile.lastModified())) {
+        loadState(cookie);
+      } else if (stateFile.exists()) {
+        loadState(stateFile);
+      }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void loadState(File file) throws IOException, ClassNotFoundException {
+
+    Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
+
+    if (state.selected != null /*&&  state.read != null*/) {
+      System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
+      //System.arraycopy(state.read, 0, this.read, 0, state.read.length);
+    }
+
+    for (byte[] array : state.labels) {
+      byte[] newArray = new byte[App.get().lastId + 1];
+      int len = Math.min(newArray.length, array.length);
+      System.arraycopy(array, 0, newArray, 0, len);
+      this.labels.add(newArray);
+    }
+
+    this.typedWords = state.typedWords;
+    this.selectedItens = state.selectedItens;
+    this.labelNames = state.labelNames;
+
+    if (App.get().termo != null) {
+      if (typedWords.size() != 0) {
+        App.get().termo.addItem(HISTORY_DIV);
+      }
+      for (String text : typedWords) {
+        App.get().termo.addItem(text);
+      }
+      atualizarGUI();
+    }
+
+  }
+
+  public void askAndLoadState() {
+    fileChooser.setFileFilter(filtro);
+    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+      File file = fileChooser.getSelectedFile();
+      try {
+        loadState(file);
+        JOptionPane.showMessageDialog(App.get(), "Marcadores carregados com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+
+      } catch (Exception e1) {
+        e1.printStackTrace();
+        JOptionPane.showMessageDialog(App.get(), "Erro ao carregar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
+      }
+    }
+  }
+
+  public void atualizarGUI() {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (App.get().resultsTable.getRowCount() > 0) {
+          App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
+          App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
+        }
+        App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().totalItens);
+        App.get().checkBox.setSelected(selectedItens > 0);
+        App.get().bookmarksListener.updateModelAndSelection();
+        GerenciadorMarcadores.updateCounters();
+      }
+    });
+
+  }
+
+  public void setValueAtId(Object value, int id, int col, boolean changeCount) {
+    boolean[] array;
+    if (col == 1) {
+      array = selected;
+      if ((Boolean) value != selected[id] && changeCount) {
+        if ((Boolean) value) {
+          selectedItens++;
+        } else {
+          selectedItens--;
+        }
+      }
+      // seta valor nos outros fragmentos
+      try {
+        array[id] = (Boolean) value;
+        setValueAtOtherVersion(value, id, col, array);
+
+        if (!multiSetting) {
+          if (col == 1) {
+            saveState();
+          }
+          atualizarGUI();
+        }
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  // seta valor na outra versao
+  private void setValueAtOtherVersion(Object value, int doc, int col, boolean[] array) {
+    Integer id2 = App.get().viewToRawMap.getRaw(doc);
+    if (id2 != null && array[id2] != (Boolean) value) {
+      setValueAtId(value, id2, col, false);
+    }
+    id2 = App.get().viewToRawMap.getView(doc);
+    if (id2 != null && array[id2] != (Boolean) value) {
+      setValueAtId(value, id2, col, false);
+    }
+  }
 
 }

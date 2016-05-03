@@ -22,20 +22,20 @@ import javax.swing.table.AbstractTableModel;
 
 public class ResultTableSortModel extends AbstractTableModel {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	@Override
-	public int getColumnCount() {
-		return 1000;
-	}
+  @Override
+  public int getColumnCount() {
+    return 1000;
+  }
 
-	@Override
-	public int getRowCount() {
-		return App.get().results.length;
-	}
+  @Override
+  public int getRowCount() {
+    return App.get().results.length;
+  }
 
-	@Override
-	final public Integer getValueAt(int row, int col) {
-		return row;
-	}
+  @Override
+  final public Integer getValueAt(int row, int col) {
+    return row;
+  }
 }

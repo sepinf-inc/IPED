@@ -33,16 +33,16 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
  */
 public class AppAnalyzer {
 
-	public static Analyzer get() {
-		Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
-		analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
-		analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
-		analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
-		analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
-		analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
-		analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
-		analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
-		return new PerFieldAnalyzerWrapper(new StandardASCIIAnalyzer(Versao.current, false), analyzerPerField);
-	}
+  public static Analyzer get() {
+    Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
+    analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
+    analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
+    analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
+    analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
+    analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
+    analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
+    analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
+    return new PerFieldAnalyzerWrapper(new StandardASCIIAnalyzer(Versao.current, false), analyzerPerField);
+  }
 
 }

@@ -18,11 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import dpf.sp.gpinf.indexer.IFileProcessor;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.io.IOException;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
@@ -30,129 +29,134 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.Util;
 
-public class FileProcessor extends CancelableWorker<Void, Void> {
-	
-	private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
+public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
+  private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
-	private static int STATUS_LENGTH = 200;
-	private volatile static FileProcessor parsingTask;
-	private static Object lock = new Object(), lock2 = new Object();
-	private Document doc;
-	private boolean listSubItens;
-	private static volatile EvidenceFile lastItem;
+  private static int STATUS_LENGTH = 200;
+  private volatile static FileProcessor parsingTask;
+  private static Object lock = new Object(), lock2 = new Object();
+  private Document doc;
+  private boolean listSubItens;
+  private static volatile EvidenceFile lastItem;
 
-	public FileProcessor(int docId, boolean listSubItens) {
-		this.listSubItens = listSubItens;
+  public FileProcessor(int docId, boolean listSubItens) {
+    this.listSubItens = listSubItens;
 
-		App.get().lastSelectedDoc = docId;
+    App.get().getSearchParams().lastSelectedDoc = docId;
 
-		if (parsingTask != null) {
-			parsingTask.cancel(true);
-		}
-		parsingTask = this;
+    if (parsingTask != null) {
+      parsingTask.cancel(true);
+    }
+    parsingTask = this;
 
-		if (docId >= 0) {
-			try {
-				doc = App.get().searcher.doc(docId);
+    if (docId >= 0) {
+      try {
+        doc = App.get().searcher.doc(docId);
 
-				String status = doc.get(IndexItem.PATH);
-				if (status.length() > STATUS_LENGTH)
-					status = "..." + status.substring(status.length() - STATUS_LENGTH);
-				App.get().status.setText(status);
+        String status = doc.get(IndexItem.PATH);
+        if (status.length() > STATUS_LENGTH) {
+          status = "..." + status.substring(status.length() - STATUS_LENGTH);
+        }
+        App.get().status.setText(status);
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			doc = new Document();
-			doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-			doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
-		}
-	}
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else {
+      doc = new Document();
+      doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+    }
+  }
 
-	@Override
-	protected Void doInBackground() {
-		
-		synchronized (lock) {
+  @Override
+  protected Void doInBackground() {
 
-			if (this.isCancelled())
-				return null;
+    synchronized (lock) {
 
-			process();
+      if (this.isCancelled()) {
+        return null;
+      }
 
-		}
-		return null;
-	}
+      process();
 
-	private void process() {
+    }
+    return null;
+  }
 
-		LOGGER.info(doc.get(IndexItem.PATH));
-		
-		if (listSubItens) {
-			// listRelatedItens();
-			App.get().subItemModel.listSubItens(doc);
-			if (Thread.currentThread().isInterrupted())
-				return;
-			App.get().parentItemModel.listParents(doc);
-		}
-		
-		EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
+  private void process() {
 
-		disposeItem(lastItem);
-		lastItem = item;
-		String contentType = null;
-		if(item.getMediaType() != null)
-			contentType = item.getMediaType().toString();
-		
-		EvidenceFile viewItem = item;
-		
-		if(item.getViewFile() != null)
-			viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
+    LOGGER.info(doc.get(IndexItem.PATH));
 
-		App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
+    if (listSubItens) {
+      // listRelatedItens();
+      App.get().subItemModel.listSubItens(doc);
+      if (Thread.currentThread().isInterrupted()) {
+        return;
+      }
+      App.get().parentItemModel.listParents(doc);
+    }
 
-	}
-	
-	private void disposeItem(final EvidenceFile itemToDispose){
-		if (itemToDispose != null)
-			new Thread() {
-				public void run() {
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {}
-					itemToDispose.dispose();
-				}
-			}.start();
-	}
+    EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
 
-	private Thread listTask;
+    disposeItem(lastItem);
+    lastItem = item;
+    String contentType = null;
+    if (item.getMediaType() != null) {
+      contentType = item.getMediaType().toString();
+    }
 
-	private void listRelatedItens() {
-		if (listTask != null)
-			listTask.interrupt();
+    EvidenceFile viewItem = item;
 
-		listTask = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				synchronized (lock2) {
-					App.get().subItemModel.listSubItens(doc);
-					if (Thread.currentThread().isInterrupted())
-						return;
-					App.get().parentItemModel.listParents(doc);
-				}
+    if (item.getViewFile() != null) {
+      viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
+    }
 
-			}
-		});
-		synchronized (lock2) {
-			listTask.start();
-		}
+    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+  }
 
-	}
+  private void disposeItem(final EvidenceFile itemToDispose) {
+    if (itemToDispose != null) {
+      new Thread() {
+        public void run() {
+          try {
+            Thread.sleep(2000);
+          } catch (InterruptedException e) {
+          }
+          itemToDispose.dispose();
+        }
+      }.start();
+    }
+  }
+
+  private Thread listTask;
+
+  private void listRelatedItens() {
+    if (listTask != null) {
+      listTask.interrupt();
+    }
+
+    listTask = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (lock2) {
+          App.get().subItemModel.listSubItens(doc);
+          if (Thread.currentThread().isInterrupted()) {
+            return;
+          }
+          App.get().parentItemModel.listParents(doc);
+        }
+
+      }
+    });
+    synchronized (lock2) {
+      listTask.start();
+    }
+
+  }
 
 }

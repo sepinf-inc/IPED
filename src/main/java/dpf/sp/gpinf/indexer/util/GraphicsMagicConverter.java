@@ -50,7 +50,7 @@ public class GraphicsMagicConverter {
 			if(!System.getProperty("os.name").startsWith("Windows"))
 				toolPathWin = "";
 			
-			tmpDir = new File(Configuration.indexerTemp, tmpDirName);
+			tmpDir = new File(Configuration.indexTemp, tmpDirName);
 			tmpDir.mkdirs();
 			startTmpDirCleaner();
 				

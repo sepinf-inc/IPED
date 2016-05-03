@@ -38,181 +38,190 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class ExportFileTree extends CancelableWorker {
 
-    int baseDocId;
-    boolean onlyChecked;
-    File baseDir;
-    
-    int total, progress = 0;
-    ProgressDialog progressDialog;
-    
-    HashMap<Integer, File> parentCache = new HashMap<Integer, File>();
-    
-    static Node root = (Node)App.get().tree.getModel().getRoot();
+  int baseDocId;
+  boolean onlyChecked;
+  File baseDir;
 
-    public ExportFileTree(File baseDir, int baseDocId, boolean onlyChecked) {
-        this.baseDir = baseDir;
-        this.baseDocId = baseDocId;
-        this.onlyChecked = onlyChecked;
-    }
-    
-    private int[] getItemsToExport(){
-        
-        try {
-        	Document doc = App.get().reader.document(baseDocId);
-            
-            String id = doc.get(IndexItem.FTKID);
-            if (id == null)
-                id = doc.get(IndexItem.ID);
-            
-            String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id;
+  int total, progress = 0;
+  ProgressDialog progressDialog;
 
-            PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
-            SearchResult result = task.pesquisar();
-            
-            if(onlyChecked)
-            	result = task.filtrarSelecionados(result);
-            
-            return result.docs;
+  HashMap<Integer, File> parentCache = new HashMap<Integer, File>();
 
-        } catch (Exception e) {
-            return new int[0];
-        }
-    }
-    
-    private void exportItem(int docId){
-    	exportItem(docId, false);
-    }
-    
-    private File exportItem(int docId, boolean isParent){
-    	
-    	File exportedItem = null;
-    	if(docId == baseDocId){
-    		exportedItem = exportItem(docId, baseDir, isParent);
-    		parentCache.put(docId, exportedItem);
-    	}else
-    		try{
-    			Document doc = App.get().reader.document(docId);
-                
-    			String parentIdStr = doc.get(IndexItem.PARENTID);
-    			int parentId = Integer.parseInt(parentIdStr);
-                String textQuery = IndexItem.ID + ":" + parentId;
-                PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
-                SearchResult parent = task.pesquisar();
-                if(parent.length == 0)
-                	return null;
-                
-                int parentDocId = parent.docs[0];
-                File exportedParent = parentCache.get(parentDocId);
-                if(exportedParent == null){
-                	exportedParent = exportItem(parentDocId, true);
-                	parentCache.put(parentDocId, exportedParent);
-                }
-                
-                exportedItem = exportItem(docId, exportedParent, isParent);
+  static Node root = (Node) App.get().tree.getModel().getRoot();
 
-    		}catch(Exception e){
-    			e.printStackTrace();
-    		}            
-    	
-    	return exportedItem;
-    	
-    }
-    
-    private File getNonExistingFile(File dst){
-    	int num = 1;
-    	String name = dst.getName();
-        while (dst.exists())
-            dst = new File(dst.getParentFile(), Util.concat(name, num++));
-        return dst;
-    }
-    
-    private File getExistingOrNewDir(File dst){
-    	int num = 1;
-    	String name = dst.getName();
-        while (dst.exists() && !dst.isDirectory())
-            dst = new File(dst.getParentFile(), Util.concat(name, num++));
-        return dst;
-    }
-    
-    private File exportItem(int docId, File subdir, boolean isParent){
-    	
-    	if(subdir == null)
-			return null;
-        
-    	File dst = null;
-    	EvidenceFile item = null;
-    	try {
-        	Document doc = App.get().reader.document(docId);
-            item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
-            
-            String dstName = Util.getValidFilename(item.getName());
-            dst = new File(subdir, dstName);
-            
-            if(item.isDir() || isParent){
-            	if(!dst.isDirectory()){
-            		dst = getExistingOrNewDir(dst);
-            		Files.createDirectories(dst.toPath());
-            	}
-            }else
-            	try(InputStream in = item.getBufferedStream()){
-            		dst = getNonExistingFile(dst);
-            		Files.copy(in, dst.toPath());
-            	}
-            
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }finally{
-        	item.dispose();
-        }
-    	
-    	if(!isParent){
-    		progressDialog.setProgress(++progress);
-            progressDialog.setNote("Copiados " + progress + " de " + total);
-    	}
+  public ExportFileTree(File baseDir, int baseDocId, boolean onlyChecked) {
+    this.baseDir = baseDir;
+    this.baseDocId = baseDocId;
+    this.onlyChecked = onlyChecked;
+  }
 
-        return dst;
-          
-    }
+  private int[] getItemsToExport() {
 
-    @Override
-    protected Boolean doInBackground() throws Exception {
-        
-        progressDialog = new ProgressDialog(null, this);
-        
-        int[] docIds = getItemsToExport();
-        total = docIds.length;
-        progressDialog.setMaximum(total);
-        
-        try{
-        	for(int docId : docIds){
-        		exportItem(docId);
-        		if (progressDialog.isCanceled())
-                    break;
-        	}
-        	
-        }finally{
-        	progressDialog.close();
+    try {
+      Document doc = App.get().reader.document(baseDocId);
+
+      String id = doc.get(IndexItem.FTKID);
+      if (id == null) {
+        id = doc.get(IndexItem.ID);
+      }
+
+      String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id;
+
+      PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+      SearchResult result = task.pesquisar();
+
+      if (onlyChecked) {
+        result = task.filtrarSelecionados(result);
+      }
+
+      return result.docs;
+
+    } catch (Exception e) {
+      return new int[0];
+    }
+  }
+
+  private void exportItem(int docId) {
+    exportItem(docId, false);
+  }
+
+  private File exportItem(int docId, boolean isParent) {
+
+    File exportedItem = null;
+    if (docId == baseDocId) {
+      exportedItem = exportItem(docId, baseDir, isParent);
+      parentCache.put(docId, exportedItem);
+    } else {
+      try {
+        Document doc = App.get().reader.document(docId);
+
+        String parentIdStr = doc.get(IndexItem.PARENTID);
+        int parentId = Integer.parseInt(parentIdStr);
+        String textQuery = IndexItem.ID + ":" + parentId;
+        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+        SearchResult parent = task.pesquisar();
+        if (parent.length == 0) {
+          return null;
         }
 
-        return null;
+        int parentDocId = parent.docs[0];
+        File exportedParent = parentCache.get(parentDocId);
+        if (exportedParent == null) {
+          exportedParent = exportItem(parentDocId, true);
+          parentCache.put(parentDocId, exportedParent);
+        }
+
+        exportedItem = exportItem(docId, exportedParent, isParent);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
 
-    public static void salvarArquivo(int baseDocId, boolean onlyChecked) {
-    	if(baseDocId == root.docId){
-    		JOptionPane.showMessageDialog(null, "Selecione outro nó base diferente de " + root.toString());
-    		return;
-    	}
-        try {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileFilter(null);
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-                File baseDir = fileChooser.getSelectedFile();
-                (new ExportFileTree(baseDir, baseDocId, onlyChecked)).execute();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    return exportedItem;
+
+  }
+
+  private File getNonExistingFile(File dst) {
+    int num = 1;
+    String name = dst.getName();
+    while (dst.exists()) {
+      dst = new File(dst.getParentFile(), Util.concat(name, num++));
     }
+    return dst;
+  }
+
+  private File getExistingOrNewDir(File dst) {
+    int num = 1;
+    String name = dst.getName();
+    while (dst.exists() && !dst.isDirectory()) {
+      dst = new File(dst.getParentFile(), Util.concat(name, num++));
+    }
+    return dst;
+  }
+
+  private File exportItem(int docId, File subdir, boolean isParent) {
+
+    if (subdir == null) {
+      return null;
+    }
+
+    File dst = null;
+    EvidenceFile item = null;
+    try {
+      Document doc = App.get().reader.document(docId);
+      item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
+
+      String dstName = Util.getValidFilename(item.getName());
+      dst = new File(subdir, dstName);
+
+      if (item.isDir() || isParent) {
+        if (!dst.isDirectory()) {
+          dst = getExistingOrNewDir(dst);
+          Files.createDirectories(dst.toPath());
+        }
+      } else {
+        try (InputStream in = item.getBufferedStream()) {
+          dst = getNonExistingFile(dst);
+          Files.copy(in, dst.toPath());
+        }
+      }
+
+    } catch (Exception e1) {
+      e1.printStackTrace();
+    } finally {
+      item.dispose();
+    }
+
+    if (!isParent) {
+      progressDialog.setProgress(++progress);
+      progressDialog.setNote("Copiados " + progress + " de " + total);
+    }
+
+    return dst;
+
+  }
+
+  @Override
+  protected Boolean doInBackground() throws Exception {
+
+    progressDialog = new ProgressDialog(null, this);
+
+    int[] docIds = getItemsToExport();
+    total = docIds.length;
+    progressDialog.setMaximum(total);
+
+    try {
+      for (int docId : docIds) {
+        exportItem(docId);
+        if (progressDialog.isCanceled()) {
+          break;
+        }
+      }
+
+    } finally {
+      progressDialog.close();
+    }
+
+    return null;
+  }
+
+  public static void salvarArquivo(int baseDocId, boolean onlyChecked) {
+    if (baseDocId == root.docId) {
+      JOptionPane.showMessageDialog(null, "Selecione outro nó base diferente de " + root.toString());
+      return;
+    }
+    try {
+      JFileChooser fileChooser = new JFileChooser();
+      fileChooser.setFileFilter(null);
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+        File baseDir = fileChooser.getSelectedFile();
+        (new ExportFileTree(baseDir, baseDocId, onlyChecked)).execute();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
 }

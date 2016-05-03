@@ -36,150 +36,156 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ParentTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener {
-	/**
-		 * 
-		 */
-	private static final long serialVersionUID = 1L;
 
-	// public ScoreDoc[] results = new ScoreDoc[0];
-	SearchResult results = new SearchResult(0);
-	int selectedIndex = -1;
+  /**
+   *
+   */
+  private static final long serialVersionUID = 1L;
 
-	@Override
-	public int getColumnCount() {
-		return 2;
-	}
+  // public ScoreDoc[] results = new ScoreDoc[0];
+  SearchResult results = new SearchResult(0);
+  int selectedIndex = -1;
 
-	@Override
-	public int getRowCount() {
-		return results.length;
-	}
+  @Override
+  public int getColumnCount() {
+    return 2;
+  }
 
-	@Override
-	public Object getValueAt(int row, int col) {
-		if (col == 0)
-			return row + 1;
-		else {
-			try {
-				Document doc = App.get().searcher.doc(results.docs[row]);
-				return doc.get(IndexItem.NAME);
-			} catch (Exception e) {
-				// e.printStackTrace();
-			}
-			return "";
-		}
-	}
+  @Override
+  public int getRowCount() {
+    return results.length;
+  }
 
-	@Override
-	public void mouseClicked(MouseEvent arg0) {
-	}
+  @Override
+  public Object getValueAt(int row, int col) {
+    if (col == 0) {
+      return row + 1;
+    } else {
+      try {
+        Document doc = App.get().searcher.doc(results.docs[row]);
+        return doc.get(IndexItem.NAME);
+      } catch (Exception e) {
+        // e.printStackTrace();
+      }
+      return "";
+    }
+  }
 
-	@Override
-	public void mouseEntered(MouseEvent arg0) {
-	}
+  @Override
+  public void mouseClicked(MouseEvent arg0) {
+  }
 
-	@Override
-	public void mouseExited(MouseEvent arg0) {
-	}
+  @Override
+  public void mouseEntered(MouseEvent arg0) {
+  }
 
-	@Override
-	public void mousePressed(MouseEvent arg0) {
-	}
+  @Override
+  public void mouseExited(MouseEvent arg0) {
+  }
 
-	@Override
-	public void mouseReleased(MouseEvent evt) {
-		if (evt.getClickCount() == 2 && selectedIndex != -1) {
+  @Override
+  public void mousePressed(MouseEvent arg0) {
+  }
 
-			new Thread() {
-				public void run() {
-					int docId = results.docs[selectedIndex];
-					File file = null;
-					try {
-						Document doc = App.get().searcher.doc(docId);
+  @Override
+  public void mouseReleased(MouseEvent evt) {
+    if (evt.getClickCount() == 2 && selectedIndex != -1) {
 
-						String export = doc.get(IndexItem.EXPORT);
-						if (export != null && !export.isEmpty()) {
-							file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-							file = Util.getReadOnlyFile(file, doc);
-						} else
-							file = Util.extractSleuthFile(App.get().sleuthCase, doc);
+      new Thread() {
+        public void run() {
+          int docId = results.docs[selectedIndex];
+          File file = null;
+          try {
+            Document doc = App.get().searcher.doc(docId);
 
-						if (file != null)
-							Desktop.getDesktop().open(file.getCanonicalFile());
+            String export = doc.get(IndexItem.EXPORT);
+            if (export != null && !export.isEmpty()) {
+              file = Util.getRelativeFile(App.get().codePath + "/../..", export);
+              file = Util.getReadOnlyFile(file, doc);
+            } else {
+              file = Util.extractSleuthFile(App.get().sleuthCase, doc);
+            }
 
-					} catch (Exception e) {
-						try {
-							// Windows Only
-							Runtime.getRuntime().exec(new String[] { "rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\"" });
-						} catch (Exception e2) {
-							try {
-								// Linux Only
-								Runtime.getRuntime().exec(new String[] { "xdg-open", file.toURI().toURL().toString() });
-							} catch (Exception e3) {
-								CopiarArquivos.salvarArquivo(docId);
-							}
-						}
-					}
-				}
-			}.start();
+            if (file != null) {
+              Desktop.getDesktop().open(file.getCanonicalFile());
+            }
 
-		}
+          } catch (Exception e) {
+            try {
+              // Windows Only
+              Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""});
+            } catch (Exception e2) {
+              try {
+                // Linux Only
+                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()});
+              } catch (Exception e3) {
+                CopiarArquivos.salvarArquivo(docId);
+              }
+            }
+          }
+        }
+      }.start();
 
-	}
+    }
 
-	@Override
-	public void valueChanged(ListSelectionEvent evt) {
-		ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
+  }
 
-		if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-			selectedIndex = lsm.getMinSelectionIndex();
-			return;
-		}
+  @Override
+  public void valueChanged(ListSelectionEvent evt) {
+    ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
 
-		selectedIndex = lsm.getMinSelectionIndex();
-		App.get().textViewer.textTable.scrollRectToVisible(new Rectangle());
+    if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
+      selectedIndex = lsm.getMinSelectionIndex();
+      return;
+    }
 
-		FileProcessor parsingTask = new FileProcessor(results.docs[selectedIndex], false);
-		parsingTask.execute();
+    selectedIndex = lsm.getMinSelectionIndex();
+    App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
-		App.get().subItemModel.fireTableDataChanged();
-	}
+    FileProcessor parsingTask = new FileProcessor(results.docs[selectedIndex], false);
+    parsingTask.execute();
 
-	Thread thread;
+    App.get().subItemModel.fireTableDataChanged();
+  }
 
-	public void listParents(final Document doc) {
+  Thread thread;
 
-		String textQuery = null;
-		String parentId = doc.get(IndexItem.PARENTID);
-		if(parentId != null)
-			textQuery = IndexItem.ID + ":" + parentId;
+  public void listParents(final Document doc) {
 
-		String ftkId = doc.get(IndexItem.FTKID);
-		if (ftkId != null)
-			textQuery = IndexItem.FTKID + ":" + parentId;
-			
-		results = new SearchResult(0);
-		
-		if(textQuery != null)
-			try {
-				PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
-				results = task.pesquisar();
-	
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
+    String textQuery = null;
+    String parentId = doc.get(IndexItem.PARENTID);
+    if (parentId != null) {
+      textQuery = IndexItem.ID + ":" + parentId;
+    }
 
-		if (results.length > 0)
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					App.get().tabbedHits.addTab("1 Item de Origem", App.get().parentItemScroll);
-				}
-			});
+    String ftkId = doc.get(IndexItem.FTKID);
+    if (ftkId != null) {
+      textQuery = IndexItem.FTKID + ":" + parentId;
+    }
 
-		fireTableDataChanged();
+    results = new SearchResult(0);
 
-	}
+    if (textQuery != null) {
+      try {
+        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+        results = task.pesquisar();
+
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    if (results.length > 0) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          App.get().tabbedHits.addTab("1 Item de Origem", App.get().getParams().parentItemScroll);
+        }
+      });
+    }
+
+    fireTableDataChanged();
+
+  }
 
 }

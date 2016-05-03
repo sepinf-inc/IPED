@@ -9,22 +9,22 @@
    .bkmkValue class selector is defined in Common.css */
 .bkmkSeparator
 {
-  border-top-style:double;
-  clear:both;
+    border-top-style:double;
+    clear:both;
 }
 .bkmkLblFileSel
 {
-  font-weight:bold;
-  text-decoration:underline;
-  margin-top:12pt;
-  clear:both;
+    font-weight:bold;
+    text-decoration:underline;
+    margin-top:12pt;
+    clear:both;
 }
 .bkmkColLeft
 {
-  float:left;
-  width:185px;
+    float:left;
+    width:185px;
 }
 .bkmkColRight
 {
-  float:left;
+    float:left;
 }

@@ -14,242 +14,262 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
-public class SleuthkitClientInputStream extends SeekableInputStream{
-    
-    private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitClientInputStream.class);
-	
-    private static AtomicLong next = new AtomicLong();
-    
-    private static int TIMEOUT = 10000;
-    
-    int sleuthId;
-    String path;
-    SleuthkitClient client;
-    long streamId = next.getAndIncrement();
-	private InputStream in;
-	OutputStream os;
-	int bufPos = 0;
-	MappedByteBuffer mbb;
-	boolean closed = false, empty = true;
-	
-	public SleuthkitClientInputStream(int id, String path, SleuthkitClient client){
-	    this.sleuthId = id;
-	    this.path = path;
-	    this.client = client;
-		this.mbb = client.out;
-		this.in = client.is;
-		this.os = client.os;
-	}
-	
-	@Override
-    public int read(byte b[], int off, int len) throws IOException {
-		
-	    if(closed)
-			throw new IOException("Stream is closed!");
-	    if(client.serverError)
-			throw new IOException("SleuthkitServer returned an error before.");
-		
-	    synchronized(client){
-	        int read = readIn(b, off, len);
-	        return read;
-        }
-    	
+public class SleuthkitClientInputStream extends SeekableInputStream {
+
+  private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitClientInputStream.class);
+
+  private static AtomicLong next = new AtomicLong();
+
+  private static int TIMEOUT = 10000;
+
+  int sleuthId;
+  String path;
+  SleuthkitClient client;
+  long streamId = next.getAndIncrement();
+  private InputStream in;
+  OutputStream os;
+  int bufPos = 0;
+  MappedByteBuffer mbb;
+  boolean closed = false, empty = true;
+
+  public SleuthkitClientInputStream(int id, String path, SleuthkitClient client) {
+    this.sleuthId = id;
+    this.path = path;
+    this.client = client;
+    this.mbb = client.out;
+    this.in = client.is;
+    this.os = client.os;
+  }
+
+  @Override
+  public int read(byte b[], int off, int len) throws IOException {
+
+    if (closed) {
+      throw new IOException("Stream is closed!");
     }
-	
-	private int readIn(byte b[], int off, int len) throws IOException {
-	    
-		if(empty){
-		    byte cmd = sendRead();
-			if(cmd == FLAGS.EOF)
-				return -1;
-		}
-		empty = false;
-		
-		int size = mbb.getInt(13);
-		int copyLen = Math.min(len, size - bufPos);
-		mbb.position(bufPos + 17);
-		mbb.get(b, off, copyLen);
-		bufPos += copyLen;
-		if(bufPos == size)
-			empty = true;
-		
-		return copyLen;
-	}
-	
-	private byte sendRead() throws IOException{
-	    mbb.putInt(1, sleuthId);
-        mbb.putLong(5, streamId);
-	    SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
-		
-		bufPos = 0;
-		empty = true;
-		notifyServer();
-		return waitServerResponse();
-	}
-	
-	private byte waitServerResponse() throws IOException{
-	    boolean sqliteBusy = true;
-	    while(sqliteBusy)
-    	    try {
-                in.read();
-                sqliteBusy = false;
-                
-    	    } catch(SocketTimeoutException e){
-    	        if(SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ)
-    	            continue;
-    	        
-    	        client.serverError = true;
-    	        LOGGER.error("SocketTimeout aguardando SleuthkitServer: " + path);
-                throw e;
-                
-            } catch (IOException e1) {
-                client.serverError = true;
-                LOGGER.error(getCrashMsg());
-                throw e1;
-            }
-        
-	    byte cmd;
-	    long time = 0;
-        while(FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0)))
-            try {
-                if(time == 0) time = System.currentTimeMillis();
-                Thread.sleep(1);
-                LOGGER.error("Waiting Server memory write...");
-                
-                if(System.currentTimeMillis() - time >= TIMEOUT){
-                    client.serverError = true;
-                    LOGGER.error("MemoryReadTimeout aguardando SleuthkitServer: " + path);
-                    throw new IOException("MemoryReadTimeout aguardando SleuthkitServer: " + path);
-                }
-                
-            } catch (InterruptedException e) {
-                throw new InterruptedIOException(e.toString());
-            }
-        
-        if (cmd == FLAGS.EXCEPTION){
-            int len = mbb.getInt(13);
-            byte[] b = new byte[len];
-            mbb.position(17);
-            mbb.get(b);
-            try {
-                throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8"));
-            } catch ( UnsupportedEncodingException e) {
-            }
-        }
-        
-	    return cmd;
-	}
-	
-	private void notifyServer() throws IOException{
-	    try {
-            SleuthkitServer.notify(os);
-        } catch (IOException e) {
-        	client.serverError = true;
-            LOGGER.error(getCrashMsg());
-            throw e;
-        }
-	}
-	
-	private String getCrashMsg(){
-	    return "Possível crash do Sleuthkit ao ler " + path;
-	}
+    if (client.serverError) {
+      throw new IOException("SleuthkitServer returned an error before.");
+    }
 
-	@Override
-	public void seek(long pos) throws IOException {
-	    
-	    if(closed)
-            throw new IOException("Stream is closed!");
-	    if(client.serverError)
-			throw new IOException("SleuthkitServer returned an error before.");
-	    
-	    synchronized(client){
-	        mbb.putInt(1, sleuthId);
-	        mbb.putLong(5, streamId);
-	        mbb.putLong(13, pos);
-	        SleuthkitServer.commitByte(mbb, 0, FLAGS.SEEK);
-	        empty = true;
-	        notifyServer();
-	        waitServerResponse();
-        }
-		
-	}
+    synchronized (client) {
+      int read = readIn(b, off, len);
+      return read;
+    }
 
-	@Override
-	public long position() throws IOException {
-	    
-	    if(closed)
-            throw new IOException("Stream is closed!");
-	    if(client.serverError)
-			throw new IOException("SleuthkitServer returned an error before.");
-	    
-	    synchronized(client){
-	        mbb.putInt(1, sleuthId);
-	        mbb.putLong(5, streamId);
-	        SleuthkitServer.commitByte(mbb, 0, FLAGS.POSITION);
-	        notifyServer();
-	        waitServerResponse();
-	        return mbb.getLong(13); 
-        }
-	    
-	}
+  }
 
-	@Override
-	public long size() throws IOException {
-	    
-	    if(closed)
-            throw new IOException("Stream is closed!");
-	    if(client.serverError)
-			throw new IOException("SleuthkitServer returned an error before.");
-	    
-	    synchronized(client){
-	        mbb.putInt(1, sleuthId);
-	        mbb.putLong(5, streamId);
-	        SleuthkitServer.commitByte(mbb, 0, FLAGS.SIZE);
-	        notifyServer();
-	        waitServerResponse();
-	        return mbb.getLong(13);
-        }
-	    
-	}
+  private int readIn(byte b[], int off, int len) throws IOException {
 
-	@Override
-	public int read() throws IOException {
-		if(closed)
-			throw new IOException("Stream is closed!");
-		if(client.serverError)
-			throw new IOException("SleuthkitServer returned an error before.");
-		
-		byte[] b = new byte[1];
-		int i = 0;
-		do{
-			i = read(b);
-		}while(i == 0);
-		
-		if(i == -1)
-			return -1;
-		
-		return b[0];
-	}
-	
-	@Override
-	public void close() throws IOException{
-	    if(closed)
-	        return;
-	    
-	    if(client.serverError)
-	    	return;
-	    
-	    synchronized(client){
-	        closed = true;
-	        mbb.putInt(1, sleuthId);
-	        mbb.putLong(5, streamId);
-	        SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
-	        empty = true;
-	        notifyServer();
-	        waitServerResponse();
-	        client.removeStream(streamId);
+    if (empty) {
+      byte cmd = sendRead();
+      if (cmd == FLAGS.EOF) {
+        return -1;
+      }
+    }
+    empty = false;
+
+    int size = mbb.getInt(13);
+    int copyLen = Math.min(len, size - bufPos);
+    mbb.position(bufPos + 17);
+    mbb.get(b, off, copyLen);
+    bufPos += copyLen;
+    if (bufPos == size) {
+      empty = true;
+    }
+
+    return copyLen;
+  }
+
+  private byte sendRead() throws IOException {
+    mbb.putInt(1, sleuthId);
+    mbb.putLong(5, streamId);
+    SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
+
+    bufPos = 0;
+    empty = true;
+    notifyServer();
+    return waitServerResponse();
+  }
+
+  private byte waitServerResponse() throws IOException {
+    boolean sqliteBusy = true;
+    while (sqliteBusy) {
+      try {
+        in.read();
+        sqliteBusy = false;
+
+      } catch (SocketTimeoutException e) {
+        if (SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ) {
+          continue;
         }
-		
-	}
+
+        client.serverError = true;
+        LOGGER.error("SocketTimeout aguardando SleuthkitServer: " + path);
+        throw e;
+
+      } catch (IOException e1) {
+        client.serverError = true;
+        LOGGER.error(getCrashMsg());
+        throw e1;
+      }
+    }
+
+    byte cmd;
+    long time = 0;
+    while (FLAGS.isClientCmd(cmd = SleuthkitServer.getByte(mbb, 0))) {
+      try {
+        if (time == 0) {
+          time = System.currentTimeMillis();
+        }
+        Thread.sleep(1);
+        LOGGER.error("Waiting Server memory write...");
+
+        if (System.currentTimeMillis() - time >= TIMEOUT) {
+          client.serverError = true;
+          LOGGER.error("MemoryReadTimeout aguardando SleuthkitServer: " + path);
+          throw new IOException("MemoryReadTimeout aguardando SleuthkitServer: " + path);
+        }
+
+      } catch (InterruptedException e) {
+        throw new InterruptedIOException(e.toString());
+      }
+    }
+
+    if (cmd == FLAGS.EXCEPTION) {
+      int len = mbb.getInt(13);
+      byte[] b = new byte[len];
+      mbb.position(17);
+      mbb.get(b);
+      try {
+        throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8"));
+      } catch (UnsupportedEncodingException e) {
+      }
+    }
+
+    return cmd;
+  }
+
+  private void notifyServer() throws IOException {
+    try {
+      SleuthkitServer.notify(os);
+    } catch (IOException e) {
+      client.serverError = true;
+      LOGGER.error(getCrashMsg());
+      throw e;
+    }
+  }
+
+  private String getCrashMsg() {
+    return "Possível crash do Sleuthkit ao ler " + path;
+  }
+
+  @Override
+  public void seek(long pos) throws IOException {
+
+    if (closed) {
+      throw new IOException("Stream is closed!");
+    }
+    if (client.serverError) {
+      throw new IOException("SleuthkitServer returned an error before.");
+    }
+
+    synchronized (client) {
+      mbb.putInt(1, sleuthId);
+      mbb.putLong(5, streamId);
+      mbb.putLong(13, pos);
+      SleuthkitServer.commitByte(mbb, 0, FLAGS.SEEK);
+      empty = true;
+      notifyServer();
+      waitServerResponse();
+    }
+
+  }
+
+  @Override
+  public long position() throws IOException {
+
+    if (closed) {
+      throw new IOException("Stream is closed!");
+    }
+    if (client.serverError) {
+      throw new IOException("SleuthkitServer returned an error before.");
+    }
+
+    synchronized (client) {
+      mbb.putInt(1, sleuthId);
+      mbb.putLong(5, streamId);
+      SleuthkitServer.commitByte(mbb, 0, FLAGS.POSITION);
+      notifyServer();
+      waitServerResponse();
+      return mbb.getLong(13);
+    }
+
+  }
+
+  @Override
+  public long size() throws IOException {
+
+    if (closed) {
+      throw new IOException("Stream is closed!");
+    }
+    if (client.serverError) {
+      throw new IOException("SleuthkitServer returned an error before.");
+    }
+
+    synchronized (client) {
+      mbb.putInt(1, sleuthId);
+      mbb.putLong(5, streamId);
+      SleuthkitServer.commitByte(mbb, 0, FLAGS.SIZE);
+      notifyServer();
+      waitServerResponse();
+      return mbb.getLong(13);
+    }
+
+  }
+
+  @Override
+  public int read() throws IOException {
+    if (closed) {
+      throw new IOException("Stream is closed!");
+    }
+    if (client.serverError) {
+      throw new IOException("SleuthkitServer returned an error before.");
+    }
+
+    byte[] b = new byte[1];
+    int i = 0;
+    do {
+      i = read(b);
+    } while (i == 0);
+
+    if (i == -1) {
+      return -1;
+    }
+
+    return b[0];
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (closed) {
+      return;
+    }
+
+    if (client.serverError) {
+      return;
+    }
+
+    synchronized (client) {
+      closed = true;
+      mbb.putInt(1, sleuthId);
+      mbb.putLong(5, streamId);
+      SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
+      empty = true;
+      notifyServer();
+      waitServerResponse();
+      client.removeStream(streamId);
+    }
+
+  }
 
 }
