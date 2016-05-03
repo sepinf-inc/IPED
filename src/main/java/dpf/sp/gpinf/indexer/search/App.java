@@ -105,29 +105,13 @@ public class App extends JFrame implements WindowListener {
 
   SearchResult results = new SearchResult(0);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   int totalItens;
-=======
-  int totalItens, lastSelectedDoc;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-  int totalItens;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   public int lastId;
   public Marcadores marcadores;
   FilterManager filterManager;
   ArrayList<String> palavrasChave, categorias;
   HashSet<String> keywordSet = new HashSet<String>();
-<<<<<<< HEAD
-<<<<<<< HEAD
   private Set<String> highlightTerms;
-=======
-  Set<String> highlightTerms = new HashSet<String>();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-  private Set<String> highlightTerms;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
   Set<Integer> splitedDocs;
   VersionsMap viewToRawMap;
@@ -154,30 +138,13 @@ public class App extends JFrame implements WindowListener {
   HitsTable parentItemTable;
   JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   IViewerControl viewerControl = ViewerControl.getInstance();
-=======
-  ViewerControl viewerControl = ViewerControlImpl.getInstance();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-  IViewerControl viewerControl = ViewerControl.getInstance();
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   public CompositeViewer compositeViewer;
 
   public JTabbedPane tabbedHits, resultTab, treeTab;
   Color defaultTabColor;
-<<<<<<< HEAD
-<<<<<<< HEAD
   private JScrollPane subItemScroll, parentItemScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
-=======
-  JScrollPane subItemScroll, parentItemScroll, viewerScroll, resultsScroll, galleryScroll;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-  private JScrollPane subItemScroll, parentItemScroll;
-  JScrollPane viewerScroll, resultsScroll, galleryScroll;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
@@ -186,13 +153,6 @@ public class App extends JFrame implements WindowListener {
 
   ResultTableModel resultsModel;
   List resultSortKeys;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  public HitsTableModel hitsModel = new HitsTableModel();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
@@ -209,7 +169,7 @@ public class App extends JFrame implements WindowListener {
   // "NÃ£o foi possÃ­vel destacar as ocorrÃªncias. Clique duas vezes sobre o arquivo para acessar o original!";
   final static String FILTRO_TODOS = "[Sem Filtro]";
   final static String FILTRO_SELECTED = "[Selecionados]";
-  final static String SEARCH_TOOL_TIP = "[Digite ou escolha a expressÃ£o a ser pesquisada]";
+  final static String SEARCH_TOOL_TIP = "[Digite ou escolha a expressão a ser pesquisada]";
 
   public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
 
@@ -227,14 +187,7 @@ public class App extends JFrame implements WindowListener {
   private App() {
     this.appSearchParams = new AppSearchParams();
     this.appSearchParams.mainFrame = (JFrame) this;
-<<<<<<< HEAD
-<<<<<<< HEAD
     this.appSearchParams.viewerControl = ViewerControl.getInstance();    
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    this.appSearchParams.viewerControl = ViewerControl.getInstance();    
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
     this.appSearchParams.HIGHLIGHT_END_TAG = "</font>";
     this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
@@ -242,22 +195,13 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.MAX_LINES = MAX_LINES;
     this.appSearchParams.MAX_HITS = MAX_HITS;
     this.appSearchParams.MAX_LINE_SIZE = MAX_LINE_SIZE;
-<<<<<<< HEAD
-<<<<<<< HEAD
     this.appSearchParams.highlightTerms = new HashSet<String>();
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    this.appSearchParams.highlightTerms = new HashSet<String>();
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   }
 
   public static final App get() {
     if (applet == null) {
       applet = new App();
     }
-<<<<<<< HEAD
-
     return applet;
   }
 
@@ -265,19 +209,6 @@ public class App extends JFrame implements WindowListener {
     return this.appSearchParams;
   }
        
-=======
-
-    return applet;
-  }
-
-<<<<<<< HEAD
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-  public AppSearchParams getSearchParams() {
-    return this.appSearchParams;
-  }
-       
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
   public static void main(String[] args) {
     App.get().init();
   }
@@ -291,19 +222,12 @@ public class App extends JFrame implements WindowListener {
     try {
       URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
       codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
-<<<<<<< HEAD
-=======
-
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       //codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-<<<<<<< HEAD
-      //codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
-=======
-      codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
+//      codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
+
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
 
@@ -352,15 +276,7 @@ public class App extends JFrame implements WindowListener {
   }
 
   public TextViewer getTextViewer() {
-<<<<<<< HEAD
-<<<<<<< HEAD
     return (TextViewer) this.appSearchParams.textViewer;
-=======
-    return this.appSearchParams.textViewer;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    return (TextViewer) this.appSearchParams.textViewer;
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   }
 
   public void setTextViewer(TextViewer textViewer) {
@@ -472,15 +388,7 @@ public class App extends JFrame implements WindowListener {
     termo.setMaximumRowCount(30);
 
     pesquisar = new JButton("Pesquisar");
-<<<<<<< HEAD
-<<<<<<< HEAD
     opcoes = new JButton("Opções");
-=======
-    opcoes = new JButton("OpÃ§Ãµes");
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    opcoes = new JButton("Opções");
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     ajuda = new JButton("Ajuda");
     checkBox = new JCheckBox("0");
 
@@ -502,15 +410,7 @@ public class App extends JFrame implements WindowListener {
     topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
     multiFilterAlert = new JPanel();
-<<<<<<< HEAD
-<<<<<<< HEAD
     JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
-=======
-    JLabel alertLabel = new JLabel("MÃºltiplos Filtros Ativos");
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     multiFilterAlert.add(alertLabel);
     alertLabel.setBackground(alertColor);
     alertLabel.setOpaque(true);
@@ -580,15 +480,7 @@ public class App extends JFrame implements WindowListener {
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     hitsTable = new HitsTable(appSearchParams.hitsModel);
-=======
-    hitsTable = new HitsTable(hitsModel);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    hitsTable = new HitsTable(appSearchParams.hitsModel);
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     appSearchParams.hitsTable = hitsTable;
     JScrollPane hitsScroll = new JScrollPane(hitsTable);
     hitsTable.setFillsViewportHeight(true);
@@ -601,14 +493,7 @@ public class App extends JFrame implements WindowListener {
 
     subItemTable = new HitsTable(subItemModel);
     subItemScroll = new JScrollPane(subItemTable);
-<<<<<<< HEAD
-<<<<<<< HEAD
     this.appSearchParams.subItemScroll = subItemScroll;
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    this.appSearchParams.subItemScroll = subItemScroll;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     subItemTable.setFillsViewportHeight(true);
     subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     subItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -619,14 +504,7 @@ public class App extends JFrame implements WindowListener {
 
     parentItemTable = new HitsTable(parentItemModel);
     parentItemScroll = new JScrollPane(parentItemTable);
-<<<<<<< HEAD
-<<<<<<< HEAD
     this.appSearchParams.parentItemScroll = parentItemScroll;
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    this.appSearchParams.parentItemScroll = parentItemScroll;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     parentItemTable.setFillsViewportHeight(true);
     parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -636,15 +514,7 @@ public class App extends JFrame implements WindowListener {
     parentItemTable.setShowGrid(false);
 
     tabbedHits = new JTabbedPane();
-<<<<<<< HEAD
-<<<<<<< HEAD
     tabbedHits.addTab("Ocorrências", hitsScroll);
-=======
-    tabbedHits.addTab("OcorrÃªncias", hitsScroll);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    tabbedHits.addTab("Ocorrências", hitsScroll);
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     appSearchParams.tabbedHits = tabbedHits;
 
     compositeViewer = new CompositeViewer();
@@ -687,15 +557,7 @@ public class App extends JFrame implements WindowListener {
     isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
 
     if (!isFTKReport) {
-<<<<<<< HEAD
-<<<<<<< HEAD
       recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
-=======
-      recursiveTreeList = new JCheckBox("Listagem recursiva de diretÃ³rios");
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       recursiveTreeList.setSelected(true);
 
       tree = new JTree(new Object[0]);
@@ -710,16 +572,7 @@ public class App extends JFrame implements WindowListener {
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
       treeTab.add("Evidências", evidencePanel);
-=======
-      treeTab.add("EvidÃªncias", evidencePanel);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      treeTab.add("Evidências", evidencePanel);
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
-
     }
 
     if (!isFTKReport && new File(new File(codePath).getParent(), "data/containsReport.flag").exists()) {
@@ -727,14 +580,7 @@ public class App extends JFrame implements WindowListener {
     }
 
     status = new JLabel(" ");
-<<<<<<< HEAD
-<<<<<<< HEAD
     this.appSearchParams.status = status;
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    this.appSearchParams.status = status;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
     this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
@@ -808,11 +654,8 @@ public class App extends JFrame implements WindowListener {
         return false;
       }
     });
-<<<<<<< HEAD
     
     new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());    
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   }
 
   private void zoomFont(Component c, int inc) {

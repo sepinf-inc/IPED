@@ -87,12 +87,8 @@ public class HashTask extends AbstractTask {
       return;
     }
 
-<<<<<<< HEAD
     if (evidence.getHash() != null || digestMap.isEmpty()
         || evidence.getExtraAttribute(IgnoreHardLinkTask.IGNORE_HARDLINK_ATTR) != null) {
-=======
-    if (evidence.getHash() != null || digestMap.isEmpty()) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       return;
     }
 

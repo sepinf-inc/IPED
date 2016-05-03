@@ -42,25 +42,12 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().gallery.scrollRectToVisible(new Rectangle());
 
     App.get().results = new SearchResult(0);
-<<<<<<< HEAD
-<<<<<<< HEAD
     App.get().getParams().lastSelectedDoc = -1;
-=======
-    App.get().lastSelectedDoc = -1;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    App.get().getParams().lastSelectedDoc = -1;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
     App.get().resultsModel.fireTableDataChanged();
     if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
       App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
     }
-<<<<<<< HEAD
     App.get().resultsTable.getRowSorter().setSortKeys(null);
-=======
-    App.get().resultsTable.setRowSorter(null);
-    App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
     App.get().status.setText(" ");
 
@@ -163,15 +150,7 @@ public class AppListener implements ActionListener, MouseListener {
   @Override
   public void mousePressed(MouseEvent evt) {
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     ViewerControl.getInstance().releaseLibreOfficeFocus();
-=======
-    ViewerControlImpl.getInstance().releaseLibreOfficeFocus();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    ViewerControl.getInstance().releaseLibreOfficeFocus();
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
     Object termo = App.get().termo.getSelectedItem();
     if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {

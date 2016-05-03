@@ -106,11 +106,8 @@ public class IndexItem {
 
   public static final String attrTypesFilename = "metadataTypes.txt";
 
-<<<<<<< HEAD
   private static final int MAX_DOCVALUE_SIZE = 4096;
 
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
   private static volatile boolean guessMetaTypes = false;
@@ -271,13 +268,9 @@ public class IndexItem {
       value = "";
     }
     doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
-<<<<<<< HEAD
     if (value.length() > MAX_DOCVALUE_SIZE) {
       value = value.substring(0, MAX_DOCVALUE_SIZE);
     }
-=======
-    //doc.add(new SortedDocValuesField(PATH, new BytesRef(value)));
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     doc.add(getCollationDocValue(PATH, value));
 
     doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
@@ -369,7 +362,6 @@ public class IndexItem {
 
   private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey) {
     boolean isString = false;
-<<<<<<< HEAD
 
     /* utilizar docvalue de outro tipo com mesmo nome provoca erro,
      * entao usamos um prefixo no nome para diferenciar
@@ -378,8 +370,6 @@ public class IndexItem {
     if (isMetadataKey) {
       keyPrefix = "_num_";
     }
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     if (oValue instanceof Date) {
       String value = DateUtil.dateToString((Date) oValue);
       doc.add(new StringField(key, value, Field.Store.YES));
@@ -403,12 +393,7 @@ public class IndexItem {
 
     } else if (oValue instanceof Double) {
       doc.add(new DoubleField(key, (Double) oValue, Field.Store.YES));
-<<<<<<< HEAD
       doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
-=======
-      doc.add(new DoubleDocValuesField(key, (Double) oValue));
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-
     } else {
       isString = true;
     }
@@ -416,20 +401,9 @@ public class IndexItem {
     if (isMetadataKey || isString) {
       doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
       String value = oValue.toString();
-<<<<<<< HEAD
       if (value.length() > MAX_DOCVALUE_SIZE) {
         value = value.substring(0, MAX_DOCVALUE_SIZE);
       }
-=======
-      if (value.length() > 16000) {
-        value = value.substring(value.length() - 16000);
-      }
-      /*
-       * utilizar docvalue de outro tipo com mesmo nome provoca erro,
-       * entao usamos o prefixo "_" no nome para diferenciar
-       */
-      String keyPrefix = "";
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       if (isMetadataKey) {
         keyPrefix = "_";
       }
@@ -439,7 +413,6 @@ public class IndexItem {
   }
 
   private static void addMetadataToDoc(Document doc, Metadata metadata) {
-<<<<<<< HEAD
     MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
     boolean isHtml = MediaType.TEXT_HTML.equals(mimetype) || MediaType.application("xhtml+xml").equals(mimetype);
 
@@ -467,17 +440,6 @@ public class IndexItem {
           if (val != null) {
             strBuilder.append(val + " ");
           }
-=======
-    for (String key : metadata.names()) {
-      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
-        continue;
-      }
-      String value = metadata.get(key).trim();
-      if (metadata.getValues(key).length > 1) {
-        StringBuilder strBuilder = new StringBuilder();
-        for (String val : metadata.getValues(key)) {
-          strBuilder.append(val + " ");
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         }
         value = strBuilder.toString().trim();
       }
@@ -487,7 +449,6 @@ public class IndexItem {
       }
       Object oValue = value;
       Class type = typesMap.get(key);
-<<<<<<< HEAD
 
       if (type == null && isHtml) {
         continue;
@@ -495,9 +456,6 @@ public class IndexItem {
 
       if (type == null || !type.equals(String.class)) {
 
-=======
-      if (type == null || !type.equals(String.class)) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
         try {
           if (type == null || type.equals(Double.class)) {
             oValue = Double.valueOf(value);
@@ -529,7 +487,6 @@ public class IndexItem {
     for (String key : metadata.names()) {
       if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
-<<<<<<< HEAD
 
       }
       if (metadata.getValues(key).length > 1) {
@@ -540,22 +497,9 @@ public class IndexItem {
       }
       String val = metadata.get(key);
 
-      if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class
-      )) {
-        int type = 0;
-        while (type
-            <= 4) {
-=======
-      }
-      if (metadata.getValues(key).length > 1) {
-        typesMap.put(key, String.class);
-        continue;
-      }
-      String val = metadata.get(key);
       if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class)) {
         int type = 0;
         while (type <= 4) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
           try {
             switch (type) {
               case 0:

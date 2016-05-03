@@ -30,20 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
-<<<<<<< HEAD
-<<<<<<< HEAD
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
-=======
-import dpf.sp.gpinf.indexer.util.Util;
-
-public class FileProcessor extends CancelableWorker<Void, Void> {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-
-public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
-
   private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
   private static int STATUS_LENGTH = 200;
@@ -56,15 +44,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   public FileProcessor(int docId, boolean listSubItens) {
     this.listSubItens = listSubItens;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     App.get().getSearchParams().lastSelectedDoc = docId;
-=======
-    App.get().lastSelectedDoc = docId;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    App.get().getSearchParams().lastSelectedDoc = docId;
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 
     if (parsingTask != null) {
       parsingTask.cancel(true);
@@ -136,16 +116,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
-=======
-    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().highlightTerms);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
-
   }
 
   private void disposeItem(final EvidenceFile itemToDispose) {

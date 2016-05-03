@@ -24,7 +24,6 @@ public class RandomForestPredictor {
     splitFeature = new short[nodes];
     value = new float[nodes];
   }
-<<<<<<< HEAD
 
   public int size() {
     return trees;
@@ -45,20 +44,6 @@ public class RandomForestPredictor {
       cnt++;
     }
     return ret / cnt;
-=======
-
-  public int size() {
-    return trees;
-  }
-
-  public double predict(List<Float> lFeatures) {
-    float[] features = toArr(lFeatures);
-    double ret = 0;
-    for (int root : roots) {
-      ret += classify(root, features);
-    }
-    return ret / trees;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   }
 
   private static float[] toArr(List<Float> l) {

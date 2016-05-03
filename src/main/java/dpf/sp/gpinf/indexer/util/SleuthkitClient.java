@@ -40,13 +40,10 @@ public class SleuthkitClient {
 
   volatile boolean serverError = false;
 
-<<<<<<< HEAD
   private static final int max_streams = 10000;
   private int openedStreams = 0;
   private Set<Long> currentStreams = new HashSet<Long>();
 
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   /*private static final ThreadLocal<SleuthkitClient> threadLocal =
    new ThreadLocal<SleuthkitClient>() {
    @Override protected SleuthkitClient initialValue() {
@@ -74,15 +71,7 @@ public class SleuthkitClient {
 
     int port = portStart.getAndIncrement();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
-=======
-    String pipePath = Configuration.indexerTemp + "/pipe-" + port;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-    String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
     String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M",
       SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};
@@ -153,35 +142,24 @@ public class SleuthkitClient {
     }.start();
   }
 
-<<<<<<< HEAD
   public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
 
     if (serverError || (openedStreams > max_streams && currentStreams.size() == 0)) {
-=======
-  public SeekableInputStream getInputStream(int id, String path) throws IOException {
-
-    if (serverError) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       if (process != null) {
         process.destroy();
       }
       process = null;
-<<<<<<< HEAD
       if (!serverError) 
         logger.info("Restarting SleuthkitServer to clean possible resource leaks.");
       serverError = false;
       openedStreams = 0;
       currentStreams.clear();
-=======
-      serverError = false;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     }
 
     while (process == null || !isAlive(process)) {
       start();
     }
 
-<<<<<<< HEAD
     SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
 
     currentStreams.add(stream.streamId);
@@ -192,9 +170,6 @@ public class SleuthkitClient {
 
   synchronized void removeStream(long streamID) {
     currentStreams.remove(streamID);
-=======
-    return new SleuthkitClientInputStream(id, path, this);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   }
 
   private void finishProcessOnJVMShutdown(final Process p) {

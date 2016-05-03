@@ -352,21 +352,9 @@ public class Manager {
     }
 
     try {
-<<<<<<< HEAD
-<<<<<<< HEAD
       IOUtil.deletarDiretorio(ConstantsViewer.indexerTemp);
     } catch (IOException e) {
       LOGGER.warn("Não foi possível apagar {}", ConstantsViewer.indexerTemp.getPath());
-=======
-      IOUtil.deletarDiretorio(Configuration.indexerTemp);
-    } catch (IOException e) {
-      LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      IOUtil.deletarDiretorio(ConstantsViewer.indexerTemp);
-    } catch (IOException e) {
-      LOGGER.warn("Não foi possível apagar {}", ConstantsViewer.indexerTemp.getPath());
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
     }
 
     if (caseData.containsReport()) {

@@ -18,11 +18,8 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
-<<<<<<< HEAD
   public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink";
 
-=======
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   private static Map<Long, Map<HardLink, Object>> fileSystemMap = new HashMap<Long, Map<HardLink, Object>>();
   private static Object lock = new Object();
   private boolean taskEnabled = false;
@@ -75,11 +72,6 @@ public class IgnoreHardLinkTask extends AbstractTask {
         hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
       }
 
-<<<<<<< HEAD
-=======
-      //HashValue hash = evidence.getHashValue();
-      Object value = null;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       boolean ignore = false;
 
       synchronized (lock) {
@@ -91,39 +83,14 @@ public class IgnoreHardLinkTask extends AbstractTask {
 
         if (hardLinkMap.containsKey(hardLink)) {
           ignore = true;
-<<<<<<< HEAD
         } else {
-=======
-          /*value = hardLinkMap.get(hardLink);
-           if(((Integer)evidence.getId()).equals(value)){
-           hardLinkMap.put(hardLink, hash);
-           lock.notifyAll();
-           }else{
-           ignore = true;
-           while(value instanceof Integer){
-           lock.wait();
-           value = hardLinkMap.get(hardLink);
-           }
-           }*/
-
-        } else {
-          //hardLinkMap.put(hardLink, evidence.getId());
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
           hardLinkMap.put(hardLink, null);
         }
       }
 
       if (ignore) {
         evidence.setSleuthFile(null);
-<<<<<<< HEAD
         evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true");
-=======
-        evidence.setExtraAttribute("ignoredHardLink", "true");
-        //if(value == null)
-        evidence.setHash("");
-        //else
-        //	evidence.setHash(((HashValue)value).toString());
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       }
 
     }

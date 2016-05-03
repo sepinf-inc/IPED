@@ -47,13 +47,6 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
-=======
->>>>>>> 17fb19c... Atualização para o desmembramento do viewer
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
@@ -83,15 +76,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     try {
       // ImageIO.setUseCache(false);
-<<<<<<< HEAD
-<<<<<<< HEAD
       IViewerControl viewerControl = ViewerControl.getInstance();
-=======
-      ViewerControl viewerControl = ViewerControlImpl.getInstance();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      IViewerControl viewerControl = ViewerControl.getInstance();
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
       Configuration.getConfiguration(App.get().codePath + "/..");
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
@@ -113,15 +98,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       viewerControl.createViewers(this.appSearchParams,
           exibirAjuda);
       this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-<<<<<<< HEAD
-<<<<<<< HEAD
       App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
-=======
-      App.get().setTextViewer(this.appSearchParams.textViewer);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
       // lista todos os itens
       App.get().setQuery(PesquisarIndice.getQuery(""));

@@ -31,11 +31,6 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class RowComparator implements Comparator<Integer> {
 
-<<<<<<< HEAD
-=======
-  static String[] fields = ResultTableModel.fields;
-
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   private int col;
   private boolean bookmarkCol = false;
   private boolean scoreCol = false;
@@ -51,15 +46,9 @@ public class RowComparator implements Comparator<Integer> {
   public RowComparator(int col) {
     this.col = col;
 
-<<<<<<< HEAD
     if (col >= ResultTableModel.fixedCols.length) {      
       col -= ResultTableModel.fixedCols.length;
       String[] fields = ResultTableModel.fields;
-=======
-    if (col >= ResultTableModel.fixedCols.length) {
-      col -= ResultTableModel.fixedCols.length;
-      fields = ResultTableModel.fields;
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
 
       if (fields[col].equals(ResultTableModel.BOOKMARK_COL)) {
         bookmarkCol = true;
@@ -84,14 +73,10 @@ public class RowComparator implements Comparator<Integer> {
       if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
         ndv = atomicReader.getNumericDocValues(indexedField);
         docsWithField = atomicReader.getDocsWithField(indexedField);
-<<<<<<< HEAD
         if (ndv == null) {
           ndv = atomicReader.getNumericDocValues("_num_" + indexedField);
           docsWithField = atomicReader.getDocsWithField("_num_" + indexedField);
         }
-=======
-
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       }
       if (ndv == null) {
         sdv = atomicReader.getSortedDocValues(indexedField);

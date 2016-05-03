@@ -50,15 +50,7 @@ import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 public class TextParser extends CancelableWorker implements ITextParser {
-=======
-public class TextParser extends CancelableWorker {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-public class TextParser extends CancelableWorker implements ITextParser {
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -66,8 +58,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
   volatile int id;
   private EvidenceFile item;
   private volatile InputStream is;
-<<<<<<< HEAD
-<<<<<<< HEAD
   private ProgressDialog progressMonitor;
 
   private static Object lock = new Object();
@@ -89,35 +79,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
   public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
     try {
       this.appSearchParams = params;
-=======
-  protected ProgressDialog progressMonitor;
-=======
-  private ProgressDialog progressMonitor;
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
-
-  private static Object lock = new Object();
-  private TemporaryResources tmp;
-  private static FileChannel parsedFile;
-  private boolean firstHitAutoSelected = false;
-  AppSearchParams appSearchParams = null;
-
-  // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
-  // sortedHits
-  private TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
-
-  // contém offset dos hits
-  private ArrayList<Long> hits = new ArrayList<Long>();
-
-  // contém offset das quebras de linha do preview
-  private ArrayList<Long> viewRows = new ArrayList<Long>();
-
-  public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
-    try {
-<<<<<<< HEAD
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      this.appSearchParams = params;
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       this.content = content;
       this.contentType = contentType;
       this.tmp = tmp;
@@ -139,10 +100,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
     }
 
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   
   @Override
   public FileChannel getParsedFile() {
@@ -173,7 +130,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
   public void setHits(ArrayList<Long> hits) {
     this.hits = hits;
   }
-<<<<<<< HEAD
 
   @Override
   public ArrayList<Long> getViewRows() {
@@ -207,45 +163,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
   
   
   @Override
-=======
-
-  @Override
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-
-  @Override
-  public ArrayList<Long> getViewRows() {
-    return this.viewRows;
-  }
-  
-  @Override
-  public void setViewRows(ArrayList<Long> viewRows) {
-    this.viewRows = viewRows;
-  }
-
-  @Override
-  public ProgressDialog getProgressMonitor() {
-    return this.progressMonitor;
-  }
-  
-  @Override
-  public void setProgressMonitor(ProgressDialog monitor) {
-    this.progressMonitor = monitor;
-  }
-  
-  @Override
-  public boolean getFirstHitAutoSelected() {
-    return this.firstHitAutoSelected;
-  }
-  
-  @Override
-  public void setFirstHitAutoSelected(boolean val) {
-    this.firstHitAutoSelected = val;
-  }
-  
-  
-  @Override
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
   public void done() {
     try {
       if (is != null) {
@@ -277,15 +194,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       sortedHits = new TreeMap<Long, int[]>();
       hits = new ArrayList<Long>();
       viewRows = new ArrayList<Long>();
-<<<<<<< HEAD
-<<<<<<< HEAD
       appSearchParams.hitsModel.fireTableDataChanged();
-=======
-      App.get().hitsModel.fireTableDataChanged();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-      appSearchParams.hitsModel.fireTableDataChanged();
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
       App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
       parseText();
@@ -446,15 +355,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
             }
 
             // atualiza lista de hits
-<<<<<<< HEAD
-<<<<<<< HEAD
             appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
-=======
-            App.get().hitsModel.fireTableRowsInserted(numHits, numHits);
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
-=======
-            appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
->>>>>>> 85a3db0... Desmembramento do viewer para outro projeto.
             this.firePropertyChange("hits", numHits, numHits + 1);
           }
 

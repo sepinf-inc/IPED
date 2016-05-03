@@ -70,11 +70,7 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     String mediaType = evidence.getMediaType().toString();
-<<<<<<< HEAD
     if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty() || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
-=======
-    if (evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       return;
     }
 

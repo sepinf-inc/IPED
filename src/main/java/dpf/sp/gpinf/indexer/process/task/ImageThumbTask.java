@@ -178,11 +178,7 @@ public class ImageThumbTask extends AbstractTask {
         ImageIO.write(img, "jpg", tmp);
       }
 
-<<<<<<< HEAD
     } catch (Throwable e) {
-=======
-    } catch (Exception e) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       Log.warning(getClass().getSimpleName(), "Erro ao gerar miniatura: "
           + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
 

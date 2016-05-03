@@ -89,7 +89,6 @@ public class ExportFileTask extends AbstractTask {
 
   public static void load(File file) throws FileNotFoundException, IOException {
 
-<<<<<<< HEAD
     byte[] bytes = Files.readAllBytes(file.toPath());
     //BOM test
     if (bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
@@ -98,20 +97,11 @@ public class ExportFileTask extends AbstractTask {
 
     String content = new String(bytes, "UTF-8");
     for (String line : content.split("\n")) {
-=======
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-    String line = reader.readLine();
-    while ((line = reader.readLine()) != null) {
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
       if (line.trim().startsWith("#") || line.trim().isEmpty()) {
         continue;
       }
       categoriesToExtract.add(line.trim());
     }
-<<<<<<< HEAD
-=======
-    reader.close();
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
   }
 
   private static synchronized File getSubDir(File extractDir) {
