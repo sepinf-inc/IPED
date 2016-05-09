@@ -213,44 +213,9 @@
             <version>1.6.3</version>
         </dependency>
         <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>ridl</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>unoil</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>juh</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>jurt</artifactId>
-            <version>5.1.1</version>
-        </dependency>        
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>officebean</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>unoloader</artifactId>
-            <version>5.1.1</version>
-        </dependency>
-        <dependency>
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
             <version>0.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openoffice</groupId>
-            <artifactId>bootstrap-connector</artifactId>
-            <version>0.1.1</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
