@@ -101,6 +101,9 @@ public class App extends JFrame implements WindowListener {
   SleuthkitCase sleuthCase;
 
   private AppSearchParams appSearchParams = null;
+  
+  //variáveis temporárias, serão movidas para futura classe IPEDSource
+  int[] ids, docs, textSizes;
 
   SearchResult results = new SearchResult(0);
 
@@ -283,27 +286,27 @@ public class App extends JFrame implements WindowListener {
   }
 
   public int[] getTextSizes() {
-    return this.appSearchParams.textSizes;
+    return this.textSizes;
   }
 
   public void setTextSizes(int[] sizes) {
-    this.appSearchParams.textSizes = sizes;
+    this.textSizes = sizes;
   }
 
   public int[] getIDs() {
-    return this.appSearchParams.ids;
+    return this.ids;
   }
 
   public void setIDs(int[] ids) {
-    this.appSearchParams.ids = ids;
+    this.ids = ids;
   }
 
   public int[] getDocs() {
-    return this.appSearchParams.docs;
+    return this.docs;
   }
 
   public void setDocs(int[] docs) {
-    this.appSearchParams.docs = docs;
+    this.docs = docs;
   }
 
   public void destroy() {
