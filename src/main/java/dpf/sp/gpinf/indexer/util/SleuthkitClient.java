@@ -9,7 +9,6 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.ConstantsViewer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
@@ -71,7 +69,7 @@ public class SleuthkitClient {
 
     int port = portStart.getAndIncrement();
 
-    String pipePath = ConstantsViewer.indexerTemp + "/pipe-" + port;
+    String pipePath = Configuration.indexerTemp + "/pipe-" + port;
 
     String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M",
       SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};

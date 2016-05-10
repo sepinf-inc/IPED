@@ -47,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.ConstantsViewer;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
@@ -352,9 +351,9 @@ public class Manager {
     }
 
     try {
-      IOUtil.deletarDiretorio(ConstantsViewer.indexerTemp);
+      IOUtil.deletarDiretorio(Configuration.indexerTemp);
     } catch (IOException e) {
-      LOGGER.warn("Não foi possível apagar {}", ConstantsViewer.indexerTemp.getPath());
+      LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
     }
 
     if (caseData.containsReport()) {

@@ -56,7 +56,7 @@ public class Configuration {
   private static final String FASTMODE_CONFIG = "conf/FastModeConfig.txt";
 
   public static UTF8Properties properties = new UTF8Properties();
-  public static File indexTemp;
+  public static File indexTemp, indexerTemp;
   public static int numThreads;
   public static int textSplitSize = 10000000;
   public static int textOverlapSize = 10000;
@@ -110,7 +110,7 @@ public class Configuration {
     if (value != null) {
       value = value.trim();
     }
-    if (ConstantsViewer.indexerTemp == null) {
+    if (indexerTemp == null) {
       if (value != null && !value.equalsIgnoreCase("default")) {
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
@@ -119,22 +119,23 @@ public class Configuration {
           tmp = newTmp;
         }
       }
-      ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
-      if (!ConstantsViewer.indexerTemp.mkdirs()) {
+      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      if (!indexerTemp.mkdirs()) {
         tmp = new File(System.getProperty("java.io.tmpdir"));
-        ConstantsViewer.indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
-        ConstantsViewer.indexerTemp.mkdirs();
+        indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+        indexerTemp.mkdirs();
       }
-      if (ConstantsViewer.indexerTemp.exists()) {
-        System.setProperty("java.io.tmpdir", ConstantsViewer.indexerTemp.getAbsolutePath());
+      if (indexerTemp.exists()) {
+        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
       }
       if (tmp == newTmp) {
-        indexTemp = new File(ConstantsViewer.indexerTemp, "index");
+        indexTemp = new File(indexerTemp, "index");
       }
     }
-    if (ConstantsViewer.indexerTemp != null) {
-      ConstantsViewer.indexerTemp.mkdirs();
+    if (indexerTemp != null) {
+      indexerTemp.mkdirs();
     }
+    ConstantsViewer.indexerTemp = indexerTemp;
 
     value = properties.getProperty("robustImageReading");
     if (value != null) {
@@ -364,8 +365,8 @@ public class Configuration {
         OCRParser.TESSERACTFOLDER = configPath + "/" + value;
       }
 
-      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(ConstantsViewer.indexerTemp, "libewf"), true);
-      Util.loadNatLibs(new File(ConstantsViewer.indexerTemp, "libewf").getAbsolutePath());
+      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
+      Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
