@@ -4,18 +4,18 @@
 
 # As informações do caso são obtidas de arquivo .asap do Criminalística informado via linha de comando (-asap). 
 # Caso não informado arquivo .asap ou caso ele não tenha todos os dados, são utilizados os valores padrão abaixo.
-Cabecalho=SERVIÇO PÚBLICO FEDERAL<br>MJ - DEPARTAMENTO DE POLÍCIA FEDERAL<br>SUPERINTENDÊNCIA REGIONAL EM SÃO PAULO<br>SETEC - NÚCLEO DE CRIMINALÍSTICA
+Cabecalho=SERVIÇO PÚBLICO FEDERAL<br>MJ - POLÍCIA FEDERAL<br>SUPERINTENDÊNCIA REGIONAL EM SÃO PAULO<br>SETEC - NÚCLEO DE CRIMINALÍSTICA
 Classe=1a Classe
 DataDocumento=xx/xx/201x
 DataLaudo=xx/xx/201x
 DataProtocolo=xx/xx/201x
-Documento=Memorando xxx/201x-SR/DPF/SP
-Ipl=IPL xxx/201x-x - SR/DPF/SP
-Laudo=xxx/201x-NUCRIM/SETEC/SR/DPF/SP
+Documento=Memorando xxx/201x-SR/PF/SP
+Ipl=IPL xxx/201x-x - SR/PF/SP
+Laudo=xxx/201x-NUCRIM/SETEC/SR/PF/SP
 Material=MATERIAL
 Matricula=XX.XXX
 Perito=PERITO
-Protocolo=xxx/201x-SETEC/SR/DPF/SP
+Protocolo=xxx/201x-SETEC/SR/PF/SP
 Solicitante = do Delegado de Polícia Federal xxx
 Titulo = LAUDO DE PERÍCIA CRIMINAL FEDERAL (Informática)
 
