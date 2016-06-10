@@ -75,6 +75,9 @@ indexUnallocated = false
 # e a recuperar, podem ser configurados em conf/CarvingConfig.txt
 enableCarving = false
 
+# Habilita carving específico de arquivos known.met do e-Mule. Necessário habilitar "addUnallocated". 
+enableKnownMetCarving = false
+
 # Habilita a geração de miniaturas das imagens durante o processamento.
 # Pode deixar o processamento bem mais lento, porém torna a visualização na galeria muito rápida.
 enableImageThumbs = true
