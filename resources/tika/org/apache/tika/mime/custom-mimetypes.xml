@@ -67,7 +67,6 @@
         <glob pattern="*-MemberShadow-v*"/>
     </mime-type>
    
-<<<<<<< HEAD
    <mime-type type="message/rfc822">
     <magic priority="60">
       <match value="Relay-Version:" type="stringignorecase" offset="0"/>
@@ -95,34 +94,6 @@
     <glob pattern="*.mht"/>
     <glob pattern="*.mhtml"/>
    </mime-type>
-=======
-    <mime-type type="message/rfc822">
-        <magic priority="60">
-            <match value="Relay-Version:" type="stringignorecase" offset="0"/>
-            <match value="#!\ rnews" type="string" offset="0"/>
-            <match value="N#!\ rnews" type="string" offset="0"/>
-            <match value="Forward\ to" type="string" offset="0"/>
-            <match value="Pipe\ to" type="string" offset="0"/>
-            <match value="Subject:" type="string" offset="0"/>
-            <match value="From:" type="string" offset="0"/>
-            <match value="Date:" type="string" offset="0"/>
-            <match value="Return-Path:" type="stringignorecase" offset="0"/>
-            <match value="X-Originating-IP:" type="stringignorecase" offset="0"/>
-            <match value="Received:" type="stringignorecase" offset="0"/>
-            <match value="Message-ID:" type="stringignorecase" offset="0"/>
-            <match value="\nReturn-Path:" type="stringignorecase" offset="0:1000"/>
-            <match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
-            <match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
-            <match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
-            <match value="MIME-Version:" type="stringignorecase" offset="0"/>
-        </magic>
-        <sub-class-of type="text/html"/>
-        <glob pattern="*.eml"/>
-        <glob pattern="*.mime"/>
-        <glob pattern="*.mht"/>
-        <glob pattern="*.mhtml"/>
-    </mime-type>
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.
     
     <mime-type type="image/cdr">
         <magic priority="60">
@@ -397,8 +368,4 @@
         <glob pattern="*.lnk"/>
     </mime-type> 
    
-<<<<<<< HEAD
 </mime-info>
-=======
-</mime-info>
->>>>>>> 4855b2f... Versão estável do desmembramento por pacote.

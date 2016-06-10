@@ -322,6 +322,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-graphicsmagick</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>graphicsmagick</groupId>
+                                    <artifactId>graphicsmagick-zip</artifactId>
+                                    <version>1.3.21</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-tesseract</id>
                         <phase>package</phase>
                         <goals>
@@ -333,6 +352,25 @@
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
                                     <version>3.02</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-mplayer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>mplayer</groupId>
+                                    <artifactId>mplayer-zip</artifactId>
+                                    <version>4.9.2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
