@@ -148,9 +148,10 @@ public class IPEDReader extends DataSourceReader {
     boolean[] isParentToAdd = new boolean[App.get().lastId + 1];
     for (int docID : result.docs) {
       String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
-      for (String parentId : parentIds.split(" ")) {
-        isParentToAdd[Integer.parseInt(parentId)] = true;
-      }
+      if(!parentIds.trim().isEmpty())
+	      for (String parentId : parentIds.trim().split(" ")) {
+	        isParentToAdd[Integer.parseInt(parentId)] = true;
+	      }
     }
     for (int docID : result.docs) {
       String id = App.get().reader.document(docID).get(IndexItem.ID);
