@@ -34,6 +34,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
@@ -67,17 +68,12 @@ public class Util {
   }
 
   public static String getRelativePath(File baseFile, File file) throws IOException {
-    String basePath = baseFile.getCanonicalFile().getParent();
-    if (basePath.endsWith(File.separator)) {
-      basePath = basePath.substring(0, basePath.length() - 1);
-    }
-    String filePath = file.getCanonicalPath();
-    String result = filePath.replace(basePath, "");
-    if (result.length() < filePath.length() && result.startsWith(File.separator)) {
-      result = result.substring(1, result.length());
-    }
-    return result.replace(File.separator, "/");
-
+	  Path base = baseFile.getParentFile().getCanonicalFile().toPath();
+	  file = file.getCanonicalFile();
+	  Path path = file.toPath();
+	  if(!base.getRoot().equals(path.getRoot()))
+	  	return file.getAbsolutePath();
+	  return base.relativize(path).toString();
   }
 
   public static void writeObject(Object obj, String filePath) throws IOException {
