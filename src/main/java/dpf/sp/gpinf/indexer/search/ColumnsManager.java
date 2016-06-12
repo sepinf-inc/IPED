@@ -97,23 +97,24 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	public static final String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
 	
+	private static ColumnsManager instance;
+	
 	String[] indexFields = null;
 	
 	private String[] groupNames = {"Básicas", "Avançadas", "Email", "Outras"};
 	public String[][] fieldGroups;
 	
 	ColumnState colState = new ColumnState();
-    	
-	private static ColumnsManager instance = new ColumnsManager();
-	
+    
 	private ArrayList<String> loadedFields = new ArrayList<String>();
-
 		
 	private JDialog dialog = new JDialog();
 	private JPanel listPanel = new JPanel();
 	private JComboBox<Object> combo;
 	
 	public static ColumnsManager getInstance(){
+		if(instance == null)
+			instance = new ColumnsManager();
 		return instance;
 	}
 	
