@@ -414,6 +414,8 @@ public class IndexItem {
 
   private static void addMetadataToDoc(Document doc, Metadata metadata) {
     MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
+    if(mimetype != null)
+    	mimetype = mimetype.getBaseType();
     boolean isHtml = MediaType.TEXT_HTML.equals(mimetype) || MediaType.application("xhtml+xml").equals(mimetype);
 
     //previne mto raro ConcurrentModificationException
