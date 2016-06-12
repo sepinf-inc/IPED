@@ -200,13 +200,13 @@ public class CmdLineArgs {
       throw new RuntimeException("Opção -o não deve ser utilizada com relatorios do FTK!");
     }
 
-    if (IndexFiles.getInstance().dataSource.size() > 1) {
-      for (File file : IndexFiles.getInstance().dataSource) {
-        if (new IPEDReader(null, null, false).isSupported(file)) {
-          throw new RuntimeException("Relatórios do IPED não podem ser gerados junto com outras fontes de dados!");
-        }
-      }
-    }
+    for(File file : IndexFiles.getInstance().dataSource)
+    	if(new IPEDReader(null, null, false).isSupported(file)){
+    		if(IndexFiles.getInstance().dataSource.size() > 1)
+    			throw new RuntimeException("Relatórios do IPED não podem ser gerados junto com outras fontes de dados!");
+    		if(IndexFiles.getInstance().appendIndex)
+    			throw new RuntimeException("Não é permitido realizar append de um arquivo .iped!");
+    	}
 
     if (new File(reportDir, "Report_files/files").exists()) {
       IndexFiles.getInstance().dataSource.remove(reportDir);
