@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>4.2-p02</version>
+            <version>4.2-p03</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -212,6 +212,11 @@
             <artifactId>levigo-jbig2-imageio</artifactId>
             <version>1.6.3</version>
         </dependency>
+        <dependency>
+    		<groupId>gpinf.sp</groupId>
+    		<artifactId>robust-png</artifactId>
+    		<version>0.1</version>
+    	</dependency>
         <dependency>
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
@@ -389,7 +394,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>loaddb-zip</artifactId>
-                                    <version>20160107-iped-patch-0.2</version>
+                                    <version>20160107-iped-patch-0.4</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -408,7 +413,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>0.2</version>
+                                    <version>0.4</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
