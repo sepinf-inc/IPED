@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2015, Wladimir Leite
+ * Copyright 2015-2016, Wladimir Leite
  * 
  * This file is part of Indexador e Processador de Evidencias Digitais (IPED).
  *
@@ -41,6 +41,7 @@ import java.nio.file.Path;
 import java.text.Collator;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,8 +57,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
-
-import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -198,16 +197,6 @@ public class HTMLReportTask extends AbstractTask {
    * Constante com o nome utilizado para o arquivo de propriedades.
    */
   private static final String configFileName = "HTMLReportConfig.txt";
-
-  /**
-   * Formato de datas no relatório.
-   */
-  private final DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-
-  /**
-   * Formato de números no relatório.
-   */
-  private final DecimalFormat longFormat = new DecimalFormat("#,##0");
 
   /**
    * Set com arquivos em processamento, estático e sincronizado para evitar que duas threads
@@ -421,7 +410,7 @@ public class HTMLReportTask extends AbstractTask {
     reg.created = evidence.getCreationDate();
     reg.path = evidence.getPath();
 
-    String[] labels = evidence.getLabels() == null ? new String[]{""} : evidence.getLabels().split("\\|");
+    String[] labels = evidence.getLabels() == null ? new String[] {""} : evidence.getLabels().split("\\|");
     String[] categories = reg.category.split("\\|");
     synchronized (init) {
       for (String label : labels) {
@@ -583,41 +572,98 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private void processBookmarks(File templatesFolder) throws Exception {
+    sortRegs();
     StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content;
     StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content;
     int idx = 1;
     for (String marcador : entriesByLabel.keySet()) {
       String id = String.format("arq%06d", idx);
-      processaBookmark(marcador, id, modelo, item, true, entriesByLabel.get(marcador));
+      List<ReportEntry> regs = entriesByLabel.get(marcador);
+      processaBookmark(marcador, id, modelo, item, true, regs);
       idx++;
+      List<String> l = new ArrayList<String>();
+      imageThumbsByLabel.put(marcador, l);
+      for (ReportEntry e : regs) {
+        l.add(e.img);
+      }
     }
     if (categoriesListEnabled) {
       for (String categoria : entriesByCategory.keySet()) {
         String id = String.format("arq%06d", idx);
-        processaBookmark(categoria, id, modelo, item, false, entriesByCategory.get(categoria));
+        List<ReportEntry> regs = entriesByCategory.get(categoria);
+        processaBookmark(categoria, id, modelo, item, false, regs);
         idx++;
+        List<String> l = new ArrayList<String>();
+        imageThumbsByLabel.put(categoria, l);
+        for (ReportEntry e : regs) {
+          l.add(e.img);
+        }
       }
     }
   }
 
-  private void processaBookmark(String name, String id, StringBuilder model, StringBuilder item, boolean isLabel, List<ReportEntry> regs) throws Exception {
-    Collections.sort(regs, new Comparator<ReportEntry>() {
-      public int compare(ReportEntry a, ReportEntry b) {
-        int cmp = collator.compare(a.path, b.path);
-        if (cmp == 0) {
-          cmp = collator.compare(a.name, b.name);
-        }
-        return cmp;
+  private void sortRegs() {
+    final List<List<ReportEntry>> l = new ArrayList<List<ReportEntry>>(entriesByLabel.values());
+    if (categoriesListEnabled) l.addAll(entriesByCategory.values());
+    Collections.sort(l, new Comparator<List<ReportEntry>>() {
+      public int compare(List<ReportEntry> a, List<ReportEntry> b) {
+        return Integer.compare(b.size(), a.size());
       }
     });
+    final CustomComparator comparator = new CustomComparator();
+    final int numThreads = Configuration.numThreads;
+    Thread[] threads = new Thread[numThreads];
+    for (int i = 0; i < numThreads; i++) {
+      final int idx = i;
+      (threads[i] = new Thread() {
+        public void run() {
+          for (int j = idx; j < l.size(); j += numThreads) {
+            Collections.sort(l.get(j), new Comparator<ReportEntry>() {
+              public int compare(ReportEntry a, ReportEntry b) {
+                return comparator.compare(a.path, b.path);
+              }
+            });
+          }
+        }
+      }).start();
+    }
+    for (int i = 0; i < numThreads; i++) {
+      try {
+        if (threads[i] != null) threads[i].join();
+      } catch (InterruptedException e) {}
+    }
+  }
 
-    int tot = regs.size();
-    int numPages = (tot + itemsPerPage - 1) / itemsPerPage;
-    int start = 0;
-    for (int page = 1; page <= numPages; page++) {
-      int end = Math.min(tot, start + itemsPerPage);
-      createBookmarkPage(name, id, model, item, page, numPages, tot, regs.subList(start, end), isLabel);
-      start = end;
+  private void processaBookmark(final String name, final String id, final StringBuilder model, final StringBuilder item, final boolean isLabel, final List<ReportEntry> regs) throws Exception {
+    final int tot = regs.size();
+    final int numPages = (tot + itemsPerPage - 1) / itemsPerPage;
+    final int numThreads = Configuration.numThreads;
+    Thread[] threads = new Thread[numThreads];
+    for (int i = 0; i < numThreads; i++) {
+      final int idx = i;
+      (threads[i] = new Thread() {
+        public void run() {
+          DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+          NumberFormat longFormat = new DecimalFormat("#,##0");
+          for (int page = 1; page <= numPages; page++) {
+            if (page % numThreads != idx) continue;
+            int start = (page - 1) * itemsPerPage;
+            int end = Math.min(tot, start + itemsPerPage);
+            try {
+              createBookmarkPage(dateFormat, longFormat, name, id, model, item, page, numPages, tot, regs.subList(start, end), isLabel);
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }
+      }).start();
+    }
+    for (int i = 0; i < numThreads; i++) {
+      try {
+        threads[i].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
   }
 
@@ -625,7 +671,7 @@ public class HTMLReportTask extends AbstractTask {
     return id + "(" + page + ").html";
   }
 
-  private void createBookmarkPage(String name, String id, StringBuilder model, StringBuilder item, int pag, int totPags, int totRegs, List<ReportEntry> regs, boolean isLabel) throws Exception {
+  private void createBookmarkPage(DateFormat dateFormat, NumberFormat longFormat, String name, String id, StringBuilder model, StringBuilder item, int pag, int totPags, int totRegs, List<ReportEntry> regs, boolean isLabel) throws Exception {
     File arq = new File(reportSubFolder, getPageId(id, pag));
 
     StringBuilder sb = new StringBuilder();
@@ -652,9 +698,9 @@ public class HTMLReportTask extends AbstractTask {
           img.append("<img src=\"");
           img.append(getRelativePath(thumbFile, reportSubFolder));
           img.append("\" ");
-          BufferedImage image = ImageIO.read(thumbFile);
-          if (image != null && (image.getWidth() > thumbSize || image.getHeight() > thumbSize)) {
-            if (image.getWidth() >= image.getHeight()) {
+          Dimension d = ImageUtil.getImageFileDimension(thumbFile);
+          if (d != null && (d.getWidth() > thumbSize || d.getHeight() > thumbSize)) {
+            if (d.getWidth() >= d.getHeight()) {
               img.append("width=\"").append(thumbSize).append("\"");
             } else {
               img.append("height=\"").append(thumbSize).append("\"");
@@ -668,12 +714,8 @@ public class HTMLReportTask extends AbstractTask {
           it.append(img);
           it.append("</td></tr></table>\n");
 
-          if (isLabel || entriesByLabel.size() == 0) {
-            List<String> l = imageThumbsByLabel.get(name);
-            if (l == null) {
-              imageThumbsByLabel.put(name, l = new ArrayList<String>());
-            }
-            l.add(img.toString());
+          if (isLabel || entriesByLabel.isEmpty()) {
+            reg.img = img.toString();
           }
         }
       } else if (reg.isVideo && videoThumbsEnabled && reg.hash != null) {
@@ -702,20 +744,19 @@ public class HTMLReportTask extends AbstractTask {
           it.append("</a></span></div>\n");
         }
       }
-
       replace(it, "%SEQ%", reg.hash);
       replace(it, "%NOME%", reg.name);
       replace(it, "%CAMINHO%", reg.path);
       replace(it, "%TIPO%", reg.category);
-      replace(it, "%TAMANHO%", formatNumber(reg.length));
+      replace(it, "%TAMANHO%", formatNumber(reg.length, longFormat));
       replace(it, "%EXCLUIDO%", reg.deleted ? "Sim" : "N&atilde;o");
       replace(it, "%CARVED%", reg.carved ? "Sim" : "N&atilde;o");
       replace(it, "%HASH%", reg.hash);
       String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>";
       replace(it, "%EXP%", export);
-      replace(it, "%DT_CRIACAO%", formatDate(reg.created));
-      replace(it, "%DT_MOD%", formatDate(reg.modified));
-      replace(it, "%DT_ACESSO%", formatDate(reg.accessed));
+      replace(it, "%DT_CRIACAO%", formatDate(reg.created, dateFormat));
+      replace(it, "%DT_MOD%", formatDate(reg.modified, dateFormat));
+      replace(it, "%DT_ACESSO%", formatDate(reg.accessed, dateFormat));
       items.append(it);
     }
 
@@ -905,11 +946,11 @@ public class HTMLReportTask extends AbstractTask {
     }
   }
 
-  private String formatDate(Date date) {
+  private static String formatDate(Date date, DateFormat dateFormat) {
     return date == null ? "-" : dateFormat.format(date);
   }
 
-  private String formatNumber(Long val) {
+  private static String formatNumber(Long val, NumberFormat longFormat) {
     return val == null ? "-" : longFormat.format(val);
   }
 
@@ -1069,8 +1110,8 @@ public class HTMLReportTask extends AbstractTask {
     String[] md = matDesc.split("\\|");
     String[] mn = matNum.split("\\|");
     if (md.length != mn.length) {
-      md = new String[]{matDesc};
-      mn = new String[]{matNum};
+      md = new String[] {matDesc};
+      mn = new String[] {matNum};
     }
     StringBuilder mat = new StringBuilder();
     for (int i = 0; i < md.length; i++) {
@@ -1087,11 +1128,9 @@ public class HTMLReportTask extends AbstractTask {
  * Classe de dados que armazena informações que serão incluídas no relatório.
  *
  * @author Wladimir
- *
  */
 class ReportEntry {
-
-  String name, export, ext, category, hash, path;
+  String name, export, ext, category, hash, path, img;
   Long length;
   boolean deleted, carved, isImage, isVideo;
   Date accessed, modified, created;
@@ -1139,5 +1178,49 @@ class EncodedFile {
     out.write(content.toString());
     out.close();
     fos.close();
+  }
+}
+
+/**
+ * Comparador simples de Strings, que ignora maísculas/minúsculas e trata
+ * acentuação básica, mas sem o overhead de performance do Collator do Java.
+ */
+class CustomComparator implements Comparator<String> {
+  private final char[] map = new char[Character.MAX_VALUE + 1];
+  private static final String[] mappings = new String[] {"A","ÁÀÂÃÄáàâãä","E","ÉÈÊËéèêë","I","ÍÌÎÏíìîï","O","ÓÒÕÔÖóòõôö","U","ÚÙÜÛúùüû","C","Çç","N","Ññ"};
+
+  public CustomComparator() {
+    for (int i = 0; i < mappings.length; i += 2) {
+      char to = mappings[i].charAt(0);
+      char[] froms = mappings[i + 1].toCharArray();
+      for (char from : froms) {
+        map[from] = to;
+      }
+    }
+  }
+
+  public int compare(String a, String b) {
+    int i = 0;
+    int j = 0;
+    for (; i < a.length() && j < b.length(); i++, j++) {
+      char c = a.charAt(i);
+      char d = b.charAt(j);
+      if (c == d) continue;
+      if (c >= 'a' && c <= 'z') c -= 32;
+      else if (c >= 128) {
+        char m = map[c];
+        if (m != 0) c = m;
+      }
+      if (d >= 'a' && d <= 'z') d -= 32;
+      else if (d >= 128) {
+        char m = map[d];
+        if (m != 0) d = m;
+      }
+      if (c < d) return -1;
+      if (c > d) return 1;
+    }
+    if (i < a.length() && j == b.length()) return 1;
+    if (i == a.length() && j < b.length()) return -1;
+    return 0;
   }
 }
