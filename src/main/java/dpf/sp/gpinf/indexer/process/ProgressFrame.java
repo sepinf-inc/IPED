@@ -18,12 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -31,26 +27,24 @@ import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos
@@ -310,7 +304,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     msg.append("<tr><td>");
     msg.append("Itens de carving");
     msg.append("</td><td>");
-    msg.append(CarveTask.getItensCarved());
+    msg.append(BaseCarveTask.getItensCarved());
     msg.append("</td></tr>");
     msg.append("<tr><td>");
     msg.append("Carvings ignorados");

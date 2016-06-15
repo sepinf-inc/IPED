@@ -54,7 +54,7 @@ import gpinf.dev.data.EvidenceFile;
  * de assinaturas pesquisadas, sendo proporcional ao volume de dados de entrada e ao número de
  * padrões descobertos.
  */
-public class CarveTask extends AbstractTask {
+public class CarveTask extends BaseCarveTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(CarveTask.class);
   private static final long serialVersionUID = 1L;
@@ -72,7 +72,6 @@ public class CarveTask extends AbstractTask {
   static ArrayList<CarverType> sigArray = new ArrayList<CarverType>();
   static CarverType[] signatures;
 
-  public static int itensCarved = 0;
   private static int largestPatternLen = 100;
 
   EvidenceFile evidence;
@@ -82,14 +81,6 @@ public class CarveTask extends AbstractTask {
   int len = 0, k = 0;
   byte[] buf = new byte[1024 * 1024];
   byte[] cBuf;
-
-  synchronized public static void incItensCarved() {
-    CarveTask.itensCarved++;
-  }
-
-  synchronized public static int getItensCarved() {
-    return itensCarved;
-  }
 
   public CarveTask(Worker worker) {
     super(worker);
@@ -442,7 +433,7 @@ public class CarveTask extends AbstractTask {
           if (foot != null && head != null) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[s / 2].minSize && length <= signatures[s / 2].maxSize) {
-              addCarvedFile(head.off, length, s / 2);
+              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
             }
             break;
           }
@@ -458,7 +449,7 @@ public class CarveTask extends AbstractTask {
           if (head.sig % 2 == 0 && foot.sig % 2 == 1) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[eml].minSize && length <= signatures[eml].maxSize) {
-              addCarvedFile(head.off, length, eml);
+              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType);
             }
           }
         }
@@ -519,59 +510,6 @@ public class CarveTask extends AbstractTask {
     return len;
   }
 
-  private void addCarvedFile(long off, long len, int sig) throws Exception {
-
-    EvidenceFile evidence = new EvidenceFile();
-    evidence.setName("Carved-" + off);
-    evidence.setPath(this.evidence.getPath() + ">>" + evidence.getName());
-    evidence.setLength(len);
-
-    int parentId = this.evidence.getId();
-    evidence.setParentId(Integer.toString(parentId));
-    evidence.addParentIds(this.evidence.getParentIds());
-    evidence.addParentId(parentId);
-
-    evidence.setDeleted(this.evidence.isDeleted());
-    evidence.setCarved(true);
-    if (signatures[sig].mimeType != null) {
-      evidence.setMediaType(signatures[sig].mimeType);
-    }
-
-    long prevOff = this.evidence.getFileOffset();
-    if (prevOff == -1) {
-      evidence.setFileOffset(off);
-    } else {
-      evidence.setFileOffset(prevOff + off);
-    }
-
-    if (this.evidence.getSleuthFile() != null) {
-      evidence.setSleuthFile(this.evidence.getSleuthFile());
-      evidence.setSleuthId(this.evidence.getSleuthId());
-      //Pode causar problema com itens de carving que ultrapassam as bordas dos fragmentos do não alocado
-      if (this.evidence.hasTmpFile()) {
-        evidence.setFile(this.evidence.getTempFile());
-        evidence.setTempStartOffset(off);
-      }
-
-    } else {
-      evidence.setFile(this.evidence.getFile());
-      evidence.setExportedFile(this.evidence.getExportedFile());
-    }
-
-    this.evidence.setHasChildren(true);
-
-    incItensCarved();
-
-    // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-    if (ExportFileTask.hasCategoryToExtract() && this.evidence.isSubItem() && !this.evidence.isToExtract()) {
-      caseData.incDiscoveredEvidences(1);
-      worker.process(evidence);
-    } else {
-      worker.processNewItem(evidence);
-    }
-
-  }
-
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
     String value = confProps.getProperty("enableCarving");
@@ -583,8 +521,6 @@ public class CarveTask extends AbstractTask {
     }
 
     loadConfigFile(new File(confDir, CARVE_CONFIG));
-
-    itensCarved = 0;
   }
 
   @Override

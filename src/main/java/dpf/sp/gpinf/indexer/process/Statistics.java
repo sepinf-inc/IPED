@@ -14,10 +14,9 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.App;
@@ -172,7 +171,7 @@ public class Statistics {
     LOGGER.info("Erros de leitura de I/O: {}", this.getIoErrors());
     LOGGER.info("Subitens descobertos: {}", ParsingTask.getSubitensDiscovered());
     LOGGER.info("Itens exportados: {}", extracted);
-    LOGGER.info("Itens de Carving: {}", CarveTask.getItensCarved());
+    LOGGER.info("Itens de Carving: {}", BaseCarveTask.getItensCarved());
     LOGGER.info("Carvings corrompidos ignorados: {}", carvedIgnored);
     LOGGER.info("Itens ignorados: {}", ignored);
 

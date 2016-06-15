@@ -39,211 +39,167 @@ import gpinf.emule.KnownMetParser;
  *
  * @author Wladimir Leite
  */
-public class KnownMetCarveTask extends AbstractTask {
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "Carving de known.met do e-Mule";
+public class KnownMetCarveTask extends BaseCarveTask {
+  /**
+   * Nome da tarefa.
+   */
+  private static final String taskName = "Carving de known.met do e-Mule";
 
-    /**
-     * Indica se a tarefa está habilitada ou não.
-     */
-    private static boolean taskEnabled = false;
+  /**
+   * Indica se a tarefa está habilitada ou não.
+   */
+  private static boolean taskEnabled = false;
 
-    /**
-     * Indicador de inicialização, para controle de sincronização entre instâncias da classe.
-     */
-    private static final AtomicBoolean init = new AtomicBoolean(false);
+  /**
+   * Indicador de inicialização, para controle de sincronização entre instâncias da classe.
+   */
+  private static final AtomicBoolean init = new AtomicBoolean(false);
 
-    /**
-     * Objeto estático para sincronizar finalização.
-     */
-    private static final AtomicBoolean finished = new AtomicBoolean(false);
+  /**
+   * Objeto estático para sincronizar finalização.
+   */
+  private static final AtomicBoolean finished = new AtomicBoolean(false);
 
-    /**
-     * Contador de arquivos recuperados.
-     */
-    private static final AtomicInteger numCarvedItems = new AtomicInteger();
+  /**
+   * Contador de arquivos recuperados.
+   */
+  private static final AtomicInteger numCarvedItems = new AtomicInteger();
 
-    /**
-     * Media type dos arquivos recuperados.
-     */
+  /**
+   * Media type dos arquivos recuperados.
+   */
 
-    private static final MediaType eMuleMediaType = MediaType.application("x-emule");
+  private static final MediaType eMuleMediaType = MediaType.application("x-emule");
 
-    /**
-     * Media type do pagefile.sys / hiberfil.sys
-     */
-    public static MediaType pageFileMediaType = MediaType.application("x-pagefile");
+  /**
+   * Media type do pagefile.sys / hiberfil.sys
+   */
+  public static MediaType pageFileMediaType = MediaType.application("x-pagefile");
 
-    /**
-     * Construtor.
-     */
-    public KnownMetCarveTask(Worker worker) {
-        super(worker);
-    }
+  /**
+   * Construtor.
+   */
+  public KnownMetCarveTask(Worker worker) {
+    super(worker);
+  }
 
-    /**
-     * Passo para verificação do início do arquivo.
-     */
-    private final int step = 512;
+  /**
+   * Passo para verificação do início do arquivo.
+   */
+  private final int step = 512;
 
-    /**
-     * Heurística de data mínima utilizada para filtrar arquivos plausíveis.
-     * Aproximadamente -20 anos.
-     */
-    private static final long dateMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 20;
+  /**
+   * Heurística de data mínima utilizada para filtrar arquivos plausíveis.
+   * Aproximadamente -20 anos.
+   */
+  private static final long dateMin = System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 365 * 20;
 
-    /**
-     * Data máxima. Aproximadamente +5 anos.
-     */
-    private static final long dateMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5;
+  /**
+   * Data máxima. Aproximadamente +5 anos.
+   */
+  private static final long dateMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5;
 
-    /**
-     * Inicializa tarefa, realizando controle de alocação de apenas uma thread principal.
-     */
-    @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        synchronized (init) {
-            if (!init.get()) {
-                //Verifica se tarefa está habilitada
-                String value = confParams.getProperty("enableKnownMetCarving");
-                if (value != null && value.trim().equalsIgnoreCase("true")) {
-                    taskEnabled = true;
-                    Log.info(taskName, "Tarefa habilitada.");
-                } else {
-                    Log.info(taskName, "Tarefa desabilitada.");
-                    init.set(true);
-                    return;
-                }
-                init.set(true);
-            }
+  /**
+   * Inicializa tarefa, realizando controle de alocação de apenas uma thread principal.
+   */
+  @Override
+  public void init(Properties confParams, File confDir) throws Exception {
+    synchronized (init) {
+      if (!init.get()) {
+        //Verifica se tarefa está habilitada
+        String value = confParams.getProperty("enableKnownMetCarving");
+        if (value != null && value.trim().equalsIgnoreCase("true")) {
+          taskEnabled = true;
+          Log.info(taskName, "Tarefa habilitada.");
+        } else {
+          Log.info(taskName, "Tarefa desabilitada.");
+          init.set(true);
+          return;
         }
+        init.set(true);
+      }
     }
+  }
 
-    /**
-     * Finaliza a tarefa.
-     */
-    @Override
-    public void finish() throws Exception {
-        synchronized (finished) {
-            if (taskEnabled && !finished.get()) {
-                finished.set(true);
-                Log.info(taskName, "Arquivos carveados: " + numCarvedItems.get());
-            }
-        }
+  /**
+   * Finaliza a tarefa.
+   */
+  @Override
+  public void finish() throws Exception {
+    synchronized (finished) {
+      if (taskEnabled && !finished.get()) {
+        finished.set(true);
+        Log.info(taskName, "Arquivos carveados: " + numCarvedItems.get());
+      }
     }
+  }
 
-    public void process(EvidenceFile evidence) {
-        //Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isAcceptedType(evidence.getMediaType())) return;
+  public void process(EvidenceFile evidence) {
+    //Verifica se está desabilitado e se o tipo de arquivo é tratado
+    if (!taskEnabled || !isAcceptedType(evidence.getMediaType())) return;
 
-        //Percorre conteúdo buscando padrões plausíveis de arquivos known.met
-        byte[] bb = new byte[1];
-        byte[] buf = new byte[step - 1];
-        BufferedInputStream is = null;
-        long offset = 0;
-        try {
-            is = evidence.getBufferedStream();
-            while (is.read(bb) > 0) {
-                byte read = bb[0];
-                if (read == 14 || read == 15) {
-                    is.read(buf);
-                    int numFiles = toInt(buf, 0);
-                    if (numFiles > 0 && numFiles < 65536) {
-                        int pos = 4;
-                        long date = toInt(buf, pos) * 1000L;
-                        if (date > dateMin && date < dateMax) {
-                            pos += 4;
-                            pos += 16;
-                            int numParts = toSmall(buf, pos);
-                            pos += 2;
-                            pos += 16 * numParts;
-                            if (pos < 500) {
-                                int numTags = toInt(buf, pos);
-                                if (numTags > 2 && numTags < 100) {
-                                    int len = 512 * numFiles;
-                                    BufferedInputStream inParse = null;
-                                    try {
-                                        inParse = evidence.getBufferedStream();
-                                        inParse.skip(offset);
-                                        List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
-                                        if (!l.isEmpty()) {
-                                            addCarvedFile(evidence, offset, len);
-                                        }
-                                    } catch (Exception e) {
-                                    } finally {
-                                        IOUtil.closeQuietly(inParse);
-                                    }
-                                }
-                            }
-                        }
+    //Percorre conteúdo buscando padrões plausíveis de arquivos known.met
+    byte[] bb = new byte[1];
+    byte[] buf = new byte[step - 1];
+    BufferedInputStream is = null;
+    long offset = 0;
+    try {
+      is = evidence.getBufferedStream();
+      while (is.read(bb) > 0) {
+        byte read = bb[0];
+        if (read == 14 || read == 15) {
+          is.read(buf);
+          int numFiles = toInt(buf, 0);
+          if (numFiles > 0 && numFiles < 65536) {
+            int pos = 4;
+            long date = toInt(buf, pos) * 1000L;
+            if (date > dateMin && date < dateMax) {
+              pos += 4;
+              pos += 16;
+              int numParts = toSmall(buf, pos);
+              pos += 2;
+              pos += 16 * numParts;
+              if (pos < 500) {
+                int numTags = toInt(buf, pos);
+                if (numTags > 2 && numTags < 100) {
+                  int len = 512 * numFiles;
+                  BufferedInputStream inParse = null;
+                  try {
+                    inParse = evidence.getBufferedStream();
+                    inParse.skip(offset);
+                    List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
+                    if (!l.isEmpty()) {
+                      addCarvedFile(evidence, offset, len, "Carved-known-met-" + offset, eMuleMediaType);
+                      numCarvedItems.incrementAndGet();
                     }
-                } else {
-                    is.skip(step - 1);
+                  } catch (Exception e) {} finally {
+                    IOUtil.closeQuietly(inParse);
+                  }
                 }
-                offset += step;
+              }
             }
-        } catch (Exception e) {
-            Log.warning(taskName, "Erro no Carving de Known.met: " + evidence.getPath() + " : " + e);
-        } finally {
-            IOUtil.closeQuietly(is);
-        }
-    }
-
-    private static final int toInt(byte[] b, int offset) {
-        return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8) | ((b[offset + 2] & 0XFF) << 16) | ((b[offset + 3] & 0XFF) << 24);
-    }
-
-    private static final int toSmall(byte[] b, int offset) {
-        return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8);
-    }
-
-    private static boolean isAcceptedType(MediaType mediaType) {
-        return mediaType.getBaseType().equals(CarveTask.UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(pageFileMediaType);
-    }
-
-    private void addCarvedFile(EvidenceFile parentEvidence, long off, long len) throws Exception {
-        EvidenceFile carvedEvidence = new EvidenceFile();
-        carvedEvidence.setName("Carved-" + off + "-known.met");
-        carvedEvidence.setPath(parentEvidence.getPath() + ">>" + carvedEvidence.getName());
-        len = Math.min(len, parentEvidence.getLength() - off);
-        carvedEvidence.setLength(len);
-
-        int parentId = parentEvidence.getId();
-        carvedEvidence.setParentId(Integer.toString(parentId));
-        carvedEvidence.addParentIds(parentEvidence.getParentIds());
-        carvedEvidence.addParentId(parentId);
-
-        carvedEvidence.setDeleted(parentEvidence.isDeleted());
-        carvedEvidence.setCarved(true);
-        carvedEvidence.setMediaType(eMuleMediaType);
-
-        long prevOff = parentEvidence.getFileOffset();
-        carvedEvidence.setFileOffset(prevOff == -1 ? off : prevOff + off);
-
-        if (parentEvidence.getSleuthFile() != null) {
-            carvedEvidence.setSleuthFile(parentEvidence.getSleuthFile());
-            carvedEvidence.setSleuthId(parentEvidence.getSleuthId());
-            if (parentEvidence.hasTmpFile()) {
-                carvedEvidence.setFile(parentEvidence.getTempFile());
-                carvedEvidence.setTempStartOffset(off);
-            }
+          }
         } else {
-            carvedEvidence.setFile(parentEvidence.getFile());
-            carvedEvidence.setExportedFile(parentEvidence.getExportedFile());
+          is.skip(step - 1);
         }
-        parentEvidence.setHasChildren(true);
-
-        numCarvedItems.incrementAndGet();
-        CarveTask.incItensCarved();
-
-        // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-        if (ExportFileTask.hasCategoryToExtract() && parentEvidence.isSubItem() && !parentEvidence.isToExtract()) {
-            caseData.incDiscoveredEvidences(1);
-            worker.process(carvedEvidence);
-        } else {
-            worker.processNewItem(carvedEvidence);
-        }
+        offset += step;
+      }
+    } catch (Exception e) {
+      Log.warning(taskName, "Erro no Carving de Known.met: " + evidence.getPath() + " : " + e);
+    } finally {
+      IOUtil.closeQuietly(is);
     }
+  }
+
+  private static final int toInt(byte[] b, int offset) {
+    return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8) | ((b[offset + 2] & 0XFF) << 16) | ((b[offset + 3] & 0XFF) << 24);
+  }
+
+  private static final int toSmall(byte[] b, int offset) {
+    return (b[offset] & 0XFF) | ((b[offset + 1] & 0XFF) << 8);
+  }
+
+  private static boolean isAcceptedType(MediaType mediaType) {
+    return mediaType.getBaseType().equals(CarveTask.UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(pageFileMediaType);
+  }
 }
