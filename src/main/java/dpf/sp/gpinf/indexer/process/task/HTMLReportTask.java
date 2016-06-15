@@ -574,6 +574,7 @@ public class HTMLReportTask extends AbstractTask {
   private void processBookmarks(File templatesFolder) throws Exception {
     sortRegs();
     StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content;
+    replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize));
     StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content;
     int idx = 1;
     for (String marcador : entriesByLabel.keySet()) {
@@ -584,7 +585,7 @@ public class HTMLReportTask extends AbstractTask {
       List<String> l = new ArrayList<String>();
       imageThumbsByLabel.put(marcador, l);
       for (ReportEntry e : regs) {
-        l.add(e.img);
+        if (e.img != null) l.add(e.img);
       }
     }
     if (categoriesListEnabled) {
@@ -593,10 +594,12 @@ public class HTMLReportTask extends AbstractTask {
         List<ReportEntry> regs = entriesByCategory.get(categoria);
         processaBookmark(categoria, id, modelo, item, false, regs);
         idx++;
-        List<String> l = new ArrayList<String>();
-        imageThumbsByLabel.put(categoria, l);
-        for (ReportEntry e : regs) {
-          l.add(e.img);
+        if (entriesByLabel.isEmpty()) {
+          List<String> l = new ArrayList<String>();
+          imageThumbsByLabel.put(categoria, l);
+          for (ReportEntry e : regs) {
+            if (e.img != null) l.add(e.img);
+          }
         }
       }
     }
@@ -697,23 +700,12 @@ public class HTMLReportTask extends AbstractTask {
           }
           img.append("<img src=\"");
           img.append(getRelativePath(thumbFile, reportSubFolder));
-          img.append("\" ");
-          Dimension d = ImageUtil.getImageFileDimension(thumbFile);
-          if (d != null && (d.getWidth() > thumbSize || d.getHeight() > thumbSize)) {
-            if (d.getWidth() >= d.getHeight()) {
-              img.append("width=\"").append(thumbSize).append("\"");
-            } else {
-              img.append("height=\"").append(thumbSize).append("\"");
-            }
-          }
-          img.append("/>");
+          img.append("\" class=\"thumb\" />");
           if (reg.export != null) {
             img.append("</a>");
           }
-
           it.append(img);
           it.append("</td></tr></table>\n");
-
           if (isLabel || entriesByLabel.isEmpty()) {
             reg.img = img.toString();
           }
@@ -1032,7 +1024,7 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private void writeThumbsPage(StringBuilder sb, File f) {
-    sb.insert(0, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/common.css\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/bookmarks.css\"/><title>Miniaturas</title></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n");
+    sb.insert(0, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/common.css\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/bookmarks.css\"/><title>Miniaturas</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n");
     sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p></body></html>");
     EncodedFile ef = new EncodedFile(sb, Charset.forName("UTF-8"), f);
     try {
