@@ -1,3 +1,21 @@
+14/06/2015: IPED-3.9.5
+- Melhor decodificação e indexação de strings em emails PST
+- Renderização de PNGs parcialmente sobrescritos, como os de carving (PCF Wladimir)
+- Correção no Sleutkit para reconhecer NTFS >= 2TB e exFAT com cluster > 64KB
+- Remoção do termo "Departamento" (de Polícia Federal) do relatório HTML (PCF Wladimir)
+- Melhor obtenção do caminho relativo ao processar pastas, usando ".." se necessário
+- Reabilita proteção para zip bombs durante o parsing
+- Não mais imprime mensagens de timeout no console
+
+07/06/2015: IPED-3.9.4
+- Corrige erro de build que impedia expansão de PSTs (3.9.3)
+- Proteção para a tabela não carregar um conjunto vazio de colunas
+- Patch no Sleuthkit para corrigir leitura, indexação e carving de Volume Shadow Copy Files (contribuição PCF Gabriel)
+- Patch no Sleuthkit para corrigir rara construção errada da árvore de diretórios
+- Validação para impedir append de relatórios .iped (não permitido)
+- Não indexa metadados novos, possivelmente corrompidos, de itens HTML
+- Corrige geração de relatórios contendo itens raizes (3.9)
+
 15/04/2015: IPED-3.9.3
 - Autocompletar com nome de colunas via tab na caixa de pesquisa (PCF Wladimir)
 - Proteção contra leaks de memória ao usar robustImageReading via reinicialização do SleuthkitServer a cada 10mil itens
