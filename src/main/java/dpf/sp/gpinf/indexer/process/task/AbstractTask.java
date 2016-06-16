@@ -195,7 +195,7 @@ public abstract class AbstractTask {
       this.process(evidence);
 
     } catch (TimeoutException e) {
-      LOGGER.error("{} TIMEOUT ao processar {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e);
+      LOGGER.warn("{} TIMEOUT ao processar {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e);
       stats.incTimeouts();
       evidence.setTimeOut(true);
       processMonitorTimeout(evidence);
