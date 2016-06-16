@@ -394,7 +394,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>loaddb-zip</artifactId>
-                                    <version>20160107-iped-patch-0.4</version>
+                                    <version>20160107-iped-patch-0.5</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
