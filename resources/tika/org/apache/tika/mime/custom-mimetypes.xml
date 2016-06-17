@@ -251,6 +251,24 @@
         <glob pattern="*.vdi"/>
     </mime-type>
     
+    <mime-type type="application/x-iso9660-image">
+     <acronym>ISO</acronym>
+     <_comment>ISO 9660 CD-ROM filesystem data</_comment>
+     <magic priority="50">
+       <!--CDROM sector: 2048 -->
+       <match value="CD001" type="string" offset="32769"/>
+       <match value="CD001" type="string" offset="34817"/>
+       <match value="CD001" type="string" offset="36865"/>
+       <!--CDROM RAW sector: 2352 -->
+       <match value="CD001" type="string" offset="37649"/>
+       <match value="CD001" type="string" offset="40001"/>
+       <!--CDROM RAW XA sector: 2352 -->
+       <match value="CD001" type="string" offset="37657"/>
+       <match value="CD001" type="string" offset="40009"/>
+     </magic>
+     <glob pattern="*.iso"/>
+   </mime-type>
+    
     <mime-type type="application/x-udf-image">
         <acronym>ISO</acronym>
         <_comment>UDF CD-ROM filesystem data</_comment>
