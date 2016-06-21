@@ -55,6 +55,7 @@ public class MakePreviewTask extends AbstractTask {
         || contentType.equals("application/x-whatsapp-db")
         || contentType.equals("application/x-shareaza-searches-dat")
         || contentType.equals("application/x-shareaza-library-dat")
+        || contentType.equals("application/x-msie-cache")
         || isSupportedTypeCSV(contentType);
   }
 

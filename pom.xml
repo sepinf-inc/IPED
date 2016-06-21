@@ -308,6 +308,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-msiecfexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libmsiecf</artifactId>
+                                    <version>20160421</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-regripper</id>
                         <phase>package</phase>
                         <goals>

@@ -542,6 +542,7 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/esedbexport"), new File(output, "tools/esedbexport"));
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/pffexport"), new File(output, "tools/pffexport"));
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/regripper"), new File(output, "tools/regripper"));
+      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/msiecfexport"), new File(output, "tools/msiecfexport"));
       if (Configuration.embutirLibreOffice) {
         IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
       }
