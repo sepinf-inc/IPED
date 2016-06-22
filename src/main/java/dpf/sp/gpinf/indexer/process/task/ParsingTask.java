@@ -418,21 +418,22 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       //causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
       //subItem.setCarved(parent.isCarved());
       subItem.setSubItem(true);
+      
+      ExportFileTask extractor = new ExportFileTask(worker);
+      extractor.extractFile(inputStream, subItem);
+
+      // Extração de anexos de emails de PSTs, se emails forem extraídos
+				/*if(contentTypeStr != null)
+       new SetCategoryTask(worker).process(subItem);
+       if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
+       subItem.setToExtract(true);
+       metadata.set(ExtraProperties.TO_EXTRACT, "true");
+       }
+       */
 
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {
         try {
-          ExportFileTask extractor = new ExportFileTask(worker);
-          extractor.extractFile(inputStream, subItem);
-
-          // Extração de anexos de emails de PSTs, se emails forem extraídos
-					/*if(contentTypeStr != null)
-           new SetCategoryTask(worker).process(subItem);
-           if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
-           subItem.setToExtract(true);
-           metadata.set(ExtraProperties.TO_EXTRACT, "true");
-           }
-           */
           worker.processNewItem(subItem);
           incSubitensDiscovered();
 
