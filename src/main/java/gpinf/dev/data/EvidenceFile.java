@@ -1012,6 +1012,14 @@ public class EvidenceFile implements Serializable, StreamSource {
   public void setParentId(String parentId) {
     this.parentId = parentId;
   }
+  
+  public void setParent(EvidenceFile parent){
+	  int parentId = parent.getId();
+	  this.setParentId(Integer.toString(parentId));
+	  List<Integer> parents = parent.getParentIds();
+	  parents.add(parentId);
+	  this.addParentIds(parents);
+  }
 
   /**
    * @param parsed se foi realizado parsing do item

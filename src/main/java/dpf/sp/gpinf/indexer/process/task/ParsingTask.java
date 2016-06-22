@@ -397,10 +397,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         subItem.setExtension("");
       }
 
-      String parentId = String.valueOf(parent.getId());
-      subItem.setParentId(parentId);
-      subItem.addParentIds(parent.getParentIds());
-      subItem.addParentId(parent.getId());
+      subItem.setParent(parent);
       parent.setHasChildren(true);
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {

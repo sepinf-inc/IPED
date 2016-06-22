@@ -49,10 +49,7 @@ public abstract class BaseCarveTask extends AbstractTask {
     len = Math.min(len, parentEvidence.getLength() - off);
     carvedEvidence.setLength(len);
 
-    int parentId = parentEvidence.getId();
-    carvedEvidence.setParentId(Integer.toString(parentId));
-    carvedEvidence.addParentIds(parentEvidence.getParentIds());
-    carvedEvidence.addParentId(parentId);
+    carvedEvidence.setParent(parentEvidence);
 
     carvedEvidence.setDeleted(parentEvidence.isDeleted());
     carvedEvidence.setCarved(true);
