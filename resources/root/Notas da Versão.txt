@@ -1,3 +1,11 @@
+xx/07/2015: IPED-3.10
+- Integração do KnownMetCarver (PCF Wladimir)
+- Otimizações significativas na geração de relatórios HTML (PCF Wladimir)
+- Processamento de ISOs Raw UDF e expansão de ISOs Raw UDF e ISO9660
+- Parser para históricos index.dat do IE <= 9 (necessário libmsiecf)
+- Modularização do viewer (PCF Marcelo)
+ 
+ 
 14/06/2015: IPED-3.9.5
 - Melhor decodificação e indexação de strings em emails PST
 - Renderização de PNGs parcialmente sobrescritos, como os de carving (PCF Wladimir)
