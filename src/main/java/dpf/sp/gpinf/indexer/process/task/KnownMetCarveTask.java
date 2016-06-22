@@ -169,7 +169,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                     inParse.skip(offset);
                     List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
                     if (!l.isEmpty()) {
-                      addCarvedFile(evidence, offset, len, "Carved-known-met-" + offset, eMuleMediaType);
+                      addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", eMuleMediaType);
                       numCarvedItems.incrementAndGet();
                     }
                   } catch (Exception e) {} finally {

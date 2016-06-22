@@ -31,7 +31,7 @@ public class SetTypeTask extends AbstractTask {
     if (evidence.getType() == null) {
       String ext = getExtBySig(evidence);
       if (!ext.isEmpty()) {
-        if (ext.length() > 1 && evidence.isCarved() && evidence.getName().startsWith("Carved-")) {
+        if (ext.length() > 1 && evidence.isCarved() && !evidence.isSubItem() && !evidence.getName().endsWith(ext)) {
           evidence.setName(evidence.getName() + ext);
           evidence.setPath(evidence.getPath() + ext);
         }
