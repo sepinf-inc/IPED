@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -358,6 +359,8 @@ public class CarveTask extends BaseCarveTask {
 
           Hit foot = null;
           Hit head = null;
+          
+          //testa se encontrou algum header
           if (s % 2 == 0) {
             head = new Hit(s, prevLen + i);
 
@@ -365,7 +368,11 @@ public class CarveTask extends BaseCarveTask {
               int oleLen = getLenFromOLE(buf, i, evidence.getLength() - (prevLen + i));
               foot = new Hit(s, head.off + oleLen);
 
-              //Testa se possui info de tamanho
+            } else if (signatures[s / 2].name.equals("MOV")) {
+            	int mp4Len = getLenFromMP4(prevLen + i);
+                foot = new Hit(s, head.off + mp4Len);
+            	
+            //Testa se possui info de tamanho no header
             } else if (signatures[s / 2].sizeBytes > 0) {
               long length = getLenFromHeader(i, s);
 
@@ -378,19 +385,6 @@ public class CarveTask extends BaseCarveTask {
                 foot = new Hit(s, head.off + length);
               }
 
-							//experimental: MOV e derivados
-							/*if(signatures[s/2].name.startsWith("MOV") && foot != null){
-               if(signatures[s/2].name.equals("MOV")){
-               sigsFound.get("MOV").addLast(head);
-               sigsFound.get("MOV").addLast(foot);
-									
-               }else if(!sigsFound.get("MOV").isEmpty() && sigsFound.get("MOV").peekLast().off == head.off){
-               sigsFound.get("MOV").pollLast();
-               sigsFound.get("MOV").addLast(foot);
-               }
-               foot = null;
-               mov = s/2;
-               }*/
               //Testa se possui footer
             } else if (signatures[s / 2].sigs[1].len > 0) {
 
@@ -406,11 +400,13 @@ public class CarveTask extends BaseCarveTask {
                 sigsFound.get(signatures[s / 2].name).pollFirst();
               }
 
+              //não possui footer, utiliza tamanho fixo
             } else {
               long length = Math.min(signatures[s / 2].maxSize, evidence.getLength() - head.off);
               foot = new Hit(s, head.off + (int) length);
             }
 
+          //encontrou um footer
           } else {
             foot = new Hit(s, prevLen + i);
 
@@ -508,6 +504,76 @@ public class CarveTask extends BaseCarveTask {
     int len = (numBatBlocks * blockSize / 4 + 1) * blockSize;
 
     return len;
+  }
+  
+  private int getLenFromMP4(long startOffset){
+	  
+	  final String[] atomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid"};
+	  
+	  long atomStart = startOffset;
+	  SeekableInputStream is = null;
+	  try{
+		  is = evidence.getStream();
+		  byte[] data = new byte[4];
+		  while(true){
+			  is.seek(atomStart + 4);
+			  int i = 0, off = 0;
+			  while(i != -1 && (off += i) < data.length)
+				  i = is.read(data, off, data.length - off);
+			  
+			  String atomType = new String(data, "windows-1252");
+			  boolean eof = true;
+			  for(String t : atomTypes)
+				  if(atomType.equals(t)){
+					  eof = false;
+					  break;
+				  }
+			  if(eof)
+				  break;
+			  
+			  is.seek(atomStart);
+			  i = 0; off = 0;
+			  while(i != -1 && (off += i) < data.length)
+				  i = is.read(data, off, data.length - off);
+				  
+			  long atomSize = (long)(data[0] & 0xff) << 24
+					  | (data[1] & 0xff) << 16
+					  | (data[2] & 0xff) << 8
+					  | (data[3] & 0xff) ;
+			  
+			  if(atomSize == 0)
+				  break;
+			  
+			  if(atomSize == 1){
+				  byte[] extendedSize = new byte[8];
+				  is.seek(atomStart + 8);
+				  i = 0; off = 0;
+				  while(i != -1 && (off += i) < extendedSize.length)
+					  i = is.read(extendedSize, off, extendedSize.length - off);
+				
+				  atomSize = (long)(extendedSize[0] & 0xff) << 56
+						  | (long)(extendedSize[1] & 0xff) << 48
+						  | (long)(extendedSize[2] & 0xff) << 40
+						  | (long)(extendedSize[3] & 0xff) << 32
+				  		  | (long)(extendedSize[4] & 0xff) << 24
+						  | (extendedSize[5] & 0xff) << 16
+						  | (extendedSize[6] & 0xff) << 8
+						  | (extendedSize[7] & 0xff) ;
+			  }
+			  
+			  atomStart += atomSize;
+			  
+			  if(atomStart >= evidence.getLength())
+				  break;
+		  }
+	  }catch(Exception e){
+		  e.printStackTrace();
+		  
+	  }finally{
+		  IOUtil.closeQuietly(is);
+	  }
+	  
+	  return (int)(atomStart - startOffset);
   }
 
   @Override

@@ -101,19 +101,20 @@ ASF, null, 100000, 300000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, 
 
 #PLIST, application/xml, 1000, 1000000, <?xml, </plist>
 
-#FLV, video/x-flv, 100000, 50000000, FLV\01\01\00\00\00, null
-#FLV, video/x-flv, 100000, 50000000, FLV\01\04\00\00\00, null
-#FLV, video/x-flv, 100000, 50000000, FLV\01\05\00\00\00, null
+FLV, video/x-flv, 100000, 50000000, FLV\01\01\00\00\00, null
+FLV, video/x-flv, 100000, 50000000, FLV\01\04\00\00\00, null
+FLV, video/x-flv, 100000, 50000000, FLV\01\05\00\00\00, null
 
-#MP4, video/mp4, 100000, 100000000, ????ftypmp41, null
-#MP4, video/mp4, 100000, 100000000, ????ftypmp42, null
-#MP4, video/mp4, 100000, 100000000, ????ftypMSNV, null
-#MP4, video/mp4, 100000, 100000000, ????ftypM4V, null
-#MP4, video/mp4, 100000, 100000000, ????ftypisom, null
-
-#3GP, video/3gpp, 100000, 20000000, ????ftyp3g, null
-
-#MOV, video/quicktime, 100000, 100000000, ????ftypqt\20\20, null
+# MOV e derivados (MP4, 3GP, QT) com tratamento específico de tamanho
+MOV, video/mp4, 100000, 300000000, ????ftypmp41, null
+MOV, video/mp4, 100000, 300000000, ????ftypmp42, null
+MOV, video/mp4, 100000, 300000000, ????ftypMSNV, null
+MOV, video/mp4, 100000, 300000000, ????ftypFACE, null
+MOV, video/mp4, 100000, 300000000, ????ftypdash, null
+MOV, video/mp4, 100000, 300000000, ????ftypM4V, null
+MOV, video/mp4, 100000, 300000000, ????ftypisom, null
+MOV, video/3gpp, 100000, 300000000, ????ftyp3g, null
+MOV, video/quicktime, 100000, 300000000, ????ftypqt\20\20, null
 
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
@@ -122,4 +123,3 @@ ASF, null, 100000, 300000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, 
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\ba\44\00, \00\00\01\b9
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\ba\2f\ff, \00\00\01\b9
 #MPG, video/mpeg, 100000, 100000000, \00\00\01\b3, \00\00\01\b7
-#MOV, video/quicktime, 100000, 10000000, ????moov, null

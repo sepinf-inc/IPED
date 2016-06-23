@@ -3,6 +3,8 @@ xx/07/2015: IPED-3.10
 - Otimizações significativas na geração de relatórios HTML (PCF Wladimir)
 - Processamento de ISOs Raw UDF e expansão de ISOs Raw UDF e ISO9660
 - Parser para históricos index.dat do IE <= 9 (necessário libmsiecf)
+- Carving específico para vídeos MP4, 3GP e MOV
+- Habilita carving simples para vídeos FLV (com tamanho fixo)
 - Modularização do viewer (PCF Marcelo)
  
  
