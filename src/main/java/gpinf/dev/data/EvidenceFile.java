@@ -1016,9 +1016,8 @@ public class EvidenceFile implements Serializable, StreamSource {
   public void setParent(EvidenceFile parent){
 	  int parentId = parent.getId();
 	  this.setParentId(Integer.toString(parentId));
-	  List<Integer> parents = parent.getParentIds();
-	  parents.add(parentId);
-	  this.addParentIds(parents);
+	  this.addParentIds(parent.getParentIds());
+	  this.addParentId(parentId);
   }
 
   /**
