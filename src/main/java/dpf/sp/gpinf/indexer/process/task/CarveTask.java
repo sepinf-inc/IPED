@@ -213,7 +213,7 @@ public class CarveTask extends BaseCarveTask {
 
     String name;
     MediaType mimeType;
-    int minSize, maxSize;
+    long minSize, maxSize;
     Signature[] sigs = new Signature[2];
     boolean bigendian;
     int sizePos, sizeBytes;
@@ -273,8 +273,8 @@ public class CarveTask extends BaseCarveTask {
       if (!values[1].trim().equals("null")) {
         this.mimeType = MediaType.parse(values[1].trim());
       }
-      this.minSize = Integer.parseInt(values[2].trim());
-      this.maxSize = Integer.parseInt(values[3].trim());
+      this.minSize = Long.parseLong(values[2].trim());
+      this.maxSize = Long.parseLong(values[3].trim());
       this.sigs[0] = decodeSig(values[4].trim());
       if (!values[5].trim().equals("null")) {
         this.sigs[1] = decodeSig(values[5].trim());
@@ -369,7 +369,7 @@ public class CarveTask extends BaseCarveTask {
               foot = new Hit(s, head.off + oleLen);
 
             } else if (signatures[s / 2].name.equals("MOV")) {
-            	int mp4Len = getLenFromMP4(prevLen + i);
+            	long mp4Len = getLenFromMP4(prevLen + i);
                 foot = new Hit(s, head.off + mp4Len);
             	
             //Testa se possui info de tamanho no header
@@ -506,7 +506,7 @@ public class CarveTask extends BaseCarveTask {
     return len;
   }
   
-  private int getLenFromMP4(long startOffset){
+  private long getLenFromMP4(long startOffset){
 	  
 	  final String[] atomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid"};
 	  
@@ -573,7 +573,7 @@ public class CarveTask extends BaseCarveTask {
 		  IOUtil.closeQuietly(is);
 	  }
 	  
-	  return (int)(atomStart - startOffset);
+	  return atomStart - startOffset;
   }
 
   @Override
