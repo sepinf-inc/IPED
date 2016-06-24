@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -364,10 +366,12 @@ public class CarveTask extends BaseCarveTask {
           if (s % 2 == 0) {
             head = new Hit(s, prevLen + i);
 
+            //calcula tamanho customizado para OLE
             if (signatures[s / 2].name.equals("OLE")) {
               int oleLen = getLenFromOLE(buf, i, evidence.getLength() - (prevLen + i));
               foot = new Hit(s, head.off + oleLen);
 
+            //calcula tamanho customizado para MOV
             } else if (signatures[s / 2].name.equals("MOV")) {
             	long mp4Len = getLenFromMP4(prevLen + i);
                 foot = new Hit(s, head.off + mp4Len);
@@ -392,6 +396,8 @@ public class CarveTask extends BaseCarveTask {
               if (sigsFound.get(signatures[s / 2].name).isEmpty()
                   || (!signatures[s / 2].name.equals("ZIP")
                   && (!signatures[s / 2].name.equals("EML") || sigsFound.get("EML").peekLast().sig % 2 == 1))) {
+            	  
+            	//adiciona header na pilha
                 sigsFound.get(signatures[s / 2].name).addLast(head);
               }
 
@@ -406,7 +412,7 @@ public class CarveTask extends BaseCarveTask {
               foot = new Hit(s, head.off + (int) length);
             }
 
-          //encontrou um footer
+          //nao encontrou header, entao encontrou um footer
           } else {
             foot = new Hit(s, prevLen + i);
 
@@ -421,6 +427,7 @@ public class CarveTask extends BaseCarveTask {
                 sigsFound.get(signatures[s / 2].name).addLast(foot);
               }
 
+            //para demais formatos, pega da pilha ultimo header encontrado
             } else {
               head = sigsFound.get(signatures[s / 2].name).pollLast();
             }
@@ -463,9 +470,9 @@ public class CarveTask extends BaseCarveTask {
     int off = i + signatures[s / 2].sizePos;
     for (int j = 0; j < signatures[s / 2].sizeBytes; j++) {
       if (!signatures[s / 2].bigendian) {
-        length |= (buf[off + j] & 0xff) << (8 * j);
+        length |= (long)(buf[off + j] & 0xff) << (8 * j);
       } else {
-        length |= (buf[off + j] & 0xff) << (8 * (signatures[s / 2].sizeBytes - j - 1));
+        length |= (long)(buf[off + j] & 0xff) << (8 * (signatures[s / 2].sizeBytes - j - 1));
       }
     }
 
@@ -495,6 +502,7 @@ public class CarveTask extends BaseCarveTask {
         | (buf[numBatBlocksOff + 2] & 0xff) << 16
         | (buf[numBatBlocksOff + 3] & 0xff) << 24;
 
+    //TODO melhorar detecção de tamanho para OLE
     /*int lastBatOffPos = i + 0x4C + (batSize - 1) * 4;
      int lastBatOffP = 	(buf[lastBatOffPos] & 0xff) << 0 | 
      (buf[lastBatOffPos + 1] & 0xff) << 8 |
@@ -506,9 +514,14 @@ public class CarveTask extends BaseCarveTask {
     return len;
   }
   
+  private static final String[] mp4AtomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid", "meta", "pict", "PICT", "pdin", "junk"};
+  private static HashSet<String> atomSet = new HashSet<String>();
+  
+  static{
+	  atomSet.addAll(Arrays.asList(mp4AtomTypes));
+  }
+  
   private long getLenFromMP4(long startOffset){
-	  
-	  final String[] atomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid"};
 	  
 	  long atomStart = startOffset;
 	  SeekableInputStream is = null;
@@ -522,13 +535,8 @@ public class CarveTask extends BaseCarveTask {
 				  i = is.read(data, off, data.length - off);
 			  
 			  String atomType = new String(data, "windows-1252");
-			  boolean eof = true;
-			  for(String t : atomTypes)
-				  if(atomType.equals(t)){
-					  eof = false;
-					  break;
-				  }
-			  if(eof)
+			  if(!atomSet.contains(atomType))
+				  //EOF
 				  break;
 			  
 			  is.seek(atomStart);
