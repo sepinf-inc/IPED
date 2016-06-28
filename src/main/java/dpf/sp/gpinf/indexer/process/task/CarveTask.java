@@ -481,7 +481,7 @@ public class CarveTask extends BaseCarveTask {
       length = maxLen - (i + prevLen);
     }
 
-    if (signatures[s / 2].name.equals("AVI")) {
+    if (signatures[s / 2].name.equals("RIFF")) {
       length += 8;
     }
 

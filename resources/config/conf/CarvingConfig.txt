@@ -40,7 +40,7 @@ ignoreCorrupted = true
 # Name, MediaType, MinSize, MaxSize, Header, Footer, SizeOffset, SizeBytes, Bigendian
 #
 # Name		Nome do tipo de arquivo
-# MediaType	Media type do tipo.
+# MediaType	Mediatype do tipo, evita nova análise de assinatura, pode ser null caso desconhecido
 # MinSize	Tamanho mínimo
 # MaxSize	Tamanho máximo
 # Header	Cabeçalho do arquivo. Utilize \ para indicar valor hexadecimal e ? como coringa (deve ser evitado sempre que possível)
@@ -71,10 +71,10 @@ GIF, image/gif, 1000, 10000000, GIF89a, \00\3b
 
 PNG, image/png, 1000, 10000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
 
-# OLE e derivados. Não altere o nome OLE, pois é realizado tratamento específico para esse formato
+# OLE e derivados (doc, xls, ppt, msg, thumbs.db). Não altere o nome OLE, pois é realizado tratamento específico para esse formato
 OLE, null, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
 
-# ZIP e derivados (docx, odt, etc). Não altere o nome ZIP, pois é realizado tratamento específico para esse formato
+# ZIP e derivados (docx, xlsx, odt, ods, cdr, etc). Não altere o nome ZIP, pois é realizado tratamento específico para esse formato
 ZIP, null, 1000, 100000000, PK\03\04, PK\05\06??????????????????
 
 RAR, null, 1000, 100000000, \52\61\72\21\1a\07, \c4\3d\7b\00\40\07\00
@@ -95,10 +95,28 @@ EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 
-AVI, video/x-msvideo, 10000, 300000000, RIFF????AVI LIST, null, 4, 4, false
+# Derivados do container RIFF (soma 8 bytes ao tamanho no cabeçalho)
+# Videos AVI
+RIFF, video/x-msvideo, 10000, 300000000, RIFF????AVI LIST, null, 4, 4, false
 
-# WMV e WMA, com tratamento específico codificado
-ASF, null, 100000, 300000000, \30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02, ignoreFooter
+# Imagem Google Webp
+RIFF, null, 10000, 300000000, RIFF????WEBP, null, 4, 4, false
+
+# Corel Draw (formato antigo)
+RIFF, null, 10000, 300000000, RIFF????CDR vrsn, null, 4, 4, false
+RIFF, null, 10000, 300000000, RIFF????CDR4vrsn, null, 4, 4, false
+RIFF, null, 10000, 300000000, RIFF????CDRDvrsn, null, 4, 4, false
+
+# Audios WAV
+RIFF, null, 10000, 300000000, RIFF????WAVEfmt, null, 4, 4, false
+
+# Audios CDA
+#RIFF, null, 10000, 300000000, RIFF????CDDAfmt, null, 4, 4, false
+# Audios MID
+#RIFF, null, 10000, 300000000, RIFF????RMIDdata, null, 4, 4, false
+
+# WMV e WMA, com tratamento específico codificado (tamanho encontra-se na segunda assinatura, no meio do arquivo)
+ASF, null, 100000, 300000000, \30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02, null
 ASF, null, 100000, 300000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, null, 40, 8, false
 
 #PLIST, application/xml, 1000, 1000000, <?xml, </plist>
