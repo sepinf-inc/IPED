@@ -108,7 +108,7 @@ RIFF, null, 10000, 300000000, RIFF????CDR4vrsn, null, 4, 4, false
 RIFF, null, 10000, 300000000, RIFF????CDRDvrsn, null, 4, 4, false
 
 # Audios WAV
-RIFF, null, 10000, 300000000, RIFF????WAVEfmt, null, 4, 4, false
+RIFF, audio/x-wav, 10000, 300000000, RIFF????WAVEfmt, null, 4, 4, false
 
 # Audios CDA
 #RIFF, null, 10000, 300000000, RIFF????CDDAfmt, null, 4, 4, false
