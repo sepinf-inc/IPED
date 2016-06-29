@@ -55,6 +55,7 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  fragFile.setCreationDate(parentEvidence.getCreationDate());
 	  fragFile.setModificationDate(parentEvidence.getModDate());
 	  fragFile.setExtraAttribute(FILE_FRAGMENT, true);
+	  fragFile.setSumVolume(false);
 	  addOffsetFile(fragFile, parentEvidence);
   }
   
