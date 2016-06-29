@@ -69,7 +69,8 @@ public class Configuration {
   public static boolean embutirLibreOffice = true;
   public static boolean sortPDFChars = false;
   public static boolean addUnallocated = true;
-  public static long unallocatedFragSize = 100 * 1024 * 1024;
+  public static long unallocatedFragSize = 1024 * 1024 * 1024;
+  public static long indexedFragSize = 10 * 1024 * 1024;
   public static String javaTmpDir = System.getProperty("java.io.tmpdir");
   public static boolean indexTempOnSSD = false;
   public static boolean entropyTest = true;
@@ -314,6 +315,14 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       unallocatedFragSize = Long.valueOf(value);
+    }
+    
+    value = properties.getProperty("indexedFragSize");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+    	indexedFragSize = Long.valueOf(value);
     }
 
     value = properties.getProperty("indexTempOnSSD");

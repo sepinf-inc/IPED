@@ -32,6 +32,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -63,7 +65,7 @@ import gpinf.dev.data.EvidenceFile;
  * documentos grandes.
  *
  */
-public class IndexTask extends AbstractTask {
+public class IndexTask extends BaseCarveTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
   private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES";
@@ -118,6 +120,20 @@ public class IndexTask extends AbstractTask {
     }
 
     stats.updateLastId(evidence.getId());
+    
+    if (evidence.getLength() > Configuration.indexedFragSize && !hasSpecificParser(evidence)
+    		 && (evidence.getSleuthFile() != null || evidence.getFile() != null)){
+    	
+    	int fragNum = 0;
+    	int overlap = 1024;
+    	long fragSize = Configuration.indexedFragSize;
+    	for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
+            long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
+            this.addFragmentFile(evidence, offset, len, fragNum++);
+        }
+    	//if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE))
+    		textCache = "";
+    }
 
     if (textCache != null) {
       Document doc;
@@ -130,8 +146,7 @@ public class IndexTask extends AbstractTask {
       worker.writer.addDocument(doc);
       textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
 
-    } else {
-
+    } else{
       Metadata metadata = getMetadata(evidence);
       ParseContext context = getTikaContext(evidence, evidence.isParsed());
 
@@ -186,6 +201,15 @@ public class IndexTask extends AbstractTask {
 
     }
 
+  }
+  
+  private boolean hasSpecificParser(EvidenceFile evidence) {
+	  Parser parser = this.autoParser.getBestParser(evidence.getMetadata());
+	if (parser instanceof RawStringParser || parser instanceof TXTParser) {
+		return false;
+	} else {
+		return true;
+	}
   }
 
   private Metadata getMetadata(EvidenceFile evidence) {

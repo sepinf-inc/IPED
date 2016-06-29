@@ -160,7 +160,8 @@ public class CarveTask extends BaseCarveTask {
     this.evidence = evidence;
     MediaType type = evidence.getMediaType();
 
-    if (evidence.isCarved() || (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type))) {
+    if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null
+    		|| (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type))) {
       return;
     }
 

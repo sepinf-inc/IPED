@@ -59,9 +59,13 @@ ignoreHardLinks = false
 # que podem tornar o processamento inviável.
 #minOrphanSizeToIgnore = 102400000
 
-# Tamanho em bytes de divisão do espaço não alocado. Em casos onde o espaço não alocado não seja indexado,
-# é interessante aumentar em 10x ou mais o valor para minimizar a perda de itens de carving nas bordas.
-unallocatedFragSize = 104857600
+# Tamanho em bytes de divisão do espaço não alocado. Em casos onde o carving de vídeos seja importante,
+# pode ser interessante aumentar esse valor para minimizar a perda de itens que atravessam as bordas.
+unallocatedFragSize = 1073741824
+
+# Tamanho em bytes de divisão de itens indexados via strings. Itens grandes são divididos para serem indexados, 
+# facilitando o destaque de hits e a exportação de trechos com hits de itens grandes como pagefile, vss, etc
+indexedFragSize = 10485760
 
 ########################################################################
 # Configurações OCR

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016, Wladimir Leite
+ * Copyright 2012-2016, Wladimir Leite, Luis Filipe Nassif
  * 
  * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
@@ -18,6 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.IOException;
+
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -28,6 +30,9 @@ import gpinf.dev.data.EvidenceFile;
  * Centraliza contador de itens carveados e outros métodos comuns.
  */
 public abstract class BaseCarveTask extends AbstractTask {
+	
+  public static final String FILE_FRAGMENT = "fileFragment";
+	
   private static int itensCarved;
 
   public BaseCarveTask(Worker worker) {
@@ -41,44 +46,68 @@ public abstract class BaseCarveTask extends AbstractTask {
   public final synchronized static int getItensCarved() {
     return itensCarved;
   }
+  
+  protected void addFragmentFile(EvidenceFile parentEvidence, long off, long len, int fragNum){
+      String name = parentEvidence.getName() + "_" + fragNum;
+	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
+	  fragFile.setExtension(parentEvidence.getExt());
+	  fragFile.setAccessDate(parentEvidence.getAccessDate());
+	  fragFile.setCreationDate(parentEvidence.getCreationDate());
+	  fragFile.setModificationDate(parentEvidence.getModDate());
+	  fragFile.setExtraAttribute(FILE_FRAGMENT, true);
+	  addOffsetFile(fragFile, parentEvidence);
+  }
+  
+  protected void addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+	  EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
+	  carvedEvidence.setCarved(true);
+  	  incItensCarved();
+	  addOffsetFile(carvedEvidence, parentEvidence);
+  }
 
-  protected void addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType) throws Exception {
-    EvidenceFile carvedEvidence = new EvidenceFile();
-    carvedEvidence.setName(name);
-    carvedEvidence.setPath(parentEvidence.getPath() + ">>" + name);
+  protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+	EvidenceFile offsetFile = new EvidenceFile();
+    offsetFile.setName(name);
+    offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
     len = Math.min(len, parentEvidence.getLength() - off);
-    carvedEvidence.setLength(len);
+    offsetFile.setLength(len);
 
-    carvedEvidence.setParent(parentEvidence);
+    offsetFile.setParent(parentEvidence);
 
-    carvedEvidence.setDeleted(parentEvidence.isDeleted());
-    carvedEvidence.setCarved(true);
-    if (mediaType != null) carvedEvidence.setMediaType(mediaType);
+    offsetFile.setDeleted(parentEvidence.isDeleted());
+    
+    if (mediaType != null) offsetFile.setMediaType(mediaType);
 
     long prevOff = parentEvidence.getFileOffset();
-    carvedEvidence.setFileOffset(prevOff == -1 ? off : prevOff + off);
+    offsetFile.setFileOffset(prevOff == -1 ? off : prevOff + off);
 
     if (parentEvidence.getSleuthFile() != null) {
-      carvedEvidence.setSleuthFile(parentEvidence.getSleuthFile());
-      carvedEvidence.setSleuthId(parentEvidence.getSleuthId());
+      offsetFile.setSleuthFile(parentEvidence.getSleuthFile());
+      offsetFile.setSleuthId(parentEvidence.getSleuthId());
       if (parentEvidence.hasTmpFile()) {
-        carvedEvidence.setFile(parentEvidence.getTempFile());
-        carvedEvidence.setTempStartOffset(off);
+        try {
+			offsetFile.setFile(parentEvidence.getTempFile());
+			offsetFile.setTempStartOffset(off);
+		} catch (IOException e) {
+			//ignore
+		}
       }
     } else {
-      carvedEvidence.setFile(parentEvidence.getFile());
-      carvedEvidence.setExportedFile(parentEvidence.getExportedFile());
+      offsetFile.setFile(parentEvidence.getFile());
+      offsetFile.setExportedFile(parentEvidence.getExportedFile());
     }
     parentEvidence.setHasChildren(true);
-
-    incItensCarved();
-
-    // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-    if (ExportFileTask.hasCategoryToExtract() && parentEvidence.isSubItem() && !parentEvidence.isToExtract()) {
-      caseData.incDiscoveredEvidences(1);
-      worker.process(carvedEvidence);
-    } else {
-      worker.processNewItem(carvedEvidence);
-    }
+    
+    return offsetFile;
+  }
+  
+  private void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
+	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
+	    if (ExportFileTask.hasCategoryToExtract() && parentEvidence.isSubItem() && !parentEvidence.isToExtract()) {
+	      caseData.incDiscoveredEvidences(1);
+	      worker.process(offsetFile);
+	    } else {
+	      worker.processNewItem(offsetFile);
+	    }
   }
 }
