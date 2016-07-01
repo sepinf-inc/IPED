@@ -395,7 +395,7 @@ public class CarveTask extends BaseCarveTask {
 
               //tratamento específico para ZIP e EML: utiliza primeiro cabeçalho encontrado
               if (sigsFound.get(signatures[s / 2].name).isEmpty()
-                  || (!signatures[s / 2].name.equals("ZIP")
+                  || (!signatures[s / 2].name.startsWith("FH")
                   && (!signatures[s / 2].name.equals("EML") || sigsFound.get("EML").peekLast().sig % 2 == 1))) {
             	  
             	//adiciona header na pilha
@@ -403,9 +403,8 @@ public class CarveTask extends BaseCarveTask {
               }
 
               //descarta headers antigos
-              if (sigsFound.get(signatures[s / 2].name).size() > 1000) {
+              while (sigsFound.get(signatures[s / 2].name).size() > 1000)
                 sigsFound.get(signatures[s / 2].name).pollFirst();
-              }
 
               //não possui footer, utiliza tamanho fixo
             } else {

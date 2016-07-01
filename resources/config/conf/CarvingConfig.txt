@@ -74,8 +74,10 @@ PNG, image/png, 1000, 10000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
 # OLE e derivados (doc, xls, ppt, msg, thumbs.db). Não altere o nome OLE, pois é realizado tratamento específico para esse formato
 OLE, null, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
 
-# ZIP e derivados (docx, xlsx, odt, ods, cdr, etc). Não altere o nome ZIP, pois é realizado tratamento específico para esse formato
-ZIP, null, 1000, 100000000, PK\03\04, PK\05\06??????????????????
+# ZIP e derivados (docx, xlsx, odt, ods, cdr, etc).
+# O prefixo FH (first header) indica que o header aparece várias vezes, devendo ser usado o primeiro
+FH-ZIP, null, 1000, 100000000, PK\03\04, PK\05\06??????????????????
+FH-ZIP-MS, null, 1000, 100000000, PK\03\04??????????????????????????[Content_Types].xml\20, PK\05\06??????????????????
 
 RAR, null, 1000, 100000000, \52\61\72\21\1a\07, \c4\3d\7b\00\40\07\00
 
@@ -112,6 +114,7 @@ RIFF, audio/x-wav, 10000, 300000000, RIFF????WAVEfmt, null, 4, 4, false
 
 # Audios CDA
 #RIFF, null, 10000, 300000000, RIFF????CDDAfmt, null, 4, 4, false
+
 # Audios MID
 #RIFF, null, 10000, 300000000, RIFF????RMIDdata, null, 4, 4, false
 
@@ -132,15 +135,18 @@ MOV, video/mp4, 100000, 300000000, ????ftypmmp4, null
 MOV, video/mp4, 100000, 300000000, ????ftypMSNV, null
 MOV, video/mp4, 100000, 300000000, ????ftypFACE, null
 MOV, video/mp4, 100000, 300000000, ????ftypdash, null
-MOV, video/mp4, 100000, 300000000, ????ftypM4V, null
+MOV, video/mj2, 100000, 300000000, ????ftypmjp2, null
+MOV, video/x-m4v, 100000, 300000000, ????ftypM4V, null
 MOV, video/mp4, 100000, 300000000, ????ftypisom, null
 MOV, video/3gpp, 100000, 300000000, ????ftyp3g, null
 MOV, video/quicktime, 100000, 300000000, ????ftypqt\20\20, null
 
+FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\21\00, \00\00\01\b9
+FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\44\00, \00\00\01\b9
+FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\2f\ff, \00\00\01\b9
+
 # Tipos experimentais, não habilite em casos reais pois recupera mtos arquivos corrompidos ou com tamanho impreciso
 #TIF, image/tiff, 1000, 1000000, MM\00\2a, null
 #TIF, image/tiff, 1000, 1000000, II\2a\00, null
-#MPG, video/mpeg, 100000, 100000000, \00\00\01\ba\21\00, \00\00\01\b9
-#MPG, video/mpeg, 100000, 100000000, \00\00\01\ba\44\00, \00\00\01\b9
-#MPG, video/mpeg, 100000, 100000000, \00\00\01\ba\2f\ff, \00\00\01\b9
-#MPG, video/mpeg, 100000, 100000000, \00\00\01\b3, \00\00\01\b7
+
+#FH-MPG2, video/mpeg, 100000, 300000000, \00\00\01\b3, \00\00\01\b7
