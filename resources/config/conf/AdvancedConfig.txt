@@ -99,6 +99,11 @@ maxPDFTextSize2OCR = 100
 # Valores possíveis: pdfbox (mais rápido) ou icepdf (teoricamente mais estável)
 pdfToImgLib = icepdf
 
+# Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
+# Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
+# Mas às vezes as imagens ficam fragmentadas em várias nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR. 
+processImagesInPDFs = true
+
 ########################################################################
 # Configurações da Pesquisa
 ########################################################################

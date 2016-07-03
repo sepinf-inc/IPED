@@ -249,10 +249,6 @@ public class IndexTask extends BaseCarveTask {
     factory.setEntryEncoding("Cp850");
     context.set(ArchiveStreamFactory.class, factory);
 
-    /*PDFParserConfig config = new PDFParserConfig();
-     config.setExtractInlineImages(true);
-     context.set(PDFParserConfig.class, config);
-     */
     return context;
   }
 

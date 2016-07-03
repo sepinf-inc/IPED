@@ -1,11 +1,13 @@
 xx/07/2015: IPED-3.10
 - Melhor carving (principalmente videos) e melhor pesquisa em itens grandes via divisão dos itens por tarefa
 - Integração do KnownMetCarver (PCF Wladimir)
-- Processamento de ISOs Raw UDF e expansão de ISOs Raw UDF e ISO9660
+- Processamento de ISOs Raw UDF e expansão de ISOs Raw (UDF e ISO9660)
 - Parser para históricos index.dat do IE <= 9 (necessário libmsiecf no Linux)
 - Carving específico para vídeos MP4, 3GP e MOV
-- Assinaturas para carving de RAR, WAV, WEBP e CDR antigo
-- Habilitado carving simples para FLV (tamanho fixo)
+- Assinaturas para carving de RAR, WAV, MIDI, CDA, WEBP e CDR antigo
+- Carving simples para FLV (tamanho fixo) e MPG (possui falsos negativos)
+- Opção para aplicar OCR em todas as imagens embutidas em PDFs
+- Recuperação de emails apagados de PSTs de qualquer versão
 - Otimizações significativas na geração de relatórios HTML (PCF Wladimir)
 - Modularização do viewer (PCF Marcelo)
  

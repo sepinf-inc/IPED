@@ -268,6 +268,14 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       PDFToImage.PDFLIB = value;
     }
+    
+    value = properties.getProperty("processImagesInPDFs");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+      PDFOCRTextParser.processEmbeddedImages = Boolean.valueOf(value);
+    }
 
     value = properties.getProperty("embutirLibreOffice");
     if (value != null) {

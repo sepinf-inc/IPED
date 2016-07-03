@@ -142,10 +142,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     factory.setEntryEncoding("Cp850");
     context.set(ArchiveStreamFactory.class, factory);
 
-    /*PDFParserConfig config = new PDFParserConfig();
-     config.setExtractInlineImages(true);
-     context.set(PDFParserConfig.class, config);
-     */
     setContext(context);
   }
 
