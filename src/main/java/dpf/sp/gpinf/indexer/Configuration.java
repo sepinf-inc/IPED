@@ -70,7 +70,7 @@ public class Configuration {
   public static boolean sortPDFChars = false;
   public static boolean addUnallocated = true;
   public static long unallocatedFragSize = 1024 * 1024 * 1024;
-  public static long indexedFragSize = 10 * 1024 * 1024;
+  public static long minItemSizeToFragment = 100 * 1024 * 1024;
   public static String javaTmpDir = System.getProperty("java.io.tmpdir");
   public static boolean indexTempOnSSD = false;
   public static boolean entropyTest = true;
@@ -325,12 +325,12 @@ public class Configuration {
       unallocatedFragSize = Long.valueOf(value);
     }
     
-    value = properties.getProperty("indexedFragSize");
+    value = properties.getProperty("minItemSizeToFragment");
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
-    	indexedFragSize = Long.valueOf(value);
+    	minItemSizeToFragment = Long.valueOf(value);
     }
 
     value = properties.getProperty("indexTempOnSSD");

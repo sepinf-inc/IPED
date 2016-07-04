@@ -121,12 +121,12 @@ public class IndexTask extends BaseCarveTask {
 
     stats.updateLastId(evidence.getId());
     
-    if (evidence.getLength() > Configuration.indexedFragSize && !hasSpecificParser(evidence)
+    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !hasSpecificParser(evidence)
     		 && (evidence.getSleuthFile() != null || evidence.getFile() != null)){
     	
     	int fragNum = 0;
     	int overlap = 1024;
-    	long fragSize = Configuration.indexedFragSize;
+    	long fragSize = 10 * 1024 * 1024;
     	for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
             long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
             this.addFragmentFile(evidence, offset, len, fragNum++);

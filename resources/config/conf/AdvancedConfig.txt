@@ -63,9 +63,10 @@ ignoreHardLinks = false
 # pode ser interessante aumentar esse valor para minimizar a perda de itens que atravessam as bordas.
 unallocatedFragSize = 1073741824
 
-# Tamanho em bytes de divisão de itens indexados via strings. Itens grandes são divididos para serem indexados, 
-# facilitando o destaque de hits e a exportação de trechos com hits de itens grandes como pagefile, vss, etc
-indexedFragSize = 10485760
+# Tamanho mínimo (bytes) de itens para serem divididos antes de serem indexados via strings. Itens grandes sem parser 
+# específico são divididos em fragmentos de 10MB antes de serem indexados, facilitando o destaque de hits e a exportação 
+# de trechos com hits de itens grandes como pagefile, vss, etc
+minItemSizeToFragment = 104857600
 
 ########################################################################
 # Configurações OCR
@@ -101,8 +102,8 @@ pdfToImgLib = icepdf
 
 # Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
 # Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
-# Mas às vezes as imagens ficam fragmentadas em várias nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR. 
-processImagesInPDFs = true
+# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR. 
+processImagesInPDFs = false
 
 ########################################################################
 # Configurações da Pesquisa
