@@ -35,7 +35,7 @@ public class ImageThumbTask extends AbstractTask {
 
   public static final String HAS_THUMB = "hasThumb";
 
-  public static final String THUMB_TIMEOUT = "imgThumbTimeout";
+  public static final String THUMB_TIMEOUT = "thumbTimeout";
 
   private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
 

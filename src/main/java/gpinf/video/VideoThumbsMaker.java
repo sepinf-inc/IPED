@@ -37,7 +37,6 @@ public class VideoThumbsMaker {
   private int timeoutFirstCall = 180000;
   private boolean verbose = false;
   private int quality = 50;
-  private boolean checkContent = false;
   private String escape = null;
   private boolean firstCall = true;
   private boolean isWindows = false;
@@ -209,6 +208,9 @@ public class VideoThumbsMaker {
 
     for (int step = 0; step <= 2; step++) {
       ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
+      if (res.timeout) {
+        result.setTimeout(true);
+      }
       files = subTmp.listFiles(new FileFilter() {
         public boolean accept(File pathname) {
           return pathname.getName().toLowerCase().endsWith(".jpg");
@@ -283,49 +285,11 @@ public class VideoThumbsMaker {
       ignoreWaitKeyFrame = -1;
     }
 
-    int[] rgbPrev = null;
     Arrays.sort(files);
     List<File> images = new ArrayList<File>();
     for (File file : files) {
       file.deleteOnExit();
-      if (checkContent) {
-        BufferedImage img = ImageIO.read(file);
-        boolean empty = true;
-        int[] rgb = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
-        int base = rgb[img.getHeight() / 2 * img.getWidth() + img.getWidth() / 2];
-        int cntm = 0;
-        for (int i = 0; i < rgb.length; i += 4) {
-          if (rgbDist(rgb[i], base) > 80) {
-            cntm++;
-            if (cntm > rgb.length / 50 + 1) {
-              empty = false;
-              break;
-            }
-          }
-        }
-        boolean repeated = false;
-        if (!empty) {
-          if (rgbPrev != null) {
-            repeated = rgb.length == rgbPrev.length;
-            if (repeated) {
-              for (int i = 0; i < rgb.length; i += 4) {
-                if (rgb[i] != rgbPrev[i]) {
-                  repeated = false;
-                  break;
-                }
-              }
-            }
-          }
-          if (!repeated) {
-            rgbPrev = rgb;
-          }
-        }
-        if (!empty && !repeated) {
-          images.add(file);
-        }
-      } else {
-        images.add(file);
-      }
+      images.add(file);
     }
     if (lnk != null) {
       lnk.delete();
@@ -339,6 +303,7 @@ public class VideoThumbsMaker {
     }
     cleanTemp(subTmp);
 
+    result.setTimeout(false);
     result.setSuccess(true);
     result.setProcessingTime(System.currentTimeMillis() - start);
     return result;
@@ -384,14 +349,6 @@ public class VideoThumbsMaker {
       }
     }
     return null;
-  }
-
-  private static final int rgbDist(int a, int b) {
-    return Math.abs(s(a, 16) - s(b, 16)) + Math.abs(s(a, 8) - s(b, 8)) + Math.abs(s(a, 0) - s(b, 0));
-  }
-
-  private static final int s(int a, int n) {
-    return (a >>> n) & 0xFF;
   }
 
   private void generateGridImage(VideoThumbsOutputConfig config, List<File> images, Dimension dimension) throws IOException {
@@ -502,6 +459,7 @@ public class VideoThumbsMaker {
     StringBuilder sb = new StringBuilder();
     AtomicInteger counter = new AtomicInteger();
     int exitCode = -1000;
+    boolean isTimeout = false;
     try {
       final Process process = Runtime.getRuntime().exec(cmds);
 
@@ -522,19 +480,20 @@ public class VideoThumbsMaker {
             if (verbose) {
               System.err.println("TIMEOUT");
             }
+            isTimeout = true;
             process.destroy();
             break;
           }
         }
       }
-      return new ExecResult(exitCode, sb.toString());
+      return new ExecResult(exitCode, sb.toString(), isTimeout);
     } catch (Exception e) {
       if (verbose) {
         System.err.print("Erro executando comando '");
         e.printStackTrace();
       }
     }
-    return new ExecResult(exitCode, null);
+    return new ExecResult(exitCode, null, isTimeout);
   }
 
   private String getExtensao(String nome) {
@@ -618,10 +577,12 @@ public class VideoThumbsMaker {
 
     final int exitCode;
     final String output;
+    boolean timeout;
 
-    public ExecResult(int exitCode, String output) {
+    public ExecResult(int exitCode, String output, boolean timeout) {
       this.exitCode = exitCode;
       this.output = output;
+      this.timeout = timeout;
     }
   }
 }

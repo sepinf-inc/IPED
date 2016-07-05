@@ -31,7 +31,7 @@ public class VideoProcessResult {
 
   private long videoDuration;
   private Dimension dimension;
-  private boolean success;
+  private boolean success, timeout;
   private long processingTime;
   private File file;
   private File subTemp;
@@ -82,5 +82,13 @@ public class VideoProcessResult {
 
   public void setSuccess(boolean success) {
     this.success = success;
+  }
+
+  public boolean isTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(boolean timeout) {
+    this.timeout = timeout;
   }
 }

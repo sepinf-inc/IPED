@@ -358,6 +358,11 @@ public class VideoThumbTask extends AbstractTask {
       } else {
         evidence.setExtraAttribute(HAS_THUMB, "false");
         totalFailed.incrementAndGet();
+        if (r.isTimeout()) {
+          stats.incTimeouts();
+          evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true");
+          Log.warning(taskName, "Timeout ao extrair cenas de vídeo: " + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+        }
       }
       totalTime.addAndGet(t);
 
