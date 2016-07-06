@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,6 +70,8 @@ public class IPEDReader extends DataSourceReader {
   //Referência estática para a JVM não finalizar o objeto que será usado futuramente
   //via referência interna ao JNI para acessar os itens do caso
   static SleuthkitCase sleuthCase;
+  
+  private static AtomicBoolean secondThread = new AtomicBoolean();
 
   HashSet<Integer> selectedLabels;
   Marcadores state;
@@ -136,7 +139,7 @@ public class IPEDReader extends DataSourceReader {
       state.saveState(new File(output, Marcadores.STATEFILENAME));
     }
 
-    if (!listOnly) {
+    if (secondThread.getAndSet(true)) {
       App.get().destroy();
     }
 
