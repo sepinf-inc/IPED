@@ -46,12 +46,12 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
     DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-    int idx = App.get().resultsTable.convertRowIndexToModel(row);
-    int col = App.get().resultsTable.convertColumnIndexToModel(column);
+    int idx = table.convertRowIndexToModel(row);
+    int col = table.convertColumnIndexToModel(column);
 
-    if (App.get().resultsModel.getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
+    if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
       try {
-        int docId = App.get().results.docs[idx];
+        int docId = ((SearchResultTableModel)table.getModel()).getSearchResult().docs[idx];
         Document doc = App.get().searcher.doc(docId);
         if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
           result.setIcon(folderIcon);

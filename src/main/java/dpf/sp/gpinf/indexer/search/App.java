@@ -228,7 +228,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-//      codePath = "E:/iped/index/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/1-pendrive/indexador/lib/iped-utils-0.5.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
@@ -498,9 +498,11 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.subItemScroll = subItemScroll;
     subItemTable.setFillsViewportHeight(true);
     subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    subItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
+    subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+    subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+    subItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
     subItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    subItemTable.getColumnModel().getColumn(1).setPreferredWidth(1500);
+    subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
     subItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
     subItemTable.setShowGrid(false);
 
@@ -509,9 +511,11 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.parentItemScroll = parentItemScroll;
     parentItemTable.setFillsViewportHeight(true);
     parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(50);
+    parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+    parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+    parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
     parentItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(1500);
+    parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
     parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
     parentItemTable.setShowGrid(false);
 

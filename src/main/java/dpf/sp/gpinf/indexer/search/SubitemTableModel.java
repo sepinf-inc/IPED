@@ -35,32 +35,66 @@ import org.apache.lucene.document.Document;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 
-public class SubitemTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener {
+public class SubitemTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
   /**
    *
    */
   private static final long serialVersionUID = 1L;
 
-  // public ScoreDoc[] results = new ScoreDoc[0];
   SearchResult results = new SearchResult(0);
   int selectedIndex = -1;
 
   @Override
   public int getColumnCount() {
-    return 2;
+    return 3;
   }
 
   @Override
   public int getRowCount() {
     return results.length;
   }
+  
+  @Override
+  public String getColumnName(int col) {
+    if (col == 2)
+      return IndexItem.NAME;
+    
+    return "";
+  }
+  
+  @Override
+  public boolean isCellEditable(int row, int col) {
+    if (col == 1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  @Override
+  public Class<?> getColumnClass(int c) {
+    if (c == 1) {
+      return Boolean.class;
+    } else {
+      return String.class;
+    }
+  }
+  
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+    App.get().marcadores.setValueAtId(value, App.get().getIDs()[results.docs[row]], col, true);
+  }
 
   @Override
   public Object getValueAt(int row, int col) {
     if (col == 0) {
       return row + 1;
-    } else {
+      
+    }else if (col == 1) {
+      return App.get().marcadores.selected[App.get().getIDs()[results.docs[row]]];
+    	
+    }else{
       try {
         Document doc = App.get().searcher.doc(results.docs[row]);
         return doc.get(IndexItem.NAME);
@@ -180,5 +214,10 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
     fireTableDataChanged();
 
   }
+
+	@Override
+	public SearchResult getSearchResult() {
+		return results;
+	}
 
 }

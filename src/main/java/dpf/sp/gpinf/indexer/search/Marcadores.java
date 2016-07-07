@@ -373,6 +373,8 @@ public class Marcadores implements Serializable {
         if (App.get().resultsTable.getRowCount() > 0) {
           App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
           App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
+          App.get().subItemModel.fireTableRowsUpdated(0, App.get().subItemTable.getRowCount() - 1);
+          App.get().parentItemModel.fireTableRowsUpdated(0, App.get().parentItemTable.getRowCount() - 1);
         }
         App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().totalItens);
         App.get().checkBox.setSelected(selectedItens > 0);

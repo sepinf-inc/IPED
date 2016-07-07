@@ -35,7 +35,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
-public class ResultTableModel extends AbstractTableModel {
+public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
 
   private static final long serialVersionUID = 1L;
 
@@ -162,6 +162,11 @@ public class ResultTableModel extends AbstractTableModel {
       return String.class;
     }
   }
+  
+  @Override
+	public SearchResult getSearchResult() {
+		return App.get().results;
+	}
 
   private Document doc;
   private int lastDocRead = -1;
