@@ -67,6 +67,11 @@ public class ExportCSVTask extends AbstractTask {
   }
 
   @Override
+  public boolean isEnabled() {
+    return exportFileProps;
+  }
+  
+  @Override
   protected void process(EvidenceFile evidence) throws IOException {
 
     if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {

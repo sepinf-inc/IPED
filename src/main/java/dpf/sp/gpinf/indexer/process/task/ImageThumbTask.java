@@ -89,6 +89,11 @@ public class ImageThumbTask extends AbstractTask {
   }
 
   @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
+  
+  @Override
   public void finish() throws Exception {
     // TODO Auto-generated method stub
 

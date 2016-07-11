@@ -6,7 +6,6 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
@@ -225,4 +224,11 @@ public abstract class AbstractTask {
     return false;
   }
 
+  /**
+   * Retorna se a tarefa está habilitada.
+   * Padrão é sim, mas pode ser sobrescrita se a tarefa possuir esse controle.
+   */
+  public boolean isEnabled() {
+    return true;
+  }
 }

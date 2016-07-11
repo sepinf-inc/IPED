@@ -110,6 +110,11 @@ public class DIETask extends AbstractTask {
     super(worker);
   }
 
+  @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
+  
   /**
    * Inicializa a tarefa de detecção de nudez.
    */

@@ -217,6 +217,11 @@ public class HTMLReportTask extends AbstractTask {
     collator.setStrength(Collator.TERTIARY);
   }
 
+  @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
+  
   /**
    * Inicializa tarefa, realizando controle de alocação de apenas uma thread principal.
    */

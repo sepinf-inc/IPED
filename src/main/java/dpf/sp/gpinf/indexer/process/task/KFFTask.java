@@ -195,6 +195,11 @@ public class KFFTask extends AbstractTask {
       monitor.close();
     }
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return map != null;
+  }
 
   @Override
   protected void process(EvidenceFile evidence) throws Exception {
