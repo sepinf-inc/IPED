@@ -19,6 +19,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
 
@@ -31,9 +35,20 @@ import gpinf.dev.data.EvidenceFile;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 	
+  /**
+   * Media type do pagefile.sys / hiberfil.sys
+   */
+  public static MediaType pageFileMediaType = MediaType.application("x-pagefile");
+
   public static final String FILE_FRAGMENT = "fileFragment";
-	
+
+  protected static HashSet<MediaType> TYPES_TO_PROCESS;
+  protected static HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
+  protected static HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
+  
   private static int itensCarved;
+  
+  protected static final Map<EvidenceFile, Set<Long>> kffCarved = new HashMap<EvidenceFile, Set<Long>>();   
 
   public BaseCarveTask(Worker worker) {
     super(worker);
@@ -59,11 +74,12 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  addOffsetFile(fragFile, parentEvidence);
   }
   
-  protected void addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+  protected EvidenceFile addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
 	  EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
 	  carvedEvidence.setCarved(true);
-  	  incItensCarved();
+  	incItensCarved();
 	  addOffsetFile(carvedEvidence, parentEvidence);
+	  return carvedEvidence;
   }
 
   protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
@@ -110,5 +126,13 @@ public abstract class BaseCarveTask extends AbstractTask {
 	    } else {
 	      worker.processNewItem(offsetFile);
 	    }
+  }
+  
+  protected boolean isToProcess(EvidenceFile evidence) {
+    if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null
+        || (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(evidence.getMediaType()))) {
+      return false;
+    }
+    return true;
   }
 }

@@ -40,6 +40,7 @@ public class TaskInstaller {
     tasks.add(new HTMLReportTask(worker));
     //Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
     //e antes da indexação (pois pode setar propriedade hasChildren nos itens)
+    tasks.add(new KFFCarveTask(worker));
     tasks.add(new CarveTask(worker));
     tasks.add(new KnownMetCarveTask(worker));
     tasks.add(new IndexTask(worker));
