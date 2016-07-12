@@ -27,7 +27,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -64,9 +63,6 @@ public class CarveTask extends BaseCarveTask {
 
   public static String CARVE_CONFIG = "CarvingConfig.txt";
   public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated");
-  private static HashSet<MediaType> TYPES_TO_PROCESS;
-  private static HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
-  private static HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
   public static boolean enableCarving = false;
 
   public static boolean ignoreCorrupted = true;
@@ -90,6 +86,11 @@ public class CarveTask extends BaseCarveTask {
     this.registry = worker.config.getMediaTypeRegistry();
   }
 
+  @Override
+  public boolean isEnabled() {
+    return enableCarving;
+  }
+  
   public Set<MediaType> getSupportedTypes(ParseContext context) {
     return TYPES_TO_PROCESS;
   }
@@ -158,15 +159,19 @@ public class CarveTask extends BaseCarveTask {
   private void safeProcess(EvidenceFile evidence) {
 
     this.evidence = evidence;
-    MediaType type = evidence.getMediaType();
 
-    if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null
-    		|| (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(type))) {
+    if (!isToProcess(evidence)) {
       return;
+    }
+
+    Set<Long> kffCarvedOffsets = null;
+    synchronized (kffCarved) {
+      kffCarvedOffsets = kffCarved.get(evidence);
     }
 
     InputStream tis = null;
     try {
+      MediaType type = evidence.getMediaType();
 
       tis = evidence.getBufferedStream();
 
@@ -193,7 +198,7 @@ public class CarveTask extends BaseCarveTask {
         map[i] = new TreeMap<Long, Integer>();
       }
 
-      findSig(tis);
+      findSig(tis, kffCarvedOffsets);
 
     } catch (Exception t) {
       LOGGER.warn("{} Erro no Carving de {} {}", Thread.currentThread().getName(), evidence.getPath(), t.toString());
@@ -325,7 +330,7 @@ public class CarveTask extends BaseCarveTask {
   static AhoCorasick tree = null;
   TreeMap<Long, Integer>[] map;
 
-  private Hit findSig(InputStream in) throws Exception {
+  private Hit findSig(InputStream in, Set<Long> kffCarvedOffsets) throws Exception {
 
     SearchResult lastResult = new SearchResult(tree.root, null, 0);
     do {
@@ -436,7 +441,9 @@ public class CarveTask extends BaseCarveTask {
           if (foot != null && head != null) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[s / 2].minSize && length <= signatures[s / 2].maxSize) {
-              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
+              if (kffCarvedOffsets == null || !kffCarvedOffsets.contains(head.off)) {
+                addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
+              }
             }
             break;
           }
@@ -452,7 +459,7 @@ public class CarveTask extends BaseCarveTask {
           if (head.sig % 2 == 0 && foot.sig % 2 == 1) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[eml].minSize && length <= signatures[eml].maxSize) {
-              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType);
+                addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType);
             }
           }
         }

@@ -290,6 +290,11 @@ public class VideoThumbTask extends AbstractTask {
     }
   }
 
+  @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
+  
   /**
    * Finalização da tarefa. Apenas grava algumas informações sobre o processamento no Log.
    */

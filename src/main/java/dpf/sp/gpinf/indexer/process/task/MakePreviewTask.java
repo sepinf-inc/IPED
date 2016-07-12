@@ -64,6 +64,11 @@ public class MakePreviewTask extends AbstractTask {
   }
 
   @Override
+  public boolean isEnabled() {
+    return enableFileParsing;
+  }
+  
+  @Override
   protected void process(EvidenceFile evidence) throws Exception {
 
     if (!enableFileParsing) {

@@ -48,6 +48,11 @@ public class IgnoreHardLinkTask extends AbstractTask {
   }
 
   @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
+  
+  @Override
   protected void process(EvidenceFile evidence) throws Exception {
 
     if (!taskEnabled || evidence.getLength() == null || evidence.getLength() == 0 || evidence.isCarved()) {

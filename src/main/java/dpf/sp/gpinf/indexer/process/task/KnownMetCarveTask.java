@@ -72,18 +72,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
   private static final MediaType eMuleMediaType = MediaType.application("x-emule");
 
   /**
-   * Media type do pagefile.sys / hiberfil.sys
-   */
-  public static MediaType pageFileMediaType = MediaType.application("x-pagefile");
-
-  /**
-   * Construtor.
-   */
-  public KnownMetCarveTask(Worker worker) {
-    super(worker);
-  }
-
-  /**
    * Passo para verificação do início do arquivo.
    */
   private final int step = 512;
@@ -98,6 +86,18 @@ public class KnownMetCarveTask extends BaseCarveTask {
    * Data máxima. Aproximadamente +5 anos.
    */
   private static final long dateMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5;
+
+  /**
+   * Construtor.
+   */
+  public KnownMetCarveTask(Worker worker) {
+    super(worker);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return taskEnabled;
+  }
 
   /**
    * Inicializa tarefa, realizando controle de alocação de apenas uma thread principal.
