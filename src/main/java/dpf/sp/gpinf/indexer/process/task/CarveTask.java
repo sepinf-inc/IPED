@@ -164,11 +164,6 @@ public class CarveTask extends BaseCarveTask {
       return;
     }
 
-    Set<Long> kffCarvedOffsets = null;
-    synchronized (kffCarved) {
-      kffCarvedOffsets = kffCarved.get(evidence);
-    }
-
     InputStream tis = null;
     try {
       MediaType type = evidence.getMediaType();
@@ -198,7 +193,7 @@ public class CarveTask extends BaseCarveTask {
         map[i] = new TreeMap<Long, Integer>();
       }
 
-      findSig(tis, kffCarvedOffsets);
+      findSig(tis);
 
     } catch (Exception t) {
       LOGGER.warn("{} Erro no Carving de {} {}", Thread.currentThread().getName(), evidence.getPath(), t.toString());
@@ -330,7 +325,7 @@ public class CarveTask extends BaseCarveTask {
   static AhoCorasick tree = null;
   TreeMap<Long, Integer>[] map;
 
-  private Hit findSig(InputStream in, Set<Long> kffCarvedOffsets) throws Exception {
+  private Hit findSig(InputStream in) throws Exception {
 
     SearchResult lastResult = new SearchResult(tree.root, null, 0);
     do {
@@ -441,9 +436,7 @@ public class CarveTask extends BaseCarveTask {
           if (foot != null && head != null) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[s / 2].minSize && length <= signatures[s / 2].maxSize) {
-              if (kffCarvedOffsets == null || !kffCarvedOffsets.contains(head.off)) {
-                addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
-              }
+              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
             }
             break;
           }

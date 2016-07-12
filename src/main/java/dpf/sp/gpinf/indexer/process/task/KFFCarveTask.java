@@ -81,7 +81,7 @@ public class KFFCarveTask extends BaseCarveTask {
   public boolean isEnabled() {
     return taskEnabled;
   }
-  
+
   /**
    * Inicializa tarefa.
    */
@@ -126,34 +126,38 @@ public class KFFCarveTask extends BaseCarveTask {
     byte[] buf512 = new byte[512];
     byte[] buf64K = new byte[65536 - buf512.length];
     BufferedInputStream is = null;
-    long offset = 0;
-    int read512 = 0;
+
+    int cntCarvedItems = 0;
+    long cnt512hit = 0;
+    long cnt512total = 0;
+    long cntBytesHashed = 0;
+    Set<Long> offsets = null;
     try {
+      long offset = 0;
+      int read512 = 0;
       is = evidence.getBufferedStream();
       while ((read512 = is.read(buf512)) > 0) {
         if (read512 != buf512.length) break;
-        num512total.incrementAndGet();
+        cnt512total++;
         boolean empty = true;
-        byte prev = buf512[0];
+        byte first = buf512[0];
         for (int i = 1; i < read512; i++) {
-          byte curr = buf512[i];
-          if (curr != prev) {
+          if (buf512[i] != first) {
             empty = false;
             break;
           }
-          prev = curr;
         }
         if (!empty) {
           digest.update(buf512, 0, read512);
-          bytesHashed.addAndGet(read512);
+          cntBytesHashed += read512;
           HashValue hash512 = new HashValue(digest.digest());
           if (Arrays.binarySearch(md5_512, hash512) >= 0) {
-            num512hit.incrementAndGet();
+            cnt512hit++;
             is.mark(65536);
             int read64K = is.read(buf64K);
             is.reset();
             if (read64K == buf64K.length) {
-              bytesHashed.addAndGet(read512 + read64K);
+              cntBytesHashed += read512 + read64K;
               digest.update(buf512, 0, read512);
               digest.update(buf64K, 0, read64K);
               HashValue hash64K = new HashValue(digest.digest());
@@ -164,12 +168,14 @@ public class KFFCarveTask extends BaseCarveTask {
                 if (ext != null) name += '.' + ext.toLowerCase();
                 EvidenceFile carvedItem = addCarvedFile(evidence, offset, kffItem.getLength(), name, null);
                 carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString());
-                numCarvedItems.incrementAndGet();
-                synchronized (kffCarved) {
-                  Set<Long> offsets = kffCarved.get(evidence);
-                  if (offsets == null) kffCarved.put(evidence, offsets = new HashSet<Long>());
-                  offsets.add(offset);
+                cntCarvedItems++;
+                if (offsets == null) {
+                  offsets = new HashSet<Long>();
+                  synchronized (kffCarved) {
+                    kffCarved.put(evidence, offsets);
+                  }
                 }
+                offsets.add(offset);
               }
             }
           }
@@ -182,5 +188,9 @@ public class KFFCarveTask extends BaseCarveTask {
     } finally {
       IOUtil.closeQuietly(is);
     }
+    numCarvedItems.addAndGet(cntCarvedItems);
+    num512hit.addAndGet(cnt512hit);
+    num512total.addAndGet(cnt512total);
+    bytesHashed.addAndGet(cntBytesHashed);
   }
 }
