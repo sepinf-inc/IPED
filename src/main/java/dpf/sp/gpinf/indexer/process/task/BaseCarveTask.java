@@ -48,6 +48,9 @@ public abstract class BaseCarveTask extends AbstractTask {
   
   private static int itensCarved;
   
+  private Set<Long> kffCarvedOffsets;
+  private EvidenceFile prevEvidence;
+
   protected static final Map<EvidenceFile, Set<Long>> kffCarved = new HashMap<EvidenceFile, Set<Long>>();   
 
   public BaseCarveTask(Worker worker) {
@@ -75,6 +78,16 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
   
   protected EvidenceFile addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+    if (!parentEvidence.equals(prevEvidence)) {
+      synchronized (kffCarved) {
+        kffCarvedOffsets = kffCarved.remove(parentEvidence);
+      }
+      prevEvidence = parentEvidence;
+    }
+    if (kffCarvedOffsets != null && kffCarvedOffsets.contains(off)) {
+      return null;
+    }
+
 	  EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
 	  carvedEvidence.setCarved(true);
   	incItensCarved();
