@@ -80,7 +80,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   protected EvidenceFile addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
     if (!parentEvidence.equals(prevEvidence)) {
       synchronized (kffCarved) {
-        kffCarvedOffsets = kffCarved.remove(parentEvidence);
+        kffCarvedOffsets = kffCarved.get(parentEvidence);
       }
       prevEvidence = parentEvidence;
     }
