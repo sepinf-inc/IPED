@@ -121,7 +121,7 @@ public class IndexTask extends BaseCarveTask {
 
     stats.updateLastId(evidence.getId());
     
-    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !hasSpecificParser(evidence)
+    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !ParsingTask.hasSpecificParser(autoParser, evidence)
     		 && (evidence.getSleuthFile() != null || evidence.getFile() != null)){
     	
     	int fragNum = 0;
@@ -201,15 +201,6 @@ public class IndexTask extends BaseCarveTask {
 
     }
 
-  }
-  
-  private boolean hasSpecificParser(EvidenceFile evidence) {
-	  Parser parser = this.autoParser.getBestParser(evidence.getMetadata());
-	if (parser instanceof RawStringParser || parser instanceof TXTParser) {
-		return false;
-	} else {
-		return true;
-	}
   }
 
   private Metadata getMetadata(EvidenceFile evidence) {

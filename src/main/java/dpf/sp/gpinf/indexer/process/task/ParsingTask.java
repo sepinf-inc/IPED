@@ -28,10 +28,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.tika.Tika;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -41,8 +41,10 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,19 +207,38 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     fillMetadata(evidence);
 
-    if (!evidence.isTimedOut() && hasParser(evidence)) {
+    if (!evidence.isTimedOut() && hasSpecificParser(autoParser, evidence)) {
       new ParsingTask(worker).safeProcess(evidence);
     }
 
   }
 
-  private boolean hasParser(EvidenceFile evidence) {
-    Parser parser = this.autoParser.getBestParser(evidence.getMetadata());
-    if (parser instanceof RawStringParser || parser instanceof TXTParser) {
-      return false;
-    } else {
-      return true;
+  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
+    Parser parser = autoParser.getBestParser(evidence.getMetadata());
+    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
+    	if(parser instanceof CompositeParser)
+    		parser = getParser((CompositeParser)parser, evidence.getMetadata());
+    	else
+    		parser = ((ParserDecorator)parser).getWrappedParser();
     }
+    if (parser instanceof RawStringParser || parser instanceof TXTParser)
+      return false;
+    else
+      return true;
+  }
+  
+  private static Parser getParser(CompositeParser comp, Metadata metadata) {
+      Map<MediaType, Parser> map = comp.getParsers();
+      MediaType type = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
+      if (type != null)
+         type = comp.getMediaTypeRegistry().normalize(type);
+      while (type != null) {
+          Parser parser = map.get(type);
+          if (parser != null)
+              return parser;
+          type = comp.getMediaTypeRegistry().getSupertype(type);
+      }
+      return comp.getFallback();
   }
 
   private void safeProcess(EvidenceFile evidence) throws IOException {
