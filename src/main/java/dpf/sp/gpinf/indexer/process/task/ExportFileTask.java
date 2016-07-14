@@ -52,9 +52,12 @@ import gpinf.dev.data.EvidenceFile;
 public class ExportFileTask extends AbstractTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
-  public static String EXTRACT_CONFIG = "CategoriesToExport.txt";
-  public static String EXTRACT_DIR = "Exportados";
-  private static String SUBITEM_DIR = "subitens";
+  public static final String EXTRACT_CONFIG = "CategoriesToExport.txt";
+  public static final String EXTRACT_DIR = "Exportados";
+  private static final String SUBITEM_DIR = "subitens";
+  
+  private static final int MAX_SUBITEM_COMPRESSION = 100;
+  private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
 
   private static HashSet<String> categoriesToExtract = new HashSet<String>();
   public static int subDirCounter = 0, itensExtracted = 0;
@@ -201,7 +204,7 @@ public class ExportFileTask extends AbstractTask {
     InputStream is = null;
     try {
       is = evidence.getBufferedStream();
-      extractFile(is, evidence);
+      extractFile(is, evidence, null);
       evidence.setFileOffset(-1);
 
     } catch (IOException e) {
@@ -305,7 +308,7 @@ public class ExportFileTask extends AbstractTask {
     }
   }
 
-  public void extractFile(InputStream inputStream, EvidenceFile evidence) throws IOException {
+  public void extractFile(InputStream inputStream, EvidenceFile evidence, Long parentSize) throws IOException {
 
     String hash;
     File outputFile = null;
@@ -345,8 +348,16 @@ public class ExportFileTask extends AbstractTask {
         try {
           bos = new BufferedOutputStream(new FileOutputStream(outputFile));
           BufferedInputStream bis = new BufferedInputStream(inputStream);
-          IOUtil.copiaArquivo(bis, bos);
-
+          byte[] buf = new byte[1024 * 1024];
+  		  int total = 0,len;
+  		  while ((len = bis.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()){
+  			bos.write(buf, 0, len);
+  			total += len;
+  			if(parentSize != null && total >= ZIPBOMB_MIN_SIZE && 
+  					total > parentSize * MAX_SUBITEM_COMPRESSION)
+  				throw new IOException("Potential zip bomb while extracting subitem!");
+  		  }
+  		
         } catch (IOException e) {
           //e.printStackTrace();
           LOGGER.warn("{} Erro ao extrair {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
