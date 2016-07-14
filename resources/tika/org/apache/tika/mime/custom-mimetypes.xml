@@ -106,9 +106,25 @@
     
     <mime-type type="application/sqlite-skype">     
         <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="main.db"/>
+        <glob pattern="main*.db"/>
     </mime-type>
     
+    <mime-type type="contact/x-skype-contact">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-skype-message">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-skype-filetransfer">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-skype-conversation">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
     <mime-type type="application/skype"> 
         <magic priority="50">
             <match value="l33l" type="string" offset="0"/>

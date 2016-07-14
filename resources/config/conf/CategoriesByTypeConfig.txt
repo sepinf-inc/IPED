@@ -33,9 +33,9 @@ Bases de dados = application/x-edb; application/x-edb-table; application/irpf; a
 # adicionar application/zlib após resolver TIKA-1635
 Arquivos Compactados = application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-compress
 
-Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table
+Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact;
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; message/x-whatsapp-msg
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
