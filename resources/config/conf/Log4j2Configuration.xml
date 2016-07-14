@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration packages="gpinf.util.log">
+	<CustomLevels>
+    	<CustomLevel name="MSG" intLevel="250" />
+  	</CustomLevels>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="IPED-%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
@@ -12,7 +15,7 @@
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console" level="error"/>
+            <AppenderRef ref="Console" level="MSG"/>
             <AppenderRef ref="LogFile" />
         </Root>
     </Loggers>

@@ -37,6 +37,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.FilterOutputStream;
@@ -218,6 +219,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         setConfigPath();
       }
       configureLogParameters(logFile, nologfile);
+      
+      if(nogui){
+    	 ProgressConsole console = new ProgressConsole();
+    	 this.addPropertyChangeListener(console);
+      }
 
       LOGGER.info(Versao.APP_NAME);
 

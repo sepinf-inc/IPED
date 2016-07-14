@@ -29,6 +29,7 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeSet;
@@ -46,6 +47,7 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Versao;
@@ -376,9 +378,10 @@ public class Manager {
       }
     }
     categories.addAll(SetCategoryTask.getCategories());
-
+    
+    CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName());
     // filtra categorias vazias
-    if (categories.size() != 0) {
+    if (categories.size() != 0 && !args.getCmdArgs().containsKey("--nogui")) {
       InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
       ArrayList<String> palavrasFinais = new ArrayList<String>();
       for (String categoria : categories) {
@@ -403,7 +406,10 @@ public class Manager {
       int filtradas = categories.size() - palavrasFinais.size();
       LOGGER.info("Filtradas {} categorias", filtradas);
     } else {
-      LOGGER.info("Nenhuma categoria detectada.");
+      //LOGGER.info("Nenhuma categoria detectada.");
+    	ArrayList<String> categoryList = new ArrayList<String>();
+    	categoryList.addAll(Arrays.asList(categories.toArray(new String[0])));
+    	Util.saveKeywords(categoryList, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
     }
 
   }
