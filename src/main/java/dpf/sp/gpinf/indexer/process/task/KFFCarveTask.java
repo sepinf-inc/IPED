@@ -95,7 +95,7 @@ public class KFFCarveTask extends BaseCarveTask {
             System.err.println("LEN=" + md5_512.length);
             taskEnabled = true;
           } else {
-            Log.warning(taskName, "Base do LED precisa ser carregada para o KFFCarving funcionar.");
+            Log.error(taskName, "Base do LED precisa ser carregada para o KFFCarving funcionar.");
           }
         }
         Log.info(taskName, taskEnabled ? "Tarefa habilitada." : "Tarefa desabilitada.");
