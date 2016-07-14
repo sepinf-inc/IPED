@@ -77,7 +77,7 @@ OLE, null, 1000, 20000000, \d0\cf\11\e0\a1\b1\1a\e1, null
 # ZIP e derivados (docx, xlsx, odt, ods, cdr, etc).
 # O prefixo FH (first header) indica que o header aparece várias vezes, devendo ser usado o primeiro
 FH-ZIP, null, 1000, 100000000, PK\03\04, PK\05\06??????????????????
-FH-ZIP-MS, null, 1000, 100000000, PK\03\04??????????????????????????[Content_Types].xml\20, PK\05\06??????????????????
+ZIP-MS, null, 1000, 100000000, PK\03\04??????????????????????????[Content_Types].xml\20, PK\05\06??????????????????
 
 RAR, null, 1000, 100000000, \52\61\72\21\1a\07, \c4\3d\7b\00\40\07\00
 
@@ -124,6 +124,7 @@ ASF, null, 100000, 300000000, \A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65, 
 
 #PLIST, application/xml, 1000, 1000000, <?xml, </plist>
 
+# Carving simples de FLV, com tamanho fixo
 FLV, video/x-flv, 100000, 50000000, FLV\01\01\00\00\00, null
 FLV, video/x-flv, 100000, 50000000, FLV\01\04\00\00\00, null
 FLV, video/x-flv, 100000, 50000000, FLV\01\05\00\00\00, null
@@ -141,6 +142,8 @@ MOV, video/mp4, 100000, 300000000, ????ftypisom, null
 MOV, video/3gpp, 100000, 300000000, ????ftyp3g, null
 MOV, video/quicktime, 100000, 300000000, ????ftypqt\20\20, null
 
+# Carving simples de MPG, apresenta falsos negativos
+# O prefixo FH (first header) indica que o header aparece várias vezes, devendo ser usado o primeiro
 FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\21\00, \00\00\01\b9
 FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\44\00, \00\00\01\b9
 FH-MPG, video/mpeg, 100000, 300000000, \00\00\01\ba\2f\ff, \00\00\01\b9
