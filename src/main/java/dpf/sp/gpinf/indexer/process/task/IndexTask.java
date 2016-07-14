@@ -32,6 +32,8 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.html.HtmlMapper;
+import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,6 +240,9 @@ public class IndexTask extends BaseCarveTask {
     ArchiveStreamFactory factory = new ArchiveStreamFactory();
     factory.setEntryEncoding("Cp850");
     context.set(ArchiveStreamFactory.class, factory);
+    
+    //Indexa conteudo de todos os elementos de HTMLs, como script, etc
+    context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
 
     return context;
   }

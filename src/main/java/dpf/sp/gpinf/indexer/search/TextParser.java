@@ -37,6 +37,8 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.html.HtmlMapper;
+import org.apache.tika.parser.html.IdentityHtmlMapper;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
@@ -216,13 +218,12 @@ public class TextParser extends CancelableWorker implements ITextParser {
     ArchiveStreamFactory factory = new ArchiveStreamFactory();
     factory.setEntryEncoding("Cp850");
     context.set(ArchiveStreamFactory.class, factory);
+    
+    // Indexa conteudo de todos os elementos de HTMLs, como script, etc
+    context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
 
     context.set(StreamSource.class, content);
 
-    /*PDFParserConfig config = new PDFParserConfig();
-     config.setExtractInlineImages(true);
-     context.set(PDFParserConfig.class, config);
-     */
     return context;
   }
 
