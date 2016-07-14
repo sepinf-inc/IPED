@@ -82,7 +82,6 @@ public class IndexTask extends BaseCarveTask {
 
   public IndexTask(Worker worker) {
     super(worker);
-    IndexerDefaultParser.parsingErrors = 0;
     this.autoParser = new IndexerDefaultParser();
     this.autoParser.setFallback(Configuration.fallBackParser);
     this.autoParser.setErrorParser(Configuration.errorParser);

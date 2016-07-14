@@ -94,8 +94,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static int subitensDiscovered = 0;
   private static HashSet<String> categoriesToExpand = new HashSet<String>();
 
-  private Detector detector;
-
   private EvidenceFile evidence;
   private ParseContext context;
   private boolean extractEmbedded;
@@ -113,11 +111,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   public ParsingTask(Worker worker) {
     super(worker);
-    IndexerDefaultParser.parsingErrors = 0;
     this.autoParser = new IndexerDefaultParser();
     this.autoParser.setFallback(Configuration.fallBackParser);
-    this.autoParser.setErrorParser(Configuration.errorParser);    
-    this.detector = worker.detector;
+    this.autoParser.setErrorParser(Configuration.errorParser);
+  }
+  
+  public ParsingTask(Worker worker, IndexerDefaultParser parser) {
+	  super(worker);
+	  this.autoParser = parser;
   }
 
   private void setContext(ParseContext context) {
@@ -208,7 +209,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     fillMetadata(evidence);
 
     if (!evidence.isTimedOut() && hasSpecificParser(autoParser, evidence)) {
-      new ParsingTask(worker).safeProcess(evidence);
+      new ParsingTask(worker, autoParser).safeProcess(evidence);
     }
 
   }
