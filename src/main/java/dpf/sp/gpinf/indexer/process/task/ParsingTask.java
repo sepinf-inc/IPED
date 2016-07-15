@@ -440,7 +440,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       subItem.setSubItem(true);
       
       ExportFileTask extractor = new ExportFileTask(worker);
-      extractor.extractFile(inputStream, subItem, parent.getLength());
+      extractor.extractFile(inputStream, subItem, evidence.getLength());
 
       // Extração de anexos de emails de PSTs, se emails forem extraídos
 				/*if(contentTypeStr != null)
