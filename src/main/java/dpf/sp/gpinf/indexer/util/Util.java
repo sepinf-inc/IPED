@@ -58,10 +58,11 @@ public class Util {
 
   public static File getRelativeFile(String basePath, String export) {
     File file;
+    export = export.replace("\\", File.separator);
     if ((export.length() > 1 && export.charAt(1) == ':') || export.startsWith("/")) {
       file = new File(export);
     } else {
-      file = new File(basePath + "/" + export);
+      file = new File(basePath + File.separator + export);
     }
 
     return file;
