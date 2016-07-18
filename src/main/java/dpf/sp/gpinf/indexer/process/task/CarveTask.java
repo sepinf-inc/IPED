@@ -399,12 +399,16 @@ public class CarveTask extends BaseCarveTask {
               //Testa se possui footer
             } else if (signatures[s / 2].sigs[1].len > 0) {
 
-              //tratamento específico para ZIP e EML: utiliza primeiro cabeçalho encontrado
-              if (sigsFound.get(signatures[s / 2].name).isEmpty()
-                  || (!signatures[s / 2].name.startsWith("FH")
-                  && (!signatures[s / 2].name.equals("EML") || sigsFound.get("EML").peekLast().sig % 2 == 1))) {
-            	  
-            	//adiciona header na pilha
+              /*
+               * Empilha header para ser usado quando footer for descoberto,
+               * exceto no caso de ZIP e EML se já houver header empilhado,
+               * pois se repete várias vezes, sendo usado o primeiro
+               */
+              Hit lastHit = sigsFound.get(signatures[s / 2].name).peekLast();
+              if (lastHit == null || (!signatures[s / 2].name.startsWith("FH")
+                  && (!signatures[s / 2].name.equals("EML") || lastHit.sig % 2 == 1))
+                  || (head.off - lastHit.off > signatures[s / 2].maxSize )
+            	) {
                 sigsFound.get(signatures[s / 2].name).addLast(head);
               }
 
@@ -427,7 +431,7 @@ public class CarveTask extends BaseCarveTask {
               eml = s / 2;
               Hit lastHit = sigsFound.get(signatures[s / 2].name).peekLast();
               if (lastHit != null) {
-                if (lastHit.sig % 2 == 1) {
+                if (lastHit.sig % 2 == 1 && foot.off - lastHit.off < signatures[s / 2].maxSize) {
                   sigsFound.get(signatures[s / 2].name).pollLast();
                 }
                 sigsFound.get(signatures[s / 2].name).addLast(foot);
