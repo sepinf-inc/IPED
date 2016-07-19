@@ -60,16 +60,16 @@ BMP, image/x-ms-bmp, 1000, 50000000, BM????????????????????????\01\00\20\00, nul
 
 EMF, application/x-emf, 1000, 50000000, \01\00\00\00???????????????????????????????????? EMF, null, 48, 4, false
 
-JPG, image/jpeg, 1000, 50000000, \ff\d8\ff\DB, \ff\d9
-JPG, image/jpeg, 1000, 50000000, \ff\d8\ff\E0, \ff\d9
-JPG, image/jpeg, 1000, 50000000, \ff\d8\ff\EE, \ff\d9
-JPG, image/jpeg, 1000, 50000000, \ff\d8\ff\E1, \ff\d9
-JPG, image/jpeg, 1000, 50000000, \ff\d8\ff\FE, \ff\d9
+JPG, image/jpeg, 1000, 20000000, \ff\d8\ff\DB, \ff\d9
+JPG, image/jpeg, 1000, 20000000, \ff\d8\ff\E0, \ff\d9
+JPG, image/jpeg, 1000, 20000000, \ff\d8\ff\EE, \ff\d9
+JPG, image/jpeg, 1000, 20000000, \ff\d8\ff\E1, \ff\d9
+JPG, image/jpeg, 1000, 20000000, \ff\d8\ff\FE, \ff\d9
 
-GIF, image/gif, 1000, 50000000, GIF87a, \00\3b
-GIF, image/gif, 1000, 50000000, GIF89a, \00\3b
+GIF, image/gif, 1000, 10000000, GIF87a, \00\3b
+GIF, image/gif, 1000, 10000000, GIF89a, \00\3b
 
-PNG, image/png, 1000, 50000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
+PNG, image/png, 1000, 20000000, \89PNG\0d\0a\1a\0a, \49END\AE\42\60\82
 
 # OLE e derivados (doc, xls, ppt, msg, thumbs.db). Não altere o nome OLE, pois é realizado tratamento específico para esse formato
 OLE, null, 1000, 50000000, \d0\cf\11\e0\a1\b1\1a\e1, null
