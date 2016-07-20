@@ -23,11 +23,18 @@ import org.eclipse.swt.widgets.Shell;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 
+
 /**
- * A simple canvas that encapsulates a SWT Browser instance.
- * Add it to a AWT or Swing container and call "connect()" after
- * the container has been made visible.
+ * Canvas que se conecta com um Browser SWT para integração com o Swing.
+ *  
+ * Implementa também métodos de transformação dos resultados das pesquisas em KML
+ * a ser renderizado no GoogleMaps.
+ * 
+ *  adaptado do código: https://gist.github.com/r10r/2305091
+ *
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
  */
+
 public class MapaCanvas extends Canvas {
 
   private Thread swtThread;
@@ -46,12 +53,6 @@ public void setDesatualizado(boolean des){
 	  this.desatualizado = des;
   }
 
-
-  /**
-   * Connect this canvas to a SWT shell with a Browser component
-   * and starts a background thread to handle SWT events. This method
-   * waits until the browser component is ready.
-   */
   public void connect() {
     if (this.swtThread == null) {
       final Canvas canvas = this;
@@ -71,7 +72,10 @@ public void setDesatualizado(boolean des){
 
             shell.open();
             conectado = true;
+            
+            //função de retorno, chamada quando um item é clicado no mapa.
             new MapItemClickFuncion (getBrowser(), "itemClick");
+
             
             while (!isInterrupted() && !shell.isDisposed()) {
               if (!display.readAndDispatch()) {
@@ -154,7 +158,6 @@ public void setDesatualizado(boolean des){
           }
       });
   }
-  
 
   public void setKml(String kml) throws IOException{
 	  setText(getHtmlFromKml(kml));

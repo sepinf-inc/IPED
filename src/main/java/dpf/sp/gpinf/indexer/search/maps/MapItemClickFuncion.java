@@ -10,6 +10,13 @@ import org.eclipse.swt.browser.BrowserFunction;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 
+
+/**
+ * Implementa o evento que ocorre ao se clicar em um item redenrizado no mapa.
+ *
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ */
+
 public class MapItemClickFuncion extends BrowserFunction {
 	
 	public MapItemClickFuncion(Browser browser, String item) {

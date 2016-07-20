@@ -1,16 +1,17 @@
+<!-- Modelo de HTML usado para renderizar o mapa 
+Autor: Patrick Dalla Bernardina
+-->
 <html> 
     <head>
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 		<link type="text/css" rel="stylesheet" href="gmap.css" />
-		
-		
 		<style type="text/css" media="screen">
 		#map-container { height:800px;overflow:scroll; }
 		body { margin:0px;padding:0px }
 		</style>
-		
-		
         <script type="text/javascript" src= "http://maps.google.com/maps/api/js?sensor=false"></script>
+        
+        <!-- Ponto de inclusão do javascript de renderização -->
 		<script type="text/javascript">
 		{{javascript_geo}}
 		</script>
@@ -22,35 +23,23 @@
 	var proxy = "/cgi-bin/proxy.php?"
 	var pagenumber = 1;
 	var linkstr;
-	var tags ="volcano";
-	function updateMap(evt){
-		gxml.clear();
-		tags = document.getElementById('tag').value;
-		
-		pagenumber = parseInt(document.getElementById('thepage').value);
-		linkstr = '<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://earth.google.com/kml/2.1"><NetworkLink><name>Photos from everyone tagged climatechange, with geodata</name><open>1</open><flyToView>0</flyToView><Url><href>http://www.flickr.com/services/feeds/geo/&amp;tags=climatechange&amp;format=kml_nl?format=kml&amp;tags='+tags+'&amp;page='+pagenumber+'</href><refreshMode>onInterval</refreshMode><refreshInterval>3600</refreshInterval></Url></NetworkLink></kml>';
-		gxml.processString(linkstr,"flicker request "+tags);
-		return false;
-		}
-		
     function initialize() {
-        var kmlUrl = 'http://www.dyasdesigns.com/geoxml/vulcan.kml';
         var myOptions = {
             mapTypeId: google.maps.MapTypeId.HYBRID,
 			zoom: 3,
 			center: new google.maps.LatLng(0,0)
 			}
         map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-	 	gxml = new GeoXml("gxml", map, kmlUrl, {
+	 	gxml = new GeoXml("gxml", map, "", {
 			sidebarid:"the_side_bar",
-			publishdirectory:"http://www.dyasdesigns.com/tntmap/",
+			publishdirectory:"DPF",
 			messagestyle:{opacity:1.0 ,backgroundColor:"#a0c0fE", borderWidth:"1px"},
 			iwwidth:280
 		}); 
-		linkstr = '{{data}}';
-		gxml.processString(linkstr,"Resultado");
-		
-		//gxml.parse(["Volcanoes"]); 
+		//Ponto de entrada do KML
+	 	linkstr = '{{data}}';
+
+		gxml.processString(linkstr,"Resultado da Pesquisa");
     }
         </script>
     </head>

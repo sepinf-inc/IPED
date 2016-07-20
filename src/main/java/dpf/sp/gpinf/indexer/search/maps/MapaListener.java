@@ -5,6 +5,13 @@ import javax.swing.event.TableModelListener;
 
 import dpf.sp.gpinf.indexer.search.App;
 
+/**
+ * Monitora mudanças nos resultados das pesquisas para alterar o conteúdo
+ * do mapa.
+ *
+ * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
+ */
+
 public class MapaListener implements TableModelListener {
 
 	MapaCanvas browser;
