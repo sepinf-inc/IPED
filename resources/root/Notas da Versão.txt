@@ -1,23 +1,25 @@
-xx/07/2015: IPED-3.10
+20/07/2015: IPED-3.10
 - Melhor carving (principalmente videos) e melhor pesquisa em itens grandes via divisão dos itens por tarefa
 - Integração do KnownMetCarver (PCF Wladimir)
 - Integração do KFFCarving (PCF Wladimir)
 - Carving específico para vídeos MP4, 3GP e MOV
 - Assinaturas para carving de RAR, WAV, MIDI, CDA, WEBP e CDR antigo
 - Carving simples para FLV (tamanho fixo) e MPG (possui falsos negativos)
+- Melhoria no carving de EML, ZIP e derivados e aumento do tamanho máximo carveado de vários tipos
 - Processamento de ISOs Raw UDF e expansão de ISOs Raw (UDF e ISO9660)
 - Parser para históricos index.dat do IE <= 9 (necessário libmsiecf no Linux)
 - Parser específico para main.db do Skype (PCF Patrick)
 - Recuperação de emails apagados de PSTs de qualquer versão
 - Opção para aplicar OCR em todas as imagens embutidas em PDFs (processImagesInPDFs)
 - CheckBox e ícones nas abas "Subitens" e "Item de Origem"
-- Imprime progresso do processamento no console ao usar --nogui
-- Otimizações significativas na geração de relatórios HTML (PCF Wladimir) 
+- Otimizações na geração de relatórios HTML (PCF Wladimir) 
 - Modularização do viewer (PCF Marcelo)
+- Imprime estatísticas do processamento no console ao usar --nogui
 Correções:
 - Erro eventual na geração de reports com poucos itens
 - Controle de zipbombs e timeouts ao expandir conteineres
-- Indexação do conteúdo de todos os elementos de itens HTML (scripts, etc)
+- Indexação do conteúdo de elementos invisiveis de itens HTML (scripts, etc)
+- Abertura externa de HTMLs grandes e anexos de EML no Linux
 
  
 14/06/2015: IPED-3.9.5
