@@ -68,6 +68,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
@@ -80,6 +82,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.search.maps.MapaCanvas;
+import dpf.sp.gpinf.indexer.search.maps.MapaListener;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
@@ -87,7 +91,6 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
-
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class App extends JFrame implements WindowListener {
@@ -131,14 +134,16 @@ public class App extends JFrame implements WindowListener {
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
-
+  public MapaCanvas browserCanvas;
+  JPanel browserPane ;
+  
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
   TreeListener treeListener;
   CategoryTreeListener categoryListener;
   BookmarksTreeListener bookmarksListener;
   HitsTable parentItemTable;
-  JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
+  public JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
@@ -478,9 +483,26 @@ public class App extends JFrame implements WindowListener {
       }
     });
 
+    browserCanvas = new MapaCanvas();
+    resultsModel.addTableModelListener(new MapaListener(browserCanvas));
+    browserPane = new JPanel();
+    browserPane.setLayout(new BorderLayout());
+    browserPane.add(browserCanvas, BorderLayout.CENTER);
+    JScrollPane mapsScroll = new JScrollPane(browserPane);
+
     resultTab = new JTabbedPane();
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
+    resultTab.addTab("Mapas", mapsScroll);
+
+    resultTab.addChangeListener(new ChangeListener() {
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			if(resultTab.getSelectedIndex()==2){
+				browserCanvas.redesenhaMapa(App.get());
+			}
+		}		
+	});
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
@@ -787,6 +809,14 @@ public class App extends JFrame implements WindowListener {
   public void windowOpened(WindowEvent e) {
     // TODO Auto-generated method stub
 
+  }
+
+  public SearchResult getResults() {
+	return results;
+  }
+  
+  public JTable getResultsTable() {
+	return resultsTable;
   }
 
 }
