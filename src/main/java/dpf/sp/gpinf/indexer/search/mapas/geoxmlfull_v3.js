@@ -2,8 +2,7 @@
 *  geoxmlfullv3.js		                               by Lance Dyas          *
 *  A Google Maps API Extension  GeoXml parser                                 *
 *  GeoXml Parser based on my maps kml parser by Mike Williams called egeoxml  *
-*  Additions include:   GML/WFS/GeoRSS/GPX expanded GE KML style support      * 
-*  		http://www.dyasdesigns.com/geoxml/GeoXmlSamples.html				  *                                          
+*  Additions include:   GML/WFS/GeoRSS/GPX expanded GE KML style support      *                                          
 \******************************************************************************/
 // Constructor
 function KMLObj(title,desc,op,fid) {
@@ -24,6 +23,7 @@ var topwin = self;
 var G = google.maps;
  
 function GeoXml(myvar, map, url, opts) {
+	var i=0;
   // store the parameters
   this.myvar = myvar;
   this.opts = opts || {};
@@ -37,7 +37,6 @@ function GeoXml(myvar, map, url, opts) {
     this.urls = url;
 	this.url= this.url[0];
   }
-  
   if (opts.openbyid)
   	this.openbyid = opts.openbyid;
   if (opts.openbyname)
@@ -709,9 +708,6 @@ GeoXml.prototype.createMarker = function(point, name, desc, styleid, idx, instyl
 					if (!m.onMap)
 						m.geoxml.map.panTo(m.getPosition());
 				}
-				
-				itemClick(m.getTitle(), m.getPosition().lat(), m.getPosition().lng());
-				
 				if (!m.infoWindow.getMap())
 					m.infoWindow.open(m.geoxml.map, this);
 			});
@@ -1993,6 +1989,7 @@ GeoXml.prototype.addAll = function() {
 	};
 	
 GeoXml.prototype.processString = function(doc,titles,latlon) {
+
   var names =[];
  if(titles) {
  	names = titles.split(",");
@@ -3056,9 +3053,9 @@ GeoXml.prototype.processKML = function(node, marks, title, sbid, depth, paren) {
 	var grouptitle;
 	var keepopen = this.forcefoldersopen;
 	if (node.nodeName == "kml"){ icon = this.docicon; }
-        if (node.nodeName == "Document" ){ 
+    if (node.nodeName == "Document" ){ 
 		icon = this.kmlicon;  
-		}
+	}
 	if (node.nodeName == "Folder"){  
 		icon = this.foldericon; 
 		grouptitle = title; 
@@ -4044,6 +4041,7 @@ OverlayManager.prototype.addMarker = function (marker, title, idx, sidebar, visi
 			}
 		}
 	this.cluster.addMarker(marker);
+	
     this.DisplayLater();
     if(sidebar){
 	this.folderhtml[idx].push(sidebar);

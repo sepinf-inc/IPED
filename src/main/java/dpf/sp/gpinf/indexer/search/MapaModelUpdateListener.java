@@ -1,9 +1,9 @@
-package dpf.sp.gpinf.indexer.search.maps;
+package dpf.sp.gpinf.indexer.search;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.search.mapas.MapaCanvas;
 
 /**
  * Monitora mudanças nos resultados das pesquisas para alterar o conteúdo
@@ -12,21 +12,24 @@ import dpf.sp.gpinf.indexer.search.App;
  * @author Patrick Dalla Bernardina <patrick.dalla@gmail.com>
  */
 
-public class MapaListener implements TableModelListener {
+public class MapaModelUpdateListener implements TableModelListener {
 
-	MapaCanvas browser;
+	App app;
+	public static boolean desabilitaTemp=false;
 	
-	public MapaListener(MapaCanvas browser){
-		this.browser = browser;
+	public MapaModelUpdateListener(App app){
+		this.app = app;
 	}
 
 	@Override
 	public void tableChanged(TableModelEvent e) {
-		browser.setDesatualizado(true);
+		app.mapaDesatualizado = true;
+
 		/* somente chamado se o tab de mapas estiver sendo exibido */ 
 	    if(App.get().resultTab.getSelectedIndex()==2){
-	    	browser.redesenhaMapa(App.get());
+	    	app.redesenhaMapa();
 	    }
+
 	}
 
 }

@@ -1,0 +1,52 @@
+package dpf.sp.gpinf.indexer.search.mapas;
+
+import java.awt.event.MouseEvent;
+import java.util.Date;
+
+import org.eclipse.swt.browser.Browser;
+import org.eclipse.swt.browser.BrowserFunction;
+
+public class MarkerMouseClickedFunction extends BrowserFunction {
+	MapaCanvas map;
+	
+	public MarkerMouseClickedFunction(MapaCanvas map, Browser browser, String name) {
+		super(browser, name);
+		this.map = map;
+	}
+
+	@Override
+	public Object function(Object[] arguments) {
+		
+		MarkerEventListener l = map.getMarkerEventListener();
+		if(l!=null){
+			int clickcount = 0;
+			if(getName().equals("markerMouseDblClickedBF")){
+				clickcount = 2;
+			}
+			if(getName().equals("markerMouseClickedBF")){
+				clickcount = 1;
+			}
+			int button = 0;
+			if(arguments[1] instanceof Double){
+				button = ((Double)arguments[1]).intValue();
+			}else if(arguments[1] instanceof String){
+				button = Integer.parseInt((String)arguments[1]);
+			}
+			MouseEvent e = new MouseEvent(map.getParent(),
+					  1,
+	                  (new Date()).getTime(),
+	                  0,
+	                  0,//x
+	                  0,//y
+	                  clickcount,//clickcount
+	                  false,//popupTrigger
+	                  button //button
+					);
+			l.onClicked(Integer.parseInt((String)arguments[0]), e);
+		}
+		
+		return super.function(arguments);
+	}
+
+
+}
