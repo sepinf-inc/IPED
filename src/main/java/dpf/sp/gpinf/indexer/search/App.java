@@ -82,8 +82,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.search.maps.MapaCanvas;
-import dpf.sp.gpinf.indexer.search.maps.MapaListener;
+import dpf.sp.gpinf.indexer.search.kml.KMLResult;
+import dpf.sp.gpinf.indexer.search.mapas.MapaCanvas;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
@@ -135,6 +135,7 @@ public class App extends JFrame implements WindowListener {
   GalleryTable gallery;
   public HitsTable hitsTable;
   public MapaCanvas browserCanvas;
+  boolean mapaDesatualizado = true; //variável para registrar se os dados a serem apresentados pelo mapa precisa renderização 
   JPanel browserPane ;
   
   HitsTable subItemTable;
@@ -445,7 +446,7 @@ public class App extends JFrame implements WindowListener {
     InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
     inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
-
+    
     gallery = new GalleryTable(galleryModel);
     galleryScroll = new JScrollPane(gallery);
     gallery.setFillsViewportHeight(true);
@@ -484,7 +485,10 @@ public class App extends JFrame implements WindowListener {
     });
 
     browserCanvas = new MapaCanvas();
-    resultsModel.addTableModelListener(new MapaListener(browserCanvas));
+    browserCanvas.setMapSelectionListener(new AppMapaSelectionListener());
+    browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener());
+    browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener());
+    resultsModel.addTableModelListener(new MapaModelUpdateListener(this));
     browserPane = new JPanel();
     browserPane.setLayout(new BorderLayout());
     browserPane.add(browserCanvas, BorderLayout.CENTER);
@@ -499,7 +503,7 @@ public class App extends JFrame implements WindowListener {
 		@Override
 		public void stateChanged(ChangeEvent e) {
 			if(resultTab.getSelectedIndex()==2){
-				browserCanvas.redesenhaMapa(App.get());
+				redesenhaMapa();
 			}
 		}		
 	});
@@ -819,4 +823,29 @@ public class App extends JFrame implements WindowListener {
 	return resultsTable;
   }
 
+  public TreeListener getTreeListener() {
+	return treeListener;
+  }
+
+  public void redesenhaMapa(){
+	    if(mapaDesatualizado){
+			if(!browserCanvas.isConnected()){
+				this.setVisible(true);
+				browserCanvas.connect();
+				//força a rederização do Mapa (resolvendo o bug da primeira renderização 
+				this.treeSplitPane.setDividerLocation(this.treeSplitPane.getDividerLocation()-1);
+			}
+			
+		    String kml = "";
+		    try {
+		    	kml = KMLResult.getResultsKML(this);
+		    	browserCanvas.setKML(kml);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}finally {
+				mapaDesatualizado = false;
+			}
+		}
+  }
+  
 }

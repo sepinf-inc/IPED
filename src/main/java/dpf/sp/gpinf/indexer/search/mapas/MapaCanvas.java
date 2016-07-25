@@ -32,6 +32,7 @@ public class MapaCanvas extends Canvas {
   
   MapSelectionListener mapSelectionListener = null;
   MarkerEventListener markerEventListener = null;
+  MarkerCheckBoxListener markerCheckBoxListener = null;
   
   boolean connected = false;
 
@@ -64,7 +65,8 @@ public class MapaCanvas extends Canvas {
             new MarkerMouseReleasedFunction(canvas, swtBrowser, "markerMouseReleasedBF");
             new MarkerMouseEnteredFunction(canvas, swtBrowser, "markerMouseEnteredBF");
             new MarkerMouseExitedFunction(canvas, swtBrowser, "markerMouseExitedBF");
-
+            new SelecionaItemFunction(canvas, swtBrowser, "marcaMarcadorBF");
+            
             shell.open();
             connected = true;
             
@@ -184,5 +186,13 @@ public void setMarkerEventListener(MarkerEventListener markerEventListener) {
 public boolean isConnected() {
 	return connected;
 }
-  
+
+public MarkerCheckBoxListener getMarkerCheckBoxListener() {
+	return markerCheckBoxListener;
+}
+
+public void setMarkerCheckBoxListener(MarkerCheckBoxListener markerCheckBoxListener) {
+	this.markerCheckBoxListener = markerCheckBoxListener;
+}
+
 }

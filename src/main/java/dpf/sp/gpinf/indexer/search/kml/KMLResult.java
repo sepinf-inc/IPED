@@ -23,6 +23,7 @@ public class KMLResult {
 		  kml+="<Folder>";
 		  kml+="<name>Resultados</name>";
 
+		  int contSemCoordenadas=0;
 		  SearchResult results = app.getResults();
 		  for (int i = 0; i < results.docs.length; i++) {
 			  org.apache.lucene.document.Document doc = app.searcher.doc(results.docs[i]);
@@ -51,6 +52,8 @@ public class KMLResult {
 				  kml+="<TimeSpan><begin>"+dataCriacao+"</begin></TimeSpan>";
 
 				  kml+="</Placemark>";
+			  }else{
+				  contSemCoordenadas++;
 			  }
 			  
 		  }

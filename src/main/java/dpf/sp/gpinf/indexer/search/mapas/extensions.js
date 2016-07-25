@@ -42,7 +42,6 @@
 		    geodesic: true,
 		    map: map
 		  });
-  
   }
   
   DragSelect.prototype.onMouseMoveDistancia = function (e){
@@ -56,8 +55,9 @@
 		  this.geodesicPoly.setPath(path);
 		  this.poly.setVisible(true);
 		  this.geodesicPoly.setVisible(true);
+		  
 		  var distance = google.maps.geometry.spherical.computeDistanceBetween(path[0], path[1]);
-		  //document.getElementById('heading').value = heading;
+		  document.getElementById('distancia_calc').innerHTML = distance.toFixed(0) + " metros";
 	  }
   }
   
@@ -72,7 +72,7 @@
   }
   
   
-  DragSelect.prototype.getOverlay = function () {
+  DragSelect.prototype.getOverlay = function () { 
 	  return this.prjov_;	  
   }  
   
@@ -81,6 +81,7 @@
 	    
 	    this.poly.setVisible(false);
 		this.geodesicPoly.setVisible(false);
+		document.getElementById('distancia_calc').innerHTML = "";
 	    
 	    if (this.dragging_) {
 	      //this.map_.fitBounds(bnds); 
@@ -212,6 +213,5 @@
   google.maps.Map.prototype.enableKeyDragSelect = function (opt_zoomOpts) {
 	    this.dragSelect = new DragSelect(this, opt_zoomOpts);
 	  };
-	  
 	  
 })();

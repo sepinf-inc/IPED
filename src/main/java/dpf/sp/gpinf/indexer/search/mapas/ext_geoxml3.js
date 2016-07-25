@@ -63,13 +63,25 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 	if(e.length<=0) return;
 	
 	m.extendedData = {};
+	var marcado = '';
 	for (i = 0; i <e.length; i++) {
 		var d = e[i].getElementsByTagName("Data");
 		for (j = 0; j <d.length; j++) {
 			values = d[j].getElementsByTagName("value");
 			m.extendedData[d[j].getAttribute("name")] = values[0].childNodes[0].nodeValue;
+			if(d[j].getAttribute("name")=="checked"){
+				if(values[0].childNodes[0].nodeValue=="true"){
+					marcado = "checked";
+				}
+			}
 		}
 	}
+	
+	/* Adiciona checkbox ao infoWindow*/
+	
+	var html = m.infoWindow.getContent();
+	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"marcaMarcadorBF("+m.extendedData.id+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
+	m.infoWindow.setContent(html);
 	
 	/* Adiciona listeners */
 	google.maps.event.addListener(m, "mouseover", function(){ markerMouseEnteredBF(this.extendedData.id) });

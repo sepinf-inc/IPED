@@ -28,7 +28,7 @@
 		</script>
         <script>
     var map;
-	var gxml; 
+	var gxml;
 	var proxy = "/cgi-bin/proxy.php?"
     function initialize() {
         var kmlUrl = '';
@@ -47,17 +47,20 @@
 		gxml.processString('{{kml}}', 'Resultados'); 
 		map.enableKeyDragSelect();
 		
+		document.getElementById('resultsinfo').innerHTML = gxml.overlayman.markers.length+' itens com coordenadas geográficas foram mapeados.'; 
+		
 	    map.addListener('dragend_rect', function(rect, proj) {
 	    	var ms = gxml.selecionaRetangulo(rect, proj, selecionaMarcador);
 	    	selecionaMarcadorBF(ms);
     	  });
 	    map.addListener('dragend_circle', function(pInicio, pFim, proj) {
 	    	var ms = gxml.selecionaCirculo(pInicio, pFim, proj, selecionaMarcador);
+	    	selecionaMarcadorBF(ms);
     	  });
 	    
 	    var icone_marcador_selecionado = "{{icone_selecionado_base64}}"; 
 	    var icone_marcador = "{{icone_base64}}"; 
-	    var icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}"; 
+	    var icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}";
 	    
 	    function selecionaMarcador(marcador){
 	    	if(typeof(marcador.selecionado)==='undefined' || marcador.selecionado == 0){
@@ -84,10 +87,18 @@
         </script>
     </head>
     <body onload="initialize()">
-       <table style="height:512px;width;1624px"><tr><td>
-  <div id="map_canvas" style="width:1024px;height:100%"></div></td><td>
-   <div id="the_side_bar" style="position:absolute;left:1040px;top:0px;height:800px;overflow:auto"></div>
+       <table style="height:100%;width:100%"><tr><td width="*">
+  <div id="map_canvas" style="width:100%;height:100%;"></div></td>
+    <td width="50px">
+   <div id="barra_lateral" style="height:100%;width:100%;">
+   		<input type="button" name="teste" value="Marcar Selecionados"/>
+   	 	<div id="resultsinfo"></div>
+   	 	<div style="position:relative; top:20px;">Pressione [Ctrl] para seleção radial. 
+		<br/>Pressione [Shift] para seleção retangular.</div>
+		<div style="position:absolute; bottom:20px;" id="distancia_calc"></div>
+   </div>
    </td></tr>
 </table>
     </body>
+    <div id="the_side_bar" style="position:fixed;float:right;height:100%;width:100%; visibility:hidden"></div>    
 </html>
