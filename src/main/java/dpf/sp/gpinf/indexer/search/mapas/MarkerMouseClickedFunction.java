@@ -32,10 +32,19 @@ public class MarkerMouseClickedFunction extends BrowserFunction {
 			}else if(arguments[1] instanceof String){
 				button = Integer.parseInt((String)arguments[1]);
 			}
+			int modf = 0;
+			if(arguments.length > 2){
+				if(arguments[2] instanceof String){
+					if(((String)arguments[2]).equals("shift")){
+						modf = MouseEvent.SHIFT_DOWN_MASK;
+					}
+				}
+			}
+
 			MouseEvent e = new MouseEvent(map.getParent(),
 					  1,
 	                  (new Date()).getTime(),
-	                  0,
+	                  modf, //modifiers
 	                  0,//x
 	                  0,//y
 	                  clickcount,//clickcount

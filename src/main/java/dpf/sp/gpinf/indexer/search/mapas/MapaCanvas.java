@@ -3,9 +3,12 @@ package dpf.sp.gpinf.indexer.search.mapas;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Set;
 
 import javax.imageio.stream.ImageOutputStreamImpl;
 import javax.swing.JFrame;
@@ -35,7 +38,23 @@ public class MapaCanvas extends Canvas {
   MarkerCheckBoxListener markerCheckBoxListener = null;
   
   boolean connected = false;
-
+  Runnable saveRunnable;
+  SaveKMLFunction savef = null;
+  HashMap <String, Boolean> selecoesAfazer;
+  
+  public void addSaveKmlFunction(Runnable save){
+	  this.saveRunnable = save;
+	  final MapaCanvas canvas = this;
+	  if(connected){
+		  swtBrowser.getDisplay().syncExec(new Runnable() {
+				@Override
+				public void run() {
+					savef = new SaveKMLFunction(canvas.saveRunnable, swtBrowser, "exportarKmlBF");
+				}
+			});
+	  }
+  }
+  
   /**
    * Connect this canvas to a SWT shell with a Browser component
    * and starts a background thread to handle SWT events. This method
@@ -66,6 +85,9 @@ public class MapaCanvas extends Canvas {
             new MarkerMouseEnteredFunction(canvas, swtBrowser, "markerMouseEnteredBF");
             new MarkerMouseExitedFunction(canvas, swtBrowser, "markerMouseExitedBF");
             new SelecionaItemFunction(canvas, swtBrowser, "marcaMarcadorBF");
+            if((savef==null)&&(canvas.saveRunnable!=null)){
+				savef = new SaveKMLFunction(canvas.saveRunnable, swtBrowser, "exportarKmlBF");
+            }
             
             shell.open();
             connected = true;
@@ -151,6 +173,7 @@ public class MapaCanvas extends Canvas {
 		  String b64_selecionado = "data:image/png;base64," + new String(Base64.getEncoder().encode(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))));
 		  String b64_selecionado_m = "data:image/png;base64," + new String(Base64.getEncoder().encode(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))));
 		  String b64_normal = "data:image/png;base64," + new String(Base64.getEncoder().encode(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))));
+		  String b64_marcado = "data:image/png;base64," + new String(Base64.getEncoder().encode(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))));
 		  
 		  html = html.replace("{{load_geoxml3}}", js);
 		  html = html.replace("{{load_keydragzoom}}", js2);
@@ -159,6 +182,7 @@ public class MapaCanvas extends Canvas {
 		  html = html.replace("{{icone_selecionado_base64}}", b64_selecionado);
 		  html = html.replace("{{icone_base64}}", b64_normal);
 		  html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m);
+		  html = html.replace("{{icone_m_base64}}", b64_marcado);		  
 		  html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", ""));
 		  
 		  setText(html);		  
@@ -193,6 +217,38 @@ public MarkerCheckBoxListener getMarkerCheckBoxListener() {
 
 public void setMarkerCheckBoxListener(MarkerCheckBoxListener markerCheckBoxListener) {
 	this.markerCheckBoxListener = markerCheckBoxListener;
+}
+
+public void enviaSelecoes(HashMap <String, Boolean> selecoes){
+	if(this.selecoesAfazer==null){
+		this.selecoesAfazer = new HashMap<String, Boolean>();
+	}
+	
+	String[] marks = new String[selecoes.keySet().size()]; 
+	marks = selecoes.keySet().toArray(marks);
+	for(int i = 0; i<marks.length; i++){
+		this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));		
+	}
+}
+
+public void redesenha(){
+	
+	if(this.selecoesAfazer!=null){
+		//repinta selecoes alteradas
+		final String[] marks = new String[this.selecoesAfazer.keySet().size()]; 
+		this.selecoesAfazer.keySet().toArray(marks);
+		final HashMap <String, Boolean> selecoesAfazerCopy = selecoesAfazer;
+
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				for(int i = 0; i<marks.length; i++){
+					Boolean b = selecoesAfazerCopy.get(marks[i]);
+					swtBrowser.execute("gxml.seleciona("+marks[i]+",'"+b+"');");
+				}
+			}
+		});
+		this.selecoesAfazer = null;
+	}
 }
 
 }

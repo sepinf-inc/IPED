@@ -34,6 +34,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
 				}
 	        }
 
+	        pos = t.convertRowIndexToView(pos);
 	        t.changeSelection(pos, 1, true, false);
 		}
 	}

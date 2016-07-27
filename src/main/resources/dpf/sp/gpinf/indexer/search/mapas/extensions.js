@@ -1,13 +1,28 @@
+/*
+ * Classname             DragSelect
+ * 
+ * Version information   1.0
+ *
+ * Date                  26/07/2016
+ * 
+ * author                Patrick Dalla Bernardina
+ * 
+ * Extensão da classe DragZoom para modificar o objetivo seleção: Ao invés de 
+ * dar zoom na área selecionada, apenas passa as coordenadas da seleção. Implementa
+ * também a seleção radial (centro + raio).
+ * 
+ * */
+
+
 
 (function () { 
 	
-  /* desenvolvido por Patrick */ 
   DragSelect.prototype = new DragZoom();
   DragSelect.prototype.constructor=DragSelect;
   
   function DragSelect(map, opt_zoomOpts) {
       opt_zoomOpts = opt_zoomOpts || {};
-      opt_zoomOpts.key = "shift,ctrl";
+      opt_zoomOpts.key = "";//"shift,ctrl";
 	  var me = this;
 
 	  DragZoom.call(this, map, opt_zoomOpts);
@@ -18,11 +33,6 @@
 	  google.maps.event.addDomListener(document, "mousedown", function (e) {
 		  me.defineClasseVisual(e);
 	  });
-	  
-	  google.maps.event.addDomListener(document, "keydown", function (e) {
-	        me.lastKeyDown = e;
-	      });
-
 
 	  google.maps.event.addDomListener(document, "mousemove", function (e) {
 		  me.onMouseMoveDistancia(e);
@@ -42,6 +52,9 @@
 		    geodesic: true,
 		    map: map
 		  });
+
+	  this.activatedProgramatically = false;
+	  this.dragType = 'radius';//default selection type
   }
   
   DragSelect.prototype.onMouseMoveDistancia = function (e){
@@ -63,7 +76,7 @@
   
   DragSelect.prototype.defineClasseVisual = function (e){
 	  var att = document.createAttribute("class");
-	  if(this.lastKeyDown.shiftKey){
+	  if(this.dragType == 'area'){
 		  att.value = "rect_class";
 	  }else{
 		  att.value = "circle_class";
@@ -88,8 +101,7 @@
 	      this.dragging_ = false;
 	      this.boxDiv_.style.display = 'none';
 
-
-		  if(this.lastKeyDown.shiftKey){
+		  if(this.dragType == 'area'){
 		      var left = Math.min(this.startPt_.x, this.endPt_.x);
 		      var top = Math.min(this.startPt_.y, this.endPt_.y);
 		      var width = Math.abs(this.startPt_.x - this.endPt_.x);
@@ -134,11 +146,12 @@
 	        break;
 	      }
 	    }
-	    return isHot;
+	    //return isHot;
+	    return false;
 	  };
 
   DragSelect.prototype.onMouseMove_ = function (e) {
-	  if(this.lastKeyDown.shiftKey){
+	  if(this.dragType == 'area'){
 		  DragZoom.prototype.onMouseMove_.call(this, e); 
 	  }else{
 		  this.onMouseMoveCircle_(e);
@@ -212,6 +225,60 @@
   
   google.maps.Map.prototype.enableKeyDragSelect = function (opt_zoomOpts) {
 	    this.dragSelect = new DragSelect(this, opt_zoomOpts);
-	  };
-	  
+  };
+
+  DragSelect.prototype.isMouseOnMap_ = function () {
+	if(this.activatedProgramatically){
+		return true;
+	}else{
+		var mousePosn = this.mousePosn_;
+	    if (mousePosn) {
+	      var mapPosn = this.mapPosn_;
+	      var mapDiv = this.map_.getDiv();
+	      return mousePosn.left > mapPosn.left && mousePosn.left < (mapPosn.left + mapDiv.offsetWidth) &&
+	      mousePosn.top > mapPosn.top && mousePosn.top < (mapPosn.top + mapDiv.offsetHeight);
+	    } else {
+	      // if user never moved mouse
+	      return false;
+	    }
+	}
+  }	  
+
+  DragSelect.prototype.activateRadiusDrag = function (){
+      this.dragType = 'radius';
+      this.activateDrag();
+  }
+  
+  DragSelect.prototype.activateAreaDrag = function (){
+      this.dragType = 'area';
+      this.activateDrag();
+  }
+  
+  DragSelect.prototype.activateDrag = function (){
+	  this.mapPosn_ = getElementPosition(this.map_.getDiv());
+	  this.activatedProgramatically = true;
+	  this.activatedByControl_ = false;
+      this.hotKeyDown_ = true;
+      this.setVeilVisibility_();
+      google.maps.event.trigger(this, "activate");
+  }
+
+  DragSelect.prototype.startDrag = function (){	  
+	  google.maps.event.trigger(this, "dragstart", latlng);
+  }
+  
+  DragSelect.prototype.cancelDrag = function (){
+      this.hotKeyDown_ = false;
+      this.activatedByControl_ = false;
+      google.maps.event.trigger(this, "deactivate");
+  }
+
+/*  DragZoom.prototype.onKeyUp_ = function (e) {
+	  // do nothing
+  }  
+  
+  DragSelect.prototype.onKeyDown_ = function (e) {
+	  // do nothing
+  }
+*/	  
 })();

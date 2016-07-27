@@ -12,6 +12,8 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
 	@Override
 	public void onClicked(int mid, MouseEvent e) {
         int pos = 0;
+        
+        //procura pela posição correspondente na tabela do item clicado no mapa
         SearchResult results = App.get().getResults();
         for (int i = 0; i < results.docs.length; i++) {
         	org.apache.lucene.document.Document doc = null;
@@ -28,7 +30,16 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         }
         
         JTable t = App.get().getResultsTable();
-        t.setRowSelectionInterval(pos, pos);
+        pos = t.convertRowIndexToView(pos);
+        if(e.isShiftDown()){
+        	if(t.isRowSelected(pos)){
+                t.removeRowSelectionInterval(pos, pos);
+        	}else{
+                t.addRowSelectionInterval(pos, pos);
+        	}
+        }else{
+            t.setRowSelectionInterval(pos, pos);
+        }
 	}
 
 	@Override

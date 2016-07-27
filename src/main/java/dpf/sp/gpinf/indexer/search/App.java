@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -70,6 +71,8 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
@@ -485,6 +488,11 @@ public class App extends JFrame implements WindowListener {
     });
 
     browserCanvas = new MapaCanvas();
+    browserCanvas.addSaveKmlFunction(new Runnable() {
+		public void run() {
+			KMLResult.saveKML();
+		}
+	});
     browserCanvas.setMapSelectionListener(new AppMapaSelectionListener());
     browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener());
     browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener());
@@ -645,6 +653,32 @@ public class App extends JFrame implements WindowListener {
     resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
     resultsTable.addMouseListener(new ResultTableListener());
     resultsTable.addKeyListener(new ResultTableListener());
+
+    //Adiciona listener para indicar a seleção de item ao Mapa
+    resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+		@Override
+		public void valueChanged(ListSelectionEvent e) {
+			if((resultTab.getSelectedIndex()!=2)&&(!mapaDesatualizado)){
+				ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+				HashMap <String, Boolean> selecoes = new HashMap <String, Boolean>(); 
+				for(int i=e.getFirstIndex(); i<=e.getLastIndex(); i++){
+					boolean selected = lsm.isSelectedIndex(i);
+					//int im = resultsTable.convertColumnIndexToModel(i);
+
+		        	org.apache.lucene.document.Document doc = null;
+		        	try {
+						doc = App.get().searcher.doc(results.docs[i]);
+			        	selecoes.put(doc.get("id"), selected);
+					} catch (IOException ex) {
+						ex.printStackTrace();
+						break;
+					}
+				}
+				browserCanvas.enviaSelecoes(selecoes);
+			}
+		}
+	});
+    
     hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
     subItemTable.addMouseListener(subItemModel);
     subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -829,6 +863,7 @@ public class App extends JFrame implements WindowListener {
 
   public void redesenhaMapa(){
 	    if(mapaDesatualizado){
+	    	//se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
 			if(!browserCanvas.isConnected()){
 				this.setVisible(true);
 				browserCanvas.connect();
@@ -845,6 +880,8 @@ public class App extends JFrame implements WindowListener {
 			}finally {
 				mapaDesatualizado = false;
 			}
+		}else{
+			browserCanvas.redesenha();
 		}
   }
   
