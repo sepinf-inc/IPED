@@ -26,6 +26,11 @@ public class SignatureTask extends AbstractTask {
   public SignatureTask(Worker worker) {
     super(worker);
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return processFileSignatures;
+  }
 
   public void process(EvidenceFile evidence) {
 

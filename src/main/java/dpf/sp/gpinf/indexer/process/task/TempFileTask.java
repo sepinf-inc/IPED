@@ -28,6 +28,11 @@ public class TempFileTask extends AbstractTask {
   public TempFileTask(Worker worker) {
     super(worker);
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return indexTempOnSSD;
+  }
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
