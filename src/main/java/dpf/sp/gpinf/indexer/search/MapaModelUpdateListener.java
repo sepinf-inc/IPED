@@ -24,11 +24,11 @@ public class MapaModelUpdateListener implements TableModelListener {
 	@Override
 	public void tableChanged(TableModelEvent e) {
 		if(!desabilitaTemp){
-			app.mapaDesatualizado = true;
+			app.getBrowserPane().setMapaDesatualizado(true);
 
 			/* somente chamado se o tab de mapas estiver sendo exibido */ 
 		    if(App.get().resultTab.getSelectedIndex()==2){
-		    	app.redesenhaMapa();
+		    	app.getBrowserPane().redesenhaMapa();
 		    }
 		}else{
 			//rehabilita renderização automatica pela alteração no modelo

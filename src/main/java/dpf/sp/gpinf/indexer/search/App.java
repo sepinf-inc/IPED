@@ -138,8 +138,7 @@ public class App extends JFrame implements WindowListener {
   GalleryTable gallery;
   public HitsTable hitsTable;
   public MapaCanvas browserCanvas;
-  boolean mapaDesatualizado = true; //variável para registrar se os dados a serem apresentados pelo mapa precisa renderização 
-  JPanel browserPane ;
+  AppMapaPanel browserPane;
   
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
@@ -487,34 +486,15 @@ public class App extends JFrame implements WindowListener {
       }
     });
 
-    browserCanvas = new MapaCanvas();
-    browserCanvas.addSaveKmlFunction(new Runnable() {
-		public void run() {
-			KMLResult.saveKML();
-		}
-	});
-    browserCanvas.setMapSelectionListener(new AppMapaSelectionListener());
-    browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener());
-    browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener());
     resultsModel.addTableModelListener(new MapaModelUpdateListener(this));
-    browserPane = new JPanel();
-    browserPane.setLayout(new BorderLayout());
-    browserPane.add(browserCanvas, BorderLayout.CENTER);
+    
+    browserPane = new AppMapaPanel(this);
     JScrollPane mapsScroll = new JScrollPane(browserPane);
 
     resultTab = new JTabbedPane();
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
-    resultTab.addTab("Mapas", mapsScroll);
-
-    resultTab.addChangeListener(new ChangeListener() {
-		@Override
-		public void stateChanged(ChangeEvent e) {
-			if(resultTab.getSelectedIndex()==2){
-				redesenhaMapa();
-			}
-		}		
-	});
+    resultTab.addTab("Mapa", mapsScroll);
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
@@ -654,31 +634,6 @@ public class App extends JFrame implements WindowListener {
     resultsTable.addMouseListener(new ResultTableListener());
     resultsTable.addKeyListener(new ResultTableListener());
 
-    //Adiciona listener para indicar a seleção de item ao Mapa
-    resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-		@Override
-		public void valueChanged(ListSelectionEvent e) {
-			if((resultTab.getSelectedIndex()!=2)&&(!mapaDesatualizado)){
-				ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-				HashMap <String, Boolean> selecoes = new HashMap <String, Boolean>(); 
-				for(int i=e.getFirstIndex(); i<=e.getLastIndex(); i++){
-					boolean selected = lsm.isSelectedIndex(i);
-					//int im = resultsTable.convertColumnIndexToModel(i);
-
-		        	org.apache.lucene.document.Document doc = null;
-		        	try {
-						doc = App.get().searcher.doc(results.docs[i]);
-			        	selecoes.put(doc.get("id"), selected);
-					} catch (IOException ex) {
-						ex.printStackTrace();
-						break;
-					}
-				}
-				browserCanvas.enviaSelecoes(selecoes);
-			}
-		}
-	});
-    
     hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
     subItemTable.addMouseListener(subItemModel);
     subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -861,28 +816,12 @@ public class App extends JFrame implements WindowListener {
 	return treeListener;
   }
 
-  public void redesenhaMapa(){
-	    if(mapaDesatualizado){
-	    	//se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
-			if(!browserCanvas.isConnected()){
-				this.setVisible(true);
-				browserCanvas.connect();
-				//força a rederização do Mapa (resolvendo o bug da primeira renderização 
-				this.treeSplitPane.setDividerLocation(this.treeSplitPane.getDividerLocation()-1);
-			}
-			
-		    String kml = "";
-		    try {
-		    	kml = KMLResult.getResultsKML(this);
-		    	browserCanvas.setKML(kml);
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}finally {
-				mapaDesatualizado = false;
-			}
-		}else{
-			browserCanvas.redesenha();
-		}
-  }
+public JTabbedPane getResultTab() {
+	return resultTab;
+}
+
+public AppMapaPanel getBrowserPane() {
+	return browserPane;
+}
   
 }
