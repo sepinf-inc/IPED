@@ -51,7 +51,6 @@ public class AppMapaPanel extends JPanel {
 					HashMap <String, Boolean> selecoes = new HashMap <String, Boolean>(); 
 					for(int i=e.getFirstIndex(); i<=e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
-						//int im = resultsTable.convertColumnIndexToModel(i);
 
 			        	org.apache.lucene.document.Document doc = null;
 			        	try {
@@ -81,11 +80,13 @@ public class AppMapaPanel extends JPanel {
 	}
 
 	public void redesenhaMapa(){
-		    if(mapaDesatualizado){
+		    if(mapaDesatualizado && (app.getResults().length>0)){
 		    	//se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
 				if(!browserCanvas.isConnected()){
 					this.setVisible(true);
+
 					browserCanvas.connect();
+					
 					//força a rederização do Mapa (resolvendo o bug da primeira renderização 
 					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
 				}

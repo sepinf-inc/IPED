@@ -26,10 +26,7 @@
 	  var me = this;
 
 	  DragZoom.call(this, map, opt_zoomOpts);
-	  google.maps.event.addListener(map, 'idle', function () {
-          prj = ov.getProjection();
-      });
-	  
+
 	  google.maps.event.addDomListener(document, "mousedown", function (e) {
 		  me.defineClasseVisual(e);
 	  });

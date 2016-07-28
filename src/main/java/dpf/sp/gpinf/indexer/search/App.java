@@ -239,6 +239,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:/1-pendrive/indexador/lib/iped-utils-0.5.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
+      //codePath = System.getProperty("user.dir")+"/indexador/lib";
       appSearchParams.codePath = codePath;
 
       javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
@@ -248,7 +249,6 @@ public class App extends JFrame implements WindowListener {
           LOGGER.info("GUI created");
         }
       });
-
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -486,10 +486,9 @@ public class App extends JFrame implements WindowListener {
       }
     });
     
+    resultTab = new JTabbedPane();
     browserPane = new AppMapaPanel(this);
     JScrollPane mapsScroll = new JScrollPane(browserPane);
-
-    resultTab = new JTabbedPane();
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
     resultTab.addTab("Mapa", mapsScroll);
