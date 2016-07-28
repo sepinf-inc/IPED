@@ -485,8 +485,6 @@ public class App extends JFrame implements WindowListener {
         }
       }
     });
-
-    resultsModel.addTableModelListener(new MapaModelUpdateListener(this));
     
     browserPane = new AppMapaPanel(this);
     JScrollPane mapsScroll = new JScrollPane(browserPane);

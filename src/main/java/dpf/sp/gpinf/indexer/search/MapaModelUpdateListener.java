@@ -27,7 +27,7 @@ public class MapaModelUpdateListener implements TableModelListener {
 			app.getBrowserPane().setMapaDesatualizado(true);
 
 			/* somente chamado se o tab de mapas estiver sendo exibido */ 
-		    if(App.get().resultTab.getSelectedIndex()==2){
+		    if(app.getResultTab().getSelectedIndex()==2){
 		    	app.getBrowserPane().redesenhaMapa();
 		    }
 		}else{

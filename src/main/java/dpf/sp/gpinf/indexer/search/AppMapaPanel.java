@@ -76,7 +76,8 @@ public class AppMapaPanel extends JPanel {
 				}
 			}		
 		});
-	
+
+	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
 	}
 
 	public void redesenhaMapa(){
