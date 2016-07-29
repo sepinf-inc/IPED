@@ -14,6 +14,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
 		int pos=0,mid;
         JTable t = App.get().getResultsTable();
 
+        t.getSelectionModel().setValueIsAdjusting(true);
 		for (int j = 0; j < marcadores.length; j++) {
 			mid = marcadores[j].getId();
 
@@ -35,8 +36,10 @@ public class AppMapaSelectionListener implements MapSelectionListener {
 	        }
 
 	        pos = t.convertRowIndexToView(pos);
+	        
 	        t.changeSelection(pos, 1, true, false);
 		}
+        t.getSelectionModel().setValueIsAdjusting(false);
 	}
 
 }
