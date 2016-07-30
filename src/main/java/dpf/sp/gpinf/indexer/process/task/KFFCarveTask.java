@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.tika.mime.MediaType;
+
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -121,7 +123,8 @@ public class KFFCarveTask extends BaseCarveTask {
   }
 
   protected void process(EvidenceFile evidence) throws Exception {
-    if (!taskEnabled || !isToProcess(evidence)) return;
+    //Verifica se está desabilitado e se o tipo de arquivo é tratado
+    if (!taskEnabled || !isAcceptedType(evidence.getMediaType())) return;
 
     byte[] buf512 = new byte[512];
     byte[] buf64K = new byte[65536 - buf512.length];
@@ -192,5 +195,10 @@ public class KFFCarveTask extends BaseCarveTask {
     num512hit.addAndGet(cnt512hit);
     num512total.addAndGet(cnt512total);
     bytesHashed.addAndGet(cntBytesHashed);
+  }
+
+  private static boolean isAcceptedType(MediaType mediaType) {
+    return mediaType.getBaseType().equals(CarveTask.UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile) || mediaType.getBaseType().equals(mtDiskImage) || mediaType.getBaseType().equals(mtUnknown)
+        || mediaType.getBaseType().equals(mtVdi) || mediaType.getBaseType().equals(mtVhd) || mediaType.getBaseType().equals(mtVmdk) || mediaType.getBaseType().equals(mtVolumeShadow);
   }
 }

@@ -35,10 +35,13 @@ import gpinf.dev.data.EvidenceFile;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 	
-  /**
-   * Media type do pagefile.sys / hiberfil.sys
-   */
-  public static MediaType pageFileMediaType = MediaType.application("x-pagefile");
+  protected static MediaType mtPageFile = MediaType.application("x-pagefile");
+  protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow");
+  protected static MediaType mtDiskImage = MediaType.application("x-disk-image");
+  protected static MediaType mtVmdk = MediaType.application("x-vmdk");
+  protected static MediaType mtVhd = MediaType.application("x-vhd");
+  protected static MediaType mtVdi = MediaType.application("x-vdi");
+  protected static MediaType mtUnknown = MediaType.application("octet-stream");
 
   public static final String FILE_FRAGMENT = "fileFragment";
 
