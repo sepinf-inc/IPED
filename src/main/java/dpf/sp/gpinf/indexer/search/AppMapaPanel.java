@@ -28,7 +28,6 @@ public class AppMapaPanel extends JPanel {
 	    this.setLayout(new BorderLayout());
 	    
 	    init();
-	    this.add(browserCanvas, BorderLayout.CENTER);
 	}
 	
 	public void init(){
@@ -46,6 +45,8 @@ public class AppMapaPanel extends JPanel {
 	    app.getResultsTable().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			@Override
 			public void valueChanged(ListSelectionEvent e) {
+			    if(e.getValueIsAdjusting()) return;
+
 				if((app.getResultTab().getSelectedIndex()!=2)&&(!mapaDesatualizado)){
 					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 					HashMap <String, Boolean> selecoes = new HashMap <String, Boolean>(); 
@@ -77,6 +78,8 @@ public class AppMapaPanel extends JPanel {
 		});
 
 	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
+	    
+	    this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
 	}
 
 	public void redesenhaMapa(){

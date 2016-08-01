@@ -1,25 +1,16 @@
 package dpf.sp.gpinf.indexer.search.mapas;
 
-import java.awt.BorderLayout;
-import java.awt.Canvas;
-import java.awt.Dimension;
-import java.awt.FileDialog;
+import java.awt.Component;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Base64;
 import java.util.HashMap;
-import java.util.Set;
 
-import javax.imageio.stream.ImageOutputStreamImpl;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.awt.SWT_AWT;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
@@ -28,14 +19,10 @@ import org.eclipse.swt.widgets.Shell;
  * Add it to a AWT or Swing container and call "connect()" after
  * the container has been made visible.
  */
-public class MapaCanvas extends Canvas {
+public class MapaCanvas extends AbstractMapaCanvas {
 
   private Thread swtThread;
   private Browser swtBrowser;
-  
-  MapSelectionListener mapSelectionListener = null;
-  MarkerEventListener markerEventListener = null;
-  MarkerCheckBoxListener markerCheckBoxListener = null;
   
   boolean connected = false;
   Runnable saveRunnable;
@@ -191,33 +178,9 @@ public class MapaCanvas extends Canvas {
 	  }
   }
 
-public MapSelectionListener getMapSelectionListener() {
-	return mapSelectionListener;
-}
-
-public void setMapSelectionListener(MapSelectionListener mapSelectionListener) {
-	this.mapSelectionListener = mapSelectionListener;
-}
-
-public MarkerEventListener getMarkerEventListener() {
-	return markerEventListener;
-}
-
-public void setMarkerEventListener(MarkerEventListener markerEventListener) {
-	this.markerEventListener = markerEventListener;
-}
-
-public boolean isConnected() {
+  public boolean isConnected() {
 	return connected;
-}
-
-public MarkerCheckBoxListener getMarkerCheckBoxListener() {
-	return markerCheckBoxListener;
-}
-
-public void setMarkerCheckBoxListener(MarkerCheckBoxListener markerCheckBoxListener) {
-	this.markerCheckBoxListener = markerCheckBoxListener;
-}
+ }
 
 public void enviaSelecoes(HashMap <String, Boolean> selecoes){
 	if(this.selecoesAfazer==null){
@@ -249,6 +212,11 @@ public void redesenha(){
 		});
 		this.selecoesAfazer = null;
 	}
+}
+
+@Override
+public Component getContainer() {
+	return this;
 }
 
 }

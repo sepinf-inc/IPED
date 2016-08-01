@@ -1,5 +1,7 @@
 package dpf.sp.gpinf.indexer.search.mapas;
 
+import java.util.Arrays;
+
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
@@ -17,16 +19,9 @@ public class MapSelectFunction extends BrowserFunction {
 		
 		MapSelectionListener l = map.getMapSelectionListener();
 		if(l!=null){
-			Object[] o = (Object[]) arguments[0];
-			Marker[] ms = new Marker[o.length];
-			
-			for (int i = 0; i < o.length; i++) {
-				Marker m = new Marker();
-				m.setId(Integer.parseInt((String)o[i]));
-				ms[i]=m;
-			}
-			
-			l.OnSelect(ms);
+			String[] o = Arrays.copyOf((Object[])arguments[0], ((Object[])arguments[0]).length, String[].class);
+
+			l.OnSelect(o);
 		}
 		
 		return super.function(arguments);

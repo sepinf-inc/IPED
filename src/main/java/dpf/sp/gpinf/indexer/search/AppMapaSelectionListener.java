@@ -1,44 +1,45 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
-
+import java.util.HashSet;
 import javax.swing.JTable;
 
 import dpf.sp.gpinf.indexer.search.mapas.MapSelectionListener;
-import dpf.sp.gpinf.indexer.search.mapas.Marker;
 
 public class AppMapaSelectionListener implements MapSelectionListener {
 
 	@Override
-	public void OnSelect(Marker[] marcadores) {
-		int pos=0,mid;
+	public void OnSelect(String[] mids) {
+		int pos=0;
         JTable t = App.get().getResultsTable();
+        org.apache.lucene.document.Document doc = null;
+        SearchResult results = App.get().getResults();
+        
+        HashSet<String> columns = new HashSet<String>();
+        columns.add("id");
 
         t.getSelectionModel().setValueIsAdjusting(true);
-		for (int j = 0; j < marcadores.length; j++) {
-			mid = marcadores[j].getId();
-
-	        SearchResult results = App.get().getResults();
-
-	        for (int i = 0; i < results.docs.length; i++) {
-	        	org.apache.lucene.document.Document doc = null;
-	        	try {
-					doc = App.get().searcher.doc(results.docs[i]);
-					int did = Integer.parseInt(doc.get("id"));
-		        	if(did == mid){
-		        		pos = i;
-		        		break;
-		        	}
-				} catch (IOException ex) {
-					ex.printStackTrace();
-					break;
-				}
-	        }
-
-	        pos = t.convertRowIndexToView(pos);
-	        
-	        t.changeSelection(pos, 1, true, false);
-		}
+        for (int i = 0; i < results.docs.length; i++) {
+        	try {
+        		pos = -1;
+    			doc = App.get().searcher.doc(results.docs[i], columns);
+    			for (int j = 0; j < mids.length; j++) {
+    	        	if(mids[j].equals(doc.get("id"))){
+    	        		pos = i;
+    	        		break;
+    	        	}
+    			}
+    			if(pos>=0){
+        	        pos = t.convertRowIndexToView(pos);
+        	        t.addRowSelectionInterval(pos, pos);
+        	        //t.changeSelection(pos, 1, false, false);
+    			}
+			} catch (IOException ex) {
+				ex.printStackTrace();
+				break;
+			}
+        }
+        
         t.getSelectionModel().setValueIsAdjusting(false);
 	}
 
