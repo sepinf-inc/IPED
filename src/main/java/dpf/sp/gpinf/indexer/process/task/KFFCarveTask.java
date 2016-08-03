@@ -169,16 +169,19 @@ public class KFFCarveTask extends BaseCarveTask {
                 String name = "CarvedKff-" + offset;
                 String ext = kffItem.getExt();
                 if (ext != null) name += '.' + ext.toLowerCase();
-                EvidenceFile carvedItem = addCarvedFile(evidence, offset, kffItem.getLength(), name, null);
-                carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString());
-                cntCarvedItems++;
-                if (offsets == null) {
-                  offsets = new HashSet<Long>();
-                  synchronized (kffCarved) {
-                    kffCarved.put(evidence, offsets);
+                EvidenceFile carvedItem = createCarvedFile(evidence, offset, kffItem.getLength(), name, null);
+                if (carvedItem != null) {
+                  carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString());
+                  cntCarvedItems++;
+                  if (offsets == null) {
+                    offsets = new HashSet<Long>();
+                    synchronized (kffCarved) {
+                      kffCarved.put(evidence, offsets);
+                    }
                   }
+                  offsets.add(offset);
+                  addOffsetFile(carvedItem, evidence);
                 }
-                offsets.add(offset);
               }
             }
           }
