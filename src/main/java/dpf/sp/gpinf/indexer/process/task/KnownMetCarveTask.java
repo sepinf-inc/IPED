@@ -136,7 +136,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
 
   public void process(EvidenceFile evidence) {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
-    if (!taskEnabled || !isAcceptedType(evidence.getMediaType())) return;
+    if (!taskEnabled || caseData.containsReport() || !isAcceptedType(evidence.getMediaType())) return;
 
     //Percorre conteúdo buscando padrões plausíveis de arquivos known.met
     byte[] bb = new byte[1];

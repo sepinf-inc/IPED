@@ -81,6 +81,12 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
   
   protected EvidenceFile addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+    EvidenceFile carvedEvidence = createCarvedFile(parentEvidence, off, len, name, mediaType);
+	  if (carvedEvidence != null) addOffsetFile(carvedEvidence, parentEvidence);
+	  return carvedEvidence;
+  }
+
+  protected EvidenceFile createCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
     if (!parentEvidence.equals(prevEvidence)) {
       synchronized (kffCarved) {
         kffCarvedOffsets = kffCarved.get(parentEvidence);
@@ -91,11 +97,10 @@ public abstract class BaseCarveTask extends AbstractTask {
       return null;
     }
 
-	  EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
-	  carvedEvidence.setCarved(true);
-  	incItensCarved();
-	  addOffsetFile(carvedEvidence, parentEvidence);
-	  return carvedEvidence;
+    EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
+    carvedEvidence.setCarved(true);
+    incItensCarved();
+    return carvedEvidence;
   }
 
   protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
@@ -134,7 +139,7 @@ public abstract class BaseCarveTask extends AbstractTask {
     return offsetFile;
   }
   
-  private void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
+  protected void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
 	    if (ExportFileTask.hasCategoryToExtract() && parentEvidence.isSubItem() && !parentEvidence.isToExtract()) {
 	      caseData.incDiscoveredEvidences(1);

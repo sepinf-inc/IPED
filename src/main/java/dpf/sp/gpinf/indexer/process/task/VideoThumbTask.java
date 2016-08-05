@@ -339,6 +339,7 @@ public class VideoThumbTask extends AbstractTask {
 
     //Chama o método de extração de cenas
     File mainTmpFile = null;
+    boolean hasThumb = false;
     try {
       File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg");
       if (!mainOutFile.getParentFile().exists()) {
@@ -347,32 +348,29 @@ public class VideoThumbTask extends AbstractTask {
 
       //Já está pasta? Então não é necessário gerar.
       if (mainOutFile.exists()) {
-        evidence.setExtraAttribute(HAS_THUMB, "true");
-        return;
-      }
-
-      mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
-      mainConfig.setOutFile(mainTmpFile);
-
-      long t = System.currentTimeMillis();
-      VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
-      t = System.currentTimeMillis() - t;
-      if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
-        evidence.setExtraAttribute(HAS_THUMB, "true");
-        totalProcessed.incrementAndGet();
+        hasThumb = true;
       } else {
-        evidence.setExtraAttribute(HAS_THUMB, "false");
-        totalFailed.incrementAndGet();
-        if (r.isTimeout()) {
-          stats.incTimeouts();
-          evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true");
-          Log.warning(taskName, "Timeout ao extrair cenas de vídeo: " + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+        mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
+        mainConfig.setOutFile(mainTmpFile);
+  
+        long t = System.currentTimeMillis();
+        VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
+        t = System.currentTimeMillis() - t;
+        if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
+          hasThumb = true;
+          totalProcessed.incrementAndGet();
+        } else {
+          totalFailed.incrementAndGet();
+          if (r.isTimeout()) {
+            stats.incTimeouts();
+            evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true");
+            Log.warning(taskName, "Timeout ao extrair cenas de vídeo: " + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+          }
         }
+        totalTime.addAndGet(t);
       }
-      totalTime.addAndGet(t);
-
     } catch (Exception e) {
-      Log.warning(taskName, e.toString());
+      Log.warning(taskName, evidence + " : " + e.toString());
       Log.debug(taskName, e);
 
     } finally {
@@ -381,9 +379,13 @@ public class VideoThumbTask extends AbstractTask {
         mainTmpFile.delete();
       }
 
+      //Atualiza atributo HasThumb do item
+      String hasThumbStr = hasThumb ? "true" : "false";
+      evidence.setExtraAttribute(HAS_THUMB, hasThumbStr);
+
       //Guarda resultado do processamento
       synchronized (processedVideos) {
-        processedVideos.put(evidence.getHash(), (String) evidence.getExtraAttribute(HAS_THUMB));
+        processedVideos.put(evidence.getHash(), hasThumbStr);
         processedVideos.notifyAll();
       }
     }
