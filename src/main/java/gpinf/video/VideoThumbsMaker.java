@@ -356,7 +356,9 @@ public class VideoThumbsMaker {
     double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
     int h = dimension.height * w / dimension.width;
     int border = config.getBorder();
-
+    if (w > 1024) w = 1024;
+    if (h > 1024) h = 1024;
+    
     BufferedImage img = new BufferedImage(2 + config.getColumns() * (w + border) + border, 2 + config.getRows() * (h + border) + border, BufferedImage.TYPE_INT_BGR);
     Graphics2D g2 = (Graphics2D) img.getGraphics();
     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
