@@ -108,6 +108,8 @@ public class SleuthkitReader extends DataSourceReader {
         || name.endsWith(".aff")
         || name.endsWith(".l01")
         || name.endsWith(".dd")
+        || name.endsWith(".vmdk")
+        || name.endsWith(".vhd")
         || isPhysicalDrive(file)
         || (isISO9660 = isISO9660(file))
         || name.equals(DB_NAME);
@@ -193,8 +195,8 @@ public class SleuthkitReader extends DataSourceReader {
     reader.close();
     process.getErrorStream().close();
 
-    if (!out.toString().contains(" 4.2")) {
-      throw new Exception("Versao do Sleuthkit nao suportada. Instale a versao 4.2");
+    if (!out.toString().contains(" 4.3")) {
+      throw new Exception("Versao do Sleuthkit nao suportada. Instale a versao 4.3");
     }
 
     if (out.toString().contains("iped-patched")) {

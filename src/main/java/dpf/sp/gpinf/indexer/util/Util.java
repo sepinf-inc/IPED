@@ -513,14 +513,16 @@ public class Util {
   }
 
   public static void loadNatLibs(String path) {
-    String arch = System.getProperty("os.arch") + File.separator;
+    //String arch = System.getProperty("os.arch") + File.separator;
 
     if (System.getProperty("os.name").startsWith("Windows")) {
-      path += File.separator + "Win" + File.separator + arch;
+      path += File.separator;
       System.load(new File(path + "msvcp100.dll").getAbsolutePath());
       System.load(new File(path + "msvcr100.dll").getAbsolutePath());
       System.load(new File(path + "zlib.dll").getAbsolutePath());
       System.load(new File(path + "libewf.dll").getAbsolutePath());
+      System.load(new File(path + "libvhdi.dll").getAbsolutePath());
+      System.load(new File(path + "libvmdk.dll").getAbsolutePath());
     }
   }
 

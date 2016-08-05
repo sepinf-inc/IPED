@@ -52,6 +52,11 @@ public class HashTask extends AbstractTask {
   public HashTask(Worker worker) {
     super(worker);
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return !digestMap.isEmpty();
+  }
 
   @Override
   public void init(Properties confProps, File confDir) throws Exception {

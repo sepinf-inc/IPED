@@ -34,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
+import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 
@@ -54,6 +56,10 @@ public class FTK3ReportReader extends DataSourceReader {
 
   public int read(File report) throws Exception {
 
+	// Configuração para não expandir containers
+	ParsingTask.expandContainers = false;
+	CarveTask.enableCarving = false;
+	  
     caseData.setContainsReport(true);
     wasExecuted = true;
 

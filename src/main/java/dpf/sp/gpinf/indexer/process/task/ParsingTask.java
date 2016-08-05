@@ -110,6 +110,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     super(null);
     setContext(context);
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return enableFileParsing;
+  }
 
   public ParsingTask(Worker worker) {
     super(worker);

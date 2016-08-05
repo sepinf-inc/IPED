@@ -371,8 +371,9 @@ public class Configuration {
       if (value != null) {
         value = value.trim();
       }
+      String loaddbPath = configPath + "/" + value;
       if (value != null && !value.isEmpty()) {
-        SleuthkitReader.setTskPath(configPath + "/" + value);
+        SleuthkitReader.setTskPath(loaddbPath);
       }
 
       value = properties.getProperty("TesseractPath");
@@ -383,8 +384,8 @@ public class Configuration {
         OCRParser.TESSERACTFOLDER = configPath + "/" + value;
       }
 
-      IOUtil.copiaDiretorio(new File(configPath, "lib/libewf"), new File(indexerTemp, "libewf"), true);
-      Util.loadNatLibs(new File(indexerTemp, "libewf").getAbsolutePath());
+      IOUtil.copiaDiretorio(new File(loaddbPath).getParentFile(), new File(indexerTemp, "nativelibs"), true);
+      Util.loadNatLibs(new File(indexerTemp, "nativelibs").getAbsolutePath());
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
