@@ -443,6 +443,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       //causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
       //subItem.setCarved(parent.isCarved());
       subItem.setSubItem(true);
+      subItem.setSumVolume(false);
       
       ExportFileTask extractor = new ExportFileTask(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());

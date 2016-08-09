@@ -156,15 +156,15 @@ public abstract class AbstractTask {
     if ((nextTask == null) && !evidence.isQueueEnd()) {
       evidence.dispose();
       stats.incProcessed();
-      if ((!evidence.isSubItem() && !evidence.isCarved()) || caseData.isIpedReport()) {
+      if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
         stats.incActiveProcessed();
-        Long len = evidence.getLength();
-        if (len == null) {
-          len = 0L;
-        }
-        if (evidence.isToSumVolume()) {
+      }
+      if (evidence.isToSumVolume()) {
+      	Long len = evidence.getLength();
+          if (len == null) {
+            len = 0L;
+          }
           stats.addVolume(len);
-        }
       }
       worker.itensBeingProcessed--;
     }

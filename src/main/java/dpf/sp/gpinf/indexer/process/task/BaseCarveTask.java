@@ -76,7 +76,6 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  fragFile.setCreationDate(parentEvidence.getCreationDate());
 	  fragFile.setModificationDate(parentEvidence.getModDate());
 	  fragFile.setExtraAttribute(FILE_FRAGMENT, true);
-	  fragFile.setSumVolume(false);
 	  addOffsetFile(fragFile, parentEvidence);
   }
   
@@ -109,7 +108,7 @@ public abstract class BaseCarveTask extends AbstractTask {
     offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
     len = Math.min(len, parentEvidence.getLength() - off);
     offsetFile.setLength(len);
-
+    offsetFile.setSumVolume(false);
     offsetFile.setParent(parentEvidence);
 
     offsetFile.setDeleted(parentEvidence.isDeleted());
