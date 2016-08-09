@@ -6,10 +6,13 @@
 # Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
 indexTemp = default
 
-# Habilite caso indexTemp (ou a pasta do caso ao usar --append) esteja em disco SSD. Nesse caso, são feitas otimizações 
-# que podem reduzir o tempo de processamento em até 60%: merge threads do índice é aumentado e, no caso de imagens E01, 
-# são utilizados arquivos temporários para evitar múltiplas descompactações dos itens pela libewf
+# Habilite caso indexTemp esteja em disco SSD. Nesse caso, são feitas otimizações que podem reduzir
+# o tempo de processamento em até 60%: o número de merge threads do índice é aumentado e 
+# são utilizados arquivos temporários para evitar múltiplas leituras/descompactações dos itens.
 indexTempOnSSD = false
+
+# Habilite caso a pasta de saída -o esteja em disco SSD. Só tem efeito em processamentos com a opção --append.
+outputOnSSD = false
 
 # Habilita cálculo de hash dos arquivos. Para calcular vários hashes utilize ; como separador
 # Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey

@@ -73,6 +73,7 @@ public class Configuration {
   public static long minItemSizeToFragment = 100 * 1024 * 1024;
   public static String javaTmpDir = System.getProperty("java.io.tmpdir");
   public static boolean indexTempOnSSD = false;
+  public static boolean outputOnSSD = false;
   public static boolean entropyTest = true;
   public static boolean addFatOrphans = true;
   public static long minOrphanSizeToIgnore = -1;
@@ -339,6 +340,14 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       indexTempOnSSD = Boolean.valueOf(value);
+    }
+    
+    value = properties.getProperty("outputOnSSD");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+      outputOnSSD = Boolean.valueOf(value);
     }
 
     value = properties.getProperty("addFatOrphans");

@@ -231,11 +231,12 @@ public class Manager {
     conf.setMaxThreadStates(Configuration.numThreads);
     conf.setSimilarity(new IndexerSimilarity());
     ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-    if (Configuration.indexTempOnSSD) {
-      mergeScheduler.setMaxMergesAndThreads(8, 3);
+    if ((Configuration.indexTempOnSSD && !IndexFiles.getInstance().appendIndex) ||
+    		(Configuration.outputOnSSD && IndexFiles.getInstance().appendIndex)) {
+      mergeScheduler.setMaxMergesAndThreads(8, 4);
     }
     conf.setMergeScheduler(mergeScheduler);
-    conf.setRAMBufferSizeMB(32);
+    conf.setRAMBufferSizeMB(64);
     TieredMergePolicy tieredPolicy = new TieredMergePolicy();
     /*
      * Seta tamanho máximo dos subíndices. Padrão é 5GB.
