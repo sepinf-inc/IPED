@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.search.mapas;
+package dpf.mt.gpinf.mapas;
 
 import java.awt.event.MouseEvent;
 import java.util.Date;

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import javax.swing.JTable;
 
-import dpf.sp.gpinf.indexer.search.mapas.MapSelectionListener;
+import dpf.mt.gpinf.mapas.MapSelectionListener;
 
 public class AppMapaSelectionListener implements MapSelectionListener {
 

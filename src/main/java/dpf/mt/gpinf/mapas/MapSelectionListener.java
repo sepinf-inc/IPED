@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.search.mapas;
+package dpf.mt.gpinf.mapas;
 
 public interface MapSelectionListener {
 	

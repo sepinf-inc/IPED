@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.search.kml;
+package dpf.mt.gpinf.indexer.search.kml;
 
 import java.awt.FileDialog;
 import java.io.File;

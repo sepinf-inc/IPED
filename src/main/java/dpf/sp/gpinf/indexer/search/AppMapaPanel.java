@@ -11,8 +11,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import dpf.sp.gpinf.indexer.search.kml.KMLResult;
-import dpf.sp.gpinf.indexer.search.mapas.MapaCanvas;
+import dpf.mt.gpinf.indexer.search.kml.KMLResult;
+import dpf.mt.gpinf.mapas.MapaCanvas;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas

@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import javax.swing.JTable;
 
-import dpf.sp.gpinf.indexer.search.mapas.MarkerEventListener;
+import dpf.mt.gpinf.mapas.MarkerEventListener;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
 

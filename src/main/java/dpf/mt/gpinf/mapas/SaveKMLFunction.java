@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.search.mapas;
+package dpf.mt.gpinf.mapas;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.browser.Browser;

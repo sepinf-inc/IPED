@@ -84,9 +84,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.mt.gpinf.indexer.search.kml.KMLResult;
+import dpf.mt.gpinf.mapas.MapaCanvas;
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.search.kml.KMLResult;
-import dpf.sp.gpinf.indexer.search.mapas.MapaCanvas;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;

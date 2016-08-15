@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.search;
 
-import dpf.sp.gpinf.indexer.search.mapas.MarkerCheckBoxListener;
+import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
 
