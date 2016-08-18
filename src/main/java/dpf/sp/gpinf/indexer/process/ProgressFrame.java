@@ -20,6 +20,8 @@ package dpf.sp.gpinf.indexer.process;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +32,7 @@ import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -40,6 +43,7 @@ import javax.swing.SwingWorker;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -50,10 +54,11 @@ import gpinf.dev.data.EvidenceFile;
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos
  * itens sendo processados.
  */
-public class ProgressFrame extends JFrame implements PropertyChangeListener, WindowListener {
+public class ProgressFrame extends JFrame implements PropertyChangeListener, WindowListener, ActionListener {
 
   private static final long serialVersionUID = -1130342847618772236L;
   private JProgressBar progressBar;
+  private JButton pause;
   private JLabel tasks, itens, stats;
   int indexed = 0, discovered = 0;
   long rate = 0, instantRate;
@@ -64,6 +69,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
   private Worker[] workers;
   private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
   private SimpleDateFormat df = new SimpleDateFormat("dd/MM HH:mm:ss");
+  private boolean paused = false;
 
   private class RestrictedSizeLabel extends JLabel {
 
@@ -83,6 +89,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     progressBar.setPreferredSize(new Dimension(600, 40));
     progressBar.setStringPainted(true);
     progressBar.setString("Inicializando...");
+    
+    pause = new JButton("Pausar");
+    pause.addActionListener(this);
 
     JPanel panel = new JPanel();//new FlowLayout(FlowLayout.LEADING));
     panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
@@ -101,8 +110,13 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     panel.add(tasks);
     panel.add(itens);
     JScrollPane scrollPane = new JScrollPane(panel);
+    
+    JPanel topPanel = new JPanel();
+    topPanel.setLayout(new BorderLayout());
+    topPanel.add(progressBar, BorderLayout.CENTER);
+    topPanel.add(pause, BorderLayout.EAST);
 
-    this.getContentPane().add(progressBar, BorderLayout.NORTH);
+    this.getContentPane().add(topPanel, BorderLayout.NORTH);
     this.getContentPane().add(scrollPane, BorderLayout.CENTER);
     this.addWindowListener(this);
   }
@@ -185,7 +199,11 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       msg.append(workers[i].getName());
       msg.append("</td><td>");
       AbstractTask task = workers[i].runningTask;
-      if (task != null) {
+      if(workers[i].state == STATE.PAUSED){
+    	  msg.append("[PAUSED]");
+      }else if(workers[i].state == STATE.PAUSING){
+    	  msg.append("[PAUSING]");
+      }else if (task != null) {
         msg.append(task.getClass().getSimpleName());
       } else {
         msg.append("  -  ");
@@ -381,5 +399,20 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     // TODO Auto-generated method stub
 
   }
+
+@Override
+public void actionPerformed(ActionEvent e) {
+	paused = !paused;
+	if(paused)
+		pause.setText("Continuar");
+	else
+		pause.setText("Pausar");
+	
+	for (Worker worker : workers) {
+		synchronized(worker){
+			worker.state = paused ? Worker.STATE.PAUSING : Worker.STATE.RUNNING;
+		}
+	}
+}
 
 }

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.Worker.STATE;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving, indexação, etc).
@@ -130,6 +131,14 @@ public abstract class AbstractTask {
    * @throws Exception Caso ocorra erro inesperado.
    */
   public final void processAndSendToNextTask(EvidenceFile evidence) throws Exception {
+	  
+	while(worker.state != STATE.RUNNING){
+		synchronized(worker){
+			if(worker.state == STATE.PAUSING)
+				worker.state = STATE.PAUSED;
+		}
+		Thread.sleep(1000);
+	}
 
     if (this == worker.firstTask && !evidence.isQueueEnd()) {
       worker.itensBeingProcessed++;

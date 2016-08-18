@@ -65,6 +65,12 @@ public class Worker extends Thread {
   public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
   public AbstractTask firstTask;
   public volatile int itensBeingProcessed = 0;
+  
+  public enum STATE {
+	    RUNNING, PAUSING, PAUSED 
+  }
+  
+  public volatile STATE state = STATE.RUNNING;
 
   public Manager manager;
   public Statistics stats;
