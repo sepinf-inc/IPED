@@ -228,10 +228,16 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/1-pendrive/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/1-pen/indexador/lib/iped-utils-0.5.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
+      
+      File caseFolder = new File(codePath).getParentFile().getParentFile();
+      if(!new File(System.getProperty("user.dir")).equals(caseFolder)){
+    	  LOGGER.error("Execute o programa de dentro da pasta do caso: " + caseFolder.getAbsolutePath());
+    	  System.exit(1);
+      }
 
       javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
         @Override

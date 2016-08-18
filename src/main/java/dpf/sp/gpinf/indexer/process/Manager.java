@@ -54,6 +54,7 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -352,6 +353,8 @@ public class Manager {
         IOUtil.copiaDiretorio(indexTemp, indexDir);
       }
     }
+    
+    SleuthkitReader.updateImagePaths();
 
     try {
       IOUtil.deletarDiretorio(Configuration.indexerTemp);
