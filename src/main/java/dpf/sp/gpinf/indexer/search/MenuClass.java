@@ -29,7 +29,7 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
@@ -83,6 +83,10 @@ public class MenuClass extends JPopupMenu {
     exportarMarcados = new JMenuItem("Exportar itens selecionados");
     exportarMarcados.addActionListener(menuListener);
     this.add(exportarMarcados);
+    
+    exportCheckedToZip = new JMenuItem("Exportar itens selecionados para ZIP");
+    exportCheckedToZip.addActionListener(menuListener);
+    this.add(exportCheckedToZip);
 
     this.addSeparator();
 

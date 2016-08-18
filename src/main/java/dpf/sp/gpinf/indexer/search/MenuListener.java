@@ -187,7 +187,21 @@ public class MenuListener implements ActionListener {
         (new CopiarArquivos(dir, uniqueSelectedIds)).execute();
       }
 
-    } else if (e.getSource() == menu.importarPalavras) {
+    } else if (e.getSource() == menu.exportCheckedToZip) {
+        ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
+        for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
+          if (App.get().marcadores.selected[App.get().getIDs()[docId]]) {
+            uniqueSelectedIds.add(docId);
+          }
+        }
+        fileChooser.setFileFilter(defaultFilter);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
+          File file = fileChooser.getSelectedFile();
+          (new ExportFilesToZip(file, uniqueSelectedIds)).execute();
+        }
+
+      } else if (e.getSource() == menu.importarPalavras) {
       fileChooser.setFileFilter(defaultFilter);
       fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
       if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
