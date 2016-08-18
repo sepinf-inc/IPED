@@ -32,11 +32,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.LinkedList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FolderTreeReader extends DataSourceReader {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
   private File rootFile;
   private String category;
@@ -82,7 +86,8 @@ public class FolderTreeReader extends DataSourceReader {
       try {
         String relativePath = Util.getRelativePath(output, file);
         evidenceFile.setExportedFile(relativePath);
-      } catch (IOException e) {
+      } catch (Exception e) {
+    	LOGGER.warn("Não foi possível calcular caminho relativo para " + file.getAbsolutePath());
       }
 
       String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
