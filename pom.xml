@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.10</version>
+    <version>3.10.1</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>4.3-p01</version>
+            <version>4.3-p1.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -67,7 +67,7 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>3.10</version>
+            <version>3.10.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -187,12 +187,12 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-viewer</artifactId>
-            <version>3.10</version>
+            <version>3.10.1</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.10</version>
+            <version>3.10.1</version>
         </dependency>
     </dependencies>
     <build>
