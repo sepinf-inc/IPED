@@ -31,6 +31,8 @@ public class Statistics {
 
   private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
   private static Statistics instance = null;
+  
+  private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
 
   CaseData caseData;
   File indexDir;
@@ -208,7 +210,9 @@ public class Statistics {
      if (indexed != extracted)
      throw new Exception("Indexados " + indexed + " itens de " + extracted);
      */
-
+    
+    if(this.getIoErrors() > activeFiles * IO_ERROR_RATE_TO_WARN)
+    	LOGGER.error("Alerta: houve erros ao acessar o conteudo de " + getIoErrors() + " itens!");
   }
 
   public void printSystemInfo() throws Exception {
