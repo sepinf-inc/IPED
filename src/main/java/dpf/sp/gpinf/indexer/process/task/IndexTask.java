@@ -132,6 +132,8 @@ public class IndexTask extends BaseCarveTask {
     	for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
             long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
             this.addFragmentFile(evidence, offset, len, fragNum++);
+            if(Thread.currentThread().isInterrupted())
+            	return;
         }
     	//if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE))
     		textCache = "";
