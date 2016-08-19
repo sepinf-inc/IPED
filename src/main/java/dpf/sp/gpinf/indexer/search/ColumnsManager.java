@@ -95,7 +95,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        IndexerDefaultParser.PARSER_EXCEPTION
 	    };
 	
-	public static final String[] email = {ExtraProperties.MESSAGE_SUBJECT, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC};
+	public static final String[] email = {ExtraProperties.MESSAGE_SUBJECT, ExtraProperties.MESSAGE_DATE.getName(), 
+			Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, ExtraProperties.MESSAGE_BODY};
 	
 	private static ColumnsManager instance;
 	
