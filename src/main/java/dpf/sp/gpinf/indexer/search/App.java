@@ -232,12 +232,6 @@ public class App extends JFrame implements WindowListener {
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
-      
-      File caseFolder = new File(codePath).getParentFile().getParentFile();
-      if(!new File(System.getProperty("user.dir")).equals(caseFolder)){
-    	  LOGGER.error("Execute o programa de dentro da pasta do caso: " + caseFolder.getAbsolutePath());
-    	  System.exit(1);
-      }
 
       javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
         @Override

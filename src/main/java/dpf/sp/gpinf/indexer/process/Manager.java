@@ -354,7 +354,9 @@ public class Manager {
       }
     }
     
-    SleuthkitReader.updateImagePaths();
+    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+    if(args.getCmdArgs().containsKey("--portable"))
+    	SleuthkitReader.updateImagePaths();
 
     try {
       IOUtil.deletarDiretorio(Configuration.indexerTemp);

@@ -135,21 +135,34 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     }
   }
 
+  
   private void updateImagePaths(File sleuthFile) throws Exception {
-	  Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
+	  File tmpCase = null;
+      char letter = App.get().codePath.charAt(0);
+      Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
       for (Long id : imgPaths.keySet()) {
         List<String> paths = imgPaths.get(id);
         ArrayList<String> newPaths = new ArrayList<String>();
         for (String path : paths) {
-          File file = new File(path);
-          if(file.exists() || file.isAbsolute())
-        	  break;
-          file = new File(sleuthFile.getParentFile(), path);
-          if(file.exists())
-        	  newPaths.add(file.getCanonicalPath());
+          if (new File(path).exists()) {
+            break;
+          } else {
+            String newPath = letter + path.substring(1);
+            if (new File(newPath).exists()) {
+              newPaths.add(newPath);
+            }
+          }
         }
-        if (newPaths.size() > 0)
+        if (newPaths.size() > 0) {
+          if (tmpCase == null && !sleuthFile.canWrite()) {
+            tmpCase = File.createTempFile("sleuthkit-", ".db");
+            tmpCase.deleteOnExit();
+            App.get().sleuthCase.close();
+            IOUtil.copiaArquivo(sleuthFile, tmpCase);
+            App.get().sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
+          }
           App.get().sleuthCase.setImagePaths(id, newPaths);
+        }
       }
   }
 

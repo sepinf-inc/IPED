@@ -100,11 +100,6 @@ public class IPEDReader extends DataSourceReader {
     indexDir = state.getIndexDir().getCanonicalFile();
     basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
     String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
-    
-    File caseFolder = new File(basePath);
-    if(!new File(System.getProperty("user.dir")).equals(caseFolder)){
-  	  throw new Exception("O relatorio deve ser gerado de dentro da pasta do caso: " + caseFolder.getAbsolutePath());
-    }
 
     synchronized (lock) {
       if (new File(dbPath).exists() && sleuthCase == null) {
