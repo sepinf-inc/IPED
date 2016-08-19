@@ -55,7 +55,10 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
   @Override
   protected Boolean doInBackground() throws Exception {
 
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+	FileOutputStream fos = new FileOutputStream(file);
+    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+    byte[] utf8bom = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
+    fos.write(utf8bom);
 
     ArrayList<String> fields = new ArrayList<String>();
     for (String field : ResultTableModel.fields) {

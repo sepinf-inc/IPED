@@ -174,8 +174,11 @@ public class ExportCSVTask extends AbstractTask {
   }
 
   private static synchronized void flush(StringBuilder list, File output) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(output, true), "UTF-8");
+	FileOutputStream fos =  new FileOutputStream(output, true);
+    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
     if (!headerWritten) {
+      byte[] utf8bom = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
+      fos.write(utf8bom);
       writer.write("\"Nome\";\"Atalho\";\"Tamanho\";\"Ext\";\"Marcador\";\"Categoria\";\"Hash\";\"Deletado\";\"Recuperado\";\"Acesso\";\"Modificação\";\"Criação\";\"Caminho\";\r\n");
       headerWritten = true;
     }
