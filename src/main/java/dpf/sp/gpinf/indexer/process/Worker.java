@@ -33,6 +33,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -175,8 +176,12 @@ public class Worker extends Thread {
     } catch (Throwable t) {
       //ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
       if (exception == null) {
-        exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
-        exception.initCause(t);
+    	  if(t instanceof IPEDException)
+    		  exception = (IPEDException)t;
+    	  else{
+    		  exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
+    		  exception.initCause(t);
+    	  }
       }
 
     }

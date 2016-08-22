@@ -134,6 +134,10 @@ public class Manager {
     OCRParser.OUTPUT_BASE = output;
 
   }
+  
+  public File getIndexTemp(){
+	  return indexTemp;
+  }
 
   Worker[] getWorkers() {
     return workers;

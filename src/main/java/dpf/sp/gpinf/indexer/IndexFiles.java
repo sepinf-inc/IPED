@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.FilterOutputStream;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém compatibilidade com
@@ -240,7 +241,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     } catch (Throwable e) {
       success = false;
-      LOGGER.error("Erro no processamento:", e);
+      if(e instanceof IPEDException)
+    	  LOGGER.error("Erro no processamento: " + e.getMessage());
+      else
+    	  LOGGER.error("Erro no processamento:", e);
 
     } finally {
       closeConsoleLogFile();

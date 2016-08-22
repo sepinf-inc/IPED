@@ -53,6 +53,7 @@ import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -147,7 +148,17 @@ public class IndexTask extends BaseCarveTask {
         doc = IndexItem.Document(evidence, null);
       }
 
-      worker.writer.addDocument(doc);
+      try{
+    	  worker.writer.addDocument(doc);
+    	  
+      }catch(IOException e){
+    	  if(e.toString().toLowerCase().contains("espaço insuficiente no disco") ||
+    	     e.toString().toLowerCase().contains("no space left on device"))
+    		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
+    	  else
+    		  throw e;
+      }
+      
       textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
 
     } else{
@@ -188,7 +199,13 @@ public class IndexTask extends BaseCarveTask {
 
         } while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
 
-      } finally {
+      }catch(IOException e){
+    	  if(e.toString().toLowerCase().contains("espaço insuficiente no disco") ||
+    	     e.toString().toLowerCase().contains("no space left on device"))
+    		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
+    	  else
+    	  	  throw e;
+      }finally {
         if (reader != null) {
           reader.reallyClose();
         }
