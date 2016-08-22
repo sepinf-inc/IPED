@@ -61,7 +61,7 @@ public class TempFileTask extends AbstractTask {
           evidence.getTempFile();
         }
       } catch (IOException e) {
-        LOGGER.warn("{} Erro ao acessar {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+        LOGGER.warn("{} Erro ao criar temporário {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
       }
     }
 
