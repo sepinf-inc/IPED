@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import org.apache.tika.metadata.Metadata;
 
 public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodingDetector {
@@ -15,6 +15,10 @@ public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodi
     if (input == null) {
       return null;
     }
+    
+    String knownEncoding = metadata.get(Util.KNOWN_CONTENT_ENCODING);
+    if(knownEncoding != null)
+    	return Charset.forName(knownEncoding);
 
     byte[] header = new byte[1024];
     int read = 0, len = 0;
