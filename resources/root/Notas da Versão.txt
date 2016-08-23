@@ -1,3 +1,24 @@
+23/08/2016: IPED-3.10.1
+Melhorias:
+- Atualização para Sleuthkit-4.3: suporte a VMDK e VHD (apenas Windows), correções para exFAT, HFS+, etc
+- Extrai informações da conta do usuário do Skype (PCF Patrick)
+- Função para exportar itens selecionados para arquivo ZIP
+- Novos metadados Message-Date e Message-Body
+- Função para pausar processamento
+- Parâmetro outputOnSSD para não degradar --append em discos magnéticos
+- Opção --portable para utilizar caminhos relativos ao invés de absolutos para imagens
+- Alerta no Console caso haja erros de leitura em mais de 5% dos itens
+- Alertas de disco cheio mais detalhados e em mais casos (geração de temporário, expansão de zip, etc)
+Correções:
+- Correções diversas na tarefa de KFFCarving (PCF Wladimir)
+- Correção na Galeria de relatórios HTML (PCF Wladimir)
+- Corrige raro NPE na geração de thumbs de vídeos que abortava processamento (PCF Wladimir)
+- Não fragmenta novamente itens grandes na geração de relatórios
+- Desabilita carving e expansão de conteineres ao processar relatórios do FTK
+- Corrige erros ao renomear subitens devido a timeout no OCR ou a bug na icepdf
+- Grava BOM UTF-8 no CSV de propriedades
+
+
 20/07/2015: IPED-3.10
 - Melhor carving (principalmente videos) e melhor pesquisa em itens grandes via divisão dos itens por tarefa
 - Integração do KnownMetCarver (PCF Wladimir)
