@@ -221,6 +221,12 @@ public class ParsingReader extends Reader {
     }
 
     future.cancel(true);
+    try {
+    	//wait some time to cancel task, kill external process, etc
+		Thread.sleep(5000);
+	} catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+	}
 
   }
 
