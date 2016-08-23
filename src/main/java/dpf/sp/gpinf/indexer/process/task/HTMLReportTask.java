@@ -588,10 +588,10 @@ public class HTMLReportTask extends AbstractTask {
       processaBookmark(marcador, id, modelo, item, true, regs);
       idx++;
       List<String> l = new ArrayList<String>();
-      imageThumbsByLabel.put(marcador, l);
       for (ReportEntry e : regs) {
         if (e.img != null) l.add(e.img);
       }
+      if (!l.isEmpty()) imageThumbsByLabel.put(marcador, l);
     }
     if (categoriesListEnabled) {
       for (String categoria : entriesByCategory.keySet()) {
@@ -601,10 +601,10 @@ public class HTMLReportTask extends AbstractTask {
         idx++;
         if (entriesByLabel.isEmpty()) {
           List<String> l = new ArrayList<String>();
-          imageThumbsByLabel.put(categoria, l);
           for (ReportEntry e : regs) {
             if (e.img != null) l.add(e.img);
           }
+          if (!l.isEmpty()) imageThumbsByLabel.put(categoria, l);
         }
       }
     }
