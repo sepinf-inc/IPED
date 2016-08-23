@@ -2,8 +2,6 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,50 +11,34 @@ import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.SwingConstants;
-import javax.swing.RowSorter.SortKey;
-import javax.swing.SortOrder;
-import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumn;
 
-import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.DIETask;
-import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
-import dpf.sp.gpinf.indexer.process.task.KFFTask;
-import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ColumnsManager implements ActionListener, Serializable{
     
     private static final long serialVersionUID = 1057562688829969313L;
 
-    private static File lastCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
+    private static File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
+    
+    private static File caseCols = new File(new File(App.get().codePath).getParentFile(), "visibleCols.dat");
     
     private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000);
 	
@@ -146,10 +128,10 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    }
 	    if(cs.visibleFields.size() > 0)
 		    try {
-		    	lastCols.getParentFile().mkdirs();
-	            Util.writeObject(cs, lastCols.getAbsolutePath());
+		    	globalCols.getParentFile().mkdirs();
+	            Util.writeObject(cs, globalCols.getAbsolutePath());
+	            Util.writeObject(cs, caseCols.getAbsolutePath());
 	        } catch (IOException e1) {
-	            // TODO Auto-generated catch block
 	            e1.printStackTrace();
 	        }
 	}
@@ -183,9 +165,12 @@ public class ColumnsManager implements ActionListener, Serializable{
 		panel.add(scrollList, BorderLayout.CENTER);
 		
 		boolean lastColsOk = false;
-		if(lastCols.exists()){
+		File cols = caseCols;
+		if(!cols.exists())
+			cols = globalCols;
+		if(cols.exists()){
 		    try {
-		        colState = (ColumnState)Util.readObject(lastCols.getAbsolutePath());
+		        colState = (ColumnState)Util.readObject(cols.getAbsolutePath());
 		        loadedFields = (ArrayList<String>)colState.visibleFields.clone();
 		        if(loadedFields.size() > 0)
 	                lastColsOk = true;
