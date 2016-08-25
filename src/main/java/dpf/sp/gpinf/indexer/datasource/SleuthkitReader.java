@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.io.IOUtils;
@@ -56,6 +57,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -66,6 +68,7 @@ public class SleuthkitReader extends DataSourceReader {
 
   public static String DB_NAME = "sleuth.db";
   private static String IMG_NAME = "IMG_NAME";
+  private static String TIMEZONE = "TIMEZONE";
   public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
 
   private static boolean tskChecked = false;
@@ -73,7 +76,7 @@ public class SleuthkitReader extends DataSourceReader {
 
   private static ConcurrentHashMap<File, Object[]> idRangeMap = new ConcurrentHashMap<File, Object[]>();
 
-  private static String[] TSK_CMD = {"tsk_loaddb", "-a", "-d", DB_NAME, IMG_NAME};
+  private static String[] TSK_CMD = {"tsk_loaddb", "-z", TIMEZONE, "-a", "-d", DB_NAME, IMG_NAME};
 
   private Long firstId, lastId;
 
@@ -200,9 +203,10 @@ public class SleuthkitReader extends DataSourceReader {
       throw new Exception("Versao do Sleuthkit nao suportada. Instale a versao 4.3");
     }
 
-    if (out.toString().contains("iped-patched")) {
+    if (out.toString().contains("iped-patch02")) {
       isTskPatched = true;
-    }
+    }else
+    	throw new IPEDException("Aplique o patch 02 disponível na pasta sources no Sleuthkit para utilização!");
 
     tskChecked = true;
   }
@@ -214,6 +218,14 @@ public class SleuthkitReader extends DataSourceReader {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (args.getCmdArgs().containsKey("--fastmode")) {
       fastmode = true;
+    }
+    
+    int offset = TimeZone.getDefault().getRawOffset() / 3600000;
+    String timezone = "GMT" + (-offset);
+    if (args.getCmdArgs().containsKey("-tz")) {
+    	timezone = args.getCmdArgs().get("-tz").get(0);
+    	if(timezone.contains("+")) timezone = timezone.replace('+', '-');
+    	else timezone = timezone.replace('-', '+');
     }
 
     firstId = null;
@@ -268,6 +280,9 @@ public class SleuthkitReader extends DataSourceReader {
           if (cmd[i].equals(IMG_NAME)) {
             cmd[i] = image.getAbsolutePath();
           }
+          if (cmd[i].equals(TIMEZONE)) {
+              cmd[i] = timezone;
+            }
         }
 
         if (!isTskPatched) {

@@ -53,6 +53,8 @@ public class CmdLineArgs {
     {"-Xxxx", "parâmetros extras de módulos iniciados com -X"},
     {"-nocontent", "não exporta conteúdo de itens do marcador/categoria informado"},
     {"-importkff", "importa diretorio com base de hashes no formato NSRL"},
+    {"-tz", "timezone de origem de dispositivos FAT: GMT-3, GMT-4, etc\n"
+    		+ "\tCaso não especificado, utiliza o timezone local do sistema."},
     {"--append", "adiciona indexação a um indice ja existente"},
     {"--nogui", "nao exibe a janela de progresso da indexacao"},
     {"--nologfile", "imprime as mensagem de log na saida padrao"},
