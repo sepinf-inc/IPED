@@ -12,14 +12,16 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
+import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.MapaCanvas;
+import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
 public class AppMapaPanel extends JPanel {
-	MapaCanvas browserCanvas;
+	AbstractMapaCanvas browserCanvas;
 	final App app;
     boolean mapaDesatualizado = true; //variável para registrar se os dados a serem apresentados pelo mapa precisa renderização 
 	
@@ -31,7 +33,7 @@ public class AppMapaPanel extends JPanel {
 	}
 	
 	public void init(){
-	    browserCanvas = new MapaCanvas();
+	    browserCanvas = new MapaCanvasWebkit();
 	    browserCanvas.addSaveKmlFunction(new Runnable() {
 			public void run() {
 				KMLResult.saveKML();
@@ -78,7 +80,7 @@ public class AppMapaPanel extends JPanel {
 		});
 
 	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
-	    
+
 	    this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
 	}
 
@@ -89,11 +91,11 @@ public class AppMapaPanel extends JPanel {
 					this.setVisible(true);
 
 					browserCanvas.connect();
-					
+
 					//força a rederização do Mapa (resolvendo o bug da primeira renderização 
 					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
 				}
-				
+
 			    String kml = "";
 			    try {
 			    	kml = KMLResult.getResultsKML(app);
