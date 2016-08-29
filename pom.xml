@@ -194,6 +194,12 @@
             <artifactId>iped-utils</artifactId>
             <version>3.10</version>
         </dependency>
+        
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>swt</artifactId>
+            <version>4.527</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
