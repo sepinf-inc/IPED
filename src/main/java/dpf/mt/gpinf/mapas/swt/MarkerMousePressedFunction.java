@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import java.awt.event.MouseEvent;
 import java.util.Date;
@@ -6,10 +6,12 @@ import java.util.Date;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
-public class MarkerMouseReleasedFunction extends BrowserFunction {
+import dpf.mt.gpinf.mapas.MarkerEventListener;
+
+public class MarkerMousePressedFunction extends BrowserFunction{
 	MapaCanvas map;
 
-	public MarkerMouseReleasedFunction(MapaCanvas map, Browser browser, String name) {
+	public MarkerMousePressedFunction(MapaCanvas map, Browser browser, String name) {
 		super(browser, name);
 		this.map = map;
 	}
@@ -29,10 +31,11 @@ public class MarkerMouseReleasedFunction extends BrowserFunction {
 	                  false,//popupTrigger
 	                  0 //button
 					);
-			l.onMouseReleased(Integer.parseInt((String)arguments[0]), e);
+			l.onMousePressed(Integer.parseInt((String)arguments[0]), e);
 		}
 		
 		return super.function(arguments);
 	}
+
 
 }

@@ -4,16 +4,11 @@ import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
 import java.util.StringTokenizer;
 
-import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 
 import org.apache.commons.lang.ArrayUtils;
-
-import com.healthmarketscience.jackcess.impl.ColumnImpl.SortOrder;
 
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.ColumnsManager;

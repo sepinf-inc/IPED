@@ -131,12 +131,12 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 	/* Adiciona checkbox ao infoWindow*/
 	
 	var html = m.infoWindow.getContent();
-	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"marcaMarcadorBF("+m.extendedData.id+", this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
+	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.marcaMarcadorBF("+m.extendedData.id+", this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
 	m.infoWindow.setContent(html);
 	
 	/* Adiciona listeners */
-	google.maps.event.addListener(m, "mouseover", function(){ markerMouseEnteredBF(this.extendedData.id) });
-	google.maps.event.addListener(m, "mouseout", function(){ markerMouseExitedBF(this.extendedData.id) });
+	google.maps.event.addListener(m, "mouseover", function(){ window.app.markerMouseEnteredBF(this.extendedData.id) });
+	google.maps.event.addListener(m, "mouseout", function(){ window.app.markerMouseExitedBF(this.extendedData.id) });
 	google.maps.event.addListener(m, "click", function(){
 	    var e = window.event;
 		var button = (typeof e.which != "undefined") ? e.which : e.button;
@@ -158,21 +158,23 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 				this.extendedData.selected='true';
 			}
 			this.geoxml.ajustaIcone(this);
-			markerMouseClickedBF(this.extendedData.id, button, 'shift');	
+			
+			window.app.markerMouseClickedBF(this.extendedData.id, button, 'shift');	
 		}else{
 			this.extendedData.selected='true';
 			this.geoxml.ajustaIcone(this);
-			markerMouseClickedBF(this.extendedData.id, button);
+			
+			window.app.markerMouseClickedBF(this.extendedData.id, button, '');	
 		}
 		 
 		});
 	google.maps.event.addListener(m, "dblclick", function(){ 
 	    var e = window.event;
 		var button = (typeof e.which != "undefined") ? e.which : e.button;
-		markerMouseDblClickedBF(this.extendedData.id, button); 
+		window.app.markerMouseDblClickedBF(this.extendedData.id, button); 
 		});
-	google.maps.event.addListener(m, "mousedown", function(){ markerMousePressedBF(this.extendedData.id) });
-	google.maps.event.addListener(m, "mouseup", function(){ markerMouseReleasedBF(this.extendedData.id) });
+	google.maps.event.addListener(m, "mousedown", function(){ window.app.markerMousePressedBF(this.extendedData.id) });
+	google.maps.event.addListener(m, "mouseup", function(){ window.app.markerMouseReleasedBF(this.extendedData.id) });
 }
 
 /* Extendido para processar informação da ordem de navegação */

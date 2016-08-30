@@ -1,8 +1,9 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
+import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
 import dpf.sp.gpinf.indexer.search.App;
 
 public class SelecionaItemFunction extends BrowserFunction {

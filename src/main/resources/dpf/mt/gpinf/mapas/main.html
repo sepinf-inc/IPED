@@ -58,11 +58,11 @@
 		
 	    map.addListener('dragend_rect', function(rect, proj) {
 	    	var ms = gxml.selecionaRetangulo(rect, proj);
-	    	selecionaMarcadorBF(ms);
+	    	window.app.selecionaMarcadorBF(ms);
     	  });
 	    map.addListener('dragend_circle', function(pInicio, pFim, proj) {
 	    	var ms = gxml.selecionaCirculo(pInicio, pFim, proj);
-	    	selecionaMarcadorBF(ms);
+	    	window.app.selecionaMarcadorBF(ms);
     	  });
     }
 
@@ -92,7 +92,7 @@
     }
 
     function exportarKml(){
-    	exportarKmlBF();
+    	window.app.exportarKmlBF();
     }
     function toogleVisibility(){
     	if(document.getElementById("barra_content").style.display == "none"){
@@ -107,7 +107,7 @@
     }
 	</script>
     </head>
-    <body onload="initialize()">
+    <body onload="initialize();">
        <table style="height:100%;width:100%"><tr><td width="*">
   <div id="map_canvas" style="width:100%;height:100%;"></div></td>
     <td width="50px" id="td_barra">

@@ -1,9 +1,11 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import java.util.Arrays;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
+
+import dpf.mt.gpinf.mapas.MapSelectionListener;
 
 public class MapSelectFunction extends BrowserFunction {
 	

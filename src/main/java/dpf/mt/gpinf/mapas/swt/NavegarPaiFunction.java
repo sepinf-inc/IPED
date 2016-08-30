@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;

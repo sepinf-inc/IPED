@@ -9,6 +9,9 @@ abstract public class AbstractMapaCanvas extends Canvas {
 	MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
 
+    protected HashMap <String, Boolean> selecoesAfazer;
+    protected Runnable saveRunnable;
+    
     /* abstract methods*/
 	abstract public void connect();
 	abstract public void disconnect();
@@ -16,7 +19,6 @@ abstract public class AbstractMapaCanvas extends Canvas {
 	abstract public void setKML(String kml);
 	abstract public void redesenha();
 	abstract public void addSaveKmlFunction(Runnable save);
-	abstract public void enviaSelecoes(HashMap <String, Boolean> selecoes);
 	abstract public boolean isConnected();
 	abstract public Component getContainer();
 
@@ -37,5 +39,20 @@ abstract public class AbstractMapaCanvas extends Canvas {
 	}
 	public void setMarkerCheckBoxListener(MarkerCheckBoxListener markerCheckBoxListener) {
 		this.markerCheckBoxListener = markerCheckBoxListener;
+	}
+	public Runnable getSaveRunnable() {
+		return saveRunnable;
+	}
+
+	public void enviaSelecoes(HashMap <String, Boolean> selecoes){
+		if(this.selecoesAfazer==null){
+			this.selecoesAfazer = new HashMap<String, Boolean>();
+		}
+	
+		String[] marks = new String[selecoes.keySet().size()]; 
+		marks = selecoes.keySet().toArray(marks);
+		for(int i = 0; i<marks.length; i++){
+			this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));		
+		}
 	}
 }

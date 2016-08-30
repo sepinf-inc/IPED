@@ -1,10 +1,12 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import java.awt.event.MouseEvent;
 import java.util.Date;
 
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
+
+import dpf.mt.gpinf.mapas.MarkerEventListener;
 
 public class MarkerMouseClickedFunction extends BrowserFunction {
 	MapaCanvas map;

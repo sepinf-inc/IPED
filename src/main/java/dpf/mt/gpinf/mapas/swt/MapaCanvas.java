@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.mapas;
+package dpf.mt.gpinf.mapas.swt;
 
 import java.awt.Component;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+
 /**
  * A simple canvas that encapsulates a SWT Browser instance.
  * Add it to a AWT or Swing container and call "connect()" after
@@ -25,10 +27,8 @@ public class MapaCanvas extends AbstractMapaCanvas {
   private Browser swtBrowser;
   
   boolean connected = false;
-  Runnable saveRunnable;
   SaveKMLFunction savef = null;
-  HashMap <String, Boolean> selecoesAfazer;
-  
+ 
   public void addSaveKmlFunction(Runnable save){
 	  this.saveRunnable = save;
 	  final MapaCanvas canvas = this;
@@ -60,11 +60,11 @@ public class MapaCanvas extends AbstractMapaCanvas {
 
             synchronized (this) {
               swtBrowser = new Browser(shell, SWT.NONE);
+              swtBrowser.setJavascriptEnabled(true);
               this.notifyAll();
             }
             
             new MapSelectFunction(canvas, swtBrowser, "selecionaMarcadorBF");
-            
             new MarkerMouseClickedFunction(canvas, swtBrowser, "markerMouseClickedBF");
             new MarkerMouseClickedFunction(canvas, swtBrowser, "markerMouseDblClickedBF");
             new MarkerMousePressedFunction(canvas, swtBrowser, "markerMousePressedBF");
@@ -72,6 +72,7 @@ public class MapaCanvas extends AbstractMapaCanvas {
             new MarkerMouseEnteredFunction(canvas, swtBrowser, "markerMouseEnteredBF");
             new MarkerMouseExitedFunction(canvas, swtBrowser, "markerMouseExitedBF");
             new SelecionaItemFunction(canvas, swtBrowser, "marcaMarcadorBF");
+            
             if((savef==null)&&(canvas.saveRunnable!=null)){
 				savef = new SaveKMLFunction(canvas.saveRunnable, swtBrowser, "exportarKmlBF");
             }
@@ -181,18 +182,6 @@ public class MapaCanvas extends AbstractMapaCanvas {
   public boolean isConnected() {
 	return connected;
  }
-
-public void enviaSelecoes(HashMap <String, Boolean> selecoes){
-	if(this.selecoesAfazer==null){
-		this.selecoesAfazer = new HashMap<String, Boolean>();
-	}
-	
-	String[] marks = new String[selecoes.keySet().size()]; 
-	marks = selecoes.keySet().toArray(marks);
-	for(int i = 0; i<marks.length; i++){
-		this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));		
-	}
-}
 
 public void redesenha(){
 	
