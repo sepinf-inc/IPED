@@ -4,15 +4,20 @@ import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 
 import javax.swing.RowSorter.SortKey;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.ColumnsManager;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class KMLResult {
 	  static FileDialog fDialog;
@@ -73,6 +78,9 @@ public class KMLResult {
 		  int contSemCoordenadas=0;
 		  SearchResult results = app.getResults();
 		  org.apache.lucene.document.Document doc;
+		  
+		  SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		  df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		  for (int i = 0; i < results.docs.length; i++) {
 			  doc =  app.searcher.doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
@@ -120,8 +128,13 @@ public class KMLResult {
 				  kml.append("</ExtendedData>");
 				  
 
-				  String dataCriacao = doc.get("criacao").replace(".", "-");
-				  dataCriacao = dataCriacao.substring(0, 10)+"T"+dataCriacao.replace(".",":").substring(11, 19)+"Z"; 
+				  String dataCriacao = doc.get(IndexItem.CREATED);
+				  if(!dataCriacao.isEmpty())
+					try {
+						dataCriacao = df.format(DateUtil.stringToDate(dataCriacao)) + "Z";
+					} catch (ParseException e) {
+						dataCriacao = "";
+					} 
 				  kml.append("<TimeSpan><begin>"+dataCriacao+"</begin></TimeSpan>");
 
 				  kml.append("</Placemark>");
