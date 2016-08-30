@@ -9,6 +9,7 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.sp.gpinf.indexer.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -87,6 +88,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
 		Platform.runLater(new Runnable() {
 			public void run() {
+				ProxySever.get().disable();
 				webEngine.loadContent(html);
 				jfxPanel.invalidate();
 			}
