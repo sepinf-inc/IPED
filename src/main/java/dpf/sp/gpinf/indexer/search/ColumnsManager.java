@@ -38,8 +38,6 @@ public class ColumnsManager implements ActionListener, Serializable{
 
     private static File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
     
-    private static File caseCols = new File(new File(App.get().codePath).getParentFile(), "visibleCols.dat");
-    
     private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000);
 	
 	private static String[] defaultFields =
@@ -81,6 +79,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 			Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, ExtraProperties.MESSAGE_BODY};
 	
 	private static ColumnsManager instance;
+	
+	private File caseCols = new File(new File(App.get().codePath).getParentFile(), "visibleCols.dat");
 	
 	String[] indexFields = null;
 	
