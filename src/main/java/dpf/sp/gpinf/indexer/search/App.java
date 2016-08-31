@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,7 +88,6 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
-
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class App extends JFrame implements WindowListener {
@@ -131,14 +131,15 @@ public class App extends JFrame implements WindowListener {
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
-
+  AppMapaPanel browserPane;
+  
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
   TreeListener treeListener;
   CategoryTreeListener categoryListener;
   BookmarksTreeListener bookmarksListener;
   HitsTable parentItemTable;
-  JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
+  public JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
@@ -228,7 +229,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/1-pen/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/1-1756/indexador/lib/iped-utils-0.5.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
@@ -240,7 +241,6 @@ public class App extends JFrame implements WindowListener {
           LOGGER.info("GUI created");
         }
       });
-
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -440,7 +440,7 @@ public class App extends JFrame implements WindowListener {
     InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
     inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
-
+    
     gallery = new GalleryTable(galleryModel);
     galleryScroll = new JScrollPane(gallery);
     gallery.setFillsViewportHeight(true);
@@ -477,10 +477,13 @@ public class App extends JFrame implements WindowListener {
         }
       }
     });
-
+    
     resultTab = new JTabbedPane();
+    browserPane = new AppMapaPanel(this);
+    JScrollPane mapsScroll = new JScrollPane(browserPane);
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
+    resultTab.addTab("Mapa", mapsScroll);
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
@@ -619,6 +622,7 @@ public class App extends JFrame implements WindowListener {
     resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
     resultsTable.addMouseListener(new ResultTableListener());
     resultsTable.addKeyListener(new ResultTableListener());
+
     hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
     subItemTable.addMouseListener(subItemModel);
     subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -789,4 +793,24 @@ public class App extends JFrame implements WindowListener {
 
   }
 
+  public SearchResult getResults() {
+	return results;
+  }
+  
+  public JTable getResultsTable() {
+	return resultsTable;
+  }
+
+  public TreeListener getTreeListener() {
+	return treeListener;
+  }
+
+  public JTabbedPane getResultTab() {
+	return resultTab;
+  }
+
+  public AppMapaPanel getBrowserPane() {
+	return browserPane;
+  }
+  
 }
