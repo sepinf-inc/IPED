@@ -118,9 +118,11 @@ public class ItemProducer extends Thread {
         LOGGER.info("Localizados {} itens", caseData.getDiscoveredEvidences());
       }
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       if (manager.exception == null) {
-        manager.exception = e;
+    	Exception e1 = new Exception();
+    	e1.initCause(e);
+        manager.exception = e1;
       }
     }
 
