@@ -69,10 +69,6 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
@@ -84,8 +80,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.mt.gpinf.indexer.search.kml.KMLResult;
-import dpf.mt.gpinf.mapas.MapaCanvas;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
@@ -137,7 +131,6 @@ public class App extends JFrame implements WindowListener {
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
-  public MapaCanvas browserCanvas;
   AppMapaPanel browserPane;
   
   HitsTable subItemTable;
@@ -236,7 +229,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/1-pendrive/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/1-1756/indexador/lib/iped-utils-0.5.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       //codePath = System.getProperty("user.dir")+"/indexador/lib";
