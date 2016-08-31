@@ -1,3 +1,6 @@
+xx/xx/2016: IPED-3.11
+- Novo painel Mapas com função de georreferenciamento (contribuição PCF Patrick)
+
 25/08/2016: IPED-3.10.2
 - Patch no Sleuthkit-4.3 e opção -tz para definição de timezone, necessários para correta decodificação de datas em sistemas FAT 
 
