@@ -66,7 +66,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     value = properties.getProperty(externalToolPath);
-    if (value != null && !value.trim().isEmpty()) {
+    if (value != null && !value.trim().isEmpty() && System.getProperty("os.name").startsWith("Windows")) {
       GraphicsMagicConverter.toolPathWin = new File(confDir.getParentFile(), value.trim()).getCanonicalPath();
     }
 
