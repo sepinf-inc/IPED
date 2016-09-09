@@ -165,18 +165,18 @@ public class IndexTask extends BaseCarveTask {
       Metadata metadata = getMetadata(evidence);
       ParseContext context = getTikaContext(evidence, evidence.isParsed());
 
-      TikaInputStream tis = null;
-      try {
-        tis = evidence.getTikaStream();
-      } catch (IOException e) {
-        LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
-      }
-
       ParsingReader reader = null;
-      if (indexFileContents && tis != null
-          && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
-        reader = new ParsingReader(this.autoParser, tis, metadata, context);
-        reader.startBackgroundParsing();
+      if (indexFileContents && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+    	TikaInputStream tis = null;
+        try {
+            tis = evidence.getTikaStream();
+        } catch (IOException e) {
+            LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+        }
+        if(tis != null){
+        	reader = new ParsingReader(this.autoParser, tis, metadata, context);
+            reader.startBackgroundParsing();
+        }
       }
 
       Document doc = IndexItem.Document(evidence, reader);

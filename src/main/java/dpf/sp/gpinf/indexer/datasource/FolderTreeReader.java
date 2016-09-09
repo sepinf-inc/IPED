@@ -69,19 +69,20 @@ public class FolderTreeReader extends DataSourceReader {
 
   }
 
-  private EvidenceFile getEvidence(File file) {
-    if (listOnly) {
+  private EvidenceFile getEvidence(Path path, BasicFileAttributes attr) {
+	if (listOnly) {
       caseData.incDiscoveredEvidences(1);
-      caseData.incDiscoveredVolume(file.length());
+      caseData.incDiscoveredVolume(attr.size());
       return null;
 
     } else {
+      File file = path.toFile();
       EvidenceFile evidenceFile = new EvidenceFile();
       evidenceFile.setName(file.getName());
       if (file.equals(rootFile)) {
         evidenceFile.setName(evidenceName);
       }
-
+      
       evidenceFile.setFile(file);
       try {
         String relativePath = Util.getRelativePath(output, file);
@@ -90,8 +91,8 @@ public class FolderTreeReader extends DataSourceReader {
     	LOGGER.warn("Não foi possível calcular caminho relativo para " + file.getAbsolutePath());
       }
 
-      String path = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-      evidenceFile.setPath(path);
+      String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
+      evidenceFile.setPath(path1);
 
       // evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
       if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
@@ -120,7 +121,7 @@ public class FolderTreeReader extends DataSourceReader {
         return FileVisitResult.TERMINATE;
       }
 
-      EvidenceFile evidenceFile = getEvidence(path.toFile());
+      EvidenceFile evidenceFile = getEvidence(path, attr);
       if (evidenceFile != null) {
         if (!parentIds.isEmpty()) {
           evidenceFile.setParentId(parentIds.getLast().toString());

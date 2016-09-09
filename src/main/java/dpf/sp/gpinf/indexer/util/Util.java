@@ -69,9 +69,8 @@ public class Util {
   }
 
   public static String getRelativePath(File baseFile, File file) throws IOException {
-	  Path base = baseFile.getParentFile().getCanonicalFile().toPath();
-	  file = file.getCanonicalFile();
-	  Path path = file.toPath();
+	  Path base = baseFile.getParentFile().toPath().normalize();
+	  Path path = file.toPath().normalize();
 	  if(!base.getRoot().equals(path.getRoot()))
 	  	return file.getAbsolutePath();
 	  return base.relativize(path).toString();
