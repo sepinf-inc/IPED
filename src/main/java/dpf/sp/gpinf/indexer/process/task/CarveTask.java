@@ -382,7 +382,12 @@ public class CarveTask extends BaseCarveTask {
             } else if (signatures[s / 2].name.equals("MOV")) {
             	long mp4Len = getLenFromMP4(prevLen + i);
                 foot = new Hit(s, head.off + mp4Len);
-            	
+            
+              //calcula tamanho customizado para SQLITE
+            } else if (signatures[s / 2].name.equals("SQLITE")) {
+            	long len = getLenFromSQLite(prevLen + i);
+                foot = new Hit(s, head.off + len);
+            
             //Testa se possui info de tamanho no header
             } else if (signatures[s / 2].sizeBytes > 0) {
               long length = getLenFromHeader(i, s);
@@ -592,6 +597,43 @@ public class CarveTask extends BaseCarveTask {
 	  }
 	  
 	  return atomStart - startOffset;
+  }
+  
+  private long getLenFromSQLite(long startOffset){
+	  SeekableInputStream is = null;
+	  try{
+		  is = evidence.getStream();
+		  byte[] data = new byte[2];
+		  is.seek(startOffset + 16);
+		  int i = 0, off = 0;
+		  while(i != -1 && (off += i) < data.length)
+			  i = is.read(data, off, data.length - off);
+		  
+		  int pageSize = (data[0] & 0xff) << 8 | (data[1] & 0xff) ;
+		  if(pageSize == 1)
+			  pageSize = 65536;
+		  
+		  data = new byte[4];
+		  is.seek(startOffset + 28);
+		  i = 0; off = 0;
+		  while(i != -1 && (off += i) < data.length)
+			  i = is.read(data, off, data.length - off);
+		  
+		  int numPages = (data[0] & 0xff) << 24
+				  | (data[1] & 0xff) << 16
+				  | (data[2] & 0xff) << 8
+				  | (data[3] & 0xff) ;
+		  
+		  return numPages * pageSize;
+		  
+	  }catch(Exception e){
+		  e.printStackTrace();
+		  
+	  }finally{
+		  IOUtil.closeQuietly(is);
+	  }
+	  
+	  return 0;
   }
 
   @Override

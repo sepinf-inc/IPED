@@ -92,6 +92,9 @@ ARES, application/x-ares-galaxy, 1000, 1000000, __ARESDB1.04L_, null
 INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver 4, null, 28, 4, false
 INDEX.DAT, application/x-msie-cache, 1000, 10000000, Client UrlCache MMF Ver 5, null, 28, 4, false
 
+# SQLite com tratamento especifico de tamanho
+SQLITE, application/x-sqlite3, 10000, 100000000, SQLite format 3\00, null
+
 EML, message/rfc822, 1000, 10000000, Received: by, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
