@@ -1,6 +1,7 @@
 xx/xx/2016: IPED-3.11
-- Novo painel Mapas com função de georreferenciamento (contribuição PCF Patrick)
+- Novo painel de Mapas com função de georreferenciamento (contribuição PCF Patrick)
 - Carving específico para SQLite
+- Otimizações no --fastmode ao varrer pastas locais e em rede
 
 08/09/2016: IPED-3.10.3
 - Corrige erro ao gerar relatórios contendo emails de PST/OST (3.10.1)
