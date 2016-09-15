@@ -143,7 +143,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     context.set(ItemInfo.class, itemInfo);
     context.set(EmbeddedDocumentExtractor.class, this);
     context.set(StreamSource.class, evidence);
-    if (CarveTask.ignoreCorrupted) {
+    if (CarveTask.ignoreCorrupted && !caseData.isIpedReport()) {
       context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
     }
 
