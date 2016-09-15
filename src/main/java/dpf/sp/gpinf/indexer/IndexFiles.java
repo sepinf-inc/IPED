@@ -128,6 +128,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    */
   private void setConfigPath() throws Exception {
     URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+    //configPath = System.getProperty("user.dir");
     configPath = new File(url.toURI()).getParent();
   }
 

@@ -13,7 +13,6 @@ import javax.swing.event.ListSelectionListener;
 
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-import dpf.mt.gpinf.mapas.swt.MapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
 
 /* 
