@@ -98,16 +98,16 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 	@Override
 	public void setKML(String kml) {
 		  try {
-			  String html = IOUtils.toString(getClass().getResourceAsStream("../main.html"), "UTF-8");
-			  String js = IOUtils.toString(getClass().getResourceAsStream("../geoxmlfull_v3.js"), "UTF-8");
-			  String js2 = IOUtils.toString(getClass().getResourceAsStream("../keydragzoom.js"), "UTF-8");
-			  String js3 = IOUtils.toString(getClass().getResourceAsStream("../extensions.js"), "UTF-8");
-			  String js4 = IOUtils.toString(getClass().getResourceAsStream("../ext_geoxml3.js"), "UTF-8");
+			  String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8");
+			  String js = IOUtils.toString(getClass().getResourceAsStream("geoxmlfull_v3.js"), "UTF-8");
+			  String js2 = IOUtils.toString(getClass().getResourceAsStream("keydragzoom.js"), "UTF-8");
+			  String js3 = IOUtils.toString(getClass().getResourceAsStream("extensions.js"), "UTF-8");
+			  String js4 = IOUtils.toString(getClass().getResourceAsStream("ext_geoxml3.js"), "UTF-8");
 
-			  String b64_selecionado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("../marcador_selecionado.png")));
-			  String b64_selecionado_m = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("../marcador_selecionado_m.png")));
-			  String b64_normal = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("../marcador_normal.png")));
-			  String b64_marcado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("../marcador_marcado.png")));
+			  String b64_selecionado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png")));
+			  String b64_selecionado_m = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png")));
+			  String b64_normal = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png")));
+			  String b64_marcado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png")));
 			  
 			  html = html.replace("{{load_geoxml3}}", js);
 			  html = html.replace("{{load_keydragzoom}}", js2);
