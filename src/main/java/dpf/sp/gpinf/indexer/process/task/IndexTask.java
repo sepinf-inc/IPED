@@ -111,7 +111,7 @@ public class IndexTask extends BaseCarveTask {
     String textCache = evidence.getParsedTextCache();
 
     if (!evidence.isToAddToCase()) {
-      if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren()) {
+      if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
         textCache = "";
         evidence.setSleuthId(null);
         evidence.setExportedFile(null);
