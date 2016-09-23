@@ -328,7 +328,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
       System.out.println("Consulte o LOG na pasta \"IPED/log\".");
     }
 
-    System.exit(0);
+    System.exit((success)?0:1);
 
     // PARA ASAP:
     // IndexFiles indexador = new IndexFiles(List<File> reports, File
