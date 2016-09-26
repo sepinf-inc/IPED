@@ -393,7 +393,13 @@ public class Configuration {
         OCRParser.TESSERACTFOLDER = configPath + "/" + value;
       }
 
-      IOUtil.copiaDiretorio(new File(loaddbPath).getParentFile(), new File(indexerTemp, "nativelibs"), true);
+      File nativelibs = new File(loaddbPath).getParentFile().getParentFile();
+      if(System.getProperty("os.arch").contains("64"))
+    	  nativelibs = new File(nativelibs, "x64");
+      else
+    	  nativelibs = new File(nativelibs, "x86");
+      
+      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
       Util.loadNatLibs(new File(indexerTemp, "nativelibs").getAbsolutePath());
 
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
