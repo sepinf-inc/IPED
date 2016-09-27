@@ -92,6 +92,9 @@ public class EvidenceFile implements Serializable, StreamSource {
    * Identificador utilizado para serialização da classe.
    */
   private static final long serialVersionUID = 98653214753695125L;
+  
+  /** representa a evidência de origem (imagem dd, pasta) do item */
+  private DataSource dataSource;
 
   /**
    * Nome do arquivo.
@@ -1018,6 +1021,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 	  this.setParentId(Integer.toString(parentId));
 	  this.addParentIds(parent.getParentIds());
 	  this.addParentId(parentId);
+	  this.setDataSource(parent.getDataSource());
   }
 
   /**
@@ -1180,5 +1184,13 @@ public class EvidenceFile implements Serializable, StreamSource {
   public void setMetadata(Metadata metadata) {
     this.metadata = metadata;
   }
+
+public DataSource getDataSource() {
+	return dataSource;
+}
+
+public void setDataSource(DataSource evidence) {
+	this.dataSource = evidence;
+}
 
 }

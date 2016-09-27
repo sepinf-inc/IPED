@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
 import gpinf.dev.filetypes.GenericFileType;
@@ -81,6 +82,7 @@ public class IndexItem {
   public static final String PARENTID = "parentId";
   public static final String PARENTIDs = "parentIds";
   public static final String SLEUTHID = "sleuthId";
+  public static final String EVIDENCE_UUID = "evidenceUUID";
   public static final String NAME = "nome";
   public static final String TYPE = "tipo";
   public static final String LENGTH = "tamanho";
@@ -185,6 +187,9 @@ public class IndexItem {
 
     doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
     doc.add(new NumericDocValuesField(ID, evidence.getId()));
+    
+    doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
+    doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
     String value = evidence.getFtkID();
     if (value != null) {
@@ -578,6 +583,11 @@ public class IndexItem {
       if (value != null) {
         evidence.setParentId(value);
       }
+      
+      //TODO obter source corretamente
+      DataSource dataSource = new DataSource(null);
+      dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
+      evidence.setDataSource(dataSource);
 
       value = doc.get(IndexItem.TYPE);
       if (value != null) {

@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
@@ -244,6 +245,11 @@ public class IPEDReader extends DataSourceReader {
       if (treeNode) {
         evidence.setSumVolume(false);
       }
+      
+      //TODO obter source corretamente
+      DataSource dataSource = new DataSource(null);
+      dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
+      evidence.setDataSource(dataSource);
 
       int id = Integer.valueOf(doc.get(IndexItem.ID));
       evidence.setId(id);

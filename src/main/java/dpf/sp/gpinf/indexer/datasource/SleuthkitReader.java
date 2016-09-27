@@ -60,6 +60,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
 
 public class SleuthkitReader extends DataSourceReader {
@@ -232,7 +233,10 @@ public class SleuthkitReader extends DataSourceReader {
     lastId = null;
     sleuthIdToId.clear();
     parentIds.clear();
+    
     deviceName = getEvidenceName(image);
+    dataSource = new DataSource(image);
+    dataSource.setName(deviceName);
 
     String dbPath = output.getParent() + File.separator + DB_NAME;
 
@@ -635,6 +639,8 @@ public class SleuthkitReader extends DataSourceReader {
       caseData.incDiscoveredVolume(evidence.getLength());
       return;
     }
+    
+    evidence.setDataSource(dataSource);
 
     if (evidence.getName() == null) {
       if (absFile.isRoot() && absFile.getName().isEmpty()) {
@@ -712,6 +718,8 @@ public class SleuthkitReader extends DataSourceReader {
     EvidenceFile evidence = new EvidenceFile();
     evidence.setLength(content.getSize());
     evidence.setSumVolume(false);
+    
+    evidence.setDataSource(dataSource);
 
     if (content.getName().isEmpty()) {
       if (content instanceof VolumeSystem) {
