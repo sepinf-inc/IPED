@@ -362,7 +362,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.3-p02</version>
+                                    <version>4.3-p03</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -381,7 +381,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>4.3-p02</version>
+                                    <version>4.3-p03</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
