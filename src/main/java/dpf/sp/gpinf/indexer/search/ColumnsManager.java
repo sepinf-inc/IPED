@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 public class ColumnsManager implements ActionListener, Serializable{
     
@@ -187,17 +188,20 @@ public class ColumnsManager implements ActionListener, Serializable{
 		}
 		
 		try {
-			ArrayList<String> extraAttrs = new ArrayList<String>();
-			HashSet<String> extraAttr = (HashSet<String>)Util.readObject(App.get().codePath + "/../data/" + IndexTask.extraAttrFilename);
-			extraAttrs.addAll(Arrays.asList(extraFields));
-			extraAttrs.addAll(extraAttr);
-			extraFields = extraAttrs.toArray(new String[0]);
-			
+			File extraAttrFile = new File(App.get().codePath + "/../data/" + IndexTask.extraAttrFilename);
+			if(extraAttrFile.exists()){
+				ArrayList<String> extraAttrs = new ArrayList<String>();
+				HashSet<String> extraAttr = (HashSet<String>)Util.readObject(extraAttrFile.getAbsolutePath());
+				EvidenceFile.setExtraAttributeSet(extraAttr);
+				extraAttrs.addAll(Arrays.asList(extraFields));
+				extraAttrs.addAll(extraAttr);
+				extraFields = extraAttrs.toArray(new String[0]);
+			}
 		} catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
 		
-		indexFields = LoadIndexFields.addExtraFields(App.get().reader, new String[0]);
+		indexFields = LoadIndexFields.addExtraFields(App.get().appCase.reader, new String[0]);
 		
 		fieldGroups = new String[][] {defaultFields, extraFields, email, indexFields};
 		

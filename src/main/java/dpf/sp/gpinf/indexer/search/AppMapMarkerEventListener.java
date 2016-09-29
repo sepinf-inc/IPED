@@ -18,7 +18,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         for (int i = 0; i < results.docs.length; i++) {
         	org.apache.lucene.document.Document doc = null;
         	try {
-				doc = App.get().searcher.doc(results.docs[i]);
+				doc = App.get().appCase.searcher.doc(results.docs[i]);
 	        	if(doc.get("id").equals(Integer.toString(mid))){
 	        		pos = i;
 	        		break;

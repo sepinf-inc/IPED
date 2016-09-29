@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.search;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import gpinf.dev.data.EvidenceFile;
 
-import java.io.File;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.tika.mime.MediaType;
@@ -38,11 +37,13 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   private volatile static FileProcessor parsingTask;
   private static Object lock = new Object(), lock2 = new Object();
   private Document doc;
+  private int docId;
   private boolean listSubItens;
   private static volatile EvidenceFile lastItem;
 
   public FileProcessor(int docId, boolean listSubItens) {
     this.listSubItens = listSubItens;
+    this.docId = docId;
 
     App.get().getSearchParams().lastSelectedDoc = docId;
 
@@ -53,7 +54,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
     if (docId >= 0) {
       try {
-        doc = App.get().searcher.doc(docId);
+        doc = App.get().appCase.searcher.doc(docId);
 
         String status = doc.get(IndexItem.PATH);
         if (status.length() > STATUS_LENGTH) {
@@ -101,7 +102,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       App.get().parentItemModel.listParents(doc);
     }
 
-    EvidenceFile item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
+    IPEDSource iCase = App.get().appCase.getAtomicCase(docId);
+	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.sleuthCase, false);
 
     disposeItem(lastItem);
     lastItem = item;
@@ -113,7 +115,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     EvidenceFile viewItem = item;
 
     if (item.getViewFile() != null) {
-      viewItem = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, true);
+    	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.sleuthCase, true);
     }
 
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);

@@ -189,8 +189,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
       }
 
       progressMonitor = new ProgressDialog(App.get(), parsingTask);
-      if (App.get().getTextSizes().length > id) {
-        progressMonitor.setMaximum(App.get().getTextSizes()[id] * 1000L);
+      if (App.get().appCase.textSizes.length > id) {
+        progressMonitor.setMaximum(App.get().appCase.textSizes[id] * 1000L);
       }
 
       sortedHits = new TreeMap<Long, int[]>();

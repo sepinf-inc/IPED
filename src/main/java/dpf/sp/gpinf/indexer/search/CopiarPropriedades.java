@@ -77,13 +77,13 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
     for (Integer docId : uniqueIds) {
       this.firePropertyChange("progress", progress, ++progress);
       try {
-        Document doc = App.get().searcher.doc(docId);
+        Document doc = App.get().appCase.searcher.doc(docId);
         for (int col = 0; col < fields.size(); col++) {
           String value, field = fields.get(col);
           if (!field.equals(ResultTableModel.BOOKMARK_COL)) {
             value = doc.get(fields.get(col));
           } else {
-            value = App.get().marcadores.getLabels(app.getIDs()[docId]);
+            value = App.get().appCase.marcadores.getLabels(app.appCase.ids[docId]);
           }
           if (value == null) {
             value = "";

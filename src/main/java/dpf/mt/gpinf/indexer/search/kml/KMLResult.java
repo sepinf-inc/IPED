@@ -83,7 +83,7 @@ public class KMLResult {
 		  df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		  for (int i = 0; i < results.docs.length; i++) {
-			  doc =  app.searcher.doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
+			  doc =  app.appCase.searcher.doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
 			  
 			  String lat = doc.get("GPS Latitude");
 			  if(lat!=null){

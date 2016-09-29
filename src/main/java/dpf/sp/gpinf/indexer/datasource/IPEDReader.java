@@ -24,7 +24,6 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,13 +31,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
@@ -53,9 +49,9 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.ColumnsManager;
-import dpf.sp.gpinf.indexer.search.InicializarBusca;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -71,9 +67,8 @@ public class IPEDReader extends DataSourceReader {
   //Referência estática para a JVM não finalizar o objeto que será usado futuramente
   //via referência interna ao JNI para acessar os itens do caso
   static SleuthkitCase sleuthCase;
-  
-  private static AtomicBoolean secondThread = new AtomicBoolean();
 
+  IPEDSource ipedCase;
   HashSet<Integer> selectedLabels;
   Marcadores state;
   File indexDir;
@@ -102,24 +97,21 @@ public class IPEDReader extends DataSourceReader {
     basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
     String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
 
+    //TODO remover e usar sleuthCase interno ao ipedCase?
     synchronized (lock) {
       if (new File(dbPath).exists() && sleuthCase == null) {
         sleuthCase = SleuthkitCase.openCase(dbPath);
       }
-
-      if (App.get().reader == null) {
-        InicializarBusca.inicializar(indexDir.getAbsolutePath());
-      }
     }
 
     Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
+    
+    ipedCase = new IPEDSource(new File(basePath));
 
     selectedLabels = new HashSet<Integer>();
-    App.get().marcadores = state;
-
-    //Inclui itens selecionados no relatório
-    PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
-    SearchResult result = pesquisa.filtrarSelecionados(pesquisa.pesquisar());
+    
+    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	SearchResult result = state.filtrarSelecionados(pesquisa.pesquisar(), ipedCase);
 
     insertIntoProcessQueue(result, false);
 
@@ -140,36 +132,35 @@ public class IPEDReader extends DataSourceReader {
       state.saveState(new File(output, Marcadores.STATEFILENAME));
     }
 
-    if (secondThread.getAndSet(true)) {
-      App.get().destroy();
-    }
+    ipedCase.close();
 
     return 0;
 
   }
 
   private void insertParentTreeNodes(SearchResult result) throws Exception {
-    boolean[] isParentToAdd = new boolean[App.get().lastId + 1];
+    boolean[] isParentToAdd = new boolean[ipedCase.lastId + 1];
     for (int docID : result.docs) {
-      String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+      String parentIds = ipedCase.reader.document(docID).get(IndexItem.PARENTIDs);
       if(!parentIds.trim().isEmpty())
 	      for (String parentId : parentIds.trim().split(" ")) {
 	        isParentToAdd[Integer.parseInt(parentId)] = true;
 	      }
     }
     for (int docID : result.docs) {
-      String id = App.get().reader.document(docID).get(IndexItem.ID);
+      String id = ipedCase.reader.document(docID).get(IndexItem.ID);
       isParentToAdd[Integer.parseInt(id)] = false;
     }
     int num = 0;
     BooleanQuery query = new BooleanQuery();
-    for (int i = 0; i <= App.get().lastId; i++) {
+    for (int i = 0; i <= ipedCase.lastId; i++) {
       if (isParentToAdd[i]) {
         query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
         num++;
       }
-      if (num == 1000 || i == App.get().lastId) {
-        PesquisarIndice searchParents = new PesquisarIndice(query, true);
+      if (num == 1000 || i == ipedCase.lastId) {
+    	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
+  		searchParents.setTreeQuery(true);
         result = searchParents.pesquisar();
         insertIntoProcessQueue(result, true);
         query = new BooleanQuery();
@@ -181,16 +172,16 @@ public class IPEDReader extends DataSourceReader {
   private void insertPSTAttachs(SearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) {
-      boolean[] isSelectedPSTEmail = new boolean[App.get().lastId + 1];
+      boolean[] isSelectedPSTEmail = new boolean[ipedCase.lastId + 1];
       for (int docID : result.docs) {
-        String mimetype = App.get().reader.document(docID).get(IndexItem.CONTENTTYPE);
+        String mimetype = ipedCase.reader.document(docID).get(IndexItem.CONTENTTYPE);
         if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
-          isSelectedPSTEmail[Integer.parseInt(App.get().reader.document(docID).get(IndexItem.ID))] = true;
+          isSelectedPSTEmail[Integer.parseInt(ipedCase.reader.document(docID).get(IndexItem.ID))] = true;
         }
       }
-      boolean[] isAttachToAdd = new boolean[App.get().lastId + 1];
-      for (int id = 0; id <= App.get().lastId; id++) {
-        Document doc = App.get().reader.document(App.get().getDocs()[id]);
+      boolean[] isAttachToAdd = new boolean[ipedCase.lastId + 1];
+      for (int id = 0; id <= ipedCase.lastId; id++) {
+        Document doc = ipedCase.reader.document(ipedCase.docs[id]);
         if (doc != null && doc.get(IndexItem.PARENTID) != null) {
           if (isSelectedPSTEmail[Integer.parseInt(doc.get(IndexItem.PARENTID))]) {
             isAttachToAdd[id] = true;
@@ -198,19 +189,19 @@ public class IPEDReader extends DataSourceReader {
         }
       }
       for (int docID : result.docs) {
-        String id = App.get().reader.document(docID).get(IndexItem.ID);
+        String id = ipedCase.reader.document(docID).get(IndexItem.ID);
         isAttachToAdd[Integer.parseInt(id)] = false;
       }
       int num = 0;
       BooleanQuery query = new BooleanQuery();
-      for (int i = 0; i <= App.get().lastId; i++) {
+      for (int i = 0; i <= ipedCase.lastId; i++) {
         if (isAttachToAdd[i]) {
           query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
           num++;
         }
-        if (num == 1000 || i == App.get().lastId) {
-          PesquisarIndice searchAttachs = new PesquisarIndice(query);
-          SearchResult attachs = searchAttachs.pesquisar();
+        if (num == 1000 || i == ipedCase.lastId) {
+          IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+    	  SearchResult attachs = searchAttachs.pesquisar();
           insertIntoProcessQueue(attachs, false);
           query = new BooleanQuery();
           num = 0;
@@ -222,7 +213,7 @@ public class IPEDReader extends DataSourceReader {
   private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
 
     for (int docID : result.docs) {
-      Document doc = App.get().reader.document(docID);
+      Document doc = ipedCase.reader.document(docID);
 
       String value = doc.get(IndexItem.LENGTH);
       Long len = null;

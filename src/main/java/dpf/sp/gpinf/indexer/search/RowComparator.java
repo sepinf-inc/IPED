@@ -19,8 +19,11 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
@@ -36,12 +39,22 @@ public class RowComparator implements Comparator<Integer> {
   private boolean scoreCol = false;
 
   private volatile static AtomicReader atomicReader;
+  private static boolean loadDocValues = true;
 
   private App app = App.get();
+  
+  private String field;
+  private HashSet<String> fieldsToLoad = new HashSet<String>();
+  private boolean isLongField = false;
+  private boolean isDoubleField = false;
 
   protected SortedDocValues sdv;
   private NumericDocValues ndv;
   private Bits docsWithField;
+  
+  public static void setLoadDocValues(boolean load){
+	loadDocValues = load;
+  }
 
   public RowComparator(int col) {
     this.col = col;
@@ -50,13 +63,14 @@ public class RowComparator implements Comparator<Integer> {
       col -= ResultTableModel.fixedCols.length;
       String[] fields = ResultTableModel.fields;
 
-      if (fields[col].equals(ResultTableModel.BOOKMARK_COL)) {
+      if (fields[col].equals(ResultTableModel.BOOKMARK_COL))
         bookmarkCol = true;
-      } else if (fields[col].equals(ResultTableModel.SCORE_COL)) {
+      
+      else if (fields[col].equals(ResultTableModel.SCORE_COL))
         scoreCol = true;
-      } else {
+      
+      else
         loadDocValues(fields[col]);
-      }
     }
   }
 
@@ -65,10 +79,21 @@ public class RowComparator implements Comparator<Integer> {
   }
 
   private void loadDocValues(String indexedField) {
+	  field = indexedField;
+	  fieldsToLoad.add(field);
+	  String[] fixedNumericFields = {IndexItem.ID, IndexItem.PARENTID, IndexItem.SLEUTHID, IndexItem.LENGTH};
+	  isLongField = Arrays.asList(fixedNumericFields).contains(field) || 
+				Integer.class.equals(IndexItem.getMetadataTypes().get(field)) ||
+				Long.class.equals(IndexItem.getMetadataTypes().get(field));
+	  isDoubleField = Float.class.equals(IndexItem.getMetadataTypes().get(field)) || 
+				Double.class.equals(IndexItem.getMetadataTypes().get(field));
+		
+	  if(!loadDocValues)
+		  return;
+	  
     try {
-      if (atomicReader == null) {
-        atomicReader = SlowCompositeReaderWrapper.wrap(app.reader);
-      }
+      if (atomicReader == null)
+        atomicReader = SlowCompositeReaderWrapper.wrap(app.appCase.reader);
 
       if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
         ndv = atomicReader.getNumericDocValues(indexedField);
@@ -91,9 +116,8 @@ public class RowComparator implements Comparator<Integer> {
   }
 
   public static void closeAtomicReader() throws IOException {
-    if (atomicReader != null) {
+    if (atomicReader != null)
       atomicReader.close();
-    }
     atomicReader = null;
   }
 
@@ -102,47 +126,78 @@ public class RowComparator implements Comparator<Integer> {
   }
 
   @Override
-  public int compare(Integer a, Integer b) {
-
-    if (Thread.currentThread().isInterrupted()) {
-      throw new RuntimeException("Ordenação cancelada.");
-    }
-
-    if (scoreCol) {
-      return (int) (app.results.scores[a] - app.results.scores[b]);
-    }
-
-    a = app.results.docs[a];
-    b = app.results.docs[b];
-
-    if (col == 1) {
-      if (app.marcadores.selected[app.getIDs()[a]] == app.marcadores.selected[app.getIDs()[b]]) {
-        return 0;
-      } else if (app.marcadores.selected[app.getIDs()[a]] == true) {
-        return -1;
-      } else {
-        return 1;
+	public int compare(Integer a, Integer b) {
+		
+		if(Thread.currentThread().isInterrupted())
+			throw new RuntimeException("Ordenação cancelada.");
+		
+		if(scoreCol)
+          return (int)(app.results.scores[a] - app.results.scores[b]);
+		
+		a = app.results.docs[a];
+		b = app.results.docs[b];
+		
+		if(col == 1){
+		    if (app.appCase.marcadores.selected[app.appCase.ids[a]] == app.appCase.marcadores.selected[app.appCase.ids[b]])
+              return 0;
+          else if (app.appCase.marcadores.selected[app.appCase.ids[a]] == true)
+              return -1;
+          else
+              return 1;
+		
+		}else if(bookmarkCol)
+          return app.appCase.marcadores.getLabels(app.appCase.ids[a]).compareTo(app.appCase.marcadores.getLabels(app.appCase.ids[b]));
+      
+		else if(sdv != null)
+			return sdv.getOrd(a) - sdv.getOrd(b);
+		
+      else if(ndv != null){
+      	if(docsWithField.get(a)){
+      		if(docsWithField.get(b))
+      			return Long.compare(ndv.get(a), ndv.get(b));
+      		else
+      			return 1;
+      	}else 
+      		if(docsWithField.get(b))
+      			return -1;
+      		else
+      			return 0;
+      }else{
+      	//Ordenação sob demanda caso não haja DocValues (bem mais lenta)
+      	try {
+				Document doc1 = app.appCase.reader.document(a, fieldsToLoad);
+				Document doc2 = app.appCase.reader.document(b, fieldsToLoad);
+				
+				String v1 = doc1.get(field);
+				String v2 = doc2.get(field);
+				
+				if(v1 == null || v1.isEmpty()){
+					if(v2 == null || v2.isEmpty())
+						return 0;
+					else
+						return -1;
+				}else if(v2 == null || v2.isEmpty())
+					return 1;
+				
+				if(isLongField){
+					long l1 = Long.parseLong(v1);
+					long l2 = Long.parseLong(v2);
+					return Long.compare(l1, l2);
+				}
+				if(isDoubleField){
+					double d1 = Double.parseDouble(v1);
+					double d2 = Double.parseDouble(v2);
+					return Double.compare(d1, d2);
+				}
+				
+				return v1.compareTo(v2);
+				
+			} catch (IOException e) {
+				return 0;
+			}
+      	
       }
-
-    } else if (bookmarkCol) {
-      return app.marcadores.getLabels(app.getIDs()[a]).compareTo(app.marcadores.getLabels(app.getIDs()[b]));
-    } else if (sdv != null) {
-      return sdv.getOrd(a) - sdv.getOrd(b);
-    } else if (ndv != null) {
-      if (docsWithField.get(a)) {
-        if (docsWithField.get(b)) {
-          return Long.compare(ndv.get(a), ndv.get(b));
-        } else {
-          return 1;
-        }
-      } else if (docsWithField.get(b)) {
-        return -1;
-      } else {
-        return 0;
-      }
-    } else {
-      return 0;
-    }
-  }
+          
+	}
 
 }

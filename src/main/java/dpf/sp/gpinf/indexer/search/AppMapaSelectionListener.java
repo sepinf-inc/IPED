@@ -22,7 +22,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
         for (int i = 0; i < results.docs.length; i++) {
         	try {
         		pos = -1;
-    			doc = App.get().searcher.doc(results.docs[i], columns);
+    			doc = App.get().appCase.searcher.doc(results.docs[i], columns);
     			for (int j = 0; j < mids.length; j++) {
     	        	if(mids[j].equals(doc.get("id"))){
     	        		pos = i;

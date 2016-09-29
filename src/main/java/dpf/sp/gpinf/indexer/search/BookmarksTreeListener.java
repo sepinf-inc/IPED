@@ -64,7 +64,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
       for (String path : tempSel) {
         for (int i : labelMap.keySet()) {
           if (labelMap.get(i).equals(path)) {
-            String name = App.get().marcadores.getLabelMap().get(i);
+            String name = App.get().appCase.marcadores.getLabelMap().get(i);
             if (name != null) {
               selection.add(name);
             }

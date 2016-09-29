@@ -68,7 +68,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     	  zaos.putArchiveEntry(entry);
     	  zaos.closeArchiveEntry();
     	}
-        Document doc = App.get().searcher.doc(docId);
+        Document doc = App.get().appCase.searcher.doc(docId);
         String dstName = doc.get(IndexItem.NAME);
         //dstName += "." + doc.get(IndexItem.TYPE);
 
@@ -78,7 +78,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
           File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
           in = Util.getStream(src, doc);
         } else {
-          in = Util.getSleuthStream(App.get().sleuthCase, doc);
+          in = Util.getSleuthStream(App.get().appCase.sleuthCase, doc);
         }
 
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName);

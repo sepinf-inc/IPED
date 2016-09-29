@@ -38,11 +38,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -73,10 +71,7 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +82,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class App extends JFrame implements WindowListener {
@@ -98,29 +92,19 @@ public class App extends JFrame implements WindowListener {
 
   private static Logger LOGGER = LoggerFactory.getLogger(App.class);
 
-  SleuthkitCase sleuthCase;
-
   private AppSearchParams appSearchParams = null;
-  
-  //variáveis temporárias, serão movidas para futura classe IPEDSource
-  int[] ids, docs, textSizes;
 
   SearchResult results = new SearchResult(0);
+  
+  public IPEDSource appCase;
 
-  int totalItens;
   public int lastId;
-  public Marcadores marcadores;
+  
   FilterManager filterManager;
-  ArrayList<String> palavrasChave, categorias;
+  ArrayList<String> palavrasChave;
   HashSet<String> keywordSet = new HashSet<String>();
-  private Set<String> highlightTerms;
-
-  Set<Integer> splitedDocs;
-  VersionsMap viewToRawMap;
-
-  public volatile IndexReader reader;
-  public volatile IndexSearcher searcher;
-  public ExecutorService searchExecutorService;
+  Set<String> highlightTerms;
+  Query highlightQuery;
 
   public JDialog dialogBar;
   JProgressBar progressBar;
@@ -164,6 +148,8 @@ public class App extends JFrame implements WindowListener {
 
   private int zoomLevel;
 
+  public String codePath;
+  File casesPathFile;
   public JLabel status;
 
   // final String MSG_NO_PREVIEW =
@@ -183,8 +169,7 @@ public class App extends JFrame implements WindowListener {
   static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
 
   private static App applet;
-
-  public String codePath;
+  
   AppListener appletListener;
 
   private App() {
@@ -213,7 +198,17 @@ public class App extends JFrame implements WindowListener {
   }
        
   public static void main(String[] args) {
-    App.get().init();
+	  
+	  if(args.length == 2 && args[0].equals("-multicases")){
+			App.get().casesPathFile = new File(args[1]);
+			
+			if(!App.get().casesPathFile.exists()){
+				System.out.println("Arquivo de casos inexistente: " + args[1]);
+				return;
+			}
+		}
+	  
+	  App.get().init();
   }
 
   public void init() {
@@ -285,42 +280,15 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.textViewer = textViewer;
   }
 
-  public int[] getTextSizes() {
-    return this.textSizes;
-  }
-
-  public void setTextSizes(int[] sizes) {
-    this.textSizes = sizes;
-  }
-
-  public int[] getIDs() {
-    return this.ids;
-  }
-
-  public void setIDs(int[] ids) {
-    this.ids = ids;
-  }
-
-  public int[] getDocs() {
-    return this.docs;
-  }
-
-  public void setDocs(int[] docs) {
-    this.docs = docs;
-  }
-
   public void destroy() {
     try {
       if (this.resultsTable != null) {
         ColumnsManager.getInstance().saveColumnsState();
       }
-      reader.close();
       if (compositeViewer != null) {
         compositeViewer.dispose();
       }
-      if (searchExecutorService != null) {
-        searchExecutorService.shutdown();
-      }
+      appCase.close();
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -393,12 +361,6 @@ public class App extends JFrame implements WindowListener {
     opcoes = new JButton("Opções");
     ajuda = new JButton("Ajuda");
     checkBox = new JCheckBox("0");
-
-    try {
-      categorias = Util.loadKeywords(codePath + "/../categorias.txt", "UTF-8");
-    } catch (IOException e) {
-      categorias = new ArrayList<String>();
-    }
 
     filtro = new JComboBox<String>();
     filtro.setMaximumSize(new Dimension(100, 50));
@@ -546,12 +508,13 @@ public class App extends JFrame implements WindowListener {
     treeSplitPane.setDividerSize(5);
     treeSplitPane.setContinuousLayout(true);
     treeSplitPane.setResizeWeight(0.1);
-
-    categoryTree = new JTree(new CategoryTreeModel());
-    categoryTree.setExpandsSelectedPaths(false);
-    categoryListener = new CategoryTreeListener();
-    categoryTree.addTreeSelectionListener(categoryListener);
-    categoryTree.addTreeExpansionListener(categoryListener);
+    
+    categoryTree = new JTree(new Object[0]);
+	categoryTree.setRootVisible(true);
+	categoryTree.setExpandsSelectedPaths(false);
+	categoryListener = new CategoryTreeListener();
+	categoryTree.addTreeSelectionListener(categoryListener);
+	categoryTree.addTreeExpansionListener(categoryListener);
 
     bookmarksTree = new JTree(new BookmarksTreeModel());
     bookmarksListener = new BookmarksTreeListener();

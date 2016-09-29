@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,7 @@ import javax.swing.SwingWorker;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -52,6 +54,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   private AppSearchParams appSearchParams = null;
+  private TreeViewModel treeModel;
 
   public InicializarBusca(AppSearchParams params) {
     this.appSearchParams = params;
@@ -80,11 +83,20 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
       Configuration.getConfiguration(App.get().codePath + "/..");
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
-
-      inicializar(App.get().codePath + "/../index");
-
-      App.get().resultsModel.initCols();
-      App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+      
+      if(App.get().casesPathFile == null)
+			App.get().appCase = new IPEDSource(new File(App.get().codePath).getParentFile().getParentFile());
+		else
+			App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+		
+		System.out.println("Loading Columns " + new Date());
+		App.get().resultsModel.initCols();
+		
+		System.out.println("Loading Column Sorters " + new Date());
+		if(App.get().appCase.totalItens > 10000000)
+			RowComparator.setLoadDocValues(false);
+		App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+      
 
       OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
       OCRParser.EXECTESS = false;
@@ -94,25 +106,22 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       autoParser.setErrorParser(Configuration.errorParser);
       App.get().setAutoParser(autoParser);
 
+      //Load viewers
       FileProcessor exibirAjuda = new FileProcessor(-1, false);
-      viewerControl.createViewers(this.appSearchParams,
-          exibirAjuda);
+      viewerControl.createViewers(this.appSearchParams, exibirAjuda);
       this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
       App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
+      
+      System.out.println("Listing items " + new Date());
 
       // lista todos os itens
-      App.get().setQuery(PesquisarIndice.getQuery(""));
-      PesquisarIndice pesquisa = new PesquisarIndice(App.get().getQuery());
-      App.get().results = pesquisa.pesquisar();
-      App.get().totalItens = App.get().results.length;
-      pesquisa.countVolume(App.get().results);
-      App.get().resultsModel.fireTableDataChanged();
-
-      File sleuthFile = new File(App.get().codePath + "/../../sleuth.db");
-      if (sleuthFile.exists()){
-    	  App.get().sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
-          updateImagePaths(sleuthFile);  
-      }
+      PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
+      pesquisa.execute();
+      App.get().appCase.totalItens = pesquisa.get().length;
+      
+      System.out.println("Finished " + new Date());
+      
+      treeModel = new TreeViewModel();
 
     } catch (Throwable e) {
       e.printStackTrace();
@@ -123,81 +132,16 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   @Override
   public void done() {
-    App.get().marcadores.loadState();
-    App.get().marcadores.atualizarGUI();
-    App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
-    App.get().resultsTable.getTableHeader().repaint();
+	  App.get().appCase.marcadores.loadState();
+	  App.get().appCase.marcadores.atualizarGUI();
+	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
+	  App.get().resultsTable.getTableHeader().repaint();
+	  App.get().categoryTree.setModel(new CategoryTreeModel());
 
     if (!App.get().isFTKReport) {
-      App.get().tree.setModel(new TreeViewModel());
+      App.get().tree.setModel(treeModel);
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
-    }
-  }
-
-  
-  private void updateImagePaths(File sleuthFile) throws Exception {
-	  File tmpCase = null;
-      char letter = App.get().codePath.charAt(0);
-      Map<Long, List<String>> imgPaths = App.get().sleuthCase.getImagePaths();
-      for (Long id : imgPaths.keySet()) {
-        List<String> paths = imgPaths.get(id);
-        ArrayList<String> newPaths = new ArrayList<String>();
-        for (String path : paths) {
-          if (new File(path).exists()) {
-            break;
-          } else {
-            String newPath = letter + path.substring(1);
-            if (new File(newPath).exists()) {
-              newPaths.add(newPath);
-            }
-          }
-        }
-        if (newPaths.size() > 0) {
-          if (tmpCase == null && !sleuthFile.canWrite()) {
-            tmpCase = File.createTempFile("sleuthkit-", ".db");
-            tmpCase.deleteOnExit();
-            App.get().sleuthCase.close();
-            IOUtil.copiaArquivo(sleuthFile, tmpCase);
-            App.get().sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
-          }
-          App.get().sleuthCase.setImagePaths(id, newPaths);
-        }
-      }
-  }
-
-  public static void inicializar(String index) {
-    try {
-      Directory directory = FSDirectory.open(new File(index));
-      App.get().reader = DirectoryReader.open(directory);
-
-      if (Configuration.searchThreads > 1) {
-        App.get().searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
-        App.get().searcher = new IndexSearcher(App.get().reader, App.get().searchExecutorService);
-      } else {
-        App.get().searcher = new IndexSearcher(App.get().reader);
-      }
-
-      App.get().searcher.setSimilarity(new IndexerSimilarity());
-      App.get().setAnalyzer(AppAnalyzer.get());
-      App.get().splitedDocs = (Set<Integer>) Util.readObject(index + "/../data/splits.ids");
-      App.get().setTextSizes((int[]) Util.readObject(index + "/../data/texts.size"));
-      App.get().lastId = App.get().getTextSizes().length - 1;
-      App.get().setIDs((int[]) Util.readObject(index + "/../data/ids.map"));
-      App.get().setDocs(new int[App.get().lastId + 1]);
-      for (int i = 0; i < App.get().getIDs().length; i++) {
-        App.get().getDocs()[App.get().getIDs()[i]] = i;
-      }
-      if (new File(index + "/../data/alternativeToOriginals.ids").exists()) {
-        App.get().viewToRawMap = (VersionsMap) Util.readObject(index + "/../data/alternativeToOriginals.ids");
-      }
-      IndexItem.loadMetadataTypes(new File(index + "/../conf"));
-      App.get().marcadores = new Marcadores(index + "/..");
-
-      BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-
-    } catch (Exception e) {
-      e.printStackTrace();
     }
   }
 

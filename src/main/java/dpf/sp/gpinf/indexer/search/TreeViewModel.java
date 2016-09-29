@@ -19,7 +19,10 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.event.TreeModelListener;
@@ -38,7 +41,7 @@ public class TreeViewModel implements TreeModel {
   private Node root;
   private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
 
-  private RowComparator getComparator() {
+  private RowComparator getComparator1() {
     return new RowComparator(IndexItem.NAME) {
       @Override
       public int compare(Integer a, Integer b) {
@@ -46,6 +49,28 @@ public class TreeViewModel implements TreeModel {
       }
     };
   }
+  
+  private Collator collator = Collator.getInstance();
+	
+	private Comparator<Integer> getComparator(){
+		final HashSet<String> fields = new HashSet<String>();
+		fields.add(IndexItem.NAME);
+		collator.setStrength(Collator.PRIMARY);
+		return new Comparator<Integer>(){
+			@Override
+		    public int compare(Integer a, Integer b) {
+				try {
+					Document doc1 = App.get().appCase.reader.document(a, fields);
+					Document doc2 = App.get().appCase.reader.document(b, fields);
+			        return collator.compare(doc1.get(IndexItem.NAME),doc2.get(IndexItem.NAME));
+			        
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return 0;
+		    }
+		};
+	}
 
   public class Node {
 
@@ -62,7 +87,7 @@ public class TreeViewModel implements TreeModel {
       if (doc == null) {
         if (docId != -1) {
           try {
-            this.doc = App.get().reader.document(docId);
+            this.doc = App.get().appCase.reader.document(docId);
 
           } catch (IOException e) {
             //e.printStackTrace();
@@ -96,12 +121,14 @@ public class TreeViewModel implements TreeModel {
         parentId = doc.get(IndexItem.ID);
       }
 
-      String textQuery = IndexItem.PARENTID + ":" + parentId;
+      String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+      String textQuery = IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
 
       textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
 
       try {
-        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+		task.setTreeQuery(true);
         children = task.pesquisar();
         Integer[] array = ArrayUtils.toObject(children.docs);
         Arrays.sort(array, getComparator());
@@ -120,10 +147,10 @@ public class TreeViewModel implements TreeModel {
     root = new Node(-1);
     root.doc = new Document();
     root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
-    PesquisarIndice pesquisa;
     try {
-      pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(IndexItem.ISROOT + ":true"), true);
-      root.children = pesquisa.pesquisar();
+      IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true");
+	  task.setTreeQuery(true);
+      root.children = task.pesquisar();
       Integer[] array = ArrayUtils.toObject(root.children.docs);
       Arrays.sort(array, getComparator());
       root.children.docs = ArrayUtils.toPrimitive(array);

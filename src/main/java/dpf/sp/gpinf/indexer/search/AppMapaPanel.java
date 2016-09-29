@@ -56,7 +56,7 @@ public class AppMapaPanel extends JPanel {
 
 			        	org.apache.lucene.document.Document doc = null;
 			        	try {
-							doc = App.get().searcher.doc(app.getResults().docs[i]);
+							doc = App.get().appCase.searcher.doc(app.getResults().docs[i]);
 				        	selecoes.put(doc.get("id"), selected);
 						} catch (IOException ex) {
 							ex.printStackTrace();

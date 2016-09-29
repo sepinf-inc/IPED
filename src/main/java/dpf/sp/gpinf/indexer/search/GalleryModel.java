@@ -117,7 +117,7 @@ public class GalleryModel extends AbstractTableModel {
 
     idx = App.get().resultsTable.convertRowIndexToModel(idx);
     final int docId = App.get().results.docs[idx];
-    final int id = App.get().getIDs()[docId];
+    final int id = App.get().appCase.ids[docId];
 
     synchronized (cache) {
       if (cache.containsKey(id)) {
@@ -127,7 +127,7 @@ public class GalleryModel extends AbstractTableModel {
 
     final Document doc;
     try {
-      doc = App.get().searcher.doc(docId);
+      doc = App.get().appCase.searcher.doc(docId);
 
     } catch (IOException e) {
       return new GalleryValue("", errorIcon, id);
@@ -159,7 +159,7 @@ public class GalleryModel extends AbstractTableModel {
 
           String hash = doc.get(IndexItem.HASH);
           if (hash != null) {
-            image = getViewImage(hash, !isSupportedImage(mediaType));
+        	image = getViewImage(docId, hash, !isSupportedImage(mediaType));
             int resizeTolerance = 4;
             if (image != null) {
               if (image.getWidth() < thumbSize - resizeTolerance && image.getHeight() < thumbSize - resizeTolerance) {
@@ -174,13 +174,13 @@ public class GalleryModel extends AbstractTableModel {
 
             image = getThumbFromFTKReport(export);
             if (image == null) {
-              File file = Util.getRelativeFile(App.get().codePath + "/../..", export);
+              File file = Util.getRelativeFile(App.get().appCase.getAtomicCase(docId).getCaseDir().getAbsolutePath(), export);
               stream = Util.getStream(file, doc);
             }
 
           }
           if (image == null && stream == null && isSupportedImage(mediaType)) {
-            stream = Util.getSleuthStream(App.get().sleuthCase, doc);
+        	  stream = Util.getSleuthStream(App.get().appCase.getAtomicCase(docId).sleuthCase, doc);
           }
 
           if (stream != null) {
@@ -246,8 +246,8 @@ public class GalleryModel extends AbstractTableModel {
     return new GalleryValue(doc.get(IndexItem.NAME), null, id);
   }
 
-  private BufferedImage getViewImage(String hash, boolean isVideo) throws IOException {
-    File baseFolder = new File(App.get().codePath).getParentFile();
+  private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException{
+	File baseFolder = App.get().appCase.getAtomicCase(docID).getModuleDir();
     if (isVideo) {
       baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
     } else {

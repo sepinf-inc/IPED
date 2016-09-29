@@ -76,7 +76,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
           } while (!subdir.mkdir());
         }
 
-        Document doc = App.get().searcher.doc(docId);
+        Document doc = App.get().appCase.searcher.doc(docId);
         String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
         String export = doc.get(IndexItem.EXPORT);
 
@@ -88,7 +88,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
           }
           in = Util.getStream(src, doc);
         } else {
-          in = Util.getSleuthStream(App.get().sleuthCase, doc);
+          in = Util.getSleuthStream(App.get().appCase.sleuthCase, doc);
         }
 
         File dst = new File(subdir, dstName);

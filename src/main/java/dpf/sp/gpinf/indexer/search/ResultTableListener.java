@@ -44,6 +44,7 @@ import org.apache.lucene.document.Document;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -129,16 +130,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
           int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
           File file = null;
           try {
-            Document doc = App.get().searcher.doc(docId);
-
-            String export = doc.get(IndexItem.EXPORT);
-            if (export != null && !export.isEmpty()) {
-              file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-              file = Util.getReadOnlyFile(file, doc);
-
-            } else {
-              file = Util.extractSleuthFile(App.get().sleuthCase, doc);
-            }
+        	  EvidenceFile item = App.get().appCase.getItemByLuceneID(docId);
+              file = item.getTempFile();
+              file.setReadOnly();
 
             if (file != null) {
               Desktop.getDesktop().open(file.getCanonicalFile());
@@ -224,13 +218,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         value = false;
       }
 
-      App.get().marcadores.multiSetting = true;
+      App.get().appCase.marcadores.multiSetting = true;
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(value, row, col);
       }
-      App.get().marcadores.multiSetting = false;
-      App.get().marcadores.saveState();
-      App.get().marcadores.atualizarGUI();
+      App.get().appCase.marcadores.multiSetting = false;
+      App.get().appCase.marcadores.saveState();
+      App.get().appCase.marcadores.atualizarGUI();
 
     }
 

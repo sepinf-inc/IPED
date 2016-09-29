@@ -85,7 +85,7 @@ public class GerenciadorMarcadores implements ActionListener {
 
   public static void updateCounters() {
     instance.highlighted.setText("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
-    instance.checked.setText("Itens Selecionados (" + App.get().marcadores.selectedItens + ")");
+    instance.checked.setText("Itens Selecionados (" + App.get().appCase.marcadores.selectedItens + ")");
   }
 
   private GerenciadorMarcadores() {
@@ -155,7 +155,7 @@ public class GerenciadorMarcadores implements ActionListener {
   }
 
   private void populateList() {
-    String[] labels = App.get().marcadores.getLabelMap().values().toArray(new String[0]);
+    String[] labels = App.get().appCase.marcadores.getLabelMap().values().toArray(new String[0]);
     Arrays.sort(labels, Collator.getInstance());
     listModel.clear();
     for (String label : labels) {
@@ -180,7 +180,7 @@ public class GerenciadorMarcadores implements ActionListener {
           return;
         }
         progress.setProgress(++i);
-        String hash = app.searcher.doc(app.getDocs()[id]).get(IndexItem.HASH);
+        String hash = app.appCase.searcher.doc(app.appCase.docs[id]).get(IndexItem.HASH);
         if (hash != null) {
           query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
         }
@@ -197,7 +197,7 @@ public class GerenciadorMarcadores implements ActionListener {
       System.out.println("Duplicados incluídos:" + duplicates.length);
 
       for (int doc : duplicates.docs) {
-        uniqueSelectedIds.add(app.getIDs()[doc]);
+        uniqueSelectedIds.add(app.appCase.ids[doc]);
       }
 
     } catch (Exception e) {
@@ -214,7 +214,7 @@ public class GerenciadorMarcadores implements ActionListener {
     if (evt.getSource() == novo) {
       String texto = newLabel.getText().trim();
       if (!texto.isEmpty() && !listModel.contains(texto)) {
-        App.get().marcadores.newLabel(texto);
+        App.get().appCase.marcadores.newLabel(texto);
         populateList();
       }
       for (int i = 0; i < listModel.size(); i++) {
@@ -230,8 +230,8 @@ public class GerenciadorMarcadores implements ActionListener {
       final ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 
       if (checked.isSelected()) {
-        for (int id = 0; id < App.get().marcadores.selected.length; id++) {
-          if (App.get().marcadores.selected[id]) {
+        for (int id = 0; id < App.get().appCase.marcadores.selected.length; id++) {
+          if (App.get().appCase.marcadores.selected[id]) {
             uniqueSelectedIds.add(id);
           }
         }
@@ -239,12 +239,12 @@ public class GerenciadorMarcadores implements ActionListener {
       } else if (highlighted.isSelected()) {
         for (Integer row : App.get().resultsTable.getSelectedRows()) {
           int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-          int id = app.getIDs()[app.results.docs[rowModel]];
+          int id = app.appCase.ids[app.results.docs[rowModel]];
           uniqueSelectedIds.add(id);
 
-          Integer id2 = app.viewToRawMap.getRaw(id);
+          Integer id2 = app.appCase.viewToRawMap.getRaw(id);
           if (id2 == null) {
-            id2 = app.viewToRawMap.getView(id);
+            id2 = app.appCase.viewToRawMap.getView(id);
           }
 
           if (id2 != null) {
@@ -260,15 +260,15 @@ public class GerenciadorMarcadores implements ActionListener {
           }
 
           for (int idx : list.getSelectedIndices()) {
-            int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
+            int labelId = App.get().appCase.marcadores.getLabelId(listModel.getElementAt(idx));
             if (evt.getSource() == add || evt.getSource() == novo) {
-              App.get().marcadores.addLabel(uniqueSelectedIds, labelId);
+              App.get().appCase.marcadores.addLabel(uniqueSelectedIds, labelId);
             } else {
-              App.get().marcadores.removeLabel(uniqueSelectedIds, labelId);
+              App.get().appCase.marcadores.removeLabel(uniqueSelectedIds, labelId);
             }
           }
-          App.get().marcadores.saveState();
-          App.get().marcadores.atualizarGUI();
+          App.get().appCase.marcadores.saveState();
+          App.get().appCase.marcadores.atualizarGUI();
         }
       }.start();
 
@@ -276,12 +276,12 @@ public class GerenciadorMarcadores implements ActionListener {
       int result = JOptionPane.showConfirmDialog(dialog, "Deseja realmente apagar os marcadores selecionados?", "Confirmar", JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
         for (int idx : list.getSelectedIndices()) {
-          int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
-          App.get().marcadores.delLabel(labelId);
+          int labelId = App.get().appCase.marcadores.getLabelId(listModel.getElementAt(idx));
+          App.get().appCase.marcadores.delLabel(labelId);
         }
         populateList();
-        App.get().marcadores.saveState();
-        App.get().marcadores.atualizarGUI();
+        App.get().appCase.marcadores.saveState();
+        App.get().appCase.marcadores.atualizarGUI();
 
       }
 
@@ -289,13 +289,13 @@ public class GerenciadorMarcadores implements ActionListener {
       String newLabel = JOptionPane.showInputDialog(dialog, "Novo nome para o primeiro marcador selecionado", list.getSelectedValue());
       if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
         for (int idx : list.getSelectedIndices()) {
-          int labelId = App.get().marcadores.getLabelId(listModel.getElementAt(idx));
-          App.get().marcadores.changeLabel(labelId, newLabel.trim());;
+          int labelId = App.get().appCase.marcadores.getLabelId(listModel.getElementAt(idx));
+          App.get().appCase.marcadores.changeLabel(labelId, newLabel.trim());;
           break;
         }
         populateList();
-        App.get().marcadores.saveState();
-        App.get().marcadores.atualizarGUI();
+        App.get().appCase.marcadores.saveState();
+        App.get().appCase.marcadores.atualizarGUI();
 
       }
     }

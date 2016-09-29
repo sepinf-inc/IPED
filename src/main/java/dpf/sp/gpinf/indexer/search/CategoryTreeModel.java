@@ -61,7 +61,7 @@ public class CategoryTreeModel implements TreeModel {
 
     //map from child category to parent
     HashMap<String, String> categoryMap = new HashMap<String, String>();
-    for (String category : App.get().categorias) {
+    for (String category : App.get().appCase.categories) {
       categoryMap.put(category, rootName);
     }
 
@@ -106,7 +106,7 @@ public class CategoryTreeModel implements TreeModel {
 
   private boolean filterEmptyCategories(Category category) {
     boolean hasItems = false;
-    if (App.get().categorias.contains(category.name)) {
+    if (App.get().appCase.categories.contains(category.name)) {
       hasItems = true;
     }
     for (Category child : (TreeSet<Category>) category.children.clone()) {

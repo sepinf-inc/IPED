@@ -34,6 +34,7 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 public class ParentTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
@@ -84,7 +85,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().marcadores.setValueAtId(value, App.get().getIDs()[results.docs[row]], col, true);
+    App.get().appCase.marcadores.setValueAtId(value, App.get().appCase.ids[results.docs[row]], col, true);
   }
 
   @Override
@@ -93,11 +94,11 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       return row + 1;
       
     }else if (col == 1) {
-        return App.get().marcadores.selected[App.get().getIDs()[results.docs[row]]];
+        return App.get().appCase.marcadores.selected[App.get().appCase.ids[results.docs[row]]];
       
     } else {
       try {
-        Document doc = App.get().searcher.doc(results.docs[row]);
+        Document doc = App.get().appCase.searcher.doc(results.docs[row]);
         return doc.get(IndexItem.NAME);
       } catch (Exception e) {
         // e.printStackTrace();
@@ -136,15 +137,9 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
           int docId = results.docs[selectedIndex];
           File file = null;
           try {
-            Document doc = App.get().searcher.doc(docId);
-
-            String export = doc.get(IndexItem.EXPORT);
-            if (export != null && !export.isEmpty()) {
-              file = Util.getRelativeFile(App.get().codePath + "/../..", export);
-              file = Util.getReadOnlyFile(file, doc);
-            } else {
-              file = Util.extractSleuthFile(App.get().sleuthCase, doc);
-            }
+        	  EvidenceFile item = App.get().appCase.getItemByLuceneID(docId);
+              file = item.getTempFile();
+              file.setReadOnly();
 
             if (file != null) {
               Desktop.getDesktop().open(file.getCanonicalFile());
@@ -202,12 +197,15 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
     if (ftkId != null) {
       textQuery = IndexItem.FTKID + ":" + parentId;
     }
+    
+    String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
 
     results = new SearchResult(0);
 
     if (textQuery != null) {
       try {
-        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
         results = task.pesquisar();
 
       } catch (Exception e) {

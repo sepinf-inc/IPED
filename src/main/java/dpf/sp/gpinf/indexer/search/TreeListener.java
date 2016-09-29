@@ -83,25 +83,27 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
       recursiveTreeQuery = null;
 
     } else {
-      String treeQueryStr = "parentId:(";
+      String treeQueryStr = "";
       recursiveTreeQuery = new BooleanQuery();
 
       for (TreePath path : selection) {
         Document doc = ((Node) path.getLastPathComponent()).getDoc();
 
         String parentId = doc.get(IndexItem.FTKID);
-        if (parentId == null) {
+        if (parentId == null)
           parentId = doc.get(IndexItem.ID);
-        }
+        
+        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+        treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ") ";
 
-        treeQueryStr += parentId + " ";
-        //((BooleanQuery)treeQuery).add(new TermQuery(new Term(IndexItem.PARENTID, parentId)), Occur.SHOULD);
-        ((BooleanQuery) recursiveTreeQuery).add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.SHOULD);
+        BooleanQuery subQuery = new BooleanQuery();
+        subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
+        subQuery.add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
+        ((BooleanQuery) recursiveTreeQuery).add(subQuery, Occur.SHOULD);
       }
 
-      treeQueryStr += ")";
       try {
-        treeQuery = PesquisarIndice.getQuery(treeQueryStr);
+        treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
       } catch (ParseException | QueryNodeException e) {
         e.printStackTrace();
       }
@@ -117,21 +119,23 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     String textQuery = null;
     do {
       try {
-        Document doc = App.get().reader.document(docId);
+        Document doc = App.get().appCase.reader.document(docId);
 
         textQuery = null;
         String parentId = doc.get(IndexItem.PARENTID);
-        if (parentId != null) {
+        if (parentId != null)
           textQuery = IndexItem.ID + ":" + parentId;
-        }
 
         String ftkId = doc.get(IndexItem.FTKID);
-        if (ftkId != null) {
+        if (ftkId != null)
           textQuery = IndexItem.FTKID + ":" + parentId;
-        }
+        
+        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
 
         if (textQuery != null) {
-          PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+		  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+		  task.setTreeQuery(true);
           result = task.pesquisar();
 
           if (result.length == 1) {

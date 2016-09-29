@@ -40,7 +40,7 @@ public class KeywordListImporter extends CancelableWorker {
       }
 
       try {
-        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(keyword));
+    	IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
         if (task.pesquisarTodos().length > 0) {
           result.add(keyword);
         }
@@ -67,16 +67,16 @@ public class KeywordListImporter extends CancelableWorker {
 
     progress.close();
 
-    if (App.get().marcadores.typedWords.size() == 0) {
+    if (App.get().appCase.marcadores.typedWords.size() == 0) {
       App.get().termo.addItem(Marcadores.HISTORY_DIV);
     }
 
     for (String word : result) {
       App.get().termo.addItem(word);
-      App.get().marcadores.typedWords.add(word);
+      App.get().appCase.marcadores.typedWords.add(word);
     }
 
-    App.get().marcadores.saveState();
+    App.get().appCase.marcadores.saveState();
 
     if (errors.size() > 0) {
       StringBuilder errorTerms = new StringBuilder();

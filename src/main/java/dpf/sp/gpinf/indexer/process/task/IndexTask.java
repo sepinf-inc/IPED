@@ -49,6 +49,8 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.InicializarBusca;
 import dpf.sp.gpinf.indexer.search.PesquisarIndice;
@@ -329,8 +331,10 @@ public class IndexTask extends BaseCarveTask {
       caseData.putCaseObject(SPLITED_IDS, splitedIds);
     }
 
-    IndexItem.loadMetadataTypes(new File(output, "conf"));
-    IndexItem.loadMetadataTypes(confDir);
+    if(IndexItem.getMetadataTypes().size() == 0){
+    	IndexItem.loadMetadataTypes(confDir);
+    	IndexItem.loadMetadataTypes(new File(output, "conf"));
+    }
     loadExtraAttributes();
 
   }
@@ -381,15 +385,13 @@ public class IndexTask extends BaseCarveTask {
     LOGGER.info("Excluindo nós da árvore vazios");
 
     try {
-      App.get().reader = DirectoryReader.open(worker.writer, false);
-      App.get().searcher = new IndexSearcher(App.get().reader);
-      BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-      PesquisarIndice searchAll = new PesquisarIndice(new MatchAllDocsQuery());
+      IPEDSource ipedCase = new IPEDSource(output.getAbsoluteFile());
+      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
       SearchResult result = searchAll.pesquisarTodos();
 
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
       for (int docID : result.docs) {
-        String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+        String parentIds = ipedCase.reader.document(docID).get(IndexItem.PARENTIDs);
         if(!parentIds.trim().isEmpty()) {
           for (String parentId : parentIds.trim().split(" ")) {
             doNotDelete[Integer.parseInt(parentId)] = true;            

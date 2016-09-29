@@ -52,7 +52,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
     if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
       try {
         int docId = ((SearchResultTableModel)table.getModel()).getSearchResult().docs[idx];
-        Document doc = App.get().searcher.doc(docId);
+        Document doc = App.get().appCase.searcher.doc(docId);
         if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
           result.setIcon(folderIcon);
         } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {

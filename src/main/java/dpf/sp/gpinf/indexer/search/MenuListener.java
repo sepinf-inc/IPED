@@ -77,45 +77,45 @@ public class MenuListener implements ActionListener {
       App.get().alterarDisposicao();
 
     } else if (e.getSource() == menu.marcarSelecionados) {
-      App.get().marcadores.multiSetting = true;
+      App.get().appCase.marcadores.multiSetting = true;
       int col = App.get().resultsTable.convertColumnIndexToView(1);
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(true, row, col);
       }
-      App.get().marcadores.multiSetting = false;
-      App.get().marcadores.saveState();
-      App.get().marcadores.atualizarGUI();
+      App.get().appCase.marcadores.multiSetting = false;
+      App.get().appCase.marcadores.saveState();
+      App.get().appCase.marcadores.atualizarGUI();
 
     } else if (e.getSource() == menu.desmarcarSelecionados) {
-      App.get().marcadores.multiSetting = true;
+      App.get().appCase.marcadores.multiSetting = true;
       int col = App.get().resultsTable.convertColumnIndexToView(1);
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(false, row, col);
       }
-      App.get().marcadores.multiSetting = false;
-      App.get().marcadores.saveState();
-      App.get().marcadores.atualizarGUI();
+      App.get().appCase.marcadores.multiSetting = false;
+      App.get().appCase.marcadores.saveState();
+      App.get().appCase.marcadores.atualizarGUI();
 
     }
     if (e.getSource() == menu.lerSelecionados) {
-      App.get().marcadores.multiSetting = true;
+      App.get().appCase.marcadores.multiSetting = true;
       int col = App.get().resultsTable.convertColumnIndexToView(2);
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(true, row, col);
       }
-      App.get().marcadores.multiSetting = false;
-      App.get().marcadores.saveState();
-      App.get().marcadores.atualizarGUI();
+      App.get().appCase.marcadores.multiSetting = false;
+      App.get().appCase.marcadores.saveState();
+      App.get().appCase.marcadores.atualizarGUI();
 
     } else if (e.getSource() == menu.deslerSelecionados) {
-      App.get().marcadores.multiSetting = true;
+      App.get().appCase.marcadores.multiSetting = true;
       int col = App.get().resultsTable.convertColumnIndexToView(2);
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(false, row, col);
       }
-      App.get().marcadores.multiSetting = false;
-      App.get().marcadores.saveState();
-      App.get().marcadores.atualizarGUI();
+      App.get().appCase.marcadores.multiSetting = false;
+      App.get().appCase.marcadores.saveState();
+      App.get().appCase.marcadores.atualizarGUI();
 
     } else if (e.getSource() == menu.exportarSelecionados) {
       fileChooser.setFileFilter(defaultFilter);
@@ -156,9 +156,9 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.copiarMarcados) {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-      for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-        if (App.get().marcadores.selected[App.get().getIDs()[docId]]
-            && !App.get().viewToRawMap.isView(App.get().getIDs()[docId])) {
+      for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
+        if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]
+            && !App.get().appCase.viewToRawMap.isView(App.get().appCase.ids[docId])) {
           uniqueSelectedIds.add(docId);
         }
 
@@ -175,8 +175,8 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.exportarMarcados) {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-      for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-        if (App.get().marcadores.selected[App.get().getIDs()[docId]]) {
+      for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
+        if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]) {
           uniqueSelectedIds.add(docId);
         }
       }
@@ -189,8 +189,8 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.exportCheckedToZip) {
         ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-        for (int docId = 0; docId < App.get().reader.maxDoc(); docId++) {
-          if (App.get().marcadores.selected[App.get().getIDs()[docId]]) {
+        for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
+          if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]) {
             uniqueSelectedIds.add(docId);
           }
         }
@@ -210,18 +210,18 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.limparBuscas) {
-      App.get().marcadores.typedWords = new LinkedHashSet<String>();
+      App.get().appCase.marcadores.typedWords = new LinkedHashSet<String>();
       App.get().termo.removeAllItems();
       for (String word : App.get().palavrasChave) {
         App.get().termo.addItem(word);
       }
-      App.get().marcadores.saveState();
+      App.get().appCase.marcadores.saveState();
 
     } else if (e.getSource() == menu.carregarMarcadores) {
-      App.get().marcadores.askAndLoadState();
+      App.get().appCase.marcadores.askAndLoadState();
 
     } else if (e.getSource() == menu.salvarMarcadores) {
-      App.get().marcadores.askAndSaveState();
+      App.get().appCase.marcadores.askAndSaveState();
 
     } else if (e.getSource() == menu.copiarPreview) {
       Viewer viewer = App.get().getParams().compositeViewer.getCurrentViewer();
@@ -278,7 +278,7 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportTerms) {
-      new ExportIndexedTerms(App.get().reader).export();
+      new ExportIndexedTerms(App.get().appCase.reader).export();
     }
 
   }

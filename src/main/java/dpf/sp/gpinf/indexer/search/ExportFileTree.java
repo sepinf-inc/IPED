@@ -58,7 +58,7 @@ public class ExportFileTree extends CancelableWorker {
   private int[] getItemsToExport() {
 
     try {
-      Document doc = App.get().reader.document(baseDocId);
+      Document doc = App.get().appCase.reader.document(baseDocId);
 
       String id = doc.get(IndexItem.FTKID);
       if (id == null) {
@@ -66,12 +66,14 @@ public class ExportFileTree extends CancelableWorker {
       }
 
       String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id;
+      String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+      textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")";
 
-      PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery));
+      IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
       SearchResult result = task.pesquisar();
 
       if (onlyChecked) {
-        result = task.filtrarSelecionados(result);
+    	  result = App.get().appCase.marcadores.filtrarSelecionados(result, App.get().appCase);
       }
 
       return result.docs;
@@ -93,12 +95,17 @@ public class ExportFileTree extends CancelableWorker {
       parentCache.put(docId, exportedItem);
     } else {
       try {
-        Document doc = App.get().reader.document(docId);
+        Document doc = App.get().appCase.reader.document(docId);
 
         String parentIdStr = doc.get(IndexItem.PARENTID);
         int parentId = Integer.parseInt(parentIdStr);
+        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+        
         String textQuery = IndexItem.ID + ":" + parentId;
-        PesquisarIndice task = new PesquisarIndice(PesquisarIndice.getQuery(textQuery), true);
+        textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")";
+        
+        IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+        task.setTreeQuery(true);
         SearchResult parent = task.pesquisar();
         if (parent.length == 0) {
           return null;
@@ -149,8 +156,7 @@ public class ExportFileTree extends CancelableWorker {
     File dst = null;
     EvidenceFile item = null;
     try {
-      Document doc = App.get().reader.document(docId);
-      item = IndexItem.getItem(doc, new File(App.get().codePath).getParentFile(), App.get().sleuthCase, false);
+      item = App.get().appCase.getItemByLuceneID(docId);
 
       String dstName = Util.getValidFilename(item.getName());
       dst = new File(subdir, dstName);
@@ -169,6 +175,7 @@ public class ExportFileTree extends CancelableWorker {
 
     } catch (Exception e1) {
       e1.printStackTrace();
+      
     } finally {
       item.dispose();
     }
