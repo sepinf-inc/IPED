@@ -70,7 +70,6 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +102,6 @@ public class App extends JFrame implements WindowListener {
   FilterManager filterManager;
   ArrayList<String> palavrasChave;
   HashSet<String> keywordSet = new HashSet<String>();
-  Set<String> highlightTerms;
-  Query highlightQuery;
 
   public JDialog dialogBar;
   JProgressBar progressBar;
@@ -224,7 +221,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/1-1756/indexador/lib/iped-utils-0.5.jar";
+      //codePath = "E:/nassif/caso1/indexador/lib/iped-search-app.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
@@ -246,15 +243,7 @@ public class App extends JFrame implements WindowListener {
 
   public AppSearchParams getParams() {
     return this.appSearchParams;
-  }
-
-  public Analyzer getAnalyzer() {
-    return this.appSearchParams.analyzer;
-  }
-
-  public void setAnalyzer(Analyzer analyzer) {
-    this.appSearchParams.analyzer = analyzer;
-  }
+  }  
 
   public Query getQuery() {
     return this.appSearchParams.query;

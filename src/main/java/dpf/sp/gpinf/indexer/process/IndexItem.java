@@ -580,10 +580,13 @@ public class IndexItem {
         evidence.setParentId(value);
       }
       
-      //TODO obter source corretamente
-      DataSource dataSource = new DataSource(null);
-      dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
-      evidence.setDataSource(dataSource);
+      value = doc.get(IndexItem.EVIDENCE_UUID);
+      if(value != null){
+    	//TODO obter source corretamente
+          DataSource dataSource = new DataSource(null);
+          dataSource.setUUID(value);
+          evidence.setDataSource(dataSource);
+      }
 
       value = doc.get(IndexItem.TYPE);
       if (value != null) {

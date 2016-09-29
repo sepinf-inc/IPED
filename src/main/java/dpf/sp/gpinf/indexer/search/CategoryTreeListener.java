@@ -21,12 +21,15 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
   BooleanQuery query;
   private HashSet<TreePath> selection = new HashSet<TreePath>();
-  private TreePath root = new TreePath(App.get().categoryTree.getModel().getRoot());
+  private TreePath root;
   private long collapsed = 0;
 
   @Override
   public void valueChanged(TreeSelectionEvent evt) {
 
+	if(root == null)
+		root = new TreePath(App.get().categoryTree.getModel().getRoot());
+	  
     if (System.currentTimeMillis() - collapsed < 100) {
       //if(evt.getPath().getLastPathComponent().equals(App.get().categoryTree.getModel().getRoot()))
       App.get().categoryTree.setSelectionPaths(selection.toArray(new TreePath[0]));

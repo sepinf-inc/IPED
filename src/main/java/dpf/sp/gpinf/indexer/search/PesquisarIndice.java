@@ -154,8 +154,8 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 					
 				}
 
-				App.get().highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
-				App.get().highlightQuery = searcher.query;
+				App.get().getSearchParams().highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
+				App.get().setQuery(searcher.query);
 
 			} catch (Throwable e) {
 				e.printStackTrace();

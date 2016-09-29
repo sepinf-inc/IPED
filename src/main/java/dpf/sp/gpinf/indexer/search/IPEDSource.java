@@ -230,6 +230,10 @@ public class IPEDSource implements Closeable{
 		return categories;
 	}
 	
+	public Analyzer getAnalyzer() {
+	    return analyzer;
+	}
+	
 	protected IPEDSource getAtomicCase(int docID){
 		return this;
 	}

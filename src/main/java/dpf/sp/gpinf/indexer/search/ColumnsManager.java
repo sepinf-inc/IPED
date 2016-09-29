@@ -73,6 +73,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        IndexItem.SUBITEM,
 	        IndexItem.TIMEOUT,
 	        IndexItem.TREENODE,
+	        IndexItem.EVIDENCE_UUID,
 	        IndexerDefaultParser.PARSER_EXCEPTION
 	    };
 	
