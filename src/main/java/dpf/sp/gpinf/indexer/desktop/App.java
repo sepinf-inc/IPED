@@ -560,8 +560,6 @@ public class App extends JFrame implements WindowListener {
     dialogBar.getContentPane().add(progressBar);
     appSearchParams.dialogBar = dialogBar;
 
-    menu = new MenuClass();
-
     appletListener = new AppListener();
     if (!isFTKReport) {
       recursiveTreeList.addActionListener(treeListener);
