@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Component;
-import java.awt.Desktop;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -29,7 +28,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
 import java.text.Collator;
 import java.util.List;
 
@@ -39,12 +37,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 
-import org.apache.lucene.document.Document;
-
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -124,36 +117,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
   @Override
   public void mouseReleased(MouseEvent evt) {
     if (evt.getClickCount() == 2) {
-
-      new Thread() {
-        public void run() {
-          int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
-          File file = null;
-          try {
-        	  EvidenceFile item = App.get().appCase.getItemByLuceneID(docId);
-              file = item.getTempFile();
-              file.setReadOnly();
-
-            if (file != null) {
-              Desktop.getDesktop().open(file.getCanonicalFile());
-            }
-
-          } catch (Exception e) {
-            // e.printStackTrace();
-            try {
-              if (System.getProperty("os.name").startsWith("Windows")) {
-                Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""});
-              } else {
-                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()});
-              }
-
-            } catch (Exception e2) {
-              e2.printStackTrace();
-              CopiarArquivos.salvarArquivo(docId);
-            }
-          }
-        }
-      }.start();
+    	int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
+    	ExternalFileOpen.open(docId);
 
     } else if (evt.isPopupTrigger()) {
       App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());

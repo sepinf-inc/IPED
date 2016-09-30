@@ -18,11 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Desktop;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -35,8 +33,6 @@ import org.apache.lucene.document.Document;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
 
 public class ParentTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
@@ -133,36 +129,8 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   @Override
   public void mouseReleased(MouseEvent evt) {
     if (evt.getClickCount() == 2 && selectedIndex != -1) {
-
-      new Thread() {
-        public void run() {
-          int docId = results.docs[selectedIndex];
-          File file = null;
-          try {
-        	  EvidenceFile item = App.get().appCase.getItemByLuceneID(docId);
-              file = item.getTempFile();
-              file.setReadOnly();
-
-            if (file != null) {
-              Desktop.getDesktop().open(file.getCanonicalFile());
-            }
-
-          } catch (Exception e) {
-            try {
-              // Windows Only
-              Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""});
-            } catch (Exception e2) {
-              try {
-                // Linux Only
-                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()});
-              } catch (Exception e3) {
-                CopiarArquivos.salvarArquivo(docId);
-              }
-            }
-          }
-        }
-      }.start();
-
+    	int docId = results.docs[selectedIndex];
+    	ExternalFileOpen.open(docId);
     }
 
   }
