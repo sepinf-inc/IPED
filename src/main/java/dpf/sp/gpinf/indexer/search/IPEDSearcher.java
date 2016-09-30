@@ -117,7 +117,7 @@ public class IPEDSearcher {
 
 	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
-		int[] ids = ipedCase.ids;
+		int[] ids = ipedCase.getIds();
 		Set<Integer> splitedIds = ipedCase.splitedDocs;
 		for (int i = 0; i < prevResult.length; i++) {
 			int id = ids[prevResult.docs[i]];
@@ -141,7 +141,7 @@ public class IPEDSearcher {
 
 		TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
 		for (int i = 0; i < prevResult.length; i++) {
-		    int id = ipedCase.ids[prevResult.docs[i]];
+		    int id = ipedCase.getIds()[prevResult.docs[i]];
 			Integer original = ipedCase.viewToRawMap.getRaw(id);
 			if (original == null) {
 				if (ipedCase.viewToRawMap.isRaw(id)) {

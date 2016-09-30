@@ -94,7 +94,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 			numFilters++;
 		}
 		
-		if (!App.get().isFTKReport) {
+		if (!App.get().appCase.isFTKReport) {
 		      Query treeQuery = App.get().treeListener.treeQuery;
 		      if (App.get().recursiveTreeList.isSelected())
 		    	  treeQuery = App.get().treeListener.recursiveTreeQuery;

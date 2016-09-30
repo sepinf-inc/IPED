@@ -85,7 +85,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.marcadores.setValueAtId(value, App.get().appCase.ids[results.docs[row]], col, true);
+    App.get().appCase.marcadores.setValueAtId(value, App.get().appCase.getIds()[results.docs[row]], col, true);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       return row + 1;
       
     }else if (col == 1) {
-        return App.get().appCase.marcadores.selected[App.get().appCase.ids[results.docs[row]]];
+        return App.get().appCase.marcadores.selected[App.get().appCase.getIds()[results.docs[row]]];
       
     } else {
       try {

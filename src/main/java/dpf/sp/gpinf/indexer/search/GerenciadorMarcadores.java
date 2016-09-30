@@ -180,7 +180,7 @@ public class GerenciadorMarcadores implements ActionListener {
           return;
         }
         progress.setProgress(++i);
-        String hash = app.appCase.searcher.doc(app.appCase.docs[id]).get(IndexItem.HASH);
+        String hash = app.appCase.searcher.doc(app.appCase.getDocs()[id]).get(IndexItem.HASH);
         if (hash != null) {
           query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
         }
@@ -197,7 +197,7 @@ public class GerenciadorMarcadores implements ActionListener {
       System.out.println("Duplicados incluídos:" + duplicates.length);
 
       for (int doc : duplicates.docs) {
-        uniqueSelectedIds.add(app.appCase.ids[doc]);
+        uniqueSelectedIds.add(app.appCase.getIds()[doc]);
       }
 
     } catch (Exception e) {
@@ -239,7 +239,7 @@ public class GerenciadorMarcadores implements ActionListener {
       } else if (highlighted.isSelected()) {
         for (Integer row : App.get().resultsTable.getSelectedRows()) {
           int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-          int id = app.appCase.ids[app.results.docs[rowModel]];
+          int id = app.appCase.getIds()[app.results.docs[rowModel]];
           uniqueSelectedIds.add(id);
 
           Integer id2 = app.appCase.viewToRawMap.getRaw(id);

@@ -232,7 +232,7 @@ public class Marcadores implements Serializable {
 	
 	public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 	  	result = result.clone();
-	  	int[] ids = ipedCase.ids;
+	  	int[] ids = ipedCase.getIds();
 	  	
 	  	int[] labelIds = new int[labelNames.size()];
 	  	int i = 0;
@@ -251,7 +251,7 @@ public class Marcadores implements Serializable {
 	  
 	  public SearchResult filtrarSemEComMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 		  	result = result.clone();
-		  	int[] ids = ipedCase.ids;
+		  	int[] ids = ipedCase.getIds();
 		  	
 		  	int[] labelIds = new int[labelNames.size()];
 		  	int i = 0;
@@ -270,7 +270,7 @@ public class Marcadores implements Serializable {
 	  
 	  public SearchResult filtrarSemMarcadores(SearchResult result, IPEDSource ipedCase){
 		  	result = result.clone();
-			int[] ids = ipedCase.ids;
+			int[] ids = ipedCase.getIds();
 			for (int i = 0; i < result.length; i++)
 				if (hasLabel(ids[result.docs[i]])) {
 					result.docs[i] = -1;
@@ -282,7 +282,7 @@ public class Marcadores implements Serializable {
 	
 	  public SearchResult filtrarSelecionados(SearchResult result, IPEDSource ipedCase) throws Exception {
 		  	result = result.clone();
-			int[] ids = ipedCase.ids;
+			int[] ids = ipedCase.getIds();
 			for (int i = 0; i < result.length; i++)
 				if (!selected[ids[result.docs[i]]]) {
 					result.docs[i] = -1;

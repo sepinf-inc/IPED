@@ -181,7 +181,7 @@ public class IPEDReader extends DataSourceReader {
       }
       boolean[] isAttachToAdd = new boolean[ipedCase.lastId + 1];
       for (int id = 0; id <= ipedCase.lastId; id++) {
-        Document doc = ipedCase.reader.document(ipedCase.docs[id]);
+        Document doc = ipedCase.reader.document(ipedCase.getDocs()[id]);
         if (doc != null && doc.get(IndexItem.PARENTID) != null) {
           if (isSelectedPSTEmail[Integer.parseInt(doc.get(IndexItem.PARENTID))]) {
             isAttachToAdd[id] = true;

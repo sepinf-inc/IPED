@@ -138,7 +138,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	  App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 
-    if (!App.get().isFTKReport) {
+    if (!App.get().appCase.isFTKReport) {
       App.get().tree.setModel(treeModel);
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());

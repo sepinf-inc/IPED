@@ -138,15 +138,15 @@ public class RowComparator implements Comparator<Integer> {
 		b = app.results.docs[b];
 		
 		if(col == 1){
-		    if (app.appCase.marcadores.selected[app.appCase.ids[a]] == app.appCase.marcadores.selected[app.appCase.ids[b]])
+		    if (app.appCase.marcadores.selected[app.appCase.getIds()[a]] == app.appCase.marcadores.selected[app.appCase.getIds()[b]])
               return 0;
-          else if (app.appCase.marcadores.selected[app.appCase.ids[a]] == true)
+          else if (app.appCase.marcadores.selected[app.appCase.getIds()[a]] == true)
               return -1;
           else
               return 1;
 		
 		}else if(bookmarkCol)
-          return app.appCase.marcadores.getLabels(app.appCase.ids[a]).compareTo(app.appCase.marcadores.getLabels(app.appCase.ids[b]));
+          return app.appCase.marcadores.getLabels(app.appCase.getIds()[a]).compareTo(app.appCase.marcadores.getLabels(app.appCase.getIds()[b]));
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);

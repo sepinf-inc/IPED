@@ -126,11 +126,11 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	protected IPEDSource getAtomicCase(int docID){
+	protected IPEDSource getAtomicCase(int luceneId){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			maxDoc += iCase.reader.maxDoc();
-			if(docID < maxDoc)
+			if(luceneId < maxDoc)
 				return iCase;
 		}
 		return null;
@@ -157,10 +157,10 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	public EvidenceFile getItemByLuceneID(int docID){
+	public EvidenceFile getItemByLuceneID(int luceneId){
 		try {
-			Document doc = searcher.doc(docID);
-			IPEDSource atomicCase = getAtomicCase(docID);
+			Document doc = searcher.doc(luceneId);
+			IPEDSource atomicCase = getAtomicCase(luceneId);
 			EvidenceFile item = IndexItem.getItem(doc, atomicCase.getModuleDir(), atomicCase.sleuthCase, false);
 			return item;
 			

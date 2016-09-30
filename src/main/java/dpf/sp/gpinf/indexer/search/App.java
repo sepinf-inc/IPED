@@ -133,7 +133,6 @@ public class App extends JFrame implements WindowListener {
   JPanel topPanel;
   JPanel multiFilterAlert;
   boolean disposicaoVertical = false;
-  boolean isFTKReport;
 
   ResultTableModel resultsModel;
   List resultSortKeys;
@@ -515,7 +514,7 @@ public class App extends JFrame implements WindowListener {
     treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
     defaultTabColor = treeTab.getBackgroundAt(0);
 
-    isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
+    boolean isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
 
     if (!isFTKReport) {
       recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");

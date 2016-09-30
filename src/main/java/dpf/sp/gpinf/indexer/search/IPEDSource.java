@@ -62,21 +62,33 @@ public class IPEDSource implements Closeable{
 	public IndexSearcher searcher;
 	Analyzer analyzer;
 	
+	private ExecutorService searchExecutorService;
+	
 	protected ArrayList<String> categories = new ArrayList<String>(); 
 	
 	public Marcadores marcadores;
 	
-	public int[] ids, docs, textSizes;
-	
-	Set<Integer> splitedDocs = Collections.EMPTY_SET;
-	VersionsMap viewToRawMap = new VersionsMap(0);
+	int[] ids, docs, textSizes;
 	
 	int totalItens = 0;
 	public int lastId = 0;
 	
-	ExecutorService searchExecutorService;
+	Set<Integer> splitedDocs = Collections.EMPTY_SET;
+	VersionsMap viewToRawMap = new VersionsMap(0);
 	
 	boolean isFTKReport = false;
+	
+	public int[] getIds() {
+		return ids;
+	}
+
+	public int[] getDocs() {
+		return docs;
+	}
+
+	public int[] getTextSizes() {
+		return textSizes;
+	}
 	
 	public IPEDSource(File casePath) {
 		
@@ -234,7 +246,7 @@ public class IPEDSource implements Closeable{
 	    return analyzer;
 	}
 	
-	protected IPEDSource getAtomicCase(int docID){
+	protected IPEDSource getAtomicCase(int luceneId){
 		return this;
 	}
 	

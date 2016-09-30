@@ -157,8 +157,8 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.copiarMarcados) {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
       for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
-        if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]
-            && !App.get().appCase.viewToRawMap.isView(App.get().appCase.ids[docId])) {
+        if (App.get().appCase.marcadores.selected[App.get().appCase.getIds()[docId]]
+            && !App.get().appCase.viewToRawMap.isView(App.get().appCase.getIds()[docId])) {
           uniqueSelectedIds.add(docId);
         }
 
@@ -176,7 +176,7 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.exportarMarcados) {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
       for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
-        if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]) {
+        if (App.get().appCase.marcadores.selected[App.get().appCase.getIds()[docId]]) {
           uniqueSelectedIds.add(docId);
         }
       }
@@ -190,7 +190,7 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.exportCheckedToZip) {
         ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
         for (int docId = 0; docId < App.get().appCase.reader.maxDoc(); docId++) {
-          if (App.get().appCase.marcadores.selected[App.get().appCase.ids[docId]]) {
+          if (App.get().appCase.marcadores.selected[App.get().appCase.getIds()[docId]]) {
             uniqueSelectedIds.add(docId);
           }
         }
