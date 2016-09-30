@@ -172,16 +172,11 @@ public class GalleryModel extends AbstractTableModel {
 
           String export = doc.get(IndexItem.EXPORT);
           if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
-
-            image = getThumbFromFTKReport(export);
-            if (image == null) {
-              File file = Util.getRelativeFile(App.get().appCase.getAtomicCase(docId).getCaseDir().getAbsolutePath(), export);
-              stream = Util.getStream(file, doc);
-            }
-
+            image = getThumbFromFTKReport(App.get().appCase.getAtomicCase(docId).getCaseDir().getAbsolutePath(), export);
           }
+          
           if (image == null && stream == null && isSupportedImage(mediaType)) {
-        	  stream = Util.getSleuthStream(App.get().appCase.getAtomicCase(docId).getSleuthCase(), doc);
+        	  stream = App.get().appCase.getItemByID(id).getBufferedStream();
           }
 
           if (stream != null) {
@@ -269,7 +264,7 @@ public class GalleryModel extends AbstractTableModel {
     }
   }
 
-  private BufferedImage getThumbFromFTKReport(String export) {
+  private BufferedImage getThumbFromFTKReport(String basePath, String export) {
 
     BufferedImage image = null;
     try {
@@ -286,7 +281,7 @@ public class GalleryModel extends AbstractTableModel {
       File file = null;
       if (i1 > -1) {
         String thumbPath = export.substring(0, i1) + "thumbnails/" + nome;
-        file = Util.getRelativeFile(App.get().codePath + "/../..", thumbPath);
+        file = Util.getRelativeFile(basePath, thumbPath);
       }
       if (file != null && file.exists()) {
         image = ImageIO.read(file);

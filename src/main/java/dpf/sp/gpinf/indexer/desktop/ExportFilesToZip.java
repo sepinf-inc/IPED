@@ -72,14 +72,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         String dstName = doc.get(IndexItem.NAME);
         //dstName += "." + doc.get(IndexItem.TYPE);
 
-        InputStream in;
-        String export = doc.get(IndexItem.EXPORT);
-        if (export != null && !export.isEmpty()) {
-          File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
-          in = Util.getStream(src, doc);
-        } else {
-          in = Util.getSleuthStream(App.get().appCase.getSleuthCase(), doc);
-        }
+        InputStream in = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
 
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName);
         

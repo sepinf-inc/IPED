@@ -78,18 +78,8 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
         Document doc = App.get().appCase.getSearcher().doc(docId);
         String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
-        String export = doc.get(IndexItem.EXPORT);
 
-        InputStream in;
-        if (export != null && !export.isEmpty()) {
-          File src = Util.getRelativeFile(App.get().codePath + "/../..", export);
-          if (doc.get(IndexItem.OFFSET) == null) {
-            dstName = addExtension(src.getName(), dstName);
-          }
-          in = Util.getStream(src, doc);
-        } else {
-          in = Util.getSleuthStream(App.get().appCase.getSleuthCase(), doc);
-        }
+        InputStream in = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
 
         File dst = new File(subdir, dstName);
         int num = 1;
