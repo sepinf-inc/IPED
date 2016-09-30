@@ -530,7 +530,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.search.App</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.desktop.App</mainClass>
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>
