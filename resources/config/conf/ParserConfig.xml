@@ -41,7 +41,6 @@
         <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
         <parser class="org.apache.tika.parser.mp3.Mp3Parser"></parser>
-        <parser class="org.apache.tika.parser.mp4.MP4Parser"></parser>
         <parser class="org.apache.tika.parser.odf.OpenDocumentParser"></parser>
         <parser class="org.apache.tika.parser.pdf.PDFParser"></parser>
         <parser class="org.apache.tika.parser.pkg.CompressorParser"></parser>
