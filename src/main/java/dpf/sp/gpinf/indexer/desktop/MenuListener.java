@@ -124,7 +124,7 @@ public class MenuListener implements ActionListener {
         File dir = fileChooser.getSelectedFile();
         ArrayList<Integer> selectedIds = new ArrayList<Integer>();
         for (int row : App.get().resultsTable.getSelectedRows()) {
-          int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(row)];
+          int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(row)];
           selectedIds.add(docId);
           // exporta versão nao selecionada caso exista
 					/*Integer docId2 = App.get().viewToRawMap.getRaw(docId);
@@ -141,7 +141,7 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.copiarSelecionados) {
       ArrayList<Integer> selectedIds = new ArrayList<Integer>();
       for (int row : App.get().resultsTable.getSelectedRows()) {
-        selectedIds.add(App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(row)]);
+        selectedIds.add(App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(row)]);
       }
 
       fileChooser.setFileFilter(csvFilter);
@@ -273,7 +273,7 @@ public class MenuListener implements ActionListener {
 
       int selIdx = App.get().resultsTable.getSelectedRow();
       if (selIdx != -1) {
-        int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(selIdx)];
+        int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(selIdx)];
         App.get().treeListener.navigateToParent(docId);
       }
 

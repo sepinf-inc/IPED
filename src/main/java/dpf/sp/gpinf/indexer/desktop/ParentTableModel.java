@@ -52,7 +52,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
 
   @Override
   public int getRowCount() {
-    return results.length;
+    return results.getLength();
   }
   
   @Override
@@ -83,7 +83,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.getMarcadores().setValueAtId(value, App.get().appCase.getIds()[results.docs[row]], col, true);
+    App.get().appCase.getMarcadores().setValueAtId(value, App.get().appCase.getIds()[results.getLuceneIds()[row]], col, true);
   }
 
   @Override
@@ -92,11 +92,11 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       return row + 1;
       
     }else if (col == 1) {
-        return App.get().appCase.getMarcadores().selected[App.get().appCase.getIds()[results.docs[row]]];
+        return App.get().appCase.getMarcadores().selected[App.get().appCase.getIds()[results.getLuceneIds()[row]]];
       
     } else {
       try {
-        Document doc = App.get().appCase.getSearcher().doc(results.docs[row]);
+        Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
         return doc.get(IndexItem.NAME);
       } catch (Exception e) {
         // e.printStackTrace();
@@ -129,7 +129,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   @Override
   public void mouseReleased(MouseEvent evt) {
     if (evt.getClickCount() == 2 && selectedIndex != -1) {
-    	int docId = results.docs[selectedIndex];
+    	int docId = results.getLuceneIds()[selectedIndex];
     	ExternalFileOpen.open(docId);
     }
 
@@ -147,7 +147,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
     selectedIndex = lsm.getMinSelectionIndex();
     App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
-    FileProcessor parsingTask = new FileProcessor(results.docs[selectedIndex], false);
+    FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
     parsingTask.execute();
 
     App.get().subItemModel.fireTableDataChanged();
@@ -183,7 +183,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       }
     }
 
-    if (results.length > 0) {
+    if (results.getLength() > 0) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {

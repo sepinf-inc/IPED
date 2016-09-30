@@ -32,12 +32,11 @@ import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.desktop.PesquisarIndice;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class IPEDSearcher {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSearcher.class);
 		
 	IPEDSource ipedCase;
 	Query query;

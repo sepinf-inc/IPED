@@ -141,8 +141,8 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 		  task.setTreeQuery(true);
           result = task.pesquisar();
 
-          if (result.length == 1) {
-            docId = result.docs[0];
+          if (result.getLength() == 1) {
+            docId = result.getLuceneIds()[0];
             path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
           }
         }
@@ -151,7 +151,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
         e.printStackTrace();
       }
 
-    } while (result.length == 1 && textQuery != null);
+    } while (result.getLength() == 1 && textQuery != null);
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
 

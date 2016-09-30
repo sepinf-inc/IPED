@@ -195,9 +195,9 @@ public class GerenciadorMarcadores implements ActionListener {
       progress.setIndeterminate(true);
       SearchResult duplicates = task.pesquisar();
 
-      System.out.println("Duplicados incluídos:" + duplicates.length);
+      System.out.println("Duplicados incluídos:" + duplicates.getLength());
 
-      for (int doc : duplicates.docs) {
+      for (int doc : duplicates.getLuceneIds()) {
         uniqueSelectedIds.add(app.appCase.getIds()[doc]);
       }
 
@@ -240,7 +240,7 @@ public class GerenciadorMarcadores implements ActionListener {
       } else if (highlighted.isSelected()) {
         for (Integer row : App.get().resultsTable.getSelectedRows()) {
           int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-          int id = app.appCase.getIds()[app.results.docs[rowModel]];
+          int id = app.appCase.getIds()[app.results.getLuceneIds()[rowModel]];
           uniqueSelectedIds.add(id);
 
           Integer id2 = app.appCase.getViewToRawMap().getRaw(id);

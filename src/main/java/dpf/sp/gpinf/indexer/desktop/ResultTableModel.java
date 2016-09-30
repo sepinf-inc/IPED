@@ -108,13 +108,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public int getRowCount() {
-    return App.get().results.length;
+    return App.get().results.getLength();
   }
 
   @Override
   public String getColumnName(int col) {
     if (col == 0) {
-      return String.valueOf(App.get().results.length);
+      return String.valueOf(App.get().results.getLength());
     } else {
       return columnNames[col];
     }
@@ -149,7 +149,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public void setValueAt(Object value, int row, int col) {
-    app.appCase.getMarcadores().setValueAtId(value, app.appCase.getIds()[app.results.docs[row]], col, true);
+    app.appCase.getMarcadores().setValueAtId(value, app.appCase.getIds()[app.results.getLuceneIds()[row]], col, true);
 
   }
 
@@ -178,25 +178,25 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     if (col == 0) {
       value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
     } else if (col == 1) {
-      return app.appCase.getMarcadores().selected[app.appCase.getIds()[app.results.docs[row]]];
+      return app.appCase.getMarcadores().selected[app.appCase.getIds()[app.results.getLuceneIds()[row]]];
     } else {
       try {
         int fCol = col - fixedCols.length;
         String field = fields[fCol];
 
         if (field.equals(SCORE_COL)) {
-          return app.results.scores[row];
+          return app.results.getScores()[row];
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMarcadores().getLabels(app.appCase.getIds()[app.results.docs[row]]);
+          return app.appCase.getMarcadores().getLabels(app.appCase.getIds()[app.results.getLuceneIds()[row]]);
         }
 
-        int docId = App.get().results.docs[row];
-        if (App.get().results.docs[row] != lastDocRead) {
+        int docId = App.get().results.getLuceneIds()[row];
+        if (App.get().results.getLuceneIds()[row] != lastDocRead) {
           doc = app.appCase.getSearcher().doc(docId);
         }
-        lastDocRead = App.get().results.docs[row];
+        lastDocRead = App.get().results.getLuceneIds()[row];
 
         value = doc.get(field);
         if (value == null) {

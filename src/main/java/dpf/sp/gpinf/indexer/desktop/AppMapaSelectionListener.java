@@ -20,10 +20,10 @@ public class AppMapaSelectionListener implements MapSelectionListener {
         columns.add("id");
 
         t.getSelectionModel().setValueIsAdjusting(true);
-        for (int i = 0; i < results.docs.length; i++) {
+        for (int i = 0; i < results.getLength(); i++) {
         	try {
         		pos = -1;
-    			doc = App.get().appCase.getSearcher().doc(results.docs[i], columns);
+    			doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[i], columns);
     			for (int j = 0; j < mids.length; j++) {
     	        	if(mids[j].equals(doc.get("id"))){
     	        		pos = i;

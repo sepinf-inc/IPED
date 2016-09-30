@@ -132,10 +132,10 @@ public class RowComparator implements Comparator<Integer> {
 			throw new RuntimeException("Ordenação cancelada.");
 		
 		if(scoreCol)
-          return (int)(app.results.scores[a] - app.results.scores[b]);
+          return (int)(app.results.getScores()[a] - app.results.getScores()[b]);
 		
-		a = app.results.docs[a];
-		b = app.results.docs[b];
+		a = app.results.getLuceneIds()[a];
+		b = app.results.getLuceneIds()[b];
 		
 		if(col == 1){
 		    if (app.appCase.getMarcadores().selected[app.appCase.getIds()[a]] == app.appCase.getMarcadores().selected[app.appCase.getIds()[b]])

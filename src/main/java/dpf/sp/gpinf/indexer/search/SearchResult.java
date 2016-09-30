@@ -23,16 +23,43 @@ import java.util.Comparator;
 
 import org.apache.lucene.search.ScoreDoc;
 
+/**
+ * Classe que armazena os resultados de uma pesquisa. Decompõe ScoreDoc[] para descartar 
+ * atributo desnecessário e header do objeto, ocupando 1/3 da memória original.
+ * 
+ * @author Nassif
+ *
+ */
 public class SearchResult {
 
-	public int length = 0;
-	public int[] docs;
-	public float[] scores;
+	int length = 0;
+	int[] docs;
+	float[] scores;
 
 	public SearchResult(int num) {
 		this.length = num;
 		docs = new int[num];
 		scores = new float[num];
+	}
+	
+	public int[] getLuceneIds(){
+		return docs;
+	}
+	
+	public int getLength(){
+		return length;
+	}
+	
+	public float[] getScores(){
+		return scores;
+	}
+	
+	public static SearchResult buildSearchResult(int[] docs, float[] scores){
+		SearchResult s = new SearchResult(0);
+		s.docs = docs;
+		s.scores = scores;
+		s.length = docs.length;
+		return s;
 	}
 
 	public SearchResult addResults(ScoreDoc[] scoreDocs) {

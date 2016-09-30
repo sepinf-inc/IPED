@@ -119,7 +119,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       // lista todos os itens
       PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
       pesquisa.execute();
-      App.get().appCase.setTotalItens(pesquisa.get().length);
+      App.get().appCase.setTotalItens(pesquisa.get().getLength());
       
       System.out.println("Finished " + new Date());
       
@@ -136,7 +136,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
   public void done() {
 	  App.get().appCase.getMarcadores().loadState();
 	  App.get().appCase.getMarcadores().atualizarGUI();
-	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
+	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.getLength());
 	  App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 

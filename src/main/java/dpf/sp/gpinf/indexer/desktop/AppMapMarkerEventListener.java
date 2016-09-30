@@ -16,10 +16,10 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         
         //procura pela posição correspondente na tabela do item clicado no mapa
         SearchResult results = App.get().getResults();
-        for (int i = 0; i < results.docs.length; i++) {
+        for (int i = 0; i < results.getLength(); i++) {
         	org.apache.lucene.document.Document doc = null;
         	try {
-				doc = App.get().appCase.getSearcher().doc(results.docs[i]);
+				doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[i]);
 	        	if(doc.get("id").equals(Integer.toString(mid))){
 	        		pos = i;
 	        		break;

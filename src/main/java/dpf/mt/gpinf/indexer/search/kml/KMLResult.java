@@ -82,8 +82,8 @@ public class KMLResult {
 		  SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		  df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
-		  for (int i = 0; i < results.docs.length; i++) {
-			  doc =  app.appCase.getSearcher().doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
+		  for (int i = 0; i < results.getLength(); i++) {
+			  doc =  app.appCase.getSearcher().doc(results.getLuceneIds()[app.getResultsTable().convertRowIndexToModel(i)]);
 			  
 			  String lat = doc.get("GPS Latitude");
 			  if(lat!=null){

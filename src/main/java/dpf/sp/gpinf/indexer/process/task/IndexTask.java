@@ -375,7 +375,7 @@ public class IndexTask extends BaseCarveTask {
       SearchResult result = searchAll.pesquisarTodos();
 
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
-      for (int docID : result.docs) {
+      for (int docID : result.getLuceneIds()) {
         String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
         if(!parentIds.trim().isEmpty()) {
           for (String parentId : parentIds.trim().split(" ")) {

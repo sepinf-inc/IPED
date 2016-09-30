@@ -23,7 +23,7 @@ public class GalleryTable extends JTable {
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
     int currentCell = rowIndex * this.getColumnCount() + columnIndex;
-    if (currentCell > App.get().results.length - 1) {
+    if (currentCell > App.get().results.getLength() - 1) {
       return;
     }
     int minCell = Math.min(currentCell, lastCell);
@@ -79,7 +79,7 @@ public class GalleryTable extends JTable {
 
   @Override
   public void selectAll() {
-    selectedCells.set(0, App.get().results.length);
+    selectedCells.set(0, App.get().results.getLength());
     super.selectAll();
   }
 

@@ -33,7 +33,7 @@ public class ResultTotalSizeCounter {
 				long volume = 0;
 				IndexSearcher searcher = App.get().appCase.getSearcher();
 				Set<String> fieldsToLoad = Collections.singleton(IndexItem.LENGTH);
-				for (int doc : result.docs) {
+				for (int doc : result.getLuceneIds()) {
 					try {
 						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
 						if (len != null && !len.isEmpty())

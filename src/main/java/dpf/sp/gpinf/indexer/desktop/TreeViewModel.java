@@ -132,10 +132,9 @@ public class TreeViewModel implements TreeModel {
 		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
 		task.setTreeQuery(true);
         children = task.pesquisar();
-        Integer[] array = ArrayUtils.toObject(children.docs);
+        Integer[] array = ArrayUtils.toObject(children.getLuceneIds());
         Arrays.sort(array, getComparator());
-        children.docs = ArrayUtils.toPrimitive(array);
-        children.scores = null;
+        children = SearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
 
       } catch (Exception e) {
         children = new SearchResult(0);
@@ -153,10 +152,9 @@ public class TreeViewModel implements TreeModel {
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true");
 	  task.setTreeQuery(true);
       root.children = task.pesquisar();
-      Integer[] array = ArrayUtils.toObject(root.children.docs);
+      Integer[] array = ArrayUtils.toObject(root.children.getLuceneIds());
       Arrays.sort(array, getComparator());
-      root.children.docs = ArrayUtils.toPrimitive(array);
-      root.children.scores = null;
+      root.children = SearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -172,20 +170,20 @@ public class TreeViewModel implements TreeModel {
 
   @Override
   public Object getChild(Object parent, int index) {
-    return new Node(((Node) parent).getChildren().docs[index]);
+    return new Node(((Node) parent).getChildren().getLuceneIds()[index]);
   }
 
   @Override
   public int getChildCount(Object parent) {
-    return ((Node) parent).getChildren().length;
+    return ((Node) parent).getChildren().getLength();
   }
 
   @Override
   public int getIndexOfChild(Object parent, Object child) {
 
     Node childNode = (Node) child;
-    for (int i = 0; i < ((Node) parent).getChildren().docs.length; i++) {
-      if (childNode.docId == ((Node) parent).getChildren().docs[i]) {
+    for (int i = 0; i < ((Node) parent).getChildren().getLength(); i++) {
+      if (childNode.docId == ((Node) parent).getChildren().getLuceneIds()[i]) {
         return i;
       }
     }

@@ -83,7 +83,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
   public void mouseReleased(MouseEvent evt) {
 
     if (evt.getClickCount() == 2) {
-    	int docId = App.get().results.docs[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
+    	int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
     	ExternalFileOpen.open(docId);
 
     } else if (evt.isPopupTrigger()) {

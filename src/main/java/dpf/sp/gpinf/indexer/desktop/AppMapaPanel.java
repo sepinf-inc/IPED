@@ -56,7 +56,7 @@ public class AppMapaPanel extends JPanel {
 
 			        	org.apache.lucene.document.Document doc = null;
 			        	try {
-							doc = App.get().appCase.getSearcher().doc(app.getResults().docs[i]);
+							doc = App.get().appCase.getSearcher().doc(app.getResults().getLuceneIds()[i]);
 				        	selecoes.put(doc.get("id"), selected);
 						} catch (IOException ex) {
 							ex.printStackTrace();
@@ -84,7 +84,7 @@ public class AppMapaPanel extends JPanel {
 	}
 
 	public void redesenhaMapa(){
-		    if(mapaDesatualizado && (app.getResults().length>0)){
+		    if(mapaDesatualizado && (app.getResults().getLength()>0)){
 		    	//se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
 				if(!browserCanvas.isConnected()){
 					this.setVisible(true);

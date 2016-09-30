@@ -403,7 +403,7 @@ public class Manager {
         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
 		SearchResult result = pesquisa.pesquisarTodos();
 
-        if (result.length > 0) {
+        if (result.getLength() > 0) {
           palavrasFinais.add(categoria);
         }
 
@@ -439,7 +439,7 @@ public class Manager {
           }
 
           IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-          if (pesquisa.pesquisarTodos().length > 0) {
+          if (pesquisa.pesquisarTodos().getLength() > 0) {
             palavrasFinais.add(palavra);
           }
         }
@@ -472,12 +472,12 @@ public class Manager {
       SearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.pesquisarTodos());
 
       HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
-      for (int i = 0; i < alternatives.length; i++) {
+      for (int i = 0; i < alternatives.getLength(); i++) {
         if (Thread.interrupted()) {
           ipedCase.close();
           throw new InterruptedException("Indexação cancelada!");
         }
-        Document doc = ipedCase.getSearcher().doc(alternatives.docs[i]);
+        Document doc = ipedCase.getSearcher().doc(alternatives.getLuceneIds()[i]);
         String ftkId = doc.get(IndexItem.FTKID);
         int id = Integer.valueOf(doc.get(IndexItem.ID));
         viewMap.put(ftkId, id);

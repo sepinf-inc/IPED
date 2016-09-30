@@ -78,7 +78,7 @@ public class ExportFileTree extends CancelableWorker {
     	  result = App.get().appCase.getMarcadores().filtrarSelecionados(result, App.get().appCase);
       }
 
-      return result.docs;
+      return result.getLuceneIds();
 
     } catch (Exception e) {
       return new int[0];
@@ -109,11 +109,11 @@ public class ExportFileTree extends CancelableWorker {
         IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
         task.setTreeQuery(true);
         SearchResult parent = task.pesquisar();
-        if (parent.length == 0) {
+        if (parent.getLength() == 0) {
           return null;
         }
 
-        int parentDocId = parent.docs[0];
+        int parentDocId = parent.getLuceneIds()[0];
         File exportedParent = parentCache.get(parentDocId);
         if (exportedParent == null) {
           exportedParent = exportItem(parentDocId, true);

@@ -140,14 +140,14 @@ public class IPEDReader extends DataSourceReader {
 
   private void insertParentTreeNodes(SearchResult result) throws Exception {
     boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
-    for (int docID : result.docs) {
+    for (int docID : result.getLuceneIds()) {
       String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
       if(!parentIds.trim().isEmpty())
 	      for (String parentId : parentIds.trim().split(" ")) {
 	        isParentToAdd[Integer.parseInt(parentId)] = true;
 	      }
     }
-    for (int docID : result.docs) {
+    for (int docID : result.getLuceneIds()) {
       String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
       isParentToAdd[Integer.parseInt(id)] = false;
     }
@@ -173,7 +173,7 @@ public class IPEDReader extends DataSourceReader {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) {
       boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
-      for (int docID : result.docs) {
+      for (int docID : result.getLuceneIds()) {
         String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
         if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
           isSelectedPSTEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
@@ -188,7 +188,7 @@ public class IPEDReader extends DataSourceReader {
           }
         }
       }
-      for (int docID : result.docs) {
+      for (int docID : result.getLuceneIds()) {
         String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
         isAttachToAdd[Integer.parseInt(id)] = false;
       }
@@ -212,7 +212,7 @@ public class IPEDReader extends DataSourceReader {
 
   private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
 
-    for (int docID : result.docs) {
+    for (int docID : result.getLuceneIds()) {
       Document doc = ipedCase.getReader().document(docID);
 
       String value = doc.get(IndexItem.LENGTH);

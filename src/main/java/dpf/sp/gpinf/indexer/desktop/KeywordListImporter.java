@@ -42,7 +42,7 @@ public class KeywordListImporter extends CancelableWorker {
 
       try {
     	IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
-        if (task.pesquisarTodos().length > 0) {
+        if (task.pesquisarTodos().getLength() > 0) {
           result.add(keyword);
         }
 

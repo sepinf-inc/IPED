@@ -242,9 +242,9 @@ public class Marcadores implements Serializable {
 	  		labelIds[i++] = getLabelId(labelName);
 		byte[] labelBits = getLabelBits(labelIds);
 	  	
-		for (i = 0; i < result.length; i++)
-			if (!hasLabel(ids[result.docs[i]], labelBits)) {
-				result.docs[i] = -1;
+		for (i = 0; i < result.getLength(); i++)
+			if (!hasLabel(ids[result.getLuceneIds()[i]], labelBits)) {
+				result.getLuceneIds()[i] = -1;
 			}
 
 		result.clearResults();
@@ -261,9 +261,9 @@ public class Marcadores implements Serializable {
 		  		labelIds[i++] = getLabelId(labelName);
 			byte[] labelBits = getLabelBits(labelIds);
 		  	
-			for (i = 0; i < result.length; i++)
-				if (hasLabel(ids[result.docs[i]]) && !hasLabel(ids[result.docs[i]], labelBits)) {
-					result.docs[i] = -1;
+			for (i = 0; i < result.getLength(); i++)
+				if (hasLabel(ids[result.getLuceneIds()[i]]) && !hasLabel(ids[result.getLuceneIds()[i]], labelBits)) {
+					result.getLuceneIds()[i] = -1;
 				}
 	
 			result.clearResults();
@@ -273,9 +273,9 @@ public class Marcadores implements Serializable {
 	  public SearchResult filtrarSemMarcadores(SearchResult result, IPEDSource ipedCase){
 		  	result = result.clone();
 			int[] ids = ipedCase.getIds();
-			for (int i = 0; i < result.length; i++)
-				if (hasLabel(ids[result.docs[i]])) {
-					result.docs[i] = -1;
+			for (int i = 0; i < result.getLength(); i++)
+				if (hasLabel(ids[result.getLuceneIds()[i]])) {
+					result.getLuceneIds()[i] = -1;
 				}
 	
 			result.clearResults();
@@ -285,9 +285,9 @@ public class Marcadores implements Serializable {
 	  public SearchResult filtrarSelecionados(SearchResult result, IPEDSource ipedCase) throws Exception {
 		  	result = result.clone();
 			int[] ids = ipedCase.getIds();
-			for (int i = 0; i < result.length; i++)
-				if (!selected[ids[result.docs[i]]]) {
-					result.docs[i] = -1;
+			for (int i = 0; i < result.getLength(); i++)
+				if (!selected[ids[result.getLuceneIds()[i]]]) {
+					result.getLuceneIds()[i] = -1;
 				}
 	
 			result.clearResults();
