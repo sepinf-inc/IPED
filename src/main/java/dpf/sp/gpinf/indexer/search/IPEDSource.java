@@ -41,6 +41,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.desktop.Marcadores;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -58,8 +59,8 @@ public class IPEDSource implements Closeable{
 	private File index;
 	
 	SleuthkitCase sleuthCase;
-	public IndexReader reader;
-	public IndexSearcher searcher;
+	IndexReader reader;
+	IndexSearcher searcher;
 	Analyzer analyzer;
 	
 	private ExecutorService searchExecutorService;
@@ -71,7 +72,8 @@ public class IPEDSource implements Closeable{
 	int[] ids, docs, textSizes;
 	
 	int totalItens = 0;
-	public int lastId = 0;
+	
+	int lastId = 0;
 	
 	Set<Integer> splitedDocs = Collections.EMPTY_SET;
 	VersionsMap viewToRawMap = new VersionsMap(0);
@@ -163,6 +165,11 @@ public class IPEDSource implements Closeable{
 		totalItens++;
 	}
 	
+	//TODO remover após reparar contagem acima
+	public void setTotalItens(int count){
+		totalItens = count;
+	}
+	
 	private void loadCategories(){
 		try {
 			categories = Util.loadKeywords(moduleDir + "/categorias.txt", "UTF-8");
@@ -226,27 +233,7 @@ public class IPEDSource implements Closeable{
 		openIndex(index);
 	}
 	
-	public File getIndex(){
-		return index;
-	}
-	
-	public File getModuleDir(){
-		return moduleDir;
-	}
-	
-	public File getCaseDir(){
-		return casePath;
-	}
-	
-	public List<String> getCategories(){
-		return categories;
-	}
-	
-	public Analyzer getAnalyzer() {
-	    return analyzer;
-	}
-	
-	protected IPEDSource getAtomicCase(int luceneId){
+	public IPEDSource getAtomicCase(int luceneId){
 		return this;
 	}
 	
@@ -287,5 +274,61 @@ public class IPEDSource implements Closeable{
 	        }
 	      }
 	  }
+	
+	public File getIndex(){
+		return index;
+	}
+	
+	public File getModuleDir(){
+		return moduleDir;
+	}
+	
+	public File getCaseDir(){
+		return casePath;
+	}
+	
+	public List<String> getCategories(){
+		return categories;
+	}
+	
+	public Analyzer getAnalyzer() {
+	    return analyzer;
+	}
+
+	public SleuthkitCase getSleuthCase() {
+		return sleuthCase;
+	}
+
+	public IndexReader getReader() {
+		return reader;
+	}
+
+	public IndexSearcher getSearcher() {
+		return searcher;
+	}
+
+	public Marcadores getMarcadores() {
+		return marcadores;
+	}
+
+	public int getTotalItens() {
+		return totalItens;
+	}
+
+	public int getLastId() {
+		return lastId;
+	}
+
+	public Set<Integer> getSplitedDocs() {
+		return splitedDocs;
+	}
+
+	public VersionsMap getViewToRawMap() {
+		return viewToRawMap;
+	}
+
+	public boolean isFTKReport() {
+		return isFTKReport;
+	}
 	
 }

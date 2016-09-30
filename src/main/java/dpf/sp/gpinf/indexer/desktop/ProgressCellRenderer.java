@@ -16,37 +16,36 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.File;
-import java.io.Serializable;
+import java.awt.Component;
 
-import javax.swing.filechooser.FileFilter;
+import javax.swing.JProgressBar;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.TableCellRenderer;
 
-import dpf.sp.gpinf.indexer.desktop.Marcadores;
-
-public class SearchStateFilter extends FileFilter implements Serializable {
+class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
 
   /**
    *
    */
   private static final long serialVersionUID = 1L;
 
-  @Override
-  public boolean accept(File f) {
-    if (f.isDirectory()) {
-      return true;
-    }
-    if (f.getName().endsWith(Marcadores.EXT)) {
-      return true;
-    }
-
-    return false;
+  ProgressCellRenderer() {
+    super(SwingConstants.HORIZONTAL);
+    setBorderPainted(false);
+    setMaximum(100);
+    setStringPainted(true);
   }
 
   @Override
-  public String getDescription() {
-    return "Marcadores da Pesquisa";
+  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+    // int i = (int)Math.ceil(100*(Float)value/((Float)value + 1));
+    int i = (int) Math.ceil((Float) value);
+    this.setValue(i);
+
+    return this;
   }
 
 }

@@ -26,6 +26,7 @@ import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class QueryBuilder {

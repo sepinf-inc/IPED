@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import dpf.sp.gpinf.indexer.search.TextParser;
+import dpf.sp.gpinf.indexer.desktop.TextParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import java.util.Set;

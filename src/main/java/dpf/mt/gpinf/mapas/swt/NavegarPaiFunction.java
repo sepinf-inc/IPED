@@ -3,7 +3,7 @@ package dpf.mt.gpinf.mapas.swt;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
-import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.desktop.App;
 
 public class NavegarPaiFunction extends BrowserFunction {
 

@@ -14,6 +14,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.desktop.Marcadores;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.EvidenceFile;
@@ -126,7 +127,7 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	protected IPEDSource getAtomicCase(int luceneId){
+	public IPEDSource getAtomicCase(int luceneId){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			maxDoc += iCase.reader.maxDoc();

@@ -4,7 +4,7 @@ import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.BrowserFunction;
 
 import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
-import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.desktop.App;
 
 public class SelecionaItemFunction extends BrowserFunction {
 	MapaCanvas mcanvas;

@@ -59,7 +59,6 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
@@ -478,7 +477,7 @@ public class Manager {
           ipedCase.close();
           throw new InterruptedException("Indexação cancelada!");
         }
-        Document doc = ipedCase.searcher.doc(alternatives.docs[i]);
+        Document doc = ipedCase.getSearcher().doc(alternatives.docs[i]);
         String ftkId = doc.get(IndexItem.FTKID);
         int id = Integer.valueOf(doc.get(IndexItem.ID));
         viewMap.put(ftkId, id);

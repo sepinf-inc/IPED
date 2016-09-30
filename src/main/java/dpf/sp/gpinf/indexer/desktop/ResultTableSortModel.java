@@ -16,37 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.File;
-import java.io.Serializable;
+import javax.swing.table.AbstractTableModel;
 
-import javax.swing.filechooser.FileFilter;
+public class ResultTableSortModel extends AbstractTableModel {
 
-import dpf.sp.gpinf.indexer.desktop.Marcadores;
-
-public class SearchStateFilter extends FileFilter implements Serializable {
-
-  /**
-   *
-   */
   private static final long serialVersionUID = 1L;
 
   @Override
-  public boolean accept(File f) {
-    if (f.isDirectory()) {
-      return true;
-    }
-    if (f.getName().endsWith(Marcadores.EXT)) {
-      return true;
-    }
-
-    return false;
+  public int getColumnCount() {
+    return 1000;
   }
 
   @Override
-  public String getDescription() {
-    return "Marcadores da Pesquisa";
+  public int getRowCount() {
+    return App.get().results.length;
   }
 
+  @Override
+  final public Integer getValueAt(int row, int col) {
+    return row;
+  }
 }

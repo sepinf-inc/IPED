@@ -18,35 +18,22 @@
  */
 package dpf.sp.gpinf.indexer.util;
 
-import java.io.File;
-import java.io.Serializable;
+import java.awt.image.BufferedImage;
 
-import javax.swing.filechooser.FileFilter;
+import javax.swing.ImageIcon;
 
-import dpf.sp.gpinf.indexer.desktop.Marcadores;
+public class GalleryValue {
 
-public class SearchStateFilter extends FileFilter implements Serializable {
+  public String name;
+  public ImageIcon icon;
+  public int id;
+  public int originalW = Integer.MAX_VALUE;
+  public int originalH = Integer.MAX_VALUE;
+  public BufferedImage image;
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
-
-  @Override
-  public boolean accept(File f) {
-    if (f.isDirectory()) {
-      return true;
-    }
-    if (f.getName().endsWith(Marcadores.EXT)) {
-      return true;
-    }
-
-    return false;
+  public GalleryValue(String name, ImageIcon icon, int id) {
+    this.name = name;
+    this.icon = icon;
+    this.id = id;
   }
-
-  @Override
-  public String getDescription() {
-    return "Marcadores da Pesquisa";
-  }
-
 }

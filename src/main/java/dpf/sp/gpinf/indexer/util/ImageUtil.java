@@ -52,8 +52,6 @@ import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifThumbnailDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 
-import dpf.sp.gpinf.indexer.search.GalleryValue;
-
 public class ImageUtil {
 
   /**

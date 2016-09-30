@@ -13,9 +13,9 @@ import javax.swing.RowSorter.SortKey;
 
 import org.apache.commons.lang.ArrayUtils;
 
+import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.search.ColumnsManager;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
@@ -83,7 +83,7 @@ public class KMLResult {
 		  df.setTimeZone(TimeZone.getTimeZone("GMT"));
 
 		  for (int i = 0; i < results.docs.length; i++) {
-			  doc =  app.appCase.searcher.doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
+			  doc =  app.appCase.getSearcher().doc(results.docs[app.getResultsTable().convertRowIndexToModel(i)]);
 			  
 			  String lat = doc.get("GPS Latitude");
 			  if(lat!=null){

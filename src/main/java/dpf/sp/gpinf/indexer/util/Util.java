@@ -50,9 +50,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.App;
 
 public class Util {
 

@@ -5,24 +5,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
@@ -34,31 +27,23 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.App;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.InicializarBusca;
-import dpf.sp.gpinf.indexer.search.PesquisarIndice;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
@@ -391,7 +376,7 @@ public class IndexTask extends BaseCarveTask {
 
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
       for (int docID : result.docs) {
-        String parentIds = ipedCase.reader.document(docID).get(IndexItem.PARENTIDs);
+        String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
         if(!parentIds.trim().isEmpty()) {
           for (String parentId : parentIds.trim().split(" ")) {
             doNotDelete[Integer.parseInt(parentId)] = true;            

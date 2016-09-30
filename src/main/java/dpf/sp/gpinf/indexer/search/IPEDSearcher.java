@@ -32,6 +32,7 @@ import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.desktop.PesquisarIndice;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class IPEDSearcher {
@@ -58,6 +59,14 @@ public class IPEDSearcher {
 	
 	public void setTreeQuery(boolean treeQuery){
 		this.treeQuery = treeQuery;
+	}
+	
+	public void setQuery(Query query){
+		this.query = query;
+	}
+	
+	public Query getQuery(){
+		return query;
 	}
 
 	public void cancel(){

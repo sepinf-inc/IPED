@@ -40,6 +40,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
+import dpf.sp.gpinf.indexer.desktop.Marcadores;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -47,11 +50,8 @@ import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.search.ColumnsManager;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -139,26 +139,26 @@ public class IPEDReader extends DataSourceReader {
   }
 
   private void insertParentTreeNodes(SearchResult result) throws Exception {
-    boolean[] isParentToAdd = new boolean[ipedCase.lastId + 1];
+    boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
     for (int docID : result.docs) {
-      String parentIds = ipedCase.reader.document(docID).get(IndexItem.PARENTIDs);
+      String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
       if(!parentIds.trim().isEmpty())
 	      for (String parentId : parentIds.trim().split(" ")) {
 	        isParentToAdd[Integer.parseInt(parentId)] = true;
 	      }
     }
     for (int docID : result.docs) {
-      String id = ipedCase.reader.document(docID).get(IndexItem.ID);
+      String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
       isParentToAdd[Integer.parseInt(id)] = false;
     }
     int num = 0;
     BooleanQuery query = new BooleanQuery();
-    for (int i = 0; i <= ipedCase.lastId; i++) {
+    for (int i = 0; i <= ipedCase.getLastId(); i++) {
       if (isParentToAdd[i]) {
         query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
         num++;
       }
-      if (num == 1000 || i == ipedCase.lastId) {
+      if (num == 1000 || i == ipedCase.getLastId()) {
     	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
   		searchParents.setTreeQuery(true);
         result = searchParents.pesquisar();
@@ -172,16 +172,16 @@ public class IPEDReader extends DataSourceReader {
   private void insertPSTAttachs(SearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) {
-      boolean[] isSelectedPSTEmail = new boolean[ipedCase.lastId + 1];
+      boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
       for (int docID : result.docs) {
-        String mimetype = ipedCase.reader.document(docID).get(IndexItem.CONTENTTYPE);
+        String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
         if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
-          isSelectedPSTEmail[Integer.parseInt(ipedCase.reader.document(docID).get(IndexItem.ID))] = true;
+          isSelectedPSTEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
         }
       }
-      boolean[] isAttachToAdd = new boolean[ipedCase.lastId + 1];
-      for (int id = 0; id <= ipedCase.lastId; id++) {
-        Document doc = ipedCase.reader.document(ipedCase.getDocs()[id]);
+      boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
+      for (int id = 0; id <= ipedCase.getLastId(); id++) {
+        Document doc = ipedCase.getReader().document(ipedCase.getDocs()[id]);
         if (doc != null && doc.get(IndexItem.PARENTID) != null) {
           if (isSelectedPSTEmail[Integer.parseInt(doc.get(IndexItem.PARENTID))]) {
             isAttachToAdd[id] = true;
@@ -189,17 +189,17 @@ public class IPEDReader extends DataSourceReader {
         }
       }
       for (int docID : result.docs) {
-        String id = ipedCase.reader.document(docID).get(IndexItem.ID);
+        String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
         isAttachToAdd[Integer.parseInt(id)] = false;
       }
       int num = 0;
       BooleanQuery query = new BooleanQuery();
-      for (int i = 0; i <= ipedCase.lastId; i++) {
+      for (int i = 0; i <= ipedCase.getLastId(); i++) {
         if (isAttachToAdd[i]) {
           query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
           num++;
         }
-        if (num == 1000 || i == ipedCase.lastId) {
+        if (num == 1000 || i == ipedCase.getLastId()) {
           IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
     	  SearchResult attachs = searchAttachs.pesquisar();
           insertIntoProcessQueue(attachs, false);
@@ -213,7 +213,7 @@ public class IPEDReader extends DataSourceReader {
   private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
 
     for (int docID : result.docs) {
-      Document doc = ipedCase.reader.document(docID);
+      Document doc = ipedCase.getReader().document(docID);
 
       String value = doc.get(IndexItem.LENGTH);
       Long len = null;
