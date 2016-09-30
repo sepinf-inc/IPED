@@ -152,8 +152,8 @@ public class QueryBuilder {
 		  numericConfigMap.put(IndexItem.LENGTH, configLong);
 		  numericConfigMap.put(IndexItem.ID, configInt);
 		  numericConfigMap.put(IndexItem.SLEUTHID, configInt);
-		  if(!ipedCase.isFTKReport)
-			  numericConfigMap.put(IndexItem.PARENTID, configInt);
+		  numericConfigMap.put(IndexItem.PARENTID, configInt);
+		  numericConfigMap.put(IndexItem.FTKID, configInt);
 		  
 		  for(Entry<String, Class> e : IndexItem.getMetadataTypes().entrySet())
 			  if(e.getValue().equals(Integer.class) || e.getValue().equals(Byte.class))

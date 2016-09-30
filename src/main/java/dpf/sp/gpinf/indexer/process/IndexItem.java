@@ -187,33 +187,28 @@ public class IndexItem {
     doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
     doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-    String value = evidence.getFtkID();
-    if (value != null) {
-      doc.add(new StringField(FTKID, value, Field.Store.YES));
-      doc.add(new SortedDocValuesField(FTKID, new BytesRef(value)));
+    Integer intVal = evidence.getFtkID();
+    if (intVal != null) {
+      doc.add(new IntField(FTKID, intVal, Field.Store.YES));
+      doc.add(new NumericDocValuesField(FTKID, intVal));
     }
 
-    value = evidence.getSleuthId();
-    if (value != null) {
-      doc.add(new IntField(SLEUTHID, Integer.parseInt(value), Field.Store.YES));
-      doc.add(new NumericDocValuesField(SLEUTHID, Integer.parseInt(value)));
+    intVal = evidence.getSleuthId();
+    if (intVal != null) {
+      doc.add(new IntField(SLEUTHID, intVal, Field.Store.YES));
+      doc.add(new NumericDocValuesField(SLEUTHID, intVal));
     }
 
-    value = evidence.getParentId();
-    if (value != null) {
-      try {
-        doc.add(new IntField(PARENTID, Integer.parseInt(value), Field.Store.YES));
-        doc.add(new NumericDocValuesField(PARENTID, Integer.parseInt(value)));
-      } catch (Exception e) {
-        doc.add(new StringField(PARENTID, value, Field.Store.YES));
-        doc.add(new SortedDocValuesField(PARENTID, new BytesRef(value)));
-      }
+    intVal = evidence.getParentId();
+    if (intVal != null) {
+    	doc.add(new IntField(PARENTID, intVal, Field.Store.YES));
+        doc.add(new NumericDocValuesField(PARENTID, intVal));
     }
 
     doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 
-    value = evidence.getName();
+    String value = evidence.getName();
     if (value == null) {
       value = "";
     }
@@ -577,7 +572,7 @@ public class IndexItem {
       //evidence.setLabels(state.getLabels(id));
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
-        evidence.setParentId(value);
+        evidence.setParentId(Integer.valueOf(value));
       }
       
       value = doc.get(IndexItem.EVIDENCE_UUID);
@@ -626,7 +621,7 @@ public class IndexItem {
       } else {
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty()) {
-          evidence.setSleuthId(value);
+          evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
         }
       }

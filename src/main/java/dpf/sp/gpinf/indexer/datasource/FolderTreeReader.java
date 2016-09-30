@@ -127,7 +127,7 @@ public class FolderTreeReader extends DataSourceReader {
       EvidenceFile evidenceFile = getEvidence(path, attr);
       if (evidenceFile != null) {
         if (!parentIds.isEmpty()) {
-          evidenceFile.setParentId(parentIds.getLast().toString());
+          evidenceFile.setParentId(parentIds.getLast());
           evidenceFile.addParentIds(parentIds);
         } else {
           evidenceFile.setRoot(true);

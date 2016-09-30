@@ -174,10 +174,11 @@ public class FTK3Database extends FTKDatabase {
       ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID"));
       for (String path : paths) {
         EvidenceFile evidenceFile = new EvidenceFile();
+        evidenceFile.setDataSource(ipedDataSource);
         int ftkId = rset.getInt("OBJECTID");
-        evidenceFile.setFtkID(caso + "-" + ftkId);
+        evidenceFile.setFtkID(ftkId);
         int parentId = rset.getInt("PARENTID");
-        evidenceFile.setParentId(caso + "-" + parentId);
+        evidenceFile.setParentId(parentId);
         evidenceFile.setName(rset.getString("OBJECTNAME"));
         evidenceFile.setExportedFile(path);
         evidenceFile.setPath(rset.getString("PATH"));

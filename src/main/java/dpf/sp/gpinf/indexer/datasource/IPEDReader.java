@@ -255,7 +255,7 @@ public class IPEDReader extends DataSourceReader {
 
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
-        evidence.setParentId(value);
+        evidence.setParentId(Integer.valueOf(value));
       }
 
       value = doc.get(IndexItem.PARENTIDs);
@@ -300,7 +300,7 @@ public class IPEDReader extends DataSourceReader {
       } else {
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty() && !treeNode) {
-          evidence.setSleuthId(value);
+          evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
         }
       }

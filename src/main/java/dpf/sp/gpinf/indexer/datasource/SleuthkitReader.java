@@ -658,7 +658,7 @@ public class SleuthkitReader extends DataSourceReader {
 
     evidence.setHasChildren(absFile.hasChildren());
     evidence.setSleuthFile(absFile);
-    evidence.setSleuthId(Long.toString(absFile.getId()));
+    evidence.setSleuthId((int)absFile.getId());
 
     int sleuthId = (int) (absFile.getId() - firstId);
 
@@ -674,7 +674,7 @@ public class SleuthkitReader extends DataSourceReader {
     }
 
     Integer parentId = sleuthIdToId.get((int) (parent - firstId));
-    evidence.setParentId(parentId.toString());
+    evidence.setParentId(parentId);
 
     while (evidence.getId() >= parentIds.size()) {
       parentIds.add(-1);
@@ -774,7 +774,7 @@ public class SleuthkitReader extends DataSourceReader {
 
     //evidence.setSleuthFile(content);
     evidence.setHash("");
-    evidence.setSleuthId(Long.toString(content.getId()));
+    evidence.setSleuthId((int)content.getId());
 
     int sleuthId = (int) (content.getId() - firstId);
 
@@ -791,7 +791,7 @@ public class SleuthkitReader extends DataSourceReader {
     Integer parentId = -1;
     if (parent != null) {
       parentId = sleuthIdToId.get((int) (parent.getId() - firstId));
-      evidence.setParentId(parentId.toString());
+      evidence.setParentId(parentId);
     }
 
     while (evidence.getId() >= parentIds.size()) {
