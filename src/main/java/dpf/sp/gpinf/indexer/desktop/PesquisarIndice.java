@@ -138,7 +138,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 				String filtro = App.get().filtro.getSelectedItem().toString();
 				if (filtro.equals(App.FILTRO_SELECTED)){
-					result = App.get().appCase.marcadores.filtrarSelecionados(result, App.get().appCase);
+					result = App.get().appCase.getMarcadores().filtrarSelecionados(result, App.get().appCase);
 					numFilters++;
 				}
 				
@@ -147,13 +147,13 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 					numFilters++;
 					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
 						if(bookmarkSelection.size() == 1)
-							result = App.get().appCase.marcadores.filtrarSemMarcadores(result, App.get().appCase);
+							result = App.get().appCase.getMarcadores().filtrarSemMarcadores(result, App.get().appCase);
 						else{
 							bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-							result = App.get().appCase.marcadores.filtrarSemEComMarcadores(result, bookmarkSelection, App.get().appCase);
+							result = App.get().appCase.getMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection, App.get().appCase);
 						}
 					}else
-						result = App.get().appCase.marcadores.filtrarMarcadores(result, bookmarkSelection, App.get().appCase);
+						result = App.get().appCase.getMarcadores().filtrarMarcadores(result, bookmarkSelection, App.get().appCase);
 					
 				}
 

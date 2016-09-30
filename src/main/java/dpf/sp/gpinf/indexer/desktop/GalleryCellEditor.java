@@ -75,7 +75,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
       return new JPanel();
     }
 
-    check.setSelected(App.get().appCase.marcadores.selected[cellValue.id]);
+    check.setSelected(App.get().appCase.getMarcadores().selected[cellValue.id]);
     cLabel.setText(cellValue.name);
 
     if (cellValue.icon == null && cellValue.image == null) {

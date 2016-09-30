@@ -134,8 +134,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   @Override
   public void done() {
-	  App.get().appCase.marcadores.loadState();
-	  App.get().appCase.marcadores.atualizarGUI();
+	  App.get().appCase.getMarcadores().loadState();
+	  App.get().appCase.getMarcadores().atualizarGUI();
 	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.length);
 	  App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());

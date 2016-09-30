@@ -75,7 +75,7 @@ public class ExportFileTree extends CancelableWorker {
       SearchResult result = task.pesquisar();
 
       if (onlyChecked) {
-    	  result = App.get().appCase.marcadores.filtrarSelecionados(result, App.get().appCase);
+    	  result = App.get().appCase.getMarcadores().filtrarSelecionados(result, App.get().appCase);
       }
 
       return result.docs;

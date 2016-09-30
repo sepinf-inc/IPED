@@ -218,13 +218,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         value = false;
       }
 
-      App.get().appCase.marcadores.multiSetting = true;
+      App.get().appCase.getMarcadores().multiSetting = true;
       for (Integer row : App.get().resultsTable.getSelectedRows()) {
         App.get().resultsTable.setValueAt(value, row, col);
       }
-      App.get().appCase.marcadores.multiSetting = false;
-      App.get().appCase.marcadores.saveState();
-      App.get().appCase.marcadores.atualizarGUI();
+      App.get().appCase.getMarcadores().multiSetting = false;
+      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMarcadores().atualizarGUI();
 
     }
 

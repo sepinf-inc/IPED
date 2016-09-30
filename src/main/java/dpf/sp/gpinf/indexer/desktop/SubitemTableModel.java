@@ -86,7 +86,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.marcadores.setValueAtId(value, App.get().appCase.getIds()[results.docs[row]], col, true);
+    App.get().appCase.getMarcadores().setValueAtId(value, App.get().appCase.getIds()[results.docs[row]], col, true);
   }
 
   @Override
@@ -95,7 +95,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
       return row + 1;
       
     }else if (col == 1) {
-      return App.get().appCase.marcadores.selected[App.get().appCase.getIds()[results.docs[row]]];
+      return App.get().appCase.getMarcadores().selected[App.get().appCase.getIds()[results.docs[row]]];
     	
     }else{
       try {

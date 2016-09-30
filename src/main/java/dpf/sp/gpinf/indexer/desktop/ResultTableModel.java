@@ -149,7 +149,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public void setValueAt(Object value, int row, int col) {
-    app.appCase.marcadores.setValueAtId(value, app.appCase.getIds()[app.results.docs[row]], col, true);
+    app.appCase.getMarcadores().setValueAtId(value, app.appCase.getIds()[app.results.docs[row]], col, true);
 
   }
 
@@ -178,7 +178,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     if (col == 0) {
       value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
     } else if (col == 1) {
-      return app.appCase.marcadores.selected[app.appCase.getIds()[app.results.docs[row]]];
+      return app.appCase.getMarcadores().selected[app.appCase.getIds()[app.results.docs[row]]];
     } else {
       try {
         int fCol = col - fixedCols.length;
@@ -189,7 +189,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.marcadores.getLabels(app.appCase.getIds()[app.results.docs[row]]);
+          return app.appCase.getMarcadores().getLabels(app.appCase.getIds()[app.results.docs[row]]);
         }
 
         int docId = App.get().results.docs[row];

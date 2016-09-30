@@ -70,7 +70,7 @@ public class AppListener implements ActionListener, MouseListener {
         clearSearchBox = true;
         App.get().termo.setSelectedItem("");
       }
-      App.get().appCase.marcadores.addToTypedWordList(texto);
+      App.get().appCase.getMarcadores().addToTypedWordList(texto);
 
     }
 
@@ -109,24 +109,24 @@ public class AppListener implements ActionListener, MouseListener {
     }
 
     if (evt.getSource() == App.get().checkBox) {
-      if (App.get().appCase.marcadores.selectedItens > 0) {
+      if (App.get().appCase.getMarcadores().selectedItens > 0) {
         int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
-          App.get().appCase.marcadores.selectedItens = 0;
-          for (int i = 0; i < App.get().appCase.marcadores.selected.length; i++) {
-            App.get().appCase.marcadores.selected[i] = false;
+          App.get().appCase.getMarcadores().selectedItens = 0;
+          for (int i = 0; i < App.get().appCase.getMarcadores().selected.length; i++) {
+            App.get().appCase.getMarcadores().selected[i] = false;
           }
         }
       } else {
-        App.get().appCase.marcadores.selectedItens = App.get().appCase.getTotalItens();
-        for (int i = 0; i < App.get().appCase.marcadores.selected.length; i++) {
-          App.get().appCase.marcadores.selected[i] = true;
+        App.get().appCase.getMarcadores().selectedItens = App.get().appCase.getTotalItens();
+        for (int i = 0; i < App.get().appCase.getMarcadores().selected.length; i++) {
+          App.get().appCase.getMarcadores().selected[i] = true;
         }
       }
 
       App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-      App.get().appCase.marcadores.saveState();
-      App.get().appCase.marcadores.atualizarGUI();
+      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMarcadores().atualizarGUI();
     }
 
     clearSearchBox = false;

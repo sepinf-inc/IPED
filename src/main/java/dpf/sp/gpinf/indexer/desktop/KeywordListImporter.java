@@ -68,16 +68,16 @@ public class KeywordListImporter extends CancelableWorker {
 
     progress.close();
 
-    if (App.get().appCase.marcadores.typedWords.size() == 0) {
+    if (App.get().appCase.getMarcadores().typedWords.size() == 0) {
       App.get().termo.addItem(Marcadores.HISTORY_DIV);
     }
 
     for (String word : result) {
       App.get().termo.addItem(word);
-      App.get().appCase.marcadores.typedWords.add(word);
+      App.get().appCase.getMarcadores().typedWords.add(word);
     }
 
-    App.get().appCase.marcadores.saveState();
+    App.get().appCase.getMarcadores().saveState();
 
     if (errors.size() > 0) {
       StringBuilder errorTerms = new StringBuilder();

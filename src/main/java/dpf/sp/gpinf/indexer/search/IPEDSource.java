@@ -67,7 +67,7 @@ public class IPEDSource implements Closeable{
 	
 	protected ArrayList<String> categories = new ArrayList<String>(); 
 	
-	public Marcadores marcadores;
+	Marcadores marcadores;
 	
 	int[] ids, docs, textSizes;
 	
@@ -75,22 +75,10 @@ public class IPEDSource implements Closeable{
 	
 	int lastId = 0;
 	
-	Set<Integer> splitedDocs = Collections.EMPTY_SET;
+	Set<Integer> splitedDocs = Collections.emptySet();
 	VersionsMap viewToRawMap = new VersionsMap(0);
 	
 	boolean isFTKReport = false;
-	
-	public int[] getIds() {
-		return ids;
-	}
-
-	public int[] getDocs() {
-		return docs;
-	}
-
-	public int[] getTextSizes() {
-		return textSizes;
-	}
 	
 	public IPEDSource(File casePath) {
 		
@@ -285,6 +273,18 @@ public class IPEDSource implements Closeable{
 	
 	public File getCaseDir(){
 		return casePath;
+	}
+	
+	public int[] getIds() {
+		return ids;
+	}
+
+	public int[] getDocs() {
+		return docs;
+	}
+
+	public int[] getTextSizes() {
+		return textSizes;
 	}
 	
 	public List<String> getCategories(){
