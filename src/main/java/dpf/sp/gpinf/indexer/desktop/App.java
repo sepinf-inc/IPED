@@ -98,8 +98,6 @@ public class App extends JFrame implements WindowListener {
   SearchResult results = new SearchResult(0);
   
   public IPEDSource appCase;
-
-  public int lastId;
   
   FilterManager filterManager;
   ArrayList<String> palavrasChave;
