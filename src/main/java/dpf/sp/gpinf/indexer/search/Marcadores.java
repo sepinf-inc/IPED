@@ -28,7 +28,6 @@ import java.util.TreeMap;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.desktop.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
