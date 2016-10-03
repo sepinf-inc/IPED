@@ -41,7 +41,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.desktop.Marcadores;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -127,6 +126,7 @@ public class IPEDSource implements Closeable{
 			loadCategories();
 			
 			marcadores = new Marcadores(this, moduleDir);
+			marcadores.loadState();
 
 			IndexItem.loadMetadataTypes(new File(moduleDir, "conf"));
 			

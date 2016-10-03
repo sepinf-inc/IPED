@@ -16,28 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.TreeMap;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.tree.TreePath;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.util.SearchStateFilter;
+import dpf.sp.gpinf.indexer.desktop.SaveStateThread;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
@@ -46,31 +38,25 @@ public class Marcadores implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -4728708012271393485L;
-	/**
-	 * 
-	 */
-	public static String HISTORY_DIV = "-----------------------Histórico-----------------------";
 	
 	public static String EXT = "." + Versao.APP_EXT.toLowerCase();
 	public static String STATEFILENAME = "marcadores" + EXT;
+	
 	static int labelBits = Byte.SIZE;
 
-	boolean[] selected, read;
-	ArrayList<byte[]> labels;
-	int selectedItens = 0;
-	TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
+	private boolean[] selected;
+	private ArrayList<byte[]> labels;
+	private TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
+	private int selectedItens = 0, totalItems, lastId;
 
-	LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
+	private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
 	private File indexDir;
-	File stateFile, cookie;
-	public boolean multiSetting = false;
-
-	private static JFileChooser fileChooser;
-	private static SearchStateFilter filtro;
+	private File stateFile, cookie;
 
 	public Marcadores(IPEDSource ipedCase, final File basePath) {
-		selected = new boolean[ipedCase.getLastId() + 1];
-		//read = new boolean[App.get().lastId + 1];
+		this.totalItems = ipedCase.getTotalItens();
+		this.lastId = ipedCase.getLastId();
+		selected = new boolean[lastId + 1];
 		labels = new ArrayList<byte[]>();
 		indexDir = new File(basePath, "index");
 		long date = indexDir.lastModified();
@@ -79,20 +65,9 @@ public class Marcadores implements Serializable {
 		try {
 			stateFile = stateFile.getCanonicalFile();
 		} catch (IOException e) {}
-			
-
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				fileChooser = new JFileChooser();
-				fileChooser.setCurrentDirectory(basePath);
-				filtro = new SearchStateFilter();
-			}
-		});
-
 	}
 	
 	public void resetAndSetIndexDir(File indexDir){
-		//read = null;
 		selected = null;
 		selectedItens = 0;
 		typedWords = new LinkedHashSet<String>();
@@ -105,6 +80,32 @@ public class Marcadores implements Serializable {
 	
 	public TreeMap<Integer, String> getLabelMap(){
 		return labelNames;
+	}
+	
+	public LinkedHashSet<String> getTypedWords(){
+		return typedWords;
+	}
+	
+	public int getTotalSelected(){
+		return selectedItens;
+	}
+	
+	public boolean isSelected(int id){
+		return selected[id];
+	}
+	
+	public void clearSelected(){
+		selectedItens = 0;
+        for (int i = 0; i < selected.length; i++) {
+          selected[i] = false;
+        }
+	}
+	
+	public void selectAll(){
+		selectedItens = totalItems;
+        for (int i = 0; i < selected.length; i++) {
+          selected[i] = true;
+        }
 	}
 
 	public String getLabels(int id) {
@@ -293,24 +294,10 @@ public class Marcadores implements Serializable {
 			result.clearResults();
 			return result;
 	  }
-	
-	private boolean canCreateFile(File dir){
-		boolean result;
-		File test = new File(dir, "writeTest");
-		try {
-			result = test.createNewFile();
-			
-		} catch (IOException e) {
-			result = false;
-		}
-		test.delete();
-		
-		return result;
-	}
 
 	public void saveState() {
 		try {			
-			if(stateFile.canWrite() || (!stateFile.exists() && canCreateFile(stateFile.getParentFile())))
+			if(stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
 				saveState(stateFile);
 			else
 				saveState(cookie);
@@ -323,36 +310,11 @@ public class Marcadores implements Serializable {
 	public void saveState(File file) throws IOException {
 		SaveStateThread.getInstance().saveState(this, file);
 	}
-	
-	public void askAndSaveState() {
-		fileChooser.setFileFilter(filtro);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-			File file = fileChooser.getSelectedFile();
-			if (!file.getName().endsWith(EXT))
-				file = new File(file.getPath() + EXT);
 
-			try {
-				saveState(file);
-				JOptionPane.showMessageDialog(App.get(), "Marcadores salvos com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+	public void addToTypedWords(String texto) {
 
-			} catch (IOException e1) {
-				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao salvar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
-			}
-
-		}
-	}
-
-	public void addToTypedWordList(String texto) {
-
-		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !typedWords.contains(texto) && !App.get().keywordSet.contains(texto)) {
-
-			if (typedWords.size() == 0)
-				App.get().termo.addItem(HISTORY_DIV);
-
+		if (!texto.trim().isEmpty() && !typedWords.contains(texto)) {
 			typedWords.add(texto);
-			App.get().termo.addItem(texto);
 			saveState();
 		}
 	}
@@ -376,11 +338,11 @@ public class Marcadores implements Serializable {
 		
 		if(state.selected != null /*&&  state.read != null*/){
 			System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
-			//System.arraycopy(state.read, 0, this.read, 0, state.read.length);
 		}
 		
+		this.labels.clear();
 		for(byte[] array : state.labels){
-			byte[] newArray = new byte[App.get().appCase.getLastId() + 1];
+			byte[] newArray = new byte[lastId + 1];
 			int len = Math.min(newArray.length, array.length);
 			System.arraycopy(array, 0, newArray, 0, len);
 			this.labels.add(newArray);
@@ -390,85 +352,30 @@ public class Marcadores implements Serializable {
 		this.selectedItens = state.selectedItens;
 		this.labelNames = state.labelNames;
 
-		if (App.get().termo != null) {
-			if (typedWords.size() != 0)
-				App.get().termo.addItem(HISTORY_DIV);
-			for (String text : typedWords) {
-				App.get().termo.addItem(text);
-			}
-			atualizarGUI();
-		}
-
+	}
+	
+	public void setSelected(boolean value, int id, IPEDSource ipedCase) {
+		setSelected(value, id, true, ipedCase);
 	}
 
-	public void askAndLoadState() {
-		fileChooser.setFileFilter(filtro);
-		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
-			File file = fileChooser.getSelectedFile();
-			try {
-				loadState(file);
-				JOptionPane.showMessageDialog(App.get(), "Marcadores carregados com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-
-			} catch (Exception e1) {
-				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao carregar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
-			}
+	private void setSelected(boolean value, int id, boolean changeCount, IPEDSource ipedCase) {
+		if (value != selected[id] && changeCount) {
+			if (value) selectedItens++;
+			else selectedItens--;
 		}
-	}
-
-	public void atualizarGUI() {
-		SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				if (App.get().resultsTable.getRowCount() > 0) {
-					App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
-					App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
-				}
-				App.get().checkBox.setText(String.valueOf(selectedItens) + " / " + App.get().appCase.getTotalItens());
-				App.get().checkBox.setSelected(selectedItens > 0);
-				App.get().bookmarksListener.updateModelAndSelection();
-				GerenciadorMarcadores.updateCounters();
-			}
-		});
-
-	}
-
-	public void setValueAtId(Object value, int id, int col, boolean changeCount) {
-		boolean[] array;
-		if (col == 1) {
-			array = selected;
-			if ((Boolean) value != selected[id] && changeCount) {
-				if ((Boolean) value)
-					selectedItens++;
-				else
-					selectedItens--;
-			}
-			// seta valor nos outros fragmentos
-			try {
-				array[id] = (Boolean) value;
-				setValueAtOtherVersion(value, id, col, array);
-
-				if (!multiSetting) {
-					if (col == 1)
-						saveState();
-					atualizarGUI();
-				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		// seta valor na versão de visualização ou vice-versa
+		selected[id] = value;
+		setValueAtOtherVersion(value, id, selected, ipedCase);
 	}
 
 	// seta valor na outra versao
-	private void setValueAtOtherVersion(Object value, int doc, int col, boolean[] array) {
-		Integer id2 = App.get().appCase.getViewToRawMap().getRaw(doc);
+	private void setValueAtOtherVersion(boolean value, int doc, boolean[] array, IPEDSource ipedCase) {
+		Integer id2 = ipedCase.getViewToRawMap().getRaw(doc);
 		if (id2 != null && array[id2] != (Boolean) value)
-			setValueAtId(value, id2, col, false);
-		id2 = App.get().appCase.getViewToRawMap().getView(doc);
+			setSelected(value, id2, false, ipedCase);
+		id2 = ipedCase.getViewToRawMap().getView(doc);
 		if (id2 != null && array[id2] != (Boolean) value)
-			setValueAtId(value, id2, col, false);
+			setSelected(value, id2, false, ipedCase);
 	}
 
 }

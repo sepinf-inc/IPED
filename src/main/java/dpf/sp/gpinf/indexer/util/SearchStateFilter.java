@@ -23,7 +23,7 @@ import java.io.Serializable;
 
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.desktop.Marcadores;
+import dpf.sp.gpinf.indexer.search.Marcadores;
 
 public class SearchStateFilter extends FileFilter implements Serializable {
 

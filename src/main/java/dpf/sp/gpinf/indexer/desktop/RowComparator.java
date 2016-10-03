@@ -138,9 +138,9 @@ public class RowComparator implements Comparator<Integer> {
 		b = app.results.getLuceneIds()[b];
 		
 		if(col == 1){
-		    if (app.appCase.getMarcadores().selected[app.appCase.getIds()[a]] == app.appCase.getMarcadores().selected[app.appCase.getIds()[b]])
+		    if (app.appCase.getMarcadores().isSelected(app.appCase.getIds()[a]) == app.appCase.getMarcadores().isSelected(app.appCase.getIds()[b]))
               return 0;
-          else if (app.appCase.getMarcadores().selected[app.appCase.getIds()[a]] == true)
+          else if (app.appCase.getMarcadores().isSelected(app.appCase.getIds()[a]) == true)
               return -1;
           else
               return 1;

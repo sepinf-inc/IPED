@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.File;
 import java.io.IOException;
 
+import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class SaveStateThread extends Thread{

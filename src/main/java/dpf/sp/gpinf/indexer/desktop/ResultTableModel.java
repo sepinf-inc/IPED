@@ -149,8 +149,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public void setValueAt(Object value, int row, int col) {
-    app.appCase.getMarcadores().setValueAtId(value, app.appCase.getIds()[app.results.getLuceneIds()[row]], col, true);
-
+    app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
+    if(!MarcadoresController.get().isMultiSetting()){
+    	App.get().appCase.getMarcadores().saveState();
+    	MarcadoresController.get().atualizarGUI();
+    }
   }
 
   @Override
@@ -178,7 +181,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     if (col == 0) {
       value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
     } else if (col == 1) {
-      return app.appCase.getMarcadores().selected[app.appCase.getIds()[app.results.getLuceneIds()[row]]];
+      return app.appCase.getMarcadores().isSelected(app.appCase.getIds()[app.results.getLuceneIds()[row]]);
     } else {
       try {
         int fCol = col - fixedCols.length;

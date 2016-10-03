@@ -80,13 +80,17 @@ public class GerenciadorMarcadores implements ActionListener {
   JList<String> list = new JList<String>(listModel);
   JScrollPane scrollList = new JScrollPane(list);
 
+  public static GerenciadorMarcadores get(){
+	  return instance;
+  }
+  
   public static void setVisible() {
     instance.dialog.setVisible(true);
   }
 
   public static void updateCounters() {
     instance.highlighted.setText("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
-    instance.checked.setText("Itens Selecionados (" + App.get().appCase.getMarcadores().selectedItens + ")");
+    instance.checked.setText("Itens Selecionados (" + App.get().appCase.getMarcadores().getTotalSelected() + ")");
   }
 
   private GerenciadorMarcadores() {
@@ -101,7 +105,7 @@ public class GerenciadorMarcadores implements ActionListener {
     duplicates.setText("Incluir duplicatas (hash)");
     duplicates.setSelected(false);
 
-    populateList();
+    updateList();
 
     newLabel.setToolTipText("Novo marcador");
     novo.setToolTipText("Criar novo marcador");
@@ -155,7 +159,7 @@ public class GerenciadorMarcadores implements ActionListener {
 
   }
 
-  private void populateList() {
+  public void updateList() {
     String[] labels = App.get().appCase.getMarcadores().getLabelMap().values().toArray(new String[0]);
     Arrays.sort(labels, Collator.getInstance());
     listModel.clear();
@@ -216,7 +220,7 @@ public class GerenciadorMarcadores implements ActionListener {
       String texto = newLabel.getText().trim();
       if (!texto.isEmpty() && !listModel.contains(texto)) {
         App.get().appCase.getMarcadores().newLabel(texto);
-        populateList();
+        updateList();
       }
       for (int i = 0; i < listModel.size(); i++) {
         if (listModel.get(i).equals(texto)) {
@@ -231,8 +235,8 @@ public class GerenciadorMarcadores implements ActionListener {
       final ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
 
       if (checked.isSelected()) {
-        for (int id = 0; id < App.get().appCase.getMarcadores().selected.length; id++) {
-          if (App.get().appCase.getMarcadores().selected[id]) {
+        for (int id = 0; id <= App.get().appCase.getLastId(); id++) {
+          if (App.get().appCase.getMarcadores().isSelected(id)) {
             uniqueSelectedIds.add(id);
           }
         }
@@ -269,7 +273,7 @@ public class GerenciadorMarcadores implements ActionListener {
             }
           }
           App.get().appCase.getMarcadores().saveState();
-          App.get().appCase.getMarcadores().atualizarGUI();
+          MarcadoresController.get().atualizarGUI();
         }
       }.start();
 
@@ -280,9 +284,9 @@ public class GerenciadorMarcadores implements ActionListener {
           int labelId = App.get().appCase.getMarcadores().getLabelId(listModel.getElementAt(idx));
           App.get().appCase.getMarcadores().delLabel(labelId);
         }
-        populateList();
+        updateList();
         App.get().appCase.getMarcadores().saveState();
-        App.get().appCase.getMarcadores().atualizarGUI();
+        MarcadoresController.get().atualizarGUI();
 
       }
 
@@ -294,9 +298,9 @@ public class GerenciadorMarcadores implements ActionListener {
           App.get().appCase.getMarcadores().changeLabel(labelId, newLabel.trim());;
           break;
         }
-        populateList();
+        updateList();
         App.get().appCase.getMarcadores().saveState();
-        App.get().appCase.getMarcadores().atualizarGUI();
+        MarcadoresController.get().atualizarGUI();
 
       }
     }

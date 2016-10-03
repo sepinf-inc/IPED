@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import java.awt.Component;
@@ -65,12 +66,12 @@ public class AppListener implements ActionListener, MouseListener {
     String texto = "";
     if (App.get().termo.getSelectedItem() != null) {
       texto = App.get().termo.getSelectedItem().toString();
-      if (texto.equals(Marcadores.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
+      if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
         texto = "";
         clearSearchBox = true;
         App.get().termo.setSelectedItem("");
       }
-      App.get().appCase.getMarcadores().addToTypedWordList(texto);
+      MarcadoresController.get().addToRecentSearches(texto);
 
     }
 
@@ -109,24 +110,18 @@ public class AppListener implements ActionListener, MouseListener {
     }
 
     if (evt.getSource() == App.get().checkBox) {
-      if (App.get().appCase.getMarcadores().selectedItens > 0) {
+      if (App.get().appCase.getMarcadores().getTotalSelected() > 0) {
         int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
-          App.get().appCase.getMarcadores().selectedItens = 0;
-          for (int i = 0; i < App.get().appCase.getMarcadores().selected.length; i++) {
-            App.get().appCase.getMarcadores().selected[i] = false;
-          }
+          App.get().appCase.getMarcadores().clearSelected();
         }
       } else {
-        App.get().appCase.getMarcadores().selectedItens = App.get().appCase.getTotalItens();
-        for (int i = 0; i < App.get().appCase.getMarcadores().selected.length; i++) {
-          App.get().appCase.getMarcadores().selected[i] = true;
-        }
+        App.get().appCase.getMarcadores().selectAll();
       }
 
       App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
       App.get().appCase.getMarcadores().saveState();
-      App.get().appCase.getMarcadores().atualizarGUI();
+      MarcadoresController.get().atualizarGUI();
     }
 
     clearSearchBox = false;

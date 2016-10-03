@@ -9,6 +9,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -68,13 +69,13 @@ public class KeywordListImporter extends CancelableWorker {
 
     progress.close();
 
-    if (App.get().appCase.getMarcadores().typedWords.size() == 0) {
-      App.get().termo.addItem(Marcadores.HISTORY_DIV);
+    if (App.get().appCase.getMarcadores().getTypedWords().size() == 0) {
+      App.get().termo.addItem(MarcadoresController.HISTORY_DIV);
     }
 
     for (String word : result) {
       App.get().termo.addItem(word);
-      App.get().appCase.getMarcadores().typedWords.add(word);
+      App.get().appCase.getMarcadores().getTypedWords().add(word);
     }
 
     App.get().appCase.getMarcadores().saveState();
