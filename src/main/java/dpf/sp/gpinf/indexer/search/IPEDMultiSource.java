@@ -137,7 +137,12 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	protected int getBaseLuceneId(IPEDSource atomicCase){
+	public List<IPEDSource> getAtomicSources(){
+		return this.cases;
+	}
+	
+	@Override
+	public int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)
