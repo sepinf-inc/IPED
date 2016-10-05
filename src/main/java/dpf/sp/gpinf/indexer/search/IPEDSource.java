@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -53,6 +54,8 @@ public class IPEDSource implements Closeable{
 	public static final String MODULE_DIR = "indexador";
 	public static final String SLEUTH_DB = "sleuth.db";
 	
+	private static AtomicInteger nextId = new AtomicInteger();
+	
 	private File casePath;
 	private File moduleDir;
 	private File index;
@@ -70,6 +73,8 @@ public class IPEDSource implements Closeable{
 	
 	int[] ids, docs, textSizes;
 	
+	int sourceId;
+	
 	int totalItens = 0;
 	
 	int lastId = 0;
@@ -82,7 +87,7 @@ public class IPEDSource implements Closeable{
 	public IPEDSource(File casePath) {
 		
 		this.casePath = casePath;
-		
+		sourceId = nextId.getAndIncrement();
 		moduleDir = new File(casePath, MODULE_DIR);
 		index = new File(moduleDir, INDEX_DIR);
 		
@@ -225,7 +230,11 @@ public class IPEDSource implements Closeable{
 		return this;
 	}
 	
-	protected int getBaseLuceneId(IPEDSource atomicCase){
+	public List<IPEDSource> getAtomicSources(){
+		return Collections.singletonList(this);
+	}
+	
+	public int getBaseLuceneId(IPEDSource atomicCase){
 		return 0;
 	}
 	
@@ -263,6 +272,10 @@ public class IPEDSource implements Closeable{
 	      }
 	  }
 	
+	public int getSourceId(){
+		return sourceId;
+	}
+	
 	public File getIndex(){
 		return index;
 	}
@@ -278,9 +291,17 @@ public class IPEDSource implements Closeable{
 	public int[] getIds() {
 		return ids;
 	}
+	
+	public int getId(int luceneId){
+		return ids[luceneId];
+	}
 
 	public int[] getDocs() {
 		return docs;
+	}
+	
+	public int getLuceneId(int id){
+		return docs[id];
 	}
 
 	public int[] getTextSizes() {
