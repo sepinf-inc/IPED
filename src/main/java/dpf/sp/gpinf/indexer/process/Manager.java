@@ -524,7 +524,11 @@ public class Manager {
 
     IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
     int[] ids = new int[reader.maxDoc()];
+    Bits liveDocs = MultiFields.getLiveDocs(reader);
     for (int i = 0; i < reader.maxDoc(); i++) {
+    	//ignore deleted docs
+    	if(liveDocs != null && !liveDocs.get(i))
+    		continue;
       Document doc = reader.document(i);
       ids[i] = Integer.parseInt(doc.get(IndexItem.ID));
     }
