@@ -36,7 +36,8 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
     JFileChooser fileChooser = new JFileChooser();
     fileChooser.setFileFilter(null);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-    fileChooser.setCurrentDirectory(new File(App.get().codePath).getParentFile().getParentFile());
+    File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+    fileChooser.setCurrentDirectory(moduleDir.getParentFile());
 
     if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
       file = fileChooser.getSelectedFile();

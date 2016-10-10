@@ -66,7 +66,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
 
     GalleryValue cellValue = (GalleryValue) value;
-    if (cellValue.id == -1) {
+    if (cellValue.id == null) {
       return new JPanel();
     }
 

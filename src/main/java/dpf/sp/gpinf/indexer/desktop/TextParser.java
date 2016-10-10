@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -53,6 +54,8 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
+	
+  public static final String TEXT_SIZE = "textSize";
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -189,9 +192,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       }
 
       progressMonitor = new ProgressDialog(App.get(), parsingTask);
-      if (App.get().appCase.getTextSizes().length > id) {
-        progressMonitor.setMaximum(App.get().appCase.getTextSizes()[id] * 1000L);
-      }
+      progressMonitor.setMaximum((Integer)item.getExtraAttribute(TEXT_SIZE) * 1000L);
 
       sortedHits = new TreeMap<Long, int[]>();
       hits = new ArrayList<Long>();
@@ -223,6 +224,9 @@ public class TextParser extends CancelableWorker implements ITextParser {
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
 
     context.set(StreamSource.class, content);
+    
+    OCROutputFolder ocrOut = (OCROutputFolder)item.getExtraAttribute(OCROutputFolder.class.getName());
+    context.set(OCROutputFolder.class, ocrOut);
 
     return context;
   }

@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import dpf.sp.gpinf.indexer.IFileProcessor;
+import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import gpinf.dev.data.EvidenceFile;
 
 import org.apache.lucene.document.Document;
@@ -69,9 +70,10 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     } else {
       doc = new Document();
       doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
-      doc.add(new Field(IndexItem.EXPORT, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
+      doc.add(new Field(IndexItem.EXPORT, moduleDir + "/htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
       doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-      doc.add(new Field(IndexItem.PATH, App.get().codePath + "/../htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.PATH, moduleDir + "/htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
     }
   }
 
@@ -103,8 +105,15 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       App.get().parentItemModel.listParents(doc);
     }
 
-    IPEDSource iCase = App.get().appCase.getAtomicCase(docId);
+    //TODO usar nova API e contornar exibição da Ajuda
+    IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
 	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+	
+	int textSize = App.get().appCase.getAtomicSource(docId).getTextSize(item.getId());
+	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
+	
+	OCROutputFolder ocrOut = new OCROutputFolder(iCase.getModuleDir());
+	item.setExtraAttribute(OCROutputFolder.class.getName(), ocrOut);
 
     disposeItem(lastItem);
     lastItem = item;

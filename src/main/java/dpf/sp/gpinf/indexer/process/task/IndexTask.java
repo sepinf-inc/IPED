@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -250,6 +251,8 @@ public class IndexTask extends BaseCarveTask {
     
     //Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    
+    context.set(OCROutputFolder.class, new OCROutputFolder(output));
 
     return context;
   }
@@ -351,12 +354,11 @@ public class IndexTask extends BaseCarveTask {
   }
 
   private void loadExtraAttributes() throws ClassNotFoundException, IOException {
-    if (EvidenceFile.getAllExtraAttributes().size() > 0) {
-      return;
-    }
+
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
     if (extraAttributtesFile.exists()) {
-      EvidenceFile.setExtraAttributeSet((HashSet<String>) Util.readObject(extraAttributtesFile.getAbsolutePath()));
+    	HashSet<String> extraAttributes = (HashSet<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
+    	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
     }
   }
 

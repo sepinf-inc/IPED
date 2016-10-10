@@ -82,7 +82,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.getMarcadores().setSelected((Boolean)value, App.get().appCase.getIds()[results.getLuceneIds()[row]], App.get().appCase);
+    App.get().appCase.getMarcadores().setSelected((Boolean)value, App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
     MarcadoresController.get().atualizarGUI();
   }
 
@@ -92,7 +92,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
       return row + 1;
       
     }else if (col == 1) {
-      return App.get().appCase.getMarcadores().isSelected(App.get().appCase.getIds()[results.getLuceneIds()[row]]);
+      return App.get().appCase.getMarcadores().isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
     	
     }else{
       try {

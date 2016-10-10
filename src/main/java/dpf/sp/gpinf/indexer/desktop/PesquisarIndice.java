@@ -31,17 +31,19 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.search.IPEDResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
-public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
+public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	
-	private static SearchResult allItemsCache;
+	private static IPEDResult allItemsCache;
 	
 	volatile static int numFilters = 0;
 	ProgressDialog progressDialog;
@@ -116,14 +118,14 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 
 	@Override
-	public SearchResult doInBackground() {
+	public IPEDResult doInBackground() {
 		
 		synchronized(this.getClass()){
 			
 			if (this.isCancelled())
 				return null;
 			
-			SearchResult result = null;
+			IPEDResult result = null;
 			try {
 				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 					
@@ -131,14 +133,17 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
 					result = allItemsCache;
 				else{
-					result = searcher.pesquisar();
+					result = IPEDResult.get(App.get().appCase, searcher.pesquisar());
 					if(q instanceof MatchAllDocsQuery && allItemsCache == null)
 						allItemsCache = result.clone();
 				}
 
-				String filtro = App.get().filtro.getSelectedItem().toString();
+				String filtro = "";
+				if(App.get().filtro.getSelectedItem() != null)
+					filtro = App.get().filtro.getSelectedItem().toString();
+				
 				if (filtro.equals(App.FILTRO_SELECTED)){
-					result = App.get().appCase.getMarcadores().filtrarSelecionados(result, App.get().appCase);
+					result = App.get().appCase.getMarcadores().filtrarSelecionados(result);
 					numFilters++;
 				}
 				
@@ -147,13 +152,13 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 					numFilters++;
 					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
 						if(bookmarkSelection.size() == 1)
-							result = App.get().appCase.getMarcadores().filtrarSemMarcadores(result, App.get().appCase);
+							result = App.get().appCase.getMarcadores().filtrarSemMarcadores(result);
 						else{
 							bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-							result = App.get().appCase.getMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection, App.get().appCase);
+							result = App.get().appCase.getMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection);
 						}
 					}else
-						result = App.get().appCase.getMarcadores().filtrarMarcadores(result, bookmarkSelection, App.get().appCase);
+						result = App.get().appCase.getMarcadores().filtrarMarcadores(result, bookmarkSelection);
 					
 				}
 
@@ -162,7 +167,7 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 
 			} catch (Throwable e) {
 				e.printStackTrace();
-				return new SearchResult(0);
+				return new IPEDResult(new ItemId[0], new float[0]);
 				
 			}
 			
@@ -181,7 +186,9 @@ public class PesquisarIndice extends CancelableWorker<SearchResult, Object> {
 		
 		if (!this.isCancelled())
 			try {
-				App.get().results = this.get();
+				App.get().ipedResult = this.get();
+				App.get().results = IPEDResult.get(App.get().ipedResult, App.get().appCase);
+				
 				new ResultTotalSizeCounter().countVolume(App.get().results);
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
 				App.get().resultsTable.getTableHeader().repaint();

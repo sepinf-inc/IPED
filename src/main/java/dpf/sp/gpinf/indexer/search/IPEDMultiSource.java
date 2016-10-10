@@ -14,6 +14,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.EvidenceFile;
@@ -22,12 +23,36 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	List<IPEDSource> cases = Collections.synchronizedList(new ArrayList<IPEDSource>());
 	
-	public IPEDMultiSource(File casePathsFile) {
+	public IPEDMultiSource(List<IPEDSource> sources) {
+		super(null);
+		this.cases = sources;
+		init();
+	}
+	
+	public IPEDMultiSource(File file){
 		
-		super(casePathsFile.getParentFile());
+		super(file.getParentFile());
 		
+		List<File> files;
+		if(file.isDirectory())
+			files = searchCasesinFolder(file);
+		else
+			files = loadCasesFromTxtFile(file);
+		
+		for(File src : files){
+			System.out.println("Loading " + src.getAbsolutePath());
+			IPEDSource icase = new IPEDSource(src);
+			this.cases.add(icase);
+		}
+		init();
+		
+	}
+	
+	private List<File> loadCasesFromTxtFile(File file){
+		
+		ArrayList<File> files = new ArrayList<File>();
 		try {
-			byte[] bytes = Files.readAllBytes(casePathsFile.toPath());
+			byte[] bytes = Files.readAllBytes(file.toPath());
 			//BOM test
 			if(bytes[0] == (byte)0xEF && bytes[1] == (byte)0xBB && bytes[2] == (byte)0xBF)
 				bytes[0] = bytes[1] = bytes[2] = 0;
@@ -37,61 +62,63 @@ public class IPEDMultiSource extends IPEDSource{
 				File path = new File(pathStr.trim());
 				if(!new File(path, MODULE_DIR).exists())
 					continue;
-				System.out.println("Loading " + pathStr.trim());
-				IPEDSource icase = new IPEDSource(path);
-				cases.add(icase);
+				files.add(path);
 			}
 			
-			openIndex();
-			
-            int baseDoc = 0;
-            int baseId = 0;
-            ids = new int[reader.maxDoc()];
-            for(IPEDSource iCase : cases){
-            	for (int i = 0; i < iCase.reader.maxDoc(); i++)
-            		ids[baseDoc + i] = iCase.ids[i] + baseId;
-            	baseDoc += iCase.reader.maxDoc();
-            	baseId += iCase.lastId + 1;
-            }
-            lastId = baseId - 1;
-            	
-            invertIdToLuceneIdArray();
-			
-            for(IPEDSource iCase : cases)
-            	totalItens += iCase.totalItens;
-			
-            baseId = 0;
-			splitedDocs = new HashSet<Integer>();
-			textSizes = new int[lastId + 1];
-			for(IPEDSource iCase : cases){
-				for(Integer i : iCase.splitedDocs)
-					splitedDocs.add(i + baseId);
-				for (int i = 0; i < iCase.lastId + 1; i++)
-					textSizes[baseId + i] = iCase.textSizes[i];
-				iCase.textSizes = null;
-				baseId += iCase.lastId + 1;
-			}
-			
-			viewToRawMap = new VersionsMap(0);
-			
-			for(IPEDSource iCase : cases)
-				for(String category : iCase.categories)
-					if(!categories.contains(category))
-						categories.add(category);
-			
-			marcadores = new Marcadores(this, this.getCaseDir());
-			
-			analyzer = AppAnalyzer.get();
-			
-			for(IPEDSource iCase : cases)
-				if(iCase.isFTKReport)
-					isFTKReport = true;
-			
-			System.out.println("Loaded " + cases.size() + " cases.");
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		return files;
+	}
+	
+	private List<File> searchCasesinFolder(File folder){
+		System.out.println("Searching cases in " + folder.getPath());
+		ArrayList<File> files = new ArrayList<File>();
+		File[] subFiles = folder.listFiles();
+		if(subFiles != null)
+			for(File file : subFiles){
+				if(new File(file, MODULE_DIR).exists())
+					files.add(file);
+				else if(file.isDirectory())
+					files.addAll(searchCasesinFolder(file));
+			}
+		return files;
+	}
+		
+	private void init(){
+		
+		try{
+			openIndex();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+        for(IPEDSource iCase : cases)
+        	totalItens += iCase.totalItens;
+		
+		viewToRawMap = new VersionsMap(0);
+		
+		for(IPEDSource iCase : cases)
+			for(String category : iCase.categories)
+				if(!categories.contains(category))
+					categories.add(category);
+		
+		for(IPEDSource iCase : cases)
+			for(String keyword : iCase.keywords)
+				if(!keywords.contains(keyword))
+					keywords.add(keyword);
+		
+		//marcadores = new Marcadores(this, this.getCaseDir());
+		this.globalMarcadores = new MultiMarcadores(cases);
+		
+		analyzer = AppAnalyzer.get();
+		
+		for(IPEDSource iCase : cases)
+			if(iCase.isFTKReport)
+				isFTKReport = true;
+		
+		System.out.println("Loaded " + cases.size() + " cases.");
 	}
 	
 	private void openIndex() throws IOException{
@@ -125,8 +152,7 @@ public class IPEDMultiSource extends IPEDSource{
 			}
 	}
 	
-	@Override
-	public IPEDSource getAtomicCase(int luceneId){
+	final public IPEDSource getAtomicSource(int luceneId){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			maxDoc += iCase.reader.maxDoc();
@@ -136,13 +162,15 @@ public class IPEDMultiSource extends IPEDSource{
 		return null;
 	}
 	
-	@Override
-	public List<IPEDSource> getAtomicSources(){
+	final public IPEDSource getAtomicSourceBySourceId(int sourceId){
+		return cases.get(sourceId);
+	}
+	
+	final public List<IPEDSource> getAtomicSources(){
 		return this.cases;
 	}
 	
-	@Override
-	public int getBaseLuceneId(IPEDSource atomicCase){
+	private int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)
@@ -152,8 +180,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return maxDoc;
 	}
 	
-	@Override
-	protected SearchResult rebaseLuceneIds(SearchResult resultsFromAtomicCase, IPEDSource atomicCase){
+	private SearchResult rebaseLuceneIds(SearchResult resultsFromAtomicCase, IPEDSource atomicCase){
 		SearchResult result = resultsFromAtomicCase.clone();
 		int baseDoc = getBaseLuceneId(atomicCase);
 		for(int i = 0; i < result.docs.length; i++)
@@ -162,17 +189,58 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	public EvidenceFile getItemByLuceneID(int luceneId){
-		try {
-			Document doc = searcher.doc(luceneId);
-			IPEDSource atomicCase = getAtomicCase(luceneId);
-			EvidenceFile item = IndexItem.getItem(doc, atomicCase.getModuleDir(), atomicCase.sleuthCase, false);
-			return item;
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
+	final public EvidenceFile getItemByID(int id){
+		throw new RuntimeException("Use getItemByItemId() from " + this.getClass().getSimpleName());
+	}
+	
+	final public EvidenceFile getItemByItemId(ItemId item){
+		return getAtomicSourceBySourceId(item.getSourceId()).getItemByID(item.getId());
+	}
+	
+	@Override
+	final public EvidenceFile getItemByLuceneID(int luceneId){
+		IPEDSource atomicCase = getAtomicSource(luceneId);
+		luceneId -= getBaseLuceneId(atomicCase);
+		return atomicCase.getItemByLuceneID(luceneId);
+	}
+	
+	@Override
+	final public int getId(int luceneId){
+		throw new RuntimeException("Use getItemId() from " + this.getClass().getSimpleName());
+	}
+	
+	final public ItemId getItemId(int luceneId){
+		IPEDSource atomicSource = getAtomicSource(luceneId);
+		int sourceId = atomicSource.getSourceId();
+		int baseDoc = getBaseLuceneId(atomicSource);
+		int id = atomicSource.getId(luceneId - baseDoc);
+		return new ItemId(sourceId, id);
+	}
+	
+	@Override
+	final public int getLuceneId(int id){
+		throw new RuntimeException("Use getLuceneId(ItemId) from " + this.getClass().getSimpleName());
+	}
+	
+	final public int getLuceneId(ItemId id){
+		IPEDSource atomicCase = getAtomicSourceBySourceId(id.getSourceId());
+		int baseDoc = getBaseLuceneId(atomicCase);
+		return atomicCase.getLuceneId(id.getId()) + baseDoc;
+	}
+	
+	@Override
+	boolean isSplited(int id){
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
+	}
+	
+	@Override
+	public int getTextSize(int id) {
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
+	}
+	
+	@Override
+	public int getLastId() {
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
 	}
 
 }

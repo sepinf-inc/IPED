@@ -33,16 +33,19 @@ import javax.swing.SwingWorker;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
-  ArrayList<Integer> uniqueIds;
+  ArrayList<ItemId> uniqueIds;
   File dir, subdir;
   ProgressMonitor progressMonitor;
 
-  public CopiarArquivos(File dir, ArrayList<Integer> uniqueIds) {
+  public CopiarArquivos(File dir, ArrayList<ItemId> uniqueIds) {
     this.dir = dir;
     this.subdir = dir;
     this.uniqueIds = uniqueIds;
@@ -68,18 +71,17 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
   @Override
   protected Boolean doInBackground() throws Exception {
     int progress = 0, subdirCount = 1;
-    for (Integer docId : uniqueIds) {
+    for (ItemId item : uniqueIds) {
       try {
         if (progress % 1000 == 0 && progress > 0) {
           do {
             subdir = new File(dir, Integer.toString(subdirCount++));
           } while (!subdir.mkdir());
         }
-
-        Document doc = App.get().appCase.getSearcher().doc(docId);
-        String dstName = Util.getValidFilename(doc.get(IndexItem.NAME));
-
-        InputStream in = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
+        
+        EvidenceFile e = App.get().appCase.getItemByItemId(item);
+        String dstName = Util.getValidFilename(e.getName());
+        InputStream in = e.getBufferedStream();
 
         File dst = new File(subdir, dstName);
         int num = 1;
@@ -123,8 +125,9 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
   public static void salvarArquivo(int docId) {
     try {
-      ArrayList<Integer> uniqueDoc = new ArrayList<Integer>();
-      uniqueDoc.add(docId);
+      ArrayList<ItemId> uniqueDoc = new ArrayList<ItemId>();
+      uniqueDoc.add(App.get().appCase.getItemId(docId));
+      
       JFileChooser fileChooser = new JFileChooser();
       fileChooser.setFileFilter(null);
       fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

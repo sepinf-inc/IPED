@@ -35,6 +35,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 
 public class MenuListener implements ActionListener {
@@ -46,7 +48,8 @@ public class MenuListener implements ActionListener {
 
   public MenuListener(MenuClass menu) {
     this.menu = menu;
-    fileChooser.setCurrentDirectory(new File(App.get().codePath).getParentFile().getParentFile());
+    File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+    fileChooser.setCurrentDirectory(moduleDir.getParentFile());
   }
 
   private class Filtro extends FileFilter {
@@ -122,9 +125,9 @@ public class MenuListener implements ActionListener {
       fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
       if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
         File dir = fileChooser.getSelectedFile();
-        ArrayList<Integer> selectedIds = new ArrayList<Integer>();
+        ArrayList<ItemId> selectedIds = new ArrayList<ItemId>();
         for (int row : App.get().resultsTable.getSelectedRows()) {
-          int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(row)];
+          ItemId docId = App.get().ipedResult.getIds()[App.get().resultsTable.convertRowIndexToModel(row)];
           selectedIds.add(docId);
           // exporta versão nao selecionada caso exista
 					/*Integer docId2 = App.get().viewToRawMap.getRaw(docId);
@@ -157,8 +160,9 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.copiarMarcados) {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
       for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
-        if (App.get().appCase.getMarcadores().isSelected(App.get().appCase.getIds()[docId])
-            && !App.get().appCase.getViewToRawMap().isView(App.get().appCase.getIds()[docId])) {
+    	ItemId item = App.get().appCase.getItemId(docId);
+        if (App.get().appCase.getMarcadores().isSelected(item)
+            && !App.get().appCase.getViewToRawMap().isView(App.get().appCase.getId(docId))) {
           uniqueSelectedIds.add(docId);
         }
 
@@ -174,12 +178,14 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportarMarcados) {
-      ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-      for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
-        if (App.get().appCase.getMarcadores().isSelected(App.get().appCase.getIds()[docId])) {
-          uniqueSelectedIds.add(docId);
+    	ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
+        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        	for (int id = 0; id <= source.getLastId(); id++) {
+                if (source.getMarcador().isSelected(id)) {
+                  uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                }
+              }
         }
-      }
       fileChooser.setFileFilter(defaultFilter);
       fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
       if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -188,12 +194,15 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportCheckedToZip) {
-        ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
-        for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
-          if (App.get().appCase.getMarcadores().isSelected(App.get().appCase.getIds()[docId])) {
-            uniqueSelectedIds.add(docId);
-          }
+        ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
+        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        	for (int id = 0; id <= source.getLastId(); id++) {
+        		if (source.getMarcador().isSelected(id)) {
+                    uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                }
+              }
         }
+        
         fileChooser.setFileFilter(defaultFilter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -210,12 +219,9 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.limparBuscas) {
-      App.get().appCase.getMarcadores().getTypedWords().clear();
-      App.get().termo.removeAllItems();
-      for (String word : App.get().palavrasChave) {
-        App.get().termo.addItem(word);
-      }
+      App.get().appCase.getMarcadores().clearTypedWords();
       App.get().appCase.getMarcadores().saveState();
+      MarcadoresController.get().atualizarGUIHistory();
 
     } else if (e.getSource() == menu.carregarMarcadores) {
     	MarcadoresController.get().askAndLoadState();

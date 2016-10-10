@@ -124,12 +124,13 @@ public class IPEDSearcher {
 	}
 
 	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {
+		if(ipedCase instanceof IPEDMultiSource)
+			return filtrarFragmentosMulti(prevResult);
+		
 		HashSet<Integer> duplicates = new HashSet<Integer>();
-		int[] ids = ipedCase.getIds();
-		Set<Integer> splitedIds = ipedCase.splitedDocs;
 		for (int i = 0; i < prevResult.length; i++) {
-			int id = ids[prevResult.docs[i]];
-			if (splitedIds.contains(id)) {
+			int id = ipedCase.getId(prevResult.docs[i]);
+			if (ipedCase.isSplited(id)) {
 				if (!duplicates.contains(id)) {
 					duplicates.add(id);
 				} else {
@@ -142,14 +143,32 @@ public class IPEDSearcher {
 		return prevResult;
 
 	}
+	
+	private SearchResult filtrarFragmentosMulti(SearchResult prevResult) throws Exception {
+		HashSet<Integer> duplicates = new HashSet<Integer>();
+		for (int i = 0; i < prevResult.length; i++) {
+			IPEDSource atomicSource = ((IPEDMultiSource)ipedCase).getAtomicSource(prevResult.docs[i]);
+			int id = ((IPEDMultiSource)ipedCase).getItemId(prevResult.docs[i]).getId();
+			if (atomicSource.isSplited(id)) {
+				if (!duplicates.contains(id)) {
+					duplicates.add(id);
+				} else {
+					prevResult.docs[i] = -1;
+				}
+			}
+		}
+		prevResult.clearResults();
+		return prevResult;
+		
+	}
 
-	public SearchResult filtrarVersoes(SearchResult prevResult) throws Exception {
+	private SearchResult filtrarVersoes(SearchResult prevResult) throws Exception {
 		if (ipedCase.viewToRawMap.getMappings() == 0)
 			return prevResult;
 
 		TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
 		for (int i = 0; i < prevResult.length; i++) {
-		    int id = ipedCase.getIds()[prevResult.docs[i]];
+		    int id = ipedCase.getId(prevResult.docs[i]);
 			Integer original = ipedCase.viewToRawMap.getRaw(id);
 			if (original == null) {
 				if (ipedCase.viewToRawMap.isRaw(id)) {

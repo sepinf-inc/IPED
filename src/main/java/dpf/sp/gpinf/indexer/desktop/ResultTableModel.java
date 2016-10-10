@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -33,6 +34,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
@@ -149,9 +151,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public void setValueAt(Object value, int row, int col) {
-    app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
+
+	app.appCase.getMarcadores().setSelected((Boolean)value, App.get().ipedResult.getIds()[row], app.appCase);	
+	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
-    	App.get().appCase.getMarcadores().saveState();
+    	app.appCase.getMarcadores().saveState();
     	MarcadoresController.get().atualizarGUI();
     }
   }
@@ -177,11 +181,27 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public Object getValueAt(int row, int col) {
-    String value;
-    if (col == 0) {
-      value = String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
-    } else if (col == 1) {
-      return app.appCase.getMarcadores().isSelected(app.appCase.getIds()[app.results.getLuceneIds()[row]]);
+    
+	if (col == 0)
+		return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+	      
+	String value;
+	
+    int docId = App.get().results.getLuceneIds()[row];
+    
+    if (App.get().results.getLuceneIds()[row] != lastDocRead) {
+        try {
+			doc = app.appCase.getSearcher().doc(docId);
+		} catch (IOException e) {
+			e.printStackTrace();
+	        return "ERRO";
+		}
+    }
+    lastDocRead = App.get().results.getLuceneIds()[row];
+      
+    if (col == 1) {
+      return app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[row]);
+      
     } else {
       try {
         int fCol = col - fixedCols.length;
@@ -192,14 +212,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMarcadores().getLabels(app.appCase.getIds()[app.results.getLuceneIds()[row]]);
+          return app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[row]);
         }
-
-        int docId = App.get().results.getLuceneIds()[row];
-        if (App.get().results.getLuceneIds()[row] != lastDocRead) {
-          doc = app.appCase.getSearcher().doc(docId);
-        }
-        lastDocRead = App.get().results.getLuceneIds()[row];
 
         value = doc.get(field);
         if (value == null) {

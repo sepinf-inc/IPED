@@ -48,6 +48,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -62,7 +63,7 @@ public class GalleryModel extends AbstractTableModel {
   private int galleryThreads = 1;
   ImageThumbTask imgThumbTask;
 
-  public Map<Integer, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<Integer, GalleryValue>());
+  public Map<ItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<ItemId, GalleryValue>());
   private int maxCacheSize = 1000;
   private ErrorIcon errorIcon = new ErrorIcon();
   private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
@@ -113,12 +114,12 @@ public class GalleryModel extends AbstractTableModel {
 
     int idx = row * colCount + col;
     if (idx >= App.get().results.getLength()) {
-      return new GalleryValue("", null, -1);
+      return new GalleryValue("", null, null);
     }
 
     idx = App.get().resultsTable.convertRowIndexToModel(idx);
     final int docId = App.get().results.getLuceneIds()[idx];
-    final int id = App.get().appCase.getIds()[docId];
+    final ItemId id = App.get().ipedResult.getIds()[idx];
 
     synchronized (cache) {
       if (cache.containsKey(id)) {
@@ -172,11 +173,11 @@ public class GalleryModel extends AbstractTableModel {
 
           String export = doc.get(IndexItem.EXPORT);
           if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
-            image = getThumbFromFTKReport(App.get().appCase.getAtomicCase(docId).getCaseDir().getAbsolutePath(), export);
+            image = getThumbFromFTKReport(App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
           }
           
           if (image == null && stream == null && isSupportedImage(mediaType)) {
-        	  stream = App.get().appCase.getItemByID(id).getBufferedStream();
+        	  stream = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
           }
 
           if (stream != null) {
@@ -229,7 +230,7 @@ public class GalleryModel extends AbstractTableModel {
         });
 
         synchronized (cache) {
-          Iterator<Integer> i = cache.keySet().iterator();
+          Iterator<ItemId> i = cache.keySet().iterator();
           while (cache.size() > maxCacheSize) {
             i.next();
             i.remove();
@@ -243,7 +244,7 @@ public class GalleryModel extends AbstractTableModel {
   }
 
   private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException{
-	File baseFolder = App.get().appCase.getAtomicCase(docID).getModuleDir();
+	File baseFolder = App.get().appCase.getAtomicSource(docID).getModuleDir();
     if (isVideo) {
       baseFolder = new File(baseFolder, HTMLReportTask.viewFolder);
     } else {

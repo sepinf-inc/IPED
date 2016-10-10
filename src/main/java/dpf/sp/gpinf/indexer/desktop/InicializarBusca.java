@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -82,25 +83,22 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     try {
       // ImageIO.setUseCache(false);
       IViewerControl viewerControl = ViewerControl.getInstance();
+      
+      if(!App.get().isMultiCase){
+    	  IPEDSource singleCase = new IPEDSource(App.get().casesPathFile);
+    	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
+      }else
+    	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+		
+      System.out.println("Loading Columns " + new Date());
+      App.get().resultsModel.initCols();
+		
+      System.out.println("Loading Column Sorters " + new Date());
+      if(App.get().appCase.getTotalItens() > 10000000)
+    	  RowComparator.setLoadDocValues(false);
+      App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
-      Configuration.getConfiguration(App.get().codePath + "/..");
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
-      
-      if(App.get().casesPathFile == null)
-			App.get().appCase = new IPEDSource(new File(App.get().codePath).getParentFile().getParentFile());
-		else
-			App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
-		
-		System.out.println("Loading Columns " + new Date());
-		App.get().resultsModel.initCols();
-		
-		System.out.println("Loading Column Sorters " + new Date());
-		if(App.get().appCase.getTotalItens() > 10000000)
-			RowComparator.setLoadDocValues(false);
-		App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
-      
-
-      OCRParser.OUTPUT_BASE = new File(App.get().codePath + "/..");
       OCRParser.EXECTESS = false;
 
       IndexerDefaultParser autoParser = new IndexerDefaultParser();
@@ -119,7 +117,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       // lista todos os itens
       PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
       pesquisa.execute();
-      App.get().appCase.setTotalItens(pesquisa.get().getLength());
       
       System.out.println("Finished " + new Date());
       
@@ -134,11 +131,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   @Override
   public void done() {
+	  App.get().filterManager.setUpdatingFilter(true);
 	  MarcadoresController.get().atualizarGUIandHistory();
+	  App.get().termo.setSelectedItem(App.SEARCH_TOOL_TIP);
 	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.getLength());
 	  App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 	  App.get().menu = new MenuClass();
+	  App.get().filterManager.loadFilters();
 
     if (!App.get().appCase.isFTKReport()) {
       App.get().tree.setModel(treeModel);

@@ -75,7 +75,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
+import dpf.sp.gpinf.indexer.search.IPEDResult;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
@@ -96,13 +99,11 @@ public class App extends JFrame implements WindowListener {
   private AppSearchParams appSearchParams = null;
 
   SearchResult results = new SearchResult(0);
+  IPEDResult ipedResult = new IPEDResult(new ItemId[0], new float[0]);
   
-  public IPEDSource appCase;
+  public IPEDMultiSource appCase;
   
   FilterManager filterManager;
-  ArrayList<String> palavrasChave;
-  HashSet<String> keywordSet = new HashSet<String>();
-
   public JDialog dialogBar;
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
@@ -144,8 +145,8 @@ public class App extends JFrame implements WindowListener {
 
   private int zoomLevel;
 
-  public String codePath;
   File casesPathFile;
+  boolean isMultiCase;
   public JLabel status;
 
   // final String MSG_NO_PREVIEW =
@@ -196,7 +197,8 @@ public class App extends JFrame implements WindowListener {
   public static void main(String[] args) {
 	  
 	  if(args.length == 2 && args[0].equals("-multicases")){
-			App.get().casesPathFile = new File(args[1]);
+		  App.get().isMultiCase = true;
+		  App.get().casesPathFile = new File(args[1]);
 			
 			if(!App.get().casesPathFile.exists()){
 				System.out.println("Arquivo de casos inexistente: " + args[1]);
@@ -215,15 +217,18 @@ public class App extends JFrame implements WindowListener {
 
     try {
       URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-      codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
+      String codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
       //codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      codePath = "E:/nassif/caso3/indexador/lib/iped-search-app.jar";
+      //codePath = "E:/nassif/caso3/indexador/lib/iped-search-app.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
+      
+      if(casesPathFile == null)
+    	  casesPathFile = new File(codePath).getParentFile().getParentFile();
 
       javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
         @Override
@@ -286,7 +291,7 @@ public class App extends JFrame implements WindowListener {
   public void createGUI() {
 
     String tab = "     ";
-    this.setTitle(Versao.APP_NAME + tab + "[Caso: " + new File(codePath).getParentFile().getParent() + "]");
+    this.setTitle(Versao.APP_NAME + tab + "[Caso: " + casesPathFile + "]");
     this.setSize(new Dimension(800, 600));
     this.setExtendedState(Frame.MAXIMIZED_BOTH);
     this.addWindowListener(this);
@@ -329,16 +334,7 @@ public class App extends JFrame implements WindowListener {
     } catch (Exception e) {
     }
 
-    try {
-      palavrasChave = Util.loadKeywords(codePath + "/../palavras-chave.txt", "UTF-8");
-    } catch (IOException e) {
-      palavrasChave = new ArrayList<String>();
-    }
-    for (String keyword : palavrasChave) {
-      keywordSet.add(keyword);
-    }
-
-    termo = new JComboBox<String>(palavrasChave.toArray(new String[0]));
+    termo = new JComboBox<String>();
     termo.setMinimumSize(new Dimension());
     termo.setToolTipText(SEARCH_TOOL_TIP);
     termo.setEditable(true);
@@ -355,7 +351,6 @@ public class App extends JFrame implements WindowListener {
     filtro.setMaximumRowCount(30);
     filtro.setToolTipText("Filtro");
     filterManager = new FilterManager(filtro);
-    filterManager.loadFilters();
 
     topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
@@ -514,7 +509,7 @@ public class App extends JFrame implements WindowListener {
     treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
     defaultTabColor = treeTab.getBackgroundAt(0);
 
-    boolean isFTKReport = new File(new File(codePath).getParent(), "data/containsFTKReport.flag").exists();
+    boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists();
 
     if (!isFTKReport) {
       recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
@@ -535,7 +530,7 @@ public class App extends JFrame implements WindowListener {
       treeTab.add("Evidências", evidencePanel);
     }
 
-    if (!isFTKReport && new File(new File(codePath).getParent(), "data/containsReport.flag").exists()) {
+    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) {
       treeTab.setSelectedIndex(1);
     }
 

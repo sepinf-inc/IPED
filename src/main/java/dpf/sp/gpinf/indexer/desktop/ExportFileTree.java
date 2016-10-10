@@ -32,6 +32,7 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -75,7 +76,9 @@ public class ExportFileTree extends CancelableWorker {
       SearchResult result = task.pesquisar();
 
       if (onlyChecked) {
-    	  result = App.get().appCase.getMarcadores().filtrarSelecionados(result, App.get().appCase);
+    	  IPEDResult ir = IPEDResult.get(App.get().appCase, result);
+    	  ir = App.get().appCase.getMarcadores().filtrarSelecionados(ir);
+    	  result = IPEDResult.get(ir, App.get().appCase);
       }
 
       return result.getLuceneIds();

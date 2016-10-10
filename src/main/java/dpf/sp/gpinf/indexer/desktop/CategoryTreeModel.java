@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -65,8 +66,8 @@ public class CategoryTreeModel implements TreeModel {
       categoryMap.put(category, rootName);
     }
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(
-        new FileInputStream(App.get().codePath + "/../" + CONF_FILE), "UTF-8"));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
+        new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8"));
 
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {

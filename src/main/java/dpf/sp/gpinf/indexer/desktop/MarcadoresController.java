@@ -47,7 +47,8 @@ public class MarcadoresController {
 	
 	public void addToRecentSearches(String texto) {
 
-		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMarcadores().getTypedWords().contains(texto) && !App.get().keywordSet.contains(texto)) {
+		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMarcadores().getTypedWords().contains(texto)
+				&& !App.get().appCase.getKeywords().contains(texto)) {
 
 			if (App.get().appCase.getMarcadores().getTypedWords().size() == 0)
 				App.get().termo.addItem(HISTORY_DIV);
@@ -97,17 +98,14 @@ public class MarcadoresController {
 		}
 	}
 	
-	private void atualizarGUIHistory(){
-		boolean historyIndex = false;
-		for(int i = 0; i < App.get().termo.getItemCount(); i++){
-			if(App.get().termo.getItemAt(i).equals(HISTORY_DIV))
-				historyIndex = true;
-			if(historyIndex)
-				App.get().termo.removeItemAt(i--);
-		}
-		if (App.get().appCase.getMarcadores().getTypedWords().size() != 0){
+	public void atualizarGUIHistory(){
+		App.get().termo.removeAllItems();
+	    for (String word : App.get().appCase.getKeywords())
+	        App.get().termo.addItem(word);
+	    
+		if (App.get().appCase.getMarcadores().getTypedWords().size() != 0)
 			App.get().termo.addItem(HISTORY_DIV);
-		}
+		
 		for (String text : App.get().appCase.getMarcadores().getTypedWords()) {
 			App.get().termo.addItem(text);
 		}

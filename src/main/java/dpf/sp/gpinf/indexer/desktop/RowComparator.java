@@ -134,19 +134,22 @@ public class RowComparator implements Comparator<Integer> {
 		if(scoreCol)
           return (int)(app.results.getScores()[a] - app.results.getScores()[b]);
 		
+		int rowA = a;
+		int rowB = b;
+		
 		a = app.results.getLuceneIds()[a];
 		b = app.results.getLuceneIds()[b];
 		
 		if(col == 1){
-		    if (app.appCase.getMarcadores().isSelected(app.appCase.getIds()[a]) == app.appCase.getMarcadores().isSelected(app.appCase.getIds()[b]))
+		    if (app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowB]))
               return 0;
-          else if (app.appCase.getMarcadores().isSelected(app.appCase.getIds()[a]) == true)
+          else if (app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == true)
               return -1;
           else
               return 1;
 		
 		}else if(bookmarkCol)
-          return app.appCase.getMarcadores().getLabels(app.appCase.getIds()[a]).compareTo(app.appCase.getMarcadores().getLabels(app.appCase.getIds()[b]));
+          return app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[rowA]).compareTo(app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[rowB]));
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);

@@ -3,7 +3,9 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 
 import javax.swing.event.TreeModelListener;
@@ -14,7 +16,7 @@ public class BookmarksTreeModel implements TreeModel {
 
   public static String ROOT = "Marcadores";
   public static String NO_BOOKMARKS = "[Sem Marcadores]";
-  public TreeMap<Integer, String> labelMap;
+  public Set<String> labels;
 
   static class Bookmark implements Comparator<Bookmark> {
 
@@ -51,18 +53,18 @@ public class BookmarksTreeModel implements TreeModel {
       return null;
     }
 
-    if (labelMap == null) {
-      labelMap = (TreeMap<Integer, String>) App.get().appCase.getMarcadores().getLabelMap().clone();
+    if (labels == null) {
+    	labels = (TreeSet<String>)App.get().appCase.getMarcadores().getLabelMap().clone();
     }
 
     if (index == 0) {
       return NO_BOOKMARKS;
     }
 
-    String[] labels = labelMap.values().toArray(new String[0]);
-    Arrays.sort(labels, Collator.getInstance());
+    String[] array = labels.toArray(new String[0]);
+    Arrays.sort(array, Collator.getInstance());
 
-    return labels[index - 1];
+    return array[index - 1];
 
   }
 

@@ -819,7 +819,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     try {
-      GalleryValue value = new GalleryValue(null, null, -1);
+      GalleryValue value = new GalleryValue(null, null, null);
       BufferedImage img = null;
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();

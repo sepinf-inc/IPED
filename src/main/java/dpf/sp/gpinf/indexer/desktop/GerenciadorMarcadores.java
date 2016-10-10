@@ -56,6 +56,9 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDResult;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
@@ -160,18 +163,19 @@ public class GerenciadorMarcadores implements ActionListener {
   }
 
   public void updateList() {
-    String[] labels = App.get().appCase.getMarcadores().getLabelMap().values().toArray(new String[0]);
+	listModel.clear();
+	String[] labels = App.get().appCase.getMarcadores().getLabelMap().toArray(new String[0]);
     Arrays.sort(labels, Collator.getInstance());
-    listModel.clear();
     for (String label : labels) {
       listModel.addElement(label);
     }
+    
   }
 
   /*
    * Lento com mtos itens
    */
-  private void includeDuplicates(ArrayList<Integer> uniqueSelectedIds) {
+  private void includeDuplicates(ArrayList<ItemId> uniqueSelectedIds) {
 
     ProgressDialog progress = new ProgressDialog(App.get(), null);
     progress.setNote("Obtendo hashes...");
@@ -180,12 +184,12 @@ public class GerenciadorMarcadores implements ActionListener {
       BooleanQuery query = new BooleanQuery();
       App app = App.get();
       int i = 0;
-      for (Integer id : uniqueSelectedIds) {
+      for (ItemId item : uniqueSelectedIds) {
         if (progress.isCanceled()) {
           return;
         }
         progress.setProgress(++i);
-        String hash = app.appCase.getSearcher().doc(app.appCase.getDocs()[id]).get(IndexItem.HASH);
+        String hash = app.appCase.getSearcher().doc(app.appCase.getLuceneId(item)).get(IndexItem.HASH);
         if (hash != null) {
           query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
         }
@@ -197,12 +201,12 @@ public class GerenciadorMarcadores implements ActionListener {
       progress.setTask(task);
       progress.setNote("Pesquisando duplicatas...");
       progress.setIndeterminate(true);
-      SearchResult duplicates = task.pesquisar();
+      IPEDResult duplicates = IPEDResult.get(app.appCase, task.pesquisar());
 
       System.out.println("Duplicados incluídos:" + duplicates.getLength());
 
-      for (int doc : duplicates.getLuceneIds()) {
-        uniqueSelectedIds.add(app.appCase.getIds()[doc]);
+      for (ItemId item : duplicates.getIds()) {
+        uniqueSelectedIds.add(item);
       }
 
     } catch (Exception e) {
@@ -232,29 +236,31 @@ public class GerenciadorMarcadores implements ActionListener {
     if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
 
       App app = App.get();
-      final ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
+      final ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
 
       if (checked.isSelected()) {
-        for (int id = 0; id <= App.get().appCase.getLastId(); id++) {
-          if (App.get().appCase.getMarcadores().isSelected(id)) {
-            uniqueSelectedIds.add(id);
+    	  for(IPEDSource source : App.get().appCase.getAtomicSources()){
+          	for (int id = 0; id <= source.getLastId(); id++) {
+                  if (source.getMarcador().isSelected(id)) {
+                    uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                  }
+                }
           }
-        }
 
       } else if (highlighted.isSelected()) {
         for (Integer row : App.get().resultsTable.getSelectedRows()) {
           int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-          int id = app.appCase.getIds()[app.results.getLuceneIds()[rowModel]];
+          ItemId id = app.ipedResult.getIds()[rowModel];
           uniqueSelectedIds.add(id);
 
-          Integer id2 = app.appCase.getViewToRawMap().getRaw(id);
+          //TODO reparar viewMap
+          /*Integer id2 = app.appCase.getViewToRawMap().getRaw(id);
           if (id2 == null) {
             id2 = app.appCase.getViewToRawMap().getView(id);
           }
-
           if (id2 != null) {
             uniqueSelectedIds.add(id2);
-          }
+          }*/
         }
       }
 
@@ -264,12 +270,12 @@ public class GerenciadorMarcadores implements ActionListener {
             includeDuplicates(uniqueSelectedIds);
           }
 
-          for (int idx : list.getSelectedIndices()) {
-            int labelId = App.get().appCase.getMarcadores().getLabelId(listModel.getElementAt(idx));
+          for (int index : list.getSelectedIndices()) {
+        	String label = list.getModel().getElementAt(index);
             if (evt.getSource() == add || evt.getSource() == novo) {
-              App.get().appCase.getMarcadores().addLabel(uniqueSelectedIds, labelId);
+              App.get().appCase.getMarcadores().addLabel(uniqueSelectedIds, label);
             } else {
-              App.get().appCase.getMarcadores().removeLabel(uniqueSelectedIds, labelId);
+              App.get().appCase.getMarcadores().removeLabel(uniqueSelectedIds, label);
             }
           }
           App.get().appCase.getMarcadores().saveState();
@@ -280,9 +286,9 @@ public class GerenciadorMarcadores implements ActionListener {
     } else if (evt.getSource() == delete) {
       int result = JOptionPane.showConfirmDialog(dialog, "Deseja realmente apagar os marcadores selecionados?", "Confirmar", JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
-        for (int idx : list.getSelectedIndices()) {
-          int labelId = App.get().appCase.getMarcadores().getLabelId(listModel.getElementAt(idx));
-          App.get().appCase.getMarcadores().delLabel(labelId);
+    	for (int index : list.getSelectedIndices()) {
+          String label = list.getModel().getElementAt(index);
+          App.get().appCase.getMarcadores().delLabel(label);
         }
         updateList();
         App.get().appCase.getMarcadores().saveState();
@@ -294,8 +300,8 @@ public class GerenciadorMarcadores implements ActionListener {
       String newLabel = JOptionPane.showInputDialog(dialog, "Novo nome para o primeiro marcador selecionado", list.getSelectedValue());
       if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
         for (int idx : list.getSelectedIndices()) {
-          int labelId = App.get().appCase.getMarcadores().getLabelId(listModel.getElementAt(idx));
-          App.get().appCase.getMarcadores().changeLabel(labelId, newLabel.trim());;
+          String label = list.getModel().getElementAt(idx);
+          App.get().appCase.getMarcadores().changeLabel(label, newLabel.trim());;
           break;
         }
         updateList();

@@ -90,7 +90,8 @@ public class AppListener implements ActionListener, MouseListener {
 
     if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged"))) {
 
-      if (App.get().filtro.getSelectedIndex() == 0) {
+      int filterIndex = App.get().filtro.getSelectedIndex(); 
+      if (filterIndex == 0 || filterIndex == -1) {
         App.get().filtro.setBackground(App.get().filterManager.defaultColor);
       } else {
         App.get().filtro.setBackground(App.get().alertColor);

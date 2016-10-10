@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -30,6 +31,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
@@ -83,7 +85,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	private static ColumnsManager instance;
 	
-	private File caseCols = new File(new File(App.get().codePath).getParentFile(), "visibleCols.dat");
+	private File caseCols;
 	
 	String[] indexFields = null;
 	
@@ -167,6 +169,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 		scrollList.getVerticalScrollBar().setUnitIncrement(10);
 		panel.add(scrollList, BorderLayout.CENTER);
 		
+		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+		caseCols = new File(moduleDir, "visibleCols.dat");
+		
 		boolean lastColsOk = false;
 		File cols = caseCols;
 		if(!cols.exists())
@@ -189,19 +194,11 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    colState.initialWidths = defaultWidths;
 		}
 		
-		try {
-			File extraAttrFile = new File(App.get().codePath + "/../data/" + IndexTask.extraAttrFilename);
-			if(extraAttrFile.exists()){
-				ArrayList<String> extraAttrs = new ArrayList<String>();
-				HashSet<String> extraAttr = (HashSet<String>)Util.readObject(extraAttrFile.getAbsolutePath());
-				EvidenceFile.setExtraAttributeSet(extraAttr);
-				extraAttrs.addAll(Arrays.asList(extraFields));
-				extraAttrs.addAll(extraAttr);
-				extraFields = extraAttrs.toArray(new String[0]);
-			}
-		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-		}
+		TreeSet<String> extraAttrs = new TreeSet<String>();
+		extraAttrs.addAll(Arrays.asList(extraFields));
+		for(IPEDSource source : App.get().appCase.getAtomicSources())
+			extraAttrs.addAll(source.getExtraAttributes());
+		extraFields = extraAttrs.toArray(new String[0]);
 		
 		indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
 		

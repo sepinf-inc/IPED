@@ -189,7 +189,10 @@ public class Marcadores implements Serializable {
 
 	public int newLabel(String labelName) {
 		
-		int labelId = -1;
+		int labelId = getLabelId(labelName);
+		if(labelId != -1)
+			return labelId;
+		
 		if (labelNames.size() > 0)
 			for (int i = 0; i <= labelNames.lastKey(); i++)
 				if (labelNames.get(i) == null) {
@@ -210,7 +213,8 @@ public class Marcadores implements Serializable {
 	}
 
 	public void delLabel(int label) {
-		
+		if(label == -1)
+			return;
 		labelNames.remove(label);
 		
 		int labelOrder = label / labelBits;
@@ -221,20 +225,22 @@ public class Marcadores implements Serializable {
 	}
 	
 	public void changeLabel(int labelId, String newLabel){
-		labelNames.put(labelId, newLabel);
+		if(labelId != -1)
+			labelNames.put(labelId, newLabel);
 	}
 
 	public int getLabelId(String labelName) {
-		for (int i : labelNames.keySet())
+		for (int i : labelNames.keySet()){
+			//System.out.println(labelNames.get(i) + " equals " + labelName + " " + i);
 			if (labelNames.get(i).equals(labelName))
 				return i;
+		}
 
 		return -1;
 	}
 	
 	public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 	  	result = result.clone();
-	  	int[] ids = ipedCase.getIds();
 	  	
 	  	int[] labelIds = new int[labelNames.size()];
 	  	int i = 0;
@@ -243,7 +249,7 @@ public class Marcadores implements Serializable {
 		byte[] labelBits = getLabelBits(labelIds);
 	  	
 		for (i = 0; i < result.getLength(); i++)
-			if (!hasLabel(ids[result.getLuceneIds()[i]], labelBits)) {
+			if (!hasLabel(ipedCase.getId(result.getLuceneIds()[i]), labelBits)) {
 				result.getLuceneIds()[i] = -1;
 			}
 
@@ -253,7 +259,6 @@ public class Marcadores implements Serializable {
 	  
 	  public SearchResult filtrarSemEComMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 		  	result = result.clone();
-		  	int[] ids = ipedCase.getIds();
 		  	
 		  	int[] labelIds = new int[labelNames.size()];
 		  	int i = 0;
@@ -262,7 +267,7 @@ public class Marcadores implements Serializable {
 			byte[] labelBits = getLabelBits(labelIds);
 		  	
 			for (i = 0; i < result.getLength(); i++)
-				if (hasLabel(ids[result.getLuceneIds()[i]]) && !hasLabel(ids[result.getLuceneIds()[i]], labelBits)) {
+				if (hasLabel(ipedCase.getId(result.getLuceneIds()[i])) && !hasLabel(ipedCase.getId(result.getLuceneIds()[i]), labelBits)) {
 					result.getLuceneIds()[i] = -1;
 				}
 	
@@ -272,9 +277,8 @@ public class Marcadores implements Serializable {
 	  
 	  public SearchResult filtrarSemMarcadores(SearchResult result, IPEDSource ipedCase){
 		  	result = result.clone();
-			int[] ids = ipedCase.getIds();
 			for (int i = 0; i < result.getLength(); i++)
-				if (hasLabel(ids[result.getLuceneIds()[i]])) {
+				if (hasLabel(ipedCase.getId(result.getLuceneIds()[i]))) {
 					result.getLuceneIds()[i] = -1;
 				}
 	
@@ -284,9 +288,8 @@ public class Marcadores implements Serializable {
 	
 	  public SearchResult filtrarSelecionados(SearchResult result, IPEDSource ipedCase) throws Exception {
 		  	result = result.clone();
-			int[] ids = ipedCase.getIds();
 			for (int i = 0; i < result.getLength(); i++)
-				if (!selected[ids[result.getLuceneIds()[i]]]) {
+				if (!selected[ipedCase.getId(result.getLuceneIds()[i])]) {
 					result.getLuceneIds()[i] = -1;
 				}
 	
@@ -307,7 +310,8 @@ public class Marcadores implements Serializable {
 	}
 
 	public void saveState(File file) throws IOException {
-		SaveStateThread.getInstance().saveState(this, file);
+		//SaveStateThread.getInstance().saveState(this, file);
+		Util.writeObject(this, file.getAbsolutePath());
 	}
 
 	public void addToTypedWords(String texto) {

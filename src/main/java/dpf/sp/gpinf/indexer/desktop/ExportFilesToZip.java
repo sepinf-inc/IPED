@@ -33,15 +33,17 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.EvidenceFile;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
-  ArrayList<Integer> uniqueIds;
+  ArrayList<ItemId> uniqueIds;
   File file, subdir;
   ProgressMonitor progressMonitor;
 
-  public ExportFilesToZip(File file, ArrayList<Integer> uniqueIds) {
+  public ExportFilesToZip(File file, ArrayList<ItemId> uniqueIds) {
     this.file = file;
     this.uniqueIds = uniqueIds;
 
@@ -60,7 +62,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     int subdir = 0;
     int progress = 0;
     
-    for (Integer docId : uniqueIds) {
+    for (ItemId item : uniqueIds) {
       try {
     	if (progress % 1000 == 0){
     	  subdir++;
@@ -68,17 +70,18 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     	  zaos.putArchiveEntry(entry);
     	  zaos.closeArchiveEntry();
     	}
-        Document doc = App.get().appCase.getSearcher().doc(docId);
-        String dstName = doc.get(IndexItem.NAME);
+    	
+    	EvidenceFile e = App.get().appCase.getItemByItemId(item);
+        String dstName = e.getName();
         //dstName += "." + doc.get(IndexItem.TYPE);
 
-        InputStream in = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
+        InputStream in = e.getBufferedStream();
 
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName);
         
-        String lenStr = doc.get(IndexItem.LENGTH);
-        if(lenStr != null && !lenStr.isEmpty())
-        	entry.setSize(Long.parseLong(lenStr));
+        Long length = e.getLength();
+        if(length != null)
+        	entry.setSize(length);
         
         zaos.putArchiveEntry(entry);
         int len = 0;

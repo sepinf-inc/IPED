@@ -130,8 +130,6 @@ public class Manager {
 
     stats = Statistics.get(caseData, indexDir);
 
-    OCRParser.OUTPUT_BASE = output;
-
   }
   
   public File getIndexTemp(){

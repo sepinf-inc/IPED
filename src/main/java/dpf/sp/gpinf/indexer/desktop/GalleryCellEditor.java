@@ -71,7 +71,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int col) {
 
     GalleryValue cellValue = (GalleryValue) value;
-    if (cellValue.id == -1) {
+    if (cellValue.id == null) {
       return new JPanel();
     }
 

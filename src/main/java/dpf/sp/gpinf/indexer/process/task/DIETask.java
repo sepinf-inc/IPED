@@ -239,7 +239,7 @@ public class DIETask extends AbstractTask {
   private BufferedImage getBufferedImage(EvidenceFile evidence) {
     BufferedImage img = null;
     try {
-      GalleryValue value = new GalleryValue(null, null, -1);
+      GalleryValue value = new GalleryValue(null, null, null);
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {

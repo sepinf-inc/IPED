@@ -34,6 +34,8 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
@@ -83,7 +85,8 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
           if (!field.equals(ResultTableModel.BOOKMARK_COL)) {
             value = doc.get(fields.get(col));
           } else {
-            value = App.get().appCase.getMarcadores().getLabels(app.appCase.getIds()[docId]);
+            ItemId item = App.get().appCase.getItemId(docId);
+            value = App.get().appCase.getMarcadores().getLabels(item);
           }
           if (value == null) {
             value = "";

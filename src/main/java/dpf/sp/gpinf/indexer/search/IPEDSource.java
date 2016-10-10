@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +44,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -69,32 +74,40 @@ public class IPEDSource implements Closeable{
 	
 	protected ArrayList<String> categories = new ArrayList<String>(); 
 	
-	Marcadores marcadores;
+	private Marcadores marcadores;
+	MultiMarcadores globalMarcadores;
 	
-	int[] ids, docs, textSizes;
+	private int[] ids, docs, textSizes;
 	
-	int sourceId;
+	private int sourceId = -1;
 	
 	int totalItens = 0;
 	
-	int lastId = 0;
+	private int lastId = 0;
 	
-	Set<Integer> splitedDocs = Collections.emptySet();
+	private Set<Integer> splitedDocs = Collections.emptySet();
 	VersionsMap viewToRawMap = new VersionsMap(0);
+	
+	LinkedHashSet<String> keywords = new LinkedHashSet<String>();
+	
+	HashSet<String> extraAttributes = new HashSet<String>();
 	
 	boolean isFTKReport = false;
 	
 	public IPEDSource(File casePath) {
 		
 		this.casePath = casePath;
-		sourceId = nextId.getAndIncrement();
 		moduleDir = new File(casePath, MODULE_DIR);
 		index = new File(moduleDir, INDEX_DIR);
 		
 		if(!index.exists())
 			return;
 		
+		sourceId = nextId.getAndIncrement();
+		
 		try {
+			Configuration.getConfiguration(moduleDir.getAbsolutePath());
+			
 			File sleuthFile = new File(casePath,  SLEUTH_DB);
 			if (sleuthFile.exists()){
 				sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
@@ -130,10 +143,19 @@ public class IPEDSource implements Closeable{
 			
 			loadCategories();
 			
+			loadKeywords();
+			
+			IndexItem.loadMetadataTypes(new File(moduleDir, "conf"));
+			
+			File extraAttrFile = new File(moduleDir, "data/" + IndexTask.extraAttrFilename);
+			if(extraAttrFile.exists()){
+				extraAttributes = (HashSet<String>)Util.readObject(extraAttrFile.getAbsolutePath());
+				EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
+			}
+			
 			marcadores = new Marcadores(this, moduleDir);
 			marcadores.loadState();
-
-			IndexItem.loadMetadataTypes(new File(moduleDir, "conf"));
+			globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
 			
 			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
 			
@@ -151,16 +173,11 @@ public class IPEDSource implements Closeable{
 	}
 	
 	private void countTotalItems(){
-		//TODO excluir excluidos da contagem
 		for(int i = 0; i < docs.length; i++)
 			if(docs[i] > 0)
 				totalItens++;
+		//inclui docId = 0 na contagem
 		totalItens++;
-	}
-	
-	//TODO remover após reparar contagem acima
-	public void setTotalItens(int count){
-		totalItens = count;
 	}
 	
 	private void loadCategories(){
@@ -170,6 +187,17 @@ public class IPEDSource implements Closeable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void loadKeywords(){
+		ArrayList<String> words;
+		try {
+			words = Util.loadKeywords(moduleDir.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
+		} catch (IOException e) {
+		   	words = new ArrayList<String>();
+		}
+		for(String word : words)
+			keywords.add(word);
 	}
 	
 	private void openIndex(File index) throws IOException{
@@ -226,22 +254,6 @@ public class IPEDSource implements Closeable{
 		openIndex(index);
 	}
 	
-	public IPEDSource getAtomicCase(int luceneId){
-		return this;
-	}
-	
-	public List<IPEDSource> getAtomicSources(){
-		return Collections.singletonList(this);
-	}
-	
-	public int getBaseLuceneId(IPEDSource atomicCase){
-		return 0;
-	}
-	
-	protected SearchResult rebaseLuceneIds(SearchResult resultsFromAtomicCase, IPEDSource atomicCase){
-		return resultsFromAtomicCase;
-	}
-	
 	private void checkImagePaths(File casePath, File sleuthFile) throws Exception {
 		  File tmpCase = null;
 		  char letter = casePath.getAbsolutePath().charAt(0);
@@ -288,28 +300,32 @@ public class IPEDSource implements Closeable{
 		return casePath;
 	}
 	
-	public int[] getIds() {
-		return ids;
-	}
-	
-	public int getId(int luceneId){
+	protected int getId(int luceneId){
 		return ids[luceneId];
-	}
-
-	public int[] getDocs() {
-		return docs;
 	}
 	
 	public int getLuceneId(int id){
 		return docs[id];
 	}
 
-	public int[] getTextSizes() {
-		return textSizes;
+	public int getTextSize(int id) {
+		return textSizes[id];
+	}
+	
+	boolean isSplited(int id){
+		return splitedDocs.contains(id);
 	}
 	
 	public List<String> getCategories(){
 		return categories;
+	}
+	
+	public Set<String> getKeywords(){
+		return keywords;
+	}
+	
+	public HashSet<String> getExtraAttributes(){
+		return this.extraAttributes;
 	}
 	
 	public Analyzer getAnalyzer() {
@@ -328,8 +344,12 @@ public class IPEDSource implements Closeable{
 		return searcher;
 	}
 
-	public Marcadores getMarcadores() {
+	public Marcadores getMarcador() {
 		return marcadores;
+	}
+	
+	public MultiMarcadores getMarcadores() {
+		return this.globalMarcadores;
 	}
 
 	public int getTotalItens() {

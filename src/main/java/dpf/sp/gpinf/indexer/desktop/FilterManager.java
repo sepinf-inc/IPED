@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 public class FilterManager implements ActionListener, ListSelectionListener {
 
   private static File userFilters = new File(System.getProperty("user.home") + "/.indexador/ipedFilters.txt");
-  private File defaultFilter = new File(App.get().codePath + "/../conf/DefaultFilters.txt");
+  private File defaultFilter;
 
   private UTF8Properties filters = new UTF8Properties();
   private volatile boolean updatingCombo = false;
@@ -55,6 +55,9 @@ public class FilterManager implements ActionListener, ListSelectionListener {
       if (userFilters.exists()) {
         filters.load(userFilters);
       }
+      
+      if(defaultFilter == null)
+    	  defaultFilter = new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), "conf/DefaultFilters.txt");
 
       filters.load(defaultFilter);
 
@@ -163,6 +166,10 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
   public boolean isUpdatingFilter() {
     return updatingCombo;
+  }
+  
+  public void setUpdatingFilter(boolean updating){
+	  updatingCombo = updating;
   }
 
   @Override

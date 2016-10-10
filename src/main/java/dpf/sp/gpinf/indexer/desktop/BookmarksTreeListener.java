@@ -2,7 +2,9 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -51,9 +53,9 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
   public void updateModelAndSelection() {
 
     updatingSelection = true;
-    TreeMap<Integer, String> labelMap = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).labelMap;
+    Set<String> labelSet = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).labels;
 
-    if (labelMap != null && !selection.isEmpty()) {
+    if (labelSet != null && !selection.isEmpty()) {
 
       HashSet<String> tempSel = (HashSet<String>) selection.clone();
       selection.clear();
@@ -62,14 +64,9 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
       }
 
       for (String path : tempSel) {
-        for (int i : labelMap.keySet()) {
-          if (labelMap.get(i).equals(path)) {
-            String name = App.get().appCase.getMarcadores().getLabelMap().get(i);
-            if (name != null) {
-              selection.add(name);
-            }
+          if (App.get().appCase.getMarcadores().getLabelMap().contains(path)) {
+        	  selection.add(path);
           }
-        }
       }
 
       ArrayList<TreePath> selectedPaths = new ArrayList<TreePath>();

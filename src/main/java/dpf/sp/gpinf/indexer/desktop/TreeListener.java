@@ -133,10 +133,10 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
         if (ftkId != null)
           textQuery = IndexItem.FTKID + ":" + parentId;
         
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
-
         if (textQuery != null) {
+          String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+          textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;	
+        	
 		  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
 		  task.setTreeQuery(true);
           result = task.pesquisar();
