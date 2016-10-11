@@ -162,7 +162,7 @@ public class MenuListener implements ActionListener {
       for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
     	ItemId item = App.get().appCase.getItemId(docId);
         if (App.get().appCase.getMultiMarcadores().isSelected(item)
-            && !App.get().appCase.getViewToRawMap().isView(App.get().appCase.getId(docId))) {
+            && !App.get().appCase.getAtomicSource(docId).getViewToRawMap().isView(item.getId())) {
           uniqueSelectedIds.add(docId);
         }
 

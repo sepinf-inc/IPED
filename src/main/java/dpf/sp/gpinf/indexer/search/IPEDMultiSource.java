@@ -97,8 +97,6 @@ public class IPEDMultiSource extends IPEDSource{
         for(IPEDSource iCase : cases)
         	totalItens += iCase.totalItens;
 		
-		viewToRawMap = new VersionsMap(0);
-		
 		for(IPEDSource iCase : cases)
 			for(String category : iCase.categories)
 				if(!categories.contains(category))
@@ -170,7 +168,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return this.cases;
 	}
 	
-	private int getBaseLuceneId(IPEDSource atomicCase){
+	private final int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)

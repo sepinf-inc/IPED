@@ -61,6 +61,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import dpf.sp.gpinf.indexer.util.VersionsMap;
 
 public class GerenciadorMarcadores implements ActionListener {
 
@@ -253,14 +254,12 @@ public class GerenciadorMarcadores implements ActionListener {
           ItemId id = app.ipedResult.getIds()[rowModel];
           uniqueSelectedIds.add(id);
 
-          //TODO reparar viewMap
-          /*Integer id2 = app.appCase.getViewToRawMap().getRaw(id);
-          if (id2 == null) {
-            id2 = app.appCase.getViewToRawMap().getView(id);
-          }
-          if (id2 != null) {
-            uniqueSelectedIds.add(id2);
-          }*/
+          VersionsMap viewMap = app.appCase.getAtomicSourceBySourceId(id.getSourceId()).getViewToRawMap(); 
+          Integer id2 = viewMap.getRaw(id.getId());
+          if (id2 == null) 
+            id2 = viewMap.getView(id.getId());
+          if (id2 != null)
+            uniqueSelectedIds.add(new ItemId(id.getSourceId(), id2));
         }
       }
 
