@@ -66,8 +66,14 @@ public class MultiMarcadores implements Serializable {
 	private static final int[] getLabelIds(Marcadores m, Set<String> labelNames){
 		int[] labelIds = new int[labelNames.size()];
 	  	int i = 0;
-	  	for(String labelName : labelNames)
-	  		labelIds[i++] = m.getLabelId(labelName);
+	  	boolean hasLabel = false;
+	  	for(String labelName : labelNames){
+	  		labelIds[i] = m.getLabelId(labelName);
+	  		if(labelIds[i++] != -1)
+	  			hasLabel = true;
+	  	}
+	  	if(!hasLabel)
+	  		return null;
 	  	return labelIds;
 	}
 	
@@ -148,10 +154,11 @@ public class MultiMarcadores implements Serializable {
 	  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
 	  		if(labelbits == null){
 	  			int[] labelIds = getLabelIds(m, labelNames);
-	  			labelbits = m.getLabelBits(labelIds);
+	  			if(labelIds != null) labelbits = m.getLabelBits(labelIds);
+	  			else labelbits = new byte[0];
 	  			labelBitsPerSource.put(item.getSourceId(), labelbits);
 	  		}
-	  		if(m.hasLabel(item.getId(), labelbits)){
+	  		if(labelbits.length != 0 && m.hasLabel(item.getId(), labelbits)){
 	  			selectedItems.add(item);
 	  			scores.add(result.getScores()[i]);
 	  		}
@@ -173,10 +180,11 @@ public class MultiMarcadores implements Serializable {
 		  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
 		  		if(labelbits == null){
 		  			int[] labelIds = getLabelIds(m, labelNames);
-		  			labelbits = m.getLabelBits(labelIds);
+		  			if(labelIds != null) labelbits = m.getLabelBits(labelIds);
+		  			else labelbits = new byte[0];
 		  			labelBitsPerSource.put(item.getSourceId(), labelbits);
 		  		}
-		  		if(!m.hasLabel(item.getId()) || m.hasLabel(item.getId(), labelbits)){
+		  		if(!m.hasLabel(item.getId()) || (labelbits.length != 0 && m.hasLabel(item.getId(), labelbits))){
 		  			selectedItems.add(item);
 		  			scores.add(result.getScores()[i]);
 		  		}
