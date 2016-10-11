@@ -85,16 +85,20 @@ public class MultiMarcadores implements Serializable {
 	
 	public final boolean hasLabel(ItemId item, String labelName) {
 		Marcadores m = map.get(item.getSourceId());
-		return m.hasLabel(item.getId(), m.getLabelId(labelName));
+		int labelId = m.getLabelId(labelName);
+		if(labelId == -1)
+			return false;
+		return m.hasLabel(item.getId(), labelId);
 	}
 
 	public void addLabel(ArrayList<ItemId> ids, String labelName) {
 		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
-			if(m.getLabelId(labelName) == -1)
-				System.out.println(m.newLabel(labelName));
-			m.addLabel(itemsPerSource.get(sourceId), m.getLabelId(labelName));
+			int labelId = m.getLabelId(labelName);
+			if(labelId == -1)
+				labelId = m.newLabel(labelName);
+			m.addLabel(itemsPerSource.get(sourceId), labelId);
 		}
 	}
 	
@@ -115,7 +119,9 @@ public class MultiMarcadores implements Serializable {
 		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
-			m.removeLabel(itemsPerSource.get(sourceId), m.getLabelId(labelName));
+			int labelId = m.getLabelId(labelName);
+			if(labelId != -1)
+				m.removeLabel(itemsPerSource.get(sourceId), labelId);
 		}
 
 	}

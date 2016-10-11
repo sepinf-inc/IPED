@@ -231,7 +231,6 @@ public class Marcadores implements Serializable {
 
 	public int getLabelId(String labelName) {
 		for (int i : labelNames.keySet()){
-			//System.out.println(labelNames.get(i) + " equals " + labelName + " " + i);
 			if (labelNames.get(i).equals(labelName))
 				return i;
 		}
