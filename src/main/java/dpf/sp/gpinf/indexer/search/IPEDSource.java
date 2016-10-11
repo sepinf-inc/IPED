@@ -300,7 +300,7 @@ public class IPEDSource implements Closeable{
 		return casePath;
 	}
 	
-	protected int getId(int luceneId){
+	public int getId(int luceneId){
 		return ids[luceneId];
 	}
 	

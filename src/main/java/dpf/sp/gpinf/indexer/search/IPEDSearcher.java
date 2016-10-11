@@ -100,7 +100,6 @@ public class IPEDSearcher {
 		if(!treeQuery)
 			query = getNonTreeQuery();
 		
-		
 		collector = new NoScoringCollector(ipedCase.reader.maxDoc());
 		try{
 			ipedCase.searcher.search(query, collector);
@@ -114,7 +113,7 @@ public class IPEDSearcher {
 		
 		//obtém resultados calculando score
 		LuceneSearchResult searchResult = new LuceneSearchResult(0);
-		int maxResults = 100000;
+		int maxResults = 1000000;
 		ScoreDoc[] scoreDocs = null;
 		do {
 			ScoreDoc lastScoreDoc = null;
@@ -138,8 +137,9 @@ public class IPEDSearcher {
 	}
 
 	public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {
+		
 		if(ipedCase instanceof IPEDMultiSource)
-			return filtrarFragmentosMulti(prevResult);
+			return filtrarFragmentosMulti((IPEDMultiSource)ipedCase, prevResult);
 		
 		HashSet<Integer> duplicates = new HashSet<Integer>();
 		for (int i = 0; i < prevResult.length; i++) {
@@ -158,11 +158,11 @@ public class IPEDSearcher {
 
 	}
 	
-	private LuceneSearchResult filtrarFragmentosMulti(LuceneSearchResult prevResult) throws Exception {
+	private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) throws Exception {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
 		for (int i = 0; i < prevResult.length; i++) {
-			IPEDSource atomicSource = ((IPEDMultiSource)ipedCase).getAtomicSource(prevResult.docs[i]);
-			int id = ((IPEDMultiSource)ipedCase).getItemId(prevResult.docs[i]).getId();
+			IPEDSource atomicSource = ipedCase.getAtomicSource(prevResult.docs[i]);
+			int id = ipedCase.getItemId(prevResult.docs[i]).getId();
 			if (atomicSource.isSplited(id)) {
 				if (!duplicates.contains(id)) {
 					duplicates.add(id);
