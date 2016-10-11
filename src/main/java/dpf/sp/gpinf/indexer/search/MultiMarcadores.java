@@ -63,14 +63,17 @@ public class MultiMarcadores implements Serializable {
 		return map.get(item.getSourceId()).hasLabel(item.getId());
 	}
 	
-	public final boolean hasLabel(ItemId item, Set<String> labelNames){
-		Marcadores m = map.get(item.getSourceId());
-		
+	private static final int[] getLabelIds(Marcadores m, Set<String> labelNames){
 		int[] labelIds = new int[labelNames.size()];
 	  	int i = 0;
 	  	for(String labelName : labelNames)
 	  		labelIds[i++] = m.getLabelId(labelName);
-	  	
+	  	return labelIds;
+	}
+	
+	public final boolean hasLabel(ItemId item, Set<String> labelNames){
+		Marcadores m = map.get(item.getSourceId());
+		int[] labelIds = getLabelIds(m, labelNames);
 	  	return m.hasLabel(item.getId(), m.getLabelBits(labelIds));
 	}
 	
@@ -139,8 +142,16 @@ public class MultiMarcadores implements Serializable {
 		ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 	  	ArrayList<Float> scores = new ArrayList<Float>();
 	  	int i = 0;
+	  	HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>(); 
 	  	for(ItemId item : result.getIds()){
-	  		if(this.hasLabel(item, labelNames)){
+	  		Marcadores m = map.get(item.getSourceId());
+	  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
+	  		if(labelbits == null){
+	  			int[] labelIds = getLabelIds(m, labelNames);
+	  			labelbits = m.getLabelBits(labelIds);
+	  			labelBitsPerSource.put(item.getSourceId(), labelbits);
+	  		}
+	  		if(m.hasLabel(item.getId(), labelbits)){
 	  			selectedItems.add(item);
 	  			scores.add(result.getScores()[i]);
 	  		}
@@ -156,8 +167,16 @@ public class MultiMarcadores implements Serializable {
 		  ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
 		  	int i = 0;
+		  	HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>(); 
 		  	for(ItemId item : result.getIds()){
-		  		if(!this.hasLabel(item) || this.hasLabel(item, labelNames)){
+		  		Marcadores m = map.get(item.getSourceId());
+		  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
+		  		if(labelbits == null){
+		  			int[] labelIds = getLabelIds(m, labelNames);
+		  			labelbits = m.getLabelBits(labelIds);
+		  			labelBitsPerSource.put(item.getSourceId(), labelbits);
+		  		}
+		  		if(!m.hasLabel(item.getId()) || m.hasLabel(item.getId(), labelbits)){
 		  			selectedItems.add(item);
 		  			scores.add(result.getScores()[i]);
 		  		}
