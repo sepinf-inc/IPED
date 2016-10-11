@@ -180,8 +180,8 @@ public class IPEDMultiSource extends IPEDSource{
 		return maxDoc;
 	}
 	
-	private SearchResult rebaseLuceneIds(SearchResult resultsFromAtomicCase, IPEDSource atomicCase){
-		SearchResult result = resultsFromAtomicCase.clone();
+	private LuceneSearchResult rebaseLuceneIds(LuceneSearchResult resultsFromAtomicCase, IPEDSource atomicCase){
+		LuceneSearchResult result = resultsFromAtomicCase.clone();
 		int baseDoc = getBaseLuceneId(atomicCase);
 		for(int i = 0; i < result.docs.length; i++)
 			result.docs[i] += baseDoc;

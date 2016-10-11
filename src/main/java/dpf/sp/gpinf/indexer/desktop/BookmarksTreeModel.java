@@ -54,7 +54,7 @@ public class BookmarksTreeModel implements TreeModel {
     }
 
     if (labels == null) {
-    	labels = (TreeSet<String>)App.get().appCase.getMarcadores().getLabelMap().clone();
+    	labels = (TreeSet<String>)App.get().appCase.getMultiMarcadores().getLabelMap().clone();
     }
 
     if (index == 0) {
@@ -76,7 +76,7 @@ public class BookmarksTreeModel implements TreeModel {
       if (App.get().appCase == null) {
         return 0;
       } else {
-        return App.get().appCase.getMarcadores().getLabelMap().size() + 1;
+        return App.get().appCase.getMultiMarcadores().getLabelMap().size() + 1;
       }
     }
   }

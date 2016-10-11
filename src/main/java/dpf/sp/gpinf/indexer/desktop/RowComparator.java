@@ -141,15 +141,15 @@ public class RowComparator implements Comparator<Integer> {
 		b = app.results.getLuceneIds()[b];
 		
 		if(col == 1){
-		    if (app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowB]))
+		    if (app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowB]))
               return 0;
-          else if (app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == true)
+          else if (app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == true)
               return -1;
           else
               return 1;
 		
 		}else if(bookmarkCol)
-          return app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[rowA]).compareTo(app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[rowB]));
+          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[rowA]).compareTo(app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[rowB]));
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);

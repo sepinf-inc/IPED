@@ -86,7 +86,7 @@ public class MenuListener implements ActionListener {
         App.get().resultsTable.setValueAt(true, row, col);
       }
       MarcadoresController.get().setMultiSetting(false);
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
 
     } else if (e.getSource() == menu.desmarcarSelecionados) {
@@ -96,7 +96,7 @@ public class MenuListener implements ActionListener {
         App.get().resultsTable.setValueAt(false, row, col);
       }
       MarcadoresController.get().setMultiSetting(false);
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
 
     }
@@ -107,7 +107,7 @@ public class MenuListener implements ActionListener {
         App.get().resultsTable.setValueAt(true, row, col);
       }
       MarcadoresController.get().setMultiSetting(false);
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
 
     } else if (e.getSource() == menu.deslerSelecionados) {
@@ -117,7 +117,7 @@ public class MenuListener implements ActionListener {
         App.get().resultsTable.setValueAt(false, row, col);
       }
       MarcadoresController.get().setMultiSetting(false);
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
 
     } else if (e.getSource() == menu.exportarSelecionados) {
@@ -161,7 +161,7 @@ public class MenuListener implements ActionListener {
       ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
       for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
     	ItemId item = App.get().appCase.getItemId(docId);
-        if (App.get().appCase.getMarcadores().isSelected(item)
+        if (App.get().appCase.getMultiMarcadores().isSelected(item)
             && !App.get().appCase.getViewToRawMap().isView(App.get().appCase.getId(docId))) {
           uniqueSelectedIds.add(docId);
         }
@@ -181,7 +181,7 @@ public class MenuListener implements ActionListener {
     	ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
         for(IPEDSource source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
-                if (source.getMarcador().isSelected(id)) {
+                if (source.getMarcadores().isSelected(id)) {
                   uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                 }
               }
@@ -197,7 +197,7 @@ public class MenuListener implements ActionListener {
         ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
         for(IPEDSource source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
-        		if (source.getMarcador().isSelected(id)) {
+        		if (source.getMarcadores().isSelected(id)) {
                     uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                 }
               }
@@ -219,8 +219,8 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.limparBuscas) {
-      App.get().appCase.getMarcadores().clearTypedWords();
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().clearTypedWords();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUIHistory();
 
     } else if (e.getSource() == menu.carregarMarcadores) {

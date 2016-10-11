@@ -6,7 +6,7 @@ import java.io.IOException;
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MarkerEventListener;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
 
@@ -15,7 +15,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         int pos = 0;
         
         //procura pela posição correspondente na tabela do item clicado no mapa
-        SearchResult results = App.get().getResults();
+        LuceneSearchResult results = App.get().getResults();
         for (int i = 0; i < results.getLength(); i++) {
         	org.apache.lucene.document.Document doc = null;
         	try {

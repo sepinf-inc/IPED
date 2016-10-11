@@ -344,11 +344,11 @@ public class IPEDSource implements Closeable{
 		return searcher;
 	}
 
-	public Marcadores getMarcador() {
+	public Marcadores getMarcadores() {
 		return marcadores;
 	}
 	
-	public MultiMarcadores getMarcadores() {
+	public MultiMarcadores getMultiMarcadores() {
 		return this.globalMarcadores;
 	}
 

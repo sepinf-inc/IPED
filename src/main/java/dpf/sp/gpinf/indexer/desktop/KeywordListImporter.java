@@ -43,7 +43,7 @@ public class KeywordListImporter extends CancelableWorker {
 
       try {
     	IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
-        if (task.pesquisarTodos().getLength() > 0) {
+        if (task.searchAll().getLength() > 0) {
           result.add(keyword);
         }
 
@@ -70,9 +70,9 @@ public class KeywordListImporter extends CancelableWorker {
     progress.close();
 
     for (String word : result)
-      App.get().appCase.getMarcadores().addToTypedWords(word);
+      App.get().appCase.getMultiMarcadores().addToTypedWords(word);
     
-    App.get().appCase.getMarcadores().saveState();
+    App.get().appCase.getMultiMarcadores().saveState();
     
     MarcadoresController.get().atualizarGUIHistory();
 

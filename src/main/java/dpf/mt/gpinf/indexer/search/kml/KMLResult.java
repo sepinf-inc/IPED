@@ -16,7 +16,7 @@ import org.apache.commons.lang.ArrayUtils;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class KMLResult {
@@ -76,7 +76,7 @@ public class KMLResult {
 		  kml.append("<name>Resultados</name>");
 
 		  int contSemCoordenadas=0;
-		  SearchResult results = app.getResults();
+		  LuceneSearchResult results = app.getResults();
 		  org.apache.lucene.document.Document doc;
 		  
 		  SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");

@@ -239,7 +239,7 @@ public class Marcadores implements Serializable {
 		return -1;
 	}
 	
-	public SearchResult filtrarMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
+	public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 	  	result = result.clone();
 	  	
 	  	int[] labelIds = new int[labelNames.size()];
@@ -257,7 +257,7 @@ public class Marcadores implements Serializable {
 		return result;
 	  }
 	  
-	  public SearchResult filtrarSemEComMarcadores(SearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
+	  public LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 		  	result = result.clone();
 		  	
 		  	int[] labelIds = new int[labelNames.size()];
@@ -275,7 +275,7 @@ public class Marcadores implements Serializable {
 			return result;
 	  }
 	  
-	  public SearchResult filtrarSemMarcadores(SearchResult result, IPEDSource ipedCase){
+	  public LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IPEDSource ipedCase){
 		  	result = result.clone();
 			for (int i = 0; i < result.getLength(); i++)
 				if (hasLabel(ipedCase.getId(result.getLuceneIds()[i]))) {
@@ -286,7 +286,7 @@ public class Marcadores implements Serializable {
 			return result;
 	  }
 	
-	  public SearchResult filtrarSelecionados(SearchResult result, IPEDSource ipedCase) throws Exception {
+	  public LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IPEDSource ipedCase) throws Exception {
 		  	result = result.clone();
 			for (int i = 0; i < result.getLength(); i++)
 				if (!selected[ipedCase.getId(result.getLuceneIds()[i])]) {

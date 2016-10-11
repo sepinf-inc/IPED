@@ -52,7 +52,7 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -111,7 +111,7 @@ public class IPEDReader extends DataSourceReader {
     selectedLabels = new HashSet<Integer>();
     
     IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-	SearchResult result = state.filtrarSelecionados(pesquisa.pesquisar(), ipedCase);
+	LuceneSearchResult result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
 
     insertIntoProcessQueue(result, false);
 
@@ -138,7 +138,7 @@ public class IPEDReader extends DataSourceReader {
 
   }
 
-  private void insertParentTreeNodes(SearchResult result) throws Exception {
+  private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
     boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
     for (int docID : result.getLuceneIds()) {
       String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
@@ -161,7 +161,7 @@ public class IPEDReader extends DataSourceReader {
       if (num == 1000 || i == ipedCase.getLastId()) {
     	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
   		searchParents.setTreeQuery(true);
-        result = searchParents.pesquisar();
+        result = searchParents.luceneSearch();
         insertIntoProcessQueue(result, true);
         query = new BooleanQuery();
         num = 0;
@@ -169,7 +169,7 @@ public class IPEDReader extends DataSourceReader {
     }
   }
 
-  private void insertPSTAttachs(SearchResult result) throws Exception {
+  private void insertPSTAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) {
       boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
@@ -201,7 +201,7 @@ public class IPEDReader extends DataSourceReader {
         }
         if (num == 1000 || i == ipedCase.getLastId()) {
           IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
-    	  SearchResult attachs = searchAttachs.pesquisar();
+    	  LuceneSearchResult attachs = searchAttachs.luceneSearch();
           insertIntoProcessQueue(attachs, false);
           query = new BooleanQuery();
           num = 0;
@@ -210,7 +210,7 @@ public class IPEDReader extends DataSourceReader {
     }
   }
 
-  private void insertIntoProcessQueue(SearchResult result, boolean treeNode) throws Exception {
+  private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
 
     for (int docID : result.getLuceneIds()) {
       Document doc = ipedCase.getReader().document(docID);

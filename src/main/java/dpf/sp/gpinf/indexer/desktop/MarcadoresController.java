@@ -47,14 +47,14 @@ public class MarcadoresController {
 	
 	public void addToRecentSearches(String texto) {
 
-		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMarcadores().getTypedWords().contains(texto)
+		if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty() && !App.get().appCase.getMultiMarcadores().getTypedWords().contains(texto)
 				&& !App.get().appCase.getKeywords().contains(texto)) {
 
-			if (App.get().appCase.getMarcadores().getTypedWords().size() == 0)
+			if (App.get().appCase.getMultiMarcadores().getTypedWords().size() == 0)
 				App.get().termo.addItem(HISTORY_DIV);
 			
 			App.get().termo.addItem(texto);
-			App.get().appCase.getMarcadores().addToTypedWords(texto);
+			App.get().appCase.getMultiMarcadores().addToTypedWords(texto);
 		}
 	}
 	
@@ -71,8 +71,8 @@ public class MarcadoresController {
 					App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
 					App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
 				}
-				App.get().checkBox.setText(App.get().appCase.getMarcadores().getTotalSelected() + " / " + App.get().appCase.getTotalItens());
-				App.get().checkBox.setSelected(App.get().appCase.getMarcadores().getTotalSelected() > 0);
+				App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " + App.get().appCase.getTotalItens());
+				App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
 				App.get().bookmarksListener.updateModelAndSelection();
 				GerenciadorMarcadores.updateCounters();
 			}
@@ -86,7 +86,7 @@ public class MarcadoresController {
 		if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
 			File file = fileChooser.getSelectedFile();
 			try {
-				App.get().appCase.getMarcadores().loadState(file);
+				App.get().appCase.getMultiMarcadores().loadState(file);
 				atualizarGUIandHistory();
 				GerenciadorMarcadores.get().updateList();
 				JOptionPane.showMessageDialog(App.get(), "Marcadores carregados com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
@@ -103,10 +103,10 @@ public class MarcadoresController {
 	    for (String word : App.get().appCase.getKeywords())
 	        App.get().termo.addItem(word);
 	    
-		if (App.get().appCase.getMarcadores().getTypedWords().size() != 0)
+		if (App.get().appCase.getMultiMarcadores().getTypedWords().size() != 0)
 			App.get().termo.addItem(HISTORY_DIV);
 		
-		for (String text : App.get().appCase.getMarcadores().getTypedWords()) {
+		for (String text : App.get().appCase.getMultiMarcadores().getTypedWords()) {
 			App.get().termo.addItem(text);
 		}
 	}
@@ -120,7 +120,7 @@ public class MarcadoresController {
 				file = new File(file.getPath() + Marcadores.EXT);
 
 			try {
-				App.get().appCase.getMarcadores().saveState(file);
+				App.get().appCase.getMultiMarcadores().saveState(file);
 				JOptionPane.showMessageDialog(App.get(), "Marcadores salvos com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
 
 			} catch (IOException e1) {

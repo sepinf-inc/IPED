@@ -73,12 +73,26 @@ public class IPEDSearcher {
 		if(collector != null)
 			collector.cancel();
 	}
-
-	public SearchResult pesquisar() throws Exception {
-		return filtrarVersoes(filtrarFragmentos(pesquisarTodos()));
+	
+	public SearchResult search() throws Exception {
+		if(ipedCase instanceof IPEDMultiSource)
+			throw new Exception("Use multiSearch() method for IPEDMultiSource!");
+		
+		return SearchResult.get(ipedCase, luceneSearch());
+	}
+	
+	public MultiSearchResult multiSearch() throws Exception {
+		if(!(ipedCase instanceof IPEDMultiSource))
+			throw new Exception("Use search() method for only one IPEDSource!");
+		
+		return MultiSearchResult.get((IPEDMultiSource)ipedCase, luceneSearch());
 	}
 
-	public SearchResult pesquisarTodos() throws Exception {
+	public LuceneSearchResult luceneSearch() throws Exception {
+		return filtrarVersoes(filtrarFragmentos(searchAll()));
+	}
+
+	public LuceneSearchResult searchAll() throws Exception {
 		
 		if(query == null)
 			query = new QueryBuilder(ipedCase).getQuery(queryText);
@@ -99,7 +113,7 @@ public class IPEDSearcher {
 			return collector.getSearchResults();
 		
 		//obtém resultados calculando score
-		SearchResult searchResult = new SearchResult(0);
+		LuceneSearchResult searchResult = new LuceneSearchResult(0);
 		int maxResults = 100000;
 		ScoreDoc[] scoreDocs = null;
 		do {
@@ -123,7 +137,7 @@ public class IPEDSearcher {
 		return result;
 	}
 
-	public SearchResult filtrarFragmentos(SearchResult prevResult) throws Exception {
+	public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {
 		if(ipedCase instanceof IPEDMultiSource)
 			return filtrarFragmentosMulti(prevResult);
 		
@@ -144,7 +158,7 @@ public class IPEDSearcher {
 
 	}
 	
-	private SearchResult filtrarFragmentosMulti(SearchResult prevResult) throws Exception {
+	private LuceneSearchResult filtrarFragmentosMulti(LuceneSearchResult prevResult) throws Exception {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
 		for (int i = 0; i < prevResult.length; i++) {
 			IPEDSource atomicSource = ((IPEDMultiSource)ipedCase).getAtomicSource(prevResult.docs[i]);
@@ -162,7 +176,7 @@ public class IPEDSearcher {
 		
 	}
 
-	private SearchResult filtrarVersoes(SearchResult prevResult) throws Exception {
+	private LuceneSearchResult filtrarVersoes(LuceneSearchResult prevResult) throws Exception {
 		if (ipedCase.viewToRawMap.getMappings() == 0)
 			return prevResult;
 

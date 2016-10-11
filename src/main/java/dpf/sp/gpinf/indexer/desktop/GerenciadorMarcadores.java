@@ -56,10 +56,10 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener {
@@ -93,7 +93,7 @@ public class GerenciadorMarcadores implements ActionListener {
 
   public static void updateCounters() {
     instance.highlighted.setText("Itens Destacados (" + App.get().resultsTable.getSelectedRowCount() + ")");
-    instance.checked.setText("Itens Selecionados (" + App.get().appCase.getMarcadores().getTotalSelected() + ")");
+    instance.checked.setText("Itens Selecionados (" + App.get().appCase.getMultiMarcadores().getTotalSelected() + ")");
   }
 
   private GerenciadorMarcadores() {
@@ -164,7 +164,7 @@ public class GerenciadorMarcadores implements ActionListener {
 
   public void updateList() {
 	listModel.clear();
-	String[] labels = App.get().appCase.getMarcadores().getLabelMap().toArray(new String[0]);
+	String[] labels = App.get().appCase.getMultiMarcadores().getLabelMap().toArray(new String[0]);
     Arrays.sort(labels, Collator.getInstance());
     for (String label : labels) {
       listModel.addElement(label);
@@ -201,7 +201,7 @@ public class GerenciadorMarcadores implements ActionListener {
       progress.setTask(task);
       progress.setNote("Pesquisando duplicatas...");
       progress.setIndeterminate(true);
-      IPEDResult duplicates = IPEDResult.get(app.appCase, task.pesquisar());
+      MultiSearchResult duplicates = MultiSearchResult.get(app.appCase, task.pesquisar());
 
       System.out.println("Duplicados incluídos:" + duplicates.getLength());
 
@@ -223,7 +223,7 @@ public class GerenciadorMarcadores implements ActionListener {
     if (evt.getSource() == novo) {
       String texto = newLabel.getText().trim();
       if (!texto.isEmpty() && !listModel.contains(texto)) {
-        App.get().appCase.getMarcadores().newLabel(texto);
+        App.get().appCase.getMultiMarcadores().newLabel(texto);
         updateList();
       }
       for (int i = 0; i < listModel.size(); i++) {
@@ -241,7 +241,7 @@ public class GerenciadorMarcadores implements ActionListener {
       if (checked.isSelected()) {
     	  for(IPEDSource source : App.get().appCase.getAtomicSources()){
           	for (int id = 0; id <= source.getLastId(); id++) {
-                  if (source.getMarcador().isSelected(id)) {
+                  if (source.getMarcadores().isSelected(id)) {
                     uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                   }
                 }
@@ -273,12 +273,12 @@ public class GerenciadorMarcadores implements ActionListener {
           for (int index : list.getSelectedIndices()) {
         	String label = list.getModel().getElementAt(index);
             if (evt.getSource() == add || evt.getSource() == novo) {
-              App.get().appCase.getMarcadores().addLabel(uniqueSelectedIds, label);
+              App.get().appCase.getMultiMarcadores().addLabel(uniqueSelectedIds, label);
             } else {
-              App.get().appCase.getMarcadores().removeLabel(uniqueSelectedIds, label);
+              App.get().appCase.getMultiMarcadores().removeLabel(uniqueSelectedIds, label);
             }
           }
-          App.get().appCase.getMarcadores().saveState();
+          App.get().appCase.getMultiMarcadores().saveState();
           MarcadoresController.get().atualizarGUI();
         }
       }.start();
@@ -288,10 +288,10 @@ public class GerenciadorMarcadores implements ActionListener {
       if (result == JOptionPane.YES_OPTION) {
     	for (int index : list.getSelectedIndices()) {
           String label = list.getModel().getElementAt(index);
-          App.get().appCase.getMarcadores().delLabel(label);
+          App.get().appCase.getMultiMarcadores().delLabel(label);
         }
         updateList();
-        App.get().appCase.getMarcadores().saveState();
+        App.get().appCase.getMultiMarcadores().saveState();
         MarcadoresController.get().atualizarGUI();
 
       }
@@ -301,11 +301,11 @@ public class GerenciadorMarcadores implements ActionListener {
       if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
         for (int idx : list.getSelectedIndices()) {
           String label = list.getModel().getElementAt(idx);
-          App.get().appCase.getMarcadores().changeLabel(label, newLabel.trim());;
+          App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel.trim());;
           break;
         }
         updateList();
-        App.get().appCase.getMarcadores().saveState();
+        App.get().appCase.getMultiMarcadores().saveState();
         MarcadoresController.get().atualizarGUI();
 
       }

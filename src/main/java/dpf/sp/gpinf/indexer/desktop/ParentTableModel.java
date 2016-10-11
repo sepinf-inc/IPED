@@ -32,7 +32,7 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class ParentTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
@@ -42,7 +42,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   private static final long serialVersionUID = 1L;
 
   // public ScoreDoc[] results = new ScoreDoc[0];
-  SearchResult results = new SearchResult(0);
+  LuceneSearchResult results = new LuceneSearchResult(0);
   int selectedIndex = -1;
 
   @Override
@@ -83,7 +83,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   
   @Override
   public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.getMarcadores().setSelected((Boolean)value, App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
+    App.get().appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
     MarcadoresController.get().atualizarGUI();
   }
 
@@ -93,7 +93,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       return row + 1;
       
     }else if (col == 1) {
-        return App.get().appCase.getMarcadores().isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+        return App.get().appCase.getMultiMarcadores().isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
       
     } else {
       try {
@@ -107,7 +107,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
   }
   
   @Override
-	public SearchResult getSearchResult() {
+	public LuceneSearchResult getSearchResult() {
 		return results;
 	}
 
@@ -172,12 +172,12 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
     String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
     textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
 
-    results = new SearchResult(0);
+    results = new LuceneSearchResult(0);
 
     if (textQuery != null) {
       try {
 		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-        results = task.pesquisar();
+        results = task.luceneSearch();
 
       } catch (Exception e) {
         e.printStackTrace();

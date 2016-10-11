@@ -5,7 +5,7 @@ import java.util.HashSet;
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MapSelectionListener;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class AppMapaSelectionListener implements MapSelectionListener {
 
@@ -14,7 +14,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
 		int pos=0;
         JTable t = App.get().getResultsTable();
         org.apache.lucene.document.Document doc = null;
-        SearchResult results = App.get().getResults();
+        LuceneSearchResult results = App.get().getResults();
         
         HashSet<String> columns = new HashSet<String>();
         columns.add("id");

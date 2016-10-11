@@ -35,7 +35,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
@@ -152,10 +152,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   @Override
   public void setValueAt(Object value, int row, int col) {
 
-	app.appCase.getMarcadores().setSelected((Boolean)value, App.get().ipedResult.getIds()[row], app.appCase);	
+	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getIds()[row], app.appCase);	
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
-    	app.appCase.getMarcadores().saveState();
+    	app.appCase.getMultiMarcadores().saveState();
     	MarcadoresController.get().atualizarGUI();
     }
   }
@@ -172,7 +172,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   }
   
   @Override
-	public SearchResult getSearchResult() {
+	public LuceneSearchResult getSearchResult() {
 		return App.get().results;
 	}
 
@@ -200,7 +200,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     lastDocRead = App.get().results.getLuceneIds()[row];
       
     if (col == 1) {
-      return app.appCase.getMarcadores().isSelected(app.ipedResult.getIds()[row]);
+      return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[row]);
       
     } else {
       try {
@@ -212,7 +212,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMarcadores().getLabels(app.ipedResult.getIds()[row]);
+          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[row]);
         }
 
         value = doc.get(field);

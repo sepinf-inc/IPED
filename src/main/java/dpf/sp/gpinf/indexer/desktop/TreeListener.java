@@ -48,7 +48,7 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener {
 
@@ -118,7 +118,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   public void navigateToParent(int docId) {
 
     LinkedList<Node> path = new LinkedList<Node>();
-    SearchResult result = new SearchResult(0);
+    LuceneSearchResult result = new LuceneSearchResult(0);
     String textQuery = null;
     do {
       try {
@@ -139,7 +139,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
         	
 		  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
 		  task.setTreeQuery(true);
-          result = task.pesquisar();
+          result = task.luceneSearch();
 
           if (result.getLength() == 1) {
             docId = result.getLuceneIds()[0];

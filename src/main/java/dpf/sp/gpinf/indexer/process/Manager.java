@@ -62,7 +62,7 @@ import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -399,7 +399,7 @@ public class Manager {
 
         String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
-		SearchResult result = pesquisa.pesquisarTodos();
+		LuceneSearchResult result = pesquisa.searchAll();
 
         if (result.getLength() > 0) {
           palavrasFinais.add(categoria);
@@ -437,7 +437,7 @@ public class Manager {
           }
 
           IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-          if (pesquisa.pesquisarTodos().getLength() > 0) {
+          if (pesquisa.searchAll().getLength() > 0) {
             palavrasFinais.add(palavra);
           }
         }
@@ -467,7 +467,7 @@ public class Manager {
       IPEDSource ipedCase = new IPEDSource(output.getParentFile());
       String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
       IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
-      SearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.pesquisarTodos());
+      LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
 
       HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
       for (int i = 0; i < alternatives.getLength(); i++) {

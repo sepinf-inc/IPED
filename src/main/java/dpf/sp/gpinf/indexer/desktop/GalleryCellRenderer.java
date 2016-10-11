@@ -70,7 +70,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
       return new JPanel();
     }
 
-    check.setSelected(App.get().appCase.getMarcadores().isSelected(cellValue.id));
+    check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
     cLabel.setText(cellValue.name);
 
     if (cellValue.icon == null && cellValue.image == null) {

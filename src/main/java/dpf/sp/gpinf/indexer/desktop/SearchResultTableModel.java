@@ -1,9 +1,9 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public interface SearchResultTableModel {
 	
-	abstract public SearchResult getSearchResult();
+	abstract public LuceneSearchResult getSearchResult();
 
 }

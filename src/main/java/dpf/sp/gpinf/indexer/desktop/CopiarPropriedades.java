@@ -86,7 +86,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
             value = doc.get(fields.get(col));
           } else {
             ItemId item = App.get().appCase.getItemId(docId);
-            value = App.get().appCase.getMarcadores().getLabels(item);
+            value = App.get().appCase.getMultiMarcadores().getLabels(item);
           }
           if (value == null) {
             value = "";

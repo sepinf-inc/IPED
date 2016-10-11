@@ -9,13 +9,13 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.search.IndexSearcher;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class ResultTotalSizeCounter {
 
 	private static volatile Thread lastCounter;
 
-	public void countVolume(final SearchResult result) {
+	public void countVolume(final LuceneSearchResult result) {
 
 		if (lastCounter != null)
 			lastCounter.interrupt();

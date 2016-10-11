@@ -76,10 +76,10 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
@@ -98,8 +98,8 @@ public class App extends JFrame implements WindowListener {
 
   private AppSearchParams appSearchParams = null;
 
-  SearchResult results = new SearchResult(0);
-  IPEDResult ipedResult = new IPEDResult(new ItemId[0], new float[0]);
+  LuceneSearchResult results = new LuceneSearchResult(0);
+  MultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
   
   public IPEDMultiSource appCase;
   
@@ -222,7 +222,7 @@ public class App extends JFrame implements WindowListener {
       //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
       //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
       //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/nassif/caso3/indexador/lib/iped-search-app.jar";
+      //codePath = "E:/nassif/rodrigo/M0411-16/indexador/lib/iped-search-app.jar";
 
       codePath = codePath.substring(0, codePath.lastIndexOf('/'));
       appSearchParams.codePath = codePath;
@@ -737,7 +737,7 @@ public class App extends JFrame implements WindowListener {
 
   }
 
-  public SearchResult getResults() {
+  public LuceneSearchResult getResults() {
 	return results;
   }
   

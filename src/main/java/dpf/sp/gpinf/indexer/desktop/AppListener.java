@@ -19,7 +19,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import java.awt.Component;
 import java.awt.Rectangle;
@@ -43,7 +43,7 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().resultsTable.scrollRectToVisible(a);
     App.get().gallery.scrollRectToVisible(new Rectangle());
 
-    App.get().results = new SearchResult(0);
+    App.get().results = new LuceneSearchResult(0);
     App.get().getParams().lastSelectedDoc = -1;
     App.get().resultsModel.fireTableDataChanged();
     if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {
@@ -55,9 +55,9 @@ public class AppListener implements ActionListener, MouseListener {
 
     App.get().compositeViewer.clear();
 
-    App.get().subItemModel.results = new SearchResult(0);
+    App.get().subItemModel.results = new LuceneSearchResult(0);
     App.get().subItemModel.fireTableDataChanged();
-    App.get().parentItemModel.results = new SearchResult(0);
+    App.get().parentItemModel.results = new LuceneSearchResult(0);
     App.get().parentItemModel.fireTableDataChanged();
     while (App.get().tabbedHits.getTabCount() > 1) {
       App.get().tabbedHits.removeTabAt(1);
@@ -111,17 +111,17 @@ public class AppListener implements ActionListener, MouseListener {
     }
 
     if (evt.getSource() == App.get().checkBox) {
-      if (App.get().appCase.getMarcadores().getTotalSelected() > 0) {
+      if (App.get().appCase.getMultiMarcadores().getTotalSelected() > 0) {
         int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
         if (result == JOptionPane.YES_OPTION) {
-          App.get().appCase.getMarcadores().clearSelected();
+          App.get().appCase.getMultiMarcadores().clearSelected();
         }
       } else {
-        App.get().appCase.getMarcadores().selectAll();
+        App.get().appCase.getMultiMarcadores().selectAll();
       }
 
       App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-      App.get().appCase.getMarcadores().saveState();
+      App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
     }
 

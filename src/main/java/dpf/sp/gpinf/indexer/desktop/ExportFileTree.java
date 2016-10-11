@@ -32,9 +32,9 @@ import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -73,12 +73,12 @@ public class ExportFileTree extends CancelableWorker {
       textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")";
 
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-      SearchResult result = task.pesquisar();
+      LuceneSearchResult result = task.luceneSearch();
 
       if (onlyChecked) {
-    	  IPEDResult ir = IPEDResult.get(App.get().appCase, result);
-    	  ir = App.get().appCase.getMarcadores().filtrarSelecionados(ir);
-    	  result = IPEDResult.get(ir, App.get().appCase);
+    	  MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
+    	  ir = App.get().appCase.getMultiMarcadores().filtrarSelecionados(ir);
+    	  result = MultiSearchResult.get(ir, App.get().appCase);
       }
 
       return result.getLuceneIds();
@@ -111,7 +111,7 @@ public class ExportFileTree extends CancelableWorker {
         
         IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
         task.setTreeQuery(true);
-        SearchResult parent = task.pesquisar();
+        LuceneSearchResult parent = task.luceneSearch();
         if (parent.getLength() == 0) {
           return null;
         }

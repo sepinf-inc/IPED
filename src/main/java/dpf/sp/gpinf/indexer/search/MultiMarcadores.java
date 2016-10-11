@@ -27,7 +27,7 @@ public class MultiMarcadores implements Serializable {
 	
 	public MultiMarcadores(List<IPEDSource> sources){
 		for(IPEDSource s : sources)
-			map.put(s.getSourceId(), s.getMarcador());
+			map.put(s.getSourceId(), s.getMarcadores());
 	}
 	
 	public int getTotalSelected(){
@@ -135,7 +135,7 @@ public class MultiMarcadores implements Serializable {
 		return labels;
 	}
 	
-	public IPEDResult filtrarMarcadores(IPEDResult result, Set<String> labelNames) throws Exception{
+	public MultiSearchResult filtrarMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception{
 		ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 	  	ArrayList<Float> scores = new ArrayList<Float>();
 	  	int i = 0;
@@ -146,13 +146,13 @@ public class MultiMarcadores implements Serializable {
 	  		}
 	  		i++;
 	  	}
-	  	IPEDResult r = new IPEDResult(selectedItems.toArray(new ItemId[0]),
+	  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
 	  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 	  	
 		return r;
 	  }
 	  
-	  public IPEDResult filtrarSemEComMarcadores(IPEDResult result, Set<String> labelNames) throws Exception{
+	  public MultiSearchResult filtrarSemEComMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception{
 		  ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
 		  	int i = 0;
@@ -163,13 +163,13 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	IPEDResult r = new IPEDResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;
 	  }
 	  
-	  public IPEDResult filtrarSemMarcadores(IPEDResult result){
+	  public MultiSearchResult filtrarSemMarcadores(MultiSearchResult result){
 		  
 		    ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
@@ -181,13 +181,13 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	IPEDResult r = new IPEDResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;
 	  }
 	
-	  public IPEDResult filtrarSelecionados(IPEDResult result) throws Exception {
+	  public MultiSearchResult filtrarSelecionados(MultiSearchResult result) throws Exception {
 		  	
 		  	ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
@@ -199,7 +199,7 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	IPEDResult r = new IPEDResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;

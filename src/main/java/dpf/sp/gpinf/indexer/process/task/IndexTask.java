@@ -41,7 +41,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
@@ -374,7 +374,7 @@ public class IndexTask extends BaseCarveTask {
     try {
       IPEDSource ipedCase = new IPEDSource(output.getAbsoluteFile());
       IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-      SearchResult result = searchAll.pesquisarTodos();
+      LuceneSearchResult result = searchAll.searchAll();
 
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
       for (int docID : result.getLuceneIds()) {

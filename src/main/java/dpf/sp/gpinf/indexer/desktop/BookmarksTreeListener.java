@@ -64,7 +64,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
       }
 
       for (String path : tempSel) {
-          if (App.get().appCase.getMarcadores().getLabelMap().contains(path)) {
+          if (App.get().appCase.getMultiMarcadores().getLabelMap().contains(path)) {
         	  selection.add(path);
           }
       }

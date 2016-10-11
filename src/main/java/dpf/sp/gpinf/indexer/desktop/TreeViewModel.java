@@ -35,7 +35,7 @@ import org.apache.lucene.document.StoredField;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class TreeViewModel implements TreeModel {
 
@@ -78,7 +78,7 @@ public class TreeViewModel implements TreeModel {
 
     private Document doc;
     int docId;
-    private SearchResult children;
+    private LuceneSearchResult children;
     boolean first = true;
 
     public Node(int docId) {
@@ -108,7 +108,7 @@ public class TreeViewModel implements TreeModel {
       return getDoc().get(IndexItem.NAME);
     }
 
-    public SearchResult getChildren() {
+    public LuceneSearchResult getChildren() {
       if (children == null) {
         listSubItens(getDoc());
       }
@@ -131,13 +131,13 @@ public class TreeViewModel implements TreeModel {
       try {
 		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
 		task.setTreeQuery(true);
-        children = task.pesquisar();
+        children = task.luceneSearch();
         Integer[] array = ArrayUtils.toObject(children.getLuceneIds());
         Arrays.sort(array, getComparator());
-        children = SearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
+        children = LuceneSearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
 
       } catch (Exception e) {
-        children = new SearchResult(0);
+        children = new LuceneSearchResult(0);
         e.printStackTrace();
       }
 
@@ -151,10 +151,10 @@ public class TreeViewModel implements TreeModel {
     try {
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true");
 	  task.setTreeQuery(true);
-      root.children = task.pesquisar();
+      root.children = task.luceneSearch();
       Integer[] array = ArrayUtils.toObject(root.children.getLuceneIds());
       Arrays.sort(array, getComparator());
-      root.children = SearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
+      root.children = LuceneSearchResult.buildSearchResult(ArrayUtils.toPrimitive(array), null);
 
     } catch (Exception e) {
       e.printStackTrace();

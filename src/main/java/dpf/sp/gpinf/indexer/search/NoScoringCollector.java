@@ -58,8 +58,8 @@ public class NoScoringCollector extends Collector{
 		return this.totalHits;
 	}
 	
-	public SearchResult getSearchResults1(){
-		SearchResult results = new SearchResult(totalHits);
+	public LuceneSearchResult getSearchResults1(){
+		LuceneSearchResult results = new LuceneSearchResult(totalHits);
 		int idx = 0;
 		for(int i = 0; i < bits.length(); i++)
 			if(bits.get(i))
@@ -68,8 +68,8 @@ public class NoScoringCollector extends Collector{
 		return results;
 	}
 	
-	public SearchResult getSearchResults(){
-		SearchResult results = new SearchResult(totalHits);
+	public LuceneSearchResult getSearchResults(){
+		LuceneSearchResult results = new LuceneSearchResult(totalHits);
 		int idx = 0;
 		long[] array = bits.toLongArray();
 		for(int i = 0; i < array.length; i++)

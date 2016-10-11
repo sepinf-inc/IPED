@@ -31,19 +31,19 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.IPEDResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
-public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
+public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	
-	private static IPEDResult allItemsCache;
+	private static MultiSearchResult allItemsCache;
 	
 	volatile static int numFilters = 0;
 	ProgressDialog progressDialog;
@@ -69,8 +69,8 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 		}
 	}
 	
-	public SearchResult pesquisar() throws Exception {
-		return searcher.pesquisar();
+	public LuceneSearchResult pesquisar() throws Exception {
+		return searcher.luceneSearch();
 	}
 
 	private Query getQueryWithUIFilter(String texto) throws ParseException, QueryNodeException {
@@ -118,14 +118,14 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 
 
 	@Override
-	public IPEDResult doInBackground() {
+	public MultiSearchResult doInBackground() {
 		
 		synchronized(this.getClass()){
 			
 			if (this.isCancelled())
 				return null;
 			
-			IPEDResult result = null;
+			MultiSearchResult result = null;
 			try {
 				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 					
@@ -133,7 +133,7 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
 					result = allItemsCache;
 				else{
-					result = IPEDResult.get(App.get().appCase, searcher.pesquisar());
+					result = searcher.multiSearch();
 					if(q instanceof MatchAllDocsQuery && allItemsCache == null)
 						allItemsCache = result.clone();
 				}
@@ -143,7 +143,7 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 					filtro = App.get().filtro.getSelectedItem().toString();
 				
 				if (filtro.equals(App.FILTRO_SELECTED)){
-					result = App.get().appCase.getMarcadores().filtrarSelecionados(result);
+					result = App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
 					numFilters++;
 				}
 				
@@ -152,13 +152,13 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 					numFilters++;
 					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
 						if(bookmarkSelection.size() == 1)
-							result = App.get().appCase.getMarcadores().filtrarSemMarcadores(result);
+							result = App.get().appCase.getMultiMarcadores().filtrarSemMarcadores(result);
 						else{
 							bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-							result = App.get().appCase.getMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection);
+							result = App.get().appCase.getMultiMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection);
 						}
 					}else
-						result = App.get().appCase.getMarcadores().filtrarMarcadores(result, bookmarkSelection);
+						result = App.get().appCase.getMultiMarcadores().filtrarMarcadores(result, bookmarkSelection);
 					
 				}
 
@@ -167,7 +167,7 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 
 			} catch (Throwable e) {
 				e.printStackTrace();
-				return new IPEDResult(new ItemId[0], new float[0]);
+				return new MultiSearchResult(new ItemId[0], new float[0]);
 				
 			}
 			
@@ -187,7 +187,7 @@ public class PesquisarIndice extends CancelableWorker<IPEDResult, Object> {
 		if (!this.isCancelled())
 			try {
 				App.get().ipedResult = this.get();
-				App.get().results = IPEDResult.get(App.get().ipedResult, App.get().appCase);
+				App.get().results = MultiSearchResult.get(this.get(), App.get().appCase);
 				
 				new ResultTotalSizeCounter().countVolume(App.get().results);
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
