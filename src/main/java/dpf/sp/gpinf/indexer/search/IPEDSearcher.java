@@ -179,6 +179,8 @@ public class IPEDSearcher {
 					}
 				}
 			}
+			
+		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
 		}else{
 			IPEDSource atomicSource = null;
 			int baseDoc = 0;

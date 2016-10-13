@@ -37,6 +37,8 @@ public class MultiSearchResult {
 			for(int i = 0; i < luceneResult.docs.length; i++){
 				result.ids[i] = iSource.getItemId(luceneResult.docs[i]);
 			}
+			
+		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
 		}else{
 			IPEDSource atomicSource = null;
 			int baseDoc = 0;
@@ -70,6 +72,8 @@ public class MultiSearchResult {
 			for(ItemId item : ipedResult.getIds()){ 
 				lResult.docs[i++] = iSource.getLuceneId(item);
 			}
+		
+		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
 		}else{
 			IPEDSource atomicSource = null;
 			int baseDoc = 0;
