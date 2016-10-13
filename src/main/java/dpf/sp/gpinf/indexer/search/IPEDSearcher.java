@@ -37,6 +37,8 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 public class IPEDSearcher {
 
 	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSearcher.class);
+	
+	public static final int MAX_SIZE_TO_SCORE = 1000000;
 		
 	IPEDSource ipedCase;
 	Query query;
@@ -94,6 +96,8 @@ public class IPEDSearcher {
 
 	public LuceneSearchResult searchAll() throws Exception {
 		
+		//System.out.println("searching");
+		
 		if(query == null)
 			query = new QueryBuilder(ipedCase).getQuery(queryText);
 		
@@ -108,7 +112,7 @@ public class IPEDSearcher {
 			//e.printStackTrace();
 		}
 		//não calcula scores (lento) quando resultado é mto grande
-		if(collector.getTotalHits() > 1000000 || canceled)
+		if(collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
 			return collector.getSearchResults();
 		
 		//obtém resultados calculando score
@@ -138,6 +142,8 @@ public class IPEDSearcher {
 
 	public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {
 		
+		//System.out.println("fragments");
+		
 		if(ipedCase instanceof IPEDMultiSource)
 			return filtrarFragmentosMulti((IPEDMultiSource)ipedCase, prevResult);
 		
@@ -160,17 +166,40 @@ public class IPEDSearcher {
 	
 	private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) throws Exception {
 		HashSet<Integer> duplicates = new HashSet<Integer>();
-		for (int i = 0; i < prevResult.length; i++) {
-			IPEDSource atomicSource = ipedCase.getAtomicSource(prevResult.docs[i]);
-			int id = ipedCase.getItemId(prevResult.docs[i]).getId();
-			if (atomicSource.isSplited(id)) {
-				if (!duplicates.contains(id)) {
-					duplicates.add(id);
-				} else {
-					prevResult.docs[i] = -1;
+		if(prevResult.getLength() <= MAX_SIZE_TO_SCORE){
+			for (int i = 0; i < prevResult.length; i++) {
+				ItemId item = ipedCase.getItemId(prevResult.docs[i]);
+				IPEDSource atomicSource = ipedCase.getAtomicSourceBySourceId(item.getSourceId());
+				int id = item.getId();
+				if (atomicSource.isSplited(id)) {
+					if (!duplicates.contains(id)) {
+						duplicates.add(id);
+					} else {
+						prevResult.docs[i] = -1;
+					}
+				}
+			}
+		}else{
+			IPEDSource atomicSource = null;
+			int baseDoc = 0;
+			int maxdoc = 0;
+			for(int i = 0; i < prevResult.docs.length; i++){
+				if(atomicSource == null || prevResult.docs[i] >= baseDoc + maxdoc){
+					atomicSource = ipedCase.getAtomicSource(prevResult.docs[i]);
+					baseDoc = ipedCase.getBaseLuceneId(atomicSource);
+					maxdoc = atomicSource.reader.maxDoc();
+				}
+				int id = atomicSource.getId(prevResult.docs[i] - baseDoc);
+				if (atomicSource.isSplited(id)) {
+					if (!duplicates.contains(id)) {
+						duplicates.add(id);
+					} else {
+						prevResult.docs[i] = -1;
+					}
 				}
 			}
 		}
+		
 		prevResult.clearResults();
 		return prevResult;
 		

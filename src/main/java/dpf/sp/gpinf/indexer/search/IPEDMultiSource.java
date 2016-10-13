@@ -2,26 +2,19 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDMultiSource extends IPEDSource{
 	
-	List<IPEDSource> cases = Collections.synchronizedList(new ArrayList<IPEDSource>());
+	List<IPEDSource> cases = new ArrayList<IPEDSource>();
 	
 	public IPEDMultiSource(List<IPEDSource> sources) {
 		super(null);
@@ -168,7 +161,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return this.cases;
 	}
 	
-	private final int getBaseLuceneId(IPEDSource atomicCase){
+	final int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)

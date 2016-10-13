@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -85,7 +86,7 @@ public class IPEDSource implements Closeable{
 	
 	private int lastId = 0;
 	
-	private Set<Integer> splitedDocs = Collections.emptySet();
+	BitSet splitedIds = new BitSet();
 	VersionsMap viewToRawMap = new VersionsMap(0);
 	
 	LinkedHashSet<String> keywords = new LinkedHashSet<String>();
@@ -128,8 +129,12 @@ public class IPEDSource implements Closeable{
             countTotalItems();
             
             File splitedDocsFile = new File(moduleDir, "data/splits.ids");
-            if(splitedDocsFile.exists())
-            	splitedDocs = (Set<Integer>) Util.readObject(splitedDocsFile.getAbsolutePath());
+            if(splitedDocsFile.exists()){
+            	Set<Integer> splited = (Set<Integer>) Util.readObject(splitedDocsFile.getAbsolutePath());
+            	for(int i : splited)
+            		splitedIds.set(i);
+            }
+            	
 			
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids");
 			if (viewToRawFile.exists())
@@ -313,7 +318,7 @@ public class IPEDSource implements Closeable{
 	}
 	
 	boolean isSplited(int id){
-		return splitedDocs.contains(id);
+		return splitedIds.get(id);
 	}
 	
 	public List<String> getCategories(){
@@ -358,10 +363,6 @@ public class IPEDSource implements Closeable{
 
 	public int getLastId() {
 		return lastId;
-	}
-
-	public Set<Integer> getSplitedDocs() {
-		return splitedDocs;
 	}
 
 	public VersionsMap getViewToRawMap() {
