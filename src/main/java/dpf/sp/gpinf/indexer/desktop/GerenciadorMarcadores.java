@@ -59,7 +59,6 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
@@ -206,7 +205,7 @@ public class GerenciadorMarcadores implements ActionListener {
 
       System.out.println("Duplicados incluídos:" + duplicates.getLength());
 
-      for (ItemId item : duplicates.getIds()) {
+      for (ItemId item : duplicates.getIterator()) {
         uniqueSelectedIds.add(item);
       }
 
@@ -251,7 +250,7 @@ public class GerenciadorMarcadores implements ActionListener {
       } else if (highlighted.isSelected()) {
         for (Integer row : App.get().resultsTable.getSelectedRows()) {
           int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-          ItemId id = app.ipedResult.getIds()[rowModel];
+          ItemId id = app.ipedResult.getItem(rowModel);
           uniqueSelectedIds.add(id);
 
           VersionsMap viewMap = app.appCase.getAtomicSourceBySourceId(id.getSourceId()).getViewToRawMap(); 

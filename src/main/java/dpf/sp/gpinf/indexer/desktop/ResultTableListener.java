@@ -98,7 +98,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     if (viewIndex != -1) {
       int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
-      ItemId item = App.get().ipedResult.getIds()[modelIdx];
+      ItemId item = App.get().ipedResult.getItem(modelIdx);
       int docId = App.get().appCase.getLuceneId(item);
       if (docId != App.get().getParams().lastSelectedDoc) {
 
@@ -121,7 +121,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
   public void mouseReleased(MouseEvent evt) {
     if (evt.getClickCount() == 2) {
     	int modelIdx = App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-        ItemId item = App.get().ipedResult.getIds()[modelIdx];
+        ItemId item = App.get().ipedResult.getItem(modelIdx);
         int docId = App.get().appCase.getLuceneId(item);
     	ExternalFileOpen.open(docId);
 

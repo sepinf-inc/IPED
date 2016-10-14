@@ -86,7 +86,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     if (evt.getClickCount() == 2) {
     	int modelIdx = App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-    	ItemId item = App.get().ipedResult.getIds()[modelIdx];
+    	ItemId item = App.get().ipedResult.getItem(modelIdx);
         int docId = App.get().appCase.getLuceneId(item);
     	ExternalFileOpen.open(docId);
 

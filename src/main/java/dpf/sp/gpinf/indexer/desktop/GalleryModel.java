@@ -118,7 +118,7 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     idx = App.get().resultsTable.convertRowIndexToModel(idx);
-    final ItemId id = App.get().ipedResult.getIds()[idx];
+    final ItemId id = App.get().ipedResult.getItem(idx);
     final int docId = App.get().appCase.getLuceneId(id);
 
     synchronized (cache) {

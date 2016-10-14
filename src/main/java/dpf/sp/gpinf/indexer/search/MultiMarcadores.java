@@ -155,7 +155,7 @@ public class MultiMarcadores implements Serializable {
 	  	ArrayList<Float> scores = new ArrayList<Float>();
 	  	int i = 0;
 	  	HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>(); 
-	  	for(ItemId item : result.getIds()){
+	  	for(ItemId item : result.getIterator()){
 	  		Marcadores m = map.get(item.getSourceId());
 	  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
 	  		if(labelbits == null){
@@ -166,7 +166,7 @@ public class MultiMarcadores implements Serializable {
 	  		}
 	  		if(labelbits.length != 0 && m.hasLabel(item.getId(), labelbits)){
 	  			selectedItems.add(item);
-	  			scores.add(result.getScores()[i]);
+	  			scores.add(result.getScore(i));
 	  		}
 	  		i++;
 	  	}
@@ -181,7 +181,7 @@ public class MultiMarcadores implements Serializable {
 		  	ArrayList<Float> scores = new ArrayList<Float>();
 		  	int i = 0;
 		  	HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>(); 
-		  	for(ItemId item : result.getIds()){
+		  	for(ItemId item : result.getIterator()){
 		  		Marcadores m = map.get(item.getSourceId());
 		  		byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
 		  		if(labelbits == null){
@@ -192,7 +192,7 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		if(!m.hasLabel(item.getId()) || (labelbits.length != 0 && m.hasLabel(item.getId(), labelbits))){
 		  			selectedItems.add(item);
-		  			scores.add(result.getScores()[i]);
+		  			scores.add(result.getScore(i));
 		  		}
 		  		i++;
 		  	}
@@ -207,10 +207,10 @@ public class MultiMarcadores implements Serializable {
 		    ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
 		  	int i = 0;
-		  	for(ItemId item : result.getIds()){
+		  	for(ItemId item : result.getIterator()){
 		  		if(!this.hasLabel(item)){
 		  			selectedItems.add(item);
-		  			scores.add(result.getScores()[i]);
+		  			scores.add(result.getScore(i));
 		  		}
 		  		i++;
 		  	}
@@ -225,10 +225,10 @@ public class MultiMarcadores implements Serializable {
 		  	ArrayList<ItemId> selectedItems = new ArrayList<ItemId>();
 		  	ArrayList<Float> scores = new ArrayList<Float>();
 		  	int i = 0;
-		  	for(ItemId item : result.getIds()){
+		  	for(ItemId item : result.getIterator()){
 		  		if(map.get(item.getSourceId()).isSelected(item.getId())){
 		  			selectedItems.add(item);
-		  			scores.add(result.getScores()[i]);
+		  			scores.add(result.getScore(i));
 		  		}
 		  		i++;
 		  	}

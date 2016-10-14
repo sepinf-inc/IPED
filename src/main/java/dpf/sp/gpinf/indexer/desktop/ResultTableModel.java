@@ -154,7 +154,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   @Override
   public void setValueAt(Object value, int row, int col) {
 
-	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getIds()[row], app.appCase);	
+	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);	
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();
@@ -189,7 +189,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	      
 	String value;
 	
-	ItemId item = App.get().ipedResult.getIds()[row];
+	ItemId item = App.get().ipedResult.getItem(row);
     int docId = App.get().appCase.getLuceneId(item);
     
     if (docId != lastDocRead) {
@@ -203,7 +203,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     lastDocRead = docId;
       
     if (col == 1) {
-      return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[row]);
+      return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
       
     } else {
       try {
@@ -211,11 +211,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         String field = fields[fCol];
 
         if (field.equals(SCORE_COL)) {
-          return app.ipedResult.getScores()[row];
+          return app.ipedResult.getScore(row);
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[row]);
+          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
         }
 
         value = doc.get(field);

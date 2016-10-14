@@ -127,7 +127,7 @@ public class MenuListener implements ActionListener {
         File dir = fileChooser.getSelectedFile();
         ArrayList<ItemId> selectedIds = new ArrayList<ItemId>();
         for (int row : App.get().resultsTable.getSelectedRows()) {
-          ItemId item = App.get().ipedResult.getIds()[App.get().resultsTable.convertRowIndexToModel(row)];
+          ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
           selectedIds.add(item);
           // exporta versão nao selecionada caso exista
 					/*Integer docId2 = App.get().viewToRawMap.getRaw(docId);
@@ -144,7 +144,7 @@ public class MenuListener implements ActionListener {
     } else if (e.getSource() == menu.copiarSelecionados) {
       ArrayList<Integer> selectedIds = new ArrayList<Integer>();
       for (int row : App.get().resultsTable.getSelectedRows()) {
-    	ItemId item = App.get().ipedResult.getIds()[App.get().resultsTable.convertRowIndexToModel(row)];
+    	ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
     	int luceneId = App.get().appCase.getLuceneId(item);
         selectedIds.add(luceneId);
       }
@@ -281,7 +281,7 @@ public class MenuListener implements ActionListener {
 
       int selIdx = App.get().resultsTable.getSelectedRow();
       if (selIdx != -1) {
-    	ItemId item = App.get().ipedResult.getIds()[App.get().resultsTable.convertRowIndexToModel(selIdx)]; 
+    	ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx)); 
         int docId = App.get().appCase.getLuceneId(item); 
         App.get().treeListener.navigateToParent(docId);
       }

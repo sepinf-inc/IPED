@@ -1,9 +1,11 @@
 package dpf.sp.gpinf.indexer.search;
 
+import java.util.Iterator;
+
 public class MultiSearchResult {
 	
-	ItemId[] ids;
-	float[] scores;
+	private ItemId[] ids;
+	private float[] scores;
 	
 	public MultiSearchResult(){
 		this.ids = new ItemId[0];
@@ -15,17 +17,41 @@ public class MultiSearchResult {
 		this.scores = scores;
 	}
 	
-	public ItemId[] getIds(){
-		return ids;
-	}
-	
 	public int getLength(){
 		return ids.length;
 	}
 	
-	public float[] getScores(){
-		return scores;
+	public ItemId getItem(int i){
+		return ids[i];
 	}
+	
+	public float getScore(int i){
+		return scores[i];
+	}
+	
+	public ItemIdIterator getIterator(){
+		return new ItemIdIterator();
+	}
+	
+	public class ItemIdIterator implements Iterable<ItemId>, Iterator<ItemId>{
+		
+		private int pos = 0;
+
+		@Override
+		public Iterator<ItemId> iterator() {
+			return this;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return pos < ids.length;
+		}
+
+		@Override
+		public ItemId next() {
+			return ids[pos++];
+		}
+	}	
 	
 	public static MultiSearchResult get(IPEDMultiSource iSource, LuceneSearchResult luceneResult){
 		
@@ -71,7 +97,7 @@ public class MultiSearchResult {
 		
 		int i = 0;
 		if(ipedResult.getLength() <= IPEDSearcher.MAX_SIZE_TO_SCORE){
-			for(ItemId item : ipedResult.getIds()){ 
+			for(ItemId item : ipedResult.ids){ 
 				lResult.docs[i++] = iSource.getLuceneId(item);
 			}
 		
@@ -80,7 +106,7 @@ public class MultiSearchResult {
 			IPEDSource atomicSource = null;
 			int baseDoc = 0;
 			int sourceId = 0;
-			for(ItemId item : ipedResult.getIds()){
+			for(ItemId item : ipedResult.ids){
 				if(atomicSource == null || item.getSourceId() != sourceId){
 					sourceId = item.getSourceId();
 					atomicSource = iSource.getAtomicSourceBySourceId(sourceId);

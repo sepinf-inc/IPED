@@ -52,7 +52,7 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
     if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
       try {
-    	ItemId item = ((SearchResultTableModel)table.getModel()).getSearchResult().getIds()[idx];
+    	ItemId item = ((SearchResultTableModel)table.getModel()).getSearchResult().getItem(idx);
     	int docId = App.get().appCase.getLuceneId(item);
         Document doc = App.get().appCase.getSearcher().doc(docId);
         if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
