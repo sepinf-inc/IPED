@@ -266,18 +266,35 @@ public class IPEDSource implements Closeable{
 	      for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
 	        ArrayList<String> newPaths = new ArrayList<String>();
-	        for (String path : paths) {
-	          if (new File(path).exists()) {
-	            break;
-	          } else {
-	            String newPath = letter + path.substring(1);
-	            if (new File(newPath).exists()) {
-	              newPaths.add(newPath);
-	            }
-	          }
+	        for(String path : paths){
+	        	if(new File(path).exists())
+	        		break;
+	        	else{
+	        		String newPath = letter + path.substring(1);
+	        		if(new File(newPath).exists())
+	        			newPaths.add(newPath);	        				
+	        		else{
+	        			File baseFile = sleuthFile;
+		        		while((baseFile = baseFile.getParentFile()) != null){
+		        			File file = new File(path);
+		        			String relPath = "";
+		        			do{
+		        				relPath = File.separator + file.getName() + relPath;
+		        				newPath = baseFile.getAbsolutePath() + relPath;
+		        				file = file.getParentFile();
+		        				
+		        			}while(file != null && !new File(newPath).exists());
+		        			
+		        			if(new File(newPath).exists()){
+		        				newPaths.add(newPath);
+		        				break;
+		        			}
+		        		}		        			
+	        		}
+	        	}
 	        }
 	        if (newPaths.size() > 0) {
-	          if (tmpCase == null && !sleuthFile.canWrite()) {
+	          if (tmpCase == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
 	            tmpCase = File.createTempFile("sleuthkit-", ".db");
 	            tmpCase.deleteOnExit();
 	            sleuthCase.close();
