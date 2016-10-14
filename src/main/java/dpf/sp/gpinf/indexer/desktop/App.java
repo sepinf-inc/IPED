@@ -98,7 +98,6 @@ public class App extends JFrame implements WindowListener {
 
   private AppSearchParams appSearchParams = null;
 
-  LuceneSearchResult results = new LuceneSearchResult(0);
   MultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
   
   public IPEDMultiSource appCase;
@@ -738,7 +737,7 @@ public class App extends JFrame implements WindowListener {
   }
 
   public LuceneSearchResult getResults() {
-	return results;
+	return MultiSearchResult.get(ipedResult, appCase);
   }
   
   public JTable getResultsTable() {

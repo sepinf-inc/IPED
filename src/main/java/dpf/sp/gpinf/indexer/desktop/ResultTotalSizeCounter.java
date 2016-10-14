@@ -9,13 +9,14 @@ import javax.swing.SwingUtilities;
 import org.apache.lucene.search.IndexSearcher;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
 public class ResultTotalSizeCounter {
 
 	private static volatile Thread lastCounter;
 
-	public void countVolume(final LuceneSearchResult result) {
+	public void countVolume(final MultiSearchResult result) {
 
 		if (lastCounter != null)
 			lastCounter.interrupt();
@@ -33,7 +34,8 @@ public class ResultTotalSizeCounter {
 				long volume = 0;
 				IndexSearcher searcher = App.get().appCase.getSearcher();
 				Set<String> fieldsToLoad = Collections.singleton(IndexItem.LENGTH);
-				for (int doc : result.getLuceneIds()) {
+				for (ItemId item : result.getIds()) {
+					int doc = App.get().appCase.getLuceneId(item);
 					try {
 						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
 						if (len != null && !len.isEmpty())

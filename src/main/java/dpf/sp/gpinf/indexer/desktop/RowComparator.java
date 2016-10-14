@@ -31,6 +31,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.Bits;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.ItemId;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -132,24 +133,24 @@ public class RowComparator implements Comparator<Integer> {
 			throw new RuntimeException("Ordenação cancelada.");
 		
 		if(scoreCol)
-          return (int)(app.results.getScores()[a] - app.results.getScores()[b]);
+          return (int)(app.ipedResult.getScores()[a] - app.ipedResult.getScores()[b]);
 		
-		int rowA = a;
-		int rowB = b;
+		ItemId itemA = app.ipedResult.getIds()[a];
+		ItemId itemB = app.ipedResult.getIds()[b];
 		
-		a = app.results.getLuceneIds()[a];
-		b = app.results.getLuceneIds()[b];
+		a = app.appCase.getLuceneId(itemA);
+		b = app.appCase.getLuceneId(itemB);
 		
 		if(col == 1){
-		    if (app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowB]))
+		    if (app.appCase.getMultiMarcadores().isSelected(itemA) == app.appCase.getMultiMarcadores().isSelected(itemB))
               return 0;
-          else if (app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[rowA]) == true)
+          else if (app.appCase.getMultiMarcadores().isSelected(itemA) == true)
               return -1;
           else
               return 1;
 		
 		}else if(bookmarkCol)
-          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[rowA]).compareTo(app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getIds()[rowB]));
+          return app.appCase.getMultiMarcadores().getLabels(itemA).compareTo(app.appCase.getMultiMarcadores().getLabels(itemB));
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);

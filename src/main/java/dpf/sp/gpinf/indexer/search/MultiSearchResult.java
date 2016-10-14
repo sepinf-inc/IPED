@@ -5,7 +5,9 @@ public class MultiSearchResult {
 	ItemId[] ids;
 	float[] scores;
 	
-	private MultiSearchResult(){
+	public MultiSearchResult(){
+		this.ids = new ItemId[0];
+		this.scores = new float[0];
 	}
 	
 	public MultiSearchResult(ItemId[] ids, float[] scores){

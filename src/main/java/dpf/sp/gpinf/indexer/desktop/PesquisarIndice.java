@@ -187,12 +187,11 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 		if (!this.isCancelled())
 			try {
 				App.get().ipedResult = this.get();
-				App.get().results = MultiSearchResult.get(this.get(), App.get().appCase);
 				
-				new ResultTotalSizeCounter().countVolume(App.get().results);
+				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
 				App.get().resultsTable.getTableHeader().repaint();
-				if(App.get().results.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null){
+				if(App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null){
 					App.get().resultsTable.getRowSorter().allRowsChanged();
 					App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
 				}else{

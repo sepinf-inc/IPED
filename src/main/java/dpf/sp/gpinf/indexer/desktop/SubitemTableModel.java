@@ -33,6 +33,7 @@ import org.apache.lucene.document.Document;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
 public class SubitemTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
@@ -185,8 +186,8 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
   }
 
 	@Override
-	public LuceneSearchResult getSearchResult() {
-		return results;
+	public MultiSearchResult getSearchResult() {
+		return MultiSearchResult.get(App.get().appCase, results);
 	}
 
 }

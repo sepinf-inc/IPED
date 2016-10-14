@@ -77,7 +77,7 @@ public class GalleryModel extends AbstractTableModel {
 
   @Override
   public int getRowCount() {
-    return (int) Math.ceil((double) App.get().results.getLength() / (double) colCount);
+    return (int) Math.ceil((double) App.get().ipedResult.getLength() / (double) colCount);
   }
 
   public boolean isCellEditable(int row, int col) {
@@ -113,13 +113,13 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     int idx = row * colCount + col;
-    if (idx >= App.get().results.getLength()) {
+    if (idx >= App.get().ipedResult.getLength()) {
       return new GalleryValue("", null, null);
     }
 
     idx = App.get().resultsTable.convertRowIndexToModel(idx);
-    final int docId = App.get().results.getLuceneIds()[idx];
     final ItemId id = App.get().ipedResult.getIds()[idx];
+    final int docId = App.get().appCase.getLuceneId(id);
 
     synchronized (cache) {
       if (cache.containsKey(id)) {

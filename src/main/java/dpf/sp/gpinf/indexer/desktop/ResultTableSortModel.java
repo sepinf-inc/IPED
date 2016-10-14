@@ -31,7 +31,7 @@ public class ResultTableSortModel extends AbstractTableModel {
 
   @Override
   public int getRowCount() {
-    return App.get().results.getLength();
+    return App.get().ipedResult.getLength();
   }
 
   @Override

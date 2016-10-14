@@ -37,6 +37,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
@@ -96,8 +97,10 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     int viewIndex = App.get().resultsTable.getSelectionModel().getLeadSelectionIndex();
 
     if (viewIndex != -1) {
-      int selectedDoc = App.get().resultsTable.convertRowIndexToModel(viewIndex);
-      if (App.get().results.getLuceneIds()[selectedDoc] != App.get().getParams().lastSelectedDoc) {
+      int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
+      ItemId item = App.get().ipedResult.getIds()[modelIdx];
+      int docId = App.get().appCase.getLuceneId(item);
+      if (docId != App.get().getParams().lastSelectedDoc) {
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
@@ -106,7 +109,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
           App.get().tabbedHits.removeTabAt(1);
         }
 
-        FileProcessor parsingTask = new FileProcessor(App.get().results.getLuceneIds()[selectedDoc], true);
+        FileProcessor parsingTask = new FileProcessor(docId, true);
         parsingTask.execute();
       }
 
@@ -117,7 +120,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
   @Override
   public void mouseReleased(MouseEvent evt) {
     if (evt.getClickCount() == 2) {
-    	int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
+    	int modelIdx = App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
+        ItemId item = App.get().ipedResult.getIds()[modelIdx];
+        int docId = App.get().appCase.getLuceneId(item);
     	ExternalFileOpen.open(docId);
 
     } else if (evt.isPopupTrigger()) {

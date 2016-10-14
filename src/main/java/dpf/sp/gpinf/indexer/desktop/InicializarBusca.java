@@ -94,7 +94,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().resultsModel.initCols();
 		
       System.out.println("Loading Column Sorters " + new Date());
-      if(App.get().appCase.getTotalItens() > 10000000)
+      if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
       App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
@@ -134,7 +134,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 	  App.get().filterManager.setUpdatingFilter(true);
 	  MarcadoresController.get().atualizarGUIandHistory();
 	  App.get().termo.setSelectedItem(App.SEARCH_TOOL_TIP);
-	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().results.getLength());
+	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().ipedResult.getLength());
 	  App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 	  App.get().menu = new MenuClass();

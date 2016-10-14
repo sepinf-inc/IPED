@@ -29,6 +29,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.ItemId;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
@@ -51,7 +52,8 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
 
     if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
       try {
-        int docId = ((SearchResultTableModel)table.getModel()).getSearchResult().getLuceneIds()[idx];
+    	ItemId item = ((SearchResultTableModel)table.getModel()).getSearchResult().getIds()[idx];
+    	int docId = App.get().appCase.getLuceneId(item);
         Document doc = App.get().appCase.getSearcher().doc(docId);
         if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
           result.setIcon(folderIcon);

@@ -18,7 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import java.awt.Component;
@@ -43,7 +43,7 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().resultsTable.scrollRectToVisible(a);
     App.get().gallery.scrollRectToVisible(new Rectangle());
 
-    App.get().results = new LuceneSearchResult(0);
+    App.get().ipedResult = new MultiSearchResult();
     App.get().getParams().lastSelectedDoc = -1;
     App.get().resultsModel.fireTableDataChanged();
     if (App.get().resultSortKeys == null || (App.get().resultsTable.getRowSorter() != null && !App.get().resultsTable.getRowSorter().getSortKeys().isEmpty())) {

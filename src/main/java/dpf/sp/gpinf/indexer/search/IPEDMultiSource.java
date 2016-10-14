@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
@@ -13,6 +14,8 @@ import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDMultiSource extends IPEDSource{
+	
+	private static ArrayList<Integer> baseDocCache = new ArrayList<Integer>();
 	
 	List<IPEDSource> cases = new ArrayList<IPEDSource>();
 	
@@ -89,6 +92,9 @@ public class IPEDMultiSource extends IPEDSource{
 
         for(IPEDSource iCase : cases)
         	totalItens += iCase.totalItens;
+        
+        for(IPEDSource iCase : cases)
+			baseDocCache.add(getBaseLuceneId(iCase));
 		
 		for(IPEDSource iCase : cases)
 			for(String category : iCase.categories)
@@ -214,8 +220,9 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	final public int getLuceneId(ItemId id){
-		IPEDSource atomicCase = getAtomicSourceBySourceId(id.getSourceId());
-		int baseDoc = getBaseLuceneId(atomicCase);
+		int sourceid = id.getSourceId();
+		IPEDSource atomicCase = getAtomicSourceBySourceId(sourceid);
+		int baseDoc = baseDocCache.get(sourceid);
 		return atomicCase.getLuceneId(id.getId()) + baseDoc;
 	}
 	

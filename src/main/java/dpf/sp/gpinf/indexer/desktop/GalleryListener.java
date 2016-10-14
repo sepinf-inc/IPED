@@ -27,6 +27,8 @@ import java.awt.event.MouseListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import dpf.sp.gpinf.indexer.search.ItemId;
+
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
   private GalleryCellEditor cellEditor;
@@ -83,7 +85,9 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
   public void mouseReleased(MouseEvent evt) {
 
     if (evt.getClickCount() == 2) {
-    	int docId = App.get().results.getLuceneIds()[App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex())];
+    	int modelIdx = App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
+    	ItemId item = App.get().ipedResult.getIds()[modelIdx];
+        int docId = App.get().appCase.getLuceneId(item);
     	ExternalFileOpen.open(docId);
 
     } else if (evt.isPopupTrigger()) {

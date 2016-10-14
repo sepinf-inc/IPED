@@ -35,7 +35,9 @@ import org.apache.lucene.search.highlight.TextFragment;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
@@ -110,13 +112,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   @Override
   public int getRowCount() {
-    return App.get().results.getLength();
+    return App.get().ipedResult.getLength();
   }
 
   @Override
   public String getColumnName(int col) {
     if (col == 0) {
-      return String.valueOf(App.get().results.getLength());
+      return String.valueOf(App.get().ipedResult.getLength());
     } else {
       return columnNames[col];
     }
@@ -172,9 +174,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   }
   
   @Override
-	public LuceneSearchResult getSearchResult() {
-		return App.get().results;
-	}
+  public MultiSearchResult getSearchResult() {
+	return App.get().ipedResult;
+  }
 
   private Document doc;
   private int lastDocRead = -1;
@@ -187,9 +189,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	      
 	String value;
 	
-    int docId = App.get().results.getLuceneIds()[row];
+	ItemId item = App.get().ipedResult.getIds()[row];
+    int docId = App.get().appCase.getLuceneId(item);
     
-    if (App.get().results.getLuceneIds()[row] != lastDocRead) {
+    if (docId != lastDocRead) {
         try {
 			doc = app.appCase.getSearcher().doc(docId);
 		} catch (IOException e) {
@@ -197,7 +200,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	        return "ERRO";
 		}
     }
-    lastDocRead = App.get().results.getLuceneIds()[row];
+    lastDocRead = docId;
       
     if (col == 1) {
       return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getIds()[row]);
@@ -208,7 +211,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         String field = fields[fCol];
 
         if (field.equals(SCORE_COL)) {
-          return app.results.getScores()[row];
+          return app.ipedResult.getScores()[row];
         }
 
         if (field.equals(BOOKMARK_COL)) {
