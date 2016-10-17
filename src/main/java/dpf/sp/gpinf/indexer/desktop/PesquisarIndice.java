@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog.ModalityType;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.util.HashSet;
 
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -43,7 +44,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	
-	private static MultiSearchResult allItemsCache;
+	private static SoftReference<MultiSearchResult> allItemsCache;
 	
 	volatile static int numFilters = 0;
 	ProgressDialog progressDialog;
@@ -131,11 +132,12 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 					
 				Query q = searcher.getQuery();
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
-					result = allItemsCache;
-				else{
+					result = allItemsCache.get();
+				
+				if(result == null){
 					result = searcher.multiSearch();
-					if(q instanceof MatchAllDocsQuery && allItemsCache == null)
-						allItemsCache = result.clone();
+					if(q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
+						allItemsCache = new SoftReference(result.clone());
 				}
 
 				String filtro = "";
