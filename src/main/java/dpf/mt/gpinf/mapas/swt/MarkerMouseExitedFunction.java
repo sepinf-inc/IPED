@@ -31,7 +31,7 @@ public class MarkerMouseExitedFunction extends BrowserFunction {
 	                  false,//popupTrigger
 	                  0 //button
 					);
-			l.onMouseExited(Integer.parseInt((String)arguments[0]), e);
+			l.onMouseExited((String)arguments[0], e);
 		}
 		
 		return super.function(arguments);

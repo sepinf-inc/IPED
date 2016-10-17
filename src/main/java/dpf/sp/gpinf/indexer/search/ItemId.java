@@ -22,6 +22,11 @@ public class ItemId implements Comparable<ItemId>{
 		return compareTo((ItemId)o) == 0;
 	}
 	
+	@Override
+	public int hashCode(){
+		return id;
+	}
+	
 	public int getSourceId(){
 		return this.sourceId;
 	}

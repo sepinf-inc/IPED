@@ -14,6 +14,8 @@ import javax.swing.event.ListSelectionListener;
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.ItemId;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
@@ -50,18 +52,12 @@ public class AppMapaPanel extends JPanel {
 
 				if((app.getResultTab().getSelectedIndex()!=2)&&(!mapaDesatualizado)){
 					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-					HashMap <String, Boolean> selecoes = new HashMap <String, Boolean>(); 
-					for(int i=e.getFirstIndex(); i<=e.getLastIndex(); i++){
+					HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>(); 
+					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
-
-			        	org.apache.lucene.document.Document doc = null;
-			        	try {
-							doc = App.get().appCase.getSearcher().doc(app.getResults().getLuceneIds()[i]);
-				        	selecoes.put(doc.get("id"), selected);
-						} catch (IOException ex) {
-							ex.printStackTrace();
-							break;
-						}
+						ItemId item = app.getResults().getItem(i);
+						String gid = item.getSourceId() + "-" + item.getId();
+			        	selecoes.put(gid, selected);
 					}
 					browserCanvas.enviaSelecoes(selecoes);
 				}

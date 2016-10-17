@@ -1,33 +1,28 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.event.MouseEvent;
-import java.io.IOException;
 
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MarkerEventListener;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
 public class AppMapMarkerEventListener implements MarkerEventListener {
 
 	@Override
-	public void onClicked(int mid, MouseEvent e) {
+	public void onClicked(String mid, MouseEvent e) {
         int pos = 0;
         
         //procura pela posição correspondente na tabela do item clicado no mapa
-        LuceneSearchResult results = App.get().getResults();
+        MultiSearchResult results = App.get().getResults();
         for (int i = 0; i < results.getLength(); i++) {
-        	org.apache.lucene.document.Document doc = null;
-        	try {
-				doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[i]);
-	        	if(doc.get("id").equals(Integer.toString(mid))){
-	        		pos = i;
-	        		break;
-	        	}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-				break;
-			}
+        	ItemId item = App.get().getResults().getItem(i);
+			String gid = item.getSourceId() + "-" + item.getId();
+        	if(gid.equals(mid)){
+        		pos = i;
+        		break;
+        	}
         }
         
         JTable t = App.get().getResultsTable();
@@ -44,19 +39,19 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
 	}
 
 	@Override
-	public void onMouseEntered(int mid, MouseEvent e) {
+	public void onMouseEntered(String mid, MouseEvent e) {
 	}
 
 	@Override
-	public void onMouseExited(int mid, MouseEvent e) {
+	public void onMouseExited(String mid, MouseEvent e) {
 	}
 
 	@Override
-	public void onMousePressed(int mid, MouseEvent e) {
+	public void onMousePressed(String mid, MouseEvent e) {
 	}
 
 	@Override
-	public void onMouseReleased(int mid, MouseEvent e) {
+	public void onMouseReleased(String mid, MouseEvent e) {
 	}
 
 }

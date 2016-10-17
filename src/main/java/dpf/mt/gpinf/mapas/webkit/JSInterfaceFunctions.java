@@ -39,7 +39,7 @@ public class JSInterfaceFunctions {
     	System.out.println("App.Alert:"+alert);
     }
     
-    public void markerMouseClickedBF(int markerId, int button, String modfJS){
+    public void markerMouseClickedBF(String markerId, int button, String modfJS){
     	MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			int modf = 0;
@@ -67,11 +67,11 @@ public class JSInterfaceFunctions {
     	
     }
     
-    public void markerMouseDblClickedBF(int markerId, int button){
+    public void markerMouseDblClickedBF(String markerId, int button){
     	markerMouseClickedBF(markerId, button, "");    	
     }
     
-    public void markerMousePressedBF(int markerId){
+    public void markerMousePressedBF(String markerId){
 		MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			MouseEvent e = new MouseEvent(map.getContainer(),
@@ -88,7 +88,7 @@ public class JSInterfaceFunctions {
 		}
     }
     
-    public void markerMouseReleasedBF(int markerId){
+    public void markerMouseReleasedBF(String markerId){
 		MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			MouseEvent e = new MouseEvent(map.getContainer(),
@@ -105,7 +105,7 @@ public class JSInterfaceFunctions {
 		}
     }
     
-    public void markerMouseEnteredBF(int markerId){
+    public void markerMouseEnteredBF(String markerId){
 		MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			MouseEvent e = new MouseEvent(map.getContainer(),
@@ -122,7 +122,7 @@ public class JSInterfaceFunctions {
 		}
     }
     
-    public void markerMouseExitedBF(int markerId){
+    public void markerMouseExitedBF(String markerId){
 		MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			MouseEvent e = new MouseEvent(map.getContainer(),
@@ -139,7 +139,7 @@ public class JSInterfaceFunctions {
 		}
     }
     
-    public void marcaMarcadorBF(int markerId, boolean checked){
+    public void marcaMarcadorBF(String markerId, boolean checked){
 		MarkerCheckBoxListener l = map.getMarkerCheckBoxListener();
 		if(l!=null){
 			int id = 0; 

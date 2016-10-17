@@ -736,8 +736,8 @@ public class App extends JFrame implements WindowListener {
 
   }
 
-  public LuceneSearchResult getResults() {
-	return MultiSearchResult.get(ipedResult, appCase);
+  public MultiSearchResult getResults() {
+	return ipedResult;
   }
   
   public JTable getResultsTable() {

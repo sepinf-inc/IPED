@@ -5,7 +5,7 @@ import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
 
 	@Override
-	public void onClicked(int mid, boolean checked) {
+	public void onClicked(String mid, boolean checked) {
 		//desabilita renderização automatica pela alteração no modelo por ser uma
 		//alteração feita no próprio mapa; 
 		MapaModelUpdateListener.desabilitaTemp = true;

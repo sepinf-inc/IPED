@@ -17,14 +17,14 @@ public class SelecionaItemFunction extends BrowserFunction {
 	public Object function(Object[] arguments) {
 		MarkerCheckBoxListener l = mcanvas.getMarkerCheckBoxListener();
 		if(l!=null){
-			int id = 0; 
+			String id; 
 			if(arguments[0] instanceof String){
-				id = Integer.parseInt((String)arguments[0]);
+				id = (String)arguments[0];
 			}else{
 				if(arguments[0] instanceof Double){
-					id = ((Double) arguments[0]).intValue();
+					id = String.valueOf((Double)arguments[0]);
 				}else{
-					id = ((Integer) arguments[0]).intValue();			
+					id = String.valueOf((Integer)arguments[0]);			
 				}
 			}
 
