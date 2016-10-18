@@ -37,10 +37,12 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
@@ -124,9 +126,9 @@ public class IPEDSource implements Closeable{
             	if(ids[i] > lastId)
             		lastId = ids[i];
             
-            invertIdToLuceneIdArray();
-            
-            countTotalItems();
+            Bits liveDocs = MultiFields.getLiveDocs(reader);
+            invertIdToLuceneIdArray(liveDocs);
+            countTotalItems(liveDocs);
             
             File splitedDocsFile = new File(moduleDir, "data/splits.ids");
             if(splitedDocsFile.exists()){
@@ -171,18 +173,21 @@ public class IPEDSource implements Closeable{
 		}
 	}
 	
-	protected void invertIdToLuceneIdArray(){
+	protected void invertIdToLuceneIdArray(Bits liveDocs){
 		docs = new int[lastId + 1];
 		for(int i = ids.length - 1; i >= 0 ; i--)
-			docs[ids[i]] = i;
+			if(liveDocs == null || liveDocs.get(i))
+				docs[ids[i]] = i;
 	}
 	
-	private void countTotalItems(){
+	private void countTotalItems(Bits liveDocs){
 		for(int i = 0; i < docs.length; i++)
 			if(docs[i] > 0)
 				totalItens++;
-		//inclui docId = 0 na contagem
-		totalItens++;
+		
+		//inclui docId = 0 na contagem se nao for deletado
+		if(liveDocs == null || liveDocs.get(0))
+			totalItens++;
 	}
 	
 	private void loadCategories(){
