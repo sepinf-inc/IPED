@@ -55,6 +55,11 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class Util {
+	
+  public static boolean isPhysicalDrive(File file) {
+	return file.getName().toLowerCase().contains("physicaldrive")
+	        || file.getAbsolutePath().toLowerCase().contains("/dev/");
+  }
 
   public static File getRelativeFile(String basePath, String export) {
     File file;

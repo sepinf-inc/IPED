@@ -4,7 +4,6 @@ import gpinf.dev.data.CaseData;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import dpf.sp.gpinf.indexer.datasource.IPEDReader;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando. Parâmetros iniciados com 01
@@ -192,7 +191,7 @@ public class CmdLineArgs {
     if (reportDir == null || !(new File(reportDir, "files")).exists()) {
       if (reportDir == null || !(new File(reportDir, "Report_files/files")).exists()) {
         if (reportDir == null || !(new File(reportDir, "Export")).exists()) {
-          if (dataSource == null || (!dataSource.exists() && !SleuthkitReader.isPhysicalDrive(dataSource))) {
+          if (dataSource == null || (!dataSource.exists() && !Util.isPhysicalDrive(dataSource))) {
             printUsageExit();
           }
         }

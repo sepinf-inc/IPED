@@ -121,8 +121,7 @@ public class SleuthkitReader extends DataSourceReader {
   }
 
   public static boolean isPhysicalDrive(File file) {
-    return file.getName().toLowerCase().contains("physicaldrive")
-        || file.getAbsolutePath().toLowerCase().contains("/dev/");
+    return Util.isPhysicalDrive(file);
   }
 
   private boolean isISO9660(File file) {
