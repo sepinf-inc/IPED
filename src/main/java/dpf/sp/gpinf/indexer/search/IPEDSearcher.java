@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.io.InterruptedIOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -165,15 +166,20 @@ public class IPEDSearcher {
 	}
 	
 	private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) throws Exception {
-		HashSet<Integer> duplicates = new HashSet<Integer>();
+		HashMap<Integer,HashSet<Integer>> duplicates = new HashMap<Integer,HashSet<Integer>>();
 		if(prevResult.getLength() <= MAX_SIZE_TO_SCORE){
 			for (int i = 0; i < prevResult.length; i++) {
 				ItemId item = ipedCase.getItemId(prevResult.docs[i]);
 				IPEDSource atomicSource = ipedCase.getAtomicSourceBySourceId(item.getSourceId());
 				int id = item.getId();
 				if (atomicSource.isSplited(id)) {
-					if (!duplicates.contains(id)) {
-						duplicates.add(id);
+					HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
+					if(dups == null){
+						dups = new HashSet<Integer>();
+						duplicates.put(atomicSource.getSourceId(), dups);
+					}
+					if (!dups.contains(id)) {
+						dups.add(id);
 					} else {
 						prevResult.docs[i] = -1;
 					}
@@ -193,8 +199,13 @@ public class IPEDSearcher {
 				}
 				int id = atomicSource.getId(prevResult.docs[i] - baseDoc);
 				if (atomicSource.isSplited(id)) {
-					if (!duplicates.contains(id)) {
-						duplicates.add(id);
+					HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
+					if(dups == null){
+						dups = new HashSet<Integer>();
+						duplicates.put(atomicSource.getSourceId(), dups);
+					}
+					if (!dups.contains(id)) {
+						dups.add(id);
 					} else {
 						prevResult.docs[i] = -1;
 					}
