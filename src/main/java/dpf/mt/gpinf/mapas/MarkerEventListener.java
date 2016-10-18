@@ -4,10 +4,10 @@ import java.awt.event.MouseEvent;
 
 public interface MarkerEventListener {
 	
-	public void onClicked(int mid, MouseEvent e);
-	public void onMouseEntered(int mid, MouseEvent e);
-	public void onMouseExited(int mid, MouseEvent e);
-	public void onMousePressed(int mid, MouseEvent e);
-	public void onMouseReleased(int mid, MouseEvent e);
+	public void onClicked(String mid, MouseEvent e);
+	public void onMouseEntered(String mid, MouseEvent e);
+	public void onMouseExited(String mid, MouseEvent e);
+	public void onMousePressed(String mid, MouseEvent e);
+	public void onMouseReleased(String mid, MouseEvent e);
 
 }

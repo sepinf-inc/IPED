@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
 
 import java.io.File;
 import java.util.List;
@@ -49,6 +50,11 @@ public abstract class DataSourceReader {
    * Pasta de saída do processamento.
    */
   File output;
+  
+  /**
+   * Fonte de dados de origem
+   */
+  DataSource dataSource;
 
   /**
    * Construtor.

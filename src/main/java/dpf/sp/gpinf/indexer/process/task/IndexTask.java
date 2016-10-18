@@ -5,24 +5,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.StringReader;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
@@ -34,29 +27,24 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.App;
-import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.InicializarBusca;
-import dpf.sp.gpinf.indexer.search.PesquisarIndice;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
@@ -263,6 +251,8 @@ public class IndexTask extends BaseCarveTask {
     
     //Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    
+    context.set(OCROutputFolder.class, new OCROutputFolder(output));
 
     return context;
   }
@@ -329,8 +319,10 @@ public class IndexTask extends BaseCarveTask {
       caseData.putCaseObject(SPLITED_IDS, splitedIds);
     }
 
-    IndexItem.loadMetadataTypes(new File(output, "conf"));
-    IndexItem.loadMetadataTypes(confDir);
+    if(IndexItem.getMetadataTypes().size() == 0){
+    	IndexItem.loadMetadataTypes(confDir);
+    	IndexItem.loadMetadataTypes(new File(output, "conf"));
+    }
     loadExtraAttributes();
 
   }
@@ -362,12 +354,11 @@ public class IndexTask extends BaseCarveTask {
   }
 
   private void loadExtraAttributes() throws ClassNotFoundException, IOException {
-    if (EvidenceFile.getAllExtraAttributes().size() > 0) {
-      return;
-    }
+
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
     if (extraAttributtesFile.exists()) {
-      EvidenceFile.setExtraAttributeSet((HashSet<String>) Util.readObject(extraAttributtesFile.getAbsolutePath()));
+    	HashSet<String> extraAttributes = (HashSet<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
+    	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
     }
   }
 
@@ -381,15 +372,13 @@ public class IndexTask extends BaseCarveTask {
     LOGGER.info("Excluindo nós da árvore vazios");
 
     try {
-      App.get().reader = DirectoryReader.open(worker.writer, false);
-      App.get().searcher = new IndexSearcher(App.get().reader);
-      BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-      PesquisarIndice searchAll = new PesquisarIndice(new MatchAllDocsQuery());
-      SearchResult result = searchAll.pesquisarTodos();
+      IPEDSource ipedCase = new IPEDSource(output.getAbsoluteFile());
+      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+      LuceneSearchResult result = searchAll.searchAll();
 
       boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
-      for (int docID : result.docs) {
-        String parentIds = App.get().reader.document(docID).get(IndexItem.PARENTIDs);
+      for (int docID : result.getLuceneIds()) {
+        String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
         if(!parentIds.trim().isEmpty()) {
           for (String parentId : parentIds.trim().split(" ")) {
             doNotDelete[Integer.parseInt(parentId)] = true;            

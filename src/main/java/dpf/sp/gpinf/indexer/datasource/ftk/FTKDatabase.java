@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.datasource.ftk;
 
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.FileGroup;
 
 import java.io.File;
@@ -62,6 +63,8 @@ public abstract class FTKDatabase {
    * Objeto para conexÃ£o com o banco
    */
   javax.sql.DataSource ods;
+  
+  DataSource ipedDataSource;
 
   Connection conn;
   Map<String, String> bookmarksMap;
@@ -180,6 +183,8 @@ public abstract class FTKDatabase {
 
   public void getCaseData(CaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
 
+	ipedDataSource = new DataSource(file);
+	
     conn = ods.getConnection();
 
     loadTableSpace();

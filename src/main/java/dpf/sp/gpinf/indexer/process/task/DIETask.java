@@ -31,7 +31,7 @@ import javax.imageio.ImageIO;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.GalleryValue;
+import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -239,7 +239,7 @@ public class DIETask extends AbstractTask {
   private BufferedImage getBufferedImage(EvidenceFile evidence) {
     BufferedImage img = null;
     try {
-      GalleryValue value = new GalleryValue(null, null, -1);
+      GalleryValue value = new GalleryValue(null, null, null);
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {

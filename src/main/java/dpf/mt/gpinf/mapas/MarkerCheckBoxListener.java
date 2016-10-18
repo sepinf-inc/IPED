@@ -4,6 +4,6 @@ import java.awt.event.MouseEvent;
 
 public interface MarkerCheckBoxListener {
 
-	public void onClicked(int mid, boolean checked);
+	public void onClicked(String mid, boolean checked);
 	
 }

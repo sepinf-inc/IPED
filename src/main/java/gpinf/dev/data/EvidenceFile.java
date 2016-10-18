@@ -92,6 +92,9 @@ public class EvidenceFile implements Serializable, StreamSource {
    * Identificador utilizado para serialização da classe.
    */
   private static final long serialVersionUID = 98653214753695125L;
+  
+  /** representa a evidência de origem (imagem dd, pasta) do item */
+  private DataSource dataSource;
 
   /**
    * Nome do arquivo.
@@ -122,9 +125,9 @@ public class EvidenceFile implements Serializable, StreamSource {
 
   private int id = -1;
 
-  private String ftkID;
+  private Integer ftkID;
 
-  private String parentId;
+  private Integer parentId;
 
   private List<Integer> parentIds = new ArrayList<Integer>();
 
@@ -210,7 +213,7 @@ public class EvidenceFile implements Serializable, StreamSource {
 
   private long startOffset = -1, tempStartOffset = -1;
 
-  private String sleuthId;
+  private Integer sleuthId;
 
   private TikaInputStream tis;
 
@@ -405,7 +408,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    *
    * @return o id do item no FTK3+ no caso de reports
    */
-  public String getFtkID() {
+  public Integer getFtkID() {
     return ftkID;
   }
 
@@ -480,7 +483,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    *
    * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do FTK3+
    */
-  public String getParentId() {
+  public Integer getParentId() {
     return parentId;
   }
 
@@ -547,7 +550,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    *
    * @return o id do item no Sleuthkit
    */
-  public String getSleuthId() {
+  public Integer getSleuthId() {
     return sleuthId;
   }
 
@@ -934,7 +937,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    *
    * @param ftkID id do FTK
    */
-  public void setFtkID(String ftkID) {
+  public void setFtkID(Integer ftkID) {
     this.ftkID = ftkID;
   }
 
@@ -1009,15 +1012,16 @@ public class EvidenceFile implements Serializable, StreamSource {
   /**
    * @param parentId identificador do item pai
    */
-  public void setParentId(String parentId) {
+  public void setParentId(Integer parentId) {
     this.parentId = parentId;
   }
   
   public void setParent(EvidenceFile parent){
 	  int parentId = parent.getId();
-	  this.setParentId(Integer.toString(parentId));
+	  this.setParentId(parentId);
 	  this.addParentIds(parent.getParentIds());
 	  this.addParentId(parentId);
+	  this.setDataSource(parent.getDataSource());
   }
 
   /**
@@ -1072,7 +1076,7 @@ public class EvidenceFile implements Serializable, StreamSource {
   /**
    * @param sleuthId id do item no sleuthkit
    */
-  public void setSleuthId(String sleuthId) {
+  public void setSleuthId(Integer sleuthId) {
     this.sleuthId = sleuthId;
   }
 
@@ -1180,5 +1184,13 @@ public class EvidenceFile implements Serializable, StreamSource {
   public void setMetadata(Metadata metadata) {
     this.metadata = metadata;
   }
+
+public DataSource getDataSource() {
+	return dataSource;
+}
+
+public void setDataSource(DataSource evidence) {
+	this.dataSource = evidence;
+}
 
 }

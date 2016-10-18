@@ -22,6 +22,7 @@ import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
@@ -78,6 +79,8 @@ public class Configuration {
   public static boolean addFatOrphans = true;
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
+  
+  private static AtomicBoolean loaded = new AtomicBoolean();
 
   public static void getConfiguration(String configPath) throws Exception {
     getConfiguration(configPath, false);
@@ -87,6 +90,9 @@ public class Configuration {
    * Configurações a partir do caminho informado.
    */
   public static void getConfiguration(String configPathStr, boolean fastmode) throws Exception {
+	  
+	  if(loaded.getAndSet(true))
+		  return;
 
     // DataSource.testConnection(configPathStr);
     LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());

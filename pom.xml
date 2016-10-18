@@ -67,7 +67,7 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>3.10.1</version>
+            <version>3.11</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -192,7 +192,7 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.10.1</version>
+            <version>3.11</version>
         </dependency>
         
         <dependency>
@@ -530,7 +530,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.search.App</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.desktop.App</mainClass>
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>

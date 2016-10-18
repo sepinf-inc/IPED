@@ -59,11 +59,10 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
-import dpf.sp.gpinf.indexer.search.App;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.InicializarBusca;
-import dpf.sp.gpinf.indexer.search.PesquisarIndice;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -130,8 +129,6 @@ public class Manager {
     }
 
     stats = Statistics.get(caseData, indexDir);
-
-    OCRParser.OUTPUT_BASE = output;
 
   }
   
@@ -392,25 +389,24 @@ public class Manager {
     CmdLineArgs args = (CmdLineArgs)caseData.getCaseObject(CmdLineArgs.class.getName());
     // filtra categorias vazias
     if (categories.size() != 0 && !args.getCmdArgs().containsKey("--nogui")) {
-      InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
+      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
       ArrayList<String> palavrasFinais = new ArrayList<String>();
       for (String categoria : categories) {
         if (Thread.interrupted()) {
-          App.get().destroy();
+          ipedCase.close();
           throw new InterruptedException("Indexação cancelada!");
         }
 
         String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
-        PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
-        SearchResult result = pesquisa.pesquisarTodos();
+        IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
+		LuceneSearchResult result = pesquisa.searchAll();
 
-        if (result.length > 0) {
+        if (result.getLength() > 0) {
           palavrasFinais.add(categoria);
         }
 
       }
-      // fecha o Ã­ndice
-      App.get().destroy();
+      ipedCase.close();
 
       Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
       int filtradas = categories.size() - palavrasFinais.size();
@@ -432,21 +428,21 @@ public class Manager {
       ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name());
 
       if (palavras.size() != 0) {
-        InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
+    	IPEDSource ipedCase = new IPEDSource(output.getParentFile());
         ArrayList<String> palavrasFinais = new ArrayList<String>();
         for (String palavra : palavras) {
           if (Thread.interrupted()) {
-            App.get().destroy();
+        	ipedCase.close();
             throw new InterruptedException("Indexação cancelada!");
           }
 
-          PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(palavra));
-          if (pesquisa.pesquisarTodos().length > 0) {
+          IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
+          if (pesquisa.searchAll().getLength() > 0) {
             palavrasFinais.add(palavra);
           }
         }
-        // fecha o Ã­ndice
-        App.get().destroy();
+        ipedCase.close();
+        
         Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
         int filtradas = palavras.size() - palavrasFinais.size();
         LOGGER.info("Filtradas {} palavras-chave.", filtradas);
@@ -468,24 +464,24 @@ public class Manager {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo mapeamento de versções de visualização para originais...");
       LOGGER.info("Obtendo mapa versões de visualização -> originais...");
 
-      InicializarBusca.inicializar(output.getAbsolutePath() + "/index");
+      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
       String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))";
-      PesquisarIndice pesquisa = new PesquisarIndice(PesquisarIndice.getQuery(query));
-      SearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.pesquisarTodos());
+      IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
+      LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
 
       HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
-      for (int i = 0; i < alternatives.length; i++) {
+      for (int i = 0; i < alternatives.getLength(); i++) {
         if (Thread.interrupted()) {
-          App.get().destroy();
+          ipedCase.close();
           throw new InterruptedException("Indexação cancelada!");
         }
-        Document doc = App.get().searcher.doc(alternatives.docs[i]);
+        Document doc = ipedCase.getSearcher().doc(alternatives.getLuceneIds()[i]);
         String ftkId = doc.get(IndexItem.FTKID);
         int id = Integer.valueOf(doc.get(IndexItem.ID));
         viewMap.put(ftkId, id);
       }
       alternatives = null;
-      App.get().destroy();
+      ipedCase.close();
 
       IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index")));
       Bits liveDocs = MultiFields.getLiveDocs(reader);
@@ -526,7 +522,11 @@ public class Manager {
 
     IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
     int[] ids = new int[reader.maxDoc()];
+    Bits liveDocs = MultiFields.getLiveDocs(reader);
     for (int i = 0; i < reader.maxDoc(); i++) {
+    	//ignore deleted docs
+    	if(liveDocs != null && !liveDocs.get(i))
+    		continue;
       Document doc = reader.document(i);
       ids[i] = Integer.parseInt(doc.get(IndexItem.ID));
     }

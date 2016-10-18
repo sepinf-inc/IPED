@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.EvidenceFileType;
 import gpinf.dev.filetypes.GenericFileType;
@@ -81,6 +82,7 @@ public class IndexItem {
   public static final String PARENTID = "parentId";
   public static final String PARENTIDs = "parentIds";
   public static final String SLEUTHID = "sleuthId";
+  public static final String EVIDENCE_UUID = "evidenceUUID";
   public static final String NAME = "nome";
   public static final String TYPE = "tipo";
   public static final String LENGTH = "tamanho";
@@ -160,10 +162,6 @@ public class IndexItem {
 
   public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
 
-    if (typesMap.size() != 0) {
-      return;
-    }
-
     File metadataTypesFile = new File(confDir, attrTypesFilename);
     if (metadataTypesFile.exists()) {
       UTF8Properties props = new UTF8Properties();
@@ -185,34 +183,32 @@ public class IndexItem {
 
     doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
     doc.add(new NumericDocValuesField(ID, evidence.getId()));
+    
+    doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
+    doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-    String value = evidence.getFtkID();
-    if (value != null) {
-      doc.add(new StringField(FTKID, value, Field.Store.YES));
-      doc.add(new SortedDocValuesField(FTKID, new BytesRef(value)));
+    Integer intVal = evidence.getFtkID();
+    if (intVal != null) {
+      doc.add(new IntField(FTKID, intVal, Field.Store.YES));
+      doc.add(new NumericDocValuesField(FTKID, intVal));
     }
 
-    value = evidence.getSleuthId();
-    if (value != null) {
-      doc.add(new IntField(SLEUTHID, Integer.parseInt(value), Field.Store.YES));
-      doc.add(new NumericDocValuesField(SLEUTHID, Integer.parseInt(value)));
+    intVal = evidence.getSleuthId();
+    if (intVal != null) {
+      doc.add(new IntField(SLEUTHID, intVal, Field.Store.YES));
+      doc.add(new NumericDocValuesField(SLEUTHID, intVal));
     }
 
-    value = evidence.getParentId();
-    if (value != null) {
-      try {
-        doc.add(new IntField(PARENTID, Integer.parseInt(value), Field.Store.YES));
-        doc.add(new NumericDocValuesField(PARENTID, Integer.parseInt(value)));
-      } catch (Exception e) {
-        doc.add(new StringField(PARENTID, value, Field.Store.YES));
-        doc.add(new SortedDocValuesField(PARENTID, new BytesRef(value)));
-      }
+    intVal = evidence.getParentId();
+    if (intVal != null) {
+    	doc.add(new IntField(PARENTID, intVal, Field.Store.YES));
+        doc.add(new NumericDocValuesField(PARENTID, intVal));
     }
 
     doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 
-    value = evidence.getName();
+    String value = evidence.getName();
     if (value == null) {
       value = "";
     }
@@ -576,7 +572,15 @@ public class IndexItem {
       //evidence.setLabels(state.getLabels(id));
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
-        evidence.setParentId(value);
+        evidence.setParentId(Integer.valueOf(value));
+      }
+      
+      value = doc.get(IndexItem.EVIDENCE_UUID);
+      if(value != null){
+    	//TODO obter source corretamente
+          DataSource dataSource = new DataSource(null);
+          dataSource.setUUID(value);
+          evidence.setDataSource(dataSource);
       }
 
       value = doc.get(IndexItem.TYPE);
@@ -617,7 +621,7 @@ public class IndexItem {
       } else {
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty()) {
-          evidence.setSleuthId(value);
+          evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
         }
       }

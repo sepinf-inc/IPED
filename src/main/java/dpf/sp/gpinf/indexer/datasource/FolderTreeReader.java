@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.data.FileGroup;
 
@@ -57,6 +58,8 @@ public class FolderTreeReader extends DataSourceReader {
     if (evidenceName == null) {
       evidenceName = file.getName();
     }
+    dataSource = new DataSource(file);
+    dataSource.setName(evidenceName);
 
     if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
       category = file.getName();
@@ -82,7 +85,7 @@ public class FolderTreeReader extends DataSourceReader {
       if (file.equals(rootFile)) {
         evidenceFile.setName(evidenceName);
       }
-      
+      evidenceFile.setDataSource(dataSource);
       evidenceFile.setFile(file);
       try {
         String relativePath = Util.getRelativePath(output, file);
@@ -124,7 +127,7 @@ public class FolderTreeReader extends DataSourceReader {
       EvidenceFile evidenceFile = getEvidence(path, attr);
       if (evidenceFile != null) {
         if (!parentIds.isEmpty()) {
-          evidenceFile.setParentId(parentIds.getLast().toString());
+          evidenceFile.setParentId(parentIds.getLast());
           evidenceFile.addParentIds(parentIds);
         } else {
           evidenceFile.setRoot(true);

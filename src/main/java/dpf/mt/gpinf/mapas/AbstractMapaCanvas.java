@@ -44,14 +44,14 @@ abstract public class AbstractMapaCanvas extends Canvas {
 		return saveRunnable;
 	}
 
-	public void enviaSelecoes(HashMap <String, Boolean> selecoes){
+	public void enviaSelecoes(HashMap<String, Boolean> selecoes){
 		if(this.selecoesAfazer==null){
 			this.selecoesAfazer = new HashMap<String, Boolean>();
 		}
 	
 		String[] marks = new String[selecoes.keySet().size()]; 
 		marks = selecoes.keySet().toArray(marks);
-		for(int i = 0; i<marks.length; i++){
+		for(int i = 0; i < marks.length; i++){
 			this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));		
 		}
 	}

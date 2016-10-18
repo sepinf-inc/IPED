@@ -53,7 +53,7 @@ public class MarkerMouseClickedFunction extends BrowserFunction {
 	                  false,//popupTrigger
 	                  button //button
 					);
-			l.onClicked(Integer.parseInt((String)arguments[0]), e);
+			l.onClicked((String)arguments[0], e);
 		}
 		
 		return super.function(arguments);
