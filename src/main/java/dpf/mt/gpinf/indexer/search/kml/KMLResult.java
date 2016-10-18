@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 
+import javax.swing.JOptionPane;
 import javax.swing.RowSorter.SortKey;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -63,7 +64,11 @@ public class KMLResult {
 		  if(showProgress)
 			  progress.setVisible();
 		  try {
-			return getKML.get();
+			String kml = getKML.get();
+			if(showProgress && getKML.itemsWithGPS == 0)
+				  JOptionPane.showMessageDialog(null, "Nenhum item georeferenciado encontrado!");
+			
+			return kml;
 			
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
@@ -77,17 +82,23 @@ public class KMLResult {
 		  App app;
 		  String[] colunas;
 		  ProgressDialog progress;
+		  int contSemCoordenadas=0, itemsWithGPS = 0;
 		  
 		  GetResultsKML(App app, String[] colunas, ProgressDialog progress){
 			this.app = app;
 			this.colunas = colunas;
 			this.progress = progress;
 		  }
+		  
+		  @Override
+		  public void done() {
+			  if(progress != null)
+				  progress.close();
+		  }
 
 		@Override
 		protected String doInBackground() throws Exception {
 			
-			try{
 			  StringBuilder tourPlayList = new StringBuilder("");
 			  StringBuilder kml= new StringBuilder("");
 
@@ -117,7 +128,6 @@ public class KMLResult {
 			  kml.append("<Folder>");
 			  kml.append("<name>Resultados</name>");
 
-			  int contSemCoordenadas=0, itemsWithGPS = 0;
 			  MultiSearchResult results = app.getResults();
 			  org.apache.lucene.document.Document doc;
 			  
@@ -243,10 +253,6 @@ public class KMLResult {
 			  kml.append("</kml>");
 			  
 			  return kml.toString();
-			  
-			}finally{
-				if(progress != null) progress.close();
-			}
 			
 		}
 		  
