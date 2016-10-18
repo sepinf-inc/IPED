@@ -24,6 +24,7 @@ public class LogConfiguration {
 	}
 	
 	private void setConsoleLogFile(File logFile) throws FileNotFoundException {
+		logFile.getParentFile().mkdirs();
 	    out = System.out;
 	    err = System.err;
 	    FileOutputStream fos = new FileOutputStream(logFile, true);

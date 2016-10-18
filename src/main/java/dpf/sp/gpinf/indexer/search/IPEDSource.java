@@ -101,7 +101,7 @@ public class IPEDSource implements Closeable{
 		moduleDir = new File(casePath, MODULE_DIR);
 		index = new File(moduleDir, INDEX_DIR);
 		
-		if(!index.exists())
+		if(!index.exists() || casePath == null)
 			return;
 		
 		sourceId = nextId.getAndIncrement();
