@@ -47,7 +47,7 @@ public class AppMain {
 		      if(isMultiCase && casesPathFile.isFile())
 		    	  logParent = casesPathFile.getParentFile();
 		      
-		      File logFile = new File(logParent, appLogFileName);
+		      File logFile = new File(logParent, appLogFileName).getCanonicalFile();
 		      LogConfiguration logConfiguration = new LogConfiguration(logFile);
 		      logConfiguration.configureLogParameters(new File(codePath).getParentFile().getAbsolutePath(), nolog);
 			  

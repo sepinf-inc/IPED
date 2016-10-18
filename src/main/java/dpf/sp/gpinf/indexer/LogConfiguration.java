@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
@@ -23,14 +24,27 @@ public class LogConfiguration {
 		this.logFile = logFile;
 	}
 	
-	private void setConsoleLogFile(File logFile) throws FileNotFoundException {
-		logFile.getParentFile().mkdirs();
-	    out = System.out;
-	    err = System.err;
-	    FileOutputStream fos = new FileOutputStream(logFile, true);
-	    log = new PrintStream(new FilterOutputStream(fos, out, "IPED"));
-	    System.setOut(log);
-	    System.setErr(log);
+	private boolean setConsoleLogFile(boolean createLogInTemp) {
+		try{
+			if(createLogInTemp)
+				logFile = File.createTempFile("IPED", ".log");
+			
+			logFile.getParentFile().mkdirs();
+		    out = System.out;
+		    err = System.err;
+		    FileOutputStream fos = new FileOutputStream(logFile, true);
+		    log = new PrintStream(new FilterOutputStream(fos, out, "IPED"));
+		    System.setOut(log);
+		    System.setErr(log);
+		    
+		    return true;
+	    	  
+	    }catch(IOException e){
+	    	if(createLogInTemp)
+	    		e.printStackTrace();
+	    }
+		return false;
+		
 	  }
 
 	  /**
@@ -48,7 +62,7 @@ public class LogConfiguration {
 	    }
 	  }
 
-	  public void configureLogParameters(String configPath, boolean noLog) throws FileNotFoundException, MalformedURLException {
+	  public void configureLogParameters(String configPath, boolean noLog) throws MalformedURLException {
 	    
 		System.setProperty("logFileDate", df.format(new Date()));
 	    if (noLog) {
@@ -57,9 +71,12 @@ public class LogConfiguration {
 	      if (logFile == null)
 	    	  logFile = new File(configPath, "log/IPED-" + df.format(new Date()) + ".log");
 	      
+	      if(!setConsoleLogFile(false))
+	    	  setConsoleLogFile(true);
+	      
 	      System.setProperty("logFileNamePath", logFile.getPath());
 	      System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
-	      setConsoleLogFile(logFile);
+	      
 	    }
 	    // instala bridge para capturar logs gerados pelo java.util.logging
 	    SLF4JBridgeHandler.removeHandlersForRootLogger();
