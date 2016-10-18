@@ -65,8 +65,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   File output;
 
   File logFile;
-  private PrintStream log, out, err;
-  private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+  LogConfiguration logConfiguration;
 
   private CmdLineArgs cmdLineParams;
 
@@ -133,65 +132,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   }
 
   /**
-   * Redireciona saída padrão e de erro para o arquivo de log informado, pois algumas libs imprimem
-   * msgs de erro e traces no console, confundindo o usuário.
-   *
-   * @throws FileNotFoundException
-   */
-  private void setConsoleLogFile(File logFile) throws FileNotFoundException {
-    if (logFile == null) {
-      File logDir = new File(configPath + "/log");
-      logDir.mkdir();
-      logFile = new File(logDir, Versao.APP_EXT + "-" + df.format(new Date()) + "-Console.log");
-    }
-    out = System.out;
-    err = System.err;
-    FileOutputStream fos = new FileOutputStream(logFile, true);
-    log = new PrintStream(new FilterOutputStream(fos, out, "IPED"));
-    System.setOut(log);
-    System.setErr(log);
-  }
-
-  /**
-   * Fecha o arquivo de log, realizando flush automaticamente.
-   */
-  private void closeConsoleLogFile() {
-    if (log != null) {
-      log.close();
-    }
-    if (out != null) {
-      System.setOut(out);
-    }
-    if (err != null) {
-      System.setErr(err);
-    }
-  }
-
-  private void configureLogParameters(File logFile, boolean noLog) throws FileNotFoundException, MalformedURLException {
-    System.setProperty("logFileDate", df.format(new Date()));
-
-    if (noLog) {
-      System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml").toURI().toURL().toString());
-    } else {
-      if (logFile == null) {
-        System.setProperty("logFilePath", new File(configPath, "log").getAbsolutePath());
-        System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2Configuration.xml").toURI().toURL().toString());
-      } else {
-        System.setProperty("logFileNamePath", logFile.getPath());
-        System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
-      }
-      setConsoleLogFile(logFile);
-    }
-    // instala bridge para capturar logs gerados pelo java.util.logging
-    SLF4JBridgeHandler.removeHandlersForRootLogger();
-    SLF4JBridgeHandler.install();
-
-    //instancia o logger
-    LogManager.getRootLogger();
-    LOGGER = LoggerFactory.getLogger(IndexFiles.class);
-  }
-
-  /**
    * Importa base de hashes no formato NSRL.
    *
    * @param kffPath caminho para base de hashes.
@@ -220,7 +160,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
       if (fromCmdLine) {
         setConfigPath();
       }
-      configureLogParameters(logFile, nologfile);
+      
+      logConfiguration = new LogConfiguration(logFile);
+      logConfiguration.configureLogParameters(configPath, nologfile);
+      
+      LOGGER = LoggerFactory.getLogger(IndexFiles.class);
       
       if(nogui){
     	 ProgressConsole console = new ProgressConsole();
@@ -248,7 +192,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     	  LOGGER.error("Erro no processamento:", e);
 
     } finally {
-      closeConsoleLogFile();
+    	logConfiguration.closeConsoleLogFile();
       done = true;
     }
 

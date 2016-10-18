@@ -36,6 +36,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -74,18 +75,16 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class App extends JFrame implements WindowListener {
@@ -94,7 +93,9 @@ public class App extends JFrame implements WindowListener {
    */
   private static final long serialVersionUID = 1L;
 
-  private static Logger LOGGER = LoggerFactory.getLogger(App.class);
+  private static Logger LOGGER;
+  
+  private LogConfiguration logConfiguration;
 
   private AppSearchParams appSearchParams = null;
 
@@ -192,53 +193,28 @@ public class App extends JFrame implements WindowListener {
   public AppSearchParams getSearchParams() {
     return this.appSearchParams;
   }
-       
-  public static void main(String[] args) {
-	  
-	  if(args.length == 2 && args[0].equals("-multicases")){
-		  App.get().isMultiCase = true;
-		  App.get().casesPathFile = new File(args[1]);
-			
-			if(!App.get().casesPathFile.exists()){
-				System.out.println("Arquivo de casos inexistente: " + args[1]);
-				return;
-			}
-		}
-	  
-	  App.get().init();
-  }
 
-  public void init() {
+  public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile) {
 
-    LOGGER.info("init");
-
-    applet = this;
-
-    try {
-      URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-      String codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
-      //codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
-      //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
-      //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
-      //codePath = "E:/1-1973/indexador/lib/search.jar";
-      //codePath = "E:/nassif/rodrigo/M0411-16/indexador/lib/iped-search-app.jar";
-
-      codePath = codePath.substring(0, codePath.lastIndexOf('/'));
-      appSearchParams.codePath = codePath;
+	  this.logConfiguration = logConfiguration;
+      this.isMultiCase = isMultiCase;
+      this.casesPathFile = casesPathFile;
       
-      if(casesPathFile == null)
-    	  casesPathFile = new File(codePath).getParentFile().getParentFile();
-
-      javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          createGUI();
-          LOGGER.info("GUI created");
-        }
-      });
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+      LOGGER = LoggerFactory.getLogger(App.class);
+      LOGGER.info("Starting...");
+      
+      try {
+		javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+		    @Override
+		    public void run() {
+		      createGUI();
+		      LOGGER.info("GUI created");
+		    }
+		  });
+		
+	} catch (InvocationTargetException | InterruptedException e) {
+		e.printStackTrace();
+	}
 
     (new InicializarBusca(appSearchParams)).execute();
 
@@ -281,6 +257,8 @@ public class App extends JFrame implements WindowListener {
         compositeViewer.dispose();
       }
       appCase.close();
+      
+      logConfiguration.closeConsoleLogFile();
 
     } catch (Exception e) {
       e.printStackTrace();

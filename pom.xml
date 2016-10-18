@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.10.1</version>
+    <version>3.11</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -530,7 +530,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <addClasspath>true</addClasspath>
-                                    <mainClass>dpf.sp.gpinf.indexer.desktop.App</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.desktop.AppMain</mainClass>
                                 </manifest>
                                 <manifestEntries>
                                     <Build-By>MACEE</Build-By>
