@@ -59,6 +59,8 @@ public class RowComparator implements Comparator<Integer> {
 
   public RowComparator(int col) {
     this.col = col;
+    
+    System.out.println("Loading sort data for Column " + col);
 
     if (col >= ResultTableModel.fixedCols.length) {      
       col -= ResultTableModel.fixedCols.length;

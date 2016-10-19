@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog;
 import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -60,8 +61,8 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
   public void setSortKeys(final List<? extends SortKey> sortKeys) {
     if (sortKeys == null) {
       super.setSortKeys(null);
+      App.get().resultsModel.fireTableDataChanged();
     } else {
-
       BackgroundSort backgroundSort = new BackgroundSort(sortKeys);
       backgroundSort.execute();
     }

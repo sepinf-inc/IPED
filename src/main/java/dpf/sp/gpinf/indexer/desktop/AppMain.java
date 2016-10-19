@@ -20,7 +20,7 @@ public class AppMain {
 				  nolog = true;
 			if(args[i].equals("-multicases")){
 				  isMultiCase = true;
-				  casesPathFile = new File(args[i + 1]);
+				  casesPathFile = new File(args[i + 1]).getAbsoluteFile();
 					
 				  if(!casesPathFile.exists()){
 					  System.out.println("Arquivo de casos inexistente: " + args[1]);
