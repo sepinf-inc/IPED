@@ -88,7 +88,8 @@ public class AppListener implements ActionListener, MouseListener {
   @Override
   public void actionPerformed(ActionEvent evt) {
 
-    if (!clearSearchBox && !App.get().filterManager.isUpdatingFilter() && (evt.getActionCommand().equals("comboBoxChanged"))) {
+    if (!clearSearchBox && (evt.getActionCommand().equals("comboBoxChanged")) &&
+    	!App.get().filterManager.isUpdatingFilter() && !MarcadoresController.get().updatingHistory) {
 
       int filterIndex = App.get().filtro.getSelectedIndex(); 
       if (filterIndex == 0 || filterIndex == -1) {

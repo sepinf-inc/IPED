@@ -93,7 +93,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       System.out.println("Loading Columns " + new Date());
       App.get().resultsModel.initCols();
 		
-      System.out.println("Loading Column Sorters " + new Date());
       if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
       App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
@@ -131,14 +130,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   @Override
   public void done() {
-	  App.get().filterManager.setUpdatingFilter(true);
-	  MarcadoresController.get().atualizarGUIandHistory();
-	  App.get().termo.setSelectedItem(App.SEARCH_TOOL_TIP);
-	  App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().ipedResult.getLength());
-	  App.get().resultsTable.getTableHeader().repaint();
+	  //App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().ipedResult.getLength());
+	  //App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 	  App.get().menu = new MenuClass();
 	  App.get().filterManager.loadFilters();
+	  MarcadoresController.get().atualizarGUIandHistory();
 
     if (!App.get().appCase.isFTKReport()) {
       App.get().tree.setModel(treeModel);

@@ -21,6 +21,8 @@ public class MarcadoresController {
 	
 	private boolean multiSetting = false;
 	
+	boolean updatingHistory = false;
+	
 	private MarcadoresController(){
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -99,6 +101,8 @@ public class MarcadoresController {
 	}
 	
 	public void atualizarGUIHistory(){
+		updatingHistory = true;
+		Object prevText = App.get().termo.getSelectedItem();
 		App.get().termo.removeAllItems();
 	    for (String word : App.get().appCase.getKeywords())
 	        App.get().termo.addItem(word);
@@ -109,6 +113,8 @@ public class MarcadoresController {
 		for (String text : App.get().appCase.getMultiMarcadores().getTypedWords()) {
 			App.get().termo.addItem(text);
 		}
+		App.get().termo.setSelectedItem(prevText);
+		updatingHistory = false;
 	}
 
 	public void askAndSaveState() {

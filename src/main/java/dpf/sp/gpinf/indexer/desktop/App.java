@@ -326,6 +326,7 @@ public class App extends JFrame implements WindowListener {
     filtro = new JComboBox<String>();
     filtro.setMaximumSize(new Dimension(100, 50));
     filtro.setMaximumRowCount(30);
+    filtro.addItem(App.FILTRO_TODOS);
     filtro.setToolTipText("Filtro");
     filterManager = new FilterManager(filtro);
 
