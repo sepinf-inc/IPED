@@ -51,6 +51,7 @@ public class AppMain {
 		      LogConfiguration logConfiguration = new LogConfiguration(logFile);
 		      logConfiguration.configureLogParameters(new File(codePath).getParentFile().getAbsolutePath(), nolog);
 			  
+		      App.get().getSearchParams().codePath = codePath;
 			  App.get().init(logConfiguration, isMultiCase, casesPathFile);
 			  
 		  } catch (Exception e) {
