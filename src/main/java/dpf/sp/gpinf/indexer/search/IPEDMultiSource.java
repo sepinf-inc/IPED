@@ -27,7 +27,7 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	public IPEDMultiSource(File file){
 		
-		super(file.getParentFile());
+		super(null);
 		
 		List<File> files;
 		if(file.isDirectory())
