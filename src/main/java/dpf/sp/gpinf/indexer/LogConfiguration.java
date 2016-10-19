@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -65,24 +64,32 @@ public class LogConfiguration {
 	  public void configureLogParameters(String configPath, boolean noLog) throws MalformedURLException {
 	    
 		System.setProperty("logFileDate", df.format(new Date()));
-	    if (noLog) {
-	      System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml").toURI().toURL().toString());
-	    } else {
-	      if (logFile == null)
-	    	  logFile = new File(configPath, "log/IPED-" + df.format(new Date()) + ".log");
-	      
-	      if(!setConsoleLogFile(false))
-	    	  setConsoleLogFile(true);
-	      
-	      System.setProperty("logFileNamePath", logFile.getPath());
-	      System.setProperty("log4j.configurationFile", new File(configPath, "conf/Log4j2ConfigurationFile.xml").toURI().toURL().toString());
-	      
+		File configFile = null;
+	    if (noLog)
+	    	configFile = new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml");
+	    
+	    else {
+	    	configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml");
+	    	
+	    	if (logFile == null)
+		    	  logFile = new File(configPath, "log/IPED-" + df.format(new Date()) + ".log");
+		      
+		    if(!setConsoleLogFile(false))
+		    	setConsoleLogFile(true);
+		      
+		    System.setProperty("logFileNamePath", logFile.getPath());
 	    }
+	    
 	    // instala bridge para capturar logs gerados pelo java.util.logging
 	    SLF4JBridgeHandler.removeHandlersForRootLogger();
 	    SLF4JBridgeHandler.install();
 
 	    //instancia o logger
-	    LogManager.getRootLogger();
+	    if(configFile.exists()){
+	    	System.setProperty("log4j.configurationFile", configFile.toURI().toURL().toString());
+		    LogManager.getRootLogger();
+	    }else
+	    	System.out.println(df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath());
+	    
 	  }
 }
