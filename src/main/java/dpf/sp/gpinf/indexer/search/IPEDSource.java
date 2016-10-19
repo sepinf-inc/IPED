@@ -126,9 +126,8 @@ public class IPEDSource implements Closeable{
             	if(ids[i] > lastId)
             		lastId = ids[i];
             
-            Bits liveDocs = MultiFields.getLiveDocs(reader);
-            invertIdToLuceneIdArray(liveDocs);
-            countTotalItems(liveDocs);
+            invertIdToLuceneIdArray();
+            countTotalItems();
             
             File splitedDocsFile = new File(moduleDir, "data/splits.ids");
             if(splitedDocsFile.exists()){
@@ -173,16 +172,16 @@ public class IPEDSource implements Closeable{
 		}
 	}
 	
-	protected void invertIdToLuceneIdArray(Bits liveDocs){
+	protected void invertIdToLuceneIdArray(){
 		docs = new int[lastId + 1];
 		for(int i = ids.length - 1; i >= 0 ; i--)
-			if(liveDocs == null || liveDocs.get(i))
-				docs[ids[i]] = i;
+			docs[ids[i]] = i;
 	}
 	
-	private void countTotalItems(Bits liveDocs){
+	private void countTotalItems(){
+		Bits liveDocs = MultiFields.getLiveDocs(reader);
 		for(int i = 0; i < docs.length; i++)
-			if(docs[i] > 0)
+			if(docs[i] > 0 && (liveDocs == null || liveDocs.get(docs[i])))
 				totalItens++;
 		
 		//inclui docId = 0 na contagem se nao for deletado
