@@ -56,14 +56,17 @@ public class P2PBookmarker {
 			queryText = null;
 			try {
 				SearchResult result = searcher.search();
+				LOGGER.info("Itens compartilhados via " + program.appName + " encontrados: " + result.getLength());
+				
+				if(result.getLength() == 0)
+					continue;
+				
 				int labelId = ipedSrc.getMarcadores().newLabel("Compartilhados via " + program.appName);
 				ArrayList<Integer> ids = new ArrayList<Integer>();
 				for (int i = 0; i < result.getLength(); i++)
 					ids.add(result.getId(i));
 				ipedSrc.getMarcadores().addLabel(ids, labelId);
 				ipedSrc.getMarcadores().saveState();
-				
-				LOGGER.info("Itens compartilhados via " + program.appName + " encontrados e marcados: " + result.getLength());
 
 			} catch (Exception e) {
 				e.printStackTrace();
