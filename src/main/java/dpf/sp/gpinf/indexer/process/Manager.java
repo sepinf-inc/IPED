@@ -56,7 +56,6 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -183,6 +182,8 @@ public class Manager {
     filtrarPalavrasChave();
 
     configurarCategorias();
+    
+    new P2PBookmarker().createBookmarksForSharedFiles(output.getParentFile());
 
     stats.logarEstatisticas(this);
 
