@@ -1,12 +1,33 @@
-xx/xx/2016: IPED-3.11
+xx/11/2016: IPED-3.11
 - Novo painel de Mapas com função de georreferenciamento (contribuição PCF Patrick)
-- Carving específico para SQLite
+- Análise simultânea de múltiplos casos independentes (opção -multicases pasta_com_casos no iped-search-app)
+- Refatoração do código da interface e api para pesquisa, obtenção e marcação de itens
+- Otimizações da interface para casos com dezenas de milhões de itens
+- Unificação dos logs de processamento e geração de log de análise
+- Criação automática de marcadores para itens compartilhados via P2P encontrados
+- Carving específico para bancos de dados SQLite
 - Otimizações no --fastmode ao varrer pastas locais e em rede
+- Melhor atualização do caminho para imagens, inclusive em casos somente leitura
+TODO- Atualização para Tika-1.14 (POI-3.15, PDFBox-2.0.3, mais parsers, correções, etc)
+Correções:
+- OutOfMemory ao processar áudios M4A e itens CHM corrompidos
+- Não geração de log ao processar discos físicos
+TODO- Patch 04 no Sleuthkit-4.3 para suportar discos com setores de 4k
+TODO- Inclusão de DLLs faltantes nas pastas da msiecfexport e esedbexport
+
+
+27/09/2016: IPED-3.10.5
+- Erro ao abrir App de pesquisa com java 32bits após processar em sistema x64 (regressão 3.10.1)
+- Patch 03 no Sleuthkit-4.3 para agilizar fastmode e cálculo de término estimado
+
+15/09/2016: IPED-3.10.4
+- Bloqueia novamente conexões externas ao renderizar itens HTML (regressão 3.10.3)
+- Eventualmente alguns nós da árvore de diretórios em relatórios iped não eram indexados
 
 08/09/2016: IPED-3.10.3
-- Corrige erro ao gerar relatórios contendo emails de PST/OST (3.10.1)
+- Corrige erro (não silencioso) ao gerar relatórios contendo emails de PST/OST (regressão 3.10.1)
 - Não inclui metadados ao final da coluna Message-Body
-- Compatibiliza novamente com java 7
+- Compatibiliza novamente com java 7 (regressão 3.10.1)
 
 25/08/2016: IPED-3.10.2
 - Patch no Sleuthkit-4.3 e opção -tz para definição de timezone, necessários para correta decodificação de datas em sistemas FAT 
