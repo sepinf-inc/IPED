@@ -13,16 +13,16 @@ public class SearchResult {
 		this.scores = scores;
 	}
 	
-	public int[] getIds(){
-		return ids;
+	public int getId(int i){
+		return ids[i];
+	}
+	
+	public float getScore(int i){
+		return scores[i];
 	}
 	
 	public int getLength(){
 		return ids.length;
-	}
-	
-	public float[] getScores(){
-		return scores;
 	}
 	
 	public static SearchResult get(IPEDSource iSource, LuceneSearchResult luceneResult){
@@ -44,7 +44,7 @@ public class SearchResult {
 		lResult.docs = new int[lResult.length];
 		
 		int i = 0;
-		for(int id : ipedResult.getIds()){
+		for(int id : ipedResult.ids){
 			lResult.docs[i++] = id;
 		}
 		return lResult;

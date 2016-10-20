@@ -130,8 +130,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   @Override
   public void done() {
-	  //App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(App.get().ipedResult.getLength());
-	  //App.get().resultsTable.getTableHeader().repaint();
 	  App.get().categoryTree.setModel(new CategoryTreeModel());
 	  App.get().menu = new MenuClass();
 	  App.get().filterManager.loadFilters();
