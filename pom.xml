@@ -229,7 +229,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>libesedb</artifactId>
-                                    <version>20151213</version>
+                                    <version>20151213.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -267,7 +267,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>libmsiecf</artifactId>
-                                    <version>20160421</version>
+                                    <version>20160421.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -362,7 +362,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.3-p03</version>
+                                    <version>4.3-p04</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

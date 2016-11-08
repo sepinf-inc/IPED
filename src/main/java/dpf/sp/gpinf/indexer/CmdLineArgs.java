@@ -54,6 +54,7 @@ public class CmdLineArgs {
     {"-importkff", "importa diretorio com base de hashes no formato NSRL"},
     {"-tz", "timezone de origem de dispositivos FAT: GMT-3, GMT-4, etc\n"
     		+ "\tCaso não especificado, utiliza o timezone local do sistema."},
+    {"-b", "tamanho em bytes do setor do dispositivo, necessario informar para discos com setores de 4k"},
     {"--append", "adiciona indexação a um indice ja existente"},
     {"--nogui", "nao exibe a janela de progresso da indexacao"},
     {"--nologfile", "imprime as mensagem de log na saida padrao"},
