@@ -51,6 +51,11 @@ public class MultiSearchResult {
 		public ItemId next() {
 			return ids[pos++];
 		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("Remove not allowed");
+		}
 	}	
 	
 	public static MultiSearchResult get(IPEDMultiSource iSource, LuceneSearchResult luceneResult){
