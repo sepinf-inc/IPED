@@ -61,7 +61,7 @@ public class P2PBookmarker {
 				if(result.getLength() == 0)
 					continue;
 				
-				int labelId = ipedSrc.getMarcadores().newLabel("Itens registrados pelo " + program.appName);
+				int labelId = ipedSrc.getMarcadores().newLabel("Provavelmente Compartilhados via " + program.appName);
 				ArrayList<Integer> ids = new ArrayList<Integer>();
 				for (int i = 0; i < result.getLength(); i++)
 					ids.add(result.getId(i));
