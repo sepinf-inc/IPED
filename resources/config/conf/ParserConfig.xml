@@ -21,6 +21,7 @@
 
     <parsers>
 
+        <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser>
@@ -28,18 +29,22 @@
         <parser class="org.apache.tika.parser.epub.EpubParser"></parser>
         <parser class="org.apache.tika.parser.feed.FeedParser"></parser>
         <parser class="org.apache.tika.parser.html.HtmlParser"></parser>
+        <parser class="org.apache.tika.parser.image.BPGParser"></parser>
         <parser class="org.apache.tika.parser.image.ImageParser"></parser>
         <parser class="org.apache.tika.parser.image.PSDParser"></parser>
         <parser class="org.apache.tika.parser.image.TiffParser"></parser>
         <parser class="org.apache.tika.parser.image.WebPParser"></parser>
-        <parser class="org.apache.tika.parser.image.BPGParser"></parser>
+        <parser class="org.apache.tika.parser.image.ICNSParser"></parser>
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
         <parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.OfficeParserPatched"></parser>
+        <parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.TNEFParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"></parser>
-        <parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.xml.WordMLParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.xml.SpreadsheetMLParser"></parser>
         <parser class="org.apache.tika.parser.mp3.Mp3Parser"></parser>
         <parser class="org.apache.tika.parser.odf.OpenDocumentParser"></parser>
         <parser class="org.apache.tika.parser.pdf.PDFParser"></parser>

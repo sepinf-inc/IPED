@@ -28,7 +28,7 @@ Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/out
 
 Caixas de Emails = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
 
-Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; text/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db
+Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db
 
 # adicionar application/zlib após resolver TIKA-1635
 Arquivos Compactados = application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-compress
