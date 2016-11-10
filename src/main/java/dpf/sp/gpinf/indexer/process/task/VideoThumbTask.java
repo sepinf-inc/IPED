@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -96,6 +95,11 @@ public class VideoThumbTask extends AbstractTask {
    * Executável, incluindo caminho do MPlayer.
    */
   private static String mplayer = "mplayer";
+  
+  /**
+   * Caminho relativo para o MPlayer distribuído para Windows 
+   */
+  private static final String mplayerWin = "/tools/mplayer/mplayer.exe";
 
   /**
    * Largura da imagem das cenas geradas.
@@ -203,12 +207,6 @@ public class VideoThumbTask extends AbstractTask {
         try {
           properties.load(confFile);
 
-          //Caminho do MPlayer
-          value = properties.getProperty("MPlayer");
-          if (value != null) {
-            mplayer = value.trim();
-          }
-
           //Layout
           value = properties.getProperty("Layout");
           if (value != null) {
@@ -244,10 +242,8 @@ public class VideoThumbTask extends AbstractTask {
           throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
         }
 
-        //Configura o caminho do MPlayer, juntando com caminho da pasta principal caso tenha sido utilizado caminho relativo. 
-        if (mplayer.indexOf('/') >= 0 || mplayer.indexOf('\\') >= 0) {
-          String codePath = Configuration.configPath;
-          mplayer = new File(codePath).getAbsolutePath() + "/" + mplayer;
+        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+        	mplayer = confDir.getCanonicalFile().getParent() + mplayerWin;
         }
         videoThumbsMaker.setMPlayer(mplayer);
 
@@ -255,7 +251,7 @@ public class VideoThumbTask extends AbstractTask {
         String vmp = videoThumbsMaker.getVersion();
         if (vmp == null) {
           Log.error(taskName, "MPLAYER NÃO PODE SER EXECUTADO!");
-          Log.error(taskName, "MPlyer Configurado = " + mplayer);
+          Log.error(taskName, "MPlayer Configurado = " + mplayer);
           Log.error(taskName, "Verifique o caminho e tente executá-lo diretamente na linha de comando.");
           taskEnabled = false;
           init.set(true);

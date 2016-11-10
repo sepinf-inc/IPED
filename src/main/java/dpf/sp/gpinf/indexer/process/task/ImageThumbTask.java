@@ -31,13 +31,13 @@ public class ImageThumbTask extends AbstractTask {
 
   private static final String enableProperty = "enableImageThumbs";
 
-  private static final String externalToolPath = "externalToolPath";
-
   public static final String HAS_THUMB = "hasThumb";
 
   public static final String THUMB_TIMEOUT = "thumbTimeout";
 
   private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
+  
+  private static final String winToolPath = "tools/graphicsmagick";
 
   private static final int samplingRatio = 3;
 
@@ -65,9 +65,8 @@ public class ImageThumbTask extends AbstractTask {
       GraphicsMagicConverter.enabled = false;
     }
 
-    value = properties.getProperty(externalToolPath);
-    if (value != null && !value.trim().isEmpty() && System.getProperty("os.name").startsWith("Windows")) {
-      GraphicsMagicConverter.toolPathWin = new File(confDir.getParentFile(), value.trim()).getCanonicalPath();
+    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+      GraphicsMagicConverter.toolPathWin = new File(confDir.getParentFile(), winToolPath).getCanonicalPath();
     }
 
     value = properties.getProperty("imgConvTimeout");
