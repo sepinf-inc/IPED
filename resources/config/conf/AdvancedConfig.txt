@@ -4,10 +4,10 @@
 
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
-# Caminho relativo para o tsk_loaddb no Windows. Em outros sistemas basta que esteja no PATH.
-# É distribuída versão com patch que permite recuperar arquivos fragmentados e processar os itens antes do fim do tsk_loaddb. 
+# Caminho absoluto obrigatório para o Tsk_DataModel.jar compilado em sistemas Linux ou MacOS.
+# É distribuída versão com patch para Windows com diversas correções de bugs e otimizações. 
 # No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
-TskLoaddbPath = tools/tsk/x64/tsk_loaddb
+#tskJarPath = /home/user/tsk-4.3-src-folder/bindings/java/dist/Tsk_DataModel.jar
 
 # Número de threads de processamento: "default" utiliza o número de processadores.
 # Caso haja problemas de consumo de memória, configurar um valor pequeno (no mínimo 1) e/ou aumentar memória heap do java (-Xms)
@@ -73,10 +73,6 @@ minItemSizeToFragment = 104857600
 ########################################################################
 
 # Opcionalmente, utilize o parâmetro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado várias vezes)
-
-# Caminho relativo para a pasta do tesseract no Windows.
-# Em outros sistemas basta que esteja no PATH.
-TesseractPath = tools/tesseract
 
 # Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng
 OCRLanguage = por

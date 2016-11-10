@@ -44,6 +44,8 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -382,35 +384,36 @@ public class Configuration {
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
 
-      value = properties.getProperty("TskLoaddbPath");
-      if (value != null) {
-        value = value.trim();
-      }
-      String loaddbPath = configPath + "/" + value;
-      if (value != null && !value.isEmpty()) {
-        SleuthkitReader.setTskPath(loaddbPath);
-      }
-
-      value = properties.getProperty("TesseractPath");
-      if (value != null) {
-        value = value.trim();
-      }
-      if (value != null && !value.isEmpty()) {
-        OCRParser.TESSERACTFOLDER = configPath + "/" + value;
-      }
+      String arch = "x86";
+      if(System.getProperty("os.arch").contains("64"))
+    	  arch = "x64";
+      
+      String loaddbPath = configPath + "/tools/tsk/" + arch + "/tsk_loaddb";
+      SleuthkitReader.setTskPath(loaddbPath);
 
       File nativelibs = new File(loaddbPath).getParentFile().getParentFile();
-      if(System.getProperty("os.arch").contains("64"))
-    	  nativelibs = new File(nativelibs, "x64");
-      else
-    	  nativelibs = new File(nativelibs, "x86");
+      nativelibs = new File(nativelibs, arch);
       
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
       Util.loadNatLibs(new File(indexerTemp, "nativelibs").getAbsolutePath());
 
+      OCRParser.TESSERACTFOLDER = configPath + "/tools/tesseract";
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
       IndexDatParser.TOOL_PATH = configPath + "/tools/msiecfexport/";
+    
+    }else{
+    	String tskJarPath = properties.getProperty("tskJarPath");
+    	if (tskJarPath != null && !tskJarPath.isEmpty())
+        	tskJarPath = tskJarPath.trim();
+    	else
+    		throw new IPEDException("Obrigatório configurar tskJarPath em conf/AdvancedConfig.txt!");
+    	
+    	File tskJarFile = new File(tskJarPath);
+    	if(!tskJarFile.exists())
+    		throw new IPEDException("Arquivo não encontrado " + tskJarPath + ". Configure tskJarPath em conf/AdvancedConfig.txt!");
+    	
+    	new JarLoader().loadJar(tskJarFile);
     }
 
     RegistryParser.TOOL_PATH = configPath + "/tools/regripper/";
