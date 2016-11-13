@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>4.3-p02</version>
+            <version>4.3-p04</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -162,12 +162,6 @@
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>0.9.5.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.icepdf</groupId>
-            <artifactId>icepdf-core</artifactId>
-            <version>6.0.2</version>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.levigo.jbig2</groupId>
@@ -381,7 +375,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>4.3-p03</version>
+                                    <version>4.3-p04</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
