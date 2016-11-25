@@ -52,9 +52,11 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.MultiMarcadores;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
@@ -92,7 +94,12 @@ public class IPEDReader extends DataSourceReader {
     ParsingTask.expandContainers = false;
     CarveTask.enableCarving = false;
 
-    state = (Marcadores) Util.readObject(file.getAbsolutePath());
+    Object obj = Util.readObject(file.getAbsolutePath());
+    if(obj instanceof MultiMarcadores)
+    	throw new IPEDException("Atualmente não é possível gerar relatórios a partir de múltiplos casos!"
+    			+ "Gere o relatório para cada caso separadamente.");
+    
+    state = (Marcadores)obj;
     indexDir = state.getIndexDir().getCanonicalFile();
     basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
     String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
