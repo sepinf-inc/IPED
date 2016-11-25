@@ -4,16 +4,19 @@ xx/11/2016: IPED-3.11
 - Refatoração do código da interface e api para pesquisa, obtenção e marcação de itens
 - Otimizações da interface para casos com dezenas de milhões de itens
 - Unificação dos logs de processamento e geração de log de análise
-- Criação automática de marcadores para itens compartilhados via P2P encontrados
+- Criação automática de marcadores para itens compartilhados via P2P
 - Carving específico para bancos de dados SQLite
 - Otimizações no --fastmode ao varrer pastas locais e em rede
 - Melhor atualização do caminho para imagens, inclusive em casos somente leitura
-TODO- Atualização para Tika-1.14 (POI-3.15, PDFBox-2.0.3, mais parsers, correções, etc)
+- Atualização para Tika-1.14 (POI-3.15, PDFBox-2.0.3, mais parsers, correções, etc)
+- Atualização para SevenzipJBindings-9.20-2.0beta
+- Atualização para IcePDF-6.1.3
 Correções:
 - OutOfMemory ao processar áudios M4A e itens CHM corrompidos
+- Melhor linkagem com sleuthkit em sistemas Linux (novo parâmetro tskJarPath no AdvancedConfig.txt)
 - Não geração de log ao processar discos físicos
-TODO- Patch 04 no Sleuthkit-4.3 para suportar discos com setores de 4k
-TODO- Inclusão de DLLs faltantes nas pastas da msiecfexport e esedbexport
+- Patch 04 no Sleuthkit-4.3 para suportar discos com setores de 4k
+- Inclusão de DLLs faltantes nas pastas da msiecfexport e esedbexport
 
 
 27/09/2016: IPED-3.10.5
