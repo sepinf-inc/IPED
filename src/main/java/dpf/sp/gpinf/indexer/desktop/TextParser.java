@@ -47,6 +47,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
@@ -305,7 +306,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
           // grava texto em disco
           String fragment = frag.toString();
-          byte data[] = fragment.getBytes("windows-1252");
+          byte data[] = fragment.getBytes(ATextViewer.TEXT_ENCODING);
           long startPos = parsedFile.position();
           ByteBuffer out = ByteBuffer.wrap(data);
           while (out.hasRemaining()) {
@@ -354,7 +355,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
               App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
               lastRowInserted = viewRows.size() - 2;
             } else {
-              int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / App.MAX_LINE_SIZE);
+              int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+              int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
               App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
               lastRowInserted = line;
             }
@@ -375,7 +377,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
           App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
           lastRowInserted = viewRows.size() - 2;
         } else {
-          int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / App.MAX_LINE_SIZE);
+          int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+          int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
           App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
           lastRowInserted = line;
         }

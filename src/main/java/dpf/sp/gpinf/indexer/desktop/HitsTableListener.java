@@ -26,6 +26,8 @@ import javax.swing.JTextPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+
 public class HitsTableListener implements ListSelectionListener {
 
   private int lastSelectedRow = -1;
@@ -54,17 +56,19 @@ public class HitsTableListener implements ListSelectionListener {
         long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
         int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
         int hitLen = hit[0];
+        
+        int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
 
         int startViewRow = hit[1];
         long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
         if (startViewRow == App.MAX_LINES) {
-          startViewRow += (int) (hitOff - viewRowOff) / App.MAX_LINE_SIZE;
+          startViewRow += (int) (hitOff - viewRowOff) / line_disk_size;
         }
 
         int endViewRow = hit[2];
         viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
         if (endViewRow == App.MAX_LINES) {
-          endViewRow += (int) (hitOff + hitLen - viewRowOff) / App.MAX_LINE_SIZE;
+          endViewRow += (int) (hitOff + hitLen - viewRowOff) / line_disk_size;
         }
 
         int viewRow = startViewRow;
