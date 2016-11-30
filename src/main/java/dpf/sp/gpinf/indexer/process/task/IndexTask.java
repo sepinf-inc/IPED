@@ -14,12 +14,6 @@ import java.util.Set;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -39,9 +33,6 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
@@ -340,8 +331,6 @@ public class IndexTask extends BaseCarveTask {
       saveExtraAttributes();
 
       IndexItem.saveMetadataTypes(new File(output, "conf"));
-
-      removeEmptyTreeNodes();
     }
     caseData.putCaseObject(TEXT_SIZES, null);
 
@@ -360,55 +349,6 @@ public class IndexTask extends BaseCarveTask {
     	HashSet<String> extraAttributes = (HashSet<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
     	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
     }
-  }
-
-  private void removeEmptyTreeNodes() {
-
-    if (!caseData.containsReport() || caseData.isIpedReport()) {
-      return;
-    }
-
-    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Excluindo nós da árvore vazios");
-    LOGGER.info("Excluindo nós da árvore vazios");
-
-    try {
-      IPEDSource ipedCase = new IPEDSource(output.getAbsoluteFile());
-      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-      LuceneSearchResult result = searchAll.searchAll();
-
-      boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
-      for (int docID : result.getLuceneIds()) {
-        String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
-        if(!parentIds.trim().isEmpty()) {
-          for (String parentId : parentIds.trim().split(" ")) {
-            doNotDelete[Integer.parseInt(parentId)] = true;            
-          }
-        }
-      }
-
-      BooleanQuery query;
-      int startId = 0, interval = 1000, endId = interval;
-      while (startId <= stats.getLastId()) {
-        if (endId > stats.getLastId()) {
-          endId = stats.getLastId();
-        }
-        query = new BooleanQuery();
-        query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST);
-        query.add(NumericRangeQuery.newIntRange(IndexItem.ID, startId, endId, true, true), Occur.MUST);
-        for (int i = startId; i <= endId; i++) {
-          if (doNotDelete[i]) {
-            query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.MUST_NOT);
-          }
-        }
-        worker.writer.deleteDocuments(query);
-        startId = endId + 1;
-        endId += interval;
-      }
-
-    } catch (Exception e) {
-      LOGGER.warn("Erro ao excluir nós da árvore vazios", e);
-    }
-
   }
 
   private void salvarTamanhoTextosExtraidos() throws Exception {

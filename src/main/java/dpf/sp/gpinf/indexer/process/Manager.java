@@ -41,9 +41,16 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
+import org.apache.poi.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,6 +190,8 @@ public class Manager {
 
     configurarCategorias();
     
+    removeEmptyTreeNodes();
+    
     new P2PBookmarker().createBookmarksForSharedFiles(output.getParentFile());
 
     stats.logarEstatisticas(this);
@@ -224,33 +233,37 @@ public class Manager {
     }
 
   }
+  
+  private IndexWriterConfig getIndexWriterConfig(){
+	    IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
+	    conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+	    conf.setMaxThreadStates(Configuration.numThreads);
+	    conf.setSimilarity(new IndexerSimilarity());
+	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
+	    if ((Configuration.indexTempOnSSD && !IndexFiles.getInstance().appendIndex) ||
+	    		(Configuration.outputOnSSD && IndexFiles.getInstance().appendIndex)) {
+	      mergeScheduler.setMaxMergesAndThreads(8, 4);
+	    }
+	    conf.setMergeScheduler(mergeScheduler);
+	    conf.setRAMBufferSizeMB(64);
+	    TieredMergePolicy tieredPolicy = new TieredMergePolicy();
+	    /*
+	     * Seta tamanho máximo dos subíndices. Padrão é 5GB.
+	     * Poucos subíndices grandes impactam processamento devido a merges parciais demorados.
+	     * Muitos subíndices pequenos aumentam tempo e memória necessários p/ pesquisas.
+	     * Usa 4000MB devido a limite do ISO9660
+	     */
+	    tieredPolicy.setMaxMergedSegmentMB(4000);
+	    conf.setMergePolicy(tieredPolicy);
+	    
+	    return conf;
+  }
 
   private void iniciarIndexacao() throws Exception {
     IndexFiles.getInstance().firePropertyChange("mensagem", "", "Configurando índice...");
     LOGGER.info("Configurando índice...");
 
-    IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
-    conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-    conf.setMaxThreadStates(Configuration.numThreads);
-    conf.setSimilarity(new IndexerSimilarity());
-    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-    if ((Configuration.indexTempOnSSD && !IndexFiles.getInstance().appendIndex) ||
-    		(Configuration.outputOnSSD && IndexFiles.getInstance().appendIndex)) {
-      mergeScheduler.setMaxMergesAndThreads(8, 4);
-    }
-    conf.setMergeScheduler(mergeScheduler);
-    conf.setRAMBufferSizeMB(64);
-    TieredMergePolicy tieredPolicy = new TieredMergePolicy();
-    /*
-     * Seta tamanho máximo dos subíndices. Padrão é 5GB.
-     * Poucos subíndices grandes impactam processamento devido a merges parciais demorados.
-     * Muitos subíndices pequenos aumentam tempo e memória necessários p/ pesquisas.
-     * Usa 4000MB devido a limite do ISO9660
-     */
-    tieredPolicy.setMaxMergedSegmentMB(4000);
-    conf.setMergePolicy(tieredPolicy);
-
-    writer = new IndexWriter(FSDirectory.open(indexTemp), conf);
+    writer = new IndexWriter(FSDirectory.open(indexTemp), getIndexWriterConfig());
 
     workers = new Worker[Configuration.numThreads];
     for (int k = 0; k < workers.length; k++) {
@@ -344,6 +357,7 @@ public class Manager {
     IndexFiles.getInstance().firePropertyChange("mensagem", "", "Fechando Índice...");
     LOGGER.info("Fechando Índice...");
     writer.close();
+    writer = null;
 
     if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", "Copiando Índice...");
@@ -529,6 +543,60 @@ public class Manager {
 
     reader.close();
     Util.writeObject(ids, output.getAbsolutePath() + "/data/ids.map");
+  }
+  
+  private void removeEmptyTreeNodes() {
+
+	    if (!caseData.containsReport() || caseData.isIpedReport()) {
+	      return;
+	    }
+
+	    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Excluindo nós da árvore vazios");
+	    LOGGER.info("Excluindo nós da árvore vazios");
+
+	    try {
+	      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+	      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	      LuceneSearchResult result = searchAll.searchAll();
+
+	      boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
+	      for (int docID : result.getLuceneIds()) {
+	        String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
+	        if(!parentIds.trim().isEmpty()) {
+	          for (String parentId : parentIds.trim().split(" ")) {
+	            doNotDelete[Integer.parseInt(parentId)] = true;            
+	          }
+	        }
+	      }
+	      
+	      writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
+
+	      BooleanQuery query;
+	      int startId = 0, interval = 1000, endId = interval;
+	      while (startId <= stats.getLastId()) {
+	        if (endId > stats.getLastId()) {
+	          endId = stats.getLastId();
+	        }
+	        query = new BooleanQuery();
+	        query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST);
+	        query.add(NumericRangeQuery.newIntRange(IndexItem.ID, startId, endId, true, true), Occur.MUST);
+	        for (int i = startId; i <= endId; i++) {
+	          if (doNotDelete[i]) {
+	            query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.MUST_NOT);
+	          }
+	        }
+	        writer.deleteDocuments(query);
+	        startId = endId + 1;
+	        endId += interval;
+	      }
+
+	    } catch (Exception e) {
+	      LOGGER.warn("Erro ao excluir nós da árvore vazios", e);
+	      
+	    }finally{
+	    	IOUtil.closeQuietly(writer);
+	    }    
+
   }
 
   private void prepararReport() throws Exception {
