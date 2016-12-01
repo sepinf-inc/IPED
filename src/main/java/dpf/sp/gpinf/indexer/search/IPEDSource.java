@@ -127,7 +127,6 @@ public class IPEDSource implements Closeable{
             		lastId = ids[i];
             
             invertIdToLuceneIdArray();
-            countTotalItems();
             
             File splitedDocsFile = new File(moduleDir, "data/splits.ids");
             if(splitedDocsFile.exists()){
@@ -135,11 +134,14 @@ public class IPEDSource implements Closeable{
             	for(int i : splited)
             		splitedIds.set(i);
             }
-            	
 			
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids");
 			if (viewToRawFile.exists())
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
+			
+			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists();
+			
+			countTotalItems();
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size");
 			if(textSizesFile.exists())
@@ -164,8 +166,6 @@ public class IPEDSource implements Closeable{
 			globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
 			
 			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
-			
-			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -179,7 +179,8 @@ public class IPEDSource implements Closeable{
 	}
 	
 	private void countTotalItems(){
-		Bits liveDocs = MultiFields.getLiveDocs(reader);
+		//Não ignora tree nodes em reports
+		/*Bits liveDocs = MultiFields.getLiveDocs(reader);
 		for(int i = 0; i < docs.length; i++)
 			if(docs[i] > 0 && (liveDocs == null || liveDocs.get(docs[i])))
 				totalItens++;
@@ -187,6 +188,16 @@ public class IPEDSource implements Closeable{
 		//inclui docId = 0 na contagem se nao for deletado
 		if(liveDocs == null || liveDocs.get(0))
 			totalItens++;
+		*/
+		
+		// ignora tree nodes
+		IPEDSearcher pesquisa = new IPEDSearcher(this, "");
+	    try {
+			totalItens = pesquisa.search().getLength();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void loadCategories(){
