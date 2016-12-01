@@ -25,6 +25,7 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
 public class KMLResult {
 	  static FileDialog fDialog;
@@ -176,8 +177,8 @@ public class KMLResult {
 					  kml.append("<Placemark>");
 					  //kml+="<styleUrl>#basico</styleUrl>";
 					  kml.append("<id>" + gid + "</id>");
-					  kml.append("<name>" + doc.get(IndexItem.NAME) + "</name>");
-					  if(!IndexItem.ID.equals(coluna))
+					  kml.append("<name>" + htmlFormat(doc.get(IndexItem.NAME)) + "</name>");
+				      if(!IndexItem.ID.equals(coluna))
 						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(doc.get(coluna))+"</description>");
 					  else
 						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(gid)+"</description>");
@@ -209,9 +210,9 @@ public class KMLResult {
 					  
 					  for(int j = 0; j < colunas.length; j++){
 						  if(!IndexItem.ID.equals(colunas[j]))
-							  kml.append("<Data name=\""+colunas[j]+"\"><value>"+ doc.get(colunas[j]) +"</value></Data>");
+							  kml.append("<Data name=\""+htmlFormat(colunas[j])+"\"><value>"+ htmlFormat(doc.get(colunas[j])) +"</value></Data>");
 						  else
-							  kml.append("<Data name=\""+colunas[j]+"\"><value>"+ gid +"</value></Data>");
+							  kml.append("<Data name=\""+IndexItem.ID+"\"><value>"+ gid +"</value></Data>");
 					  }
 					  
 					  boolean checked = App.get().appCase.getMultiMarcadores().isSelected(item);
@@ -222,7 +223,7 @@ public class KMLResult {
 					  kml.append("</ExtendedData>");
 
 					  String dataCriacao = doc.get(IndexItem.CREATED);
-					  if(!dataCriacao.isEmpty())
+					  if(dataCriacao != null && !dataCriacao.isEmpty())
 						try {
 							dataCriacao = df.format(DateUtil.stringToDate(dataCriacao)) + "Z";
 						} catch (ParseException e) {
@@ -262,7 +263,7 @@ public class KMLResult {
 		  if(html==null){
 			  return "";
 		  }
-		  return html.replace("/", "&#47;").replace("\\", "&#92;").replace("@", "&#64;");			
+		  return SimpleHTMLEncoder.htmlEncode(html);
 	  }
 
 	  static public String converteCoordFormat(String coord){
