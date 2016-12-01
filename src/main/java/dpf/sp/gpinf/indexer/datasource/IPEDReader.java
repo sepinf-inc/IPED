@@ -26,7 +26,6 @@ import gpinf.dev.filetypes.GenericFileType;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +39,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -53,6 +51,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
+import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -165,7 +164,7 @@ public class IPEDReader extends DataSourceReader {
         query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
         num++;
       }
-      if (num == 1000 || i == ipedCase.getLastId()) {
+      if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
     	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
   		searchParents.setTreeQuery(true);
         result = searchParents.luceneSearch();
@@ -180,33 +179,51 @@ public class IPEDReader extends DataSourceReader {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) {
       boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
+      boolean hasPSTEmail = false;
       for (int docID : result.getLuceneIds()) {
         String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
         if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
+          hasPSTEmail = true;
           isSelectedPSTEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
         }
       }
+      if(!hasPSTEmail)
+        return;
+      
+      //search attachs
+      int num = 0;
       boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
-      for (int id = 0; id <= ipedCase.getLastId(); id++) {
-        Document doc = ipedCase.getReader().document(ipedCase.getLuceneId(id));
-        if (doc != null && doc.get(IndexItem.PARENTID) != null) {
-          if (isSelectedPSTEmail[Integer.parseInt(doc.get(IndexItem.PARENTID))]) {
-            isAttachToAdd[id] = true;
+      String queryStr = IndexItem.PARENTID + ":(";
+      for (int i = 0; i <= ipedCase.getLastId(); i++) {
+          if (isSelectedPSTEmail[i]) {
+        	queryStr += (i + " ");
+            num++;
           }
-        }
+          if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
+        	queryStr += ")";
+            IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, queryStr);
+            SearchResult attachs = searchAttachs.search();
+      	    for(int j = 0; j < attachs.getLength(); j++)
+      	    	isAttachToAdd[attachs.getId(j)] = true;
+      	    queryStr = IndexItem.PARENTID + ":(";
+            num = 0;
+          }
       }
+      
+      //remove duplicate attachs
       for (int docID : result.getLuceneIds()) {
         String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
         isAttachToAdd[Integer.parseInt(id)] = false;
       }
-      int num = 0;
+      
+      num = 0;
       BooleanQuery query = new BooleanQuery();
       for (int i = 0; i <= ipedCase.getLastId(); i++) {
         if (isAttachToAdd[i]) {
           query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
           num++;
         }
-        if (num == 1000 || i == ipedCase.getLastId()) {
+        if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
           IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
     	  LuceneSearchResult attachs = searchAttachs.luceneSearch();
           insertIntoProcessQueue(attachs, false);
@@ -300,7 +317,7 @@ public class IPEDReader extends DataSourceReader {
       }
 
       evidence.setPath(doc.get(IndexItem.PATH));
-
+      
       value = doc.get(IndexItem.EXPORT);
       if (value != null && !value.isEmpty() && !treeNode) {
         evidence.setFile(Util.getRelativeFile(basePath, value));
