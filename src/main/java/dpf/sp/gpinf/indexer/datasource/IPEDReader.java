@@ -193,19 +193,18 @@ public class IPEDReader extends DataSourceReader {
       //search attachs
       int num = 0;
       boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
-      String queryStr = IndexItem.PARENTID + ":(";
+      BooleanQuery query = new BooleanQuery();
       for (int i = 0; i <= ipedCase.getLastId(); i++) {
           if (isSelectedPSTEmail[i]) {
-        	queryStr += (i + " ");
-            num++;
+        	  query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, i, i, true, true), Occur.SHOULD);
+              num++;
           }
           if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-        	queryStr += ")";
-            IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, queryStr);
+            IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
             SearchResult attachs = searchAttachs.search();
       	    for(int j = 0; j < attachs.getLength(); j++)
       	    	isAttachToAdd[attachs.getId(j)] = true;
-      	    queryStr = IndexItem.PARENTID + ":(";
+      	    query = new BooleanQuery();
             num = 0;
           }
       }
@@ -217,7 +216,7 @@ public class IPEDReader extends DataSourceReader {
       }
       
       num = 0;
-      BooleanQuery query = new BooleanQuery();
+      query = new BooleanQuery();
       for (int i = 0; i <= ipedCase.getLastId(); i++) {
         if (isAttachToAdd[i]) {
           query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
