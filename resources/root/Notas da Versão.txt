@@ -1,4 +1,4 @@
-xx/11/2016: IPED-3.11
+13/12/2016: IPED-3.11
 - Novo painel de Mapas com função de georreferenciamento (contribuição PCF Patrick)
 - Análise simultânea de múltiplos casos independentes (opção -multicases pasta_com_casos no iped-search-app)
 - Refatoração do código da interface e api para pesquisa, obtenção e marcação de itens
@@ -8,6 +8,7 @@ xx/11/2016: IPED-3.11
 - Carving específico para bancos de dados SQLite
 - Otimizações no --fastmode ao varrer pastas locais e em rede
 - Melhor atualização do caminho para imagens, inclusive em casos somente leitura
+- Visualizador de texto totalmente Unicode
 - Atualização para Tika-1.14 (POI-3.15, PDFBox-2.0.3, mais parsers, correções, etc)
 - Atualização para SevenzipJBindings-9.20-2.0beta
 - Atualização para IcePDF-6.1.3
