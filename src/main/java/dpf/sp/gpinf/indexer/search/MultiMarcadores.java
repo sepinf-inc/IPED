@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +29,10 @@ public class MultiMarcadores implements Serializable {
 	public MultiMarcadores(List<IPEDSource> sources){
 		for(IPEDSource s : sources)
 			map.put(s.getSourceId(), s.getMarcadores());
+	}
+	
+	public Collection<Marcadores> getSingleBookmarks(){
+		return map.values();
 	}
 	
 	public int getTotalSelected(){

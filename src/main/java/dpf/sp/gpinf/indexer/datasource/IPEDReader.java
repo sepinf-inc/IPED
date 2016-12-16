@@ -94,11 +94,16 @@ public class IPEDReader extends DataSourceReader {
     CarveTask.enableCarving = false;
 
     Object obj = Util.readObject(file.getAbsolutePath());
-    if(obj instanceof MultiMarcadores)
-    	throw new IPEDException("Atualmente não é possível gerar relatórios a partir de múltiplos casos!"
-    			+ "Gere o relatório para cada caso separadamente.");
+    if(obj instanceof MultiMarcadores){
+    	MultiMarcadores mm = (MultiMarcadores) obj;
+    	if(mm.getSingleBookmarks().size() == 1)
+    		state = mm.getSingleBookmarks().iterator().next();
+    	else
+    		throw new IPEDException("Atualmente não é possível gerar relatórios a partir de múltiplos casos!"
+        			+ "Gere o relatório para cada caso separadamente.");
+    }else
+    	state = (Marcadores)obj;
     
-    state = (Marcadores)obj;
     indexDir = state.getIndexDir().getCanonicalFile();
     basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
     String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
