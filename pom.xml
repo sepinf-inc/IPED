@@ -39,7 +39,7 @@
             <url>http://jbig2-imageio.googlecode.com/svn/maven-repository</url>
         </repository>
     </repositories>
-        
+    
     <dependencies>
         <dependency>
             <groupId>org.sleuthkit</groupId>
@@ -188,7 +188,16 @@
             <artifactId>iped-utils</artifactId>
             <version>3.11</version>
         </dependency>
-        
+        <dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox</artifactId>
+  			<version>2.0.4</version>
+		</dependency>
+		<dependency>
+  			<groupId>org.apache.pdfbox</groupId>
+  			<artifactId>pdfbox-tools</artifactId>
+  			<version>2.0.4</version>
+		</dependency>
         <dependency>
             <groupId>org.eclipse</groupId>
             <artifactId>swt</artifactId>
