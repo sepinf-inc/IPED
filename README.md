@@ -1,4 +1,4 @@
-# IPED (em contrução)
+# IPED (em construção)
 
 Software forense computacional para exame completo de mídias de armazenamento de dados.
 Licenciado sob GNU GPL v3
