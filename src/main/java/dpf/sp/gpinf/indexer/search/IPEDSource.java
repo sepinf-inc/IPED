@@ -37,26 +37,28 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.util.Bits;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDSource implements Closeable{
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 	
 	public static final String INDEX_DIR = "index";
 	public static final String MODULE_DIR = "indexador";
@@ -114,7 +116,7 @@ public class IPEDSource implements Closeable{
 			File sleuthFile = new File(casePath,  SLEUTH_DB);
 			if (sleuthFile.exists()){
 				sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
-				checkImagePaths(casePath, sleuthFile);
+				updateImagePathsToAbsolute(casePath, sleuthFile);
 			}
 				
 			openIndex(index);
@@ -274,7 +276,53 @@ public class IPEDSource implements Closeable{
 		openIndex(index);
 	}
 	
-	private void checkImagePaths(File casePath, File sleuthFile) throws Exception {
+	public void checkImagePaths() throws IPEDException, TskCoreException{
+		Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
+		for (Long id : imgPaths.keySet()) {
+	        List<String> paths = imgPaths.get(id);
+	        for(String path : paths){
+	        	if(!new File(path).exists())
+	        		throw new IPEDException("Arquivo de Imagem inexistente: " + new File(path).getAbsolutePath());
+	        }
+		}
+	}
+	
+	  /**
+	   * Substitui caminhos absolutos para imagens por relativos
+	   * 
+	   */
+	  public void updateImagePathsToRelative(){
+		  if(sleuthCase == null)
+			  return;
+		  try{
+			  File sleuthFile = new File(sleuthCase.getDbDirPath() + "/" + SLEUTH_DB);
+			  Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
+		      for (Long id : imgPaths.keySet()) {
+		        List<String> paths = imgPaths.get(id);
+		        ArrayList<String> newPaths = new ArrayList<String>();
+		        for (String path : paths) {
+		          File file = new File(path);
+		          if(!file.isAbsolute())
+		        	  break;
+		          String relPath = Util.getRelativePath(sleuthFile, file);
+		          file = new File(relPath);
+		          if(file.isAbsolute() || !new File(sleuthFile.getParentFile(), relPath).exists())
+		        	  break;
+		          else
+		        	  newPaths.add(relPath);
+		          
+		          System.out.println(sleuthFile.getPath());
+		          System.out.println(file.getPath());
+		        }
+		        if (newPaths.size() > 0)
+		          sleuthCase.setImagePaths(id, newPaths);
+		      }  
+		  }catch(Exception e){
+			  LOGGER.error("Erro ao converter referências para imagens para caminhos relativos");
+		  }
+	  }
+	
+	private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
 		  File tmpCase = null;
 		  char letter = casePath.getAbsolutePath().charAt(0);
 	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();

@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -847,39 +846,6 @@ public class SleuthkitReader extends DataSourceReader {
         return;
       }
     }.start();
-  }
-  
-  /**
-   * Substitui caminhos absolutos para imagens por relativos
-   * 
-   * @throws Exception
-   */
-  public static void updateImagePaths(){
-	  if(sleuthCase == null)
-		  return;
-	  try{
-		  File sleuthFile = new File(sleuthCase.getDbDirPath() + "/" + DB_NAME);
-		  Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
-	      for (Long id : imgPaths.keySet()) {
-	        List<String> paths = imgPaths.get(id);
-	        ArrayList<String> newPaths = new ArrayList<String>();
-	        for (String path : paths) {
-	          File file = new File(path);
-	          if(!file.isAbsolute())
-	        	  break;
-	          String relPath = Util.getRelativePath(sleuthFile, file);
-	          file = new File(relPath);
-	          if(file.isAbsolute() || !new File(sleuthFile.getParentFile(), relPath).exists())
-	        	  break;
-	          else
-	        	  newPaths.add(relPath);
-	        }
-	        if (newPaths.size() > 0)
-	          sleuthCase.setImagePaths(id, newPaths);
-	      }  
-	  }catch(Exception e){
-		  LOGGER.error("Erro ao converter referências para imagens para caminhos relativos");
-	  }
   }
 
 }

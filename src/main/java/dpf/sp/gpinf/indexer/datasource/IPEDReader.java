@@ -118,6 +118,8 @@ public class IPEDReader extends DataSourceReader {
     Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
     
     ipedCase = new IPEDSource(new File(basePath));
+    
+    ipedCase.checkImagePaths();
 
     selectedLabels = new HashSet<Integer>();
     

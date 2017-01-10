@@ -194,6 +194,8 @@ public class Manager {
     
     new P2PBookmarker().createBookmarksForSharedFiles(output.getParentFile());
     
+    updateImagePaths();
+    
     deleteTempDir();
 
     stats.logarEstatisticas(this);
@@ -371,10 +373,6 @@ public class Manager {
         IOUtil.copiaDiretorio(indexTemp, indexDir);
       }
     }
-    
-    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if(args.getCmdArgs().containsKey("--portable"))
-    	SleuthkitReader.updateImagePaths();
 
     if (caseData.containsReport()) {
       new File(output, "data/containsReport.flag").createNewFile();
@@ -384,6 +382,15 @@ public class Manager {
       new File(output, "data/containsFTKReport.flag").createNewFile();
     }
 
+  }
+  
+  private void updateImagePaths(){
+	  CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+	  if(args.getCmdArgs().containsKey("--portable")){
+		  IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+		  ipedCase.updateImagePathsToRelative();
+		  ipedCase.close();
+	  }
   }
   
   private void deleteTempDir(){
