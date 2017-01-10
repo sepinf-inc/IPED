@@ -193,6 +193,8 @@ public class Manager {
     removeEmptyTreeNodes();
     
     new P2PBookmarker().createBookmarksForSharedFiles(output.getParentFile());
+    
+    deleteTempDir();
 
     stats.logarEstatisticas(this);
 
@@ -374,12 +376,6 @@ public class Manager {
     if(args.getCmdArgs().containsKey("--portable"))
     	SleuthkitReader.updateImagePaths();
 
-    try {
-      IOUtil.deletarDiretorio(Configuration.indexerTemp);
-    } catch (IOException e) {
-      LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
-    }
-
     if (caseData.containsReport()) {
       new File(output, "data/containsReport.flag").createNewFile();
     }
@@ -388,6 +384,15 @@ public class Manager {
       new File(output, "data/containsFTKReport.flag").createNewFile();
     }
 
+  }
+  
+  private void deleteTempDir(){
+	  	try {
+	      IOUtil.deletarDiretorio(Configuration.indexerTemp);
+	      
+	    } catch (IOException e) {
+	      LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
+	    }
   }
 
   private void configurarCategorias() throws Exception {
