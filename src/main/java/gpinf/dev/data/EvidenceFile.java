@@ -44,7 +44,6 @@ import dpf.sp.gpinf.indexer.util.SleuthkitServer;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
-import gpinf.util.FormatUtil;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso, acompanhado de todas sua
@@ -1145,16 +1144,13 @@ public class EvidenceFile implements Serializable, StreamSource {
           .append(type.getLongDescr());
     }
     if (creationDate != null) {
-      sb.append("\n\t\tData de Criação: ").append(
-          FormatUtil.format(creationDate));
+      sb.append("\n\t\tData de Criação: ").append(creationDate.toString());
     }
     if (modificationDate != null) {
-      sb.append("\n\t\tData de Modificação: ").append(
-          FormatUtil.format(modificationDate));
+      sb.append("\n\t\tData de Modificação: ").append(modificationDate.toString());
     }
     if (accessDate != null) {
-      sb.append("\n\t\tData de Último Acesso: ").append(
-          FormatUtil.format(accessDate));
+      sb.append("\n\t\tData de Último Acesso: ").append(accessDate.toString());
     }
     if (length != null) {
       sb.append("\n\t\tTamanho do Arquivo: ").append(length);
