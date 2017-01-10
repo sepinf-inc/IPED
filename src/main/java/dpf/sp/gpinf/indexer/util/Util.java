@@ -36,6 +36,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -336,19 +337,35 @@ public class Util {
   public static void decompress(File input, File output) {
 
   }
-
-  public static void loadNatLibs(String path) {
-    //String arch = System.getProperty("os.arch") + File.separator;
-
-    if (System.getProperty("os.name").startsWith("Windows")) {
-      path += File.separator;
-      System.load(new File(path + "msvcp100.dll").getAbsolutePath());
-      System.load(new File(path + "msvcr100.dll").getAbsolutePath());
-      System.load(new File(path + "zlib.dll").getAbsolutePath());
-      System.load(new File(path + "libewf.dll").getAbsolutePath());
-      System.load(new File(path + "libvhdi.dll").getAbsolutePath());
-      System.load(new File(path + "libvmdk.dll").getAbsolutePath());
-    }
+  
+  /**
+   * Carrega bibliotecas nativas de uma pasta, tentando adivinhar a ordem correta
+   * 
+   * @param libDir
+   */
+  public static void loadNatLibs(File libDir) {
+	  
+	  if (System.getProperty("os.name").startsWith("Windows")) {
+	      LinkedList<File> libList = new LinkedList<File>(); 
+	      for(File file : libDir.listFiles())
+	    	  if(file.getName().endsWith(".dll"))
+	    		  libList.addFirst(file);
+	      
+	      int fail = 0;
+	      while(!libList.isEmpty()){
+	    	  File lib = libList.removeLast();
+	    	  try{
+	    		  System.load(lib.getAbsolutePath());
+	    		  fail = 0;
+	    		  
+	    	  }catch(Throwable t){
+	    		  libList.addFirst(lib);
+	    		  fail++;
+	    		  if(fail == libList.size())
+	    			  throw t;
+	    	  }
+	      }
+	  }
   }
 
   public static void loadLibs(File libDir) {

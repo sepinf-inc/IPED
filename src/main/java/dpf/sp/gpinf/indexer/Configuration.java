@@ -395,7 +395,7 @@ public class Configuration {
       nativelibs = new File(nativelibs, arch);
       
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
-      Util.loadNatLibs(new File(indexerTemp, "nativelibs").getAbsolutePath());
+      Util.loadNatLibs(new File(indexerTemp, "nativelibs"));
 
       OCRParser.TESSERACTFOLDER = configPath + "/tools/tesseract";
       EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
