@@ -82,7 +82,7 @@ public class ExportCSVTask extends AbstractTask {
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getFileToIndex();
     if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
@@ -90,7 +90,7 @@ public class ExportCSVTask extends AbstractTask {
     } else {
       value = "";
     }
-    list.append("\"" + value + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     Long length = evidence.getLength();
     if (length == null) {
@@ -98,37 +98,37 @@ public class ExportCSVTask extends AbstractTask {
     } else {
       value = length.toString();
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getExt();
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getLabels();
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | ");
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getHash();
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = Boolean.toString(evidence.isDeleted());
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = Boolean.toString(evidence.isCarved());
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     Date date = evidence.getAccessDate();
     if (date == null) {
@@ -136,7 +136,7 @@ public class ExportCSVTask extends AbstractTask {
     } else {
       value = date.toString();
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     date = evidence.getModDate();
     if (date == null) {
@@ -144,7 +144,7 @@ public class ExportCSVTask extends AbstractTask {
     } else {
       value = date.toString();
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     date = evidence.getCreationDate();
     if (date == null) {
@@ -152,13 +152,13 @@ public class ExportCSVTask extends AbstractTask {
     } else {
       value = date.toString();
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     value = evidence.getPath();
     if (value == null) {
       value = "";
     }
-    list.append("\"" + value.replace("\"", "\"\"") + "\";");
+    list.append("\"" + escape(value) + "\";");
 
     list.append("\r\n");
 
@@ -166,6 +166,15 @@ public class ExportCSVTask extends AbstractTask {
       flush();
     }
 
+  }
+  
+  private String escape(String value){
+	  StringBuilder str = new StringBuilder(); 
+	  for(char c : value.trim().toCharArray())
+		  if(c >= ' ')
+			  str.append(c);
+	  
+	  return str.toString().replace("\"", "\"\"");
   }
 
   public void flush() throws IOException {
