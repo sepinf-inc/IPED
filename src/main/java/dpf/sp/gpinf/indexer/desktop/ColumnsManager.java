@@ -169,38 +169,18 @@ public class ColumnsManager implements ActionListener, Serializable{
 		scrollList.getVerticalScrollBar().setUnitIncrement(10);
 		panel.add(scrollList, BorderLayout.CENTER);
 		
+		indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
+		
 		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
 		caseCols = new File(moduleDir, "visibleCols.dat");
 		
-		boolean lastColsOk = false;
-		File cols = caseCols;
-		if(!cols.exists())
-			cols = globalCols;
-		if(cols.exists()){
-		    try {
-		        colState = (ColumnState)Util.readObject(cols.getAbsolutePath());
-		        loadedFields = (ArrayList<String>)colState.visibleFields.clone();
-		        if(loadedFields.size() > 0)
-	                lastColsOk = true;
-		        
-            } catch (ClassNotFoundException | IOException e) {
-                e.printStackTrace();
-            }
-		}
-		if(!lastColsOk){
-		    for(String col : defaultFields)
-		        loadedFields.add(col);
-		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();
-		    colState.initialWidths = defaultWidths;
-		}
+		loadSavedCols();
 		
 		TreeSet<String> extraAttrs = new TreeSet<String>();
 		extraAttrs.addAll(Arrays.asList(extraFields));
 		for(IPEDSource source : App.get().appCase.getAtomicSources())
 			extraAttrs.addAll(source.getExtraAttributes());
 		extraFields = extraAttrs.toArray(new String[0]);
-		
-		indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
 		
 		fieldGroups = new String[][] {defaultFields, extraFields, email, indexFields};
 		
@@ -212,6 +192,46 @@ public class ColumnsManager implements ActionListener, Serializable{
 		dialog.getContentPane().add(panel);
 		dialog.setLocationRelativeTo(App.get());
 		
+	}
+	
+	private void loadSavedCols(){
+		boolean lastColsOk = false;
+		File cols = caseCols;
+		if(!cols.exists())
+			cols = globalCols;
+		if(cols.exists()){
+		    try {
+		        colState = (ColumnState)Util.readObject(cols.getAbsolutePath());
+		        loadedFields = (ArrayList<String>)colState.visibleFields.clone();
+		        if(loadedFields.size() > 0){
+		        	lastColsOk = true;
+		        	HashSet<String> indexedSet = new HashSet<String>();
+		        	indexedSet.addAll(Arrays.asList(indexFields));
+		        	//remove inexistent columns in current case
+		        	int removed = 0;
+		    		for(int i = 0; i < loadedFields.size(); i++){
+		    			String field = loadedFields.get(i);
+		    			if(!indexedSet.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
+		    					&& !field.equals(ResultTableModel.BOOKMARK_COL)){
+		    				colState.visibleFields.remove(i - removed);
+		    				colState.initialWidths.remove(i - removed);
+		    				removed++;
+		    			}
+		    		}
+		    		if(removed > 0)
+		    			loadedFields = (ArrayList<String>)colState.visibleFields.clone();	
+		        }
+		        
+            } catch (ClassNotFoundException | IOException e) {
+                e.printStackTrace();
+            }
+		}
+		if(!lastColsOk){
+		    for(String col : defaultFields)
+		        loadedFields.add(col);
+		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();
+		    colState.initialWidths = defaultWidths;
+		}
 	}
 	
 	private void updateList(){
