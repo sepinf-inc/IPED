@@ -171,7 +171,7 @@ public class ExportCSVTask extends AbstractTask {
   private String escape(String value){
 	  StringBuilder str = new StringBuilder(); 
 	  for(char c : value.trim().toCharArray())
-		  if(c >= ' ')
+		  if(c >= '\u0020' && !(c >= '\u007F' && c <= '\u009F'))
 			  str.append(c);
 	  
 	  return str.toString().replace("\"", "\"\"");
