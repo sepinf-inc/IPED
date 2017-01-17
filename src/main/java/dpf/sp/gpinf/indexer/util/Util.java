@@ -113,6 +113,14 @@ public class Util {
       return filename.substring(0, filename.length() - ext.length()) + " (" + num + ")" + ext;
     }
   }
+  
+  public static String removeNonLatin1Chars(String filename){
+	  StringBuilder str = new StringBuilder();
+	  for(char c : filename.toCharArray())
+		  if((c >= '\u0020' && c <= '\u007E') || (c >= '\u00A0' && c <= '\u00FF'))
+			  str.append(c);
+	  return str.toString();
+  }
 
   public static String getValidFilename(String filename) {
     filename = filename.trim();

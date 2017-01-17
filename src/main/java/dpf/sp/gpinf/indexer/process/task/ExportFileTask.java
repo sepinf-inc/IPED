@@ -256,7 +256,8 @@ public class ExportFileTask extends AbstractTask {
       if (!ext.isEmpty()) {
         ext = "." + ext;
       }
-
+      ext = Util.removeNonLatin1Chars(ext);
+      
       File hashFile = getHashFile(hash, ext);
 
       HashValue hashVal = new HashValue(hash);
@@ -321,6 +322,8 @@ public class ExportFileTask extends AbstractTask {
     if (!ext.isEmpty()) {
       ext = "." + ext;
     }
+    
+    ext = Util.removeNonLatin1Chars(ext);
 
     if (extractDir == null) {
       setExtractDir();
