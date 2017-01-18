@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
@@ -31,6 +32,10 @@ import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -99,10 +104,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   }
 
   private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
+  private SimpleDateFormat fatAccessedDf = new SimpleDateFormat("dd/MM/yyyy");
 
   public ResultTableModel() {
     super();
     df.setTimeZone(TimeZone.getTimeZone("UTC"));
+    fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
   @Override
@@ -227,8 +234,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         try {
-          value = df.format(DateUtil.stringToDate(value));
-          return value;
+          Date date = DateUtil.stringToDate(value);
+          if(field.equals(IndexItem.ACCESSED)){
+        	  if(isFATFile(item, date))
+        		  return fatAccessedDf.format(date);
+          }
+          return df.format(date);
 
         } catch (Exception e) {
         }
@@ -254,6 +265,25 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     return value;
 
+  }
+  
+  private boolean isFATFile(ItemId item, Date date){
+	  if(((date.getTime()/1000) % (24 * 3600)) % 60 == 0){
+		  Content content = App.get().appCase.getItemByItemId(item).getSleuthFile();
+		  if(content instanceof FsContent){
+			try {
+				TSK_FS_TYPE_ENUM fsType = ((FsContent)content).getFileSystem().getFsType();
+				if(     fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12 ||
+						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16 ||
+						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32)
+					return true;
+				
+			} catch (TskCoreException e) {
+				e.printStackTrace();
+			}
+		  }
+	  }
+	  return false;
   }
 
 }
