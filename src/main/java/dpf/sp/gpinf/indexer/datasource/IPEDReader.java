@@ -311,6 +311,10 @@ public class IPEDReader extends DataSourceReader {
       if (!value.isEmpty()) {
         evidence.setAccessDate(DateUtil.stringToDate(value));
       }
+      
+      value = doc.get(SleuthkitReader.IN_FAT_FS);
+      if(value != null)
+        evidence.setExtraAttribute(SleuthkitReader.IN_FAT_FS, true);
 
       value = doc.get(IndexItem.CREATED);
       if (!value.isEmpty()) {

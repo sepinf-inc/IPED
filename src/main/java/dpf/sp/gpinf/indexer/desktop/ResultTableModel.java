@@ -32,16 +32,11 @@ import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.highlight.TextFragment;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 
@@ -236,7 +231,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         try {
           Date date = DateUtil.stringToDate(value);
           if(field.equals(IndexItem.ACCESSED)){
-        	  if(isFATFile(item, date))
+        	  if(doc.get(SleuthkitReader.IN_FAT_FS) != null)
         		  return fatAccessedDf.format(date);
           }
           return df.format(date);
@@ -265,25 +260,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     return value;
 
-  }
-  
-  private boolean isFATFile(ItemId item, Date date){
-	  if(((date.getTime()/1000) % (24 * 3600)) % 60 == 0){
-		  Content content = App.get().appCase.getItemByItemId(item).getSleuthFile();
-		  if(content instanceof FsContent){
-			try {
-				TSK_FS_TYPE_ENUM fsType = ((FsContent)content).getFileSystem().getFsType();
-				if(     fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12 ||
-						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16 ||
-						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32)
-					return true;
-				
-			} catch (TskCoreException e) {
-				e.printStackTrace();
-			}
-		  }
-	  }
-	  return false;
   }
 
 }

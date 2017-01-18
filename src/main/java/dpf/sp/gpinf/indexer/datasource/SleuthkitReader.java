@@ -37,6 +37,7 @@ import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -45,6 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
+import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -64,10 +66,11 @@ import gpinf.dev.data.EvidenceFile;
 public class SleuthkitReader extends DataSourceReader {
 
   private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
-
+  
   public static String DB_NAME = "sleuth.db";
   private static String IMG_NAME = "IMG_NAME";
   public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
+  public static final String IN_FAT_FS = "inFatFs";
 
   private static boolean tskChecked = false;
   private static boolean isTskPatched = false;
@@ -703,6 +706,9 @@ public class SleuthkitReader extends DataSourceReader {
     if (time != 0) {
       evidence.setAccessDate(new Date(time * 1000));
     }
+    if(isFATFile(absFile))
+  	  evidence.setExtraAttribute(IN_FAT_FS, true);
+    
     time = absFile.getMtime();
     if (time != 0) {
       evidence.setModificationDate(new Date(time * 1000));
@@ -814,6 +820,22 @@ public class SleuthkitReader extends DataSourceReader {
 
     caseData.addEvidenceFile(evidence);
 
+  }
+  
+  private boolean isFATFile(Content content){
+	  if(content instanceof FsContent){
+			try {
+				TSK_FS_TYPE_ENUM fsType = ((FsContent)content).getFileSystem().getFsType();
+				if(     fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT12 ||
+						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16 ||
+						fsType == TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32)
+					return true;
+				
+			} catch (TskCoreException e) {
+				e.printStackTrace();
+			}
+		  }
+	  return false;
   }
 
   private void logStream(final InputStream stream, final String image) {

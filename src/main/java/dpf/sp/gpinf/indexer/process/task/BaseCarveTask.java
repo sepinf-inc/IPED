@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
 
@@ -73,6 +74,7 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
 	  fragFile.setExtension(parentEvidence.getExt());
 	  fragFile.setAccessDate(parentEvidence.getAccessDate());
+	  fragFile.setExtraAttribute(SleuthkitReader.IN_FAT_FS, parentEvidence.getExtraAttribute(SleuthkitReader.IN_FAT_FS));
 	  fragFile.setCreationDate(parentEvidence.getCreationDate());
 	  fragFile.setModificationDate(parentEvidence.getModDate());
 	  fragFile.setExtraAttribute(FILE_FRAGMENT, true);
