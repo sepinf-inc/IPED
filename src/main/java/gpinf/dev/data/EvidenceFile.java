@@ -146,6 +146,11 @@ public class EvidenceFile implements Serializable, StreamSource {
    * Data do último acesso do arquivo.
    */
   private Date accessDate;
+  
+  /**
+   * Data de última alteração do registro no sistema de arquivos.
+   */
+  private Date recordDate;
 
   /**
    * Tamanho do arquivo em bytes.
@@ -829,7 +834,15 @@ public class EvidenceFile implements Serializable, StreamSource {
     this.accessDate = accessDate;
   }
 
-  /**
+  public Date getRecordDate() {
+	return recordDate;
+}
+
+public void setRecordDate(Date recordDate) {
+	this.recordDate = recordDate;
+}
+
+/**
    * @param alternativeFile nome e caminho do arquivo alternativo
    */
   public void setAlternativeFile(String alternativeFile) {

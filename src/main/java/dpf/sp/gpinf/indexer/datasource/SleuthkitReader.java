@@ -717,6 +717,9 @@ public class SleuthkitReader extends DataSourceReader {
     if (time != 0) {
       evidence.setCreationDate(new Date(time * 1000));
     }
+    time = absFile.getCtime();
+    if (time != 0)
+      evidence.setRecordDate(new Date(time * 1000));
 
     caseData.addEvidenceFile(evidence);
 

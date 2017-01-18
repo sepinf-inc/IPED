@@ -56,6 +56,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 			IndexItem.CREATED,
 			IndexItem.MODIFIED,
 			IndexItem.ACCESSED,
+			IndexItem.RECORDDATE,
 			IndexItem.HASH,
 			IndexItem.PATH
 		};

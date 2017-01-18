@@ -89,6 +89,7 @@ public class IndexItem {
   public static final String CREATED = "criacao";
   public static final String ACCESSED = "acesso";
   public static final String MODIFIED = "modificacao";
+  public static final String RECORDDATE = "alteracao do registro";
   public static final String PATH = "caminho";
   public static final String EXPORT = "export";
   public static final String CATEGORY = "categoria";
@@ -124,6 +125,8 @@ public class IndexItem {
   static {
     contentField.setIndexed(true);
     contentField.setOmitNorms(true);
+    //contentField.setStoreTermVectors(true);
+    
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);
     storedTokenizedNoNormsField.setStored(true);
@@ -258,6 +261,15 @@ public class IndexItem {
     }
     doc.add(new StringField(MODIFIED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
+    
+    date = evidence.getRecordDate();
+    if (date != null) {
+      value = DateUtil.dateToString(date);
+    } else {
+      value = "";
+    }
+    doc.add(new StringField(RECORDDATE, value, Field.Store.YES));
+    doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
 
     value = evidence.getPath();
     if (value == null) {
@@ -608,6 +620,11 @@ public class IndexItem {
       value = doc.get(IndexItem.MODIFIED);
       if (value != null && !value.isEmpty()) {
         evidence.setModificationDate(DateUtil.stringToDate(value));
+      }
+      
+      value = doc.get(IndexItem.RECORDDATE);
+      if (value != null && !value.isEmpty()) {
+        evidence.setRecordDate(DateUtil.stringToDate(value));
       }
 
       evidence.setPath(doc.get(IndexItem.PATH));
