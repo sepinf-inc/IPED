@@ -192,7 +192,7 @@ public class Manager {
     
     removeEmptyTreeNodes();
     
-    new P2PBookmarker().createBookmarksForSharedFiles(output.getParentFile());
+    new P2PBookmarker(caseData).createBookmarksForSharedFiles(output.getParentFile());
     
     updateImagePaths();
     

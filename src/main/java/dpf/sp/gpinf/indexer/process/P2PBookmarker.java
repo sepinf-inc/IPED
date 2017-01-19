@@ -15,10 +15,17 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import gpinf.dev.data.CaseData;
 
 public class P2PBookmarker {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(P2PBookmarker.class);
+	
+	private boolean isReport = false;
+	
+	public P2PBookmarker(CaseData caseData){
+		isReport = caseData.containsReport();
+	}
 	
 	class P2PProgram{
 		List<HashValue> sharedHashes;
@@ -33,6 +40,9 @@ public class P2PBookmarker {
 	}
 
 	public void createBookmarksForSharedFiles(File caseDir) {
+		
+		if(isReport)
+			return;
 		
 		LOGGER.info("Pesquisando itens compartilhados via P2P...");
 
