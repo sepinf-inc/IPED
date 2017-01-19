@@ -1,4 +1,17 @@
-13/12/2016: IPED-3.11
+19/01/2017: IPED-3.11-final
+- Exibição de data e hora de última alteração do registro do item no sistema de arquivos
+- Melhor categorização de temporários de Internet (PCF Gabriel)
+Correções:
+- Opção --portable estava sendo desfeita ao final do processamento (regressão 3.11-beta)
+- Erro no final do processamento de pastas avulsas em sistemas Linux (regressão 3.11-beta)
+- Erro ao gerar relatórios a partir de arquivos .iped salvos pelo usuário (regressão 3.11-beta) 
+- Exibição incorreta de horário de último acesso em sistemas FAT (apenas data existe)
+- Remoção de caracteres de controle do "Lista de arquivos.csv" e das extensões dos itens exportados
+- Remoção de colunas de outros casos não existentes no caso atual
+- Não recria marcadores automáticos ao gerar relatório
+
+
+13/12/2016: IPED-3.11-beta
 - Novo painel de Mapas com função de georreferenciamento (contribuição PCF Patrick)
 - Análise simultânea de múltiplos casos independentes (opção -multicases pasta_com_casos no iped-search-app)
 - Refatoração do código da interface e api para pesquisa, obtenção e marcação de itens
