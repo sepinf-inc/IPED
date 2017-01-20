@@ -50,6 +50,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 	ProgressDialog progressDialog;
 	
 	String queryText;
+	Query query;
 	IPEDSearcher searcher;
 
 	public PesquisarIndice(String queryText) {
@@ -58,12 +59,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 	}
 	
 	public PesquisarIndice(Query query) {
+		this.query = query;
 		searcher = new IPEDSearcher(App.get().appCase, query);
 	}
 	
 	public void applyUIQueryFilters(){
 		try {
-			searcher.setQuery(getQueryWithUIFilter(queryText));
+			searcher.setQuery(getQueryWithUIFilter());
 			
 		} catch (ParseException | QueryNodeException e) {
 			e.printStackTrace();
@@ -74,23 +76,26 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 		return searcher.luceneSearch();
 	}
 
-	private Query getQueryWithUIFilter(String texto) throws ParseException, QueryNodeException {
+	private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
 		
+		Query result;
 		numFilters = 0;
-		if (!texto.trim().isEmpty())
-			numFilters++;
+		if (queryText != null){
+			result = new QueryBuilder(App.get().appCase).getQuery(queryText);
+			if(!queryText.trim().isEmpty())
+				numFilters++;
+		}else
+			result = query;
 		
 		if(App.get().filtro.getSelectedIndex() > 1){
 			String filter = App.get().filtro.getSelectedItem().toString();
 			filter =  App.get().filterManager.getFilterExpression(filter);
-			if (texto.trim().isEmpty())
-				texto = filter;
-			else
-				texto = "(" + filter  + ") && (" + texto + ")";
+			BooleanQuery boolQuery = new BooleanQuery();
+			boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
+			boolQuery.add(result, Occur.MUST);
+			result = boolQuery;
 			numFilters++;
 		}
-		
-		Query result = new QueryBuilder(App.get().appCase).getQuery(texto);
 		
 		if(App.get().categoryListener.query != null){
 			BooleanQuery boolQuery = new BooleanQuery();

@@ -29,7 +29,7 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas, exportCheckedToZip;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, similarDocs;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
@@ -131,6 +131,10 @@ public class MenuClass extends JPopupMenu {
       navigateToParent.addActionListener(menuListener);
       this.add(navigateToParent);
     }
+    
+    similarDocs = new JMenuItem("Encontrar documentos similares");
+    similarDocs.addActionListener(menuListener);
+    this.add(similarDocs); 
 
   }
 

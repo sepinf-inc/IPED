@@ -125,7 +125,7 @@ public class IndexItem {
   static {
     contentField.setIndexed(true);
     contentField.setOmitNorms(true);
-    //contentField.setStoreTermVectors(true);
+    contentField.setStoreTermVectors(true);
     
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);

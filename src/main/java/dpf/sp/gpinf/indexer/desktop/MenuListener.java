@@ -23,20 +23,23 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
+import org.apache.lucene.search.Query;
+
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 
 public class MenuListener implements ActionListener {
@@ -288,6 +291,16 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.exportTerms) {
       new ExportIndexedTerms(App.get().appCase.getReader()).export();
+    
+    } else if(e.getSource() == menu.similarDocs){
+        int selIdx = App.get().resultsTable.getSelectedRow();
+        if (selIdx != -1) {
+      	  int percent = Integer.parseInt(JOptionPane.showInputDialog("Porcentual de similaridade (0 a 100)", 70));
+      	  ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+      	  
+      	  Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent);
+      	  App.get().appletListener.updateFileListing(query);
+        }
     }
 
   }

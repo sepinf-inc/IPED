@@ -30,11 +30,17 @@ import java.awt.event.MouseListener;
 
 import javax.swing.JOptionPane;
 
+import org.apache.lucene.search.Query;
+
 public class AppListener implements ActionListener, MouseListener {
 
   volatile boolean clearSearchBox = false;
-
+  
   public void updateFileListing() {
+	  updateFileListing(null);
+  }
+
+  public void updateFileListing(Query query) {
 
     App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
     App.get().hitsTable.scrollRectToVisible(new Rectangle());
@@ -76,7 +82,12 @@ public class AppListener implements ActionListener, MouseListener {
     }
 
     try {
-      PesquisarIndice task = new PesquisarIndice(texto);
+      PesquisarIndice task;
+      if(query == null)
+    	  task = new PesquisarIndice(texto);
+      else
+    	  task = new PesquisarIndice(query); 
+      
       task.applyUIQueryFilters();
       task.execute();
 
