@@ -74,7 +74,8 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
 	  fragFile.setExtension(parentEvidence.getExt());
 	  fragFile.setAccessDate(parentEvidence.getAccessDate());
-	  fragFile.setExtraAttribute(SleuthkitReader.IN_FAT_FS, parentEvidence.getExtraAttribute(SleuthkitReader.IN_FAT_FS));
+	  if(parentEvidence.getExtraAttribute(SleuthkitReader.IN_FAT_FS) != null)
+		  fragFile.setExtraAttribute(SleuthkitReader.IN_FAT_FS, true);
 	  fragFile.setCreationDate(parentEvidence.getCreationDate());
 	  fragFile.setModificationDate(parentEvidence.getModDate());
 	  fragFile.setRecordDate(parentEvidence.getRecordDate());
