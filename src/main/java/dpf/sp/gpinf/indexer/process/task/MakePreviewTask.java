@@ -5,15 +5,21 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.sax.EmbeddedContentHandler;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -28,6 +34,8 @@ public class MakePreviewTask extends AbstractTask {
   private Parser parser = new AutoDetectParser();
 
   private static boolean enableFileParsing = true;
+  
+  private volatile Exception exception;
 
   public MakePreviewTask(Worker worker) {
     super(worker);
@@ -95,9 +103,7 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     try {
-      //Não é necessário fechar tis pois será fechado em evidence.dispose()
-      TikaInputStream tis = evidence.getTikaStream();
-      makeHtmlPreview(tis, viewFile, mediaType);
+      makeHtmlPreview(evidence, viewFile);
 
     } catch (Exception e) {
       Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
@@ -105,28 +111,82 @@ public class MakePreviewTask extends AbstractTask {
 
   }
 
-  private void makeHtmlPreview(TikaInputStream tis, File outFile, String mediaType) throws Exception {
+  private void makeHtmlPreview(EvidenceFile evidence, File outFile) throws Exception {
     BufferedOutputStream outStream = null;
     try {
-      Metadata metadata = new Metadata();
-      metadata.set(Metadata.CONTENT_TYPE, mediaType);
-      ParseContext context = new ParseContext();
+      final Metadata metadata = evidence.getMetadata();
+      //Não é necessário fechar tis pois será fechado em evidence.dispose()
+      final TikaInputStream tis = evidence.getTikaStream();
+      
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
       //context.set(Parser.class, parser);
+      
       outStream = new BufferedOutputStream(new FileOutputStream(outFile));
       ContentHandler handler;
-      if (!isSupportedTypeCSV(mediaType)) {
+      if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
         handler = new ToXMLContentHandler(outStream, "UTF-8");
       } else {
         handler = new ToCSVContentHandler(outStream, "UTF-8");
       }
-
-      parser.parse(tis, handler, metadata, context);
+      final ProgressContentHandler pch = new ProgressContentHandler(handler);
+      
+      exception = null;
+	  Thread t = new Thread(){
+		  @Override
+		  public void run(){
+			  try {
+				parser.parse(tis, pch, metadata, new ParseContext());
+				
+			} catch (IOException | SAXException | TikaException e) {
+				exception = e;
+			}
+		  }
+	  };
+	  t.start();
+	  
+	  long start = System.currentTimeMillis();
+	  while(t.isAlive()){
+		  if(pch.getProgress())
+			  start = System.currentTimeMillis();
+		  
+		  if((System.currentTimeMillis() - start)/1000 >= Configuration.timeOut){
+			  t.interrupt();
+			  stats.incTimeouts();
+			  throw new TimeoutException();
+		  }
+		  t.join(1000);
+		  if(exception != null)
+			  throw exception;
+	  }
 
     } finally {
       IOUtil.closeQuietly(outStream);
     }
   }
+  
+  public class ProgressContentHandler extends EmbeddedContentHandler {
+
+		private volatile boolean progress = false;
+
+		public ProgressContentHandler(ContentHandler handler) {
+			super(handler);
+		}
+
+		@Override
+		public void characters(char[] ch, int start, int length) throws SAXException {
+			progress = true;
+			super.characters(ch, start, length);
+		}
+
+		public boolean getProgress() {
+			if(progress){
+				progress = false;
+				return true;
+			}
+			return false;
+		}
+
+	}
 
 }
