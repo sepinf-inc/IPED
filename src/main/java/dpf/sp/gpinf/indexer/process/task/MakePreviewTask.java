@@ -14,7 +14,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.EmbeddedContentHandler;
+import org.apache.tika.sax.ContentHandlerDecorator;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -165,7 +165,7 @@ public class MakePreviewTask extends AbstractTask {
     }
   }
   
-  public class ProgressContentHandler extends EmbeddedContentHandler {
+  public class ProgressContentHandler extends ContentHandlerDecorator {
 
 		private volatile boolean progress = false;
 
