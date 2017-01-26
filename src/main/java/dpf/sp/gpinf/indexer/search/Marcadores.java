@@ -52,18 +52,30 @@ public class Marcadores implements Serializable {
 	private File indexDir;
 	private File stateFile, cookie;
 
-	public Marcadores(IPEDSource ipedCase, final File basePath) {
-		this.totalItems = ipedCase.getTotalItens();
-		this.lastId = ipedCase.getLastId();
+	public Marcadores(IPEDSource ipedCase, File modulePath) {
+		this(ipedCase.getTotalItens(), ipedCase.getLastId(), modulePath);
+	}
+	
+	public Marcadores(int totalItens, int lastId, final File modulePath) {
+		this.totalItems = totalItens;
+		this.lastId = lastId;
 		selected = new boolean[lastId + 1];
 		labels = new ArrayList<byte[]>();
-		indexDir = new File(basePath, "index");
+		indexDir = new File(modulePath, "index");
 		long date = indexDir.lastModified();
 		cookie = new File(Configuration.javaTmpDir, "indexer" + date + EXT);
-		stateFile = new File(basePath, STATEFILENAME);
+		stateFile = new File(modulePath, STATEFILENAME);
 		try {
 			stateFile = stateFile.getCanonicalFile();
 		} catch (IOException e) {}
+	}
+	
+	public int getLastId(){
+		return lastId;
+	}
+	
+	public int getTotalItens(){
+		return this.totalItems;
 	}
 	
 	public void resetAndSetIndexDir(File indexDir){
@@ -238,6 +250,10 @@ public class Marcadores implements Serializable {
 		return -1;
 	}
 	
+	public String getLabelName(int labelId){
+		return labelNames.get(labelId);
+	}
+	
 	public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
 	  	result = result.clone();
 	  	
@@ -336,10 +352,11 @@ public class Marcadores implements Serializable {
 
 	public void loadState(File file) throws IOException, ClassNotFoundException {
 
-		Marcadores state = (Marcadores) Util.readObject(file.getAbsolutePath());
+		Marcadores state = load(file);
 		
 		if(state.selected != null /*&&  state.read != null*/){
-			System.arraycopy(state.selected, 0, this.selected, 0, state.selected.length);
+			int len = Math.min(state.selected.length, this.selected.length);
+			System.arraycopy(state.selected, 0, this.selected, 0, len);
 		}
 		
 		this.labels.clear();
@@ -354,6 +371,10 @@ public class Marcadores implements Serializable {
 		this.selectedItens = state.selectedItens;
 		this.labelNames = state.labelNames;
 
+	}
+	
+	public static Marcadores load(File file) throws ClassNotFoundException, IOException{
+		return (Marcadores) Util.readObject(file.getAbsolutePath());
 	}
 	
 	public void setSelected(boolean value, int id, IPEDSource ipedCase) {

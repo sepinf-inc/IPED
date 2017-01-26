@@ -24,6 +24,7 @@ import gpinf.dev.data.EvidenceFile;
 import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.Level;
@@ -63,17 +64,12 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class IPEDReader extends DataSourceReader {
 
-  private static Object lock = new Object();
-
-  //Referência estática para a JVM não finalizar o objeto que será usado futuramente
-  //via referência interna ao JNI para acessar os itens do caso
-  static SleuthkitCase sleuthCase;
-
   IPEDSource ipedCase;
   HashSet<Integer> selectedLabels;
   Marcadores state;
   File indexDir;
   String basePath;
+  private int[] oldToNewIdMap;
 
   public IPEDReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
@@ -85,6 +81,8 @@ public class IPEDReader extends DataSourceReader {
   }
 
   public int read(File file) throws Exception {
+	  
+	Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
 
     caseData.setContainsReport(true);
     caseData.setIpedReport(true);
@@ -96,59 +94,67 @@ public class IPEDReader extends DataSourceReader {
     Object obj = Util.readObject(file.getAbsolutePath());
     if(obj instanceof MultiMarcadores){
     	MultiMarcadores mm = (MultiMarcadores) obj;
-    	if(mm.getSingleBookmarks().size() == 1)
-    		state = mm.getSingleBookmarks().iterator().next();
-    	else
-    		throw new IPEDException("Atualmente não é possível gerar relatórios a partir de múltiplos casos!"
-        			+ "Gere o relatório para cada caso separadamente.");
+    	for(Marcadores m : mm.getSingleBookmarks())
+    		processBookmark(m);
     }else
-    	state = (Marcadores)obj;
+    	processBookmark((Marcadores)obj);
     
-    indexDir = state.getIndexDir().getCanonicalFile();
-    basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-    String dbPath = basePath + File.separator + SleuthkitReader.DB_NAME;
-
-    //TODO remover e usar sleuthCase interno ao ipedCase?
-    synchronized (lock) {
-      if (new File(dbPath).exists() && sleuthCase == null) {
-        sleuthCase = SleuthkitCase.openCase(dbPath);
-      }
-    }
-
-    Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
-    
-    ipedCase = new IPEDSource(new File(basePath));
-    
-    ipedCase.checkImagePaths();
-
-    selectedLabels = new HashSet<Integer>();
-    
-    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-	LuceneSearchResult result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
-
-    insertIntoProcessQueue(result, false);
-
-    //Inclui anexos de emails de PST
-    insertPSTAttachs(result);
-
-    //Inclui pais para visualização em árvore
-    insertParentTreeNodes(result);
-
-    if (!listOnly) {
-      for (int labelId : state.getLabelMap().keySet().toArray(new Integer[0])) {
-        if (!selectedLabels.contains(labelId)) {
-          state.delLabel(labelId);
-        }
-      }
-
-      state.resetAndSetIndexDir(new File(output, "index"));
-      state.saveState(new File(output, Marcadores.STATEFILENAME));
-    }
-
-    ipedCase.close();
-
     return 0;
 
+  }
+  
+  private void processBookmark(Marcadores state) throws Exception {
+	    this.state = state;
+	  	selectedLabels = new HashSet<Integer>();
+	  	indexDir = state.getIndexDir().getCanonicalFile();
+	    basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
+	    ipedCase = new IPEDSource(new File(basePath));
+	    ipedCase.checkImagePaths();
+	    
+	    oldToNewIdMap = new int[ipedCase.getLastId() + 1];
+	    for(int i = 0; i < oldToNewIdMap.length; i++)
+	    	oldToNewIdMap[i] = -1;
+	    
+	    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+		LuceneSearchResult result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
+
+	    insertIntoProcessQueue(result, false);
+
+	    //Inclui anexos de emails de PST
+	    insertPSTAttachs(result);
+
+	    //Inclui pais para visualização em árvore
+	    insertParentTreeNodes(result);
+	    
+	    copyBookmarksToReport();
+
+	    ipedCase.close();
+  }
+  
+  private void copyBookmarksToReport() throws ClassNotFoundException, IOException{
+	  if (listOnly)
+	  	return;
+	  int lastId = ipedCase.getLastId();
+	  int totalItens = ipedCase.getTotalItens();
+	  File stateFile = new File(output, Marcadores.STATEFILENAME);
+	  if(stateFile.exists()){
+		  Marcadores reportState = Marcadores.load(stateFile);
+		  lastId += reportState.getLastId() + 1;
+		  totalItens += reportState.getTotalItens();
+	  }
+	  Marcadores reportState = new Marcadores(totalItens, lastId, output);
+	  reportState.loadState();
+  	
+      for(int oldLabelId : selectedLabels){
+    	  String labelName = state.getLabelName(oldLabelId);
+    	  int newLabelId = reportState.newLabel(labelName);
+    	  ArrayList<Integer> newIds = new ArrayList<Integer>();
+    	  for(int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
+    		  if(state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
+    			newIds.add(oldToNewIdMap[oldId]);
+    	  reportState.addLabel(newIds, newLabelId);
+      }
+      reportState.saveState();
   }
 
   private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
@@ -273,7 +279,12 @@ public class IPEDReader extends DataSourceReader {
       evidence.setDataSource(dataSource);
 
       int id = Integer.valueOf(doc.get(IndexItem.ID));
-      evidence.setId(id);
+      int newId = oldToNewIdMap[id];
+      if(newId == -1){
+    	  newId = EvidenceFile.getNextId();
+    	  oldToNewIdMap[id] = newId;
+      }
+      evidence.setId(newId); 
 
       if (!treeNode) {
         for (int labelId : state.getLabelIds(id)) {
@@ -285,14 +296,26 @@ public class IPEDReader extends DataSourceReader {
 
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
-        evidence.setParentId(Integer.valueOf(value));
+    	  id = Integer.valueOf(value);
+    	  newId = oldToNewIdMap[id];
+          if(newId == -1){
+        	  newId = EvidenceFile.getNextId();
+        	  oldToNewIdMap[id] = newId;
+          }
+          evidence.setParentId(newId);
       }
 
       value = doc.get(IndexItem.PARENTIDs);
       ArrayList<Integer> parents = new ArrayList<Integer>();
       for (String parent : value.split(" ")) {
         if (!parent.isEmpty()) {
-          parents.add(Integer.parseInt(parent));
+        	id = Integer.valueOf(parent);
+      	    newId = oldToNewIdMap[id];
+            if(newId == -1){
+          	  newId = EvidenceFile.getNextId();
+          	  oldToNewIdMap[id] = newId;
+            }
+          parents.add(newId);
         }
       }
       evidence.addParentIds(parents);
@@ -340,7 +363,7 @@ public class IPEDReader extends DataSourceReader {
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty() && !treeNode) {
           evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+          evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
         }
       }
 
