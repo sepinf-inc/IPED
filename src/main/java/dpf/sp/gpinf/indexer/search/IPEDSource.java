@@ -277,6 +277,8 @@ public class IPEDSource implements Closeable{
 	}
 	
 	public void checkImagePaths() throws IPEDException, TskCoreException{
+		if(sleuthCase == null)
+			return;
 		Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 		for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
