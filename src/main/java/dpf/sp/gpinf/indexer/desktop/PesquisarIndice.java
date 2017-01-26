@@ -112,8 +112,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 		
 		      if (treeQuery != null) {
 		        BooleanQuery boolQuery = new BooleanQuery();
-		        boolQuery.add(result, Occur.MUST);
 		        boolQuery.add(treeQuery, Occur.MUST);
+		        boolQuery.add(result, Occur.MUST);
 		        result = boolQuery;
 		        numFilters++;
 		      }
