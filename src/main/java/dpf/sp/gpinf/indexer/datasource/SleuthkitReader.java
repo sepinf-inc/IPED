@@ -380,7 +380,7 @@ public class SleuthkitReader extends DataSourceReader {
   private void readItensAdded(File file) throws Exception {
 
     synchronized (idRangeMap) {
-      if ((idRangeMap.get(file)) == null) {
+      while ((idRangeMap.get(file)) == null) {
         idRangeMap.wait();
       }
       firstId = (Long) idRangeMap.get(file)[0];
