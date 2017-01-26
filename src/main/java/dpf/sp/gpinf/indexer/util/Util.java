@@ -56,7 +56,7 @@ public class Util {
     }
   }
 
-  public static String getRelativePath(File baseFile, File file) throws IOException {
+  public static String getRelativePath(File baseFile, File file) {
 	  Path base = baseFile.getParentFile().toPath().normalize();
 	  Path path = file.toPath().normalize();
 	  if(!base.getRoot().equals(path.getRoot()))

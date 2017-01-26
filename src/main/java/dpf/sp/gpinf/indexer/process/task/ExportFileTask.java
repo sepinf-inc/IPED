@@ -299,14 +299,9 @@ public class ExportFileTask extends AbstractTask {
   }
 
   private void changeTargetFile(EvidenceFile evidence, File file) {
-    String relativePath;
-    try {
-      relativePath = Util.getRelativePath(output, file);
-      evidence.setExportedFile(relativePath);
-      evidence.setFile(file);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    String relativePath = Util.getRelativePath(output, file);
+    evidence.setExportedFile(relativePath);
+    evidence.setFile(file);
   }
 
   public void extractFile(InputStream inputStream, EvidenceFile evidence, Long parentSize) throws IOException {
@@ -376,9 +371,8 @@ public class ExportFileTask extends AbstractTask {
       }
     }
 
-    String relativePath = Util.getRelativePath(output, outputFile);
-    evidence.setExportedFile(relativePath);
-    evidence.setFile(outputFile);
+    changeTargetFile(evidence, outputFile);
+
     if (evidence.isSubItem()) {
       evidence.setLength(outputFile.length());
     }

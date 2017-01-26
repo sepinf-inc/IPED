@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
@@ -86,12 +87,12 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceFile.setName(evidenceName);
       }
       evidenceFile.setDataSource(dataSource);
-      evidenceFile.setFile(file);
       try {
         String relativePath = Util.getRelativePath(output, file);
         evidenceFile.setExportedFile(relativePath);
-      } catch (Exception e) {
-    	LOGGER.warn("Não foi possível calcular caminho relativo para " + file.getAbsolutePath());
+        evidenceFile.setFile(file);
+      } catch (InvalidPathException e) {
+    	LOGGER.error("File content will not be processed " + e.toString());
       }
 
       String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
