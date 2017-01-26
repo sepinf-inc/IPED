@@ -22,7 +22,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,27 +32,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeSet;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.zip.Deflater;
-
-import javax.swing.SwingUtilities;
-
-import org.apache.lucene.document.Document;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.sax.ToTextContentHandler;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.SleuthkitCase;
-
-import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class Util {
 	
@@ -63,15 +46,14 @@ public class Util {
   }
 
   public static File getRelativeFile(String basePath, String export) {
-    File file;
-    export = export.replace("\\", File.separator);
-    if ((export.length() > 1 && export.charAt(1) == ':') || export.startsWith("/")) {
-      file = new File(export);
-    } else {
-      file = new File(basePath + File.separator + export);
+	export = export.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+    File file = new File(export);
+    if(file.isAbsolute())
+    	return file;
+    else{
+    	basePath = basePath.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+    	return new File(basePath, export);
     }
-
-    return file;
   }
 
   public static String getRelativePath(File baseFile, File file) throws IOException {

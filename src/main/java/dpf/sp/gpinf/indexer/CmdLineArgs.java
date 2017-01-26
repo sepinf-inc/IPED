@@ -228,14 +228,9 @@ public class CmdLineArgs {
     File file = outputDir;
     while (file != null) {
       for (File source : IndexFiles.getInstance().dataSource) {
-        try {
-          if (file.getCanonicalPath().equals(source.getCanonicalPath())) {
-            throw new RuntimeException("Diretório de saída não pode ser igual ou estar dentro da entrada!");
-          }
-
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+    	  if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
+              throw new RuntimeException("Diretório de saída não pode ser igual ou estar dentro da entrada!");
+            }
       }
       file = file.getParentFile();
     }

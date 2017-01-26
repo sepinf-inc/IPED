@@ -31,17 +31,18 @@ public class AppMain {
 		
 		  URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
 		  try {
-			  String codePath = new File(url.toURI()).getAbsolutePath().replace("\\", "/");
-			  //codePath = "E:/Imagens/18101.11/Pendrive/indexador/lib/Search.htm";
-		      //codePath = "E:\\Imagens\\material_3106_2012\\indexador/lib/Search.htm";
-		      //codePath = "E:/Casos/Teste/LAUDO 2191.11/indexador/lib/Search.htm";
-		      //codePath = "E:/1-1973/indexador/lib/search.jar";
-		      //codePath = "E:/nassif/rodrigo/M0410-16/indexador/lib/iped-search-app.jar";
-
-		      codePath = codePath.substring(0, codePath.lastIndexOf('/'));
-		      
+			  File jarFile;
+			  if(url.toURI().getAuthority() == null)
+				  jarFile = new File(url.toURI());
+			  else
+				  jarFile = new File(url.toURI().getSchemeSpecificPart());
+			  
+			  //Caso para teste
+		      //jarFile = new File("\\\\10.11.15.57\\gpinf\\Peritos\\nassif.lfcn\\1-test6/indexador/lib/iped-search-app.jar");
+			  
+			  File libDir = jarFile.getParentFile();
 		      if(casesPathFile == null)
-		    	  casesPathFile = new File(codePath).getParentFile().getParentFile();
+		    	  casesPathFile = libDir.getParentFile().getParentFile();
 		      
 		      File logParent = casesPathFile;
 		      if(isMultiCase && casesPathFile.isFile())
@@ -49,9 +50,9 @@ public class AppMain {
 		      
 		      File logFile = new File(logParent, appLogFileName).getCanonicalFile();
 		      LogConfiguration logConfiguration = new LogConfiguration(logFile);
-		      logConfiguration.configureLogParameters(new File(codePath).getParentFile().getAbsolutePath(), nolog);
+		      logConfiguration.configureLogParameters(libDir.getParentFile().getAbsolutePath(), nolog);
 			  
-		      App.get().getSearchParams().codePath = codePath;
+		      App.get().getSearchParams().codePath = libDir.getAbsolutePath();
 			  App.get().init(logConfiguration, isMultiCase, casesPathFile);
 			  
 		  } catch (Exception e) {
