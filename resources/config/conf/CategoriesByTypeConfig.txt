@@ -40,7 +40,7 @@ Registro do Windows = application/x-windows-registry; application/x-windows-regi
 
 Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer
 
-Não Alocado = application/x-unallocated
+Não Alocado = application/x-unallocated; application/x-slackspace
 
 Imagens = image; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/x-emf; application/x-msmetafile; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
 

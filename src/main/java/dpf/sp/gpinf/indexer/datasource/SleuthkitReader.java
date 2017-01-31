@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
@@ -62,6 +63,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.filetypes.GenericFileType;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -199,14 +201,15 @@ public class SleuthkitReader extends DataSourceReader {
     reader.close();
     process.getErrorStream().close();
 
-    if (!out.toString().contains(" 4.3")) {
-      throw new Exception("Versao do Sleuthkit nao suportada. Instale a versao 4.3");
+    String[] str = out.toString().split(" ");
+    if (str[str.length - 1].compareTo("4.3") < 0) {
+      throw new Exception("Versao do Sleuthkit nao suportada. Instale pelo menos a versao 4.3");
     }
 
-    if (out.toString().contains("iped-patch04")) {
+    if (out.toString().contains("iped-patch")) {
       isTskPatched = true;
     }else
-      LOGGER.error("Recomenda-se fortemente aplicar o patch04 do iped no tsk-4.3, disponível na pasta sources!");
+      LOGGER.error("Recomenda-se fortemente aplicar o patch do iped no sleuthkit, disponível na pasta sources!");
 
     tskChecked = true;
   }
@@ -576,7 +579,8 @@ public class SleuthkitReader extends DataSourceReader {
       addEvidenceFile(content);
     }
 
-    if (absFile != null && absFile.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) == 0) {
+    if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
+    		absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
       if (!Configuration.addUnallocated) {
         return;
       }
@@ -610,10 +614,13 @@ public class SleuthkitReader extends DataSourceReader {
 
     }
 
-    if (absFile == null || absFile.getName().equals("$BadClus:$Bad")) {
+    if (absFile == null || absFile.getName().startsWith("$BadClus:$Bad")) {
       return;
     }
 
+    if(!Configuration.addUnallocated && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK)
+    	return;
+    
     addEvidenceFile(absFile, parent);
 
   }
@@ -698,8 +705,15 @@ public class SleuthkitReader extends DataSourceReader {
 
     if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)
         || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC)
+        || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNUSED)
         || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.ORPHAN)) {
       evidence.setDeleted(true);
+    }
+    
+    if(absFile instanceof SlackFile){
+    	evidence.setMediaType(MediaType.application("x-slackspace"));
+    	evidence.setType(new GenericFileType("slack"));
+    	evidence.setDeleted(true);
     }
 
     long time = absFile.getAtime();
