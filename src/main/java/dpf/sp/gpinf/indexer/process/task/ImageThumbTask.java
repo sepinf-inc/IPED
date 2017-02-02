@@ -184,7 +184,7 @@ public class ImageThumbTask extends AbstractTask {
 
     } catch (Throwable e) {
       Log.warning(getClass().getSimpleName(), "Erro ao gerar miniatura: "
-          + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+          + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString());
 
     } finally {
       if (tmp != null && !tmp.renameTo(thumbFile)) {
