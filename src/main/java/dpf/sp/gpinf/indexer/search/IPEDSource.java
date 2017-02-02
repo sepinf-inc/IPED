@@ -97,7 +97,7 @@ public class IPEDSource implements Closeable{
 	
 	HashSet<String> extraAttributes = new HashSet<String>();
 	
-	boolean isFTKReport = false;
+	boolean isFTKReport = false, isReport = false;
 	
 	public IPEDSource(File casePath) {
 		
@@ -142,6 +142,7 @@ public class IPEDSource implements Closeable{
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
 			
 			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists();
+			isReport = new File(moduleDir, "data/containsReport.flag").exists();
 			
 			countTotalItems();
 			
@@ -280,7 +281,7 @@ public class IPEDSource implements Closeable{
 	}
 	
 	public void checkImagePaths() throws IPEDException, TskCoreException{
-		if(sleuthCase == null)
+		if(sleuthCase == null || isReport)
 			return;
 		Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 		for (Long id : imgPaths.keySet()) {
