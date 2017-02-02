@@ -566,6 +566,7 @@ public class EvidenceFile implements Serializable, StreamSource {
       return new SeekableFileInputStream(file);
     }
 
+    //block 1 (referenciado abaixo)
     if (tmpFile == null && tis != null && tis.hasFile()) {
       tmpFile = tis.getFile();
     }
@@ -574,8 +575,9 @@ public class EvidenceFile implements Serializable, StreamSource {
       try {
         return new SeekableFileInputStream(tmpFile);
 
-        //workaround para itens com erro de parsing cujo tmpFile foi setado por chamada anterior de getStream() e dps apagado
-      } catch (FileNotFoundException fnfe) {
+        //workaround para itens com erro de parsing cujo tmpFile foi setado por block1 acima ao
+        //chamar getStream() antes de rodar strings e dps apagado ao fechar stream dps do parsing
+      } catch (IOException fnfe) {
         tmpFile = null;
       }
     }
@@ -586,7 +588,7 @@ public class EvidenceFile implements Serializable, StreamSource {
         stream = new SeekableFileInputStream(file);
 
         //workaround para itens carveados apontando para tmpFile do pai que foi apagado
-      } catch (FileNotFoundException fnfe) {
+      } catch (IOException fnfe) {
         file = null;
       }
     }
