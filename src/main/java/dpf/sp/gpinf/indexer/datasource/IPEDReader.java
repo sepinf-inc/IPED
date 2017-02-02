@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,7 +37,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
@@ -56,20 +56,20 @@ import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
 public class IPEDReader extends DataSourceReader {
-
+  
   IPEDSource ipedCase;
   HashSet<Integer> selectedLabels;
   Marcadores state;
   File indexDir;
   String basePath;
   private int[] oldToNewIdMap;
+  private List<IPEDSource> srcList = new ArrayList<IPEDSource>();
 
   public IPEDReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
@@ -110,6 +110,11 @@ public class IPEDReader extends DataSourceReader {
 	    basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
 	    ipedCase = new IPEDSource(new File(basePath));
 	    ipedCase.checkImagePaths();
+	    /*
+	     * Necessário guardar referência aos SleuthkitCase para não serem coletados e finalizados,
+	     * o que geraria erro ao acessar o conteúdo dos itens
+	     */
+	    srcList.add(ipedCase);
 	    
 	    oldToNewIdMap = new int[ipedCase.getLastId() + 1];
 	    for(int i = 0; i < oldToNewIdMap.length; i++)
@@ -127,8 +132,6 @@ public class IPEDReader extends DataSourceReader {
 	    insertParentTreeNodes(result);
 	    
 	    copyBookmarksToReport();
-
-	    ipedCase.close();
   }
   
   private void copyBookmarksToReport() throws ClassNotFoundException, IOException{
