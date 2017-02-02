@@ -245,10 +245,13 @@ public class IPEDSource implements Closeable{
 	@Override
 	public void close() {
 		try {
-			reader.close();
+			IOUtil.closeQuietly(reader);
 			
 			if(searchExecutorService != null)
 				searchExecutorService.shutdown();
+			
+			if(sleuthCase != null)
+				sleuthCase.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
