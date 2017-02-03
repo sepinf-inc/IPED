@@ -3,15 +3,18 @@ xx/xx/2017: IPED-3.12
 - Função para localizar documentos por similaridade
 - Otimizações no fastmode ao processar imagens de disco
 
-01/02/2017: IPED-3.11.1
-- Geração de relatório único a partir de casos independentes ou de caso múltiplo
+
+02/02/2017: IPED-3.11.1
+- Geração de relatório único a partir de casos separados ou de caso múltiplo
 Correções:
-- corrige NullPointer ao gerar relatório de caso contendo apenas pastas (3.11)
+- corrige NullPointer ao gerar relatório de caso contendo apenas pastas (regressão 3.11-final)
+- erro ao indexar itens corrompidos via strings em alguns casos (regressão 3.10.1)
+- erro ao acessar conteúdo de itens corrompidos após parsing com indexTempOnSSD = false (regressão 3.8)
 - correções para processamento e análise a partir de compartilhamentos de rede não mapeados
 - controle de timeout na tarefa de geração de preview
-- loga erro ao invés de abortar ao processar arquivos com caminho inválido
+- loga erro ao invés de abortar ao processar arquivos com caminho inválido (montagens do FTKImager)
 - correção para permitir utilizar versões posteriores do sleuthkit
-- correções no IndexDatParser
+- pequenas correções no IndexDatParser
 
 19/01/2017: IPED-3.11-final
 - Exibição de data e hora de última alteração do registro do item no sistema de arquivos
