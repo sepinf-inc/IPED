@@ -105,7 +105,7 @@ public class MakePreviewTask extends AbstractTask {
     try {
       makeHtmlPreview(evidence, viewFile);
 
-    } catch (Exception e) {
+    } catch (Throwable e) {
       Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
     }
 
