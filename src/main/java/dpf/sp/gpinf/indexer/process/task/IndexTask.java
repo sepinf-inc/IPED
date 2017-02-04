@@ -204,6 +204,7 @@ public class IndexTask extends BaseCarveTask {
   }
 
   private Metadata getMetadata(EvidenceFile evidence) {
+	//new metadata to prevent ConcurrentModificationException while indexing
     Metadata metadata = new Metadata();
     Long len = evidence.getLength();
     if (len == null) {
