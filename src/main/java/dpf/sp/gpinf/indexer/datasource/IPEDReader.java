@@ -70,6 +70,7 @@ public class IPEDReader extends DataSourceReader {
   String basePath;
   private int[] oldToNewIdMap;
   private List<IPEDSource> srcList = new ArrayList<IPEDSource>();
+  private String deviceName;
 
   public IPEDReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
@@ -90,6 +91,8 @@ public class IPEDReader extends DataSourceReader {
     // Configuração para não expandir containers
     ParsingTask.expandContainers = false;
     CarveTask.enableCarving = false;
+    
+    deviceName = getEvidenceName(file);
 
     Object obj = Util.readObject(file.getAbsolutePath());
     if(obj instanceof MultiMarcadores){
@@ -357,7 +360,15 @@ public class IPEDReader extends DataSourceReader {
         evidence.setRecordDate(DateUtil.stringToDate(value));
       }
 
-      evidence.setPath(doc.get(IndexItem.PATH));
+      String path = doc.get(IndexItem.PATH);
+      if(deviceName != null){
+    	  int idx = path.indexOf("/", 1);
+    	  if(idx == -1)
+    		  path = "/" + deviceName;
+    	  else
+    		  path = "/" + deviceName + path.substring(idx);
+      }
+      evidence.setPath(path);
       
       value = doc.get(IndexItem.EXPORT);
       if (value != null && !value.isEmpty() && !treeNode) {
@@ -456,6 +467,8 @@ public class IPEDReader extends DataSourceReader {
       value = doc.get(IndexItem.ISROOT);
       if (value != null) {
         evidence.setRoot(true);
+        if(deviceName != null)
+        	evidence.setName(deviceName);
       }
 
       caseData.addEvidenceFile(evidence);
