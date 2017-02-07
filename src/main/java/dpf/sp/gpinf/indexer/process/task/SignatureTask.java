@@ -70,7 +70,7 @@ public class SignatureTask extends AbstractTask {
           type = worker.detector.detect(null, metadata).getBaseType();
         }
 
-      } catch (Throwable e) {
+      } catch (Exception | OutOfMemoryError e) {
         type = MediaType.OCTET_STREAM;
 
         LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(),

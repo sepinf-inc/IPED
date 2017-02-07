@@ -35,7 +35,7 @@ public class MakePreviewTask extends AbstractTask {
 
   private static boolean enableFileParsing = true;
   
-  private volatile Exception exception;
+  private volatile Throwable exception;
 
   public MakePreviewTask(Worker worker) {
     super(worker);
@@ -111,7 +111,7 @@ public class MakePreviewTask extends AbstractTask {
 
   }
 
-  private void makeHtmlPreview(EvidenceFile evidence, File outFile) throws Exception {
+  private void makeHtmlPreview(EvidenceFile evidence, File outFile) throws Throwable {
     BufferedOutputStream outStream = null;
     try {
       final Metadata metadata = evidence.getMetadata();
@@ -138,7 +138,7 @@ public class MakePreviewTask extends AbstractTask {
 			  try {
 				parser.parse(tis, pch, metadata, new ParseContext());
 				
-			} catch (IOException | SAXException | TikaException e) {
+			} catch (IOException | SAXException | TikaException | OutOfMemoryError e) {
 				exception = e;
 			}
 		  }
