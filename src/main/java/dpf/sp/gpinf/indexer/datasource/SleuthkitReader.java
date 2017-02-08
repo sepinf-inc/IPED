@@ -874,13 +874,14 @@ public class SleuthkitReader extends DataSourceReader {
         } finally {
           IOUtils.closeQuietly(stream);
           String msg = out.toString().trim();
-          if (!msg.isEmpty()) {
-            if (msg.toLowerCase().contains("error")) {
-              LOGGER.error("Erro do Sleuthkit ao decodificar imagem " + image);
-              LOGGER.error(msg);
-            } else {
-              LOGGER.info(msg);
-            }
+          for(String line : msg.split("\n")){
+        	  if (!line.trim().isEmpty()) {
+                  if (line.toLowerCase().contains("error") && !line.toLowerCase().contains("microsoft reserved partition")){
+                	  LOGGER.error("Sleuthkit: " + line.trim());
+                  } else {
+                	  LOGGER.info("Sleuthkit: " + line.trim());
+                  }
+              }
           }
         }
         return;
