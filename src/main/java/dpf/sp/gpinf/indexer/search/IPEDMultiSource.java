@@ -4,16 +4,19 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDMultiSource extends IPEDSource{
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(IPEDMultiSource.class);
 	
 	private static ArrayList<Integer> baseDocCache = new ArrayList<Integer>();
 	
@@ -36,7 +39,7 @@ public class IPEDMultiSource extends IPEDSource{
 			files = loadCasesFromTxtFile(file);
 		
 		for(File src : files){
-			System.out.println("Loading " + src.getAbsolutePath());
+			LOGGER.info("Loading " + src.getAbsolutePath());
 			IPEDSource icase = new IPEDSource(src);
 			this.cases.add(icase);
 		}
@@ -68,15 +71,17 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	private List<File> searchCasesinFolder(File folder){
-		System.out.println("Searching cases in " + folder.getPath());
+		LOGGER.info("Searching cases in " + folder.getPath());
 		ArrayList<File> files = new ArrayList<File>();
 		File[] subFiles = folder.listFiles();
 		if(subFiles != null)
 			for(File file : subFiles){
-				if(new File(file, MODULE_DIR).exists())
-					files.add(file);
-				else if(file.isDirectory())
-					files.addAll(searchCasesinFolder(file));
+				if(file.isDirectory()){
+					if(new File(file, MODULE_DIR).exists())
+						files.add(file);
+					else 
+						files.addAll(searchCasesinFolder(file));
+				}
 			}
 		return files;
 	}
@@ -115,7 +120,7 @@ public class IPEDMultiSource extends IPEDSource{
 			if(iCase.isFTKReport)
 				isFTKReport = true;
 		
-		System.out.println("Loaded " + cases.size() + " cases.");
+		LOGGER.info("Loaded " + cases.size() + " cases.");
 	}
 	
 	private void openIndex() throws IOException{
@@ -124,8 +129,11 @@ public class IPEDMultiSource extends IPEDSource{
 		for(IPEDSource iCase : cases)
 			readers[i++] = iCase.reader;
 		
+		LOGGER.info("Opening MultiReader...");
+		
 		reader = new MultiReader(readers, false);
-		System.out.println("MultiReader opened");
+		
+		LOGGER.info("MultiReader opened");
 		
 		openSearcher();
 		

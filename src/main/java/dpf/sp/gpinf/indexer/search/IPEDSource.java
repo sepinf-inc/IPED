@@ -224,12 +224,14 @@ public class IPEDSource implements Closeable{
 	}
 	
 	private void openIndex(File index) throws IOException{
-		System.out.println("Openning index " + index.getAbsolutePath());
+		LOGGER.info("Openning index " + index.getAbsolutePath());
 		
 		Directory directory = FSDirectory.open(index);
 		reader = DirectoryReader.open(directory);
 		
 		openSearcher();
+		
+		LOGGER.info("Index opened");
 	}
 	
 	protected void openSearcher(){
@@ -316,9 +318,6 @@ public class IPEDSource implements Closeable{
 		        	  break;
 		          else
 		        	  newPaths.add(relPath);
-		          
-		          System.out.println(sleuthFile.getPath());
-		          System.out.println(file.getPath());
 		        }
 		        if (newPaths.size() > 0)
 		          sleuthCase.setImagePaths(id, newPaths);

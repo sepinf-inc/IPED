@@ -18,43 +18,29 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Executors;
 
 import javax.swing.SwingWorker;
 
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
-import org.sleuthkit.datamodel.SleuthkitCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
-
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
 
   private AppSearchParams appSearchParams = null;
   private TreeViewModel treeModel;
@@ -90,7 +76,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
 		
-      System.out.println("Loading Columns " + new Date());
+      LOGGER.info("Loading Columns");
       App.get().resultsModel.initCols();
 		
       if(App.get().appCase.getTotalItens() > 100000000)
@@ -111,13 +97,13 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
       App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
       
-      System.out.println("Listing items " + new Date());
+      LOGGER.info("Listing items");
 
       // lista todos os itens
       PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
       pesquisa.execute();
       
-      System.out.println("Finished " + new Date());
+      LOGGER.info("Listing items Finished");
       
       treeModel = new TreeViewModel();
 

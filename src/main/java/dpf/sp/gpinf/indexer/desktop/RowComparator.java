@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 
 import org.apache.lucene.document.Document;
@@ -29,11 +30,15 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.Bits;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
 public class RowComparator implements Comparator<Integer> {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(RowComparator.class);
 
   private int col;
   private boolean bookmarkCol = false;
@@ -60,7 +65,7 @@ public class RowComparator implements Comparator<Integer> {
   public RowComparator(int col) {
     this.col = col;
     
-    System.out.println("Loading sort data for Column " + col);
+    LOGGER.info("Loading sort data for Column " + col);
 
     if (col >= ResultTableModel.fixedCols.length) {      
       col -= ResultTableModel.fixedCols.length;
