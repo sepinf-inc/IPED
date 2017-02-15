@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
@@ -187,10 +188,26 @@ public abstract class AbstractTask {
    */
   protected void sendToNextTask(EvidenceFile evidence) throws Exception {
     if (nextTask != null) {
-      nextTask.processAndSendToNextTask(evidence);
+    	if(!MimeTypesProcessingOrder.isToProcessAtEnd(evidence.getMediaType()))
+    		nextTask.processAndSendToNextTask(evidence);
+    	else{
+    		if(worker.manager.isProducerTerminated()){
+    			if(evidence.getExtraAttribute("processedAtEnd") != null){
+    				nextTask.processAndSendToNextTask(evidence);
+    			}else{
+    				evidence.setExtraAttribute("processedAtEnd", true);
+        			caseData.addEvidenceFile(evidence);
+        			worker.itensBeingProcessed--;
+    			}
+    		}else{
+    			caseData.addEvidenceFile(evidence);
+    			worker.itensBeingProcessed--;
+    		}
+    			
+    	}
     }
   }
-
+  
   /**
    * Processa o item monitorando timeout durante parsing. Caso ocorra timeout, o item é reprocessado
    * na tarefa com um parser seguro, sem risco de timeout.
