@@ -30,8 +30,10 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
@@ -51,7 +53,6 @@ public class IndexTask extends BaseCarveTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
   private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES";
-  private static String SPLITED_IDS = IndexTask.class.getSimpleName() + "SPLITED_IDS";
 
   public static boolean indexFileContents = true;
   public static boolean indexUnallocated = false;
@@ -60,7 +61,6 @@ public class IndexTask extends BaseCarveTask {
 
   private IndexerDefaultParser autoParser;
   private List<IdLenPair> textSizes;
-  private Set<Integer> splitedIds;
 
   public IndexTask(Worker worker) {
     super(worker);
@@ -167,10 +167,6 @@ public class IndexTask extends BaseCarveTask {
         do {
           if (++fragments > 1) {
             stats.incSplits();
-            if (fragments == 2) {
-              splitedIds.add(evidence.getId());
-            }
-
             LOGGER.debug("{} Dividindo texto de {}", Thread.currentThread().getName(), evidence.getPath());
           }
 
@@ -245,6 +241,8 @@ public class IndexTask extends BaseCarveTask {
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
+    
+    context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     return context;
   }
@@ -293,24 +291,6 @@ public class IndexTask extends BaseCarveTask {
       }
     }
 
-    splitedIds = (Set<Integer>) caseData.getCaseObject(SPLITED_IDS);
-    if (splitedIds == null) {
-      File prevFile = new File(output, "data/splits.ids");
-      if (prevFile.exists()) {
-        FileInputStream fileIn = new FileInputStream(prevFile);
-        ObjectInputStream in = new ObjectInputStream(fileIn);
-
-        splitedIds = (Set<Integer>) in.readObject();
-
-        in.close();
-        fileIn.close();
-      } else {
-        splitedIds = Collections.synchronizedSet(new HashSet<Integer>());
-      }
-
-      caseData.putCaseObject(SPLITED_IDS, splitedIds);
-    }
-
     if(IndexItem.getMetadataTypes().size() == 0){
     	IndexItem.loadMetadataTypes(confDir);
     	IndexItem.loadMetadataTypes(new File(output, "conf"));
@@ -326,8 +306,6 @@ public class IndexTask extends BaseCarveTask {
     textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
     if (textSizes != null) {
       salvarTamanhoTextosExtraidos();
-
-      salvarDocsFragmentados();
 
       saveExtraAttributes();
 
@@ -365,14 +343,6 @@ public class IndexTask extends BaseCarveTask {
     }
 
     Util.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
-  }
-
-  private void salvarDocsFragmentados() throws Exception {
-    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando IDs dos itens fragmentados...");
-    LOGGER.info("Salvando IDs dos itens fragmentados...");
-
-    Util.writeObject(splitedIds, output.getAbsolutePath() + "/data/splits.ids");
-
   }
 
 }

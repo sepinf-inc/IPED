@@ -48,6 +48,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 import org.apache.poi.util.IOUtils;
@@ -181,8 +182,6 @@ public class Manager {
       interromperIndexacao();
       throw e;
     }
-
-    salvarDocIdToIdMap();
 
     saveViewToOriginalFileMap();
 
@@ -339,6 +338,13 @@ public class Manager {
       num += workers[k].itensBeingProcessed;
     }
     return num;
+  }
+  
+  public boolean isProducerTerminated(){
+	  if(produtor != null)
+		  return !produtor.isAlive();
+	  else
+		  return false;
   }
 
   private void finalizarIndexacao() throws Exception {
@@ -539,22 +545,6 @@ public class Manager {
     out.writeObject(viewToRaw);
     out.close();
     fileOut.close();
-  }
-
-  private void salvarDocIdToIdMap() throws IOException {
-
-    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando mapeamento indexId->id");
-    LOGGER.info("Salvando mapeamento indexId->id");
-
-    IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
-    int[] ids = new int[reader.maxDoc()];
-    for (int i = 0; i < reader.maxDoc(); i++) {
-      Document doc = reader.document(i);
-      ids[i] = Integer.parseInt(doc.get(IndexItem.ID));
-    }
-
-    reader.close();
-    Util.writeObject(ids, output.getAbsolutePath() + "/data/ids.map");
   }
   
   private void removeEmptyTreeNodes() {
