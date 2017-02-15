@@ -21,6 +21,8 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.WhatsAppAttachSearcherImpl;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.WhatsAppViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.LOExtractor;
 
@@ -92,6 +94,7 @@ public class ViewerControl implements IViewerControl {
               if (javaFX) {
                 viewersRepository.addViewer(new HtmlViewer());
                 viewersRepository.addViewer(new EmailViewer());
+                viewersRepository.addViewer(new WhatsAppViewer(new WhatsAppAttachSearcherImpl()));
                 viewersRepository.addViewer(new TikaHtmlViewer());
                 //multiViewer.addViewer(new VideoViewer());
               } else {
