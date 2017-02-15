@@ -108,9 +108,31 @@
         <sub-class-of type="application/zip"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-db">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="msgstore*.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-wadb">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="wa*.db"/>
+    </mime-type>
+    
+    <mime-type type="contact/x-whatsapp-contact">     
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-msg">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
     <mime-type type="application/sqlite-skype">     
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="main*.db"/>
+    </mime-type>
+    
+    <mime-type type="contact/x-skype-account">     
+        <sub-class-of type="text/html"/>
     </mime-type>
     
     <mime-type type="contact/x-skype-contact">     
@@ -128,7 +150,7 @@
     <mime-type type="message/x-skype-conversation">     
         <sub-class-of type="text/html"/>
     </mime-type>
-
+    
     <mime-type type="application/skype"> 
         <magic priority="50">
             <match value="l33l" type="string" offset="0"/>
@@ -184,15 +206,6 @@
         </magic>
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
-    </mime-type>
-    
-    <mime-type type="message/x-whatsapp-msg">
-        <sub-class-of type="text/html"/>
-    </mime-type>
-    
-    <mime-type type="application/x-whatsapp-db">
-        <sub-class-of type="application/x-sqlite3"/>
-        <glob pattern="msgstore.db"/>
     </mime-type>
     
     <mime-type type="application/x-sqlite3">
