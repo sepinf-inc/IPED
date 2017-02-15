@@ -564,7 +564,7 @@ public class CarveTask extends BaseCarveTask {
 					  | (data[2] & 0xff) << 8
 					  | (data[3] & 0xff) ;
 			  
-			  if(atomSize == 0)
+			  if(atomSize <= 0)
 				  break;
 			  
 			  if(atomSize == 1){
@@ -583,6 +583,9 @@ public class CarveTask extends BaseCarveTask {
 						  | (extendedSize[6] & 0xff) << 8
 						  | (extendedSize[7] & 0xff) ;
 			  }
+			  
+			  if(atomSize <= 0)
+				  break;
 			  
 			  atomStart += atomSize;
 			  
