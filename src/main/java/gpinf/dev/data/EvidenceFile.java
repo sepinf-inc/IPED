@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -12,7 +11,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,7 +21,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
@@ -31,16 +28,15 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
-import dpf.sp.gpinf.indexer.util.SleuthkitServer;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
@@ -55,7 +51,7 @@ import gpinf.dev.filetypes.EvidenceFileType;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class EvidenceFile implements Serializable, StreamSource {
+public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
 
@@ -105,13 +101,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    */
   private String extension;
 
-  /**
-   * Caminho completo do arquivo, armazenado em um nó de uma estrutura navegável de arquivos e
-   * pastas do caso.
-   */
-  private PathNode path;
-
-  private String pathString;
+  private String path;
 
   /**
    * Tipo do arquivo.
@@ -163,12 +153,6 @@ public class EvidenceFile implements Serializable, StreamSource {
   private String exportedFile;
 
   /**
-   * Nome e caminho relativo do arquivo alternativo. Este arquivo é utilizado por exemplo quando no
-   * próprio relatório há uma outra forma de visualização do arquivo de evidência.
-   */
-  private String alternativeFile;
-
-  /**
    * Nome e caminho relativo que o arquivo para visualização.
    */
   private File viewFile;
@@ -199,7 +183,7 @@ public class EvidenceFile implements Serializable, StreamSource {
     this.deleteFile = deleteFile;
   }
 
-  private boolean carved = false, encrypted = false;
+  private boolean carved = false;
 
   private boolean isQueueEnd = false, parsed = false;
 
@@ -273,13 +257,6 @@ public class EvidenceFile implements Serializable, StreamSource {
    */
   public Date getAccessDate() {
     return accessDate;
-  }
-
-  /**
-   * @return nome e caminho do arquivo alternativo
-   */
-  public String getAlternativeFile() {
-    return alternativeFile;
   }
 
   /**
@@ -399,9 +376,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    * de pastas.
    */
   public String getFileToIndex() {
-    if (alternativeFile != null) {
-      return alternativeFile.trim();
-    } else if (exportedFile != null) {
+    if (exportedFile != null) {
       return exportedFile.trim();
     } else {
       return "";
@@ -525,21 +500,7 @@ public class EvidenceFile implements Serializable, StreamSource {
    * @return String com o caminho completo do item
    */
   public String getPath() {
-    if (pathString != null) {
-      return pathString;
-    } else if (path != null) {
-      return path.getFullPath();
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * @return caminho do arquivo, obtido na estrutura de árvore de arquivos do caso. (apenas para
-   * reports do FTK1)
-   */
-  public PathNode getPathNode() {
-    return path;
+	  return path;
   }
 
   /**
@@ -600,7 +561,7 @@ public class EvidenceFile implements Serializable, StreamSource {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
-          stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId), pathString);
+          stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId), path);
         }
       } else {
         return new EmptyInputStream();
@@ -838,17 +799,10 @@ public class EvidenceFile implements Serializable, StreamSource {
 
   public Date getRecordDate() {
 	return recordDate;
-}
+  }
 
-public void setRecordDate(Date recordDate) {
+  public void setRecordDate(Date recordDate) {
 	this.recordDate = recordDate;
-}
-
-/**
-   * @param alternativeFile nome e caminho do arquivo alternativo
-   */
-  public void setAlternativeFile(String alternativeFile) {
-    this.alternativeFile = alternativeFile;
   }
 
   /**
@@ -1053,17 +1007,10 @@ public void setRecordDate(Date recordDate) {
   }
 
   /**
-   * @param path caminho do arquivo. Utilizado apenas em relatórios do FTK1
-   */
-  public void setPathNode(PathNode path) {
-    this.path = path;
-  }
-
-  /**
    * @param path caminho do item
    */
   public void setPath(String path) {
-    this.pathString = path;
+    this.path = path;
   }
 
   /**
