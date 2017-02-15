@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,8 +36,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DocumentStoredFieldVisitor;
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -100,6 +106,10 @@ public class IPEDSource implements Closeable{
 	boolean isFTKReport = false, isReport = false;
 	
 	public IPEDSource(File casePath) {
+		this(casePath, null);
+	}
+	
+	public IPEDSource(File casePath, IndexWriter iw) {
 		
 		this.casePath = casePath;
 		moduleDir = new File(casePath, MODULE_DIR);
@@ -119,24 +129,18 @@ public class IPEDSource implements Closeable{
 				updateImagePathsToAbsolute(casePath, sleuthFile);
 			}
 				
-			openIndex(index);
+			openIndex(index, iw);
 			
+			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
 			analyzer = AppAnalyzer.get();
 			
-            ids = (int[]) Util.readObject(new File(moduleDir, "data/ids.map").getAbsolutePath());
-            for(int i = 0; i < ids.length; i++)
-            	if(ids[i] > lastId)
-            		lastId = ids[i];
+			populateLuceneIdToIdMap();
+			invertIdToLuceneIdArray();
+            splitedIds = getSplitedIds();
+            countTotalItems();
             
-            invertIdToLuceneIdArray();
-            
-            File splitedDocsFile = new File(moduleDir, "data/splits.ids");
-            if(splitedDocsFile.exists()){
-            	Set<Integer> splited = (Set<Integer>) Util.readObject(splitedDocsFile.getAbsolutePath());
-            	for(int i : splited)
-            		splitedIds.set(i);
-            }
 			
+            /**FTK specific, will be removed*/
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids");
 			if (viewToRawFile.exists())
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
@@ -144,7 +148,6 @@ public class IPEDSource implements Closeable{
 			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists();
 			isReport = new File(moduleDir, "data/containsReport.flag").exists();
 			
-			countTotalItems();
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size");
 			if(textSizesFile.exists())
@@ -167,18 +170,42 @@ public class IPEDSource implements Closeable{
 			marcadores = new Marcadores(this, moduleDir);
 			marcadores.loadState();
 			globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
-			
-			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
+	public void populateLuceneIdToIdMap() throws IOException{
+		
+		LOGGER.info("Creating LuceneId to ID mapping...");
+	    ids = new int[reader.maxDoc()];
+	    
+	    AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(reader); 
+	    NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
+	    
+	    for (int i = 0; i < reader.maxDoc(); i++) {
+	      ids[i] = (int)ndv.get(i);
+	      if(ids[i] > lastId)
+      		lastId = ids[i];
+	    }
+	}
+	
 	protected void invertIdToLuceneIdArray(){
 		docs = new int[lastId + 1];
 		for(int i = ids.length - 1; i >= 0 ; i--)
 			docs[ids[i]] = i;
+	}
+	
+	private BitSet getSplitedIds(){
+		int[] sortedIds = Arrays.copyOf(this.ids, this.ids.length);
+		Arrays.sort(sortedIds);
+		BitSet splitedIds = new BitSet();
+		for(int i = 0; i < sortedIds.length - 1; i++)
+			if(sortedIds[i] == sortedIds[i + 1])
+				splitedIds.set(sortedIds[i]);
+		
+		return splitedIds;
 	}
 	
 	private void countTotalItems(){
@@ -223,11 +250,14 @@ public class IPEDSource implements Closeable{
 			keywords.add(word);
 	}
 	
-	private void openIndex(File index) throws IOException{
+	private void openIndex(File index, IndexWriter iw) throws IOException{
 		LOGGER.info("Openning index " + index.getAbsolutePath());
 		
-		Directory directory = FSDirectory.open(index);
-		reader = DirectoryReader.open(directory);
+		if(iw == null){
+			Directory directory = FSDirectory.open(index);
+			reader = DirectoryReader.open(directory);
+		}else
+			reader = DirectoryReader.open(iw, false);
 		
 		openSearcher();
 		
@@ -279,7 +309,7 @@ public class IPEDSource implements Closeable{
 	
 	public void reopen() throws IOException{
 		close();
-		openIndex(index);
+		openIndex(index, null);
 	}
 	
 	public void checkImagePaths() throws IPEDException, TskCoreException{

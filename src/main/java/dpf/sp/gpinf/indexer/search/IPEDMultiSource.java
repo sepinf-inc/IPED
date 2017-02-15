@@ -150,11 +150,7 @@ public class IPEDMultiSource extends IPEDSource{
 		super.close();
 		
 		for(IPEDSource iCase : cases)
-			try {
-				iCase.reader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			iCase.close();
 	}
 	
 	final public IPEDSource getAtomicSource(int luceneId){
