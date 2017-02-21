@@ -6,16 +6,14 @@ import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.WhatsAppViewer.WhatsAppAttachSearcher;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ChatViewer.ChatAttachmentSearcher;
 
-public class WhatsAppAttachSearcherImpl implements WhatsAppAttachSearcher{
+public class ChatAttachmentSearcherImpl implements ChatAttachmentSearcher{
 
 	@Override
-	public File getTmpFile(String sha256) {
+	public File getTmpFile(String luceneQuery) {
 		
-		String queryStr = "sha-256:" + sha256;
-		
-		IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, queryStr);
+		IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, luceneQuery);
 		try {
 			MultiSearchResult result = searcher.multiSearch();
 			if(result.getLength() == 0)
