@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +45,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
   private AppSearchParams appSearchParams = null;
   private TreeViewModel treeModel;
+  private IndexWriter indexWriter;
 
-  public InicializarBusca(AppSearchParams params) {
+  public InicializarBusca(AppSearchParams params, IndexWriter indexWriter) {
     this.appSearchParams = params;
+    this.indexWriter = indexWriter;
   }
 
   @Override
@@ -71,7 +74,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       IViewerControl viewerControl = ViewerControl.getInstance();
       
       if(!App.get().isMultiCase){
-    	  IPEDSource singleCase = new IPEDSource(App.get().casesPathFile);
+    	  IPEDSource singleCase = new IPEDSource(App.get().casesPathFile, indexWriter);
     	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);

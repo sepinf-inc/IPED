@@ -45,6 +45,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	
 	private static SoftReference<MultiSearchResult> allItemsCache;
+	private static App app;
 	
 	volatile static int numFilters = 0;
 	ProgressDialog progressDialog;
@@ -135,6 +136,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			try {
 				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 					
+				if(app == null)
+					app = App.get();
+				else if(app != App.get()){
+					allItemsCache = null;
+					app = App.get();
+				}
+				
 				Query q = searcher.getQuery();
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
 					result = allItemsCache.get();

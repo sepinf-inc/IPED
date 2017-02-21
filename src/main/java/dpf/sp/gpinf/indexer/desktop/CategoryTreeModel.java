@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,9 +23,12 @@ public class CategoryTreeModel implements TreeModel {
   private static String CONF_FILE = "conf/CategoryHierarchy.txt";
 
   public Category root = new Category(rootName, null);
+  private Collator collator;
 
   public CategoryTreeModel() {
     try {
+      collator = Collator.getInstance();
+      collator.setStrength(Collator.PRIMARY);
       loadHierarchy();
     } catch (IOException e) {
       e.printStackTrace();
@@ -48,23 +52,31 @@ public class CategoryTreeModel implements TreeModel {
 
     @Override
     public int compareTo(Category o) {
-      return name.compareTo(o.name);
+      return collator.compare(name,o.name);
     }
 
     @Override
     public boolean equals(Object o) {
-      return name.equals(((Category) o).name);
+      return compareTo((Category)o) == 0;
     }
 
+  }
+  
+  private String upperCaseChars(String cat){
+	  StringBuilder str = new StringBuilder();
+	  for(String s : cat.split(" "))
+		  if(s.length() == 3)
+			  str.append(s.toUpperCase() + " ");
+		  else if(s.length() > 3)
+			  str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " ");
+		  else
+			  str.append(s + " ");
+	  return str.toString().trim();
   }
 
   private void loadHierarchy() throws IOException {
 
-    //map from child category to parent
-    HashMap<String, String> categoryMap = new HashMap<String, String>();
-    for (String category : App.get().appCase.getCategories()) {
-      categoryMap.put(category, rootName);
-    }
+	ArrayList<Category> categoryList = getLeafCategories();
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
         new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8"));
@@ -76,47 +88,62 @@ public class CategoryTreeModel implements TreeModel {
       }
       String[] keyValuePair = line.split("=");
       if (keyValuePair.length == 2) {
-        String category = keyValuePair[0].trim();
-        if (!categoryMap.containsKey(category)) {
-          categoryMap.put(category, rootName);
-        }
+    	Category category = new Category(keyValuePair[0].trim(), root);
+    	category = tryAddAndGet(categoryList, category);
         String subcats = keyValuePair[1].trim();
         for (String subcat : subcats.split(";")) {
-          subcat = subcat.trim();
-          categoryMap.put(subcat, category);
+          Category sub = new Category(subcat.trim(), category);
+          Category cat = tryAddAndGet(categoryList, sub);
+          cat.parent = category;
         }
       }
     }
     reader.close();
 
-    populateChildren(root, categoryMap);
-
-    filterEmptyCategories(root);
+    populateChildren(root, categoryList);
+    
+    filterEmptyCategories(root, getLeafCategories());
 
   }
+  
+  private Category tryAddAndGet(ArrayList<Category> categoryList, Category category){
+	  if (!categoryList.contains(category)){
+          categoryList.add(category);
+          return category;
+      }else
+	      return categoryList.get(categoryList.indexOf(category));
+  }
+  
+  private ArrayList<Category> getLeafCategories(){
+	  ArrayList<Category> categoryList = new ArrayList<Category>();
+	  for (String category : App.get().appCase.getCategories()) {
+		  category = upperCaseChars(category);
+	      categoryList.add(new Category(category, root));
+	  }
+	  return categoryList;
+  }
 
-  private void populateChildren(Category category, HashMap<String, String> categoryMap) {
-    for (String categoryName : categoryMap.keySet()) {
-      if (categoryMap.get(categoryName).equals(category.name)) {
-        Category subCat = new Category(categoryName, category);
-        category.children.add(subCat);
-        populateChildren(subCat, categoryMap);
+  private void populateChildren(Category category, ArrayList<Category> categoryList) {
+    for (Category cat : categoryList) {
+      if (cat.parent.equals(category)) {
+        category.children.add(cat);
+        populateChildren(cat, categoryList);
       }
     }
   }
 
-  private boolean filterEmptyCategories(Category category) {
+  private boolean filterEmptyCategories(Category category, ArrayList<Category> leafCategories) {
     boolean hasItems = false;
-    if (App.get().appCase.getCategories().contains(category.name)) {
+    if (leafCategories.contains(category)) {
       hasItems = true;
     }
-    for (Category child : (TreeSet<Category>) category.children.clone()) {
-      if (filterEmptyCategories(child)) {
+	for (Category child : (TreeSet<Category>) category.children.clone()) {
+      if (filterEmptyCategories(child, leafCategories)) {
         hasItems = true;
       }
     }
     if (!hasItems && category.parent != null) {
-      category.parent.children.remove(category);
+    	category.parent.children.remove(category);
     }
     return hasItems;
   }

@@ -70,7 +70,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   private CmdLineArgs cmdLineParams;
 
   private ProgressFrame progressFrame;
-
+  
+  private Manager manager;
+  
   /**
    * Última instância criada deta classe.
    */
@@ -176,7 +178,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
       boolean fastmode = cmdLineParams.getCmdArgs().containsKey("--fastmode");
       Configuration.getConfiguration(configPath, fastmode);
 
-      Manager manager = new Manager(dataSource, output, palavrasChave);
+      manager = new Manager(dataSource, output, palavrasChave);
       cmdLineParams.saveIntoCaseData(manager.getCaseData());
       manager.process();
 
@@ -192,7 +194,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     	  LOGGER.error("Erro no processamento:", e);
 
     } finally {
-    	logConfiguration.closeConsoleLogFile();
+      logConfiguration.closeConsoleLogFile();
       done = true;
     }
 
@@ -271,8 +273,12 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     if (!indexador.nologfile) {
       System.out.println("Consulte o LOG na pasta \"IPED/log\".");
     }
-
-    System.exit((success)?0:1);
+    
+    if(getInstance().manager != null)
+    	getInstance().manager.setProcessingFinished(true);
+    
+    if(getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
+    	System.exit((success)?0:1);
 
     // PARA ASAP:
     // IndexFiles indexador = new IndexFiles(List<File> reports, File

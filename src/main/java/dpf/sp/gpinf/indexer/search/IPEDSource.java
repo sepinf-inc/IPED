@@ -39,10 +39,13 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
@@ -70,7 +73,8 @@ public class IPEDSource implements Closeable{
 	public static final String MODULE_DIR = "indexador";
 	public static final String SLEUTH_DB = "sleuth.db";
 	
-	private static AtomicInteger nextId = new AtomicInteger();
+	/** workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia para FS_INFO*/
+	private static List<SleuthkitCase> tskCaseList = new ArrayList<SleuthkitCase>();
 	
 	private File casePath;
 	private File moduleDir;
@@ -78,6 +82,7 @@ public class IPEDSource implements Closeable{
 	
 	SleuthkitCase sleuthCase;
 	IndexReader reader;
+	IndexWriter iw;
 	IndexSearcher searcher;
 	Analyzer analyzer;
 	
@@ -90,7 +95,7 @@ public class IPEDSource implements Closeable{
 	
 	private int[] ids, docs, textSizes;
 	
-	private int sourceId = -1;
+	protected int sourceId = -1;
 	
 	int totalItens = 0;
 	
@@ -114,11 +119,12 @@ public class IPEDSource implements Closeable{
 		this.casePath = casePath;
 		moduleDir = new File(casePath, MODULE_DIR);
 		index = new File(moduleDir, INDEX_DIR);
+		this.iw = iw;
 		
-		if(!index.exists() || casePath == null)
+		if((!index.exists() && iw == null) || casePath == null)
 			return;
 		
-		sourceId = nextId.getAndIncrement();
+		//sourceId = nextId.getAndIncrement();
 		
 		try {
 			Configuration.getConfiguration(moduleDir.getAbsolutePath());
@@ -127,6 +133,7 @@ public class IPEDSource implements Closeable{
 			if (sleuthFile.exists()){
 				sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 				updateImagePathsToAbsolute(casePath, sleuthFile);
+				tskCaseList.add(sleuthCase);
 			}
 				
 			openIndex(index, iw);
@@ -232,7 +239,15 @@ public class IPEDSource implements Closeable{
 	
 	private void loadCategories(){
 		try {
-			categories = Util.loadKeywords(moduleDir + "/categorias.txt", "UTF-8");
+			AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(reader);
+			Fields fields = atomicReader.fields();
+			Terms terms = fields.terms(IndexItem.CATEGORY);
+	        TermsEnum termsEnum = terms.iterator(null);
+	        while (termsEnum.next() != null){
+	        	String cat = termsEnum.term().utf8ToString();
+	        	categories.add(cat);
+	        }
+	        	
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -256,8 +271,9 @@ public class IPEDSource implements Closeable{
 		if(iw == null){
 			Directory directory = FSDirectory.open(index);
 			reader = DirectoryReader.open(directory);
-		}else
-			reader = DirectoryReader.open(iw, false);
+		}else{
+			reader = DirectoryReader.open(iw, true);
+		}
 		
 		openSearcher();
 		
@@ -283,8 +299,8 @@ public class IPEDSource implements Closeable{
 			if(searchExecutorService != null)
 				searchExecutorService.shutdown();
 			
-			if(sleuthCase != null)
-				sleuthCase.close();
+			//if(sleuthCase != null)
+			//	sleuthCase.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -309,7 +325,7 @@ public class IPEDSource implements Closeable{
 	
 	public void reopen() throws IOException{
 		close();
-		openIndex(index, null);
+		openIndex(index, iw);
 	}
 	
 	public void checkImagePaths() throws IPEDException, TskCoreException{

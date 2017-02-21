@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class RowComparator implements Comparator<Integer> {
 	
@@ -125,7 +126,7 @@ public class RowComparator implements Comparator<Integer> {
 
   public static void closeAtomicReader() throws IOException {
     if (atomicReader != null)
-      atomicReader.close();
+      IOUtil.closeQuietly(atomicReader);
     atomicReader = null;
   }
 

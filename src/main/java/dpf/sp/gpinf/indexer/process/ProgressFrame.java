@@ -42,6 +42,7 @@ import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.desktop.AppMain;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
@@ -58,7 +59,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
   private static final long serialVersionUID = -1130342847618772236L;
   private JProgressBar progressBar;
-  private JButton pause;
+  private JButton pause, openApp;
   private JLabel tasks, itens, stats;
   int indexed = 0, discovered = 0;
   long rate = 0, instantRate;
@@ -92,8 +93,16 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     
     pause = new JButton("Pausar");
     pause.addActionListener(this);
+    
+    openApp = new JButton("Abrir Aplicativo");
+    openApp.addActionListener(this);
+    openApp.setEnabled(false);
+    
+    JPanel buttonPanel = new JPanel();//new BorderLayout());
+    buttonPanel.add(openApp);//, BorderLayout.WEST);
+    buttonPanel.add(pause);//, BorderLayout.EAST);
 
-    JPanel panel = new JPanel();//new FlowLayout(FlowLayout.LEADING));
+    JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
 
     tasks = new RestrictedSizeLabel();
@@ -114,7 +123,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     JPanel topPanel = new JPanel();
     topPanel.setLayout(new BorderLayout());
     topPanel.add(progressBar, BorderLayout.CENTER);
-    topPanel.add(pause, BorderLayout.EAST);
+    topPanel.add(buttonPanel, BorderLayout.EAST);
 
     this.getContentPane().add(topPanel, BorderLayout.NORTH);
     this.getContentPane().add(scrollPane, BorderLayout.CENTER);
@@ -149,6 +158,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       tasks.setText(getTaskTimes());
       itens.setText(getItemList());
       stats.setText(getStats());
+      if(indexed > 0)
+    	  openApp.setEnabled(true);
 
     } else if ("taskSize".equals(evt.getPropertyName())) {
       taskSize = (Integer) evt.getNewValue();
@@ -402,16 +413,21 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
 @Override
 public void actionPerformed(ActionEvent e) {
-	paused = !paused;
-	if(paused)
-		pause.setText("Continuar");
-	else
-		pause.setText("Pausar");
-	
-	for (Worker worker : workers) {
-		synchronized(worker){
-			worker.state = paused ? Worker.STATE.PAUSING : Worker.STATE.RUNNING;
+	if(e.getSource().equals(pause)){
+		paused = !paused;
+		if(paused)
+			pause.setText("Continuar");
+		else
+			pause.setText("Pausar");
+		
+		for (Worker worker : workers) {
+			synchronized(worker){
+				worker.state = paused ? Worker.STATE.PAUSING : Worker.STATE.RUNNING;
+			}
 		}
+	}
+	if(e.getSource().equals(openApp)){
+		new AppMain().start(workers[0].output.getParentFile(), workers[0].manager);
 	}
 }
 

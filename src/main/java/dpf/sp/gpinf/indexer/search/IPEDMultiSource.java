@@ -88,6 +88,10 @@ public class IPEDMultiSource extends IPEDSource{
 		
 	private void init(){
 		
+		int i = 0;
+		for(IPEDSource iCase : cases)
+			iCase.sourceId = i++;
+		
 		try{
 			openIndex();
 			

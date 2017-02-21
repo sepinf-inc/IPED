@@ -77,6 +77,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -98,6 +99,8 @@ public class App extends JFrame implements WindowListener {
   private LogConfiguration logConfiguration;
 
   private AppSearchParams appSearchParams = null;
+  
+  private Manager processingManager;
 
   MultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
   
@@ -165,7 +168,7 @@ public class App extends JFrame implements WindowListener {
 
   static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
 
-  private static App applet;
+  private static App app;
   
   AppListener appletListener;
 
@@ -184,39 +187,51 @@ public class App extends JFrame implements WindowListener {
   }
 
   public static final App get() {
-    if (applet == null) {
-      applet = new App();
+    if (app == null) {
+      app = new App();
     }
-    return applet;
+    return app;
   }
 
   public AppSearchParams getSearchParams() {
     return this.appSearchParams;
   }
 
-  public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile) {
+  public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile, Manager processingManager) {
 
 	  this.logConfiguration = logConfiguration;
       this.isMultiCase = isMultiCase;
       this.casesPathFile = casesPathFile;
+      this.processingManager = processingManager;
+      if(processingManager != null)
+    	  processingManager.setSearchAppOpen(true);
       
       LOGGER = LoggerFactory.getLogger(App.class);
       LOGGER.info("Starting...");
       
-      try {
-		javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
-		    @Override
-		    public void run() {
-		      createGUI();
-		      LOGGER.info("GUI created");
-		    }
-		  });
-		
-	} catch (InvocationTargetException | InterruptedException e) {
-		e.printStackTrace();
-	}
-
-    (new InicializarBusca(appSearchParams)).execute();
+     
+		if(SwingUtilities.isEventDispatchThread()){
+			createGUI();
+			LOGGER.info("GUI created");
+		}else{
+			try {
+				SwingUtilities.invokeAndWait(new Runnable() {
+				    @Override
+				    public void run() {
+				    	try{
+				    		createGUI();
+				    		LOGGER.info("GUI created");
+				    		
+				    	}catch(Throwable t){
+				    		t.printStackTrace();
+				    	}
+				    }
+				  });
+			} catch (InvocationTargetException | InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
   }
 
@@ -250,6 +265,8 @@ public class App extends JFrame implements WindowListener {
 
   public void destroy() {
     try {
+      ResultTableRowSorter.resetComparators();
+    	
       if (this.resultsTable != null) {
         ColumnsManager.getInstance().saveColumnsState();
       }
@@ -259,6 +276,17 @@ public class App extends JFrame implements WindowListener {
       appCase.close();
       
       logConfiguration.closeConsoleLogFile();
+      
+      if(processingManager == null || processingManager.isProcessingFinished()){
+    	  if(processingManager != null)
+    		  processingManager.deleteTempDir();
+    	  
+      	System.exit(0);
+      	
+      }else{
+      	processingManager.setSearchAppOpen(false);
+      	app = null;
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -309,6 +337,7 @@ public class App extends JFrame implements WindowListener {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
       }
     } catch (Exception e) {
+    	e.printStackTrace();
     }
 
     termo = new JComboBox<String>();
@@ -617,22 +646,22 @@ public class App extends JFrame implements WindowListener {
       verticalSplitPane.remove(tabbedHits);
       treeSplitPane.remove(treeTab);
       treeSplitPane.remove(horizontalSplitPane);
-      applet.getContentPane().removeAll();
+      app.getContentPane().removeAll();
 
       horizontalSplitPane.add(tabbedHits);
       horizontalSplitPane.add(compositeViewer);
       verticalSplitPane.add(resultTab);
       verticalSplitPane.add(horizontalSplitPane);
 
-      applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      applet.getContentPane().add(status, BorderLayout.PAGE_END);
+      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
+      app.getContentPane().add(status, BorderLayout.PAGE_END);
       treeSplitPane.add(treeTab);
       treeSplitPane.add(verticalSplitPane);
-      applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 
-      applet.getContentPane().invalidate();
-      applet.getContentPane().validate();
-      applet.getContentPane().repaint();
+      app.getContentPane().invalidate();
+      app.getContentPane().validate();
+      app.getContentPane().repaint();
       verticalSplitPane.setDividerLocation(0.5);
       horizontalSplitPane.setDividerLocation(0.4);
 
@@ -645,22 +674,22 @@ public class App extends JFrame implements WindowListener {
       verticalSplitPane.remove(horizontalSplitPane);
       treeSplitPane.remove(treeTab);
       treeSplitPane.remove(horizontalSplitPane);
-      applet.getContentPane().removeAll();
+      app.getContentPane().removeAll();
 
       verticalSplitPane.add(resultTab);
       verticalSplitPane.add(tabbedHits);
       horizontalSplitPane.add(verticalSplitPane);
       horizontalSplitPane.add(compositeViewer);
 
-      applet.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      applet.getContentPane().add(status, BorderLayout.PAGE_END);
+      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
+      app.getContentPane().add(status, BorderLayout.PAGE_END);
       treeSplitPane.add(treeTab);
       treeSplitPane.add(horizontalSplitPane);
-      applet.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
 
-      applet.getContentPane().invalidate();
-      applet.getContentPane().validate();
-      applet.getContentPane().repaint();
+      app.getContentPane().invalidate();
+      app.getContentPane().validate();
+      app.getContentPane().repaint();
       verticalSplitPane.setDividerLocation(0.7);
       horizontalSplitPane.setDividerLocation(0.6);
 
@@ -685,10 +714,8 @@ public class App extends JFrame implements WindowListener {
 
   @Override
   public void windowClosing(WindowEvent e) {
-    destroy();
-    this.dispose();
-    System.exit(1);
-
+	  this.dispose();
+	  destroy();
   }
 
   @Override

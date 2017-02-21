@@ -119,6 +119,9 @@ public class Manager {
 
   public Statistics stats;
   public Exception exception;
+  
+  private boolean isSearchAppOpen = false;
+  private boolean isProcessingFinished = false;
 
   public Manager(List<File> sources, File output, File palavras) {
     this.indexTemp = Configuration.indexTemp;
@@ -145,6 +148,10 @@ public class Manager {
 
   Worker[] getWorkers() {
     return workers;
+  }
+  
+  public IndexWriter getIndexWriter(){
+	  return this.writer;
   }
 
   public void process() throws Exception {
@@ -186,8 +193,6 @@ public class Manager {
     saveViewToOriginalFileMap();
 
     filtrarPalavrasChave();
-
-    configurarCategorias();
     
     removeEmptyTreeNodes();
     
@@ -399,57 +404,14 @@ public class Manager {
 	  }
   }
   
-  private void deleteTempDir(){
+  public void deleteTempDir(){
 	  	try {
+	  	  LOGGER.info("Apagando diretório temporário {}", Configuration.indexerTemp);
 	      IOUtil.deletarDiretorio(Configuration.indexerTemp);
 	      
 	    } catch (IOException e) {
 	      LOGGER.warn("Não foi possível apagar {}", Configuration.indexerTemp.getPath());
 	    }
-  }
-
-  private void configurarCategorias() throws Exception {
-    LOGGER.info("Configurando categorias...");
-    TreeSet<String> categories = Util.loadKeywordSet(output.getAbsolutePath() + "/categorias.txt", "UTF-8");
-
-    if (caseData.getBookmarks().size() > 0) {
-      for (FileGroup bookmark : caseData.getBookmarks()) {
-        categories.add(bookmark.getName().replaceAll("\"", "\\\""));
-      }
-    }
-    categories.addAll(SetCategoryTask.getCategories());
-    
-    // filtra categorias vazias
-    if (categories.size() != 0) {
-      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
-      ArrayList<String> palavrasFinais = new ArrayList<String>();
-      for (String categoria : categories) {
-        if (Thread.interrupted()) {
-          ipedCase.close();
-          throw new InterruptedException("Indexação cancelada!");
-        }
-
-        String query = "categoria:\"" + categoria.replace("\"", "\\\"") + "\"";
-        IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
-		LuceneSearchResult result = pesquisa.searchAll();
-
-        if (result.getLength() > 0) {
-          palavrasFinais.add(categoria);
-        }
-
-      }
-      ipedCase.close();
-
-      Util.saveKeywords(palavrasFinais, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
-      int filtradas = categories.size() - palavrasFinais.size();
-      LOGGER.info("Filtradas {} categorias", filtradas);
-    } else {
-        LOGGER.info("Nenhuma categoria detectada.");
-    	ArrayList<String> categoryList = new ArrayList<String>();
-    	categoryList.addAll(Arrays.asList(categories.toArray(new String[0])));
-    	Util.saveKeywords(categoryList, output.getAbsolutePath() + "/categorias.txt", "UTF-8");
-    }
-
   }
 
   private void filtrarPalavrasChave() {
@@ -647,5 +609,21 @@ public class Manager {
     }
 
   }
+
+	public boolean isSearchAppOpen() {
+		return isSearchAppOpen;
+	}
+	
+	public void setSearchAppOpen(boolean isSearchAppOpen) {
+		this.isSearchAppOpen = isSearchAppOpen;
+	}
+	
+	public boolean isProcessingFinished() {
+		return isProcessingFinished;
+	}
+	
+	public void setProcessingFinished(boolean isProcessingFinished) {
+		this.isProcessingFinished = isProcessingFinished;
+	}
 
 }

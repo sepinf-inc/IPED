@@ -51,9 +51,12 @@ public class Marcadores implements Serializable {
 	private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
 	private File indexDir;
 	private File stateFile, cookie;
+	
+	private transient IPEDSource ipedCase;
 
 	public Marcadores(IPEDSource ipedCase, File modulePath) {
 		this(ipedCase.getTotalItens(), ipedCase.getLastId(), modulePath);
+		this.ipedCase = ipedCase;
 	}
 	
 	public Marcadores(int totalItens, int lastId, final File modulePath) {
@@ -76,13 +79,6 @@ public class Marcadores implements Serializable {
 	
 	public int getTotalItens(){
 		return this.totalItems;
-	}
-	
-	public void resetAndSetIndexDir(File indexDir){
-		selected = null;
-		selectedItens = 0;
-		typedWords = new LinkedHashSet<String>();
-		this.indexDir = indexDir;
 	}
 
 	public File getIndexDir() {
@@ -114,8 +110,9 @@ public class Marcadores implements Serializable {
 	
 	public void selectAll(){
 		selectedItens = totalItems;
-        for (int i = 0; i < selected.length; i++) {
-          selected[i] = true;
+		int maxLuceneId = ipedCase.getReader().maxDoc() - 1;
+        for (int i = 0; i <= maxLuceneId; i++) {
+          selected[ipedCase.getId(i)] = true;
         }
 	}
 
