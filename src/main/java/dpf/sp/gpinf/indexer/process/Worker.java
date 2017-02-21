@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.tika.config.TikaConfig;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -52,9 +50,7 @@ public class Worker extends Thread {
   private static Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 
   private static String workerNamePrefix = "Worker-";
-
-  LinkedBlockingDeque<EvidenceFile> evidences;
-
+  
   public IndexWriter writer;
   String baseFilePath;
 
@@ -83,7 +79,6 @@ public class Worker extends Thread {
   public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
     super(new ThreadGroup("ProcessingThreadGroup-" + k), workerNamePrefix + k);
     this.caseData = caseData;
-    this.evidences = caseData.getEvidenceFiles();
     this.writer = writer;
     this.output = output;
     this.manager = manager;
@@ -96,14 +91,14 @@ public class Worker extends Thread {
 
     config = TikaConfig.getDefaultConfig();
     detector = config.getDetector();
-
+    
     TaskInstaller taskInstaller = new TaskInstaller();
     taskInstaller.installProcessingTasks(this);
     doTaskChaining();
     initTasks();
 
   }
-
+  
   private void doTaskChaining() {
     firstTask = tasks.get(0);
     for (int i = 0; i < tasks.size() - 1; i++) {
@@ -130,6 +125,10 @@ public class Worker extends Thread {
   public void finish() throws Exception {
     this.interrupt();
     finishTasks();
+  }
+  
+  public void processNextQueue() {
+	this.interrupt();
   }
 
   /**
@@ -161,7 +160,7 @@ public class Worker extends Thread {
 
     try {
 
-      LOGGER.debug("{} Indexando {}", getName(), evidence.getPath());
+      LOGGER.info("{} Processando {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
 
       checkFile(evidence);
 
@@ -198,8 +197,8 @@ public class Worker extends Thread {
   public void processNewItem(EvidenceFile evidence) {
     caseData.incDiscoveredEvidences(1);
     // Se não há item na fila, enfileira para outro worker processar
-    if (evidences.size() == 0) {
-      evidences.addFirst(evidence);
+    if (caseData.getItemQueue().size() == 0) {
+    	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {
       long t = System.nanoTime() / 1000;
@@ -218,19 +217,20 @@ public class Worker extends Thread {
 
       try {
         evidence = null;
-        evidence = evidences.takeFirst();
+        evidence = caseData.getItemQueue().takeFirst();
 
         if (!evidence.isQueueEnd()) {
           process(evidence);
+          
         } else {
           EvidenceFile queueEnd = evidence;
           evidence = null;
           if (manager.numItensBeingProcessed() == 0) {
-            evidences.addLast(queueEnd);
+        	  caseData.getItemQueue().addLast(queueEnd);
             process(queueEnd);
             break;
           } else {
-            evidences.addLast(queueEnd);
+        	  caseData.getItemQueue().addLast(queueEnd);
             if (itensBeingProcessed > 0) {
               process(queueEnd);
             } else {
@@ -240,7 +240,8 @@ public class Worker extends Thread {
         }
 
       } catch (InterruptedException e) {
-        break;
+    	  if(caseData.getCurrentQueuePriority() == null)
+    		  break;
       }
     }
 

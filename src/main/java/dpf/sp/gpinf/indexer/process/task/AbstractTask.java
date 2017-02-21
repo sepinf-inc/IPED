@@ -188,22 +188,12 @@ public abstract class AbstractTask {
    */
   protected void sendToNextTask(EvidenceFile evidence) throws Exception {
     if (nextTask != null) {
-    	if(!MimeTypesProcessingOrder.isToProcessAtEnd(evidence.getMediaType()))
+    	int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
+    	if(priority <= caseData.getCurrentQueuePriority())
     		nextTask.processAndSendToNextTask(evidence);
     	else{
-    		if(worker.manager.isProducerTerminated()){
-    			if(evidence.getExtraAttribute("processedAtEnd") != null){
-    				nextTask.processAndSendToNextTask(evidence);
-    			}else{
-    				evidence.setExtraAttribute("processedAtEnd", true);
-        			caseData.addEvidenceFile(evidence);
-        			worker.itensBeingProcessed--;
-    			}
-    		}else{
-    			caseData.addEvidenceFile(evidence);
-    			worker.itensBeingProcessed--;
-    		}
-    			
+    		caseData.addItemToQueue(evidence, priority);
+			worker.itensBeingProcessed--;	
     	}
     }
   }

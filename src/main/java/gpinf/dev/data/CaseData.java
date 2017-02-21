@@ -11,9 +11,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+
+import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 
 /**
  * Classe que define todos os dados do caso.
@@ -44,9 +47,11 @@ public class CaseData implements Serializable {
   private final List<FileGroup> timeGroups = new ArrayList<FileGroup>();
 
   /**
-   * Fila de processamento dos itens do caso
+   * Filas de processamento dos itens do caso
    */
-  private LinkedBlockingDeque<EvidenceFile> evidenceFiles;
+  private TreeMap<Integer,LinkedBlockingDeque<EvidenceFile>> queues;
+  
+  private volatile Integer currentQueuePriority = 0;
 
   /**
    * Mapa genérico de objetos extras do caso. Pode ser utilizado como área de compartilhamento de
@@ -119,7 +124,14 @@ public class CaseData implements Serializable {
    */
   public CaseData(int queueSize) {
     this.maxQueueSize = queueSize;
-    evidenceFiles = new LinkedBlockingDeque<EvidenceFile>();
+    initQueues();
+  }
+  
+  private void initQueues(){
+	  queues = new TreeMap<Integer,LinkedBlockingDeque<EvidenceFile>>();
+	  queues.put(0, new LinkedBlockingDeque<EvidenceFile>());
+	  for(Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
+		  queues.put(priority, new LinkedBlockingDeque<EvidenceFile>());
   }
 
   /**
@@ -168,26 +180,6 @@ public class CaseData implements Serializable {
   }
 
   /**
-   * Retorna String com os dados contidos no objeto.
-   *
-   * @return String listando dados do caso.
-   */
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(caseInformation);
-    sb.append("\n").append("BOOKMARKS(").append(bookmarks.size()).append("):");
-    for (int i = 0; i < bookmarks.size(); i++) {
-      sb.append("\n\t").append(bookmarks.get(i));
-    }
-    sb.append("\n").append("ARQUIVOS(").append(evidenceFiles.size()).append("):");
-    for (int i = 0; i < evidenceFiles.size(); i++) {
-      sb.append("\n\t").append(evidenceFiles.element());
-    }
-    return sb.toString();
-  }
-
-  /**
    * Obtém o objeto raiz da árvore de arquivos do caso.
    *
    * @return objeto raiz, a partir do qual é possível navegar em todo estrutura de diretórios do
@@ -204,21 +196,35 @@ public class CaseData implements Serializable {
    * @throws InterruptedException
    */
   public void addEvidenceFile(EvidenceFile evidenceFile) throws InterruptedException {
-    while (evidenceFiles.size() >= maxQueueSize) {
-      Thread.sleep(1000);
-    }
-
-    evidenceFiles.put(evidenceFile);
+	  addItemToQueue(evidenceFile, 0);
 
   }
+  
+  public void addItemToQueue(EvidenceFile evidenceFile, int queuePriority) throws InterruptedException{
+	  LinkedBlockingDeque<EvidenceFile> queue = queues.get(queuePriority);
+	  while (queue.size() >= maxQueueSize) {
+	      Thread.sleep(1000);
+	  }
 
+	  queue.put(evidenceFile);
+  }
+
+  public Integer changeToNextQueue(){
+	  currentQueuePriority = queues.ceilingKey(currentQueuePriority + 1);
+	  return currentQueuePriority;
+  }
+  
+  public Integer getCurrentQueuePriority(){
+	  return currentQueuePriority;
+  }
+  
   /**
    * Obtém fila de arquivos de evidência do caso.
    *
    * @return fila de arquivos.
    */
-  public LinkedBlockingDeque<EvidenceFile> getEvidenceFiles() {
-    return evidenceFiles;
+  public LinkedBlockingDeque<EvidenceFile> getItemQueue() {
+    return queues.get(currentQueuePriority);
   }
 
   /**

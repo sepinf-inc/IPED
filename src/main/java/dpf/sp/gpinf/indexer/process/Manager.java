@@ -18,10 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,10 +25,8 @@ import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeSet;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
@@ -43,15 +37,13 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
-import org.apache.poi.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +54,8 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.process.task.SetCategoryTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
@@ -73,6 +63,8 @@ import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e
@@ -314,17 +306,18 @@ public class Manager {
         if (workers[k].exception != null && exception == null) {
           exception = workers[k].exception;
         }
-
-        /*
-         *  TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
-         *  não é demasiado grave pois será detectado o problema no log de estatísticas e o usuario sera informado do erro. 
-         */
-        if (caseData.getEvidenceFiles().size() > 0 || workers[k].evidence != null || produtor.isAlive()) //if(workers[k].isAlive())
-        {
+        /** TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não detectar um último item sendo processado
+         *  não é demasiado grave pois será detectado o problema no log de estatísticas e o usuario sera informado do erro. */
+        if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || produtor.isAlive()) //if(workers[k].isAlive())
           someWorkerAlive = true;
-        }
-
-        // TODO verificar se algum worker morreu e reinicia-lo? (Nao deve ocorrer...)
+      }
+      
+      if(!someWorkerAlive){
+      	if(caseData.changeToNextQueue() != null){
+      		someWorkerAlive = true;
+          	for (int k = 0; k < workers.length; k++)
+          		workers[k].processNextQueue();
+      	}
       }
 
       if (exception != null) {
@@ -343,13 +336,6 @@ public class Manager {
       num += workers[k].itensBeingProcessed;
     }
     return num;
-  }
-  
-  public boolean isProducerTerminated(){
-	  if(produtor != null)
-		  return !produtor.isAlive();
-	  else
-		  return false;
   }
 
   private void finalizarIndexacao() throws Exception {

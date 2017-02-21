@@ -1,34 +1,60 @@
 package dpf.sp.gpinf.indexer.process;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.tika.mime.MediaType;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 
+/**
+ * Classe de definição de prioridade de processamento de itens com base no mimeType.
+ * Para cada prioridade, é criada uma fila de processamento contendo os itens com tal prioridade.
+ * MimeTypes sem prioridade definida recebem a prioridade padrão zero.
+ * Primeiro são processados os itens da fila de prioridade 0, depois da fila de prioridade 1 e assim por diante.
+ * Assim é possível configurar dependências de processamento entre os itens. 
+ * 
+ * @author Nassif
+ *
+ */
 public class MimeTypesProcessingOrder {
 	
-	private static Set<MediaType> mediaTypes = installTypesToPostProcess();
+	/** Mapa do mimeType para sua prioridade de processamento */
+	private static Map<MediaType, Integer> mediaTypes = installTypesToPostProcess();
 	
-	private static Set<MediaType> installTypesToPostProcess(){
+	/** Definie as prioridades de processamento dos mimeTypes */
+	private static Map<MediaType, Integer> installTypesToPostProcess(){
 		
-		Set<MediaType> mediaTypes = new HashSet<MediaType>();
+		Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
 		
-		mediaTypes.add(WhatsAppParser.MSG_STORE);
-		mediaTypes.add(WhatsAppParser.WA_DB);
-		mediaTypes.add(SkypeParser.SKYPE_MIME);
+		mediaTypes.put(SkypeParser.SKYPE_MIME, 1);
+		
+		mediaTypes.put(WhatsAppParser.WA_DB, 1);
+		mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
 		
 		return mediaTypes;
 	}
 	
-	public static boolean isToProcessAtEnd(MediaType mediaType){
+	/** Obtém a prioridade de processamento do mimeType */
+	public static int getProcessingPriority(MediaType mediaType){
 		
-		if(mediaTypes.contains(mediaType))
-			return true;
+		Integer priority = mediaTypes.get(mediaType);
+		if(priority != null)
+			return priority;
 		else
-			return false;
+			return 0;
+	}
+	
+	/** Obtém todas as prioridades de processamento configuradas */
+	public static Set<Integer> getProcessingPriorities(){
+		Set<Integer> priorities = new TreeSet<Integer>();
+		for(Integer p : mediaTypes.values())
+			priorities.add(p);
+		
+		return priorities;
 	}
 
 }
