@@ -16,7 +16,7 @@ outputOnSSD = false
 
 # Habilita cálculo de hash dos arquivos. Para calcular vários hashes utilize ; como separador
 # Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey
-hash = md5;
+hash = md5; sha-256
 
 # Caminho para base de hashes (KFF) do IPED. Comente caso não queira confrontar hashes na base. É altamente
 # recomendado armazenar a base num disco SSD, sob pena de impactar o tempo de processamento. Pode-se importar 
