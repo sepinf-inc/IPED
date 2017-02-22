@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -111,6 +112,7 @@ public class Worker extends Thread {
       if (this.getName().equals(workerNamePrefix + 0)) {
         LOGGER.info("Inicializando " + task.getClass().getSimpleName());
       }
+      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Inicializando " + task.getClass().getSimpleName() + "...");
       task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
     }
 
