@@ -617,7 +617,7 @@ public class SleuthkitReader extends DataSourceReader {
       return;
     }
 
-    if(!Configuration.addUnallocated && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK)
+    if(!Configuration.addFileSlacks && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK)
     	return;
     
     addEvidenceFile(absFile, parent);
@@ -711,7 +711,7 @@ public class SleuthkitReader extends DataSourceReader {
     }
     
     if(absFile instanceof SlackFile){
-    	evidence.setMediaType(MediaType.application("x-slackspace"));
+    	evidence.setMediaType(MediaType.application("x-fileslack"));
     	evidence.setType(new GenericFileType("slack"));
     	evidence.setDeleted(true);
     }

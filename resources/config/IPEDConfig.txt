@@ -67,6 +67,9 @@ indexUnknownFiles = true
 # Opções avançadas do OCR, como o caminho do Tesseract no Linux, podem ser alteradas em conf/AdvancedConfig.txt
 enableOCR = false
 
+# Adiciona e processa fileSlacks dos arquivos
+addFileSlacks = false
+
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
 addUnallocated = false
 
