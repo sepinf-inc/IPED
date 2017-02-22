@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -93,7 +94,7 @@ public class KFFCarveTask extends BaseCarveTask {
         String value = confParams.getProperty("enableKFFCarving");
         if (value != null && value.trim().equalsIgnoreCase("true")) {
           if (LedKFFTask.kffItems != null) {
-            md5_512 = LedKFFTask.hashArrays.get("md5-512");
+            md5_512 = LedHashes.hashMap.get("md5-512");
             System.err.println("LEN=" + md5_512.length);
             taskEnabled = true;
           } else {
