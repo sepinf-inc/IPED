@@ -65,6 +65,7 @@ public class Configuration {
   public static int textSplitSize = 10000000;
   public static int textOverlapSize = 10000;
   public static int timeOut = 180;
+  public static int timeOutPerMB = 1;
   public static boolean forceMerge = true;
   public static String configPath;
   public static Parser errorParser = new RawStringParser(true);
@@ -182,6 +183,14 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       timeOut = Integer.valueOf(value);
     }
+    
+    value = properties.getProperty("timeOutPerMB");
+    if (value != null) {
+      value = value.trim();
+    }
+    if (value != null && !value.isEmpty()) {
+    	timeOutPerMB = Integer.valueOf(value);
+    }    
 
     ParsingReader.setTextSplitSize(textSplitSize);
     ParsingReader.setTextOverlapSize(textOverlapSize);
