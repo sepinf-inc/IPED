@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
@@ -51,6 +52,7 @@ public class P2PBookmarker {
 		p2pPrograms.add(new P2PProgram(KnownMetParser.getSharedHashes(), HashTask.EDONKEY, "Emule"));
 		p2pPrograms.add(new P2PProgram(AresParser.getSharedHashes(), "sha-1", "Ares"));
 		p2pPrograms.add(new P2PProgram(ShareazaLibraryDatParser.getSharedHashes(), "md5", "Shareaza"));
+		p2pPrograms.add(new P2PProgram(WhatsAppParser.getSharedHashes(), "sha-256", "WhatsApp"));
 		
 		for(P2PProgram program : p2pPrograms){
 			List<HashValue> hashes = program.sharedHashes;
