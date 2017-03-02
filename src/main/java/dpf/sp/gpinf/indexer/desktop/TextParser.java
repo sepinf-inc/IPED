@@ -237,13 +237,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     try {
 
       Metadata metadata = new Metadata();
-      metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, contentType);
-      metadata.set(Metadata.RESOURCE_NAME_KEY, item.getName());
-      Long size = item.getLength() == null ? 1 : item.getLength();
-      metadata.set(Metadata.CONTENT_LENGTH, size.toString());
-      if (item.isTimedOut()) {
-        metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-      }
+      ParsingTask.fillMetadata(item, metadata);
 
       ParseContext context = getTikaContext();
       is = item.getTikaStream();

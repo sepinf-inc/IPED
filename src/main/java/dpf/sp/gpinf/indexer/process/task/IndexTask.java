@@ -202,16 +202,7 @@ public class IndexTask extends BaseCarveTask {
   private Metadata getMetadata(EvidenceFile evidence) {
 	//new metadata to prevent ConcurrentModificationException while indexing
     Metadata metadata = new Metadata();
-    Long len = evidence.getLength();
-    if (len == null) {
-      len = 0L;
-    }
-    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
-    metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
-    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
-    if (evidence.isTimedOut()) {
-      metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-    }
+    ParsingTask.fillMetadata(evidence, metadata);
     return metadata;
   }
 
@@ -317,7 +308,7 @@ public class IndexTask extends BaseCarveTask {
 
   private void saveExtraAttributes() throws IOException {
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
-    HashSet<String> extraAttr = EvidenceFile.getAllExtraAttributes();
+    Set<String> extraAttr = EvidenceFile.getAllExtraAttributes();
     Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
   }
 

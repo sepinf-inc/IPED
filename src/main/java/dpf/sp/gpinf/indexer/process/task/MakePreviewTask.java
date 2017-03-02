@@ -114,7 +114,9 @@ public class MakePreviewTask extends AbstractTask {
   private void makeHtmlPreview(EvidenceFile evidence, File outFile) throws Throwable {
     BufferedOutputStream outStream = null;
     try {
-      final Metadata metadata = evidence.getMetadata();
+      final Metadata metadata = new Metadata();
+      ParsingTask.fillMetadata(evidence, metadata);
+      
       //Não é necessário fechar tis pois será fechado em evidence.dispose()
       final TikaInputStream tis = evidence.getTikaStream();
       

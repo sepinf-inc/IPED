@@ -166,18 +166,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   }
 
   private void fillMetadata(EvidenceFile evidence) {
-    Metadata metadata = evidence.getMetadata();
-    Long len = evidence.getLength();
-    if (len == null) {
-      len = 0L;
-    }
-    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
-    metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
-    metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
-    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
-    if (evidence.isTimedOut()) {
-      metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
-    }
+	  fillMetadata(evidence, evidence.getMetadata());
+  }
+  
+  public static void fillMetadata(EvidenceFile evidence, Metadata metadata){
+	Long len = evidence.getLength();
+	if (len == null) {
+	  len = 0L;
+	}
+	metadata.set(Metadata.CONTENT_LENGTH, len.toString());
+	metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
+	metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
+	metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+	if (evidence.isTimedOut()) {
+	  metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
+	}
   }
 
   public static void load(File file) throws FileNotFoundException, IOException {
