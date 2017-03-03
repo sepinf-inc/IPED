@@ -19,13 +19,10 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog;
-import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.RowSorter;
-import javax.swing.SwingUtilities;
 import javax.swing.table.TableRowSorter;
 
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
@@ -45,17 +42,14 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
   }
 
   public void initComparator(int col) {
+	if(RowComparator.isNewIndexReader())
+		comparatorCache.clear();
     RowComparator comp = comparatorCache.get(col);
     if (comp == null) {
       comp = new RowComparator(col);
       comparatorCache.put(col, comp);
     }
     this.setComparator(col, comp);
-  }
-
-  public static void resetComparators() throws IOException {
-    comparatorCache.clear();
-    RowComparator.closeAtomicReader();
   }
 
   public void setSortKeys(final List<? extends SortKey> sortKeys) {

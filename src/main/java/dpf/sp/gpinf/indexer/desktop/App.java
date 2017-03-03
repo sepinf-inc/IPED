@@ -110,8 +110,7 @@ public class App extends JFrame implements WindowListener {
   public JDialog dialogBar;
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
-  JButton pesquisar, opcoes;
-  JButton ajuda;
+  JButton pesquisar, opcoes, atualizar, ajuda;
   JCheckBox checkBox, recursiveTreeList;
   JTable resultsTable;
   GalleryTable gallery;
@@ -196,6 +195,10 @@ public class App extends JFrame implements WindowListener {
   public AppSearchParams getSearchParams() {
     return this.appSearchParams;
   }
+  
+  public Manager getProcessingManager(){
+	  return processingManager;
+  }
 
   public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile, Manager processingManager) {
 
@@ -263,9 +266,8 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams.textViewer = textViewer;
   }
 
-  public void destroy() {
+  private void destroy() {
     try {
-      ResultTableRowSorter.resetComparators();
     	
       if (this.resultsTable != null) {
         ColumnsManager.getInstance().saveColumnsState();
@@ -275,11 +277,11 @@ public class App extends JFrame implements WindowListener {
       }
       appCase.close();
       
-      logConfiguration.closeConsoleLogFile();
-      
       if(processingManager == null || processingManager.isProcessingFinished()){
     	  if(processingManager != null)
     		  processingManager.deleteTempDir();
+    	  if(logConfiguration != null)
+    		  logConfiguration.closeConsoleLogFile();
     	  
       	System.exit(0);
       	
@@ -349,6 +351,7 @@ public class App extends JFrame implements WindowListener {
 
     pesquisar = new JButton("Pesquisar");
     opcoes = new JButton("Opções");
+    atualizar = new JButton("Atualizar");
     ajuda = new JButton("Ajuda");
     checkBox = new JCheckBox("0");
 
@@ -377,6 +380,8 @@ public class App extends JFrame implements WindowListener {
     topPanel.add(new JLabel("    Pesquisar:"));
     topPanel.add(termo);
     topPanel.add(opcoes);
+    if(processingManager != null)
+    	topPanel.add(atualizar);
     topPanel.add(ajuda);
     topPanel.add(checkBox);
     topPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -568,6 +573,7 @@ public class App extends JFrame implements WindowListener {
     filtro.addActionListener(appletListener);
     pesquisar.addActionListener(appletListener);
     opcoes.addActionListener(appletListener);
+    atualizar.addActionListener(appletListener);
     ajuda.addActionListener(appletListener);
     checkBox.addActionListener(appletListener);
     resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());

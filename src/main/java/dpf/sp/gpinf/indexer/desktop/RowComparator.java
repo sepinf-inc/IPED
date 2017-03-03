@@ -21,11 +21,11 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashSet;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
@@ -45,6 +45,7 @@ public class RowComparator implements Comparator<Integer> {
   private boolean bookmarkCol = false;
   private boolean scoreCol = false;
 
+  private volatile static IndexReader indexReader;
   private volatile static AtomicReader atomicReader;
   private static boolean loadDocValues = true;
 
@@ -101,8 +102,12 @@ public class RowComparator implements Comparator<Integer> {
 		  return;
 	  
     try {
-      if (atomicReader == null)
-        atomicReader = SlowCompositeReaderWrapper.wrap(app.appCase.getReader());
+    	if(isNewIndexReader()){
+    		indexReader = App.get().appCase.getReader();
+    		if (atomicReader != null)
+    			IOUtil.closeQuietly(atomicReader);
+    		atomicReader = SlowCompositeReaderWrapper.wrap(indexReader);
+    	}
 
       if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
         ndv = atomicReader.getNumericDocValues(indexedField);
@@ -123,11 +128,9 @@ public class RowComparator implements Comparator<Integer> {
       e.printStackTrace();
     }
   }
-
-  public static void closeAtomicReader() throws IOException {
-    if (atomicReader != null)
-      IOUtil.closeQuietly(atomicReader);
-    atomicReader = null;
+  
+  public static boolean isNewIndexReader(){
+	  return indexReader == null || indexReader != App.get().appCase.getReader();
   }
 
   public boolean isStringComparator() {

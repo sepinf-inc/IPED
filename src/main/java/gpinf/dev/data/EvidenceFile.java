@@ -11,11 +11,13 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -55,7 +57,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
 
-  private static HashSet<String> extraAttributeSet = new HashSet<String>();
+  private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
 
   public static boolean robustImageReading = false;
 
@@ -343,12 +345,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     return this.extraAttributes;
   }
 
-  public static HashSet<String> getAllExtraAttributes() {
+  public static Set<String> getAllExtraAttributes() {
     return extraAttributeSet;
-  }
-
-  public static void setExtraAttributeSet(HashSet<String> attributeSet) {
-    extraAttributeSet = attributeSet;
   }
 
   /**
@@ -876,10 +874,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setExtraAttribute(String key, Object value) {
     this.extraAttributes.put(key, value);
-
-    synchronized (extraAttributeSet) {
-      extraAttributeSet.add(key);
-    }
+    extraAttributeSet.add(key);
   }
 
   /**

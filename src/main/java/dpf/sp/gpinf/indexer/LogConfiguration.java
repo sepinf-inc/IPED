@@ -92,4 +92,8 @@ public class LogConfiguration {
 	    	System.out.println(df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath());
 	    
 	  }
+	  
+	  public PrintStream getSystemOut(){
+		  return out;
+	  }
 }

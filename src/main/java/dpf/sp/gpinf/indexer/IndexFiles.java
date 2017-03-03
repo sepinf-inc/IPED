@@ -194,7 +194,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     	  LOGGER.error("Erro no processamento:", e);
 
     } finally {
-      logConfiguration.closeConsoleLogFile();
+      if(manager != null)
+       	manager.setProcessingFinished(true);
+      if(manager == null || !manager.isSearchAppOpen())
+    	logConfiguration.closeConsoleLogFile();
       done = true;
     }
 
@@ -265,17 +268,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     }
 
     if (!success) {
-      System.out.println("\nERRO!!!");
+    	getInstance().logConfiguration.getSystemOut().println("\nERRO!!!");
     } else {
-      System.out.println("\n" + Versao.APP_EXT + " finalizado.");
+    	getInstance().logConfiguration.getSystemOut().println("\n" + Versao.APP_EXT + " finalizado.");
     }
 
     if (!indexador.nologfile) {
-      System.out.println("Consulte o LOG na pasta \"IPED/log\".");
+    	getInstance().logConfiguration.getSystemOut().println("Consulte o LOG na pasta \"IPED/log\".");
     }
-    
-    if(getInstance().manager != null)
-    	getInstance().manager.setProcessingFinished(true);
     
     if(getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
     	System.exit((success)?0:1);

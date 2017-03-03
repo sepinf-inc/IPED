@@ -60,14 +60,16 @@ public class AppMain {
 		    	  logParent = casesPathFile.getParentFile();
 		      
 		      File logFile = new File(logParent, appLogFileName).getCanonicalFile();
-		      LogConfiguration logConfiguration = new LogConfiguration(logFile);
-		      logConfiguration.configureLogParameters(libDir.getParentFile().getAbsolutePath(), nolog);
+		      LogConfiguration logConfiguration = null;
+		      if(processingManager == null){
+		    	  logConfiguration = new LogConfiguration(logFile);
+		    	  logConfiguration.configureLogParameters(libDir.getParentFile().getAbsolutePath(), nolog);
+		      }
 			  
 		      App.get().getSearchParams().codePath = libDir.getAbsolutePath();
 			  App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
 			  
-			  InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), 
-					  processingManager == null ? null : processingManager.getIndexWriter());
+			  InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
 			  init.execute();
 			  
 		  } catch (Exception e) {

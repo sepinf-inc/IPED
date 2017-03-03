@@ -26,6 +26,8 @@ import javax.swing.JScrollPane;
 import javax.swing.table.TableColumn;
 
 import org.apache.tika.metadata.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -39,10 +41,12 @@ import gpinf.dev.data.EvidenceFile;
 public class ColumnsManager implements ActionListener, Serializable{
     
     private static final long serialVersionUID = 1057562688829969313L;
+    
+    private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
 
     private static File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
     
-    private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 250, 2000);
+    private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
 	
 	private static String[] defaultFields =
 		{ 
@@ -107,6 +111,10 @@ public class ColumnsManager implements ActionListener, Serializable{
 		return instance;
 	}
 	
+	public static void disposeInstance(){
+		instance = null;
+	}
+	
 	public void setVisible(){
 		dialog.setVisible(true);
 	}
@@ -124,22 +132,23 @@ public class ColumnsManager implements ActionListener, Serializable{
 	}
 	
 	public void saveColumnsState(){
-	    ColumnState cs = new ColumnState();
-	    for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
-	        TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-	        if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){    
-                cs.visibleFields.add(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length));
-                cs.initialWidths.add(tc.getWidth());
-            }
-	    }
-	    if(cs.visibleFields.size() > 0)
-		    try {
+		try {
+			ColumnState cs = new ColumnState();
+		    for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
+		        TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+		        if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){    
+	                cs.visibleFields.add(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length));
+	                cs.initialWidths.add(tc.getWidth());
+	            }
+		    }
+		    if(cs.visibleFields.size() > 0){
 		    	globalCols.getParentFile().mkdirs();
 	            Util.writeObject(cs, globalCols.getAbsolutePath());
 	            Util.writeObject(cs, caseCols.getAbsolutePath());
-	        } catch (IOException e1) {
-	            e1.printStackTrace();
-	        }
+		    }
+	    } catch (Exception e1) {
+	       e1.printStackTrace();
+	    }
 	}
 	
 	private ColumnsManager(){
@@ -179,11 +188,10 @@ public class ColumnsManager implements ActionListener, Serializable{
 		
 		TreeSet<String> extraAttrs = new TreeSet<String>();
 		extraAttrs.addAll(Arrays.asList(extraFields));
-		for(IPEDSource source : App.get().appCase.getAtomicSources())
-			extraAttrs.addAll(source.getExtraAttributes());
+		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
 		extraFields = extraAttrs.toArray(new String[0]);
 		
-		fieldGroups = new String[][] {defaultFields, extraFields, email, indexFields};
+		fieldGroups = new String[][] {defaultFields.clone(), extraFields, email, indexFields};
 		
 		for(String[] fields : fieldGroups)
 			Arrays.sort(fields, Collator.getInstance());
@@ -228,6 +236,7 @@ public class ColumnsManager implements ActionListener, Serializable{
             }
 		}
 		if(!lastColsOk){
+			LOGGER.info("Loading default columns");
 		    for(String col : defaultFields)
 		        loadedFields.add(col);
 		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();

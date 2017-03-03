@@ -106,7 +106,7 @@ public class IPEDSource implements Closeable{
 	
 	LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 	
-	HashSet<String> extraAttributes = new HashSet<String>();
+	Set<String> extraAttributes = new HashSet<String>();
 	
 	boolean isFTKReport = false, isReport = false;
 	
@@ -170,7 +170,7 @@ public class IPEDSource implements Closeable{
 			
 			File extraAttrFile = new File(moduleDir, "data/" + IndexTask.extraAttrFilename);
 			if(extraAttrFile.exists()){
-				extraAttributes = (HashSet<String>)Util.readObject(extraAttrFile.getAbsolutePath());
+				extraAttributes = (Set<String>)Util.readObject(extraAttrFile.getAbsolutePath());
 				EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
 			}
 			
@@ -460,7 +460,7 @@ public class IPEDSource implements Closeable{
 		return keywords;
 	}
 	
-	public HashSet<String> getExtraAttributes(){
+	public Set<String> getExtraAttributes(){
 		return this.extraAttributes;
 	}
 	

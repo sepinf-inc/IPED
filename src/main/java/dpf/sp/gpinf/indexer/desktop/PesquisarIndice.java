@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
@@ -45,9 +46,9 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 	
 	private static SoftReference<MultiSearchResult> allItemsCache;
-	private static App app;
+	private static IPEDSource ipedCase;
 	
-	volatile static int numFilters = 0;
+	volatile int numFilters = 0;
 	ProgressDialog progressDialog;
 	
 	String queryText;
@@ -136,11 +137,9 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			try {
 				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 					
-				if(app == null)
-					app = App.get();
-				else if(app != App.get()){
+				if(ipedCase == null || ipedCase != App.get().appCase){
 					allItemsCache = null;
-					app = App.get();
+					ipedCase = App.get().appCase;
 				}
 				
 				Query q = searcher.getQuery();
@@ -228,7 +227,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 		LOGGER.error("Pesquisa cancelada!");
 		searcher.cancel();
 		try {
-			ResultTableRowSorter.resetComparators();
 			App.get().appCase.reopen();
 
 		} catch (IOException e) {

@@ -24,6 +24,7 @@ import gpinf.dev.data.EvidenceFile;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.IntField;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +70,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       }
     } else {
       doc = new Document();
+      doc.add(new IntField(IndexItem.ID, 0, Field.Store.YES));
       doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
       String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
       doc.add(new Field(IndexItem.EXPORT, moduleDir + "/htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
@@ -86,7 +88,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         return null;
       }
 
-      process();
+      try{
+    	  process();
+    	  
+      }catch(Exception e){
+    	  e.printStackTrace();
+      }
 
     }
     return null;
@@ -109,11 +116,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
 	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 	
-	int textSize = App.get().appCase.getAtomicSource(docId).getTextSize(item.getId());
+	int textSize = iCase.getTextSize(item.getId());
 	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
 	
 	OCROutputFolder ocrOut = new OCROutputFolder(iCase.getModuleDir());
 	item.setExtraAttribute(OCROutputFolder.class.getName(), ocrOut);
+	EvidenceFile.getAllExtraAttributes().remove(OCROutputFolder.class.getName());
 
     disposeItem(lastItem);
     lastItem = item;
@@ -127,7 +135,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     if (item.getViewFile() != null) {
     	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
     }
-
+    
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
   }
 

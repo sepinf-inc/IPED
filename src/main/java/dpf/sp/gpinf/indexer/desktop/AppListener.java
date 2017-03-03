@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JOptionPane;
 
@@ -135,6 +136,11 @@ public class AppListener implements ActionListener, MouseListener {
       App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
       App.get().appCase.getMultiMarcadores().saveState();
       MarcadoresController.get().atualizarGUI();
+    }
+    
+    if (evt.getSource() == App.get().atualizar){ 
+    	InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), App.get().getProcessingManager(), true);
+		init.execute();
     }
 
     clearSearchBox = false;

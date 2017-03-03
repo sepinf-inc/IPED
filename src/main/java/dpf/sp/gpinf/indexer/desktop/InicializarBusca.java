@@ -23,7 +23,6 @@ import java.util.List;
 
 import javax.swing.SwingWorker;
 
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
@@ -42,14 +42,21 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 	
   private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
+  
+  private boolean updateItems; 
 
   private AppSearchParams appSearchParams = null;
   private TreeViewModel treeModel;
-  private IndexWriter indexWriter;
+  private Manager manager;
 
-  public InicializarBusca(AppSearchParams params, IndexWriter indexWriter) {
-    this.appSearchParams = params;
-    this.indexWriter = indexWriter;
+  public InicializarBusca(AppSearchParams params, Manager manager) {
+    this(params, manager, false);
+  }
+  
+  public InicializarBusca(AppSearchParams params, Manager manager, boolean updateItems) {
+	  this.appSearchParams = params;
+	  this.manager = manager;
+	  this.updateItems = updateItems;
   }
 
   @Override
@@ -71,55 +78,60 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     try {
       // ImageIO.setUseCache(false);
-      IViewerControl viewerControl = ViewerControl.getInstance();
+      
+      if(updateItems)
+    	  App.get().appCase.close();
       
       if(!App.get().isMultiCase){
-    	  IPEDSource singleCase = new IPEDSource(App.get().casesPathFile, indexWriter);
+    	  IPEDSource singleCase = null;
+    	  if(manager == null) singleCase = new IPEDSource(App.get().casesPathFile);
+    	  else singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
     	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
 		
-      LOGGER.info("Loading Columns");
-      App.get().resultsModel.initCols();
-		
       if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
-      App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
-
+      
+      ColumnsManager.disposeInstance();
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
       OCRParser.EXECTESS = false;
-
-      IndexerDefaultParser autoParser = new IndexerDefaultParser();
-      autoParser.setFallback(Configuration.fallBackParser);
-      autoParser.setErrorParser(Configuration.errorParser);
-      App.get().setAutoParser(autoParser);
-
-      //Load viewers
-      FileProcessor exibirAjuda = new FileProcessor(-1, false);
-      viewerControl.createViewers(this.appSearchParams, exibirAjuda);
-      this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-      App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
       
-      LOGGER.info("Listing items");
-
-      // lista todos os itens
-      PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
-      pesquisa.execute();
-      
-      LOGGER.info("Listing items Finished");
+      if(!updateItems){
+    	  LOGGER.info("Loading Columns");
+          App.get().resultsModel.initCols();
+    	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+    	  
+          IndexerDefaultParser autoParser = new IndexerDefaultParser();
+          autoParser.setFallback(Configuration.fallBackParser);
+          autoParser.setErrorParser(Configuration.errorParser);
+          App.get().setAutoParser(autoParser);
+    	  
+    	  FileProcessor exibirAjuda = new FileProcessor(-1, false);
+    	  
+    	  IViewerControl viewerControl = ViewerControl.getInstance();
+          viewerControl.createViewers(this.appSearchParams, exibirAjuda);
+          this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
+          App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
+          
+          LOGGER.info("Listing all items");
+          PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
+          pesquisa.execute();
+          LOGGER.info("Listing all items Finished");          
+      }
       
       treeModel = new TreeViewModel();
-
+      
     } catch (Throwable e) {
       e.printStackTrace();
     }
-
+    
     return null;
   }
-
+  
   @Override
   public void done() {
-	  App.get().categoryTree.setModel(new CategoryTreeModel());
+	  CategoryTreeModel.install();
 	  App.get().menu = new MenuClass();
 	  App.get().filterManager.loadFilters();
 	  MarcadoresController.get().atualizarGUIandHistory();
@@ -128,6 +140,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().tree.setModel(treeModel);
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
+    }
+    if(updateItems){
+    	App.get().appletListener.updateFileListing();
+    	App.get().dialogBar.setVisible(false);
     }
   }
 

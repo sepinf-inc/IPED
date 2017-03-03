@@ -1,15 +1,18 @@
-xx/xx/2017: IPED-3.12
+xx/03/2017: IPED-3.12
 - Atualização para Sleuthkit-4.4 (processamento de FileSlacks)
 - Análise simultânea ao processamento (apenas itens processados por completo)
 - API para acessar múltiplos itens de dentro dos parsers
-- Múltiplas filas de processamento para acomodar dependências de parsing entre os itens
-- Melhorias no WhatsAppParser: abertura de anexos (necessita do sha-256), extrai contatos, inclui avatares, inclui apelidos nos chats, miniaturas de vídeos, renderiza emojis 
+- Múltiplas filas de processamento para suportar dependências de parsing entre os itens
+- Melhorias no WhatsAppParser: abertura de anexos (necessita do sha-256), extrai contatos, inclui avatares, inclui apelidos nos chats, miniaturas de vídeos, renderiza emojis
+- Criação de marcador automático p/ itens enviados via WhatsApp
 - Função para localizar documentos por similaridade
-- Melhor detecção de tipos derivados de SQLite via nomes de tabelas (antes usava apenas nome)
+- Melhor detecção de tipos derivados de SQLite via tabelas (antes usava apenas nome)
 - Otimizações no fastmode ao processar imagens e dispositivos
+- Exposição do parâmetro de timeout por tamanho (timeOutPerMB)
+- Carregamento mais rápido de bases do LED (PCF Wladimir)
+- Aumenta cache de texto extraído para indexação mais rápida de itens grandes
 Correções:
 - Processamento interminável devido a bug no carving de MP4 (3.10)
-- Processamento abortava com OutOfMemory na análise de assinatura (3.11)
 - OutOfMemory ao processar caixas DBX corrompidas (2.15)
 - Contas do Skype não eram renderizadas no HTMLViewer
 - Visualização truncada de chats do skype devido a msgs com html mal formado

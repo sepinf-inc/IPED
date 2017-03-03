@@ -35,6 +35,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -42,6 +43,7 @@ import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
@@ -427,7 +429,11 @@ public void actionPerformed(ActionEvent e) {
 		}
 	}
 	if(e.getSource().equals(openApp)){
-		new AppMain().start(workers[0].output.getParentFile(), workers[0].manager);
+		if(!App.get().isVisible()){
+			JOptionPane.showMessageDialog(App.get(), "A árvore de diretórios só estará completa ao fim do processamento!");
+			new AppMain().start(workers[0].output.getParentFile(), workers[0].manager);
+		}else
+			JOptionPane.showMessageDialog(App.get(), "O aplicativo de análise já está aberto!");
 	}
 }
 

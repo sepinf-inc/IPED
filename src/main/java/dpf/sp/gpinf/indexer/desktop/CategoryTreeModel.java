@@ -7,12 +7,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
@@ -22,17 +23,38 @@ public class CategoryTreeModel implements TreeModel {
   public static String rootName = "Categorias";
   private static String CONF_FILE = "conf/CategoryHierarchy.txt";
 
-  public Category root = new Category(rootName, null);
+  public Category root;
+  
+  private List<TreeModelListener> listeners = new ArrayList<TreeModelListener>(); 
+  
   private Collator collator;
+  
+  public static void install(){
+	  if(App.get().categoryTree.getModel() instanceof CategoryTreeModel)
+		  ((CategoryTreeModel)App.get().categoryTree.getModel()).updateCategories();
+	  else
+		  App.get().categoryTree.setModel(new CategoryTreeModel());
+  }
 
-  public CategoryTreeModel() {
+  private CategoryTreeModel() {
     try {
       collator = Collator.getInstance();
       collator.setStrength(Collator.PRIMARY);
-      loadHierarchy();
+      this.root = loadHierarchy();
+      
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+  
+  private void updateCategories(){
+	try {
+		Category newRoot = loadHierarchy();
+		addNewChildren(this.root, newRoot);
+		
+	} catch (IOException e) {
+		e.printStackTrace();
+	} 
   }
 
   class Category implements Comparable<Category> {
@@ -74,9 +96,11 @@ public class CategoryTreeModel implements TreeModel {
 	  return str.toString().trim();
   }
 
-  private void loadHierarchy() throws IOException {
-
-	ArrayList<Category> categoryList = getLeafCategories();
+  private Category loadHierarchy() throws IOException {
+	  
+	Category root = new Category(rootName, null);
+	  
+	ArrayList<Category> categoryList = getLeafCategories(root);
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
         new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8"));
@@ -102,8 +126,43 @@ public class CategoryTreeModel implements TreeModel {
 
     populateChildren(root, categoryList);
     
-    filterEmptyCategories(root, getLeafCategories());
-
+    filterEmptyCategories(root, getLeafCategories(root));
+    
+    return root;
+  }
+  
+  private void addNewChildren(Category oldRoot, Category newRoot){
+	  int idx = 0;
+	  for(Category cat : newRoot.children){
+		  if(!oldRoot.children.contains(cat)){
+			  cat.parent = oldRoot;
+			  oldRoot.children.add(cat);
+			  notifyNewNode(cat, idx);
+		  }else
+			  addNewChildren(getFromSet(oldRoot.children, cat), cat);
+		  idx++;
+	  }
+  }
+  
+  private Category getFromSet(Set<Category> set, Category cat){
+	  Iterator<Category> it = set.iterator();
+	  while(it.hasNext()){
+		  Category next = it.next();
+		  if(next.equals(cat))
+			  return next;
+	  }
+	  return null;
+  }
+  
+  private void notifyNewNode(Category cat, int idx){
+	  int[] idxs = {idx};
+	  Category[] cats = {cat};
+	  LinkedList<Category> path = new LinkedList<Category>();
+	  while(cat.parent != null)
+		  path.addFirst(cat = cat.parent);
+	  TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
+	  for(TreeModelListener l : listeners)
+		  l.treeNodesInserted(e);
   }
   
   private Category tryAddAndGet(ArrayList<Category> categoryList, Category category){
@@ -114,7 +173,7 @@ public class CategoryTreeModel implements TreeModel {
 	      return categoryList.get(categoryList.indexOf(category));
   }
   
-  private ArrayList<Category> getLeafCategories(){
+  private ArrayList<Category> getLeafCategories(Category root){
 	  ArrayList<Category> categoryList = new ArrayList<Category>();
 	  for (String category : App.get().appCase.getCategories()) {
 		  category = upperCaseChars(category);
@@ -176,6 +235,8 @@ public class CategoryTreeModel implements TreeModel {
 
   @Override
   public int getIndexOfChild(Object parent, Object child) {
+	if(parent == null || child == null)
+	  return -1;
     int i = 0;
     for (Category cat : ((Category) parent).children) {
       if (cat.equals(child)) {
@@ -183,18 +244,18 @@ public class CategoryTreeModel implements TreeModel {
       }
       i++;
     }
-    return 0;
+    return -1;
   }
 
   @Override
   public void addTreeModelListener(TreeModelListener l) {
-    //treeModelListeners.addElement(l);
+    listeners.add(l);
 
   }
 
   @Override
   public void removeTreeModelListener(TreeModelListener l) {
-    //treeModelListeners.removeElement(l);
+	listeners.remove(l);
 
   }
 
