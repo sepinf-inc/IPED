@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
@@ -82,11 +84,24 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        IndexItem.TIMEOUT,
 	        IndexItem.TREENODE,
 	        IndexItem.EVIDENCE_UUID,
-	        IndexerDefaultParser.PARSER_EXCEPTION
+	        IndexerDefaultParser.PARSER_EXCEPTION,
+	        OCRParser.OCR_CHAR_COUNT,
+	        ExtraProperties.WKFF_HITS,
+	        ExtraProperties.P2P_REGISTRY_COUNT,
+	        ExtraProperties.SHARED_HASHES
 	    };
 	
-	public static final String[] email = {ExtraProperties.MESSAGE_SUBJECT, ExtraProperties.MESSAGE_DATE.getName(), 
-			Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, ExtraProperties.MESSAGE_BODY};
+	public static final String[] email = {
+			ExtraProperties.MESSAGE_SUBJECT,
+			ExtraProperties.MESSAGE_DATE.getName(),
+			ExtraProperties.MESSAGE_BODY,
+			Message.MESSAGE_FROM, 
+			Message.MESSAGE_TO, 
+			Message.MESSAGE_CC, 
+			Message.MESSAGE_BCC, 
+			OutlookPSTParser.PST_ATTACH,
+			OutlookPSTParser.HAS_ATTACHS
+		};
 	
 	private static ColumnsManager instance;
 	
