@@ -53,7 +53,7 @@ public class ExportFileTask extends AbstractTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
   public static final String EXTRACT_CONFIG = "CategoriesToExport.txt";
-  public static final String EXTRACT_DIR = "Exportados";
+  public static final String EXTRACT_DIR = "Exportados/arquivos";
   private static final String SUBITEM_DIR = "subitens";
   
   private static final int MAX_SUBITEM_COMPRESSION = 100;
