@@ -93,7 +93,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
       
-      ColumnsManager.disposeInstance();
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
       OCRParser.EXECTESS = false;
       

@@ -46,11 +46,11 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
 
-    private static File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
+    private static final File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
     
-    private static List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
+    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
 	
-	private static String[] defaultFields =
+	private static final String[] defaultFields =
 		{ 
 	        ResultTableModel.SCORE_COL,
             ResultTableModel.BOOKMARK_COL,
@@ -67,7 +67,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 			IndexItem.PATH
 		};
 	
-	private static String[] extraFields = 
+	private static final String[] extraFields = 
 	    {
 	        IndexItem.CARVED,
 	        IndexItem.CONTENTTYPE,
@@ -105,6 +105,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	private static ColumnsManager instance;
 	
+	private IPEDSource lastCase;
+	
 	private File caseCols;
 	
 	String[] indexFields = null;
@@ -126,11 +128,14 @@ public class ColumnsManager implements ActionListener, Serializable{
 		return instance;
 	}
 	
-	public static void disposeInstance(){
+	public void dispose(){
+		dialog.setVisible(false);
 		instance = null;
 	}
 	
 	public void setVisible(){
+		updateDinamicFields();
+		updateList();
 		dialog.setVisible(true);
 	}
 	
@@ -151,8 +156,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 			ColumnState cs = new ColumnState();
 		    for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
 		        TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-		        if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){    
-	                cs.visibleFields.add(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length));
+		        if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){
+		        	int idx = tc.getModelIndex() - ResultTableModel.fixedCols.length;
+		        	cs.visibleFields.add(loadedFields.get(idx));
 	                cs.initialWidths.add(tc.getWidth());
 	            }
 		    }
@@ -194,32 +200,20 @@ public class ColumnsManager implements ActionListener, Serializable{
 		scrollList.getVerticalScrollBar().setUnitIncrement(10);
 		panel.add(scrollList, BorderLayout.CENTER);
 		
-		indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
-		
-		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-		caseCols = new File(moduleDir, "visibleCols.dat");
-		
-		loadSavedCols();
-		
-		TreeSet<String> extraAttrs = new TreeSet<String>();
-		extraAttrs.addAll(Arrays.asList(extraFields));
-		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
-		extraFields = extraAttrs.toArray(new String[0]);
-		
-		fieldGroups = new String[][] {defaultFields.clone(), extraFields, email, indexFields};
-		
-		for(String[] fields : fieldGroups)
-			Arrays.sort(fields, Collator.getInstance());
-		
-		updateList();
-		
 		dialog.getContentPane().add(panel);
 		dialog.setLocationRelativeTo(App.get());
 		
+		updateDinamicFields();
+		
+		loadSavedCols();
+		
+		updateList();
 	}
 	
 	private void loadSavedCols(){
 		boolean lastColsOk = false;
+		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+		caseCols = new File(moduleDir, "visibleCols.dat");
 		File cols = caseCols;
 		if(!cols.exists())
 			cols = globalCols;
@@ -257,6 +251,25 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();
 		    colState.initialWidths = defaultWidths;
 		}
+	}
+	
+	private void updateDinamicFields(){
+		
+		if(lastCase != App.get().appCase){
+			lastCase = App.get().appCase;
+			indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
+		}
+		
+		TreeSet<String> extraAttrs = new TreeSet<String>();
+		extraAttrs.addAll(Arrays.asList(extraFields));
+		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
+		String[] extraAttrArray = extraAttrs.toArray(new String[0]);
+		
+		fieldGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, indexFields};
+		
+		for(String[] fields : fieldGroups)
+			Arrays.sort(fields, Collator.getInstance());
+		
 	}
 	
 	private void updateList(){
