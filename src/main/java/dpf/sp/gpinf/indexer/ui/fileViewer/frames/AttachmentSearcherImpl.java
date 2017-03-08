@@ -6,9 +6,9 @@ import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ChatViewer.ChatAttachmentSearcher;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer.AttachmentSearcher;
 
-public class ChatAttachmentSearcherImpl implements ChatAttachmentSearcher{
+public class AttachmentSearcherImpl implements AttachmentSearcher{
 
 	@Override
 	public File getTmpFile(String luceneQuery) {
