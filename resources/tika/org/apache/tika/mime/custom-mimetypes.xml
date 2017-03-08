@@ -377,8 +377,15 @@
     <mime-type type="application/x-emule">
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
-    </mime-type>   
-   
+    </mime-type>
+    
+    <mime-type type="application/x-preview-with-links">
+        <sub-class-of type="text/html"/>
+        <magic priority="50">
+            <match value="!--Preview With Links--" type="string" offset="40:50"/>
+        </magic>
+    </mime-type>
+    
     <mime-type type="application/x-ares-galaxy">
         <sub-class-of type="application/x-p2p"/>
         <magic priority="50">

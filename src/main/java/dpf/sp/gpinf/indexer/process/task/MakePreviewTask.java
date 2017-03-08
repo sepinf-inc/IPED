@@ -6,6 +6,8 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
@@ -20,9 +22,12 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -30,7 +35,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class MakePreviewTask extends AbstractTask {
 
   public static String viewFolder = "view";
-
+  
   private Parser parser = new AutoDetectParser();
 
   private static boolean enableFileParsing = true;
@@ -57,14 +62,18 @@ public class MakePreviewTask extends AbstractTask {
     return contentType.equals("application/x-msaccess")
         || contentType.equals("application/x-sqlite3")
         || contentType.equals("application/sqlite-skype")
-        || contentType.equals("application/x-emule")
-        || contentType.equals("application/x-ares-galaxy")
         || contentType.equals("application/x-lnk")
         || contentType.equals("application/x-whatsapp-db")
         || contentType.equals("application/x-shareaza-searches-dat")
-        || contentType.equals("application/x-shareaza-library-dat")
         || contentType.equals("application/x-msie-cache")
+        || mayContainLinks(contentType)
         || isSupportedTypeCSV(contentType);
+  }
+  
+  private boolean mayContainLinks(String contentType){
+	  return contentType.equals("application/x-emule")
+			  || contentType.equals("application/x-ares-galaxy")
+			  || contentType.equals("application/x-shareaza-library-dat");
   }
 
   private boolean isSupportedTypeCSV(String contentType) {
@@ -103,7 +112,7 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     try {
-      makeHtmlPreview(evidence, viewFile);
+      makeHtmlPreview(evidence, viewFile, mediaType);
 
     } catch (Throwable e) {
       Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
@@ -111,7 +120,7 @@ public class MakePreviewTask extends AbstractTask {
 
   }
 
-  private void makeHtmlPreview(EvidenceFile evidence, File outFile) throws Throwable {
+  private void makeHtmlPreview(EvidenceFile evidence, File outFile, String mediaType) throws Throwable {
     BufferedOutputStream outStream = null;
     try {
       final Metadata metadata = new Metadata();
@@ -120,14 +129,21 @@ public class MakePreviewTask extends AbstractTask {
       //Não é necessário fechar tis pois será fechado em evidence.dispose()
       final TikaInputStream tis = evidence.getTikaStream();
       
+      final ParseContext context = new ParseContext();
+      context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+      
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
       //context.set(Parser.class, parser);
       
       outStream = new BufferedOutputStream(new FileOutputStream(outFile));
+      
       ContentHandler handler;
       if (!isSupportedTypeCSV(evidence.getMediaType().toString())) {
-        handler = new ToXMLContentHandler(outStream, "UTF-8");
+    	String comment = null;
+    	if(mayContainLinks(mediaType))
+    		comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
+        handler = new ToXMLContentHandlerWithComment(outStream, "UTF-8", comment);
       } else {
         handler = new ToCSVContentHandler(outStream, "UTF-8");
       }
@@ -138,7 +154,7 @@ public class MakePreviewTask extends AbstractTask {
 		  @Override
 		  public void run(){
 			  try {
-				parser.parse(tis, pch, metadata, new ParseContext());
+				parser.parse(tis, pch, metadata, context);
 				
 			} catch (IOException | SAXException | TikaException | OutOfMemoryError e) {
 				exception = e;
@@ -165,6 +181,23 @@ public class MakePreviewTask extends AbstractTask {
     } finally {
       IOUtil.closeQuietly(outStream);
     }
+  }
+  
+  private class ToXMLContentHandlerWithComment extends ToXMLContentHandler{
+	  
+	  private String comment;
+	  
+	  public ToXMLContentHandlerWithComment(OutputStream stream, String encoding, String comment) throws UnsupportedEncodingException{
+		  super(stream, encoding);
+		  this.comment = comment;
+	  }
+	  
+	  @Override
+	  public void startDocument() throws SAXException{
+		  super.startDocument();
+		  if(comment != null)
+			  this.write(comment + "\n");
+	  }
   }
   
   public class ProgressContentHandler extends ContentHandlerDecorator {

@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -70,6 +71,7 @@ public class ExportFileTask extends AbstractTask {
 
   public ExportFileTask(Worker worker) {
     super(worker);
+    ExportFolder.setExportPath(EXTRACT_DIR);
   }
 
   public static synchronized void incItensExtracted() {

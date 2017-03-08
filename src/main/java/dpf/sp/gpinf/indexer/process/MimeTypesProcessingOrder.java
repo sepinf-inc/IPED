@@ -7,8 +7,11 @@ import java.util.TreeSet;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
+import dpf.sp.gpinf.indexer.parsers.AresParser;
+import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 
 /**
  * Classe de definição de prioridade de processamento de itens com base no mimeType.
@@ -31,6 +34,10 @@ public class MimeTypesProcessingOrder {
 		Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
 		
 		mediaTypes.put(SkypeParser.SKYPE_MIME, 1);
+		
+		mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
+		mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
+		mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 1);
 		
 		mediaTypes.put(WhatsAppParser.WA_DB, 1);
 		mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
