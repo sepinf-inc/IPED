@@ -316,7 +316,7 @@ public class IndexTask extends BaseCarveTask {
 
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
     if (extraAttributtesFile.exists()) {
-    	HashSet<String> extraAttributes = (HashSet<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
+    	Set<String> extraAttributes = (Set<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
     	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
     }
   }
