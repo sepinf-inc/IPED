@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.HashSet;
 
+import javax.swing.JOptionPane;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -70,6 +72,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			searcher.setQuery(getQueryWithUIFilter());
 			
 		} catch (ParseException | QueryNodeException e) {
+			JOptionPane.showMessageDialog(App.get(), "Erro de sintaxe de pesquisa: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 			//e.printStackTrace();
 		}
 	}
