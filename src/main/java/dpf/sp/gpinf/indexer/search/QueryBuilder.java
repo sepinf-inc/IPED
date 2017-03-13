@@ -33,7 +33,7 @@ public class QueryBuilder {
 	
 	private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
 	
-	private static HashMap<String,NumericConfig> numericConfigMap;
+	private HashMap<String,NumericConfig> numericConfigMap;
 	
 	private IPEDSource ipedCase;
 	
