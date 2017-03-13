@@ -70,7 +70,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			searcher.setQuery(getQueryWithUIFilter());
 			
 		} catch (ParseException | QueryNodeException e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	}
 	
@@ -86,8 +86,11 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			result = new QueryBuilder(App.get().appCase).getQuery(queryText);
 			if(!queryText.trim().isEmpty())
 				numFilters++;
-		}else
+		}else{
 			result = query;
+			if(!(query instanceof MatchAllDocsQuery))
+				numFilters++;
+		}
 		
 		if(App.get().filtro.getSelectedIndex() > 1){
 			String filter = App.get().filtro.getSelectedItem().toString();
