@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
+import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -23,10 +24,10 @@ public class P2PBookmarker {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(P2PBookmarker.class);
 	
-	private boolean isReport = false;
+	private boolean isIpedReport = false;
 	
 	public P2PBookmarker(CaseData caseData){
-		isReport = caseData.containsReport();
+		isIpedReport = caseData.isIpedReport();
 	}
 	
 	class P2PProgram{
@@ -41,7 +42,7 @@ public class P2PBookmarker {
 
 	public void createBookmarksForSharedFiles(File caseDir) {
 		
-		if(isReport)
+		if(isIpedReport)
 			return;
 		
 		LOGGER.info("Pesquisando itens compartilhados via P2P...");
@@ -52,6 +53,8 @@ public class P2PBookmarker {
 		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram("sha-1", "Ares"));
 		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram("md5", "Shareaza"));
 		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram("sha-256", "WhatsApp"));
+		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram("md5", "Skype"));
+		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram("md5", "Skype"));
 		
 		IPEDSource ipedSrc = new IPEDSource(caseDir);
 		String queryText = ExtraProperties.SHARED_HASHES + ":*";
