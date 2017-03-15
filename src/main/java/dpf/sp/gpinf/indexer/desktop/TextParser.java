@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.io.input.CountingInputStream;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -43,6 +44,7 @@ import org.apache.tika.parser.html.IdentityHtmlMapper;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -59,7 +61,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
   private static TextParser parsingTask;
   private StreamSource content;
-  private String contentType;
   volatile int id;
   private EvidenceFile item;
   private ProgressDialog progressMonitor;
@@ -84,7 +85,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
     try {
       this.appSearchParams = params;
       this.content = content;
-      this.contentType = contentType;
       this.tmp = tmp;
       if (content instanceof EvidenceFile) {
         item = (EvidenceFile) content;
@@ -186,7 +186,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
       progressMonitor = new ProgressDialog(App.get(), parsingTask);
       progressMonitor.setMaximum((Integer)item.getExtraAttribute(TEXT_SIZE) * 1000L);
-
+      
       sortedHits = new TreeMap<Long, int[]>();
       hits = new ArrayList<Long>();
       viewRows = new ArrayList<Long>();
@@ -223,6 +223,19 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
     return context;
   }
+  
+  private class CountInputStream extends CountingInputStream{
+	
+	public CountInputStream(InputStream in) {
+		super(in);
+	}
+
+	@Override
+	protected synchronized void afterRead(final int n) {
+		super.afterRead(n);
+	    progressMonitor.setProgress(this.getByteCount());
+	}
+  }
 
   public void parseText() {
     ParsingReader textReader = null;
@@ -233,6 +246,13 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
       ParseContext context = getTikaContext();
       InputStream is = item.getTikaStream();
+      
+      CountInputStream cis = null;
+      if(item.getLength() != null && !ParsingTask.hasSpecificParser((IndexerDefaultParser) App.get().getAutoParser(), item)){
+    	  progressMonitor.setMaximum(item.getLength());
+    	  cis = new CountInputStream(is);
+    	  is = cis;
+      }
 
       textReader = new ParsingReader((Parser) App.get().getAutoParser(), is, metadata, context);
       textReader.startBackgroundParsing();
@@ -258,7 +278,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
         while (!this.isCancelled() && off != buf.length && (read = textReader.read(buf, off, buf.length - off)) != -1) {
           off += read;
           totalRead += read;
-          this.firePropertyChange("progress", 0, totalRead);
+          if(cis == null)
+        	  this.firePropertyChange("progress", 0, totalRead);
         }
 
         if (this.isCancelled()) {
