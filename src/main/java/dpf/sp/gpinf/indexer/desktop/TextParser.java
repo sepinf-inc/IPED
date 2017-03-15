@@ -43,7 +43,6 @@ import org.apache.tika.parser.html.IdentityHtmlMapper;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -63,7 +62,6 @@ public class TextParser extends CancelableWorker implements ITextParser {
   private String contentType;
   volatile int id;
   private EvidenceFile item;
-  private volatile InputStream is;
   private ProgressDialog progressMonitor;
 
   private static Object lock = new Object();
@@ -170,13 +168,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
   
   @Override
   public void done() {
-    try {
-      if (is != null) {
-        is.close();
-      }
-    } catch (Exception e) {
-    }
-
+	
     App.get().tabbedHits.setTitleAt(0, hits.size() + " Ocorrências");
     if (progressMonitor != null) {
       progressMonitor.close();
@@ -240,7 +232,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       ParsingTask.fillMetadata(item, metadata);
 
       ParseContext context = getTikaContext();
-      is = item.getTikaStream();
+      InputStream is = item.getTikaStream();
 
       textReader = new ParsingReader((Parser) App.get().getAutoParser(), is, metadata, context);
       textReader.startBackgroundParsing();
@@ -391,7 +383,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       e.printStackTrace();
     }
     if (this.isCancelled() && textReader != null) {
-      textReader.closeAndInterruptParsingTask();
+      textReader.closeAndInterruptParsingTask(false);
     }
 
   }

@@ -214,6 +214,10 @@ public class ParsingReader extends Reader {
   }
 
   public void closeAndInterruptParsingTask() {
+	  closeAndInterruptParsingTask(true);
+  }
+	  
+  public void closeAndInterruptParsingTask(boolean waitCleanup) {
 
     try {
       writer.close();
@@ -222,12 +226,14 @@ public class ParsingReader extends Reader {
     }
 
     future.cancel(true);
-    try {
-    	//wait some time to cancel task, kill external process, etc
-		Thread.sleep(5000);
-	} catch (InterruptedException e) {
-		Thread.currentThread().interrupt();
-	}
+    
+    if(waitCleanup)
+	    try {
+	    	//wait some time to cancel task, kill external process, etc
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 
   }
 
