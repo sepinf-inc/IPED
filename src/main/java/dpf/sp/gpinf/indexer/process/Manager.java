@@ -326,8 +326,6 @@ public class Manager {
 
     }
 
-    ParsingReader.shutdownTasks();
-
   }
 
   public int numItensBeingProcessed() {
