@@ -375,6 +375,8 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       outputOnSSD = Boolean.valueOf(value);
     }
+    if(outputOnSSD)
+    	indexTemp = null;
 
     value = properties.getProperty("addFatOrphans");
     if (value != null) {

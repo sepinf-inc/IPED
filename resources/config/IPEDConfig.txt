@@ -11,7 +11,8 @@ indexTemp = default
 # são utilizados arquivos temporários para evitar múltiplas leituras/descompactações dos itens.
 indexTempOnSSD = false
 
-# Habilite caso a pasta de saída -o esteja em disco SSD. Só tem efeito em processamentos com a opção --append.
+# Habilite caso a pasta de saída -o esteja em disco SSD. Nesse caso o índice é criado diretamente
+# na pasta de saída e não na pasta temporária, diminuindo o requisito de espaço livre no temp.
 outputOnSSD = false
 
 # Habilita cálculo de hash dos arquivos. Para calcular vários hashes utilize ; como separador

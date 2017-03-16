@@ -240,8 +240,7 @@ public class Manager {
 	    conf.setMaxThreadStates(Configuration.numThreads);
 	    conf.setSimilarity(new IndexerSimilarity());
 	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-	    if ((Configuration.indexTempOnSSD && !IndexFiles.getInstance().appendIndex) ||
-	    		(Configuration.outputOnSSD && IndexFiles.getInstance().appendIndex)) {
+	    if ((Configuration.indexTempOnSSD && Configuration.indexTemp != null) || Configuration.outputOnSSD) {
 	      mergeScheduler.setMaxMergesAndThreads(8, 4);
 	    }
 	    conf.setMergeScheduler(mergeScheduler);
