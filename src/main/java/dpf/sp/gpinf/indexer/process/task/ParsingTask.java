@@ -89,6 +89,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static final String EXPAND_CONFIG = "CategoriesToExpand.txt";
   public static final String ENABLE_PARSING = "enableFileParsing";
   public static final String ENCRYPTED = "encrypted";
+  public static final String HAS_SUBITEM = "hasSubitem";
 
   public static boolean expandContainers = false;
   private static boolean enableFileParsing = true;
@@ -462,20 +463,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       ExportFileTask extractor = new ExportFileTask(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());
 
-      // Extração de anexos de emails de PSTs, se emails forem extraídos
-				/*if(contentTypeStr != null)
-       new SetCategoryTask(worker).process(subItem);
-       if (!ExportFileTask.hasCategoryToExtract() || ExportFileTask.isToBeExtracted(subItem) || metadata.get(ExtraProperties.TO_EXTRACT) != null) {
-       subItem.setToExtract(true);
-       metadata.set(ExtraProperties.TO_EXTRACT, "true");
-       }
-       */
-
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {
         try {
           worker.processNewItem(subItem);
           incSubitensDiscovered();
+          parent.setExtraAttribute(HAS_SUBITEM, "true");
 
         } finally {
           //despausa contador de timeout do pai somente após processar subitem

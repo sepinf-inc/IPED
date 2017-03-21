@@ -17,6 +17,6 @@ Itens Apagados = deletado:true
 Itens Recuperados = carved:true
 Itens Georreferenciados = GPS\ Latitude:* AND GPS\ Longitude:*
 Subitens de Conteineres = subitem:true
-Conteineres não Expandidos = hasChildren:false && categoria:("Caixas de Emails" "Arquivos Compactados" "Discos ISO" "Outros Espelhos" "Discos Virtuais")
+Conteineres não Expandidos = categoria:("Caixas de Emails" "Arquivos Compactados" "Discos ISO" "Outros Espelhos" "Discos Virtuais") -hasSubitem:true -fileFragment:true
 Imagens com Possível Nudez = scoreNudez:[500 TO *]
 Imagens e Vídeos com Miniaturas = hasThumb:true
