@@ -4,6 +4,9 @@
 ########################################################################
 
 indexTemp = default
+enableKff = false
+enableLedWkff = false
+enableLedDie = false
 excludeKffIgnorable = false
 ignoreDuplicates = false
 exportFileProps = false
