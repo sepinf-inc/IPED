@@ -10,7 +10,7 @@
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
-        <release.dir>${project.build.directory}/release2</release.dir>  
+        <release.dir>${project.build.directory}/release</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
         <tools.dir>${release.dir}/tools</tools.dir>
         <conf.dir>${release.dir}/conf</conf.dir>

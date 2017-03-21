@@ -1,22 +1,29 @@
-xx/03/2017: IPED-3.12
+21/03/2017: IPED-3.12
+- Análise simultânea ao processamento (apenas itens já processados)
 - Atualização para Sleuthkit-4.4 (processamento de FileSlacks)
-- Análise simultânea ao processamento (apenas itens processados por completo)
 - API para acessar múltiplos itens de dentro dos parsers
 - Múltiplas filas de processamento para suportar dependências de parsing entre os itens
-- Melhorias no WhatsAppParser: abertura de anexos (necessita do sha-256), extrai contatos, inclui avatares, inclui apelidos nos chats, miniaturas de vídeos, renderiza emojis
-- Criação de marcador automático p/ itens enviados via WhatsApp
+- Melhorias no WhatsAppParser: abertura de anexos (necessita do sha-256), títulos de anexos, extrai contatos, inclui avatares, inclui apelidos nos chats, miniaturas de vídeos, renderiza emojis
+- Melhorias no SkypeParser: embute imagens em cache nos chats e insere miniaturas e links nas transferências 
+- Criação de marcadores automáticos p/ itens enviados via WhatsApp e Skype
+- Links no preview de históricos P2P (Emule, Ares e Shareaza) para itens encontrados na evidência
 - Função para localizar documentos por similaridade
-- Melhor detecção de tipos derivados de SQLite via tabelas (antes usava apenas nome)
+- Profiles de processamento, sendo pré-configurados: forensic, pedo, fastmode, blind.
+- Melhor detecção de tipos derivados de SQLite via nomes de tabelas
 - Otimizações no fastmode ao processar imagens e dispositivos
+- Aumenta cache de texto extraído para indexação mais rápida de itens grandes
+- Melhor progresso do viewer de texto com itens tratados pelo StringsParser
+- Melhor filtro para conteineres não expandidos
 - Exposição do parâmetro de timeout por tamanho (timeOutPerMB)
 - Carregamento mais rápido de bases do LED (PCF Wladimir)
-- Aumenta cache de texto extraído para indexação mais rápida de itens grandes
+- Atualização para PDFBox-2.0.5
 Correções:
+- Demora na atualização do viewer de texto ao interromper visualização (regressão 3.10.1)
 - Processamento interminável devido a bug no carving de MP4 (3.10)
 - OutOfMemory ao processar caixas DBX corrompidas (2.15)
 - Contas do Skype não eram renderizadas no HTMLViewer
 - Visualização truncada de chats do skype devido a msgs com html mal formado
-- Omite erro irrelevante de não reconhecimento de "Microsoft Reserved Partition"
+- Não extração de thumbs PNG de contatos do Skype
 
 
 07/02/2017: IPED-3.11.1
