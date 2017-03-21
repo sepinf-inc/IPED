@@ -442,6 +442,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
       subItem.setParent(parent);
       parent.setHasChildren(true);
+      parent.setExtraAttribute(HAS_SUBITEM, "true");
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
         subItem.setIsDir(true);
@@ -468,7 +469,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         try {
           worker.processNewItem(subItem);
           incSubitensDiscovered();
-          parent.setExtraAttribute(HAS_SUBITEM, "true");
 
         } finally {
           //despausa contador de timeout do pai somente após processar subitem
