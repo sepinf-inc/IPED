@@ -1,0 +1,22 @@
+###########################################################################
+# Configuração da extração de miniaturas de imagens
+###########################################################################
+
+# Usa ferramentas externas para ler dezenas de formatos de imagens não suportadas pelo Java (possivelmente lento).
+# O graphicsmagick já é distribuído para sistemas Windows.
+# Em outros sistemas, como Linux, é preciso instalar o graphicsmagick e incluí-lo no PATH. 
+
+# Define o "graphicsmagick" ou "imagemagick" para decodificação externa de imagens.
+# O ImageMagick suporta mais formatos, porém o GraphicsMagick decodifica melhor JPGs parciais de carving. 
+# Comente para desabilitar a decodificação externa de formatos não suportados pelo java.
+externalConversionTool = graphicsmagick
+
+# Timeout(s) para aguardar conversão externa entre formatos de imagem via GraphicsMagick.
+imgConvTimeout = 10
+
+# Tamanho das miniaturas das imagens geradas no processamento, caso habilitado.
+imgThumbSize = 160
+
+# Número de threads de geração de miniaturas na galeria. "default" utiliza o número de processadores.
+# Diminua o valor caso haja problemas de consumo de memória.
+galleryThreads = default

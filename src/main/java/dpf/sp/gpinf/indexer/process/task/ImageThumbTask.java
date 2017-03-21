@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -37,7 +38,7 @@ public class ImageThumbTask extends AbstractTask {
 
   private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
   
-  private static final String winToolPath = "tools/graphicsmagick";
+  private static final String winToolPath = "/tools/graphicsmagick";
 
   private static final int samplingRatio = 3;
 
@@ -66,7 +67,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-      GraphicsMagicConverter.toolPathWin = new File(confDir.getParentFile(), winToolPath).getCanonicalPath();
+      GraphicsMagicConverter.toolPathWin = Configuration.appRoot + winToolPath;
     }
 
     value = properties.getProperty("imgConvTimeout");

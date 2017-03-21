@@ -561,23 +561,24 @@ public class Manager {
     }
 
     if (!IndexFiles.getInstance().appendIndex) {
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib"), new File(output, "lib"), true);
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "lib/nativeview"), new File(output, "lib/nativeview"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib"), new File(output, "lib"), true);
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib/nativeview"), new File(output, "lib/nativeview"));
 
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/esedbexport"), new File(output, "tools/esedbexport"));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/pffexport"), new File(output, "tools/pffexport"));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/regripper"), new File(output, "tools/regripper"));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/msiecfexport"), new File(output, "tools/msiecfexport"));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "tools/tsk"), new File(output, "tools/tsk"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/pffexport"), new File(output, "tools/pffexport"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/regripper"), new File(output, "tools/regripper"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tsk"), new File(output, "tools/tsk"));
       if (Configuration.embutirLibreOffice) {
-        IOUtil.copiaArquivo(new File(Configuration.configPath, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
+        IOUtil.copiaArquivo(new File(Configuration.appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip"));
       }
 
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "htm"), new File(output, "htm"));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htm"), new File(output, "htm"));
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true);
       IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "bin"), output.getParentFile());
+      IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "bin"), output.getParentFile());
     }
 
     if (palavrasChave != null) {

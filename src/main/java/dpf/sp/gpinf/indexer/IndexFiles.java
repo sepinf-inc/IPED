@@ -19,28 +19,19 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.SwingWorker;
 
-import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
-import dpf.sp.gpinf.indexer.util.FilterOutputStream;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
 /**
@@ -128,9 +119,16 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    * Define o caminho onde será encontrado o arquivo de configuração principal.
    */
   private void setConfigPath() throws Exception {
-    URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
-    //configPath = System.getProperty("user.dir");
-    configPath = new File(url.toURI()).getParent();
+	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+	  //configPath = System.getProperty("user.dir");
+	  configPath = new File(url.toURI()).getParent();
+	  
+	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){
+		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0);
+		  configPath = new File(configPath, "profiles/" + profile).getAbsolutePath();
+		  if(!new File(configPath).exists())
+			  throw new IPEDException("Profile informado inexistente!");
+	  }
   }
 
   /**
@@ -158,11 +156,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   @Override
   protected Boolean doInBackground() {
     try {
-
-      if (fromCmdLine) {
-        setConfigPath();
-      }
-      
+      if (fromCmdLine) 
+    	  setConfigPath();
+    	
       logConfiguration = new LogConfiguration(logFile);
       logConfiguration.configureLogParameters(configPath, nologfile);
       
@@ -175,8 +171,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
       LOGGER.info(Versao.APP_NAME);
 
-      boolean fastmode = cmdLineParams.getCmdArgs().containsKey("--fastmode");
-      Configuration.getConfiguration(configPath, fastmode);
+      Configuration.getConfiguration(configPath);
 
       manager = new Manager(dataSource, output, palavrasChave);
       cmdLineParams.saveIntoCaseData(manager.getCaseData());

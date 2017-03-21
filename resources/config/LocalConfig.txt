@@ -1,0 +1,36 @@
+﻿########################################################################
+# Configurações Locais do Ambiente
+########################################################################
+
+# Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.
+# Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
+indexTemp = default
+
+# Habilite caso indexTemp esteja em disco SSD. Nesse caso, são feitas otimizações que podem reduzir
+# o tempo de processamento em até 60%: o número de merge threads do índice é aumentado e 
+# são utilizados arquivos temporários para evitar múltiplas leituras/descompactações dos itens.
+indexTempOnSSD = false
+
+# Habilite caso a pasta de saída -o esteja em disco SSD. Nesse caso o índice é criado diretamente
+# na pasta de saída e não na pasta temporária, diminuindo o requisito de espaço livre no temp.
+outputOnSSD = false
+
+# Número de threads de processamento: "default" utiliza o número de processadores.
+# Caso haja problemas de consumo de memória, configurar um valor pequeno e/ou aumentar memória heap do java (-Xms)
+numThreads = default
+
+# Caminho para base de hashes (KFF) do IPED. É altamente recomendado armazenar a base num disco SSD
+# sob pena de impactar o tempo de processamento. Pode-se importar base NSRL via opção -importkff. 
+#kffDb = E:/kff/kff.db
+
+# Diretório contendo a base de hashes de alerta de pornografia infantil do LED.
+#ledWkffPath = E:/LED/V1.21.00/pedo/wkff
+
+# Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
+# Necessário apontar para arquivo de dados presente no LED versão 1.21 ou superior.
+#ledDie = E:/LED/V1.21.00/pedo/die/rfdie.dat
+
+# Caminho absoluto obrigatório para o Tsk_DataModel.jar compilado em sistemas Linux ou MacOS.
+# É distribuída versão com patch para Windows com diversas correções de bugs e otimizações. 
+# No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
+#tskJarPath = /home/user/tsk-4.3-src-folder/bindings/java/dist/Tsk_DataModel.jar

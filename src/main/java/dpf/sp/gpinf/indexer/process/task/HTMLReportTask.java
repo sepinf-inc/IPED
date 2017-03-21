@@ -357,7 +357,7 @@ public class HTMLReportTask extends AbstractTask {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
 
       // Pasta com arquivos HTML formatado que são utilizados como entrada.
-      String codePath = Configuration.configPath;
+      String codePath = Configuration.appRoot;
       File templatesFolder = new File(new File(codePath), "htmlreport");
 
       Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());

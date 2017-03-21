@@ -71,7 +71,7 @@ public class SleuthkitClient {
 
     String pipePath = Configuration.indexerTemp + "/pipe-" + port;
 
-    String[] cmd = {"java", "-cp", Configuration.configPath + "/iped.jar", "-Xmx128M",
+    String[] cmd = {"java", "-cp", Configuration.appRoot + "/iped.jar", "-Xmx128M",
       SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};
 
     try {

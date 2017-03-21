@@ -20,8 +20,10 @@ import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -37,10 +39,11 @@ import gpinf.dev.data.EvidenceFile;
 public class KFFTask extends AbstractTask {
 
   private Logger LOGGER = LoggerFactory.getLogger(KFFTask.class);
-  private static String CONF_FILE = "KFFTaskConfig.txt";
+  private static final String CONF_FILE = "KFFTaskConfig.txt";
+  private static final String ENABLE_PARAM = "enableKff";
 
-  public static String KFF_STATUS = "kffstatus";
-  public static String KFF_GROUP = "kffgroup";
+  public static final String KFF_STATUS = "kffstatus";
+  public static final String KFF_GROUP = "kffgroup";
 
   public static int excluded = 0;
   private static Object lock = new Object();
@@ -57,6 +60,7 @@ public class KFFTask extends AbstractTask {
   private static Set<String> alertProducts;
   private static DB db;
 
+  private boolean taskEnabled = false;
   private boolean excludeKffIgnorable = true;
   private boolean md5 = true;
 
@@ -77,17 +81,30 @@ public class KFFTask extends AbstractTask {
       md5 = false;
     }
 
-    excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable"));
+    String enableParam = confParams.getProperty(ENABLE_PARAM);
+    if(enableParam != null)
+    	taskEnabled = Boolean.valueOf(enableParam.trim());
+    
+    excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim());
 
     String kffDbPath = confParams.getProperty("kffDb");
-    if (kffDbPath == null) {
-      return;
-    }
+    if (taskEnabled && kffDbPath == null)
+      throw new IPEDException("Configure o caminho para a base KFF em " + Configuration.LOCAL_CONFIG);
+    
+    //backwards compatibility
+    if(enableParam == null && kffDbPath != null)
+    	taskEnabled = true;
+    
+    if(!taskEnabled)
+    	return;
 
     if (map == null) {
       excluded = 0;
 
-      File kffDb = new File(kffDbPath);
+      File kffDb = new File(kffDbPath.trim());
+      if(!kffDb.exists())
+    	  throw new IPEDException("Caminho para base KFF inexistente: " + kffDb.getAbsolutePath());
+    	  
       try {
         db = DBMaker.newFileDB(kffDb)
             .transactionDisable()
@@ -198,11 +215,13 @@ public class KFFTask extends AbstractTask {
   
   @Override
   public boolean isEnabled() {
-    return map != null;
+    return taskEnabled;
   }
 
   @Override
   protected void process(EvidenceFile evidence) throws Exception {
+	  
+	if(!isEnabled()) return;
 
     HashValue hash = null;
     if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
@@ -222,8 +241,7 @@ public class KFFTask extends AbstractTask {
             synchronized (lock) {
               excluded++;
             }
-          } else //evidence.addCategory(IGNORE);
-          {
+          } else {
             evidence.setExtraAttribute(KFF_STATUS, "ignore");
           }
         }

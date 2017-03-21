@@ -72,7 +72,7 @@ public class LogConfiguration {
 	    	configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml");
 	    	
 	    	if (logFile == null)
-		    	  logFile = new File(configPath, "log/IPED-" + df.format(new Date()) + ".log");
+		    	  logFile = new File(Configuration.getAppRoot(configPath), "log/IPED-" + df.format(new Date()) + ".log");
 		      
 		    if(!setConsoleLogFile(false))
 		    	setConsoleLogFile(true);

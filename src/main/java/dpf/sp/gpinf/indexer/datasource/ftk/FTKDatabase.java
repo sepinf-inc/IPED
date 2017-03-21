@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
  */
 public abstract class FTKDatabase {
 
-  public static String FTKDatabaseConfig = "conf/FTKDatabaseConfig.txt";
+  private static String FTKDatabaseConfig = "/conf/FTKDatabaseConfig.txt";
   /*
    * Dados para conexÃ£o com o banco Oracle
    */
@@ -72,7 +72,7 @@ public abstract class FTKDatabase {
   public static FTKDatabase get(String caseName, File report) throws Exception {
 
     Properties properties = new Properties();
-    properties.load(new FileInputStream(Configuration.configPath + "/" + FTKDatabaseConfig));
+    properties.load(new FileInputStream(Configuration.appRoot + FTKDatabaseConfig));
     schemaVersion = properties.getProperty("VersaoFTK");
 
     if (schemaVersion.equalsIgnoreCase("auto")) {
@@ -94,7 +94,7 @@ public abstract class FTKDatabase {
   public static boolean testConnection(String configPathStr) throws SQLException, FileNotFoundException, IOException {
 
     Properties props = new Properties();
-    props.load(new FileInputStream(configPathStr + "/" + FTKDatabaseConfig));
+    props.load(new FileInputStream(configPathStr + FTKDatabaseConfig));
     schemaVersion = props.getProperty("VersaoFTK");
     FTKDatabase dataSrc;
     if (schemaVersion.equalsIgnoreCase("auto")) {

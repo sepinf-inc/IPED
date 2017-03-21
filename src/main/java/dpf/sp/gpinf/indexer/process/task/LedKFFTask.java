@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
 import gpinf.dev.data.EvidenceFile;
 
@@ -41,6 +43,8 @@ public class LedKFFTask extends AbstractTask {
   private static final int idxMd5_64K = 1;
   private static final int idxLength = 5;
   private static final int idxName = 6;
+  private static final String ENABLE_PARAM = "enableLedWkff";
+  private static boolean taskEnabled = false;
 
   public LedKFFTask(Worker worker) {
     super(worker);
@@ -54,21 +58,30 @@ public class LedKFFTask extends AbstractTask {
         return;
       }
 
-      //this.caseData.addBookmark(new FileGroup(ledCategory, "", ""));
+      String enabled = confParams.getProperty(ENABLE_PARAM);
+      if(enabled != null)
+    	  taskEnabled = Boolean.valueOf(enabled.trim());
+      
       String hash = confParams.getProperty("hash");
       String ledWkffPath = confParams.getProperty("ledWkffPath");
-      if (ledWkffPath == null) {
-        return;
-      }
+      if (taskEnabled && ledWkffPath == null)
+    	throw new IPEDException("Configure o caminho para a base de hashes do LED em " + Configuration.LOCAL_CONFIG);
 
-      File wkffDir = new File(ledWkffPath);
+      //backwards compatibility
+      if(enabled == null && ledWkffPath != null)
+      	taskEnabled = true;
+      
+      if(!taskEnabled)
+    	  return;
+      
+      File wkffDir = new File(ledWkffPath.trim());
       if (!wkffDir.exists()) {
-        throw new Exception("Caminho para base de hashes do LED inválido!");
+        throw new IPEDException("Caminho para base de hashes do LED inválido: " + wkffDir.getAbsolutePath());
       }
 
       hash = hash.toLowerCase();
       if (!hash.contains("md5") && !hash.contains("sha-1")) {
-        throw new Exception("Habilite o hash md5 ou sha-1 para consultar a base do LED!");
+        throw new IPEDException("Habilite o hash md5 ou sha-1 para consultar a base do LED!");
       }
 
       List<KffItem> kffList = new ArrayList<KffItem>();
@@ -292,12 +305,12 @@ public class LedKFFTask extends AbstractTask {
 
   @Override
   public boolean isEnabled() {
-    return hashArrays != null;
+    return taskEnabled;
   }
 
   @Override
   protected void process(EvidenceFile evidence) throws Exception {
-    if (hashArrays == null) {
+    if (!taskEnabled) {
       return;
     }
 

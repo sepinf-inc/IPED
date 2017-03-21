@@ -55,9 +55,9 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class Configuration {
 
   public static final String CONFIG_FILE = "IPEDConfig.txt";
+  public static final String LOCAL_CONFIG = "LocalConfig.txt";
   public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
   public static final String PARSER_CONFIG = "ParserConfig.xml";
-  private static final String FASTMODE_CONFIG = "conf/FastModeConfig.txt";
 
   public static UTF8Properties properties = new UTF8Properties();
   public static File indexTemp, indexerTemp;
@@ -67,7 +67,7 @@ public class Configuration {
   public static int timeOut = 180;
   public static int timeOutPerMB = 1;
   public static boolean forceMerge = true;
-  public static String configPath;
+  public static String configPath, appRoot;
   public static Parser errorParser = new RawStringParser(true);
   public static Parser fallBackParser = new RawStringParser(true);
   public static boolean embutirLibreOffice = true;
@@ -85,15 +85,18 @@ public class Configuration {
   public static int searchThreads = 1;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
-
-  public static void getConfiguration(String configPath) throws Exception {
-    getConfiguration(configPath, false);
+  
+  public static String getAppRoot(String configPath){
+	  String appRoot = new File(configPath).getAbsolutePath();
+	  if(appRoot.contains("profiles"))
+	   	appRoot = new File(appRoot).getParentFile().getParent();
+	  return appRoot;
   }
 
   /**
    * Configurações a partir do caminho informado.
    */
-  public static void getConfiguration(String configPathStr, boolean fastmode) throws Exception {
+  public static void getConfiguration(String configPathStr) throws Exception {
 	  
 	  if(loaded.getAndSet(true))
 		  return;
@@ -104,15 +107,12 @@ public class Configuration {
     Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
 
     configPath = configPathStr;
+    appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
 
-    if (fastmode) {
-      properties.load(new File(configPath + "/" + FASTMODE_CONFIG));
-    } else {
-      properties.load(new File(configPath + "/" + CONFIG_FILE));
-    }
-
+    properties.load(new File(appRoot + "/" + LOCAL_CONFIG));
+    properties.load(new File(configPath + "/" + CONFIG_FILE));
     properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE));
 
     String value;
@@ -408,7 +408,7 @@ public class Configuration {
       if(System.getProperty("os.arch").contains("64"))
     	  arch = "x64";
       
-      String loaddbPath = configPath + "/tools/tsk/" + arch + "/tsk_loaddb";
+      String loaddbPath = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb";
       SleuthkitReader.setTskPath(loaddbPath);
 
       File nativelibs = new File(loaddbPath).getParentFile().getParentFile();
@@ -417,10 +417,10 @@ public class Configuration {
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
       Util.loadNatLibs(new File(indexerTemp, "nativelibs"));
 
-      OCRParser.TESSERACTFOLDER = configPath + "/tools/tesseract";
-      EDBParser.TOOL_PATH = configPath + "/tools/esedbexport/";
-      LibpffPSTParser.TOOL_PATH = configPath + "/tools/pffexport/";
-      IndexDatParser.TOOL_PATH = configPath + "/tools/msiecfexport/";
+      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract";
+      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/";
+      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/";
+      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/";
     
     }else{
     	String tskJarPath = properties.getProperty("tskJarPath");
@@ -436,7 +436,7 @@ public class Configuration {
     	new JarLoader().loadJar(tskJarFile);
     }
 
-    RegistryParser.TOOL_PATH = configPath + "/tools/regripper/";
+    RegistryParser.TOOL_PATH = appRoot + "/tools/regripper/";
 
   }
 

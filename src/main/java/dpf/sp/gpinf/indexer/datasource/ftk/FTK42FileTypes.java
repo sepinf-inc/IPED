@@ -45,7 +45,7 @@ public class FTK42FileTypes {
 
   private static Logger LOGGER = LoggerFactory.getLogger(FTK42FileTypes.class);
 
-  public static void getFTK42FileTypes(String configPath) throws IOException {
+  private static void getFTK42FileTypes(String configPath) throws IOException {
     Properties properties = new Properties();
     File file = new File(configPath + "/conf/" + CONFIG_FILE);
     try {

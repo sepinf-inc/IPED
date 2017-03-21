@@ -30,10 +30,12 @@ import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -102,6 +104,8 @@ public class DIETask extends AbstractTask {
    * Objeto estático com total de tempo gasto no processamento de imagens, em milisegundos.
    */
   private static final AtomicLong totalTime = new AtomicLong();
+  
+  private static final String ENABLE_PARAM = "enableLedDie";
 
   /**
    * Construtor.
@@ -124,36 +128,38 @@ public class DIETask extends AbstractTask {
     synchronized (init) {
       if (!init.get()) {
         //Verifica se tarefa está habilitada
-        String value = confParams.getProperty("ledDie");
-        if (value == null) {
-          Log.info(taskName, "Tarefa desabilitada.");
-          init.set(true);
-          return;
-        }
-        File dieDat = new File(value);
-        if (!dieDat.exists() || !dieDat.canRead()) {
-          Log.error(taskName, "Arquivo de dados do DIE não encontrado em " + dieDat.getAbsolutePath());
-          Log.info(taskName, "Tarefa desabilitada.");
-          init.set(true);
-          return;
-        }
+        String enableParam = confParams.getProperty(ENABLE_PARAM);
+        if(enableParam != null)
+        	taskEnabled = Boolean.valueOf(enableParam.trim());
+        
+        String diePath = confParams.getProperty("ledDie");
+        if(taskEnabled && diePath == null)
+          throw new IPEDException("Configure o caminho para a base DIE em " + Configuration.LOCAL_CONFIG);
+        
+        //backwards compatibility
+        if(enableParam == null && diePath != null)
+        	taskEnabled = true;
+        
+        if (!taskEnabled) {
+            Log.info(taskName, "Tarefa desabilitada.");
+            init.set(true);
+            return;
+          }
+        
+        File dieDat = new File(diePath.trim());
+        if (!dieDat.exists() || !dieDat.canRead())
+          throw new IPEDException("Arquivo de dados do DIE não encontrado em " + dieDat.getAbsolutePath());
+        
         //Cria objeto responsável pela detecção
         predictor = RandomForestPredictor.load(dieDat, -1);
-        if (predictor == null) {
-          Log.error(taskName, "Erro inicializando arquivo de dados do DIE: " + dieDat.getAbsolutePath());
-          Log.info(taskName, "Tarefa desabilitada.");
-          init.set(true);
-          return;
-        }
+        if (predictor == null)
+          throw new IPEDException("Erro inicializando arquivo de dados do DIE: " + dieDat.getAbsolutePath());
+        
         //Cria objeto responsável pela extração de features
         die = AbstractDie.loadImplementation(dieDat);
-        if (die == null) {
-          Log.error(taskName, "Erro inicializando classe do DIE: " + dieDat.getAbsolutePath());
-          Log.info(taskName, "Tarefa desabilitada.");
-          init.set(true);
-          return;
-        }
-        taskEnabled = true;
+        if (die == null)
+          throw new IPEDException("Erro inicializando classe do DIE: " + dieDat.getAbsolutePath());
+        
         Log.info(taskName, "Tarefa habilitada.");
         Log.info(taskName, "Árvores carregadas: " + predictor.size());
         init.set(true);

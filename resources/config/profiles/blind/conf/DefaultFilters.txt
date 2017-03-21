@@ -1,0 +1,22 @@
+﻿###############################
+# Filtros pré-configurados
+############################
+
+Filtrar Duplicados = duplicate:false
+Filtrar KFF Ignoráveis = *:* -kffstatus:ignore
+Filtrar Duplicados e Ignoráveis = duplicate:false AND NOT kffstatus:ignore
+Alerta de Hash = kffstatus:alert
+Alerta de Hash (PI) = kffstatus:pedo
+Arquivos Criptografados = encrypted:true
+#Possíveis Digitalizações = ocrCharCount:[100 TO *]
+Erro de Parsing = parserException:true
+Erro de Leitura = ioError:true
+Timeout ao Processar = timeout:true OR thumbTimeout:true
+Itens Ativos = subitem:false && carved:false && deletado:false -fileFragment:true
+Itens Apagados = deletado:true
+Itens Recuperados = carved:true
+Itens Georreferenciados = GPS\ Latitude:* AND GPS\ Longitude:*
+Subitens de Conteineres = subitem:true
+Conteineres não Expandidos = hasChildren:false && categoria:("Caixas de Emails" "Arquivos Compactados" "Discos ISO" "Outros Espelhos" "Discos Virtuais")
+Imagens com Possível Nudez = scoreNudez:[500 TO *]
+Imagens e Vídeos com Miniaturas = hasThumb:true

@@ -3,15 +3,16 @@ package dpf.sp.gpinf.indexer;
 import gpinf.dev.data.CaseData;
 
 import java.io.File;
-import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -55,11 +56,12 @@ public class CmdLineArgs {
     {"-tz", "timezone de origem de dispositivos FAT: GMT-3, GMT-4, etc\n"
     		+ "\tCaso não especificado, utiliza o timezone local do sistema."},
     {"-b", "tamanho em bytes do setor do dispositivo, necessario informar para discos com setores de 4k"},
+    {"-profile", "usa um profile de processamento: forensic, pedo,\n"
+    		+ "\t\t fastmode, blind. Para detalhes consulte o manual."},
     {"--append", "adiciona indexação a um indice ja existente"},
     {"--nogui", "nao exibe a janela de progresso da indexacao"},
     {"--nologfile", "imprime as mensagem de log na saida padrao"},
     {"--nopstattachs", "não inclui automaticamente no relatorio anexos de emails de PST/OST"},
-    {"--fastmode", "habilita modo de processamento minimo, para rapida execucao em locais de busca"},
     {"--portable", "utiliza caminhos relativos para as imagens no lugar de caminhos absolutos"}};
 
   private Map<String, List<String>> paramMap = new HashMap<String, List<String>>();
@@ -185,6 +187,16 @@ public class CmdLineArgs {
       } else if (args[i].compareTo("--append") == 0) {
         IndexFiles.getInstance().appendIndex = true;
 
+      } else if (args[i].compareTo("-profile") == 0){
+    	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+		try {
+			String appRoot = new File(url.toURI()).getParent();
+			if(!new File(appRoot, "profiles/" + args[i + 1]).exists())
+				  throw new IPEDException("Profile informado inexistente!");
+			
+		} catch (URISyntaxException e) {
+			throw new IPEDException(e.getMessage());
+		}
       }
 
     }

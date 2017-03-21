@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -243,7 +244,7 @@ public class VideoThumbTask extends AbstractTask {
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-        	mplayer = confDir.getCanonicalFile().getParent() + mplayerWin;
+        	mplayer = Configuration.appRoot + mplayerWin;
         }
         videoThumbsMaker.setMPlayer(mplayer);
 
