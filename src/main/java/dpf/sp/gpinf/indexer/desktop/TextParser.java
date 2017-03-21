@@ -241,7 +241,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     ParsingReader textReader = null;
     try {
 
-      Metadata metadata = new Metadata();
+      Metadata metadata = item.getMetadata();
       ParsingTask.fillMetadata(item, metadata);
 
       ParseContext context = getTikaContext();

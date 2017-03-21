@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -102,8 +103,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
     	  
           IndexerDefaultParser autoParser = new IndexerDefaultParser();
-          autoParser.setFallback(Configuration.fallBackParser);
-          autoParser.setErrorParser(Configuration.errorParser);
+          autoParser.setFallback(new RawStringParser(Configuration.entropyTest));
+          autoParser.setErrorParser(new RawStringParser(Configuration.entropyTest));
           App.get().setAutoParser(autoParser);
     	  
     	  FileProcessor exibirAjuda = new FileProcessor(-1, false);
