@@ -62,7 +62,7 @@ public class Configuration {
   public static UTF8Properties properties = new UTF8Properties();
   public static File indexTemp, indexerTemp;
   public static int numThreads;
-  public static int textSplitSize = 10000000;
+  public static int textSplitSize = 100000000;
   public static int textOverlapSize = 10000;
   public static int timeOut = 180;
   public static int timeOutPerMB = 1;

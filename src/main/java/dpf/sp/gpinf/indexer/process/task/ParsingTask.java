@@ -297,10 +297,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       } while (reader.nextFragment());
 
       /**
-       * Armazena o texto extraído em cache até o limite de 10 fragmentos, 
-       * o que totaliza ~100MB com o tamanho padrão de fragmento de 10MB
+       * Armazena o texto extraído em cache até o limite de 1 fragmento, 
+       * o que totaliza ~100MB com o tamanho padrão de fragmento
        */
-      if (numFrags <= 10) {
+      if (numFrags == 1) {
         evidence.setParsedTextCache(writer.toString());
       }
 
