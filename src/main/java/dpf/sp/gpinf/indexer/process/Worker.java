@@ -162,7 +162,7 @@ public class Worker extends Thread {
 
     try {
 
-      LOGGER.info("{} Processando {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
+      LOGGER.debug("{} Processando {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
 
       checkFile(evidence);
 
