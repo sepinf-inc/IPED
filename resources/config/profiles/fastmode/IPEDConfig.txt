@@ -4,6 +4,7 @@
 ########################################################################
 
 indexTemp = default
+indexTempOnSSD = false
 enableKff = false
 enableLedWkff = false
 enableLedDie = false
