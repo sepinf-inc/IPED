@@ -57,8 +57,8 @@ public class Util {
   }
 
   public static String getRelativePath(File baseFile, File file) {
-	  Path base = baseFile.getParentFile().toPath().normalize();
-	  Path path = file.toPath().normalize();
+	  Path base = baseFile.getParentFile().toPath().normalize().toAbsolutePath();
+	  Path path = file.toPath().normalize().toAbsolutePath();
 	  if(!base.getRoot().equals(path.getRoot()))
 	  	return file.getAbsolutePath();
 	  return base.relativize(path).toString();
