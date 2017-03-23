@@ -38,8 +38,6 @@ public class ImageThumbTask extends AbstractTask {
 
   private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
   
-  private static final String winToolPath = "/tools/graphicsmagick";
-
   private static final int samplingRatio = 3;
 
   public int thumbSize = 160;
@@ -67,7 +65,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-      GraphicsMagicConverter.toolPathWin = Configuration.appRoot + winToolPath;
+      GraphicsMagicConverter.setWinToolPathPrefix(Configuration.appRoot);
     }
 
     value = properties.getProperty("imgConvTimeout");
