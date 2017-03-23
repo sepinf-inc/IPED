@@ -222,8 +222,9 @@ public class SleuthkitReader extends DataSourceReader {
     checkTSKVersion();
 
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (args.getCmdArgs().containsKey("--fastmode")) {
-      fastmode = true;
+    if (args.getCmdArgs().containsKey("-profile")) {
+    	if(args.getCmdArgs().get("-profile").get(0).equals("fastmode"))
+    		fastmode = true;
     }
     
     int offset = TimeZone.getDefault().getRawOffset() / 3600000;
