@@ -37,22 +37,28 @@ import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FolderTreeReader extends DataSourceReader {
 	
   private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
+  
+  public static final String FS_OWNER = "fileSystemOwner";
 
   private File rootFile;
   private String category;
   private String evidenceName;
+  private CmdLineArgs args;
 
   public FolderTreeReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
   }
 
   public int read(File file) throws Exception {
+	  
+	args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 
     rootFile = file;
     evidenceName = getEvidenceName(file);
@@ -102,6 +108,14 @@ public class FolderTreeReader extends DataSourceReader {
       if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
         evidenceFile.addCategory(category);
       }
+      
+      if (args.getCmdArgs().containsKey(CmdLineArgs.ADD_OWNER))
+	      try {
+	    	evidenceFile.setExtraAttribute(FS_OWNER, Files.getOwner(path));
+	    	
+		  } catch (IOException e) {
+			e.printStackTrace();
+		  }
 
       return evidenceFile;
     }

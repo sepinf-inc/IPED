@@ -30,9 +30,10 @@ public class CmdLineArgs {
   /**
    * Título da ajuda
    */
-  private static String usage = Versao.APP_NAME + "\n" + "Uso: java -jar iped.jar -opcao  argumento [--opcao_sem_argumento]";
+  private static final String usage = Versao.APP_NAME + "\n" + "Uso: java -jar iped.jar -opcao  argumento [--opcao_sem_argumento]";
 
-  public static String ALL_ARGS = "ALL_ARGS";
+  public static final String ALL_ARGS = "ALL_ARGS";
+  public static final String ADD_OWNER = "--addowner";
 
   /**
    * Parâmetros aceitos via linha de comando e respectiva descrição (ajuda). Aqui devem ser
@@ -58,6 +59,7 @@ public class CmdLineArgs {
     {"-b", "tamanho em bytes do setor do dispositivo, necessario informar para discos com setores de 4k"},
     {"-profile", "usa um profile de processamento: forensic, pedo,\n"
     		+ "\t\t fastmode, blind. Para detalhes consulte o manual."},
+    {ADD_OWNER, "indexa o proprietario dos arquivos ao processar pastas (mto lento via rede)"},
     {"--append", "adiciona indexação a um indice ja existente"},
     {"--nogui", "nao exibe a janela de progresso da indexacao"},
     {"--nologfile", "imprime as mensagem de log na saida padrao"},
