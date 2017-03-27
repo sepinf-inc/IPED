@@ -1,4 +1,4 @@
-21/03/2017: IPED-3.12
+27/03/2017: IPED-3.12
 - Análise simultânea ao processamento (apenas itens já processados)
 - Atualização para Sleuthkit-4.4 (processamento de FileSlacks)
 - API para acessar múltiplos itens de dentro dos parsers
@@ -7,8 +7,8 @@
 - Melhorias no SkypeParser: embute imagens em cache nos chats e insere miniaturas e links nas transferências 
 - Criação de marcadores automáticos p/ itens enviados via WhatsApp e Skype
 - Links no preview de históricos P2P (Emule, Ares e Shareaza) para itens encontrados na evidência
-- Função para localizar documentos por similaridade
 - Profiles de processamento, sendo pré-configurados: forensic, pedo, fastmode, blind.
+- Função para localizar documentos por similaridade
 - Melhor detecção de tipos derivados de SQLite via nomes de tabelas
 - Otimizações no fastmode ao processar imagens e dispositivos
 - Aumenta cache de texto extraído para indexação mais rápida de itens grandes
@@ -16,14 +16,20 @@
 - Melhor filtro para conteineres não expandidos
 - Exposição do parâmetro de timeout por tamanho (timeOutPerMB)
 - Carregamento mais rápido de bases do LED (PCF Wladimir)
+- Opção --addowner para indexar owner dos arquivos ao processar pastas
 - Atualização para PDFBox-2.0.5
 Correções:
-- Demora na atualização do viewer de texto ao interromper visualização (regressão 3.10.1)
+- Não extração de thumbs PNG de contatos do Skype
+
+
+27/03/2017: IPED-3.11.2
+Correções:
+- Falha ao armazenar referências relativas para os itens ao processar pastas (regressão 3.11)
+- Demora na atualização do viewer de texto após interromper visualização (regressão 3.10.1)
 - Processamento interminável devido a bug no carving de MP4 (3.10)
 - OutOfMemory ao processar caixas DBX corrompidas (2.15)
-- Contas do Skype não eram renderizadas no HTMLViewer
 - Visualização truncada de chats do skype devido a msgs com html mal formado
-- Não extração de thumbs PNG de contatos do Skype
+- Contas do Skype não eram renderizadas no HTMLViewer
 
 
 07/02/2017: IPED-3.11.1
