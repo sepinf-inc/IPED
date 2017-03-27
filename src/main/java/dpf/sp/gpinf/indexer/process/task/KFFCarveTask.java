@@ -95,7 +95,7 @@ public class KFFCarveTask extends BaseCarveTask {
         if (value != null && value.trim().equalsIgnoreCase("true")) {
           if (LedKFFTask.kffItems != null) {
             md5_512 = LedHashes.hashMap.get("md5-512");
-            System.err.println("LEN=" + md5_512.length);
+            Log.info(taskName, "Hashes carregados: " + md5_512.length);
             taskEnabled = true;
           } else {
             Log.error(taskName, "Base do LED precisa ser carregada para o KFFCarving funcionar.");
