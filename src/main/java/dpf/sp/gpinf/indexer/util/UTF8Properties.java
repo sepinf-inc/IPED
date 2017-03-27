@@ -34,7 +34,9 @@ public class UTF8Properties extends Properties {
         pos = str.indexOf('=', pos + 1);
       }
       if (pos > 0) {
-        super.put(str.substring(0, pos).replace("\\=", "=").trim(), str.substring(pos + 1).replace("\\=", "=").trim());
+    	String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim();
+    	String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim();
+        super.put(key, val);
       }
     }
     in.close();
