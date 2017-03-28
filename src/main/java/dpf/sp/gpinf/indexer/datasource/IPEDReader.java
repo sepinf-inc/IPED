@@ -458,6 +458,10 @@ public class IPEDReader extends DataSourceReader {
 
       value = doc.get(IndexItem.HASCHILD);
       evidence.setHasChildren(Boolean.parseBoolean(value));
+      
+      value = doc.get(ParsingTask.HAS_SUBITEM);
+      if(value != null)
+    	evidence.setExtraAttribute(ParsingTask.HAS_SUBITEM, "true");
 
       value = doc.get(IndexItem.OFFSET);
       if (value != null) {
