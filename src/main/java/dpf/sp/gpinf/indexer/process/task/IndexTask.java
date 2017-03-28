@@ -95,6 +95,7 @@ public class IndexTask extends BaseCarveTask {
         evidence.setSleuthId(null);
         evidence.setExportedFile(null);
         evidence.setExtraAttribute(IndexItem.TREENODE, "true");
+        evidence.getCategorySet().clear();
       } else {
         return;
       }
