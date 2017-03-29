@@ -198,8 +198,8 @@ public class Worker extends Thread {
    */
   public void processNewItem(EvidenceFile evidence) {
     caseData.incDiscoveredEvidences(1);
-    // Se não há item na fila, enfileira para outro worker processar
-    if (caseData.getItemQueue().size() == 0) {
+    // Se a fila está pequena, enfileira
+    if (caseData.getItemQueue().size() < manager.getWorkers().length) {
     	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {
