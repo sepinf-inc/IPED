@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -601,19 +602,17 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
         if (type != null && !type.toString().isEmpty()) {
           ext = Util.getValidFilename("." + type.toString());
         }
-        final File file = File.createTempFile("iped", ext);
+        final Path path = Files.createTempFile("iped", ext);
         tmpResources.addResource(new Closeable() {
           public void close() throws IOException {
-            if (!file.delete()) {
-              throw new IOException("Could not delete temp file " + file.getPath());
-            }
+        	  Files.delete(path);
           }
         });
 
         try (InputStream in = getBufferedStream()) {
-          Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+          Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
         }
-        tmpFile = file;
+        tmpFile = path.toFile();
       }
 
     }
