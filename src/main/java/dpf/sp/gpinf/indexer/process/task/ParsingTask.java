@@ -229,7 +229,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     fillMetadata(evidence);
 
-    if (!evidence.isTimedOut() && hasSpecificParser(autoParser, evidence)) {
+    if (!evidence.isTimedOut() && ((evidence.getLength() != null && 
+    		evidence.getLength() < Configuration.minItemSizeToFragment) ||
+    		hasSpecificParser(autoParser, evidence) )) {
       new ParsingTask(worker, autoParser).safeProcess(evidence);
     }
 
@@ -442,7 +444,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
       subItem.setParent(parent);
       parent.setHasChildren(true);
-      parent.setExtraAttribute(HAS_SUBITEM, "true");
+      //indica se o conteiner tem subitens
+      evidence.setExtraAttribute(HAS_SUBITEM, "true");
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
         subItem.setIsDir(true);
