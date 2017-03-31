@@ -264,12 +264,15 @@ public class GerenciadorMarcadores implements ActionListener {
 
       new Thread() {
         public void run() {
-          if (duplicates.isSelected()) {
+        	
+          ArrayList<String> labels = new ArrayList<String>();
+          for (int index : list.getSelectedIndices())
+        	  labels.add(list.getModel().getElementAt(index));
+        	
+          if (duplicates.isSelected())
             includeDuplicates(uniqueSelectedIds);
-          }
 
-          for (int index : list.getSelectedIndices()) {
-        	String label = list.getModel().getElementAt(index);
+          for (String label : labels) {
             if (evt.getSource() == add || evt.getSource() == novo) {
               App.get().appCase.getMultiMarcadores().addLabel(uniqueSelectedIds, label);
             } else {
