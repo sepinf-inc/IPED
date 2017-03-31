@@ -199,7 +199,7 @@ public class Worker extends Thread {
   public void processNewItem(EvidenceFile evidence) {
     caseData.incDiscoveredEvidences(1);
     // Se a fila está pequena, enfileira
-    if (caseData.getItemQueue().size() < manager.getWorkers().length) {
+    if (caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
     	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {
