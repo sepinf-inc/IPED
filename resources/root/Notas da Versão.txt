@@ -1,3 +1,7 @@
+01/04/2017: IPED-3.12.1
+- Corrige falha no parsing de bases SQLite (regressão 3.12)
+- Corrige ConcurrentModificationException que abortava processamento (3.12)
+
 29/03/2017: IPED-3.12
 - Análise simultânea ao processamento (apenas itens já processados)
 - Atualização para Sleuthkit-4.4 (processamento de FileSlacks)
