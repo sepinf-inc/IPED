@@ -78,9 +78,9 @@ public class SleuthkitClient {
       ProcessBuilder pb = new ProcessBuilder(cmd);
       process = pb.start();
       finishProcessOnJVMShutdown(process);
-
-      is = process.getInputStream();
-      os = process.getOutputStream();
+      
+      logStdErr(process.getInputStream(), port);
+      logStdErr(process.getErrorStream(), port);
 
       Thread.sleep(2000);
 
@@ -111,8 +111,6 @@ public class SleuthkitClient {
         throw new Exception("Error starting SleuthkitServer");
       }
 
-      logStdErr(process);
-
     } catch (Exception e) {
       //e.printStackTrace();
       if (process != null) {
@@ -122,15 +120,16 @@ public class SleuthkitClient {
     }
   }
 
-  private void logStdErr(final Process process) {
+  private void logStdErr(final InputStream is, final int port) {
     new Thread() {
       public void run() {
-        InputStream err = process.getErrorStream();
         byte[] b = new byte[1024 * 1024];
         try {
           int r = 0;
-          while ((r = err.read(b)) != -1) {
-            logger.info(new String(b, 0, r));
+          while ((r = is.read(b)) != -1) {
+        	String msg = new String(b, 0, r).trim();
+        	if(!msg.isEmpty())
+        		logger.info("SleuthkitServer port" + port + ": " + msg);
           }
 
         } catch (Exception e) {

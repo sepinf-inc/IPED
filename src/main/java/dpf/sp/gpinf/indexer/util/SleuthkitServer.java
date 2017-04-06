@@ -51,6 +51,7 @@ public class SleuthkitServer {
     String port = args[1];
     String pipePath = args[2];
     MappedByteBuffer out = null;
+    OutputStream os = null;
     try {
 
       int size = 10 * 1024 * 1024;
@@ -60,16 +61,13 @@ public class SleuthkitServer {
       out = fc.map(MapMode.READ_WRITE, 0, size);
       out.load();
 
-      InputStream in = System.in;
-      OutputStream os = System.out;
-
       ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
       serverSocket.setPerformancePreferences(0, 1, 2);
       serverSocket.setReceiveBufferSize(1);
       Socket clientSocket = serverSocket.accept();
       clientSocket.setTcpNoDelay(true);
       clientSocket.setSendBufferSize(1);
-      in = clientSocket.getInputStream();
+      InputStream in = clientSocket.getInputStream();
       os = clientSocket.getOutputStream();
 
       Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador");
@@ -124,8 +122,13 @@ public class SleuthkitServer {
       }
 
     } catch (Throwable e) {
-      e.printStackTrace(System.err);
+      e.printStackTrace();
       commitByte(out, 0, FLAGS.ERROR);
+      try {
+		if(os != null) notify(os);
+      } catch (IOException e1) {
+		e1.printStackTrace();
+      }
     }
   }
 
