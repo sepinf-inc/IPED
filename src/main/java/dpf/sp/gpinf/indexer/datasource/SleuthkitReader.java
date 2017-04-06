@@ -205,9 +205,12 @@ public class SleuthkitReader extends DataSourceReader {
     process.getErrorStream().close();
 
     String[] str = out.toString().split(" ");
-    if (str[str.length - 1].compareTo("4.3") < 0) {
-      throw new Exception("Versao do Sleuthkit nao suportada. Instale pelo menos a versao 4.3");
-    }
+    String tskVer = str[str.length - 1]; 
+    if (tskVer.compareTo("4.4.0") < 0)
+      throw new Exception("Versao " + tskVer + " do Sleuthkit nao suportada. Instale a versao 4.4.0");
+    else if (tskVer.compareTo("4.4.1") >= 0)
+    	LOGGER.error("Versão " + tskVer + " do Sleuthkit não testada! Pode haver incompatibilidades!");
+    	
 
     if (out.toString().contains("iped-patch")) {
       isTskPatched = true;
