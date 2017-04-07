@@ -562,7 +562,6 @@ public class Manager {
 
     if (!IndexFiles.getInstance().appendIndex) {
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib"), new File(output, "lib"), true);
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib/nativeview"), new File(output, "lib/nativeview"));
 
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/graphicsmagick"), new File(output, "tools/graphicsmagick"));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport"));
@@ -579,6 +578,8 @@ public class Manager {
       IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
       IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "bin"), output.getParentFile());
+      //copia arquivo de assinaturas customizadas
+      IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/CustomSignatures.jar"), new File(output, "conf/CustomSignatures.jar"));
     }
 
     if (palavrasChave != null) {
