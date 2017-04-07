@@ -1,9 +1,9 @@
-06/04/2017: IPED-3.12.2
-- Regressão na abertura de links p/ anexos de EML no Linux (3.12)
-- Correções no Sleuthkit 4.4.0:
-	- regressão ao reconhecer partições DOS qdo há backup de GPT de formatação anterior
-	- regressão no funcionamento do java bindings no Linux
-	- regressão na performance da opção robustImageReading
+07/04/2017: IPED-3.12.2
+- Corrige regressão na abertura de links p/ anexos no Linux (3.12)
+- Corrige regressões no Sleuthkit 4.4.0:
+	- erro ao reconhecer partições DOS qdo há backup de GPT de formatação anterior
+	- erro na linkagem do libtsk_jni.so no Linux
+	- contorna piora na performance da opção robustImageReading
 
 01/04/2017: IPED-3.12.1
 - Corrige falha no parsing de bases SQLite (regressão 3.12)
