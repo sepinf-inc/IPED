@@ -63,7 +63,6 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -819,12 +818,11 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     try {
-      GalleryValue value = new GalleryValue(null, null, null);
       BufferedImage img = null;
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
-          img = ImageUtil.getThumb(stream, value);
+          img = ImageUtil.getThumb(stream);
         } finally {
           IOUtil.closeQuietly(stream);
         }
@@ -833,11 +831,11 @@ public class HTMLReportTask extends AbstractTask {
         final int sampleFactor = 3;
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
-          img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor, value);
+          img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor);
         } finally {
           IOUtil.closeQuietly(stream);
         }
-        if (img == null) {
+        if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
           stream = evidence.getBufferedStream();
           try {
             img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);

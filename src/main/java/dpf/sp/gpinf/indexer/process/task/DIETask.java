@@ -32,7 +32,6 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -245,11 +244,10 @@ public class DIETask extends AbstractTask {
   private BufferedImage getBufferedImage(EvidenceFile evidence) {
     BufferedImage img = null;
     try {
-      GalleryValue value = new GalleryValue(null, null, null);
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
-          img = ImageUtil.getThumb(stream, value);
+          img = ImageUtil.getThumb(stream);
         } finally {
           IOUtil.closeQuietly(stream);
         }
@@ -257,12 +255,12 @@ public class DIETask extends AbstractTask {
       if (img == null) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
-          img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize(), value);
+          img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
         } finally {
           IOUtil.closeQuietly(stream);
         }
       }
-      if (img == null) {
+      if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = new GraphicsMagicConverter().getImage(stream, die.getExpectedImageSize());

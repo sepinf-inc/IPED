@@ -18,15 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,8 +37,6 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
-
-import com.sun.javafx.iio.ImageStorage.ImageType;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -150,6 +145,7 @@ public class GalleryModel extends AbstractTableModel {
         BufferedImage image = null;
         InputStream stream = null;
         GalleryValue value = new GalleryValue(doc.get(IndexItem.NAME), null, id);
+        boolean getDimension = true;
         try {
           if (cache.containsKey(id)) {
             return;
@@ -167,6 +163,7 @@ public class GalleryModel extends AbstractTableModel {
               if (image.getWidth() < thumbSize - resizeTolerance && image.getHeight() < thumbSize - resizeTolerance) {
                 value.originalW = image.getWidth();
                 value.originalH = image.getHeight();
+                getDimension = false;
               }
             }
           }
@@ -174,6 +171,7 @@ public class GalleryModel extends AbstractTableModel {
           String export = doc.get(IndexItem.EXPORT);
           if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
             image = getThumbFromFTKReport(App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
+            getDimension = false;
           }
           
           if (image == null && stream == null && isSupportedImage(mediaType)) {
@@ -183,19 +181,27 @@ public class GalleryModel extends AbstractTableModel {
           if (stream != null) {
             stream.mark(10000000);
           }
+          
+          if(stream != null && getDimension){
+        	  Dimension d = ImageUtil.getImageFileDimension(stream);
+        	  value.originalW = d.width;
+              value.originalH = d.height;
+              stream.reset();
+          }
 
-          if (image == null && stream != null && doc.get(IndexItem.CONTENTTYPE).equals("image/jpeg")) {
-            image = ImageUtil.getThumb(new CloseShieldInputStream(stream), value);
+          if (image == null && stream != null && mediaType.equals("image/jpeg")) {
+            image = ImageUtil.getThumb(new CloseShieldInputStream(stream));
             stream.reset();
           }
 
           if (image == null && stream != null) {
-            image = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize, value);
+            image = ImageUtil.getSubSampledImage(stream, thumbSize, thumbSize);
             stream.reset();
           }
 
           if (image == null && stream != null) {
-            image = new GraphicsMagicConverter().getImage(stream, thumbSize);
+        	if(!ImageUtil.jdkImagesSupported.contains(mediaType))
+              image = new GraphicsMagicConverter().getImage(stream, thumbSize);
           }
 
           if (image == null || image == errorImg) {

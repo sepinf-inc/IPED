@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.data.EvidenceFile;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -14,10 +15,9 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -136,44 +136,42 @@ public class ImageThumbTask extends AbstractTask {
 
     File tmp = null;
     try {
-      GalleryValue value = new GalleryValue(null, null, null);
       BufferedImage img = null;
+      Dimension dimension = null;
+      try (BufferedInputStream stream = evidence.getBufferedStream()){
+    	  dimension = ImageUtil.getImageFileDimension(stream);
+      }
       if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
-        BufferedInputStream stream = evidence.getBufferedStream();
-        try {
-          img = ImageUtil.getThumb(stream, value);
-        } finally {
-          IOUtil.closeQuietly(stream);
+        try (BufferedInputStream stream = evidence.getBufferedStream()){
+          img = ImageUtil.getThumb(stream);
         }
       }
       if (img == null) {
-        BufferedInputStream stream = evidence.getBufferedStream();
-        try {
-          img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio, value);
-        } finally {
-          IOUtil.closeQuietly(stream);
+        try (BufferedInputStream stream = evidence.getBufferedStream()){
+          BooleanWrapper renderException = new BooleanWrapper();
+          img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio, renderException);
+          if(img != null && renderException.value)
+        	  evidence.setExtraAttribute("thumbException", "true");
         }
       }
-      if (img == null) {
-        BufferedInputStream stream = evidence.getBufferedStream();
-        try {
+      if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
+        try (BufferedInputStream stream = evidence.getBufferedStream()){
           img = new GraphicsMagicConverter().getImage(stream, thumbSize * samplingRatio, true);
-          value = null;
+          if(img != null)
+        	  evidence.setExtraAttribute("externalThumb", "true");
+          dimension = null;
         } catch (TimeoutException e) {
           stats.incTimeouts();
           evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
           Log.warning(getClass().getSimpleName(), "Timeout ao gerar miniatura externamente: "
               + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
-
-        } finally {
-          IOUtil.closeQuietly(stream);
         }
       }
 
       tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder));
 
       if (img != null) {
-        if (value != null && (value.originalW > thumbSize || value.originalH > thumbSize) && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
+        if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize) && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
           img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
         }
         img = ImageUtil.getOpaqueImage(img);
