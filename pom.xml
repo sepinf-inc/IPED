@@ -169,11 +169,6 @@
             <version>1.6.3</version>
         </dependency>
         <dependency>
-    		<groupId>gpinf.sp</groupId>
-    		<artifactId>robust-png</artifactId>
-    		<version>0.1</version>
-    	</dependency>
-        <dependency>
             <groupId>libre-office</groupId>
             <artifactId>noa-libre</artifactId>
             <version>0.3</version>
@@ -298,7 +293,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>unpack-graphicsmagick</id>
+                        <id>unpack-imagemagick</id>
                         <phase>package</phase>
                         <goals>
                             <goal>unpack</goal>
@@ -306,9 +301,9 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>graphicsmagick</groupId>
-                                    <artifactId>graphicsmagick-zip</artifactId>
-                                    <version>1.3.21</version>
+                                    <groupId>org.imagemagick</groupId>
+                                    <artifactId>imagemagick-zip</artifactId>
+                                    <version>7.0.5-4</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
