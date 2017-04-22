@@ -22,11 +22,11 @@ public class DirectMemory {
 
   }
 
-  public static void putByteVolatile(MappedByteBuffer bb, long pos, byte val) {
+  public static final void putByteVolatile(MappedByteBuffer bb, long pos, byte val) {
     unsafe.putByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos, val);
   }
 
-  public static byte getByteVolatile(MappedByteBuffer bb, long pos) {
+  public static final byte getByteVolatile(MappedByteBuffer bb, long pos) {
     return unsafe.getByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos);
   }
 }
