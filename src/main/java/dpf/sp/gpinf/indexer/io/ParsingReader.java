@@ -192,6 +192,8 @@ public class ParsingReader extends Reader {
   }
 
   private Future future;
+  
+  private volatile boolean parseDone = false;
 
   private static class ParsingThreadFactory implements ThreadFactory {
 
@@ -273,6 +275,8 @@ public class ParsingReader extends Reader {
           LOGGER.warn("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
         }
 
+      }finally{
+    	  parseDone = true;
       }
 
       try {
@@ -376,7 +380,7 @@ public class ParsingReader extends Reader {
 
   public void reallyClose() throws IOException {
     reader.close();
-    if (!future.isDone()) {
+    if (!parseDone) {
       closeAndInterruptParsingTask();
     }
   }
