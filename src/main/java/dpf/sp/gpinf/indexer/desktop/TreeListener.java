@@ -48,6 +48,7 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
 public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener {
@@ -154,22 +155,24 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     } while (result.getLength() == 1 && textQuery != null);
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
+    
+    int index = SwingUtil.getIndexOfTab(App.get().treeTab, "Evidências");
+    App.get().treeTab.setSelectedIndex(index);
 
     TreePath treePath = new TreePath(path.toArray());
     App.get().tree.setExpandsSelectedPaths(true);
     App.get().tree.setSelectionPath(treePath);
     App.get().tree.scrollPathToVisible(treePath);
 
-    App.get().treeTab.setSelectedIndex(2);
   }
 
   @Override
   public void actionPerformed(ActionEvent e) {
 
     if ((App.get().recursiveTreeList.isSelected() && rootSelected) || selection.isEmpty()) {
-      App.get().treeTab.setBackgroundAt(2, App.get().defaultTabColor);
+      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
     } else {
-      App.get().treeTab.setBackgroundAt(2, App.get().alertColor);
+      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
     }
 
     App.get().appletListener.updateFileListing();
