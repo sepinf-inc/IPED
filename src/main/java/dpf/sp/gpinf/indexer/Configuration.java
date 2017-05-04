@@ -427,7 +427,7 @@ public class Configuration {
     	if (tskJarPath != null && !tskJarPath.isEmpty())
         	tskJarPath = tskJarPath.trim();
     	else
-    		throw new IPEDException("Obrigatório configurar tskJarPath em conf/AdvancedConfig.txt!");
+    		throw new IPEDException("Obrigatório configurar tskJarPath em LocalConfig.txt!");
     	
     	File tskJarFile = new File(tskJarPath);
     	if(!tskJarFile.exists())
