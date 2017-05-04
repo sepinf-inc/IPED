@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.12</version>
+    <version>3.13</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -41,6 +41,11 @@
     </repositories>
     
     <dependencies>
+    	<dependency>
+    		<groupId>dk.brics.automaton</groupId>
+    		<artifactId>automaton</artifactId>
+    		<version>1.11-8</version>
+		</dependency>
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
@@ -63,11 +68,6 @@
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
             <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>gpinf.iped</groupId>
-            <artifactId>iped-parsers-impl</artifactId>
-            <version>3.12</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -175,13 +175,18 @@
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
+            <artifactId>iped-parsers-impl</artifactId>
+            <version>3.13</version>
+        </dependency>
+        <dependency>
+            <groupId>gpinf.iped</groupId>
             <artifactId>iped-viewer</artifactId>
-            <version>3.12</version>
+            <version>3.13</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.12</version>
+            <version>3.13</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
