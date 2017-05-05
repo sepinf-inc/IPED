@@ -53,6 +53,9 @@ public class SleuthkitServer {
     MappedByteBuffer out = null;
     OutputStream os = null;
     try {
+      //InputStream in = System.in;
+      //os = System.out;
+      //System.setOut(System.err);
 
       int size = 10 * 1024 * 1024;
       RandomAccessFile raf = new RandomAccessFile(pipePath, "rw");

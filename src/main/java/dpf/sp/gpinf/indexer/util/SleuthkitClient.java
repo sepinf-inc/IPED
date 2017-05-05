@@ -83,6 +83,9 @@ public class SleuthkitClient {
       logStdErr(process.getErrorStream(), port);
 
       Thread.sleep(2000);
+      
+      //is = process.getInputStream();
+      //os = process.getOutputStream();
 
       socket = new Socket();
       socket.setPerformancePreferences(0, 1, 2);
