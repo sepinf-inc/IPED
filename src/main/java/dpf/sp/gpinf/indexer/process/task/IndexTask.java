@@ -104,8 +104,9 @@ public class IndexTask extends BaseCarveTask {
     stats.updateLastId(evidence.getId());
     
     //Fragmenta itens grandes indexados via strings
-    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !ParsingTask.hasSpecificParser(autoParser, evidence)
-    		 && !caseData.containsReport() && (evidence.getSleuthFile() != null || evidence.getFile() != null)){
+    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.containsReport()
+            && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
+    		&& (evidence.getSleuthFile() != null || evidence.getFile() != null)){
     	
     	int fragNum = 0;
     	int overlap = 1024;
