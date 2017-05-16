@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 
 /**
  * Instancia e instala as tarefas de processamento em um Worker. A ordem de execução das tarefas
@@ -20,9 +21,7 @@ public class TaskInstaller {
     tasks.add(new IgnoreHardLinkTask(worker));
     tasks.add(new TempFileTask(worker));
     tasks.add(new HashTask(worker));
-    //Nova tarefa IgnoreHardLinkTask após HashTask para armazenar hash dos arquivos
-    //tasks.add(new IgnoreHardLinkTask(worker));
-
+    
     tasks.add(new SignatureTask(worker));
     tasks.add(new SetTypeTask(worker));
     tasks.add(new SetCategoryTask(worker));
@@ -32,6 +31,7 @@ public class TaskInstaller {
     tasks.add(new DuplicateTask(worker));
 
     tasks.add(new ParsingTask(worker));
+    tasks.add(new RegexTask(worker));
     tasks.add(new ExportFileTask(worker));
     tasks.add(new MakePreviewTask(worker));
     tasks.add(new ImageThumbTask(worker));
