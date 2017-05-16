@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,9 +29,10 @@ import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
-import org.apache.tika.detect.Detector;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
@@ -48,11 +48,13 @@ import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.apache.tika.parser.txt.TXTParser;
+import org.apache.tika.sax.ToTextContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -66,6 +68,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import gpinf.dev.data.EvidenceFile;
@@ -99,6 +102,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   public static int subitensDiscovered = 0;
   private static HashSet<String> categoriesToExpand = new HashSet<String>();
+  public static AtomicLong totalText = new AtomicLong();
+  public static ConcurrentHashMap<String, AtomicLong> times = new ConcurrentHashMap<String, AtomicLong>();
 
   private EvidenceFile evidence;
   private ParseContext context;
@@ -220,7 +225,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static int getSubitensDiscovered() {
     return subitensDiscovered;
   }
-
+  
   public void process(EvidenceFile evidence) throws IOException {
 
     if (!enableFileParsing) {
@@ -228,23 +233,45 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     fillMetadata(evidence);
-
+    
+    Parser parser = getLeafParser(autoParser, evidence);
+    
+    AtomicLong time = times.get(parser.getClass().getSimpleName());
+    if(time == null){
+    	time = new AtomicLong();
+    	times.put(parser.getClass().getSimpleName(), time);
+    }
+    
+    long start = System.nanoTime()/1000;
+    
     if (!evidence.isTimedOut() && ((evidence.getLength() != null && 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
-    		hasSpecificParser(autoParser, evidence) )) {
+    		hasSpecificParser(parser) )) {
       new ParsingTask(worker, autoParser).safeProcess(evidence);
     }
+    
+    time.addAndGet(System.nanoTime()/1000 - start);
 
   }
+  
+  private static Parser getLeafParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
+	  Parser parser = autoParser.getBestParser(evidence.getMetadata());
+	    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
+	    	if(parser instanceof CompositeParser)
+	    		parser = getParser((CompositeParser)parser, evidence.getMetadata());
+	    	else
+	    		parser = ((ParserDecorator)parser).getWrappedParser();
+	    }
+	    return parser;
 
+  }
+  
   public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
-    Parser parser = autoParser.getBestParser(evidence.getMetadata());
-    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
-    	if(parser instanceof CompositeParser)
-    		parser = getParser((CompositeParser)parser, evidence.getMetadata());
-    	else
-    		parser = ((ParserDecorator)parser).getWrappedParser();
-    }
+	  Parser p = getLeafParser(autoParser, evidence);
+	  return hasSpecificParser(p);
+  }
+  
+  public static boolean hasSpecificParser(Parser parser) {
     if (parser instanceof RawStringParser || parser instanceof TXTParser)
       return false;
     else
@@ -280,7 +307,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     configureTikaContext(evidence);
     Metadata metadata = evidence.getMetadata();
-
+    
     reader = new ParsingReader(this.autoParser, tis, metadata, context);
     reader.startBackgroundParsing();
 
@@ -289,6 +316,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       char[] cbuf = new char[128 * 1024];
       int len = 0;
       int numFrags = 0;
+      
+      /*ContentHandler handler = new ToTextContentHandler(writer);
+      try {
+        numFrags++;
+		this.autoParser.parse(tis, handler, metadata, context);
+	  } catch (Throwable e) {
+		//e.printStackTrace();
+	  }
+      /*/
       do {
         numFrags++;
         writer = new StringWriter();
@@ -297,13 +333,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
 
       } while (reader.nextFragment());
-
+	
       /**
        * Armazena o texto extraído em cache até o limite de 1 fragmento, 
        * o que totaliza ~100MB com o tamanho padrão de fragmento
        */
       if (numFrags == 1) {
         evidence.setParsedTextCache(writer.toString());
+        totalText.addAndGet(evidence.getParsedTextCache().length());
       }
 
       if (extractEmbedded) {
@@ -335,11 +372,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       }
 
     } finally {
+      //IOUtil.closeQuietly(tis);
       //do nothing
       reader.close();
       reader.reallyClose();
     }
-
+    
   }
 
   @Override
@@ -523,7 +561,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   @Override
   public void finish() throws Exception {
-    // TODO Auto-generated method stub
+      if(totalText != null)
+          LOGGER.info("Volume de texto extraído: " + totalText.get());
+      totalText = null;
 
   }
 

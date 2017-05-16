@@ -29,6 +29,8 @@ import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -62,7 +64,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
   private static final long serialVersionUID = -1130342847618772236L;
   private JProgressBar progressBar;
   private JButton pause, openApp;
-  private JLabel tasks, itens, stats;
+  private JLabel tasks, itens, stats, parsers;
   int indexed = 0, discovered = 0;
   long rate = 0, instantRate;
   int volume, taskSize;
@@ -110,15 +112,19 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     tasks = new RestrictedSizeLabel();
     itens = new RestrictedSizeLabel();
     stats = new RestrictedSizeLabel();
+    parsers = new RestrictedSizeLabel();
     tasks.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     stats.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     itens.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    parsers.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     stats.setAlignmentY(TOP_ALIGNMENT);
     itens.setAlignmentY(TOP_ALIGNMENT);
     tasks.setAlignmentY(TOP_ALIGNMENT);
+    parsers.setAlignmentY(TOP_ALIGNMENT);
 
     panel.add(stats);
     panel.add(tasks);
+    panel.add(parsers);
     panel.add(itens);
     JScrollPane scrollPane = new JScrollPane(panel);
     
@@ -160,6 +166,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       tasks.setText(getTaskTimes());
       itens.setText(getItemList());
       stats.setText(getStats());
+      parsers.setText(getParsersTime());
       if(indexed > 0)
     	  openApp.setEnabled(true);
 
@@ -176,6 +183,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       tasks.setText(getTaskTimes());
       itens.setText(getItemList());
       stats.setText(getStats());
+      parsers.setText(getParsersTime());
 
     } else if ("progresso".equals(evt.getPropertyName())) {
       long prevVolume = volume;
@@ -272,6 +280,25 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     }
     msg.append("</table>");
     return msg.toString();
+  }
+  
+  private String getParsersTime(){
+	  if(ParsingTask.times.isEmpty())
+		  return "";
+	  StringBuilder msg = new StringBuilder();
+	  msg.append("<html>Tempos por Parser:<br>");
+	  msg.append("<table cellspacing=0 cellpadding=1 border=1>");
+	  long totalTime = (System.currentTimeMillis() - indexStart.getTime()) / 1000 + 1;
+	  for(Entry<String , AtomicLong> e : ParsingTask.times.entrySet()){
+	    	msg.append("<tr><td>");
+	        msg.append(e.getKey());
+	        msg.append("</td><td>");
+	        long sec = e.getValue().get() / (1000000 * Configuration.numThreads);
+	        msg.append(sec + "s (" + (100 * sec) / totalTime + "%)");
+	        msg.append("</td></tr>");
+	    }
+	  msg.append("</table>");
+	  return msg.toString();
   }
 
   private String getStats() {
