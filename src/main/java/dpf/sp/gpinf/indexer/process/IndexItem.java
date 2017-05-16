@@ -18,26 +18,17 @@
  */
 package dpf.sp.gpinf.indexer.process;
 
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.filetypes.EvidenceFileType;
-import gpinf.dev.filetypes.GenericFileType;
-
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.lucene.collation.ICUCollationDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoubleField;
@@ -50,26 +41,28 @@ import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedNumericDocValuesField;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-import com.ibm.icu.text.Collator;
-
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.filetypes.EvidenceFileType;
+import gpinf.dev.filetypes.GenericFileType;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens que será
@@ -120,7 +113,6 @@ public class IndexItem {
 
   private static FieldType contentField = new FieldType();
   private static FieldType storedTokenizedNoNormsField = new FieldType();
-  private static Collator collator;
 
   static {
     contentField.setIndexed(true);
@@ -130,10 +122,6 @@ public class IndexItem {
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);
     storedTokenizedNoNormsField.setStored(true);
-
-    collator = Collator.getInstance();
-    collator.setStrength(Collator.PRIMARY);
-    collator.freeze();
 
     ignoredMetadata.add(Metadata.CONTENT_TYPE);
     ignoredMetadata.add(Metadata.CONTENT_LENGTH);
@@ -174,11 +162,12 @@ public class IndexItem {
       }
     }
   }
-
-  private static final ICUCollationDocValuesField getCollationDocValue(String field, String value) {
-    ICUCollationDocValuesField cdvf = new ICUCollationDocValuesField(field, collator);
-    cdvf.setStringValue(value);
-    return cdvf;
+  
+  private static final String normalize(String value){
+      char[] input = value.toLowerCase().toCharArray();
+      char[] output = new char[input.length];
+      FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+      return new String(output).trim();
   }
 
   public static Document Document(EvidenceFile evidence, Reader reader) {
@@ -218,7 +207,7 @@ public class IndexItem {
     Field nameField = new TextField(NAME, value, Field.Store.YES);
     nameField.setBoost(1000.0f);
     doc.add(nameField);
-    doc.add(getCollationDocValue(NAME, value));
+    doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
     EvidenceFileType fileType = evidence.getType();
     if (fileType != null) {
@@ -227,7 +216,7 @@ public class IndexItem {
       value = "";
     }
     doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
-    doc.add(getCollationDocValue(TYPE, value));
+    doc.add(new SortedDocValuesField(TYPE, new BytesRef(normalize(value))));
 
     Long length = evidence.getLength();
     if (length != null) {
@@ -279,13 +268,15 @@ public class IndexItem {
     if (value.length() > MAX_DOCVALUE_SIZE) {
       value = value.substring(0, MAX_DOCVALUE_SIZE);
     }
-    doc.add(getCollationDocValue(PATH, value));
+    doc.add(new SortedDocValuesField(PATH, new BytesRef(normalize(value))));
 
     doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(EXPORT, new BytesRef(evidence.getFileToIndex())));
 
-    doc.add(new Field(CATEGORY, evidence.getCategories(), storedTokenizedNoNormsField));
-    doc.add(getCollationDocValue(CATEGORY, evidence.getCategories()));
+    for(String val : evidence.getCategorySet()){
+        doc.add(new Field(CATEGORY, val, storedTokenizedNoNormsField));
+        doc.add(new SortedSetDocValuesField(CATEGORY, new BytesRef(val)));
+    }
 
     MediaType type = evidence.getMediaType();
     if (type != null) {
@@ -350,10 +341,17 @@ public class IndexItem {
     }
 
     for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
-      if (!typesMap.containsKey(entry.getKey())) {
-        typesMap.put(entry.getKey(), entry.getValue().getClass());
+      if(entry.getValue() instanceof List){
+    	  for(Object val : (List)entry.getValue()){
+    		  if (!typesMap.containsKey(entry.getKey()))
+    		        typesMap.put(entry.getKey(), val.getClass());
+    		      addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
+    	  }
+      }else{
+    	  if (!typesMap.containsKey(entry.getKey()))
+    	        typesMap.put(entry.getKey(), entry.getValue().getClass());
+    	  addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false);
       }
-      addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false);
     }
 
     Metadata metadata = evidence.getMetadata();
@@ -368,7 +366,7 @@ public class IndexItem {
     return doc;
   }
 
-  private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey) {
+  private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey, boolean isMultiValued) {
     boolean isString = false;
 
     /* utilizar docvalue de outro tipo com mesmo nome provoca erro,
@@ -381,27 +379,33 @@ public class IndexItem {
     if (oValue instanceof Date) {
       String value = DateUtil.dateToString((Date) oValue);
       doc.add(new StringField(key, value, Field.Store.YES));
-      doc.add(new SortedDocValuesField(key, new BytesRef(value)));
+      if(!isMultiValued) doc.add(new SortedDocValuesField(key, new BytesRef(value)));
+      else doc.add(new SortedSetDocValuesField(key, new BytesRef(value)));
 
     } else if (oValue instanceof Byte) {
       doc.add(new IntField(key, (Byte) oValue, Field.Store.YES));
-      doc.add(new NumericDocValuesField(key, (Byte) oValue));
+      if(!isMultiValued) doc.add(new NumericDocValuesField(key, (Byte) oValue));
+      else doc.add(new SortedNumericDocValuesField(key, (Byte) oValue));
 
     } else if (oValue instanceof Integer) {
       doc.add(new IntField(key, (Integer) oValue, Field.Store.YES));
-      doc.add(new NumericDocValuesField(key, (Integer) oValue));
+      if(!isMultiValued) doc.add(new NumericDocValuesField(key, (Integer) oValue));
+      else doc.add(new SortedNumericDocValuesField(key, (Integer) oValue));
 
     } else if (oValue instanceof Long) {
       doc.add(new LongField(key, (Long) oValue, Field.Store.YES));
-      doc.add(new NumericDocValuesField(key, (Long) oValue));
+      if(!isMultiValued) doc.add(new NumericDocValuesField(key, (Long) oValue));
+      else doc.add(new SortedNumericDocValuesField(key, (Long) oValue));
 
     } else if (oValue instanceof Float) {
       doc.add(new FloatField(key, (Float) oValue, Field.Store.YES));
-      doc.add(new FloatDocValuesField(key, (Float) oValue));
+      if(!isMultiValued) doc.add(new FloatDocValuesField(key, (Float) oValue));
+      else doc.add(new SortedNumericDocValuesField(key, NumericUtils.floatToSortableInt((Float) oValue)));
 
     } else if (oValue instanceof Double) {
       doc.add(new DoubleField(key, (Double) oValue, Field.Store.YES));
-      doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
+      if(!isMultiValued) doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
+      else doc.add(new SortedNumericDocValuesField(keyPrefix + key, NumericUtils.doubleToSortableLong((Double) oValue)));
     } else {
       isString = true;
     }
@@ -415,7 +419,8 @@ public class IndexItem {
       if (isMetadataKey) {
         keyPrefix = "_";
       }
-      doc.add(getCollationDocValue(keyPrefix + key, value));
+      if(!isMultiValued) doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+      else doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
     }
 
   }
@@ -436,33 +441,24 @@ public class IndexItem {
     }
 
     for (String key : names) {
-
       if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
       }
-      String value = metadata.get(key);
-      if (value == null) {
-        continue;
+      boolean isMultiValued = metadata.getValues(key).length > 1;
+      for (String val : metadata.getValues(key)) {
+          if (val != null && !(val = val.trim()).isEmpty())
+              addMetadataKeyToDoc(doc, key, val, isHtml, true);
       }
-      if (metadata.getValues(key).length > 1) {
-        StringBuilder strBuilder = new StringBuilder();
-        for (String val : metadata.getValues(key)) {
-          if (val != null) {
-            strBuilder.append(val + " ");
-          }
-        }
-        value = strBuilder.toString().trim();
-      }
-      value = value.trim();
-      if (value.isEmpty()) {
-        continue;
-      }
+
+    }
+  }
+  
+  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isHtml, boolean isMultiValued){
       Object oValue = value;
       Class type = typesMap.get(key);
 
-      if (type == null && isHtml) {
-        continue;
-      }
+      if (type == null && isHtml)
+        return;
 
       if (type == null || !type.equals(String.class)) {
 
@@ -487,9 +483,7 @@ public class IndexItem {
         }
       }
 
-      addExtraAttributeToDoc(doc, key, oValue, true);
-
-    }
+      addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued);
   }
 
   private static void guessMetadataTypes(Metadata metadata) {
