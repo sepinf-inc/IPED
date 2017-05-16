@@ -227,11 +227,18 @@ public class ParsingReader extends Reader {
     } catch (Exception e) {
     }
 
-    future.cancel(true);
+    //em situações raríssimas essa chamada pode travar,
+    //ex: ao ler arquivos proibidos pelo FS, como aux no Windows,
+    //então é executada em outra thread por segurança
+    getThreadPool().submit(new Runnable(){
+        public void run(){
+            future.cancel(true);
+        }
+    });
     
     if(waitCleanup)
 	    try {
-	    	//wait some time to cancel task, kill external process, etc
+	    	//wait some time to cancel task, kill external process, close file handles, etc
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
