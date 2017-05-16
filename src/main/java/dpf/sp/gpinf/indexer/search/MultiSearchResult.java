@@ -38,17 +38,17 @@ public class MultiSearchResult {
 		private int pos = 0;
 
 		@Override
-		public Iterator<ItemId> iterator() {
+		public final Iterator<ItemId> iterator() {
 			return this;
 		}
 
 		@Override
-		public boolean hasNext() {
+		public final boolean hasNext() {
 			return pos < ids.length;
 		}
 
 		@Override
-		public ItemId next() {
+		public final ItemId next() {
 			return ids[pos++];
 		}
 
