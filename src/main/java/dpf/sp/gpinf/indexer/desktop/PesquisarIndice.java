@@ -21,10 +21,13 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -181,9 +184,25 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 						result = App.get().appCase.getMultiMarcadores().filtrarMarcadores(result, bookmarkSelection);
 					
 				}
-
-				App.get().getSearchParams().highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
-				App.get().setQuery(searcher.getQuery());
+				
+				Set<ItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
+				if(itemsWithValuesSelected != null){
+				    numFilters++;
+				    ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
+	                ArrayList<Float> scores = new ArrayList<Float>();
+	                int i = 0;
+	                for(ItemId item : result.getIterator()){
+	                    if(itemsWithValuesSelected.contains(item)){
+	                        filteredItems.add(item);
+	                        scores.add(result.getScore(i));
+	                    }
+	                    i++;
+	                }
+	                result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+	                        ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+				}
+				
+				saveHighlightTerms();
 
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -194,6 +213,25 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			return result;
 		}
 		
+	}
+	
+	private void saveHighlightTerms() throws ParseException, QueryNodeException{
+	    Set<String> highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
+        highlightTerms.addAll(App.get().metadataPanel.getHighlightTerms());
+        //for(String str : highlightTerms)
+        //    System.out.println("highlightTerm: " + str);
+        App.get().getSearchParams().highlightTerms = highlightTerms;
+        
+        Query highlightQuery = App.get().metadataPanel.getHighlightQuery();
+        if(highlightQuery != null){
+            BooleanQuery boolQuery = new BooleanQuery();
+            boolQuery.add(highlightQuery, Occur.SHOULD);
+            boolQuery.add(searcher.getQuery(), Occur.SHOULD);
+            highlightQuery = boolQuery;
+        }else
+            highlightQuery = searcher.getQuery();
+        
+        App.get().setQuery(highlightQuery);
 	}
 
 	@Override

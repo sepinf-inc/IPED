@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -49,6 +49,8 @@ public class ColumnsManager implements ActionListener, Serializable{
     private static final File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
+    
+    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Regex", "Outras"};
 	
 	private static final String[] defaultFields =
 		{ 
@@ -111,7 +113,6 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	String[] indexFields = null;
 	
-	private String[] groupNames = {"Básicas", "Avançadas", "Email", "Outras"};
 	public String[][] fieldGroups;
 	
 	ColumnState colState = new ColumnState();
@@ -263,9 +264,35 @@ public class ColumnsManager implements ActionListener, Serializable{
 		TreeSet<String> extraAttrs = new TreeSet<String>();
 		extraAttrs.addAll(Arrays.asList(extraFields));
 		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
-		String[] extraAttrArray = extraAttrs.toArray(new String[0]);
 		
-		fieldGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, indexFields};
+		ArrayList<String> regexFields = new ArrayList<String>();
+		for(String f : extraAttrs.toArray(new String[0]))
+		    if(f.startsWith(RegexTask.REGEX_PREFIX)){
+                regexFields.add(f);
+                extraAttrs.remove(f);
+		    }
+		
+		String[] extraAttrArray = extraAttrs.toArray(new String[0]);
+		String[] regexArray = regexFields.toArray(new String[0]);
+		
+		String[][] customGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, regexArray};
+		
+		ArrayList<String> otherFields = new ArrayList<String>();
+		for(String f : indexFields){
+		    boolean insertField = true;
+		    for(int i = 0; i < customGroups.length; i++)
+	            if(Arrays.asList(customGroups[i]).contains(f)){
+	                insertField = false;
+	                break;
+	            }
+		    if(insertField)
+		        otherFields.add(f);
+		}
+		
+		fieldGroups = new String[customGroups.length + 1][];
+		for(int i = 0; i < customGroups.length; i++)
+		    fieldGroups[i] = customGroups[i];
+		fieldGroups[fieldGroups.length - 1] = otherFields.toArray(new String[0]);
 		
 		for(String[] fields : fieldGroups)
 			Arrays.sort(fields, Collator.getInstance());
@@ -277,22 +304,12 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    String[] fields = fieldGroups[combo.getSelectedIndex()];
 	    
         for(String f : fields){
-        	boolean insertField = true;
-            if(combo.getSelectedIndex() == groupNames.length - 1){
-            	for(int i = 0; i < fieldGroups.length - 1; i++)
-            		if(Arrays.asList(fieldGroups[i]).contains(f)){
-            			insertField = false;
-            			break;
-            		}
-            }
-            if(insertField){
-            	JCheckBox check = new JCheckBox();
-                check.setText(f);
-                if(colState.visibleFields.contains(f))
-                    check.setSelected(true);
-                check.addActionListener(this);
-                listPanel.add(check);
-            }
+            JCheckBox check = new JCheckBox();
+            check.setText(f);
+            if(colState.visibleFields.contains(f))
+                check.setSelected(true);
+            check.addActionListener(this);
+            listPanel.add(check);
         }
         dialog.revalidate();
         dialog.repaint();

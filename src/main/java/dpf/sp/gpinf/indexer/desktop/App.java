@@ -85,6 +85,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
@@ -119,6 +120,7 @@ public class App extends JFrame implements WindowListener {
   
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
+  MetadataPanel metadataPanel;
   TreeListener treeListener;
   CategoryTreeListener categoryListener;
   BookmarksTreeListener bookmarksListener;
@@ -165,7 +167,7 @@ public class App extends JFrame implements WindowListener {
 
   public static int MAX_LINES = 100000;
 
-  static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
+  final static int FRAG_SIZE = 100, TEXT_BREAK_SIZE = 1000000;
 
   private static App app;
   
@@ -309,7 +311,7 @@ public class App extends JFrame implements WindowListener {
     ToolTipManager.sharedInstance().setInitialDelay(10);
 
     treeTab = new JTabbedPane();
-    treeTab.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+    treeTab.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
     //Possibilita pintar aba selecionada
     treeTab.setUI(new MetalTabbedPaneUI() {
       protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
@@ -517,8 +519,11 @@ public class App extends JFrame implements WindowListener {
     bookmarksTree.addTreeSelectionListener(bookmarksListener);
     bookmarksTree.addTreeExpansionListener(bookmarksListener);
     bookmarksTree.setExpandsSelectedPaths(false);
+    
+    metadataPanel = new MetadataPanel();
 
     treeTab.add("Categorias", new JScrollPane(categoryTree));
+    treeTab.add("Metadados", metadataPanel);
     treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
     defaultTabColor = treeTab.getBackgroundAt(0);
 
@@ -540,11 +545,12 @@ public class App extends JFrame implements WindowListener {
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-      treeTab.add("Evidências", evidencePanel);
+      treeTab.insertTab("Evidências", null, evidencePanel, null, 2);
     }
 
     if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) {
-      treeTab.setSelectedIndex(1);
+        int index = SwingUtil.getIndexOfTab(treeTab, "Marcadores");
+        treeTab.setSelectedIndex(index);
     }
 
     status = new JLabel(" ");
