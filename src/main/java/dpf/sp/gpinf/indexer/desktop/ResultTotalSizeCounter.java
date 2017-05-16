@@ -1,12 +1,12 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
-import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -32,22 +32,20 @@ public class ResultTotalSizeCounter {
 					}
 				});
 				long volume = 0;
-				IndexSearcher searcher = App.get().appCase.getSearcher();
-				Set<String> fieldsToLoad = Collections.singleton(IndexItem.LENGTH);
-				for (ItemId item : result.getIterator()) {
-					int doc = App.get().appCase.getLuceneId(item);
-					try {
-						String len = searcher.doc(doc, fieldsToLoad).get(IndexItem.LENGTH);
-						if (len != null && !len.isEmpty())
-							volume += Long.valueOf(len);
-
-					} catch (IOException e) {
-						// e.printStackTrace();
-					}
-
-					if (Thread.currentThread().isInterrupted())
-						return;
-				}
+				try {
+				    AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(App.get().appCase.getReader()); 
+	                NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.LENGTH);
+	                for (ItemId item : result.getIterator()) {
+	                    int doc = App.get().appCase.getLuceneId(item);
+	                    long len = ndv.get(doc);
+                        volume += len;
+	                    if (Thread.currentThread().isInterrupted())
+	                        return;
+	                }
+                } catch (IOException e) {
+                    // e.printStackTrace();
+                }
+				
 				volume = volume / (1024 * 1024);
 				final long fVol = volume;
 
