@@ -189,7 +189,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	if (col == 0)
 		return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
 	      
-	String value;
+	String value = "";
 	
 	ItemId item = App.get().ipedResult.getItem(row);
     int docId = App.get().appCase.getLuceneId(item);
@@ -220,13 +220,17 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
           return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
         }
 
-        value = doc.get(field);
-        if (value == null) {
-          value = "";
+        String[] values = doc.getValues(field);
+        StringBuilder sb = null;
+        for(int i = 0; i < values.length; i++){
+            if(sb == null) sb = new StringBuilder();
+            sb.append(values[i]);
+            if(i != values.length - 1) sb.append(" | ");
         }
-        if (value.isEmpty()) {
+        if(sb != null) value = sb.toString().trim();
+        
+        if (value.isEmpty())
           return value;
-        }
 
         try {
           Date date = DateUtil.stringToDate(value);
