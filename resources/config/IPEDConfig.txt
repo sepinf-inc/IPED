@@ -40,6 +40,10 @@ enableFileParsing = true
 # Os tipos de arquivo a expandir podem ser alterados no arquivo conf/CategoriesToExpand.txt
 expandContainers = true
 
+# Vasculha o texto extraído dos itens por expressões como cpf, cnpj, emails, urls, cartões, valores, etc
+# Novas expressões podem ser configuradas em conf/RegexConfig.txt
+enableRegexSearch = true
+
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 

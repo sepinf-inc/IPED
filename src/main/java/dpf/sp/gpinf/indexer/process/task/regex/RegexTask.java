@@ -31,9 +31,13 @@ public class RegexTask extends AbstractTask{
     
 	private static final String REGEX_CONFIG = "RegexConfig.txt";
 	
+	private static final String ENABLE_PARAM = "enableRegexSearch";
+	
 	private static List<Regex> regexList;
 	
 	private static Regex regexFull;
+	
+	private boolean enabled = true;
 	
 	class Regex{
 		
@@ -72,10 +76,20 @@ public class RegexTask extends AbstractTask{
 		}
 		return a.subst(map);
 	}
+	
+	@Override
+	public boolean isEnabled() {
+	    return enabled;
+	}
 
 	@Override
 	public void init(Properties confParams, File confDir) throws Exception {
-		if(regexList == null){
+	    
+	    String value = confParams.getProperty(ENABLE_PARAM);
+	    if(value != null && !value.trim().isEmpty())
+	        enabled = Boolean.valueOf(value.trim());
+	    
+		if(enabled && regexList == null){
 			regexList = new ArrayList<Regex>();
 			
 			File confFile = new File(confDir, REGEX_CONFIG);
@@ -120,14 +134,14 @@ public class RegexTask extends AbstractTask{
 	@Override
 	public void finish() throws Exception {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	protected void process(EvidenceFile evidence) throws Exception {
 		
-		if(evidence.getParsedTextCache() == null)
+		if(!enabled || evidence.getParsedTextCache() == null)
 			return;
+		
 		String text = evidence.getParsedTextCache();
 		
 		List<List<Object>> hitList = new ArrayList<List<Object>>();

@@ -14,6 +14,7 @@ exportFileProps = false
 processFileSignatures = false
 enableFileParsing = false
 expandContainers = false
+enableRegexSearch = false
 indexFileContents = false
 indexUnknownFiles = false
 enableOCR = false
