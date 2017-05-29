@@ -546,10 +546,14 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     if (file != null && file.isFile()) {
       try {
         stream = new SeekableFileInputStream(file);
+        
+        if (tempStartOffset != -1) {
+            return new LimitedSeekableInputStream(stream, tempStartOffset, length);
+        }
 
         //workaround para itens carveados apontando para tmpFile do pai que foi apagado
       } catch (IOException fnfe) {
-        file = null;
+          file = null;
       }
     }
 
@@ -566,11 +570,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
         return new EmptyInputStream();
       }
     }
-
-    if (tempStartOffset != -1) {
-      return new LimitedSeekableInputStream(stream, tempStartOffset, length);
-    }
-
+    
     if (startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);
     }
