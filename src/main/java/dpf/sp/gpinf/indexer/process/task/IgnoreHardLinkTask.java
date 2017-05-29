@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
 import dpf.sp.gpinf.indexer.Configuration;
@@ -20,7 +21,9 @@ public class IgnoreHardLinkTask extends AbstractTask {
 
   public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink";
 
-  private static Map<Long, Map<HardLink, Object>> fileSystemMap = new HashMap<Long, Map<HardLink, Object>>();
+  private static Map<Long, Map<HardLink, Object>> fileSystemOrigMap = new HashMap<Long, Map<HardLink, Object>>();
+  private static Map<Long, Map<HardLink, Object>> fileSystemSlackMap = new HashMap<Long, Map<HardLink, Object>>();
+  
   private static Object lock = new Object();
   private boolean taskEnabled = false;
 
@@ -76,6 +79,10 @@ public class IgnoreHardLinkTask extends AbstractTask {
       } else {
         hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
       }
+      
+      Map<Long, Map<HardLink, Object>> fileSystemMap = fileSystemOrigMap;
+      if(fsContent instanceof SlackFile)
+          fileSystemMap = fileSystemSlackMap;
 
       boolean ignore = false;
 
