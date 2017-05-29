@@ -16,11 +16,11 @@ Histórico de Internet
 # Gera relatórios de registro:
 Registro do Windows
 
-#Documentos de Texto
-#Planilhas
-#Apresentações
-#Documentos RTF
-#Documentos PDF
+Documentos de Texto
+Planilhas
+Apresentações
+Documentos RTF
+Documentos PDF
 
 # Para expandir arquivos jar, comente a linha <mime>application/java-archive</mime> em ParserConfig.xml
 #Programas e Bibliotecas
