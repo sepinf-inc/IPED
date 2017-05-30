@@ -164,7 +164,12 @@ public class IndexItem {
   }
   
   private static final String normalize(String value){
-      char[] input = value.toLowerCase().toCharArray();
+      return normalize(value, true);
+  }
+  
+  private static final String normalize(String value, boolean toLowerCase){
+      if(toLowerCase) value = value.toLowerCase();
+      char[] input = value.toCharArray();
       char[] output = new char[input.length];
       FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
       return new String(output).trim();
@@ -275,7 +280,7 @@ public class IndexItem {
 
     for(String val : evidence.getCategorySet()){
         doc.add(new Field(CATEGORY, val, storedTokenizedNoNormsField));
-        doc.add(new SortedSetDocValuesField(CATEGORY, new BytesRef(val)));
+        doc.add(new SortedSetDocValuesField(CATEGORY, new BytesRef(normalize(val, false))));
     }
 
     MediaType type = evidence.getMediaType();
