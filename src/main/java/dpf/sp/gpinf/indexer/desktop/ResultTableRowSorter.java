@@ -19,8 +19,10 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.RowSorter;
 import javax.swing.table.TableRowSorter;
@@ -30,28 +32,32 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 
 public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 
-  private static HashMap<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
+  private static volatile Map<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
 
   public ResultTableRowSorter() {
     super(new ResultTableSortModel());
     this.setSortable(0, false);
     this.setMaxSortKeys(2);
-    for (int i = 1; i < App.get().resultsModel.getColumnCount(); i++) {
-      initComparator(i);
-    }
   }
-
-  public void initComparator(int col) {
-	if(RowComparator.isNewIndexReader())
-		comparatorCache.clear();
-    RowComparator comp = comparatorCache.get(col);
-    if (comp == null) {
-      comp = new RowComparator(col);
-      comparatorCache.put(col, comp);
-    }
-    this.setComparator(col, comp);
+  
+  @Override
+  public Comparator<?> getComparator(int column) {
+      if(RowComparator.isNewIndexReader())
+          comparatorCache.clear();
+      RowComparator comp = comparatorCache.get(column);
+      if (comp == null) {
+        comp = new RowComparator(column);
+        comparatorCache.put(column, comp);
+      }
+      return comp;
   }
-
+  
+  @Override
+  protected boolean useToString(int column) {
+      return false;
+  }
+  
+  @Override
   public void setSortKeys(final List<? extends SortKey> sortKeys) {
     if (sortKeys == null) {
       super.setSortKeys(null);
@@ -61,7 +67,7 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
       backgroundSort.execute();
     }
   }
-
+  
   public void setSortKeysSuper(final List<? extends SortKey> sortKeys) {
     super.setSortKeys(sortKeys);
   }
@@ -79,7 +85,7 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
     }
 
     @Override
-    protected Object doInBackground() throws Exception {
+    protected Object doInBackground(){
 
       sorter.setSortKeysSuper(sortKeys);
 
