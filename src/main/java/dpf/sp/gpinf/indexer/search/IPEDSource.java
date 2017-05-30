@@ -82,6 +82,7 @@ public class IPEDSource implements Closeable{
 	
 	SleuthkitCase sleuthCase;
 	IndexReader reader;
+	AtomicReader atomicReader;
 	IndexWriter iw;
 	IndexSearcher searcher;
 	Analyzer analyzer;
@@ -188,7 +189,6 @@ public class IPEDSource implements Closeable{
 		LOGGER.info("Creating LuceneId to ID mapping...");
 	    ids = new int[reader.maxDoc()];
 	    
-	    AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(reader); 
 	    NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
 	    
 	    for (int i = 0; i < reader.maxDoc(); i++) {
@@ -239,7 +239,6 @@ public class IPEDSource implements Closeable{
 	
 	private void loadCategories(){
 		try {
-			AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 			Fields fields = atomicReader.fields();
 			Terms terms = fields.terms(IndexItem.CATEGORY);
 	        TermsEnum termsEnum = terms.iterator(null);
@@ -274,6 +273,8 @@ public class IPEDSource implements Closeable{
 		}else{
 			reader = DirectoryReader.open(iw, true);
 		}
+		
+		atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 		
 		openSearcher();
 		
@@ -474,6 +475,10 @@ public class IPEDSource implements Closeable{
 
 	public IndexReader getReader() {
 		return reader;
+	}
+	
+	public AtomicReader getAtomicReader(){
+	    return this.atomicReader;
 	}
 
 	public IndexSearcher getSearcher() {

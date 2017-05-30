@@ -290,7 +290,7 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportTerms) {
-      new ExportIndexedTerms(App.get().appCase.getReader()).export();
+      new ExportIndexedTerms(App.get().appCase.getAtomicReader()).export();
     
     } else if(e.getSource() == menu.similarDocs){
         int selIdx = App.get().resultsTable.getSelectedRow();

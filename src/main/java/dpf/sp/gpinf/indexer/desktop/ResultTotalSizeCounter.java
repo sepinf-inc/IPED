@@ -33,7 +33,7 @@ public class ResultTotalSizeCounter {
 				});
 				long volume = 0;
 				try {
-				    AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(App.get().appCase.getReader()); 
+				    AtomicReader atomicReader = App.get().appCase.getAtomicReader();
 	                NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.LENGTH);
 	                for (ItemId item : result.getIterator()) {
 	                    int doc = App.get().appCase.getLuceneId(item);

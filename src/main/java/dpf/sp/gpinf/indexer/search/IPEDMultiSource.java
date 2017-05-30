@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,6 +137,8 @@ public class IPEDMultiSource extends IPEDSource{
 		LOGGER.info("Opening MultiReader...");
 		
 		reader = new MultiReader(readers, false);
+		
+		atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 		
 		LOGGER.info("MultiReader opened");
 		

@@ -11,8 +11,6 @@ import javax.swing.JFileChooser;
 
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.Fields;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 
@@ -23,12 +21,12 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> implements PropertyChangeListener {
 
   ProgressDialog progressMonitor;
-  IndexReader reader;
+  AtomicReader atomicReader;
   File file;
   volatile long total = 0;
 
-  public ExportIndexedTerms(IndexReader reader) {
-    this.reader = reader;
+  public ExportIndexedTerms(AtomicReader atomicReader) {
+    this.atomicReader = atomicReader;
     this.addPropertyChangeListener(this);
   }
 
@@ -85,8 +83,8 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
        if (this.isCancelled())
        break;
        }*/
+      
       //Não exibe progresso pois SlowCompositeReaderWrapper não fornece o número total de termos
-      AtomicReader atomicReader = SlowCompositeReaderWrapper.wrap(reader);
       Fields fields = atomicReader.fields();
       for (String f : field) {
         Terms terms = fields.terms(f);

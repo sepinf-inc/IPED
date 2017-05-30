@@ -258,7 +258,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		
 		if(lastCase != App.get().appCase){
 			lastCase = App.get().appCase;
-			indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getReader(), new String[0]);
+			indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getAtomicReader(), new String[0]);
 		}
 		
 		TreeSet<String> extraAttrs = new TreeSet<String>();
@@ -329,7 +329,6 @@ public class ColumnsManager implements ActionListener, Serializable{
 	                loadedFields.add(source.getText());
 	                App.get().resultsModel.updateCols();
 	                modelIdx = ResultTableModel.fixedCols.length + loadedFields.size() - 1;
-	                ((ResultTableRowSorter)App.get().resultsTable.getRowSorter()).initComparator(modelIdx);
 	            }else
 	                modelIdx += ResultTableModel.fixedCols.length;
 	            

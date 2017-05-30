@@ -59,7 +59,6 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "VALOR_MONETARIO";
     
     private volatile static AtomicReader reader;
-    private volatile static IndexReader indexReader;
     
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
@@ -173,7 +172,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             this.count = count;
         }
         public String getVal(){
-            return lo.lookupOrd(ord);
+            try{
+                return lo.lookupOrd(ord);
+                
+            }catch(Exception e){
+                //LookupOrd fica inválido (IndexReader fechado) ao atualizar interface durante processamento
+                return "[Clique em Atualizar]";
+            }
         }
         @Override
         public String toString() {
@@ -330,10 +335,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     
     private void countValues(boolean updateResult) throws IOException {
         
-        if(indexReader != App.get().appCase.getReader()){
-            indexReader = App.get().appCase.getReader();
-            reader = SlowCompositeReaderWrapper.wrap(indexReader);
-        }
+        reader = App.get().appCase.getAtomicReader();
 
         String field = (String)props.getSelectedItem();
         if(field == null) return;
