@@ -17,15 +17,15 @@ public class MultiSearchResult {
 		this.scores = scores;
 	}
 	
-	public int getLength(){
+	public final int getLength(){
 		return ids.length;
 	}
 	
-	public ItemId getItem(int i){
+	public final ItemId getItem(int i){
 		return ids[i];
 	}
 	
-	public float getScore(int i){
+	public final float getScore(int i){
 		return scores[i];
 	}
 	
