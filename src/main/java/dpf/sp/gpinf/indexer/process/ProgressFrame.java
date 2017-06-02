@@ -223,7 +223,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       if(workers[i].state == STATE.PAUSED){
     	  msg.append("[PAUSED]");
       }else if(workers[i].state == STATE.PAUSING){
-    	  msg.append("[PAUSING]");
+    	  msg.append("[PAUSING...]");
       }else if (task != null) {
         msg.append(task.getClass().getSimpleName());
       } else {
