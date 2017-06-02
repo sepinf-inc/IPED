@@ -437,6 +437,8 @@ public class Configuration {
     }
 
     RegistryParser.TOOL_PATH = appRoot + "/tools/regripper/";
+    
+    new JarLoader().loadJarDir(new File(appRoot + "/ext"));
 
   }
 
