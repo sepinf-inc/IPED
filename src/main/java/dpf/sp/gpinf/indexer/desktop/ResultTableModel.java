@@ -23,7 +23,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
@@ -31,9 +33,9 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -43,6 +45,10 @@ import dpf.sp.gpinf.indexer.util.DateUtil;
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
 
   private static final long serialVersionUID = 1L;
+  
+  private static final List<String> dateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED, IndexItem.CREATED, IndexItem.RECORDDATE);
+  
+  private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
 
   public static String BOOKMARK_COL = "marcador";
   public static String SCORE_COL = "score";
@@ -220,36 +226,50 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
           return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
         }
 
-        String[] values = doc.getValues(field);
-        StringBuilder sb = null;
-        for(int i = 0; i < values.length; i++){
-            if(sb == null) sb = new StringBuilder();
-            sb.append(values[i]);
-            if(i != values.length - 1) sb.append(" | ");
+        StringBuilder sb = new StringBuilder();
+        
+        SortedSetDocValues ssdv = App.get().appCase.getAtomicReader().getSortedSetDocValues(field);
+        if(ssdv != null){
+            //System.out.println("getting val for " + field + ": " + row);
+            ssdv.setDocument(docId);
+            long ord;
+            boolean first = true;
+            while((ord = ssdv.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS){
+                if(!first) sb.append(" | ");
+                sb.append(ssdv.lookupOrd(ord).utf8ToString());
+                first = false;
+            }
+        
+        }else{
+            String[] values = doc.getValues(field);
+            for(int i = 0; i < values.length; i++){
+                sb.append(values[i]);
+                if(i != values.length - 1) sb.append(" | ");
+            }
         }
-        if(sb != null) value = sb.toString().trim();
+        
+        value = sb.toString().trim();
         
         if (value.isEmpty())
           return value;
-
-        try {
-          Date date = DateUtil.stringToDate(value);
-          if(field.equals(IndexItem.ACCESSED)){
-        	  if(doc.get(SleuthkitReader.IN_FAT_FS) != null)
-        		  return fatAccessedDf.format(date);
-          }
-          return df.format(date);
-
-        } catch (Exception e) {
-        }
+        
+        if(dateFields.contains(field))
+            try {
+              Date date = DateUtil.stringToDate(value);
+              if(field.equals(IndexItem.ACCESSED)){
+            	  if(doc.get(SleuthkitReader.IN_FAT_FS) != null)
+            		  return fatAccessedDf.format(date);
+              }
+              return df.format(date);
+    
+            } catch (Exception e) {
+                //e.printStackTrace();
+            }
 
         if (field.equals(IndexItem.LENGTH)) {
-          value = NumberFormat.getNumberInstance().format(Long.valueOf(value));
-        } else if (field.equals(IndexItem.CATEGORY)) {
-          value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
-        }
-
-        if (field.equals(IndexItem.NAME)) {
+          value = numberFormat.format(Long.valueOf(value));
+          
+        } else if (field.equals(IndexItem.NAME)) {
           TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
           if (fragments[0].getScore() > 0) {
             value = "<html><nobr>" + fragments[0].toString() + "</html>";

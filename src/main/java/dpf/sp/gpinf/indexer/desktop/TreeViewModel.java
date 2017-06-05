@@ -43,14 +43,14 @@ public class TreeViewModel implements TreeModel {
   private Node root;
   private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
 
-  private RowComparator getComparator1() {
+  /*private RowComparator getComparator1() {
     return new RowComparator(IndexItem.NAME) {
       @Override
       public int compare(Integer a, Integer b) {
         return sdv.getOrd(a) - sdv.getOrd(b);
       }
     };
-  }
+  }*/
   
   private Collator collator = Collator.getInstance();
 	

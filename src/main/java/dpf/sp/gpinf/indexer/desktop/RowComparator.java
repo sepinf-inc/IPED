@@ -25,17 +25,16 @@ import java.util.HashSet;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedNumericDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class RowComparator implements Comparator<Integer> {
 	
@@ -45,7 +44,6 @@ public class RowComparator implements Comparator<Integer> {
   private boolean bookmarkCol = false;
   private boolean scoreCol = false;
 
-  private volatile static IndexReader indexReader;
   private volatile static AtomicReader atomicReader;
   private static boolean loadDocValues = true;
 
@@ -57,7 +55,9 @@ public class RowComparator implements Comparator<Integer> {
   private boolean isDoubleField = false;
 
   protected SortedDocValues sdv;
+  protected SortedSetDocValues ssdv;
   private NumericDocValues ndv;
+  private SortedNumericDocValues sndv;
   private Bits docsWithField;
   
   public static void setLoadDocValues(boolean load){
@@ -66,8 +66,6 @@ public class RowComparator implements Comparator<Integer> {
 
   public RowComparator(int col) {
     this.col = col;
-    
-    LOGGER.info("Loading sort data for Column " + col);
 
     if (col >= ResultTableModel.fixedCols.length) {      
       col -= ResultTableModel.fixedCols.length;
@@ -79,8 +77,11 @@ public class RowComparator implements Comparator<Integer> {
       else if (fields[col].equals(ResultTableModel.SCORE_COL))
         scoreCol = true;
       
-      else
-        loadDocValues(fields[col]);
+      else{
+          LOGGER.info("Loading sort data for Column: " + fields[col]);
+          loadDocValues(fields[col]);
+          LOGGER.info("Sort data loaded for Column: " + fields[col]);
+      }   
     }
   }
 
@@ -102,12 +103,7 @@ public class RowComparator implements Comparator<Integer> {
 		  return;
 	  
     try {
-    	if(isNewIndexReader()){
-    		indexReader = App.get().appCase.getReader();
-    		if (atomicReader != null)
-    			IOUtil.closeQuietly(atomicReader);
-    		atomicReader = SlowCompositeReaderWrapper.wrap(indexReader);
-    	}
+      atomicReader = App.get().appCase.getAtomicReader();
 
       if (IndexItem.getMetadataTypes().get(indexedField) == null || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
         ndv = atomicReader.getNumericDocValues(indexedField);
@@ -118,10 +114,19 @@ public class RowComparator implements Comparator<Integer> {
         }
       }
       if (ndv == null) {
+          sndv = atomicReader.getSortedNumericDocValues(indexedField);
+          if (sndv == null)
+              sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField);
+      }
+      if (ndv == null && sndv == null) {
+          ssdv = atomicReader.getSortedSetDocValues(indexedField);
+          if (ssdv == null)
+              ssdv = atomicReader.getSortedSetDocValues("_" + indexedField);
+      }
+      if (ndv == null && sndv == null && ssdv == null) {
         sdv = atomicReader.getSortedDocValues(indexedField);
-        if (sdv == null) {
+        if (sdv == null)
           sdv = atomicReader.getSortedDocValues("_" + indexedField);
-        }
       }
 
     } catch (IOException e) {
@@ -130,15 +135,15 @@ public class RowComparator implements Comparator<Integer> {
   }
   
   public static boolean isNewIndexReader(){
-	  return indexReader == null || indexReader != App.get().appCase.getReader();
+	  return atomicReader != App.get().appCase.getAtomicReader();
   }
 
   public boolean isStringComparator() {
-    return sdv != null || bookmarkCol;
+    return sdv != null || ssdv != null || bookmarkCol;
   }
 
   @Override
-	public int compare(Integer a, Integer b) {
+  public final int compare(Integer a, Integer b) {
 		
 		if(Thread.currentThread().isInterrupted())
 			throw new RuntimeException("Ordenação cancelada.");
@@ -165,6 +170,42 @@ public class RowComparator implements Comparator<Integer> {
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);
+		
+		else if(ssdv != null){
+		    int result, k = 0, ordA = -1, ordB = -1;
+		    do{
+		        ssdv.setDocument(a);
+		        int i = 0;
+		        while(i++ <= k) ordA = (int)ssdv.nextOrd();
+	            ssdv.setDocument(b);
+	            i = 0;
+	            while(i++ <= k) ordB = (int)ssdv.nextOrd();
+	            result = ordA - ordB;
+	            k++;
+	            
+		    }while(result == 0 && ordA != SortedSetDocValues.NO_MORE_ORDS && ordB != SortedSetDocValues.NO_MORE_ORDS);
+		    
+		    return result;
+		}
+		else if(sndv != null){
+            int result, k = 0, countA = 0, countB = 0;
+            do{
+                long ordA, ordB;
+                sndv.setDocument(a);
+                if(k == 0) countA = sndv.count();
+                if(k < countA) ordA = sndv.valueAt(k);
+                else ordA = Long.MIN_VALUE;
+                sndv.setDocument(b);
+                if(k == 0) countB = sndv.count();
+                if(k < countB) ordB = sndv.valueAt(k);
+                else ordB = Long.MIN_VALUE;
+                result = Long.compare(ordA, ordB);
+                k++;
+                
+            }while(result == 0 && (k < countA || k < countB));
+            
+            return result;
+        }
 		
       else if(ndv != null){
       	if(docsWithField.get(a)){
