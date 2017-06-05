@@ -2,19 +2,30 @@ xx/06/2017: IPED-3.13
 - Nova aba de filtragem/agrupamento por valores de quaisquer metadados
 - Tarefa de busca por Regex: cpf, cnpj, cnh, conta, valores, cartões, emails, ips, urls, boletos, swift, iban, etc (ajuda do PCF Herrmann)
 - Otimização significativa na geração de thumbs wmf e de thumbs parciais jpg, png, gif e bmp, 10x mais rápido
-- Troca do graphicsmagick pelo imagemagick, melhor e maior suporte de formatos de imagens (de 100 para 200)
+- Troca do graphicsmagick pelo imagemagick: melhor e maior suporte de formatos de imagens (de 100 para 200)
 - Otimização no StringsParser, 80% mais rápido em certos casos
 - Novas estatísticas de tempo de processamento por parser
-todo:
+- Otimização ao abrir casos grandes e cancelar pesquisas, inicializando sob demanda as ordenações das colunas
+- Otimização no cálculo do volume dos itens listados
+Todo:
 - Exportação automática de arquivos com base em palavras-chave
-- detecção de idioma via optimaize language-detect (71 idiomas suportados)
-- extração de entidades mencionadas (nomes de pessoas, organizações, lugares, etc)
+- Janela de "aguarde" ao clicar no primeiro item de cada evidência
 - Novos grupos de propriedades (regex, imagens, documentos)
 - Melhor detecção de tipo de arquivo (usa extensão apenas qdo formato não tem assinatura)
-- Alteração na geração de relatórios: usa marcadores e não mais itens selecionados
 - Atualização p/ Tika-1.15 (diversas correções, suporte a mais formatos)
+- Atualização p/ Sleuthlkit-4.4.1
+- detecção de idioma via optimaize language-detect (71 idiomas suportados)
+- reconhecimento de entidades mencionadas
+- Alteração na geração de relatórios: usa marcadores e não mais itens selecionados
 - Comentários para marcadores
 
+
+31/05/2017: IPED-3.12.4
+- Corrige bug que ignorava itens alocados ao ligar ignoreHardLinks junto com addFileSlacks (3.12)
+- Corrige bug eventual ao tentar reaproveitar temporários apagados de itens pais
+- Algumas informações de appointments (como Subject e Body) e de outros objetos de PSTs não eram extraídas (2.15)
+- Corrige travamento raríssimo ao interromper thread após timeout
+- Extrai imagens (e outros itens) de documentos no profile pedo
 
 04/05/2017: IPED-3.12.3
 - Corrige otimização na libewf que causava erros ao processar vários E01 simultaneamente (PCF Pfeifer)
