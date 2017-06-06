@@ -415,8 +415,10 @@ public class IndexItem {
       isString = true;
     }
 
+    if (isString)
+        doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
+    
     if (isMetadataKey || isString) {
-      doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
       String value = oValue.toString();
       if (value.length() > MAX_DOCVALUE_SIZE) {
         value = value.substring(0, MAX_DOCVALUE_SIZE);
