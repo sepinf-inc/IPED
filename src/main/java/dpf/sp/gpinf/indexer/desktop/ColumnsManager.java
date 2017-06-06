@@ -130,6 +130,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	}
 	
 	public void dispose(){
+	    ColumnsManager.getInstance().saveColumnsState();
 		dialog.setVisible(false);
 		instance = null;
 	}

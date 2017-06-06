@@ -272,7 +272,6 @@ public class App extends JFrame implements WindowListener {
     try {
     	
       if (this.resultsTable != null) {
-        ColumnsManager.getInstance().saveColumnsState();
         ColumnsManager.getInstance().dispose();
       }
       if (compositeViewer != null) {
