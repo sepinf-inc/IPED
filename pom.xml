@@ -197,6 +197,27 @@
             <artifactId>swt</artifactId>
             <version>4.527</version>
         </dependency>
+        <dependency>
+        	<groupId>org.apache.tika</groupId>
+            <artifactId>tika-dl</artifactId>
+            <version>1.15</version>
+            <!-- exclusions>
+        		<exclusion>
+          			<groupId>org.nd4j</groupId>
+    				<artifactId>nd4j-native-platform</artifactId>
+        		</exclusion>
+        	</exclusions -->
+        </dependency>
+        <!-- dependency>
+   			<groupId>org.nd4j</groupId>
+   			<artifactId>nd4j-cuda-8.0-platform</artifactId>
+   			<version>0.8.0</version>
+ 		</dependency>
+ 		<dependency>
+   			<groupId>org.deeplearning4j</groupId>
+   			<artifactId>deeplearning4j-cuda-8.0</artifactId>
+   			<version>0.8.0</version>
+ 		</dependency-->
     </dependencies>
     <build>
         <plugins>

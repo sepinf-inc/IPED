@@ -36,7 +36,10 @@ public class TaskInstaller {
     tasks.add(new MakePreviewTask(worker));
     tasks.add(new ImageThumbTask(worker));
     tasks.add(new VideoThumbTask(worker));
+    
+    tasks.add(new ImageRecognizerTask(worker));
     tasks.add(new DIETask(worker));
+    
     tasks.add(new HTMLReportTask(worker));
     //Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
     //e antes da indexação (pois pode setar propriedade hasChildren nos itens)
