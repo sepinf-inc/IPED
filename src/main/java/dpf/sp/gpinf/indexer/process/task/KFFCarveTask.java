@@ -125,7 +125,7 @@ public class KFFCarveTask extends BaseCarveTask {
 
   protected void process(EvidenceFile evidence) throws Exception {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
-    if (!taskEnabled || caseData.containsReport() || !isAcceptedType(evidence.getMediaType())) return;
+    if (!taskEnabled || caseData.containsReport() || !isAcceptedType(evidence.getMediaType()) || !isToProcess(evidence)) return;
 
     byte[] buf512 = new byte[512];
     byte[] buf64K = new byte[65536 - buf512.length];
