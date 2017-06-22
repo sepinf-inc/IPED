@@ -81,23 +81,31 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
       try {
         Document doc = App.get().appCase.getSearcher().doc(docId);
         for (int col = 0; col < fields.size(); col++) {
-          String value, field = fields.get(col);
+          String[] values = new String[1];
+          String field = fields.get(col);
           if (!field.equals(ResultTableModel.BOOKMARK_COL)) {
-            value = doc.get(fields.get(col));
+            values = doc.getValues(fields.get(col));
           } else {
             ItemId item = App.get().appCase.getItemId(docId);
-            value = App.get().appCase.getMultiMarcadores().getLabels(item);
+            values[0] = App.get().appCase.getMultiMarcadores().getLabels(item);
           }
-          if (value == null) {
-            value = "";
-          }
-          if (field.equals(IndexItem.CATEGORY)) {
-            value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
-          }
+          if (values.length > 0 && values[0] == null)
+            values[0] = "";
+          
+          if (field.equals(IndexItem.CATEGORY))
+              for(String val : values)
+                  val = val.replace("" + CategoryTokenizer.SEPARATOR, " | ");
 
-          if (!value.isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED))) {
-            value = df.format(DateUtil.stringToDate(value));
+          if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
+                  || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.RECORDDATE))) {
+            values[0] = df.format(DateUtil.stringToDate(values[0]));
           }
+          String value = "";
+          for(int i = 0; i < values.length; i++){
+              if(i != 0) value += " | ";
+              value += values[i];
+          }
+          
           writer.write("\"" + value.replace("\"", "\"\"") + "\";");
         }
         writer.write("\r\n");

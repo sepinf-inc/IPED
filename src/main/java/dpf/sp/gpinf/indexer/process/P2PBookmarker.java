@@ -31,10 +31,10 @@ public class P2PBookmarker {
 	}
 	
 	class P2PProgram{
-		String hashName;
+	    HashTask.HASH hashName;
 		String appName;
 		
-		public P2PProgram(String hashName, String appName){
+		public P2PProgram(HashTask.HASH hashName, String appName){
 			this.hashName = hashName;
 			this.appName = appName;
 		}
@@ -49,12 +49,12 @@ public class P2PBookmarker {
 
 		HashMap<String, P2PProgram> p2pPrograms = new HashMap<String, P2PProgram>();
 		
-		p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.EDONKEY, "Emule"));
-		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram("sha-1", "Ares"));
-		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram("md5", "Shareaza"));
-		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram("sha-256", "WhatsApp"));
-		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram("md5", "Skype"));
-		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram("md5", "Skype"));
+		p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY, "Emule"));
+		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1, "Ares"));
+		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Shareaza"));
+		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram(HashTask.HASH.SHA256, "WhatsApp"));
+		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Skype"));
+		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Skype"));
 		
 		IPEDSource ipedSrc = new IPEDSource(caseDir);
 		String queryText = ExtraProperties.SHARED_HASHES + ":*";
@@ -65,12 +65,15 @@ public class P2PBookmarker {
 				int luceneId = ipedSrc.getLuceneId(p2pItems.getId(i));
 				Document doc = ipedSrc.getReader().document(luceneId);
 				String mediaType = doc.get(IndexItem.CONTENTTYPE);
-				String sharedHashes = doc.get(ExtraProperties.SHARED_HASHES);
 				P2PProgram program = p2pPrograms.get(mediaType);
+				String[] sharedHashes = doc.getValues(ExtraProperties.SHARED_HASHES);
+				StringBuilder hashes = new StringBuilder();
+				for(String hash : sharedHashes)
+				    hashes.append(hash).append(" ");
 				
 				StringBuilder queryBuilder = new StringBuilder();
 				queryBuilder.append(program.hashName + ":(");
-				queryBuilder.append(sharedHashes);
+				queryBuilder.append(hashes.toString());
 				queryBuilder.append(")");
 				searcher = new IPEDSearcher(ipedSrc, queryBuilder.toString());
 				

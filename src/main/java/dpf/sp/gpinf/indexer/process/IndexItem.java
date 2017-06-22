@@ -601,11 +601,8 @@ public class IndexItem {
         evidence.setType(new GenericFileType(value));
       }
 
-      value = doc.get(IndexItem.CATEGORY);
-      if (value != null) {
-        for (String category : value.split(CategoryTokenizer.SEPARATOR + "")) {
+      for (String category : doc.getValues(IndexItem.CATEGORY)) {
           evidence.addCategory(category);
-        }
       }
 
       value = doc.get(IndexItem.ACCESSED);

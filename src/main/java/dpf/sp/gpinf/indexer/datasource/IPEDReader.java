@@ -331,8 +331,7 @@ public class IPEDReader extends DataSourceReader {
         evidence.setType(new GenericFileType(value));
       }
 
-      value = doc.get(IndexItem.CATEGORY);
-      for (String category : value.split(CategoryTokenizer.SEPARATOR + "")) {
+      for (String category : doc.getValues(IndexItem.CATEGORY)) {
         evidence.addCategory(category);
       }
 
@@ -427,21 +426,17 @@ public class IPEDReader extends DataSourceReader {
         }
       }
 
-      String[] hashes = {"md5", "sha-1", "sha-256", "sha-512", HashTask.EDONKEY};
-      for (String hash : hashes) {
-        value = doc.get(hash);
-        if (value != null) {
-          evidence.setExtraAttribute(hash, value);
-        }
+      for (HashTask.HASH hash : HashTask.HASH.values()) {
+        value = doc.get(hash.toString());
+        if (value != null)
+          evidence.setExtraAttribute(hash.toString(), value);
       }
 
       //armazena metadados de emails, necessário para emails de PST
       if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))	
         for (String key : ColumnsManager.email) {
-          value = doc.get(key);
-          if (value != null) {
-            evidence.getMetadata().set(key, value);
-          }
+          for(String val : doc.getValues(key))
+              evidence.getMetadata().add(key, val);
         }
 
       value = doc.get(IndexItem.DELETED);
