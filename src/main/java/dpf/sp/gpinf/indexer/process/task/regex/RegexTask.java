@@ -16,6 +16,7 @@ import java.util.Set;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.BasicOperations;
+import dk.brics.automaton.Datatypes;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
@@ -46,15 +47,21 @@ public class RegexTask extends AbstractTask{
 		Automaton automaton;
 		RunAutomaton pattern;
 		
-		public Regex(String name, int prefix, int sufix, String regex){
-			this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()));
+		public Regex(String name, int prefix, int sufix, boolean ignoreCases, String regex){
+			this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()), ignoreCases);
 			this.prefix = prefix;
             this.sufix = sufix;
 		}
 		
 		public Regex(String name, Automaton automaton){
+		    this(name, automaton, false);
+		}
+		
+		public Regex(String name, Automaton automaton, boolean ignoreCases){
 			this.name = name;
-			this.automaton = ignoreCases(automaton);
+			if(ignoreCases)
+			    automaton = ignoreCases(automaton);
+			this.automaton = automaton;
 			this.pattern = new RunAutomaton(automaton);
 		}
 	}
@@ -65,10 +72,9 @@ public class RegexTask extends AbstractTask{
 	
 	private static Automaton ignoreCases(Automaton a) {
 		Map<Character,Set<Character>> map = new HashMap<Character,Set<Character>>();
-		for (char c1 = 'a'; c1 <= 'z'; c1++) {
+		for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {
 			Set<Character> ws = new HashSet<Character>();
 			char c2 = Character.toUpperCase(c1);
-			//System.out.println(c1 + " " + c2);
 			ws.add(c1);
 			ws.add(c2);
 			map.put(c1, ws);
@@ -108,8 +114,9 @@ public class RegexTask extends AbstractTask{
 	                  String regexName = params[0].trim();
 	                  int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
 	                  int sufix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
+	                  boolean ignoreCase = params.length > 3 ? Boolean.valueOf(params[3].trim()) : true;
 	                  String regex = replace(values[1].trim());
-	                  regexList.add(new Regex(regexName, prefix, sufix, regex));
+	                  regexList.add(new Regex(regexName, prefix, sufix, ignoreCase, regex));
 	              }
 	            }
 			}
