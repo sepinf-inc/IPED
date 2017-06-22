@@ -22,13 +22,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Properties;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
@@ -44,8 +41,24 @@ import gpinf.dev.data.EvidenceFile;
 public class HashTask extends AbstractTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
-
-  public static String EDONKEY = "edonkey";
+  
+  public enum HASH{
+      MD5 ("md5"), 
+      SHA1 ("sha-1"), 
+      SHA256 ("sha-256"), 
+      SHA512 ("sha-512"), 
+      EDONKEY ("edonkey");
+      
+      private String name;
+      
+      HASH(String val){
+          this.name = val;
+      }
+      @Override
+      public String toString(){
+          return name;
+      }
+  }
 
   private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 
@@ -68,7 +81,7 @@ public class HashTask extends AbstractTask {
       for (String algorithm : value.split(";")) {
         algorithm = algorithm.trim();
         MessageDigest digest = null;
-        if (!algorithm.equalsIgnoreCase(EDONKEY)) {
+        if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
           digest = MessageDigest.getInstance(algorithm.toUpperCase());
         } else {
           digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider());
@@ -104,7 +117,7 @@ public class HashTask extends AbstractTask {
       int len;
       while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
         for (String algo : digestMap.keySet()) {
-          if (!algo.equals(EDONKEY)) {
+          if (!algo.equals(HASH.EDONKEY.toString())) {
             digestMap.get(algo).update(buf, 0, len);
           } else {
             updateEd2k(buf, len);
@@ -115,7 +128,7 @@ public class HashTask extends AbstractTask {
       boolean defaultHash = true;
       for (String algo : digestMap.keySet()) {
         byte[] hash;
-        if (!algo.equals(EDONKEY)) {
+        if (!algo.equals(HASH.EDONKEY.toString())) {
           hash = digestMap.get(algo).digest();
         } else {
           hash = digestEd2k();
@@ -150,7 +163,7 @@ public class HashTask extends AbstractTask {
 
   private void updateEd2k(byte[] buffer, int len) throws IOException {
 
-    MessageDigest md4 = digestMap.get(EDONKEY);
+    MessageDigest md4 = digestMap.get(HASH.EDONKEY.toString());
     if (chunk + len >= CHUNK_SIZE) {
       int offset = CHUNK_SIZE - chunk;
       md4.update(buffer, 0, offset);
@@ -166,7 +179,7 @@ public class HashTask extends AbstractTask {
 
   private byte[] digestEd2k() throws IOException {
 
-    MessageDigest md4 = digestMap.get(EDONKEY);
+    MessageDigest md4 = digestMap.get(HASH.EDONKEY.toString());
     if (total == 0 || total % CHUNK_SIZE != 0) {
       out.write(md4.digest());
     }
