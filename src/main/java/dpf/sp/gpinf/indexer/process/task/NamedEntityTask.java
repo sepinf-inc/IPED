@@ -33,6 +33,7 @@ public class NamedEntityTask extends AbstractTask {
         
         String nerImpl = "org.apache.tika.parser.ner.corenlp.CoreNLPNERecogniser";
         String modelPath = "edu/stanford/nlp/models/ner/spanish.ancora.distsim.s512.crf.ser.gz";
+        //String modelPath = "edu/stanford/nlp/models/ner/english.all.3class.caseless.distsim.crf.ser.gz";
         
         System.setProperty(NamedEntityParser.SYS_PROP_NER_IMPL, nerImpl);
         System.setProperty(CoreNLPNERecogniser.MODEL_PROP_NAME, modelPath);
