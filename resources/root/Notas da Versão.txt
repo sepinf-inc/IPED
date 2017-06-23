@@ -10,14 +10,19 @@ xx/06/2017: IPED-3.13
 Todo:
 - Exportação automática de arquivos com base em palavras-chave
 - Janela de "aguarde" ao clicar no primeiro item de cada evidência
+- Janela de trace ao ocorrer erro na abertura do caso
 - Novos grupos de propriedades (regex, imagens, documentos)
-- Melhor detecção de tipo de arquivo (usa extensão apenas qdo formato não tem assinatura)
+- detecção de idioma via optimaize language-detect (71 idiomas suportados)
+- Exportar arquivos para ZIP mantendo estrutura em árvore
 - Atualização p/ Tika-1.15 (diversas correções, suporte a mais formatos)
 - Atualização p/ Sleuthlkit-4.4.1
-- detecção de idioma via optimaize language-detect (71 idiomas suportados)
-- reconhecimento de entidades mencionadas
+- Melhor detecção de tipo de arquivo (usa extensão apenas qdo formato não tem assinatura)
+- Reconhecimento de entidades mencionadas
+- Opção para enviar log de análise para servidor Syslog
 - Alteração na geração de relatórios: usa marcadores e não mais itens selecionados
 - Comentários para marcadores
+Correção:
+- Extração incompleta de chats do WhatsApp qdo mediaType dos anexos é nulo
 
 
 31/05/2017: IPED-3.12.4
