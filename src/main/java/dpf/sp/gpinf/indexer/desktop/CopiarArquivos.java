@@ -95,6 +95,9 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
         in.close();
         out.close();
+        
+        if(e.getModDate() != null)
+            dst.setLastModified(e.getModDate().getTime());
 
       } catch (Exception e1) {
         e1.printStackTrace();

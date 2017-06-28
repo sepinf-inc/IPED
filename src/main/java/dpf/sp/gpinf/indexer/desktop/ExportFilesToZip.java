@@ -24,17 +24,13 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.lucene.document.Document;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
@@ -74,21 +70,23 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     	EvidenceFile e = App.get().appCase.getItemByItemId(item);
         String dstName = e.getName();
         //dstName += "." + doc.get(IndexItem.TYPE);
-
-        InputStream in = e.getBufferedStream();
-
+        
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName);
         
-        Long length = e.getLength();
-        if(length != null)
-        	entry.setSize(length);
+        if(e.getModDate() != null)
+            entry.setTime(e.getModDate().getTime());
+        
+        if(e.getLength() != null)
+        	entry.setSize(e.getLength());
         
         zaos.putArchiveEntry(entry);
-        int len = 0;
-        while((len = in.read(buf)) != -1)
-        	zaos.write(buf, 0, len);
-        zaos.closeArchiveEntry();
-        in.close();
+        try (InputStream in = e.getBufferedStream()){
+            int len = 0;
+            while((len = in.read(buf)) != -1 && !this.isCancelled())
+                zaos.write(buf, 0, len);
+        }finally{
+            zaos.closeArchiveEntry();
+        }
 
       } catch (Exception e1) {
         e1.printStackTrace();
@@ -113,7 +111,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
       progressMonitor.setNote("Copiando " + progress + " de " + uniqueIds.size());
     }
     if (progressMonitor.isCanceled()) {
-      this.cancel(true);
+      this.cancel(false);
     }
 
   }
