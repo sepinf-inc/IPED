@@ -22,6 +22,13 @@ import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import gpinf.dev.data.EvidenceFile;
 
+import java.awt.Dialog.ModalityType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+
+import javax.swing.SwingUtilities;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
@@ -39,6 +46,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   private static int STATUS_LENGTH = 200;
   private volatile static FileProcessor parsingTask;
   private static Object lock = new Object(), lock2 = new Object();
+  private static HashSet<String> tskDataSourceInited = new HashSet<String>();
+  
   private Document doc;
   private int docId;
   private boolean listSubItens;
@@ -136,7 +145,43 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
     }
     
+    waitSleuthkitInit(item);
+    
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+  }
+  
+  private void waitSleuthkitInit(final EvidenceFile item){
+      if(item.getSleuthFile() == null)
+          return;
+      if(!tskDataSourceInited.contains(item.getDataSource().getUUID())){
+          tskDataSourceInited.add(item.getDataSource().getUUID());
+          setWaitVisible(true);
+          try (InputStream is = item.getStream()){
+              is.read();    
+          } catch (IOException e) {
+            e.printStackTrace();
+          } 
+          setWaitVisible(false);
+      }
+  }
+  
+  private void setWaitVisible(final boolean visible){
+      try {
+        SwingUtilities.invokeLater(new Runnable(){
+              @Override
+              public void run(){
+                  ModalityType previous = App.get().dialogBar.getModalityType();
+                  String prevMsg = App.get().progressBar.getString();
+                  App.get().progressBar.setString("Aguardando Sleuthkit...");
+                  App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
+                  App.get().dialogBar.setVisible(visible);
+                  App.get().dialogBar.setModalityType(previous);
+                  App.get().progressBar.setString(prevMsg);
+              }
+          });
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
   }
 
   private void disposeItem(final EvidenceFile itemToDispose) {
