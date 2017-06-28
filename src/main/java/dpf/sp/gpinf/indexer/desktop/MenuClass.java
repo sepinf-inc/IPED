@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.event.ActionListener;
 
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
@@ -29,7 +30,7 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, similarDocs;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
@@ -75,18 +76,33 @@ public class MenuClass extends JPopupMenu {
     this.add(gerenciarColunas);
 
     this.addSeparator();
-
+    
+    JMenu submenu = new JMenu("Exportar itens...");
+    this.add(submenu);
+    
     exportarSelecionados = new JMenuItem("Exportar itens destacados");
     exportarSelecionados.addActionListener(menuListener);
-    this.add(exportarSelecionados);
+    submenu.add(exportarSelecionados);
 
     exportarMarcados = new JMenuItem("Exportar itens selecionados");
     exportarMarcados.addActionListener(menuListener);
-    this.add(exportarMarcados);
+    submenu.add(exportarMarcados);
+
+    exportTree = new JMenuItem("Exportar árvore de diretórios");
+    exportTree.addActionListener(menuListener);
+    submenu.add(exportTree);
+
+    exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
+    exportTreeChecked.addActionListener(menuListener);
+    submenu.add(exportTreeChecked);
     
     exportCheckedToZip = new JMenuItem("Exportar itens selecionados para ZIP");
     exportCheckedToZip.addActionListener(menuListener);
-    this.add(exportCheckedToZip);
+    submenu.add(exportCheckedToZip);
+    
+    exportCheckedTreeToZip = new JMenuItem("Exportar itens selecionados para ZIP (em árvore)");
+    exportCheckedTreeToZip.addActionListener(menuListener);
+    submenu.add(exportCheckedTreeToZip);
 
     this.addSeparator();
 

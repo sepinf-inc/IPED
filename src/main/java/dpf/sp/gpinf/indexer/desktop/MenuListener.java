@@ -34,9 +34,11 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
 
+import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
@@ -222,6 +224,20 @@ public class MenuListener implements ActionListener {
         File file = fileChooser.getSelectedFile();
         new KeywordListImporter(file).execute();
       }
+
+    } else if (e.getSource() == menu.exportTree || 
+            e.getSource() == menu.exportTreeChecked ||
+            e.getSource() == menu.exportCheckedTreeToZip) {
+        
+        TreePath[] paths = App.get().tree.getSelectionPaths();
+        if (paths == null || paths.length != 1) {
+          JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
+        } else {
+          Node treeNode = (Node) paths[0].getLastPathComponent();
+          boolean onlyChecked = e.getSource() != menu.exportTree;
+          boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
+          ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked, toZip);
+        }
 
     } else if (e.getSource() == menu.limparBuscas) {
       App.get().appCase.getMultiMarcadores().clearTypedWords();

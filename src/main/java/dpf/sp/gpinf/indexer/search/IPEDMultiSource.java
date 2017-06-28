@@ -178,7 +178,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return this.cases;
 	}
 	
-	final int getBaseLuceneId(IPEDSource atomicCase){
+	public final int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)

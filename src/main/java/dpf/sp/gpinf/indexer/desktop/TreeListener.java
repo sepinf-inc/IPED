@@ -51,7 +51,7 @@ import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
-public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener {
+public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener {
 
   Query treeQuery, recursiveTreeQuery;
   boolean rootSelected = false;
@@ -188,77 +188,6 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   @Override
   public void treeCollapsed(TreeExpansionEvent event) {
     collapsedTime = System.currentTimeMillis();
-
-  }
-
-  @Override
-  public void mouseClicked(MouseEvent e) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mousePressed(MouseEvent e) {
-    if (e.isPopupTrigger()) {
-      showPopupMenu(e);
-    }
-
-  }
-
-  private void showPopupMenu(MouseEvent e) {
-    JPopupMenu menu = new JPopupMenu();
-
-    JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
-    exportTree.addActionListener(new TreeMenuListener(false));
-    menu.add(exportTree);
-
-    JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
-    exportTreeChecked.addActionListener(new TreeMenuListener(true));
-    menu.add(exportTreeChecked);
-
-    menu.show((Component) e.getSource(), e.getX(), e.getY());
-  }
-
-  @Override
-  public void mouseReleased(MouseEvent e) {
-    if (e.isPopupTrigger()) {
-      showPopupMenu(e);
-    }
-
-  }
-
-  class TreeMenuListener implements ActionListener {
-
-    boolean onlyChecked = false;
-
-    TreeMenuListener(boolean onlyChecked) {
-      this.onlyChecked = onlyChecked;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-
-      TreePath[] paths = App.get().tree.getSelectionPaths();
-      if (paths == null || paths.length != 1) {
-        JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
-      } else {
-        Node treeNode = (Node) paths[0].getLastPathComponent();
-        ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked);
-      }
-
-    }
-
-  }
-
-  @Override
-  public void mouseEntered(MouseEvent e) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mouseExited(MouseEvent e) {
-    // TODO Auto-generated method stub
 
   }
 

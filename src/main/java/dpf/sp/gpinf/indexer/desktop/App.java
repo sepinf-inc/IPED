@@ -538,7 +538,6 @@ public class App extends JFrame implements WindowListener {
       treeListener = new TreeListener();
       tree.addTreeSelectionListener(treeListener);
       tree.addTreeExpansionListener(treeListener);
-      tree.addMouseListener(treeListener);
 
       JPanel evidencePanel = new JPanel(new BorderLayout());
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
@@ -562,6 +561,7 @@ public class App extends JFrame implements WindowListener {
     progressBar = new JProgressBar(0, 1);
     progressBar.setValue(0);
     progressBar.setString("Aguarde...");
+    progressBar.setForeground(Color.WHITE);
     progressBar.setStringPainted(true);
     progressBar.setIndeterminate(true);
 

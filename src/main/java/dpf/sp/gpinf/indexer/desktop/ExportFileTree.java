@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -28,12 +29,15 @@ import java.util.HashMap;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
@@ -42,20 +46,28 @@ import dpf.sp.gpinf.indexer.util.Util;
 public class ExportFileTree extends CancelableWorker {
 
   int baseDocId;
-  boolean onlyChecked;
+  boolean onlyChecked, toZip;
   File baseDir;
 
   int total, progress = 0;
   ProgressDialog progressDialog;
 
-  HashMap<Integer, File> parentCache = new HashMap<Integer, File>();
+  HashMap<Integer, Object> parentCache = new HashMap<Integer, Object>();
+  
+  ZipArchiveOutputStream zaos;
+  byte[] buf = new byte[8 * 1024 * 1024];
 
   static Node root = (Node) App.get().tree.getModel().getRoot();
-
+  
   public ExportFileTree(File baseDir, int baseDocId, boolean onlyChecked) {
+      this(baseDir, baseDocId, onlyChecked, false);
+  }
+
+  public ExportFileTree(File baseDir, int baseDocId, boolean onlyChecked, boolean toZip) {
     this.baseDir = baseDir;
     this.baseDocId = baseDocId;
     this.onlyChecked = onlyChecked;
+    this.toZip = toZip;
   }
 
   private int[] getItemsToExport() {
@@ -92,32 +104,24 @@ public class ExportFileTree extends CancelableWorker {
     exportItem(docId, false);
   }
 
-  private File exportItem(int docId, boolean isParent) {
+  private Object exportItem(int docId, boolean isParent) {
 
-    File exportedItem = null;
+    Object exportedItem = null;
     if (docId == baseDocId) {
       exportedItem = exportItem(docId, baseDir, isParent);
       parentCache.put(docId, exportedItem);
     } else {
       try {
         Document doc = App.get().appCase.getReader().document(docId);
-
+        
         String parentIdStr = doc.get(IndexItem.PARENTID);
         int parentId = Integer.parseInt(parentIdStr);
-        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
         
-        String textQuery = IndexItem.ID + ":" + parentId;
-        textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")";
+        IPEDSource source = App.get().appCase.getAtomicSource(docId);
+        int baseLuceneId = App.get().appCase.getBaseLuceneId(source);
         
-        IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-        task.setTreeQuery(true);
-        LuceneSearchResult parent = task.luceneSearch();
-        if (parent.getLength() == 0) {
-          return null;
-        }
-
-        int parentDocId = parent.getLuceneIds()[0];
-        File exportedParent = parentCache.get(parentDocId);
+        int parentDocId = source.getLuceneId(parentId) + baseLuceneId;
+        Object exportedParent = parentCache.get(parentDocId);
         if (exportedParent == null) {
           exportedParent = exportItem(parentDocId, true);
           parentCache.put(parentDocId, exportedParent);
@@ -152,19 +156,21 @@ public class ExportFileTree extends CancelableWorker {
     return dst;
   }
 
-  private File exportItem(int docId, File subdir, boolean isParent) {
+  private Object exportItem(int docId, Object subdir, boolean isParent) {
 
-    if (subdir == null) {
+    if (subdir == null)
       return null;
-    }
 
+    if(toZip)
+        return exportItemToZip(docId, subdir, isParent);
+    
     File dst = null;
     EvidenceFile item = null;
     try {
       item = App.get().appCase.getItemByLuceneID(docId);
 
       String dstName = Util.getValidFilename(item.getName());
-      dst = new File(subdir, dstName);
+      dst = new File((File)subdir, dstName);
 
       if (item.isDir() || isParent) {
         if (!dst.isDirectory()) {
@@ -177,6 +183,9 @@ public class ExportFileTree extends CancelableWorker {
           Files.copy(in, dst.toPath());
         }
       }
+      
+      if(item.getModDate() != null)
+          dst.setLastModified(item.getModDate().getTime());
 
     } catch (Exception e1) {
       e1.printStackTrace();
@@ -192,6 +201,68 @@ public class ExportFileTree extends CancelableWorker {
 
     return dst;
 
+  }
+  
+  private String exportItemToZip(int docId, Object subdir, boolean isParent) {
+
+      String dst = null;
+      EvidenceFile item = null;
+      try {
+        if(zaos == null)
+            zaos = new ZipArchiveOutputStream(baseDir);
+        
+        item = App.get().appCase.getItemByLuceneID(docId);
+        String dstName = item.getName().replace("/", "-").trim();
+        if(dstName.isEmpty())
+            dstName = "-";
+        
+        dst = dstName;
+        if(subdir != baseDir)
+            dst = subdir + dstName;
+        
+        if (item.isDir() || isParent)
+            dst += "/";
+        
+        ZipArchiveEntry entry = new ZipArchiveEntry(dst);
+        
+        if(item.getLength() != null)
+            entry.setSize(item.getLength());
+        
+        if(item.getModDate() != null)
+            entry.setTime(item.getModDate().getTime());
+        
+        zaos.putArchiveEntry(entry);
+        
+        if(!item.isDir() && !isParent){
+          try (InputStream in = item.getBufferedStream()) {
+              int len = 0;
+              while((len = in.read(buf)) != -1 && !this.isCancelled())
+                  zaos.write(buf, 0, len);
+          } catch (IOException e) {
+              e.printStackTrace();
+          }
+        }
+        zaos.closeArchiveEntry();
+
+      } catch (IOException e1) {
+        e1.printStackTrace();
+        
+      } finally {
+        item.dispose();
+      }
+
+      if (!isParent) {
+        progressDialog.setProgress(++progress);
+        progressDialog.setNote("Copiados " + progress + " de " + total);
+      }
+
+      return dst;
+
+    }
+  
+  @Override
+  public boolean doCancel(boolean mayInterrupt) {
+      return cancel(false);
   }
 
   @Override
@@ -213,12 +284,14 @@ public class ExportFileTree extends CancelableWorker {
 
     } finally {
       progressDialog.close();
+      if(zaos != null)
+          zaos.close();
     }
 
     return null;
   }
 
-  public static void salvarArquivo(int baseDocId, boolean onlyChecked) {
+  public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
     if (baseDocId == root.docId) {
       JOptionPane.showMessageDialog(null, "Selecione outro nó base diferente de " + root.toString());
       return;
@@ -226,10 +299,16 @@ public class ExportFileTree extends CancelableWorker {
     try {
       JFileChooser fileChooser = new JFileChooser();
       fileChooser.setFileFilter(null);
-      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      if(toZip)
+          fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+      else
+          fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      
       if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
         File baseDir = fileChooser.getSelectedFile();
-        (new ExportFileTree(baseDir, baseDocId, onlyChecked)).execute();
+        if(toZip && !baseDir.getName().toLowerCase().endsWith(".zip"))
+            baseDir = new File(baseDir.getAbsolutePath() + ".zip");
+        (new ExportFileTree(baseDir, baseDocId, onlyChecked, toZip)).execute();
       }
     } catch (Exception e) {
       e.printStackTrace();
