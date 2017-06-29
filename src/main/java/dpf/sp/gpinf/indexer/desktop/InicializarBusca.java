@@ -21,6 +21,8 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -117,16 +119,30 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
           LOGGER.info("Listing all items");
           PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
           pesquisa.execute();
-          LOGGER.info("Listing all items Finished");          
+          LOGGER.info("Listing all items Finished");
       }
       
       treeModel = new TreeViewModel();
       
     } catch (Throwable e) {
-      e.printStackTrace();
+        e.printStackTrace();
+        showErrorDialog(e);
     }
     
     return null;
+  }
+  
+  private void showErrorDialog(Throwable e){
+      SwingUtilities.invokeLater(new Runnable(){
+          @Override
+          public void run(){
+              JOptionPane.showMessageDialog(App.get(), 
+                      "Erro ao abrir o caso. O processamento finalizou com sucesso?\n"
+                      + "Caso sim, entre em contato com o desenvolvedor e envie o log de erros\n"
+                      + "\"IPED-SearchApp.log\" para que o problema possa ser analisado e corrigido.", 
+                      "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
+          }
+      });
   }
   
   @Override
