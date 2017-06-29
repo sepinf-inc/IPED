@@ -6,14 +6,14 @@ xx/06/2017: IPED-3.13
 - Otimização no StringsParser, 80% mais rápido em certos casos
 - Novas estatísticas de tempo de processamento por parser
 - Otimização ao abrir casos grandes e cancelar pesquisas, inicializando sob demanda as ordenações das colunas
-- Otimização no cálculo do volume dos itens listados
+- Exportação de arquivos para ZIP mantendo estrutura em árvore
+- Janela de "aguarde" durante abertura inicial das imagens pelo sleuthkit
+- Janela de erro ao abrir casos corrompidos
 Todo:
 - Exportação automática de arquivos com base em palavras-chave
-- Janela de "aguarde" ao clicar no primeiro item de cada evidência
-- Janela de trace ao ocorrer erro na abertura do caso
+- Dependências com licenças restritivas tornadas opcionais (javadbx, mplayer, jped2000, levigo-jbig2)
 - Novos grupos de propriedades (regex, imagens, documentos)
 - detecção de idioma via optimaize language-detect (71 idiomas suportados)
-- Exportar arquivos para ZIP mantendo estrutura em árvore
 - Atualização p/ Tika-1.15 (diversas correções, suporte a mais formatos)
 - Atualização p/ Sleuthlkit-4.4.1
 - Melhor detecção de tipo de arquivo (usa extensão apenas qdo formato não tem assinatura)
@@ -21,9 +21,9 @@ Todo:
 - Opção para enviar log de análise para servidor Syslog
 - Alteração na geração de relatórios: usa marcadores e não mais itens selecionados
 - Comentários para marcadores
-Correção:
-- Extração incompleta de chats do WhatsApp qdo mediaType dos anexos é nulo
 
+23/06/2017: IPED-3.12.5
+- Corrige extração incompleta de chats do WhatsApp qdo mediaType dos anexos é nulo
 
 31/05/2017: IPED-3.12.4
 - Corrige bug que ignorava itens alocados ao ligar ignoreHardLinks junto com addFileSlacks (3.12)

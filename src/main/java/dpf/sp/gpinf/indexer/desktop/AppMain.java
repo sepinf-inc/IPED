@@ -71,7 +71,7 @@ public class AppMain {
 				  jarFile = new File(url.toURI().getSchemeSpecificPart());
 			  
 			  //Caso para teste
-		      //jarFile = new File("E:\\1-process-comp9/indexador/lib/iped-search-app.jar");
+		      //jarFile = new File("E:\\1-1973-3.12.5/indexador/lib/iped-search-app.jar");
 			  
 		      if(casePath != null)
 				  jarFile = new File(casePath, "indexador/lib/iped-search-app.jar");
