@@ -197,6 +197,11 @@
             <artifactId>swt</artifactId>
             <version>4.527</version>
         </dependency>
+        <dependency>
+	    	<groupId>com.optimaize.languagedetector</groupId>
+    		<artifactId>language-detector</artifactId>
+    		<version>0.6</version>
+		</dependency>
     </dependencies>
     <build>
         <plugins>

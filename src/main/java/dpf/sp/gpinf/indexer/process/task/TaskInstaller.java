@@ -32,6 +32,7 @@ public class TaskInstaller {
 
     tasks.add(new ParsingTask(worker));
     tasks.add(new RegexTask(worker));
+    tasks.add(new LanguageDetectTask(worker));
     tasks.add(new ExportFileTask(worker));
     tasks.add(new MakePreviewTask(worker));
     tasks.add(new ImageThumbTask(worker));

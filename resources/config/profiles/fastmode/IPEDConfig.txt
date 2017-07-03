@@ -15,6 +15,7 @@ processFileSignatures = false
 enableFileParsing = false
 expandContainers = false
 enableRegexSearch = false
+enableLanguageDetect = false
 indexFileContents = false
 indexUnknownFiles = false
 enableOCR = false

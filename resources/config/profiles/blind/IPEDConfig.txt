@@ -44,6 +44,9 @@ expandContainers = true
 # Novas expressões podem ser configuradas em conf/RegexConfig.txt
 enableRegexSearch = true
 
+# Habilita detecção de mais de 70 idiomas nos documentos.
+enableLanguageDetect = true
+
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 
