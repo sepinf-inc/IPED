@@ -435,6 +435,9 @@ public class Configuration {
     	
     	new JarLoader().loadJar(tskJarFile);
     }
+    
+    //load optional runtime jars
+    new JarLoader().loadJarDir(new File(appRoot + "/optional"));
 
     RegistryParser.TOOL_PATH = appRoot + "/tools/regripper/";
 

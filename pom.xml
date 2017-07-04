@@ -88,23 +88,11 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.10</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
             <version>4.9.0</version>
             <type>jar</type>
         </dependency>
-        <dependency>
-            <groupId>com.github.junrar</groupId>
-            <artifactId>junrar</artifactId>
-            <version>0.7</version>
-            <type>jar</type>
-        </dependency>        
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
@@ -156,11 +144,6 @@
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>0.9.5.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.levigo.jbig2</groupId>
-            <artifactId>levigo-jbig2-imageio</artifactId>
-            <version>1.6.3</version>
         </dependency>
         <dependency>
             <groupId>libre-office</groupId>
