@@ -35,9 +35,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 
-import org.postgresql.ds.PGSimpleDataSource;
-
-import oracle.jdbc.pool.OracleDataSource;
+import javax.sql.DataSource;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
@@ -65,16 +63,21 @@ public class FTK42Database extends FTKDatabase {
   private void setDatabaseParams(String databaseName) throws SQLException {
 
     if ("oracle".equalsIgnoreCase(databaseType)) {
-      OracleDataSource oSource = new OracleDataSource();
-      oSource.setUser(user);
-      oSource.setPassword(password);
-      oSource.setDriverType(driverType);
-      oSource.setServerName(serverName);
-      oSource.setPortNumber(portNumber);
-      oSource.setServiceName(databaseName);
-
-      ods = oSource;
-
+        try {
+            Class<?> oracleClass = Class.forName("oracle.jdbc.pool.OracleDataSource");
+            DataSource oSource = (DataSource)oracleClass.newInstance();
+            oracleClass.getMethod("setUser", String.class).invoke(oSource, user);
+            oracleClass.getMethod("setPassword", String.class).invoke(oSource, password);
+            oracleClass.getMethod("setDriverType", String.class).invoke(oSource, driverType);
+            oracleClass.getMethod("setServiceName", String.class).invoke(oSource, serviceName);
+            oracleClass.getMethod("setServerName", String.class).invoke(oSource, serverName);
+            oracleClass.getMethod("setPortNumber", String.class).invoke(oSource, portNumber);
+            ods = oSource;
+            
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
+        
       schemaPrefix = schemaBase; // Alterado
       deletedStr = "0"; // Alterado
 
