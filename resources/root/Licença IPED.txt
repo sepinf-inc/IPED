@@ -1,0 +1,1 @@
+IPED é distribuído sob a GNU GPL v3, disponível na pasta licenses.

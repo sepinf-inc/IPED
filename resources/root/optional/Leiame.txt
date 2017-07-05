@@ -1,0 +1,7 @@
+Coloque nesta pasta arquivos JAR de bibliotecas opcionais com licenças de distribuição
+incompatíveis a serem carregadas dinamicamente em tempo de execução.
+
+Por exemplo:
+- levigo-jbig2-imageio-1.6.3.jar: para decodificar imagens jbig2 comumente utilizadas em PDFs
+- oereader-1.1-p3.jar: para decodificar caixas de email DBX do Outlook Express
+- jai-imageio-jpeg2000-1.3.0.jar: para decodificar imagens incomuns jpeg2000

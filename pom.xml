@@ -33,11 +33,6 @@
             <layout>default</layout>
             <url>http://repo1.maven.org/maven2</url>
         </repository>
-        <repository>
-            <id>jbig2.googlecode</id>
-            <name>JBIG2 ImageIO-Plugin repository at googlecode.com</name>
-            <url>http://jbig2-imageio.googlecode.com/svn/maven-repository</url>
-        </repository>
     </repositories>
     
     <dependencies>
@@ -53,17 +48,10 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>sqlserver</groupId>
-            <artifactId>sqlserver-jdbc4</artifactId>
-            <version>1.0.0</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>oracle</groupId>
-            <artifactId>ojdbc</artifactId>
-            <version>10.2.0.5</version>
-            <type>jar</type>
-        </dependency>
+			<groupId>com.microsoft.sqlserver</groupId>
+			<artifactId>mssql-jdbc</artifactId>
+			<version>6.2.0.jre8</version>
+		</dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
