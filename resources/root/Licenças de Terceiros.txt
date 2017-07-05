@@ -1,4 +1,4 @@
-As bibliotecas ou softwares abaixo são utilizados e distribuídos junto com o IPED e apresentam licenças próprias, detalhadas a seguir:
+The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses, detailed below:
 
 Apache Lucene 4.9.0
 - Site: https://lucene.apache.org/core/
@@ -78,11 +78,21 @@ ICE JNI Registry
 
 Eclipse SWT
 - Site: https://www.eclipse.org/swt/
-- License: EPL 1.0
+- License: Eclipse Public License 1.0
 
 The Sleuthkit
 - Site: https://www.sleuthkit.org/
 - License: IBM Public License, Common Public License
+
+--------------------------------------------
+
+mchange commons java
+- Site: https://github.com/swaldman/mchange-commons-java
+- License: GNU LGPL 2.1
+
+mchange c3p0
+- Site: https://github.com/swaldman/c3p0
+- License: GNU LGPL 2.1
 
 Libewf
 - Site: https://github.com/libyal/libewf
@@ -108,20 +118,6 @@ Libmsiecf
 - Site: https://github.com/libyal/Libmsiecf
 - License: GNU LGPL v.3
 
-Zlib
-- Site: https://zlib.net/
-- License: licenses/ZLIB.txt
-
--------------------------------------------
-
-mchange commons java
-- Site: https://github.com/swaldman/mchange-commons-java
-- License: GNU LGPL 2.1
-
-mchange c3p0
-- Site: https://github.com/swaldman/c3p0
-- License: GNU LGPL 2.1
-
 LibreOffice 4.0.4 for windows
 - Site: https://www.libreoffice.org/
 - License: GNU LGPL 3
@@ -138,6 +134,24 @@ JavaDBF
 - Site: https://github.com/albfernandez/javadbf
 - License: GNU LGPL 3
 
+--------------------------------------------
+
+Zlib
+- Site: https://zlib.net/
+- License: licenses/ZLIB.txt
+
 JUnRAR
 - Site: https://github.com/edmund-wagner/junrar
 - License: licenses/JUNRAR.txt
+
+--------------------------------------------
+
+The softwares below are used by fork and exec, command line args and pipes:
+
+MPlayer
+- Site: https://www.mplayerhq.hu/
+- License: GNU GPL 2
+
+RegRipper
+- Site: https://github.com/keydet89/RegRipper2.8
+- License: GNU GPL 2
