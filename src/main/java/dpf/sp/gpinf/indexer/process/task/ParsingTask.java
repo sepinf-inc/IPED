@@ -37,7 +37,9 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
@@ -47,8 +49,8 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
+import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.txt.TXTParser;
-import org.apache.tika.sax.ToTextContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -163,6 +165,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    
+    OfficeParserConfig opc = new OfficeParserConfig();
+    opc.setExtractMacros(true);
+    opc.setIncludeDeletedContent(true);
+    context.set(OfficeParserConfig.class, opc);
     
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
     
@@ -347,6 +354,19 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         evidence.setParsed(true);
       }
 
+      normalizeMetadata(metadata);
+
+    } finally {
+      //IOUtil.closeQuietly(tis);
+      //do nothing
+      reader.close();
+      reader.reallyClose();
+    }
+    
+  }
+  
+  private void normalizeMetadata(Metadata metadata){
+      
       //Ajusta metadados:
       if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
         evidence.setExtraAttribute(ENCRYPTED, "true");
@@ -362,22 +382,54 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
         }
       }
-
+      
       if (evidence.getMediaType().toString().equals("application/vnd.ms-outlook")) {
-        String subject = metadata.get(TikaCoreProperties.TITLE);
-        if (subject == null || subject.isEmpty()) {
-          subject = "[Sem Assunto]";
+          String subject = metadata.get(TikaCoreProperties.TITLE);
+          if (subject == null || subject.isEmpty())
+            subject = "[Sem Assunto]";
+          metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+          
+          if(metadata.get(TikaCoreProperties.CREATED) != null)
+              metadata.set(ExtraProperties.MESSAGE_DATE, metadata.get(TikaCoreProperties.CREATED));
+          
+          value = metadata.get(Message.MESSAGE_FROM);
+          if(value == null)
+              value = "";
+          if(metadata.get(Message.MESSAGE_FROM_NAME) != null && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_NAME).toLowerCase()))
+              value += " " + metadata.get(Message.MESSAGE_FROM_NAME);
+          if(metadata.get(Message.MESSAGE_FROM_EMAIL) != null && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_EMAIL).toLowerCase()))
+              value += " \"" + metadata.get(Message.MESSAGE_FROM_EMAIL) + "\"";
+          metadata.set(Message.MESSAGE_FROM, value);
+          //remove metadata until that is consistent across email parsers
+          metadata.remove(Message.MESSAGE_FROM_NAME.getName());
+          metadata.remove(Message.MESSAGE_FROM_EMAIL.getName());
+          
+          normalizeRecipients(metadata, Message.MESSAGE_TO, Message.MESSAGE_TO_NAME, Message.MESSAGE_TO_DISPLAY_NAME, Message.MESSAGE_TO_EMAIL);
+          normalizeRecipients(metadata, Message.MESSAGE_CC, Message.MESSAGE_CC_NAME, Message.MESSAGE_CC_DISPLAY_NAME, Message.MESSAGE_CC_EMAIL);
+          normalizeRecipients(metadata, Message.MESSAGE_BCC, Message.MESSAGE_BCC_NAME, Message.MESSAGE_BCC_DISPLAY_NAME, Message.MESSAGE_BCC_EMAIL);
+          
         }
-        metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
+  }
+  
+  private void normalizeRecipients(Metadata metadata, String destMeta, Property recipMetaName, Property recipMetaDisplayName, Property recipMetaEmail){
+      String[] recipientNames = metadata.getValues(recipMetaName);
+      String[] recipientsDisplay = metadata.getValues(recipMetaDisplayName);
+      String[] recipientsEmails = metadata.getValues(recipMetaEmail);
+      metadata.remove(destMeta);
+      //remove metadata until that is consistent across email parsers
+      metadata.remove(recipMetaName.getName());
+      metadata.remove(recipMetaDisplayName.getName());
+      metadata.remove(recipMetaEmail.getName());
+      for(int i = 0; i < recipientNames.length; i++){
+          String value = recipientNames[i];
+          if(value == null)
+              value = "";
+          if(!value.toLowerCase().contains(recipientsDisplay[i].toLowerCase()))
+              value += " " + recipientsDisplay[i];
+          if(!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
+              value += " \"" + recipientsEmails[i] + "\"";
+          metadata.add(destMeta, value);
       }
-
-    } finally {
-      //IOUtil.closeQuietly(tis);
-      //do nothing
-      reader.close();
-      reader.reallyClose();
-    }
-    
   }
 
   @Override
