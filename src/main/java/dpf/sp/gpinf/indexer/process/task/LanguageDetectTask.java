@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -23,6 +24,7 @@ public class LanguageDetectTask extends AbstractTask {
     
     private static final String ENABLE_PARAM = "enableLanguageDetect";
     
+    private static final String LANGUAGE_NAMES = "detected_languages";
     private static final String LANGUAGE_NAME = "detected_language_";
     private static final String LANGUAGE_SCORE = "detected_language_score_";
     
@@ -78,12 +80,16 @@ public class LanguageDetectTask extends AbstractTask {
         
         int i = 0;
         List<DetectedLanguage> langs = detector.getProbabilities(text);
+        List<String> langList = new ArrayList<String>();
         for (DetectedLanguage lang : langs) {
             if(++i > MAX_LANGS)
                 break;
             evidence.setExtraAttribute(LANGUAGE_NAME + i, lang.getLocale().toString());
             evidence.setExtraAttribute(LANGUAGE_SCORE + i, (float)lang.getProbability());
+            langList.add(lang.getLocale().toString());
         }
+        if(!langList.isEmpty())
+            evidence.setExtraAttribute(LANGUAGE_NAMES, langList);
 
     }
     
