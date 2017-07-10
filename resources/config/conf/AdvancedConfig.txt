@@ -93,7 +93,8 @@ pdfToImgLib = icepdf
 
 # Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
 # Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
-# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR. 
+# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR.
+# Além disso, com essa opção o OCR de imagens jbig2 em PDFs não funciona, pois o tesseract não suporta esse formato. 
 processImagesInPDFs = false
 
 ########################################################################
