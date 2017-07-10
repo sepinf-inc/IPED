@@ -38,13 +38,18 @@
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
         <parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
+		<parser class="org.apache.tika.parser.microsoft.EMFParser"></parser>
+		<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
-        <parser class="org.apache.tika.parser.microsoft.OfficeParserPatched"></parser>
+        <parser class="org.apache.tika.parser.microsoft.OfficeParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.TNEFParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.ooxml.xwpf.ml2006.Word2006MLParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.xml.WordMLParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.xml.SpreadsheetMLParser"></parser>
+        <parser class="org.apache.tika.parser.wordperfect.QuattroProParser"></parser>
+        <parser class="org.apache.tika.parser.wordperfect.WordPerfectParser"></parser>
         <parser class="org.apache.tika.parser.mp3.Mp3Parser"></parser>
         <parser class="org.apache.tika.parser.odf.OpenDocumentParser"></parser>
         <parser class="org.apache.tika.parser.pdf.PDFParser"></parser>
@@ -66,6 +71,7 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
+        <!-- parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser -->
         <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IncrediMailParser"></parser>
@@ -84,7 +90,10 @@
             <mime>image/jpeg</mime>
             <mime>image/png</mime>
             <mime>image/tiff</mime>
-            <mime>image/x-ms-bmp</mime>
+            <mime>image/bmp</mime>
+            <mime>image/jp2</mime>
+            <mime>image/jpx</mime>
+            <mime>image/x-portable-pixmap</mime>
             <!--<mime>image/gif</mime>-->	
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>

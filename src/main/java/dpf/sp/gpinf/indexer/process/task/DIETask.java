@@ -235,7 +235,7 @@ public class DIETask extends AbstractTask {
    * Verifica se é imagem.
    */
   public static boolean isImageType(MediaType mediaType) {
-    return mediaType.getType().equals("image") || mediaType.toString().endsWith("msmetafile") || mediaType.toString().endsWith("x-emf");
+    return mediaType.getType().equals("image");
   }
 
   /**
