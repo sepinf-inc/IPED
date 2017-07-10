@@ -40,6 +40,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
+import org.apache.tika.parser.microsoft.OfficeParserConfig;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
@@ -215,6 +216,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
     
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    
+    OfficeParserConfig opc = new OfficeParserConfig();
+    opc.setExtractMacros(true);
+    opc.setIncludeDeletedContent(true);
+    context.set(OfficeParserConfig.class, opc);
 
     context.set(StreamSource.class, content);
     
