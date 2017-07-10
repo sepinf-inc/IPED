@@ -104,6 +104,9 @@ public class SetCategoryTask extends AbstractTask {
         String mimeTypes = keyValuePair[1].trim();
         for (String mimeType : mimeTypes.split(";")) {
           mimeType = mimeType.trim();
+          MediaType mt = MediaType.parse(mimeType);
+          if(mt != null)
+              mimeType = registry.normalize(mt).toString();
           mimetypeToCategoryMap.put(mimeType, category);
         }
       }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -22,9 +23,12 @@ public class SignatureTask extends AbstractTask {
   private static Logger LOGGER = LoggerFactory.getLogger(SignatureTask.class);
 
   public static boolean processFileSignatures = true;
+  
+  TikaConfig config;
 
   public SignatureTask(Worker worker) {
     super(worker);
+    config = worker.config;
   }
   
   @Override
@@ -76,8 +80,8 @@ public class SignatureTask extends AbstractTask {
         LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(),
             evidence.getPath(), evidence.getLength(), e.toString());
       }
-      evidence.setMediaType(type);
     }
+    evidence.setMediaType(config.getMediaTypeRegistry().normalize(type));
   }
 
   @Override
