@@ -10,10 +10,11 @@
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
-        <release.dir>${project.build.directory}/release</release.dir>  
+        <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
         <tools.dir>${release.dir}/tools</tools.dir>
         <conf.dir>${release.dir}/conf</conf.dir>
+        <optional.dir>${release.dir}/../optional_jars</optional.dir>
     </properties>
     
     <repositories>
@@ -262,7 +263,7 @@
                                     <version>2.8-p1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/../</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -319,7 +320,7 @@
                                     <version>4.9.2</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
-                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/../</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -378,6 +379,44 @@
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                     <destFileName>libreoffice.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-levigo-jbig2</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.levigo.jbig2</groupId>
+  									<artifactId>levigo-jbig2-imageio</artifactId>
+  									<version>2.0</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-java-dbx</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>net.sf</groupId>
+    								<artifactId>java-dbx</artifactId>
+    								<version>1.1-p3</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${optional.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -584,7 +623,23 @@
                             </resources>
                         </configuration>
                     </execution>
-                    
+                    <!-- COPY OPTIONAL -->
+                    <execution>
+                        <id>copy-optional</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${optional.dir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <filtering>false</filtering>
+                                    <directory>${resources.dir}/optional_jars</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

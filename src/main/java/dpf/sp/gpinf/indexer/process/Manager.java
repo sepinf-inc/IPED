@@ -566,7 +566,6 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/imagemagick"), new File(output, "tools/imagemagick"));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport"));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/pffexport"), new File(output, "tools/pffexport"));
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/regripper"), new File(output, "tools/regripper"));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport"));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tsk"), new File(output, "tools/tsk"));
       if (Configuration.embutirLibreOffice) {

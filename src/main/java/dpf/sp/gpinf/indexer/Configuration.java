@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
+import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.JarLoader;
@@ -421,6 +422,10 @@ public class Configuration {
       EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/";
       LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/";
       IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/";
+      
+      String mplayerPath = properties.getProperty("mplayerPath");
+      if(mplayerPath != null)
+          VideoThumbTask.mplayerWin = mplayerPath.trim();
     
     }else{
     	String tskJarPath = properties.getProperty("tskJarPath");
@@ -436,10 +441,14 @@ public class Configuration {
     	new JarLoader().loadJar(tskJarFile);
     }
     
-    //load optional runtime jars
-    new JarLoader().loadJarDir(new File(appRoot + "/optional"));
+    String optional_jars = properties.getProperty("optional_jars");
+    if(optional_jars != null)
+        new JarLoader().loadJarDir(new File(appRoot + "/" + optional_jars.trim()));
 
-    RegistryParser.TOOL_PATH = appRoot + "/tools/regripper/";
+    String regripperFolder = properties.getProperty("regripperFolder");
+    if(regripperFolder != null)
+        RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim();
+    
 
   }
 

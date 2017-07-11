@@ -35,6 +35,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -100,7 +101,7 @@ public class VideoThumbTask extends AbstractTask {
   /**
    * Caminho relativo para o MPlayer distribuído para Windows 
    */
-  private static final String mplayerWin = "/tools/mplayer/mplayer.exe";
+  public static String mplayerWin = "../mplayer/mplayer.exe";
 
   /**
    * Largura da imagem das cenas geradas.
@@ -240,11 +241,11 @@ public class VideoThumbTask extends AbstractTask {
           Log.error(taskName, "Erro lendo arquivo de configuração: " + confFile.getAbsolutePath());
           taskEnabled = false;
           init.set(true);
-          throw new RuntimeException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
+          throw new IPEDException("Erro lendo arquivo de configuração de extração de cenas de vídeos!");
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-        	mplayer = Configuration.appRoot + mplayerWin;
+        	mplayer = Configuration.appRoot + "/" + mplayerWin;
         }
         videoThumbsMaker.setMPlayer(mplayer);
 
@@ -256,7 +257,6 @@ public class VideoThumbTask extends AbstractTask {
           Log.error(taskName, "Verifique o caminho e tente executá-lo diretamente na linha de comando.");
           taskEnabled = false;
           init.set(true);
-          throw new RuntimeException("Erro na extração de cenas de vídeos: MPlayer não pode ser executado!");
         }
         Log.info(taskName, "Tarefa habilitada.");
         Log.info(taskName, "Versão do MPLAYER utilizada: " + vmp);
