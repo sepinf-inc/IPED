@@ -38,7 +38,6 @@
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
         <parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
-		<parser class="org.apache.tika.parser.microsoft.EMFParser"></parser>
 		<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.OfficeParser"></parser>
