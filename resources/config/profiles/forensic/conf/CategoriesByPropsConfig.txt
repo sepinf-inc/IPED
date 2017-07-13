@@ -17,7 +17,6 @@ function addNewCategories(set)
 	set.add("Outras Imagens");
 	set.add("Textos em Pasta de Sistema");
 	set.add("Lixeira do Windows");
-	set.add("Atalhos para arquivos");
 	set.add("Atalhos para URLs");
 }
 
@@ -80,10 +79,8 @@ function addCategory(e){
     
     else if(categorias.indexOf("Outros Arquivos") > -1){
 		var ext = e.getExt().toLowerCase();
-		if (ext.equals("lnk"))
-			e.setCategory("Atalhos para arquivos");
-				
-		else if (ext.equals("url"))
+		
+		if (ext.equals("url"))
 			e.setCategory("Atalhos para URLs");
 			
 		else if (ext.equals("plist")) {
