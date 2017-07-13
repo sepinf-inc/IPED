@@ -248,17 +248,20 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     	time = new AtomicLong();
     	times.put(parser.getClass().getSimpleName(), time);
     }
-    
     long start = System.nanoTime()/1000;
     
     if (!evidence.isTimedOut() && ((evidence.getLength() != null && 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
-    		hasSpecificParser(parser) )) {
-      new ParsingTask(worker, autoParser).safeProcess(evidence);
+    		isSpecificParser(parser) )) {
+        try{
+            new ParsingTask(worker, autoParser).safeProcess(evidence);
+            
+        }finally{
+            time.addAndGet(System.nanoTime()/1000 - start);
+        }
+      
     }
     
-    time.addAndGet(System.nanoTime()/1000 - start);
-
   }
   
   private static Parser getLeafParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
@@ -275,10 +278,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   
   public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
 	  Parser p = getLeafParser(autoParser, evidence);
-	  return hasSpecificParser(p);
+	  return isSpecificParser(p);
   }
   
-  public static boolean hasSpecificParser(Parser parser) {
+  private static boolean isSpecificParser(Parser parser) {
     if (parser instanceof RawStringParser || parser instanceof TXTParser)
       return false;
     else
