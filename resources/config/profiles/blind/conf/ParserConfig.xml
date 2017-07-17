@@ -96,6 +96,7 @@
             <!--<mime>image/gif</mime>-->	
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.EmptyVideoParser"></parser>
         <parser class="org.apache.tika.parser.EmptyParser">
             <mime>application/vnd.rn-realmedia</mime>
