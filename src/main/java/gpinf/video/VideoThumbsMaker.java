@@ -101,6 +101,7 @@ public class VideoThumbsMaker {
       }
 
       String info = res.output;
+      //System.out.println(info);
       if (step == 0 && info != null && info.indexOf("File not found") >= 0 && !fixed) {
         fixed = true;
         String shortName = getShortName(inOrg);
@@ -125,31 +126,23 @@ public class VideoThumbsMaker {
         }
       }
       if (info != null) {
-        long duration = getDuration(info);
-        result.setVideoDuration(duration);
+          result.setVideoInfo(info);
+          videoStream = result.getVideoStream();
 
-        Dimension dimension = getDimension(info);
-        result.setDimension(dimension);
-
-        String s = getVideoStream(info);
-        if (s != null) {
-          videoStream = s;
-        }
-
-        if (result.getVideoDuration() > 0 && result.getDimension() != null) {
-          break;
-        }
+          if (result.getVideoDuration() > 0 && result.getDimension() != null) {
+              break;
+          }
       }
 
       cmds.add(1, "-demuxer");
       cmds.add(2, "lavf");
     }
     if (outs == null) {
-      result.setFile(in);
-      result.setSubTemp(subTmp);
+      //result.setFile(in);
+      //result.setSubTemp(subTmp);
       return result;
     }
-
+    
     if (result.getVideoDuration() == 0 || result.getDimension() == null || result.getDimension().width == 0 || result.getDimension().height == 0) {
       cleanTemp(subTmp);
       return result;
@@ -389,62 +382,6 @@ public class VideoThumbsMaker {
       file.delete();
     }
     subTmp.delete();
-  }
-
-  private long getDuration(String info) throws Exception {
-    String s1 = "ID_LENGTH=";
-    int p1 = info.indexOf(s1);
-    if (p1 < 0) {
-      return -1;
-    }
-    int p2 = info.indexOf('\n', p1);
-    String s = info.substring(p1 + s1.length(), p2);
-    if (s.isEmpty() || !Character.isDigit(s.charAt(0))) {
-      return -1;
-    }
-    return (long) (1000 * Double.parseDouble(s));
-  }
-
-  private String getVideoStream(String info) throws Exception {
-    String s1 = "Video stream found, -vid ";
-    int p1 = info.indexOf(s1);
-    if (p1 < 0) {
-      return null;
-    }
-    int p2 = info.indexOf('\n', p1);
-    if (p2 < 0) {
-      return null;
-    }
-    String s = info.substring(p1 + s1.length(), p2);
-    if (s.length() != 1) {
-      return null;
-    }
-    if (!Character.isDigit(s.charAt(0))) {
-      return null;
-    }
-    return s;
-  }
-
-  private Dimension getDimension(String info) throws Exception {
-    String s1 = "ID_VIDEO_WIDTH=";
-    int p1 = info.indexOf(s1);
-    if (p1 < 0) {
-      return null;
-    }
-    int p2 = info.indexOf('\n', p1);
-    if (p2 < 0) {
-      return null;
-    }
-    String s3 = "ID_VIDEO_HEIGHT=";
-    int p3 = info.indexOf(s3);
-    if (p3 < 0) {
-      return null;
-    }
-    int p4 = info.indexOf('\n', p3);
-    if (p4 < 0) {
-      return null;
-    }
-    return new Dimension(Integer.parseInt(info.substring(p1 + s1.length(), p2)), Integer.parseInt(info.substring(p3 + s3.length(), p4)));
   }
 
   private final ExecResult run(String[] cmds, int timeout) {

@@ -20,6 +20,8 @@ package gpinf.video;
 
 import java.awt.Dimension;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Classe de armazenamento de dados do resultado de saída do processo de geração de imagens com
@@ -29,28 +31,16 @@ import java.io.File;
  */
 public class VideoProcessResult {
 
+  private String videoStream;
   private long videoDuration;
   private Dimension dimension;
+  private float FPS;
+  private long bitRate;
+  private String videoFormat, videoCodec;
+  private Map<String, String> clipInfos = new HashMap<String, String>();
+  
   private boolean success, timeout;
   private long processingTime;
-  private File file;
-  private File subTemp;
-
-  public File getFile() {
-    return file;
-  }
-
-  public void setFile(File file) {
-    this.file = file;
-  }
-
-  public File getSubTemp() {
-    return subTemp;
-  }
-
-  public void setSubTemp(File subTemp) {
-    this.subTemp = subTemp;
-  }
 
   public long getVideoDuration() {
     return videoDuration;
@@ -91,4 +81,194 @@ public class VideoProcessResult {
   public void setTimeout(boolean timeout) {
     this.timeout = timeout;
   }
+  
+  public String getVideoStream() {
+      return videoStream;
+  }
+
+  public void setVideoStream(String videoStream) {
+      this.videoStream = videoStream;
+  }
+  
+  public Map<String, String> getClipInfos(){
+      return this.clipInfos;
+  }
+  
+  public void setVideoInfo(String info) throws Exception{
+      if (info == null)
+          return;
+      
+      videoDuration = getDuration(info);
+      dimension = getDimension(info);
+      videoStream = getVideoStream(info);
+      
+      setFPS(getFPS(info));
+      setBitRate(getBitRate(info));
+      setVideoFormat(getStringInfo(info, "ID_VIDEO_FPS"));
+      setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC"));
+      
+      getClipInfos(info);
+      
+  }
+  
+    private void getClipInfos(String info) throws Exception {
+      String nameKey = "ID_CLIP_INFO_NAME";
+      String valueKey = "ID_CLIP_INFO_VALUE";
+      int i = 0;
+      while(true){
+          String s1 = nameKey + i + "=";
+          int p1 = info.indexOf(s1);
+          if(p1 == -1)
+              break;
+          int p2 = info.indexOf('\n', p1);
+          String name = info.substring(p1 + s1.length(), p2).trim();
+          
+          s1 = valueKey + i + "=";
+          p1 = info.indexOf(s1);
+          if(p1 == -1)
+              break;
+          p2 = info.indexOf('\n', p1);
+          String value = info.substring(p1 + s1.length(), p2).trim();
+          
+          if(!value.isEmpty())
+              clipInfos.put(name, value);
+          i++;
+      }
+    }
+  
+    private long getDuration(String info) throws Exception {
+      String s1 = "ID_LENGTH=";
+      int p1 = info.indexOf(s1);
+      if (p1 < 0) {
+        return -1;
+      }
+      int p2 = info.indexOf('\n', p1);
+      String s = info.substring(p1 + s1.length(), p2);
+      try{
+          return (long) (1000 * Double.parseDouble(s.trim()));
+          
+      }catch(NumberFormatException e){
+          return -1;
+      }
+    }
+    
+    private float getFPS(String info) throws Exception {
+        String s1 = "ID_VIDEO_FPS=";
+        int p1 = info.indexOf(s1);
+        if (p1 < 0) {
+          return -1;
+        }
+        int p2 = info.indexOf('\n', p1);
+        String s = info.substring(p1 + s1.length(), p2);
+        try{
+            return Float.parseFloat(s.trim());
+            
+        }catch(NumberFormatException e){
+            return -1;
+        }   
+    }
+    
+    private String getStringInfo(String info, String s1) throws Exception {
+        s1 += "=";
+        int p1 = info.indexOf(s1);
+        if (p1 < 0) {
+          return null;
+        }
+        int p2 = info.indexOf('\n', p1);
+        String s = info.substring(p1 + s1.length(), p2);
+        return s.trim();  
+    }
+    
+    private long getBitRate(String info) throws Exception {
+        String s1 = "ID_VIDEO_BITRATE=";
+        int p1 = info.indexOf(s1);
+        if (p1 < 0) {
+          return -1;
+        }
+        int p2 = info.indexOf('\n', p1);
+        String s = info.substring(p1 + s1.length(), p2);
+        try{
+            return Long.parseLong(s.trim());
+            
+        }catch(NumberFormatException e){
+            return -1;
+        }
+    }
+
+    private String getVideoStream(String info) throws Exception {
+      String s1 = "Video stream found, -vid ";
+      int p1 = info.indexOf(s1);
+      if (p1 < 0) {
+        return null;
+      }
+      int p2 = info.indexOf('\n', p1);
+      if (p2 < 0) {
+        return null;
+      }
+      String s = info.substring(p1 + s1.length(), p2);
+      if (s.length() != 1) {
+        return null;
+      }
+      if (!Character.isDigit(s.charAt(0))) {
+        return null;
+      }
+      return s;
+    }
+
+    private Dimension getDimension(String info) throws Exception {
+      String s1 = "ID_VIDEO_WIDTH=";
+      int p1 = info.indexOf(s1);
+      if (p1 < 0) {
+        return null;
+      }
+      int p2 = info.indexOf('\n', p1);
+      if (p2 < 0) {
+        return null;
+      }
+      String s3 = "ID_VIDEO_HEIGHT=";
+      int p3 = info.indexOf(s3);
+      if (p3 < 0) {
+        return null;
+      }
+      int p4 = info.indexOf('\n', p3);
+      if (p4 < 0) {
+        return null;
+      }
+      return new Dimension(Integer.parseInt(info.substring(p1 + s1.length(), p2).trim()), 
+              Integer.parseInt(info.substring(p3 + s3.length(), p4).trim()));
+    }
+
+    public float getFPS() {
+        return FPS;
+    }
+
+    public void setFPS(float fPS) {
+        FPS = fPS;
+    }
+
+    public long getBitRate() {
+        return bitRate;
+    }
+
+    public void setBitRate(long bitRate) {
+        this.bitRate = bitRate;
+    }
+
+    public String getVideoCodec() {
+        return videoCodec;
+    }
+
+    public void setVideoCodec(String videoCodec) {
+        this.videoCodec = videoCodec;
+    }
+
+    public String getVideoFormat() {
+        return videoFormat;
+    }
+
+    public void setVideoFormat(String videoFormat) {
+        this.videoFormat = videoFormat;
+    }
+
+    
 }

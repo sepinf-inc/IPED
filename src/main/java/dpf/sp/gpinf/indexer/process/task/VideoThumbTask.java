@@ -23,17 +23,21 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 
+import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
@@ -168,7 +172,7 @@ public class VideoThumbTask extends AbstractTask {
   /**
    * Mapa com resultado do processamento dos vídeos
    */
-  private static final HashMap<String, String> processedVideos = new HashMap<String, String>();
+  private static final HashMap<String, VideoProcessResult> processedVideos = new HashMap<String, VideoProcessResult>();
 
   /**
    * Construtor.
@@ -324,19 +328,21 @@ public class VideoThumbTask extends AbstractTask {
     //Verifica se outro vídeo igual foi ou está em processamento
     synchronized (processedVideos) {
       if (processedVideos.containsKey(evidence.getHash())) {
-        while (processedVideos.get(evidence.getHash()).equals("processing")) {
+        while (processedVideos.get(evidence.getHash()) == null) {
           processedVideos.wait();
         }
-        evidence.setExtraAttribute(HAS_THUMB, processedVideos.get(evidence.getHash()));
+        VideoProcessResult r = processedVideos.get(evidence.getHash());
+        evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
+        saveMetadata(r, evidence.getMetadata());
         return;
       } else {
-        processedVideos.put(evidence.getHash(), "processing");
+        processedVideos.put(evidence.getHash(), null);
       }
     }
 
     //Chama o método de extração de cenas
     File mainTmpFile = null;
-    boolean hasThumb = false;
+    VideoProcessResult r = null;
     try {
       File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg");
       if (!mainOutFile.getParentFile().exists()) {
@@ -345,18 +351,21 @@ public class VideoThumbTask extends AbstractTask {
 
       //Já está pasta? Então não é necessário gerar.
       if (mainOutFile.exists()) {
-        hasThumb = true;
-      } else {
+          synchronized (processedVideos) {
+              r = processedVideos.get(evidence.getHash());
+          }
+      }
+      if(r == null){
         mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
         mainConfig.setOutFile(mainTmpFile);
   
         long t = System.currentTimeMillis();
-        VideoProcessResult r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
+        r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
         t = System.currentTimeMillis() - t;
-        if (r.isSuccess() && mainTmpFile.renameTo(mainOutFile)) {
-          hasThumb = true;
+        if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
           totalProcessed.incrementAndGet();
         } else {
+          r.setSuccess(false);
           totalFailed.incrementAndGet();
           if (r.isTimeout()) {
             stats.incTimeouts();
@@ -377,15 +386,42 @@ public class VideoThumbTask extends AbstractTask {
       }
 
       //Atualiza atributo HasThumb do item
-      String hasThumbStr = hasThumb ? "true" : "false";
-      evidence.setExtraAttribute(HAS_THUMB, hasThumbStr);
+      evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
+      saveMetadata(r, evidence.getMetadata());
 
       //Guarda resultado do processamento
       synchronized (processedVideos) {
-        processedVideos.put(evidence.getHash(), hasThumbStr);
+        processedVideos.put(evidence.getHash(), r);
         processedVideos.notifyAll();
       }
     }
+  }
+  
+  private void saveMetadata(VideoProcessResult r, Metadata metadata){
+      long bitrate = r.getBitRate();
+      if(bitrate != -1)
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "bitrate", Long.toString(bitrate));
+      float fps = r.getFPS();
+      if(fps != -1)
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "framerate", Float.toString(fps));
+      String codec = r.getVideoCodec();
+      if(codec != null && !codec.isEmpty())
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "codec", codec);
+      String format = r.getVideoFormat();
+      if(format != null && !format.isEmpty())
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "format", format);
+      double duration = r.getVideoDuration();
+      if(duration != -1)
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "duration", Double.toString(duration / 1000));
+      Dimension d = r.getDimension();
+      if(d != null){
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "width", Integer.toString(d.width));
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + "height", Integer.toString(d.height));
+      }
+      for(Entry<String, String> meta : r.getClipInfos().entrySet()){
+          metadata.set(ExtraProperties.VIDEO_META_PREFIX + meta.getKey(), meta.getValue());
+      }
+      
   }
 
   /**
