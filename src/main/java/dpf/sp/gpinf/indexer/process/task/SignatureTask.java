@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.CustomDetector;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,10 +27,12 @@ public class SignatureTask extends AbstractTask {
   public static boolean processFileSignatures = true;
   
   TikaConfig config;
+  Detector detector;
 
   public SignatureTask(Worker worker) {
     super(worker);
     config = worker.config;
+    detector = config.getDetector();
   }
   
   @Override
@@ -51,7 +55,7 @@ public class SignatureTask extends AbstractTask {
           TikaInputStream tis = null;
           try {
             tis = evidence.getTikaStream();
-            type = worker.detector.detect(tis, metadata).getBaseType();
+            type = detector.detect(tis, metadata).getBaseType();
 
           } catch (IOException e) {
             LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), evidence.getPath(),
@@ -71,7 +75,7 @@ public class SignatureTask extends AbstractTask {
         }
 
         if (type == null) {
-          type = worker.detector.detect(null, metadata).getBaseType();
+          type = detector.detect(null, metadata).getBaseType();
         }
 
       } catch (Exception | OutOfMemoryError e) {

@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +55,6 @@ public class Worker extends Thread {
   String baseFilePath;
 
   //TODO mover para tarefas que usam estes objetos
-  public Detector detector;
   public TikaConfig config;
 
   public volatile AbstractTask runningTask;
@@ -91,7 +89,6 @@ public class Worker extends Thread {
     }
 
     config = TikaConfig.getDefaultConfig();
-    detector = config.getDetector();
     
     TaskInstaller taskInstaller = new TaskInstaller();
     taskInstaller.installProcessingTasks(this);
