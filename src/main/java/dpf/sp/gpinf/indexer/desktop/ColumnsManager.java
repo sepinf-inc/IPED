@@ -26,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.table.TableColumn;
 
 import org.apache.tika.metadata.Message;
+import org.apache.tika.parser.ner.NamedEntityParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,7 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
-    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Regex", "Outras"};
+    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Regex", "Entidades Nomeadas", "Outras"};
 	
 	private static final String[] defaultFields =
 		{ 
@@ -272,10 +273,17 @@ public class ColumnsManager implements ActionListener, Serializable{
                 extraAttrs.remove(f);
 		    }
 		
+		ArrayList<String> nerFields = new ArrayList<String>();
+		for(String f : indexFields){
+		    if(f.startsWith(NamedEntityParser.MD_KEY_PREFIX))
+		        nerFields.add(f);
+		}
+		
 		String[] extraAttrArray = extraAttrs.toArray(new String[0]);
 		String[] regexArray = regexFields.toArray(new String[0]);
+		String[] nerArray = nerFields.toArray(new String[0]);
 		
-		String[][] customGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, regexArray};
+		String[][] customGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, regexArray, nerArray};
 		
 		ArrayList<String> otherFields = new ArrayList<String>();
 		for(String f : indexFields){
