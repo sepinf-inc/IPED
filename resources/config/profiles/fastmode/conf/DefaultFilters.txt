@@ -8,6 +8,7 @@ Filtrar Duplicados e Ignoráveis = duplicate:false AND NOT kffstatus:ignore
 Alerta de Hash = kffstatus:alert
 Alerta de Hash (PI) = kffstatus:pedo
 Arquivos Criptografados = encrypted:true
+Possíveis Cifrados (Entropia) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 #Possíveis Digitalizações = ocrCharCount:[100 TO *]
 Erro de Parsing = parserException:true
 Erro de Leitura = ioError:true

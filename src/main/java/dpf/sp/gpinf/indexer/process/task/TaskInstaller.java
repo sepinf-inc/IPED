@@ -44,6 +44,7 @@ public class TaskInstaller {
     tasks.add(new KFFCarveTask(worker));
     tasks.add(new CarveTask(worker));
     tasks.add(new KnownMetCarveTask(worker));
+    tasks.add(new EntropyTask(worker));
     tasks.add(new IndexTask(worker));
     tasks.add(new ExportCSVTask(worker));
 
