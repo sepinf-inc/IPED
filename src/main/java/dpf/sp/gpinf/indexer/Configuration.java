@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
+import org.apache.tika.mime.CustomDetector;
 import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class Configuration {
   public static final String LOCAL_CONFIG = "LocalConfig.txt";
   public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
   public static final String PARSER_CONFIG = "ParserConfig.xml";
+  public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml";
 
   public static UTF8Properties properties = new UTF8Properties();
   public static File indexTemp, indexerTemp;
@@ -111,6 +113,7 @@ public class Configuration {
     appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
+    System.setProperty(CustomDetector.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG);
 
     properties.load(new File(appRoot + "/" + LOCAL_CONFIG));
     properties.load(new File(configPath + "/" + CONFIG_FILE));

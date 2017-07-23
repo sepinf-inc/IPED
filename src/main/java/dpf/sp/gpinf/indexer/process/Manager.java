@@ -578,7 +578,7 @@ public class Manager {
       IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "bin"), output.getParentFile());
       //copia arquivo de assinaturas customizadas
-      IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/CustomSignatures.jar"), new File(output, "conf/CustomSignatures.jar"));
+      IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG));
     }
 
     if (palavrasChave != null) {

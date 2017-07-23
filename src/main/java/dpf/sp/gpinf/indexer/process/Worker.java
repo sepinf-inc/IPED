@@ -54,9 +54,6 @@ public class Worker extends Thread {
   public IndexWriter writer;
   String baseFilePath;
 
-  //TODO mover para tarefas que usam estes objetos
-  public TikaConfig config;
-
   public volatile AbstractTask runningTask;
   public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
   public AbstractTask firstTask;
@@ -87,8 +84,6 @@ public class Worker extends Thread {
     if (k == 0) {
       LOGGER.info("Inicializando Tika");
     }
-
-    config = TikaConfig.getDefaultConfig();
     
     TaskInstaller taskInstaller = new TaskInstaller();
     taskInstaller.installProcessingTasks(this);

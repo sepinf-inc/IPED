@@ -37,7 +37,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import org.apache.tika.config.TikaConfig;
+import org.apache.tika.mime.CustomDetector;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
@@ -58,7 +58,7 @@ public class SetCategoryTask extends AbstractTask {
 
   private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
   private static TreeSet<String> categories;
-  private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+  private static MediaTypeRegistry registry = CustomDetector.getMimeTypes().getMediaTypeRegistry();
   private static ScriptEngine engine;
   private static Invocable inv;
   private static boolean refineCategories = false;

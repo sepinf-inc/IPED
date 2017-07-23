@@ -522,10 +522,6 @@
                                     <classpathPrefix>lib/</classpathPrefix>
                                     <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
                                 </manifest>
-                                <manifestEntries>
-                                    <Build-By>MACEE</Build-By>
-                                    <Class-Path>conf/CustomSignatures.jar</Class-Path>
-                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
@@ -544,23 +540,7 @@
                                     <addClasspath>true</addClasspath>
                                     <mainClass>dpf.sp.gpinf.indexer.desktop.AppMain</mainClass>
                                 </manifest>
-                                <manifestEntries>
-                                    <Build-By>MACEE</Build-By>
-                                    <Class-Path>../conf/CustomSignatures.jar</Class-Path>
-                                </manifestEntries>
                             </archive>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>mimetypes-jar</id>
-                        <phase>install</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <classesDirectory>${resources.dir}/tika/</classesDirectory>
-                            <outputDirectory>${conf.dir}</outputDirectory>
-                            <finalName>CustomSignatures</finalName>
                         </configuration>
                     </execution>
                 </executions>
