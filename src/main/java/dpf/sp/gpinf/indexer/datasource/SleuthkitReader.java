@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -205,10 +206,12 @@ public class SleuthkitReader extends DataSourceReader {
     process.getErrorStream().close();
 
     String[] str = out.toString().split(" ");
-    String tskVer = str[str.length - 1]; 
-    if (tskVer.compareTo("4.4.0") < 0)
-      throw new Exception("Versao " + tskVer + " do Sleuthkit nao suportada. Instale a versao 4.4.0");
-    else if (tskVer.compareTo("4.4.1") >= 0)
+    String tskVer = str[str.length - 1].trim();
+    LOGGER.info("Sleuthkit versão " + tskVer + " detectado.");
+    
+    if (tskVer.compareTo("4.4.2") < 0)
+      throw new Exception("Versao " + tskVer + " do Sleuthkit nao suportada. Instale a versao 4.4.2");
+    else if (tskVer.compareTo("4.4.3") >= 0)
     	LOGGER.error("Versão " + tskVer + " do Sleuthkit não testada! Pode haver incompatibilidades!");
     	
 
@@ -267,6 +270,9 @@ public class SleuthkitReader extends DataSourceReader {
           LOGGER.info("{} criado", dbPath);
         }
       }
+      
+      if(Configuration.robustImageReading)
+          Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
 
       if (image.getName().equals(DB_NAME)) {
         firstId = 0L;
@@ -621,11 +627,16 @@ public class SleuthkitReader extends DataSourceReader {
       return;
     }
 
-    if(!Configuration.addFileSlacks && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK)
+    if(!Configuration.addFileSlacks && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK &&
+            !isVolumeShadowCopy(absFile))
     	return;
     
     addEvidenceFile(absFile, parent);
 
+  }
+  
+  private boolean isVolumeShadowCopy(AbstractFile absFile){
+      return absFile.getName().toLowerCase().contains("{3808876b-c176-4e48-b7ae-04046e6cc752}");
   }
 
   private void setPath(EvidenceFile evidence, String path) {
@@ -714,7 +725,7 @@ public class SleuthkitReader extends DataSourceReader {
       evidence.setDeleted(true);
     }
     
-    if(absFile instanceof SlackFile){
+    if(absFile instanceof SlackFile && !isVolumeShadowCopy(absFile)){
     	evidence.setMediaType(MediaType.application("x-fileslack"));
     	evidence.setType(new GenericFileType("slack"));
     	evidence.setDeleted(true);

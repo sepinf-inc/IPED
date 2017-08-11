@@ -29,6 +29,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
@@ -59,8 +60,6 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
 
   private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
-
-  public static boolean robustImageReading = false;
 
   private static class Counter {
 
@@ -560,7 +559,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     if (stream == null) {
       if (sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-        if (sleuthcase == null || !robustImageReading) {
+        if (sleuthcase == null || !Configuration.robustImageReading) {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());

@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -86,6 +84,7 @@ public class Configuration {
   public static boolean addFatOrphans = true;
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
+  public static boolean robustImageReading = false;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -159,7 +158,7 @@ public class Configuration {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
-      EvidenceFile.robustImageReading = Boolean.valueOf(value);
+      robustImageReading = Boolean.valueOf(value);
     }
 
     value = properties.getProperty("numThreads");

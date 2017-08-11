@@ -51,18 +51,22 @@ public class SleuthkitClient {
   private static ConcurrentHashMap<String, SleuthkitClient> clients = new ConcurrentHashMap<String, SleuthkitClient>();
 
   public static SleuthkitClient get(String dbPath) {
+      return get(Thread.currentThread().getThreadGroup(), dbPath);
+  }
+  
+  public static SleuthkitClient get(ThreadGroup tg, String dbPath) {
     dbDirPath = dbPath;
-    String threadGroupName = Thread.currentThread().getThreadGroup().getName();
+    String threadGroupName = tg.getName();
     SleuthkitClient sc = clients.get(threadGroupName);
     if (sc == null) {
       sc = new SleuthkitClient();
       clients.put(threadGroupName, sc);
     }
     return sc;
-    //return threadLocal.get();
   }
 
   private SleuthkitClient() {
+      start();
   }
 
   private void start() {

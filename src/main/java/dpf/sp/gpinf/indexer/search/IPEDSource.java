@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -132,7 +133,12 @@ public class IPEDSource implements Closeable{
 			
 			File sleuthFile = new File(casePath,  SLEUTH_DB);
 			if (sleuthFile.exists()){
-				sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+			    if(SleuthkitReader.sleuthCase != null)
+			        //workaroud para demora ao abrir o caso enquanto tsk_loaddb não termina
+			        sleuthCase = SleuthkitReader.sleuthCase;
+			    else
+			        sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
+			    
 				updateImagePathsToAbsolute(casePath, sleuthFile);
 				tskCaseList.add(sleuthCase);
 			}

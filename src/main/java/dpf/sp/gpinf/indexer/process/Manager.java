@@ -61,6 +61,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.CaseData;
@@ -95,6 +96,7 @@ public class Manager {
 
   private static int QUEUE_SIZE = 100000;
   private static Logger LOGGER = LoggerFactory.getLogger(Manager.class);
+  private static Manager instance;
 
   private CaseData caseData;
 
@@ -114,6 +116,10 @@ public class Manager {
   
   private boolean isSearchAppOpen = false;
   private boolean isProcessingFinished = false;
+  
+  public static Manager getInstance(){
+      return instance;
+  }
 
   public Manager(List<File> sources, File output, File palavras) {
     this.indexTemp = Configuration.indexTemp;
@@ -131,6 +137,8 @@ public class Manager {
     }
 
     stats = Statistics.get(caseData, indexDir);
+    
+    instance = this;
 
   }
   
@@ -220,6 +228,21 @@ public class Manager {
       produtor.interrupt();
       // produtor.join(5000);
     }
+  }
+  
+  public void initSleuthkitServers(final String dbPath) throws InterruptedException{
+      ArrayList<Thread> threads = new ArrayList<Thread>(); 
+      for(final Worker worker : workers){
+          Thread t = new Thread(){
+              public void run(){
+                  SleuthkitClient.get(worker.getThreadGroup(), dbPath);
+              }
+          };
+          t.start();
+          threads.add(t);
+      }
+      for(Thread t : threads)
+          t.join();
   }
 
   private void loadExistingData() throws Exception {
