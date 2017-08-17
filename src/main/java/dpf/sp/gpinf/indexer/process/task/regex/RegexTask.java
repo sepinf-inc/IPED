@@ -28,7 +28,7 @@ import gpinf.dev.data.EvidenceFile;
 
 public class RegexTask extends AbstractTask{
     
-    public static final String REGEX_PREFIX = "Regex_";
+    public static final String REGEX_PREFIX = "Regex:";
     
 	private static final String REGEX_CONFIG = "RegexConfig.txt";
 	
@@ -135,7 +135,7 @@ public class RegexTask extends AbstractTask{
 	            .replace("\\r", "\r")
 	            .replace("\\n", "\n")
 	            .replace("\\f", "\f")
-	            .replace("\\s", "( |\t|\r|\n|\f)");
+	            .replace("\\s", "[ \t\r\n\f]");
 	}
 
 	@Override
