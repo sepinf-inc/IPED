@@ -43,6 +43,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -88,6 +89,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         
         groups = new JComboBox<String>(ColumnsManager.groupNames);
         groups.setSelectedItem(null);
+        groups.setMaximumRowCount(15);
         groups.addActionListener(this);
         
         props.setMaximumRowCount(30);
@@ -278,6 +280,10 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     }
     
     private List<ItemId> getIdsWithOrd(String field, int ordToGet, int valueCount){
+        
+        boolean isFloat = Float.class.equals(IndexItem.getMetadataTypes().get(field));
+        boolean isDouble = Double.class.equals(IndexItem.getMetadataTypes().get(field));
+        
         ArrayList<ItemId> items = new ArrayList<ItemId>(); 
         if(numValues != null){
             Bits docsWithField = null;
@@ -289,9 +295,18 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 if(docsWithField != null && docsWithField.get(doc)){
-                    long val = numValues.get(doc);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValues.get(doc);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(val < 0){
+                        ord -= 1;
+                        val *= -1;
+                        if(val > 1) ord = ord - (int)Math.log10(val);
+                    }else
+                        if(val > 1) ord = (int)Math.log10(val) + ord;
                     if(ord == ordToGet)
                         items.add(item);
                 }
@@ -301,9 +316,18 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
                 for(int i = 0; i < numValuesSet.count(); i++){
-                    long val = numValuesSet.valueAt(i);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValuesSet.valueAt(i);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(val < 0){
+                        ord -= 1;
+                        val *= -1;
+                        if(val > 1) ord = ord - (int)Math.log10(val);
+                    }else
+                        if(val > 1) ord = (int)Math.log10(val) + ord;
                     if(ord == ordToGet){
                         items.add(item);
                         break;
@@ -353,32 +377,54 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             ipedResult = App.get().ipedResult;
             updatingResult = false;
         }
-            
+        
+        boolean isFloat = Float.class.equals(IndexItem.getMetadataTypes().get(field));
+        boolean isDouble = Double.class.equals(IndexItem.getMetadataTypes().get(field));
         
         System.out.println("counting");
         int[] valueCount = null;
         if(numValues != null){
-            valueCount = new int[20];
+            //0 to 19: count negative numbers. 20 to 39: count positive numbers
+            valueCount = new int[40];
             Bits docsWithField = reader.getDocsWithField(field);
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 if(docsWithField.get(doc)){
-                    long val = numValues.get(doc);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValues.get(doc);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(val < 0){
+                        ord -= 1;
+                        val *= -1;
+                        if(val > 1) ord = ord - (int)Math.log10(val);
+                    }else
+                        if(val > 1) ord = (int)Math.log10(val) + ord;
                     valueCount[ord]++;
                 }
             }  
         }else if(numValuesSet != null){
-            valueCount = new int[20];
+          //0 to 19: count negative numbers. 20 to 39: count positive numbers
+            valueCount = new int[40];
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
                 int prevOrd = -1;
                 for(int i = 0; i < numValuesSet.count(); i++){
-                    long val = numValuesSet.valueAt(i);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValuesSet.valueAt(i);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(val < 0){
+                        ord -= 1;
+                        val *= -1;
+                        if(val > 1) ord = ord - (int)Math.log10(val);
+                    }else
+                        if(val > 1) ord = (int)Math.log10(val) + ord;
                     if(ord != prevOrd)
                         valueCount[ord]++;
                     prevOrd = ord;
@@ -410,9 +456,15 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if(numValues != null || numValuesSet != null){
             for(int ord = 0; ord < valueCount.length; ord++)
                 if(valueCount[ord] > 0){
-                    long start = ord == 0 ? 0 : (long)Math.pow(10, ord);
-                    long end = (long)Math.pow(10, ord + 1) - 1;
-                    list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                    if(ord < 20){
+                        long end = ord == 19 ? 0 : -(long)Math.pow(10, 19 - ord);
+                        long start = -((long)Math.pow(10, 19 - ord + 1) - 1);
+                        list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                    }else{
+                        long start = ord == 20 ? 0 : (long)Math.pow(10, ord - 20);
+                        long end = (long)Math.pow(10, ord - 20 + 1) - 1;
+                        list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                    }
                 }
         }else if(docValues != null){
             LookupOrd lo = new LookupOrdSDV(docValues);
