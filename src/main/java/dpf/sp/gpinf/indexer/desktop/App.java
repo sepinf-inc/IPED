@@ -368,13 +368,13 @@ public class App extends JFrame implements WindowListener {
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
     topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-    multiFilterAlert = new JPanel();
     JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
+    alertLabel.setForeground(Color.WHITE);
+    multiFilterAlert = new JPanel();
     multiFilterAlert.add(alertLabel);
-    alertLabel.setBackground(alertColor);
-    alertLabel.setOpaque(true);
-    multiFilterAlert.setMaximumSize(new Dimension(100, 50));
-    alertLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
+    multiFilterAlert.setBackground(alertColor);
+    multiFilterAlert.setMaximumSize(new Dimension(100, 100));
+    //multiFilterAlert.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
     multiFilterAlert.setVisible(false);
 
     topPanel.add(filtro);
