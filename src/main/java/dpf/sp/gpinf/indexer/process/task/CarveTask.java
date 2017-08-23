@@ -46,6 +46,7 @@ import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
@@ -649,6 +650,9 @@ public class CarveTask extends BaseCarveTask {
     if (value != null && !value.isEmpty()) {
       enableCarving = Boolean.valueOf(value);
     }
+    
+    if(enableCarving && !Configuration.addUnallocated)
+        LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!");
 
     loadConfigFile(new File(confDir, CARVE_CONFIG));
   }
