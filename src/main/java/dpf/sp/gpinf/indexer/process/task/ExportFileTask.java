@@ -20,14 +20,11 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,8 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -94,13 +93,7 @@ public class ExportFileTask extends AbstractTask {
 
   public static void load(File file) throws FileNotFoundException, IOException {
 
-    byte[] bytes = Files.readAllBytes(file.toPath());
-    //BOM test
-    if (bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
-      bytes[0] = bytes[1] = bytes[2] = 0;
-    }
-
-    String content = new String(bytes, "UTF-8");
+    String content = Util.readUTF8Content(file);
     for (String line : content.split("\n")) {
       if (line.trim().startsWith("#") || line.trim().isEmpty()) {
         continue;
@@ -157,7 +150,8 @@ public class ExportFileTask extends AbstractTask {
 
     //Renomeia subitem caso deva ser exportado
     if (!caseData.isIpedReport() && evidence.isSubItem()
-        && (evidence.isToExtract() || !hasCategoryToExtract() || isToBeExtracted(evidence))) {
+            && (evidence.isToExtract() || isToBeExtracted(evidence) || 
+                    !(hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn()) )) {
 
       evidence.setToExtract(true);
       if (!doNotExport(evidence)) {
@@ -169,12 +163,12 @@ public class ExportFileTask extends AbstractTask {
       incItensExtracted();
     }
 
-    if (hasCategoryToExtract() && !evidence.isToExtract()) {
+    if ((hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn()) && !evidence.isToExtract()) {
       evidence.setAddToCase(false);
     }
 
   }
-
+  
   private boolean doNotExport(EvidenceFile evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());

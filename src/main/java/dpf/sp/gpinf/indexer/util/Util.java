@@ -32,6 +32,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -39,6 +40,16 @@ import java.util.TreeSet;
 import java.util.zip.Deflater;
 
 public class Util {
+    
+  public static String readUTF8Content(File file) throws IOException{
+      byte[] bytes = Files.readAllBytes(file.toPath());
+      //BOM test
+      if (bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
+        bytes[0] = bytes[1] = bytes[2] = 0;
+      }
+      String content = new String(bytes, "UTF-8");
+      return content;
+  }
 	
   public static boolean isPhysicalDrive(File file) {
 	return file.getName().toLowerCase().contains("physicaldrive")

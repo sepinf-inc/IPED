@@ -1,10 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,14 +12,14 @@ import java.util.Set;
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
 import dk.brics.automaton.BasicOperations;
-import dk.brics.automaton.Datatypes;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
-
+import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
 public class RegexTask extends AbstractTask{
@@ -32,13 +28,23 @@ public class RegexTask extends AbstractTask{
     
 	private static final String REGEX_CONFIG = "RegexConfig.txt";
 	
+	private static final String KEYWORDS_CONFIG = "KeywordsToExport.txt";
+	
+	private static final String KEYWORDS_NAME = "KEYWORDS";
+	
 	private static final String ENABLE_PARAM = "enableRegexSearch";
 	
 	private static List<Regex> regexList;
 	
 	private static Regex regexFull;
 	
+	private static volatile boolean extractByKeywords = false;
+	
 	private boolean enabled = true;
+	
+	public static boolean isExtractByKeywordsOn(){
+	    return extractByKeywords;
+	}
 	
 	class Regex{
 		
@@ -47,22 +53,24 @@ public class RegexTask extends AbstractTask{
 		Automaton automaton;
 		RunAutomaton pattern;
 		
-		public Regex(String name, int prefix, int sufix, boolean ignoreCases, String regex){
-			this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()), ignoreCases);
+		public Regex(String name, int prefix, int sufix, boolean ignoreCases, boolean ignoreDiacritics, String regex){
+			this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()), ignoreCases, ignoreDiacritics);
 			this.prefix = prefix;
             this.sufix = sufix;
 		}
 		
 		public Regex(String name, Automaton automaton){
-		    this(name, automaton, false);
+		    this(name, automaton, false, false);
 		}
 		
-		public Regex(String name, Automaton automaton, boolean ignoreCases){
-			this.name = name;
+		public Regex(String name, Automaton aut, boolean ignoreCases, boolean ignoreDiacritics){
 			if(ignoreCases)
-			    automaton = ignoreCases(automaton);
-			this.automaton = automaton;
-			this.pattern = new RunAutomaton(automaton);
+			    aut = ignoreCases(aut);
+			if(ignoreDiacritics)
+                aut = ignoreDiacritics(aut);
+			this.name = name;
+			this.automaton = aut;
+			this.pattern = new RunAutomaton(aut);
 		}
 	}
 	
@@ -83,6 +91,22 @@ public class RegexTask extends AbstractTask{
 		return a.subst(map);
 	}
 	
+	private static Automaton ignoreDiacritics(Automaton a) {
+        Map<Character,Set<Character>> map = new HashMap<Character,Set<Character>>();
+        for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {
+            Set<Character> ws = new HashSet<Character>();
+            char[] input = {c1};
+            char[] output = new char[1];
+            FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+            char c2 = output[0];
+            ws.add(c1);
+            ws.add(c2);
+            map.put(c1, ws);
+            map.put(c2, ws);
+        }
+        return a.subst(map);
+    }
+	
 	@Override
 	public boolean isEnabled() {
 	    return enabled;
@@ -99,11 +123,10 @@ public class RegexTask extends AbstractTask{
 			regexList = new ArrayList<Regex>();
 			
 			File confFile = new File(confDir, REGEX_CONFIG);
-			try(BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(confFile), "UTF-8"))){
-			    //ignore first line with utf-8 header and comment
-			    String line = reader.readLine();
-	            while ((line = reader.readLine()) != null) {
-	              if (line.trim().startsWith("#") || line.trim().isEmpty())
+            String content = Util.readUTF8Content(confFile);
+            for(String line : content.split("\n")){
+	              line = line.trim();
+	              if (line.startsWith("#") || line.isEmpty())
 	                continue;
 	              else{
 	                  String[] values = line.split("=", 2);
@@ -116,10 +139,22 @@ public class RegexTask extends AbstractTask{
 	                  int sufix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
 	                  boolean ignoreCase = params.length > 3 ? Boolean.valueOf(params[3].trim()) : true;
 	                  String regex = replace(values[1].trim());
-	                  regexList.add(new Regex(regexName, prefix, sufix, ignoreCase, regex));
+	                  regexList.add(new Regex(regexName, prefix, sufix, ignoreCase, false, regex));
 	              }
-	            }
 			}
+			
+			confFile = new File(confDir, KEYWORDS_CONFIG);
+			content = Util.readUTF8Content(confFile);
+            for(String line : content.split("\n")){
+                line = line.trim();
+                if (line.startsWith("#") || line.isEmpty())
+                  continue;
+                else{
+                  String regex = replace(line);
+                  regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
+                  extractByKeywords = true;
+                }
+            }
 		    
 			ArrayList<Automaton> automatonList = new ArrayList<Automaton>();
 			for(Regex regex : regexList)
@@ -184,6 +219,8 @@ public class RegexTask extends AbstractTask{
 			if(hitList.get(i).size() > 0){
 				evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name, hitList.get(i));
 				//evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name + "_Frag", fragList.get(i));
+				if(regexList.get(i).name.equals(KEYWORDS_NAME))
+				    evidence.setToExtract(true);
 			}
 		}
 	}
