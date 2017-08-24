@@ -20,6 +20,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import gpinf.dev.data.CaseData;
 
 /**
@@ -185,7 +186,7 @@ public class Statistics {
     int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
     reader.close();
 
-    if (indexed != processed && ExportFileTask.hasCategoryToExtract()) {
+    if (indexed != processed && (ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
       LOGGER.info("Itens indexados: {}", indexed);
     }
 
@@ -202,7 +203,7 @@ public class Statistics {
       LOGGER.error("Alerta: Processados " + processed + " itens de " + discovered);
     }
 
-    if (!ExportFileTask.hasCategoryToExtract()) {
+    if (!(ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
       if (indexed != discovered - carvedIgnored - ignored) {
         LOGGER.error("Alerta: Indexados " + indexed + " itens de " + (discovered - carvedIgnored - ignored));
       }

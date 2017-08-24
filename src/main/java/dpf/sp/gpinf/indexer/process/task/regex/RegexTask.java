@@ -153,6 +153,7 @@ public class RegexTask extends AbstractTask{
                   String regex = replace(line);
                   regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
                   extractByKeywords = true;
+                  caseData.setContainsReport(true);
                 }
             }
 		    
