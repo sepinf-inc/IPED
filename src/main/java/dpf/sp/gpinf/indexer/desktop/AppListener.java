@@ -21,14 +21,15 @@ package dpf.sp.gpinf.indexer.desktop;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
+
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.concurrent.ExecutionException;
 
+import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 
 import org.apache.lucene.search.Query;
@@ -78,9 +79,14 @@ public class AppListener implements ActionListener, MouseListener {
         clearSearchBox = true;
         App.get().termo.setSelectedItem("");
       }
+      texto = texto.trim();
       MarcadoresController.get().addToRecentSearches(texto);
-
     }
+    
+    if(!texto.isEmpty())
+        App.get().termo.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
+    else
+        App.get().termo.setBorder(null);
 
     try {
       PesquisarIndice task;
