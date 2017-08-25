@@ -34,6 +34,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
@@ -50,7 +51,8 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
-    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Regex", "Outras"};
+    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Audio", "Image", "Video", 
+                                                "PDF", "Office", "HTML", "Regex", "Language", "Outras"};
 	
 	private static final String[] defaultFields =
 		{ 
@@ -265,18 +267,55 @@ public class ColumnsManager implements ActionListener, Serializable{
 		TreeSet<String> extraAttrs = new TreeSet<String>();
 		extraAttrs.addAll(Arrays.asList(extraFields));
 		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
+		String[] allExtraAttrs = extraAttrs.toArray(new String[0]); 
+        extraAttrs.clear();
 		
 		ArrayList<String> regexFields = new ArrayList<String>();
-		for(String f : extraAttrs.toArray(new String[0]))
-		    if(f.startsWith(RegexTask.REGEX_PREFIX)){
+		ArrayList<String> languageFields = new ArrayList<String>();
+		ArrayList<String> audioFields = new ArrayList<String>();
+		ArrayList<String> imageFields = new ArrayList<String>();
+		ArrayList<String> videoFields = new ArrayList<String>();
+		ArrayList<String> pdfFields = new ArrayList<String>();
+		ArrayList<String> officeFields = new ArrayList<String>();
+		ArrayList<String> htmlFields = new ArrayList<String>();
+		
+		for(String f : allExtraAttrs){
+		    if(f.startsWith(RegexTask.REGEX_PREFIX))
                 regexFields.add(f);
-                extraAttrs.remove(f);
-		    }
+		    else if(f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
+		        languageFields.add(f);
+		    else
+		        extraAttrs.add(f);
+		}
 		
-		String[] extraAttrArray = extraAttrs.toArray(new String[0]);
-		String[] regexArray = regexFields.toArray(new String[0]);
+		for(String f : indexFields){
+		    if(f.startsWith(ExtraProperties.AUDIO_META_PREFIX))
+		        audioFields.add(f);
+		    else if(f.startsWith(ExtraProperties.IMAGE_META_PREFIX))
+		        imageFields.add(f);
+		    else if(f.startsWith(ExtraProperties.VIDEO_META_PREFIX))
+		        videoFields.add(f);
+		    else if(f.startsWith(ExtraProperties.PDF_META_PREFIX))
+		        pdfFields.add(f);
+		    else if(f.startsWith(ExtraProperties.OFFICE_META_PREFIX))
+		        officeFields.add(f);
+		    else if(f.startsWith(ExtraProperties.HTML_META_PREFIX))
+		        htmlFields.add(f);
+		}
 		
-		String[][] customGroups = new String[][] {defaultFields.clone(), extraAttrArray, email, regexArray};
+		String[][] customGroups = new String[][] {
+		    defaultFields.clone(), 
+		    extraAttrs.toArray(new String[0]), 
+		    email, 
+		    audioFields.toArray(new String[0]),
+		    imageFields.toArray(new String[0]),
+		    videoFields.toArray(new String[0]),
+		    pdfFields.toArray(new String[0]),
+		    officeFields.toArray(new String[0]),
+		    htmlFields.toArray(new String[0]),
+		    regexFields.toArray(new String[0]),
+		    languageFields.toArray(new String[0])
+		    };
 		
 		ArrayList<String> otherFields = new ArrayList<String>();
 		for(String f : indexFields){
