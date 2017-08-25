@@ -45,6 +45,7 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
@@ -52,9 +53,9 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -436,7 +437,6 @@ public class IndexItem {
     MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
     if(mimetype != null)
     	mimetype = mimetype.getBaseType();
-    boolean isHtml = MediaType.TEXT_HTML.equals(mimetype) || MediaType.application("xhtml+xml").equals(mimetype);
 
     //previne mto raro ConcurrentModificationException
     String[] names = null;
@@ -451,21 +451,18 @@ public class IndexItem {
       if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
       }
-      boolean isMultiValued = metadata.getValues(key).length > 1;
+      boolean isMultiValued = true;//metadata.getValues(key).length > 1;
       for (String val : metadata.getValues(key)) {
           if (val != null && !(val = val.trim()).isEmpty())
-              addMetadataKeyToDoc(doc, key, val, isHtml, true);
+              addMetadataKeyToDoc(doc, key, val, isMultiValued);
       }
 
     }
   }
   
-  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isHtml, boolean isMultiValued){
+  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued){
       Object oValue = value;
       Class type = typesMap.get(key);
-
-      if (type == null && isHtml)
-        return;
 
       if (type == null || !type.equals(String.class)) {
 
@@ -501,8 +498,7 @@ public class IndexItem {
 
       }
       if (metadata.getValues(key).length > 1) {
-        typesMap.put(key, String.class
-        );
+        typesMap.put(key, String.class);
 
         continue;
       }
@@ -707,6 +703,10 @@ public class IndexItem {
       if (value != null) {
         evidence.setFileOffset(Long.parseLong(value));
       }
+      
+      for(IndexableField f : doc.getFields())
+          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+              evidence.getMetadata().add(f.name(), f.stringValue());
 
       return evidence;
 

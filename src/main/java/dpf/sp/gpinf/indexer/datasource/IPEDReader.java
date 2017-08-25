@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
@@ -39,10 +40,10 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
@@ -462,6 +463,10 @@ public class IPEDReader extends DataSourceReader {
       if (value != null) {
         evidence.setFileOffset(Long.parseLong(value));
       }
+      
+      for(IndexableField f : doc.getFields())
+          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+              evidence.getMetadata().add(f.name(), f.stringValue());
 
       value = doc.get(IndexItem.ISROOT);
       if (value != null) {
