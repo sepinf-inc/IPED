@@ -269,14 +269,16 @@ public class FastPipedReader extends Reader {
      throw new IOException("Write end dead");
      }*/
     //readSide = Thread.currentThread();
-    int trials = 2;
+    int trials = 10;
     while (in < 0) {
       if (closedByWriter) {
         /* closed by writer, return EOF */
         return -1;
       }
       if ((writeSide != null) && (!writeSide.isAlive()) && (--trials < 0)) {
-        throw new IOException("Pipe broken");
+          //throw new IOException("Pipe broken");
+          System.out.println("Pipe broken, writer thread is dead?");
+          closedByWriter = true;
       }
       /* might be a writer waiting */
       notifyAll();
