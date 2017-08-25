@@ -26,10 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -37,7 +38,6 @@ import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -70,7 +70,6 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import gpinf.dev.data.EvidenceFile;
@@ -105,7 +104,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static int subitensDiscovered = 0;
   private static HashSet<String> categoriesToExpand = new HashSet<String>();
   public static AtomicLong totalText = new AtomicLong();
-  public static ConcurrentHashMap<String, AtomicLong> times = new ConcurrentHashMap<String, AtomicLong>();
+  public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
   private EvidenceFile evidence;
   private ParseContext context;
@@ -357,7 +356,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         evidence.setParsed(true);
       }
 
-      normalizeMetadata(metadata);
+      metadataToExtraAttribute(evidence);
 
     } finally {
       //IOUtil.closeQuietly(tis);
@@ -368,11 +367,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
   }
   
-  private void normalizeMetadata(Metadata metadata){
-      
+  private static final void metadataToExtraAttribute(EvidenceFile evidence){
       //Ajusta metadados:
+      Metadata metadata = evidence.getMetadata();
       if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
-        evidence.setExtraAttribute(ENCRYPTED, "true");
+        evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true");
       }
       metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 
@@ -386,55 +385,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
       }
       
-      if (evidence.getMediaType().toString().equals("application/vnd.ms-outlook")) {
-          String subject = metadata.get(TikaCoreProperties.TITLE);
-          if (subject == null || subject.isEmpty())
-            subject = "[Sem Assunto]";
-          metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-          
-          if(metadata.get(TikaCoreProperties.CREATED) != null)
-              metadata.set(ExtraProperties.MESSAGE_DATE, metadata.get(TikaCoreProperties.CREATED));
-          
-          value = metadata.get(Message.MESSAGE_FROM);
-          if(value == null)
-              value = "";
-          if(metadata.get(Message.MESSAGE_FROM_NAME) != null && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_NAME).toLowerCase()))
-              value += " " + metadata.get(Message.MESSAGE_FROM_NAME);
-          if(metadata.get(Message.MESSAGE_FROM_EMAIL) != null && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_EMAIL).toLowerCase()))
-              value += " \"" + metadata.get(Message.MESSAGE_FROM_EMAIL) + "\"";
-          metadata.set(Message.MESSAGE_FROM, value);
-          //remove metadata until that is consistent across email parsers
-          metadata.remove(Message.MESSAGE_FROM_NAME.getName());
-          metadata.remove(Message.MESSAGE_FROM_EMAIL.getName());
-          
-          normalizeRecipients(metadata, Message.MESSAGE_TO, Message.MESSAGE_TO_NAME, Message.MESSAGE_TO_DISPLAY_NAME, Message.MESSAGE_TO_EMAIL);
-          normalizeRecipients(metadata, Message.MESSAGE_CC, Message.MESSAGE_CC_NAME, Message.MESSAGE_CC_DISPLAY_NAME, Message.MESSAGE_CC_EMAIL);
-          normalizeRecipients(metadata, Message.MESSAGE_BCC, Message.MESSAGE_BCC_NAME, Message.MESSAGE_BCC_DISPLAY_NAME, Message.MESSAGE_BCC_EMAIL);
-          
-        }
   }
   
-  private void normalizeRecipients(Metadata metadata, String destMeta, Property recipMetaName, Property recipMetaDisplayName, Property recipMetaEmail){
-      String[] recipientNames = metadata.getValues(recipMetaName);
-      String[] recipientsDisplay = metadata.getValues(recipMetaDisplayName);
-      String[] recipientsEmails = metadata.getValues(recipMetaEmail);
-      metadata.remove(destMeta);
-      //remove metadata until that is consistent across email parsers
-      metadata.remove(recipMetaName.getName());
-      metadata.remove(recipMetaDisplayName.getName());
-      metadata.remove(recipMetaEmail.getName());
-      for(int i = 0; i < recipientNames.length; i++){
-          String value = recipientNames[i];
-          if(value == null)
-              value = "";
-          if(!value.toLowerCase().contains(recipientsDisplay[i].toLowerCase()))
-              value += " " + recipientsDisplay[i];
-          if(!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
-              value += " \"" + recipientsEmails[i] + "\"";
-          metadata.add(destMeta, value);
-      }
-  }
-
   @Override
   public boolean shouldParseEmbedded(Metadata arg0) {
     return true;
@@ -541,15 +493,22 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       evidence.setExtraAttribute(HAS_SUBITEM, "true");
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
-        subItem.setIsDir(true);
+          metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
+          subItem.setIsDir(true);
       }
 
       subItem.setCreationDate(metadata.getDate(TikaCoreProperties.CREATED));
       subItem.setModificationDate(metadata.getDate(TikaCoreProperties.MODIFIED));
       subItem.setAccessDate(metadata.getDate(ExtraProperties.ACCESSED));
+      
+      removeMetadataAndDuplicates(metadata, TikaCoreProperties.CREATED);
+      removeMetadataAndDuplicates(metadata, TikaCoreProperties.MODIFIED);
+      removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
+      
       subItem.setDeleted(parent.isDeleted());
       if (metadata.get(ExtraProperties.DELETED) != null) {
-        subItem.setDeleted(true);
+          metadata.remove(ExtraProperties.DELETED);
+          subItem.setDeleted(true);
       }
 
       //causa problema de subitens corrompidos de zips carveados serem apagados, mesmo sendo referenciados por outros subitens
@@ -590,6 +549,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       tmp.close();
     }
 
+  }
+  
+  private static void removeMetadataAndDuplicates(Metadata metadata, Property prop){
+      metadata.remove(prop.getName());
+      Property[] props = prop.getSecondaryExtractProperties();
+      if(props != null)
+          for(Property p : props)
+              metadata.remove(p.getName());
   }
 
   @Override
