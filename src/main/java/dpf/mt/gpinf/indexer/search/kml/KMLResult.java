@@ -19,6 +19,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -140,7 +141,8 @@ public class KMLResult {
 				  progress.setMaximum(results.getLength()); 
 			  }
 			  
-			  String query = "GPS\\ Latitude:* AND GPS\\ Longitude:*";
+			  String metaPrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:");
+			  String query = metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*";
 			  IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
 			  MultiSearchResult multiResult = searcher.multiSearch();
 			  
@@ -164,8 +166,8 @@ public class KMLResult {
 				  int luceneId = app.get().appCase.getLuceneId(item);
 				  doc =  app.appCase.getSearcher().doc(luceneId);
 				  
-				  String lat = doc.get("GPS Latitude");
-				  String longit = doc.get("GPS Longitude");
+				  String lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + "GPS Latitude");
+				  String longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + "GPS Longitude");
 				  
 				  if(lat != null && longit != null){
 					  
