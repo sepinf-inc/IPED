@@ -40,8 +40,17 @@ public class EntropyTask extends AbstractTask {
     @Override
     protected void process(EvidenceFile evidence) throws Exception {
         
-        if(evidence.getMetadata().get(COMPRESS_RATIO) != null ||
-                evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE) ||
+        if(!isEnabled())
+            return;
+        
+        String ratio = evidence.getMetadata().get(COMPRESS_RATIO); 
+        if(ratio != null){
+            evidence.getMetadata().remove(COMPRESS_RATIO);
+            evidence.setExtraAttribute(COMPRESS_RATIO, Double.valueOf(ratio));
+            return;
+        }
+        
+        if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE) ||
                 Boolean.TRUE.equals(evidence.getExtraAttribute(ImageThumbTask.HAS_THUMB)))
             return;
         

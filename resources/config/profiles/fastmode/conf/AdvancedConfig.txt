@@ -31,7 +31,7 @@ sortPDFChars = false
 # Realiza teste de aleatoriedade antes de indexar trechos de itens binários e desconhecidos.
 # Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
 # Eventualmente pode ocasionar perda de hits cercados por conteúdo "aleatório".
-entropyTest = true
+entropyTest = false
 
 # Tamanho mínimo de strings brutas extraídas de arquivos desconhecidos para indexação
 minRawStringSize = 4
