@@ -220,6 +220,7 @@ public class Statistics {
     LOGGER.info("Sistema Operacional: {}", System.getProperty("os.name"));
     LOGGER.info("Versão Java: {}", System.getProperty("java.version"));
     LOGGER.info("Arquitetura: {}", System.getProperty("os.arch"));
+    LOGGER.info("Diretório atual: {}", System.getProperty("user.dir"));
     LOGGER.info("Processadores: {}", Runtime.getRuntime().availableProcessors());
     LOGGER.info("numThreads: {}", Configuration.numThreads);
 
