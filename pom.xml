@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>tsk-datamodel</artifactId>
-            <version>4.4.2-p01</version>
+            <version>4.4.2-p02</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -336,7 +336,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.4.2-p01</version>
+                                    <version>4.4.2-p02</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -355,7 +355,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>4.4.2-p01</version>
+                                    <version>4.4.2-p02</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
