@@ -356,13 +356,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         evidence.setParsed(true);
       }
 
-      metadataToExtraAttribute(evidence);
-
     } finally {
       //IOUtil.closeQuietly(tis);
       //do nothing
       reader.close();
       reader.reallyClose();
+      
+      metadataToExtraAttribute(evidence);
     }
     
   }
