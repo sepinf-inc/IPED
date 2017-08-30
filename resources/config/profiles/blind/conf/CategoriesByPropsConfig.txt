@@ -41,10 +41,10 @@ function addCategory(e){
 	var length = e.getLength();
 
 	if(length == 0)
-		e.setCategory("Tamanho Zero");
+		e.addCategory("Tamanho Zero");
 
 
-	else if(categorias.indexOf("Imagens") > -1){
+	if(categorias.indexOf("Imagens") > -1){
 
 		if(isFromInternet(e))
 			e.setCategory("Imagens Temporárias Internet");
