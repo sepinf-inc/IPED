@@ -1,11 +1,11 @@
 package dpf.sp.gpinf.indexer.search;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -156,15 +156,25 @@ public class QueryBuilder {
 		  numericConfigMap.put(IndexItem.PARENTID, configInt);
 		  numericConfigMap.put(IndexItem.FTKID, configInt);
 		  
-		  for(Entry<String, Class> e : IndexItem.getMetadataTypes().entrySet())
-			  if(e.getValue().equals(Integer.class) || e.getValue().equals(Byte.class))
-				  numericConfigMap.put(e.getKey(), configInt);
-			  else if(e.getValue().equals(Long.class))
-				  numericConfigMap.put(e.getKey(), configLong);
-			  else if(e.getValue().equals(Float.class))
-				  numericConfigMap.put(e.getKey(), configFloat);
-			  else if(e.getValue().equals(Double.class))
-				  numericConfigMap.put(e.getKey(), configDouble);
+		  try {
+            for(String field : App.get().appCase.getAtomicReader().fields()){
+                Class<?> type = IndexItem.getMetadataTypes().get(field);
+                if(type == null)
+                    continue;
+                if(type.equals(Integer.class) || type.equals(Byte.class))
+                    numericConfigMap.put(field, configInt);
+                else if(type.equals(Long.class))
+                    numericConfigMap.put(field, configLong);
+                else if(type.equals(Float.class))
+                    numericConfigMap.put(field, configFloat);
+                else if(type.equals(Double.class))
+                    numericConfigMap.put(field, configDouble);
+            }
+            	  
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 		  
 		  return numericConfigMap;
 	}

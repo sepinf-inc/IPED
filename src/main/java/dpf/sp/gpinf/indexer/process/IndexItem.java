@@ -21,12 +21,15 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.document.Document;
@@ -56,6 +59,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -108,8 +112,15 @@ public class IndexItem {
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
   private static volatile boolean guessMetaTypes = false;
+  
+  private static class StringComparator implements Comparator<String>{
+    @Override
+    public int compare(String o1, String o2) {
+        return o1.compareToIgnoreCase(o2);
+    }
+  }
 
-  private static Map<String, Class> typesMap = new ConcurrentHashMap<String, Class>();
+  private static Map<String, Class> typesMap = Collections.synchronizedMap(new TreeMap<String, Class>(new StringComparator()));
   private static Map<String, Class> newtypesMap = new ConcurrentHashMap<String, Class>();
 
   private static FieldType contentField = new FieldType();
@@ -351,7 +362,7 @@ public class IndexItem {
     	  for(Object val : (List)entry.getValue()){
     		  if (!typesMap.containsKey(entry.getKey()))
     		        typesMap.put(entry.getKey(), val.getClass());
-    		      addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
+    		  addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
     	  }
       }else{
     	  if (!typesMap.containsKey(entry.getKey()))
@@ -437,8 +448,9 @@ public class IndexItem {
     MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
     if(mimetype != null)
     	mimetype = mimetype.getBaseType();
-
-    //previne mto raro ConcurrentModificationException
+    
+    //previne mto raro ConcurrentModificationException no caso de 
+    //thread desconectada por timeout que altere os metadados
     String[] names = null;
     while (names == null) {
       try {
@@ -454,15 +466,18 @@ public class IndexItem {
       boolean isMultiValued = true;//metadata.getValues(key).length > 1;
       for (String val : metadata.getValues(key)) {
           if (val != null && !(val = val.trim()).isEmpty())
-              addMetadataKeyToDoc(doc, key, val, isMultiValued);
+              addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype);
       }
 
     }
   }
   
-  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued){
+  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued, MediaType mimetype){
       Object oValue = value;
       Class type = typesMap.get(key);
+      
+      if (type == null && MetadataUtil.isHtmlMediaType(mimetype))
+          return;
 
       if (type == null || !type.equals(String.class)) {
 
@@ -495,7 +510,6 @@ public class IndexItem {
     for (String key : metadata.names()) {
       if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
         continue;
-
       }
       if (metadata.getValues(key).length > 1) {
         typesMap.put(key, String.class);
