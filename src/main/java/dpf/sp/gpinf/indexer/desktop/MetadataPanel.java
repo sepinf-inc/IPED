@@ -47,6 +47,7 @@ import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -713,7 +714,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public Set<String> getHighlightTerms() throws ParseException, QueryNodeException{
         
         String field = (String)props.getSelectedItem();
-        if(field == null || !field.startsWith(RegexTask.REGEX_PREFIX) || list.isSelectionEmpty())
+        if(field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
@@ -727,7 +728,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public Query getHighlightQuery() throws ParseException, QueryNodeException{
         
         String field = (String)props.getSelectedItem();
-        if(field == null || !field.startsWith(RegexTask.REGEX_PREFIX) || list.isSelectionEmpty())
+        if(field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
             return null;
         
         StringBuilder str = new StringBuilder();

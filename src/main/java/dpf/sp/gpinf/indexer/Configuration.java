@@ -450,7 +450,6 @@ public class Configuration {
     String regripperFolder = properties.getProperty("regripperFolder");
     if(regripperFolder != null)
         RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim();
-    
 
   }
 

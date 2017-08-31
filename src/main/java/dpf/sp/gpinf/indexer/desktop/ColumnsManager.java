@@ -26,6 +26,7 @@ import javax.swing.JScrollPane;
 import javax.swing.table.TableColumn;
 
 import org.apache.tika.metadata.Message;
+import org.apache.tika.parser.ner.NamedEntityParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,7 @@ import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
+import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
@@ -52,7 +54,7 @@ public class ColumnsManager implements ActionListener, Serializable{
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
     public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Audio", "Image", "Video", 
-                                                "PDF", "Office", "HTML", "Regex", "Language", "Outras"};
+                                                "PDF", "Office", "HTML", "Regex", "Language", "Entidades Mencionadas", "Outras"};
 	
 	private static final String[] defaultFields =
 		{ 
@@ -278,6 +280,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		ArrayList<String> pdfFields = new ArrayList<String>();
 		ArrayList<String> officeFields = new ArrayList<String>();
 		ArrayList<String> htmlFields = new ArrayList<String>();
+		ArrayList<String> nerFields = new ArrayList<String>();
 		
 		for(String f : allExtraAttrs){
 		    if(f.startsWith(RegexTask.REGEX_PREFIX))
@@ -301,6 +304,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 		        officeFields.add(f);
 		    else if(f.startsWith(ExtraProperties.HTML_META_PREFIX))
 		        htmlFields.add(f);
+		    else if(f.startsWith(NamedEntityTask.NER_PREFIX))
+                nerFields.add(f); 
 		}
 		
 		String[][] customGroups = new String[][] {
@@ -314,7 +319,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    officeFields.toArray(new String[0]),
 		    htmlFields.toArray(new String[0]),
 		    regexFields.toArray(new String[0]),
-		    languageFields.toArray(new String[0])
+		    languageFields.toArray(new String[0]),
+		    nerFields.toArray(new String[0])
 		    };
 		
 		ArrayList<String> otherFields = new ArrayList<String>();
