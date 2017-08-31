@@ -16,6 +16,7 @@ enableFileParsing = false
 expandContainers = false
 enableRegexSearch = false
 enableLanguageDetect = false
+enableNamedEntityRecogniton = false
 indexFileContents = false
 indexUnknownFiles = false
 enableOCR = false
