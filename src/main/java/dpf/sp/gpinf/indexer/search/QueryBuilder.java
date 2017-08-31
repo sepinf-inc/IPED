@@ -157,7 +157,7 @@ public class QueryBuilder {
 		  numericConfigMap.put(IndexItem.FTKID, configInt);
 		  
 		  try {
-            for(String field : App.get().appCase.getAtomicReader().fields()){
+            for(String field : ipedCase.getAtomicReader().fields()){
                 Class<?> type = IndexItem.getMetadataTypes().get(field);
                 if(type == null)
                     continue;
