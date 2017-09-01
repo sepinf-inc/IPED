@@ -343,7 +343,7 @@ public class IPEDSource implements Closeable{
 	        List<String> paths = imgPaths.get(id);
 	        for(String path : paths){
 	        	if(!new File(path).exists())
-	        		throw new IPEDException("Arquivo de Imagem inexistente: " + new File(path).getAbsolutePath());
+	        		throw new IPEDException("Arquivo de Imagem não encontrado: " + new File(path).getAbsolutePath());
 	        }
 		}
 	}

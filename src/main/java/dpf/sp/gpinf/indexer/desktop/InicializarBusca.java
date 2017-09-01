@@ -92,6 +92,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+      
+      App.get().appCase.checkImagePaths();
 		
       if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
@@ -132,14 +134,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     return null;
   }
   
-  private void showErrorDialog(Throwable e){
+  private void showErrorDialog(final Throwable e){
       SwingUtilities.invokeLater(new Runnable(){
           @Override
           public void run(){
               JOptionPane.showMessageDialog(App.get(), 
                       "Erro ao abrir o caso. O processamento finalizou com sucesso?\n"
-                      + "Caso sim, entre em contato com o desenvolvedor e envie o log de erros\n"
-                      + "\"IPED-SearchApp.log\" para que o problema possa ser analisado e corrigido.", 
+                      + "Caso sim, entre em contato com o desenvolvedor e envie o log\n"
+                      + "de erros \"IPED-SearchApp.log\". Resumo do erro:\n" + e.getMessage(), 
                       "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
           }
       });

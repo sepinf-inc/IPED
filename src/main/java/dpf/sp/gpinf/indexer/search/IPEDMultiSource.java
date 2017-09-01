@@ -9,10 +9,12 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDMultiSource extends IPEDSource{
@@ -158,6 +160,12 @@ public class IPEDMultiSource extends IPEDSource{
 		
 		for(IPEDSource iCase : cases)
 			iCase.close();
+	}
+	
+	@Override
+	public void checkImagePaths() throws IPEDException, TskCoreException{
+	    for(IPEDSource iCase : cases)
+	        iCase.checkImagePaths();
 	}
 	
 	final public IPEDSource getAtomicSource(int luceneId){
