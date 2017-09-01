@@ -403,6 +403,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-stanfordCoreNLP</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>edu.stanford.nlp</groupId>
+  									<artifactId>stanford-corenlp</artifactId>
+  									<version>3.8.0</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-java-dbx</id>
                         <phase>package</phase>
                         <goals>
