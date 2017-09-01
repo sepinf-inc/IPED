@@ -349,6 +349,9 @@ public class SleuthkitReader extends DataSourceReader {
     
     if(!(listOnly && fastmode))
     	readItensAdded(image);
+    
+    else if(waitLoadDbThread != null)
+        waitLoadDbThread.join();
 
     return 0;
   }
