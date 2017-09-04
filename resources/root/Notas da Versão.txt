@@ -6,8 +6,9 @@
 - Detecção de idioma via optimaize language-detect (71 idiomas suportados)
 - Extração de metadados de vídeos (resolução, bitrate, fps, codec, modelo - qdo disponível, etc)
 - Novos grupos de metadados (audio, imagens, vídeos, pdf, office, html, regex, idioma)
-- Função EXPERIMENTAL para reconhecimento de entidades mencionadas (pessoas, empresas, lugares) sem modelo p/ português
+- Função EXPERIMENTAL para reconhecimento de entidades mencionadas (pessoas, empresas, lugares), sem modelo p/ português
 - Detecção de possíveis itens cifrados por entropia
+- Executa OCR em imagens PPM, JP2 e JPX
 - Exportação de arquivos para ZIP mantendo estrutura em árvore
 - Otimização significativa na geração de thumbs wmf e de thumbs parciais jpg, png, gif e bmp, 10x mais rápido
 - Otimização no StringsParser, 80% mais rápido em certos casos
@@ -27,6 +28,7 @@ Correções:
 - Janela de erro ao abrir casos corrompidos ou no caso de java < 1.8
 - Problema com LibreOffice ao abrir 2 instâncias do IPED na mesma máquina
 - Interrupção do processamento devido a arquivo "dosimg.7z"
+- Problema no fastmode ao adicionar mais de uma evidência (3.12.x)
 
 23/06/2017: IPED-3.12.5
 - Corrige extração incompleta de chats do WhatsApp qdo mediaType dos anexos é nulo
