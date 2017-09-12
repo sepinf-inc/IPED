@@ -134,8 +134,8 @@ public class IndexTask extends BaseCarveTask {
     	  worker.writer.addDocument(doc);
     	  
       }catch(IOException e){
-    	  if(e.toString().toLowerCase().contains("espaço insuficiente no disco") ||
-    	     e.toString().toLowerCase().contains("no space left on device"))
+    	  if(e.getMessage().toLowerCase().startsWith("espaço insuficiente no disco") ||
+    	     e.getMessage().toLowerCase().startsWith("no space left on device"))
     		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
     	  else
     		  throw e;
@@ -178,8 +178,8 @@ public class IndexTask extends BaseCarveTask {
         } while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
 
       }catch(IOException e){
-    	  if(e.toString().toLowerCase().contains("espaço insuficiente no disco") ||
-    	     e.toString().toLowerCase().contains("no space left on device"))
+    	  if(e.getMessage() != null && (e.getMessage().toLowerCase().startsWith("espaço insuficiente no disco") ||
+    	     e.getMessage().toLowerCase().startsWith("no space left on device")))
     		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
     	  else
     	  	  throw e;

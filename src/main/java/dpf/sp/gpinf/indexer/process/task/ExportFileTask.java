@@ -353,9 +353,10 @@ public class ExportFileTask extends AbstractTask {
   		  }
   		
         } catch (IOException e) {
-          if(e.toString().toLowerCase().contains("espaço insuficiente no disco") ||
-             e.toString().toLowerCase().contains("no space left on device"))
-        	  LOGGER.error("Erro ao extrair {}\t{}", evidence.getPath(), "Espaço insuficiente no disco do caso!");
+          String msg = e.getMessage();
+          if(msg != null && (msg.toLowerCase().startsWith("espaço insuficiente no disco") ||
+             msg.toLowerCase().startsWith("no space left on device")))
+        	  LOGGER.error("Erro ao extrair {}\t{}", evidence.getPath(), "No space left on output disk!");
           else
         	  LOGGER.warn("Erro ao extrair {}\t{}", evidence.getPath(), e.toString());
 
