@@ -60,6 +60,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -489,6 +490,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
       subItem.setParent(parent);
       parent.setHasChildren(true);
+      if (metadata.get(OutlookPSTParser.HAS_ATTACHS) != null)
+          subItem.setHasChildren(true);
+      
       //indica se o conteiner tem subitens
       evidence.setExtraAttribute(HAS_SUBITEM, "true");
 
