@@ -426,6 +426,18 @@
         <glob pattern="*.PPTX"/>
     </mime-type>
     
+    <mime-type type="application/vnd.openxmlformats-officedocument">
+        <sub-class-of type="application/x-tika-ooxml"/>
+    </mime-type>
+    
+    <mime-type type="video/mp2t">
+    	<magic priority="50">
+            <match value="HDMV" type="string" offset="215"/>
+        </magic>
+        <glob pattern="*.MTS"/>
+		<glob pattern="*.M2TS"/>
+    </mime-type>
+    
     <mime-type type="application/x-lnk">
         <magic priority="50">
             <match value="0x4C0000000114020000000000C000000000000046" type="string" offset="0"/>
