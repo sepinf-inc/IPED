@@ -24,8 +24,11 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
@@ -33,6 +36,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
@@ -188,6 +193,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   private Document doc;
   private int lastDocRead = -1;
+  
+  private AtomicReader atomicReader;
+  private Map<String, SortedSetDocValues> ssdvCache = new HashMap<String, SortedSetDocValues>();
 
   @Override
   public Object getValueAt(int row, int col) {
@@ -225,12 +233,43 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         if (field.equals(BOOKMARK_COL)) {
           return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
         }
-
+        
+        if(atomicReader != App.get().appCase.getAtomicReader()){
+            atomicReader = App.get().appCase.getAtomicReader();
+            ssdvCache.clear();
+        }
+        
+        SortedNumericDocValues sndv = atomicReader.getSortedNumericDocValues(field);
+        if(sndv == null)
+            sndv = atomicReader.getSortedNumericDocValues("_num_" + field);
+        
+        SortedSetDocValues ssdv = ssdvCache.get(field);
+        if(ssdv == null){
+            ssdv = atomicReader.getSortedSetDocValues(field);
+            if(ssdv == null)
+                ssdv = atomicReader.getSortedSetDocValues("_" + field);
+            ssdvCache.put(field, ssdv);
+        }
+        
+        boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
         StringBuilder sb = new StringBuilder();
         
-        SortedSetDocValues ssdv = App.get().appCase.getAtomicReader().getSortedSetDocValues(field);
-        if(ssdv != null){
-            //System.out.println("getting val for " + field + ": " + row);
+        if((mayBeNumeric && sndv != null) || ssdv == null){
+            String[] values = doc.getValues(field);
+            if(mayBeNumeric && sndv != null && values.length > 1){
+                Arrays.sort(values, new Comparator<String>(){
+                    @Override
+                    public int compare(String o1, String o2){
+                        return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                    }
+                });
+            }
+            for(int i = 0; i < values.length; i++){
+                sb.append(values[i]);
+                if(i != values.length - 1) sb.append(" | ");
+            }
+        }
+        else if(ssdv != null){
             ssdv.setDocument(docId);
             long ord;
             boolean first = true;
@@ -238,13 +277,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 if(!first) sb.append(" | ");
                 sb.append(ssdv.lookupOrd(ord).utf8ToString());
                 first = false;
-            }
-        
-        }else{
-            String[] values = doc.getValues(field);
-            for(int i = 0; i < values.length; i++){
-                sb.append(values[i]);
-                if(i != values.length - 1) sb.append(" | ");
             }
         }
         

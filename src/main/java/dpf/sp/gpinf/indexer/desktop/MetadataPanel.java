@@ -300,21 +300,27 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             docValuesSet = reader.getSortedSetDocValues("_" + field);
     }
     
-    private boolean isFloat(String field){
+    public static final boolean isFloat(String field){
         return Float.class.equals(IndexItem.getMetadataTypes().get(field));
     }
     
-    private boolean isDouble(String field){
+    public static final boolean isDouble(String field){
         return Double.class.equals(IndexItem.getMetadataTypes().get(field));
+    }
+    
+    public static final boolean mayBeNumeric(String field){
+        return IndexItem.getMetadataTypes().get(field) == null ||
+                !IndexItem.getMetadataTypes().get(field).equals(String.class);
     }
     
     private List<ItemId> getIdsWithOrd(String field, int ordToGet, int valueCount){
         
+        boolean mayBeNumeric = mayBeNumeric(field);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
         
         ArrayList<ItemId> items = new ArrayList<ItemId>(); 
-        if(numValues != null){
+        if(mayBeNumeric && numValues != null){
             Bits docsWithField = null;
             try {
                 docsWithField = reader.getDocsWithField(field);
@@ -346,7 +352,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                         items.add(item);
                 }
             } 
-        }else if(numValuesSet != null){
+        }else if(mayBeNumeric && numValuesSet != null){
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
@@ -429,6 +435,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             updatingResult = false;
         }
         
+        boolean isNumeric = mayBeNumeric(field);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
         
@@ -436,7 +443,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         int[] valueCount = null;
         min = Double.MAX_VALUE; max = Double.MIN_VALUE; interval = 0;
         
-        if(numValues != null){
+        if(isNumeric && numValues != null){
             Bits docsWithField = reader.getDocsWithField(field);
             if(logScale){
                 //0 to 19: count negative numbers. 20 to 39: count positive numbers
@@ -487,7 +494,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                     }
                 }
             }
-        }else if(numValuesSet != null){
+        }else if(isNumeric && numValuesSet != null){
             if(logScale){
               //0 to 19: count negative numbers. 20 to 39: count positive numbers
                 valueCount = new int[40];

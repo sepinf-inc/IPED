@@ -112,11 +112,11 @@ public class RowComparator implements Comparator<Integer> {
           ndv = atomicReader.getNumericDocValues("_num_" + indexedField);
           docsWithField = atomicReader.getDocsWithField("_num_" + indexedField);
         }
-      }
-      if (ndv == null) {
-          sndv = atomicReader.getSortedNumericDocValues(indexedField);
-          if (sndv == null)
-              sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField);
+        if (ndv == null) {
+            sndv = atomicReader.getSortedNumericDocValues(indexedField);
+            if (sndv == null)
+                sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField);
+        }
       }
       if (ndv == null && sndv == null) {
           ssdv = atomicReader.getSortedSetDocValues(indexedField);
