@@ -429,6 +429,15 @@
     <mime-type type="application/vnd.openxmlformats-officedocument">
         <sub-class-of type="application/x-tika-ooxml"/>
     </mime-type>
+      
+    <mime-type type="application/x-nls">
+    	<!--Evita detecção incorreta de itens NLS como x-ms-owner-->
+    	<magic priority="90">
+            <match value="0x0D000000000000003F00" type="string" offset="0"  mask="0xFFFF000000FF00FFFFFF"/>
+        </magic>
+        <sub-class-of type="application/x-ms-owner"/>
+        <glob pattern="*.nls"/>
+    </mime-type>
     
     <mime-type type="video/mp2t">
     	<magic priority="50">
