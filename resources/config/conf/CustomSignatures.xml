@@ -81,6 +81,7 @@
       <match value="Subject:" type="string" offset="0"/>
       <match value="From:" type="string" offset="0"/>
       <match value="Date:" type="string" offset="0"/>
+      <match value="Reply-To:" type="string" offset="0"/>
       <match value="Return-Path:" type="stringignorecase" offset="0"/>
       <match value="Delivered-To:" type="string" offset="0"/>
       <match value="X-Originating-IP:" type="stringignorecase" offset="0"/>
