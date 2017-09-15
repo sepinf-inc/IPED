@@ -1,14 +1,17 @@
-13/09/2017: IPED-3.13-final
+14/09/2017: IPED-3.13-final
+Melhorias:
 - Indexação do nome de subitens de ZIPs cifrados
 - Tratamento de vídeos MTS/M2TS (contribuição PCF Cinelli)
 - Expansão de itens vnd.openxmlformats-officedocument genéricos (derivados de zip)
 - Melhoria no descarte de ZIPs carveados corrompidos
 Correções:
-- Regressão ao indexar EMLs incomuns com corpo puramente textual sem versão html (3.13-beta)
-- Regressão ao indexar palavras acentuadas de txt e binários com mais de 128KB de texto (3.13-beta)
+- Erro ao indexar EMLs com corpo puramente textual sem versão html (3.13-beta)
+- Erro ao indexar palavras acentuadas de txt e binários com mais de 128KB de texto (3.13-beta)
+- Emails de caixas DBX sem cabeçalhos conhecidos não reconhecidos como EML (3.13-beta)
+- Metadados de emails MSG prefixados incorretamente como office (3.13-beta)
 - Downgrade p/ sqlite-jdbc-3.8.11.2 devido a erro de linkagem (3.13-beta)
 - Marcador automático para envios via Skype estava incluindo itens zerados ou com poucos bytes (3.12)
-- Itens carveados cifrados estavam sendo descartados (3.0?)
+- Itens carveados cifrados estavam sendo descartados (3.0)
 - Eventualmente emails com anexos de PSTs não apareciam na árvore de diretórios
 
 01/09/2017: IPED-3.13-beta
