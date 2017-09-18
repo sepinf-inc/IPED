@@ -20,15 +20,14 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.text.Collator;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TimeZone;
 
 import javax.swing.SwingUtilities;
@@ -36,9 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.SortedNumericDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
@@ -111,11 +108,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
   private SimpleDateFormat fatAccessedDf = new SimpleDateFormat("dd/MM/yyyy");
+  private Collator collator = Collator.getInstance();
 
   public ResultTableModel() {
     super();
     df.setTimeZone(TimeZone.getTimeZone("UTC"));
     fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    collator.setStrength(Collator.PRIMARY);
   }
 
   @Override
@@ -193,9 +192,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   private Document doc;
   private int lastDocRead = -1;
-  
-  private AtomicReader atomicReader;
-  private Map<String, SortedSetDocValues> ssdvCache = new HashMap<String, SortedSetDocValues>();
 
   @Override
   public Object getValueAt(int row, int col) {
@@ -234,50 +230,29 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
           return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
         }
         
-        if(atomicReader != App.get().appCase.getAtomicReader()){
-            atomicReader = App.get().appCase.getAtomicReader();
-            ssdvCache.clear();
-        }
-        
-        SortedNumericDocValues sndv = atomicReader.getSortedNumericDocValues(field);
+        SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);
         if(sndv == null)
-            sndv = atomicReader.getSortedNumericDocValues("_num_" + field);
-        
-        SortedSetDocValues ssdv = ssdvCache.get(field);
-        if(ssdv == null){
-            ssdv = atomicReader.getSortedSetDocValues(field);
-            if(ssdv == null)
-                ssdv = atomicReader.getSortedSetDocValues("_" + field);
-            ssdvCache.put(field, ssdv);
-        }
+            sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field);
         
         boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
-        StringBuilder sb = new StringBuilder();
         
-        if((mayBeNumeric && sndv != null) || ssdv == null){
-            String[] values = doc.getValues(field);
-            if(mayBeNumeric && sndv != null && values.length > 1){
+        String[] values = doc.getValues(field);
+        if(values.length > 1){
+            if(mayBeNumeric && sndv != null){
                 Arrays.sort(values, new Comparator<String>(){
                     @Override
                     public int compare(String o1, String o2){
                         return Double.valueOf(o1).compareTo(Double.valueOf(o2));
                     }
                 });
-            }
-            for(int i = 0; i < values.length; i++){
-                sb.append(values[i]);
-                if(i != values.length - 1) sb.append(" | ");
-            }
+            }else
+                Arrays.sort(values, collator);
         }
-        else if(ssdv != null){
-            ssdv.setDocument(docId);
-            long ord;
-            boolean first = true;
-            while((ord = ssdv.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS){
-                if(!first) sb.append(" | ");
-                sb.append(ssdv.lookupOrd(ord).utf8ToString());
-                first = false;
-            }
+        
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < values.length; i++){
+            sb.append(values[i]);
+            if(i != values.length - 1) sb.append(" | ");
         }
         
         value = sb.toString().trim();
