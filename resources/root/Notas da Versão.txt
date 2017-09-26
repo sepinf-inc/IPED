@@ -1,3 +1,8 @@
+26/09/2017: IPED-3.13.1
+- Corrige lentidão na tabela na interface de análise com dados multivalorados (3.13-beta)
+- Compatibilização com java 9 (atualiza tika-core, parsing de java.version)
+- WhatsAppParser: trata vCards com fotos e mimetypes com sufixos (PCF Pfeifer)
+
 14/09/2017: IPED-3.13-final
 Melhorias:
 - Indexação do nome de subitens de ZIPs cifrados
