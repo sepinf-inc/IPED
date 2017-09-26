@@ -143,6 +143,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                       + "Caso sim, entre em contato com o desenvolvedor e envie o log\n"
                       + "de erros \"IPED-SearchApp.log\". Resumo do erro:\n" + e.getMessage(), 
                       "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
+              
+              App.get().dialogBar.setVisible(false);
           }
       });
   }
