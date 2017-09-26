@@ -7,6 +7,7 @@ import ag.ion.bion.officelayer.internal.application.ApplicationAssistant;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 
 import dpf.sp.gpinf.indexer.util.FileContentSource;
+import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
@@ -75,7 +76,7 @@ public class ViewerControl implements IViewerControl {
 
       @Override
       public void run() {
-        final boolean javaFX = loadJavaFX();
+        final boolean javaFX = new JarLoader().loadJavaFX();
 
         final ViewersRepository viewersRepository = new ViewersRepository();
 
@@ -196,58 +197,6 @@ public class ViewerControl implements IViewerControl {
 
     process.start();
 
-  }
-
-  private boolean loadJavaFX() {
-    boolean javaFX = false;
-    String javaVersion = System.getProperty("java.version");
-    if (javaVersion.compareTo("1.7") > 0) {
-      String minor = javaVersion.substring(javaVersion.indexOf("_") + 1);
-      if (!javaVersion.startsWith("1.7") || Integer.valueOf(minor) >= 6) {
-        String fxJar = "jfxrt.jar";
-        String javaLib = System.getProperty("java.home") + File.separator + "lib";
-        if (new File(javaLib + File.separator + "ext" + File.separator + fxJar).exists()) {
-          javaFX = true;
-        } else {
-          javaFX = this.loadJar(new File(javaLib + File.separator + fxJar));
-        }
-      }
-    }
-    return javaFX;
-  }
-
-  private boolean loadJar(File file) {
-    if (!file.exists()) {
-      return false;
-    }
-    try {
-      URL jarUrl = file.toURI().toURL();
-      ClassLoader sysloader = ClassLoader.getSystemClassLoader();
-      Class<?> sysclass = URLClassLoader.class;
-      Class<?>[] parameters = new Class[]{URL.class};
-      Method method = sysclass.getDeclaredMethod("addURL", parameters);
-      method.setAccessible(true);
-      method.invoke(sysloader, new Object[]{jarUrl});
-      LOGGER.info("{} loaded", jarUrl.toString());
-      return true;
-    } catch (Exception e) {
-      e.printStackTrace();
-      return false;
-    }
-
-  }
-
-  private boolean loadJarDir(File dir) {
-    String[] jarNameList = dir.list();
-    if (jarNameList != null) {
-      for (int i = 0; i < jarNameList.length; i++) {
-        File jar = new File(dir, jarNameList[i]);
-        if (!loadJar(jar)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   @Override
