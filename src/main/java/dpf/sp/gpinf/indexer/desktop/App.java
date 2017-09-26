@@ -85,6 +85,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
@@ -438,11 +439,14 @@ public class App extends JFrame implements WindowListener {
     });
     
     resultTab = new JTabbedPane();
-    browserPane = new AppMapaPanel(this);
-    JScrollPane mapsScroll = new JScrollPane(browserPane);
     resultTab.addTab("Tabela", resultsScroll);
     resultTab.addTab("Galeria", galleryScroll);
-    resultTab.addTab("Mapa", mapsScroll);
+    
+    if(new JarLoader().loadJavaFX()) {
+        browserPane = new AppMapaPanel(this);
+        JScrollPane mapsScroll = new JScrollPane(browserPane);
+        resultTab.addTab("Mapa", mapsScroll);
+    }
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
