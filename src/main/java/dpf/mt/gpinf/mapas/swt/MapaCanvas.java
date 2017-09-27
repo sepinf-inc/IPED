@@ -2,9 +2,8 @@ package dpf.mt.gpinf.mapas.swt;
 
 import java.awt.Component;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.HashMap;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.swt.SWT;
@@ -158,10 +157,10 @@ public class MapaCanvas extends AbstractMapaCanvas {
 		  String js3 = IOUtils.toString(getClass().getResourceAsStream("extensions.js"), "UTF-8");
 		  String js4 = IOUtils.toString(getClass().getResourceAsStream("ext_geoxml3.js"), "UTF-8");
 
-		  String b64_selecionado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png")));
-		  String b64_selecionado_m = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png")));
-		  String b64_normal = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png")));
-		  String b64_marcado = "data:image/png;base64," + DatatypeConverter.printBase64Binary(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png")));
+		  String b64_selecionado = "data:image/png;base64," + Base64.getEncoder().encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png")));
+		  String b64_selecionado_m = "data:image/png;base64," + Base64.getEncoder().encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png")));
+		  String b64_normal = "data:image/png;base64," + Base64.getEncoder().encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png")));
+		  String b64_marcado = "data:image/png;base64," + Base64.getEncoder().encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png")));
 		  
 		  html = html.replace("{{load_geoxml3}}", js);
 		  html = html.replace("{{load_keydragzoom}}", js2);
