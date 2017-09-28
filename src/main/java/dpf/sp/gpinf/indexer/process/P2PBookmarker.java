@@ -31,10 +31,10 @@ public class P2PBookmarker {
 	}
 	
 	class P2PProgram{
-	    HashTask.HASH hashName;
+	    String hashName;
 		String appName;
 		
-		public P2PProgram(HashTask.HASH hashName, String appName){
+		public P2PProgram(String hashName, String appName){
 			this.hashName = hashName;
 			this.appName = appName;
 		}
@@ -49,12 +49,12 @@ public class P2PBookmarker {
 
 		HashMap<String, P2PProgram> p2pPrograms = new HashMap<String, P2PProgram>();
 		
-		p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY, "Emule"));
-		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1, "Ares"));
-		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Shareaza"));
-		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram(HashTask.HASH.SHA256, "WhatsApp"));
-		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Skype"));
-		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5, "Skype"));
+		p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule"));
+		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares"));
+		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza"));
+		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp"));
+		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype"));
+		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype"));
 		
 		IPEDSource ipedSrc = new IPEDSource(caseDir);
 		String queryText = ExtraProperties.SHARED_HASHES + ":*";
