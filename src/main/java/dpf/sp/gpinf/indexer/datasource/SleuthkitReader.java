@@ -434,6 +434,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
         continue;
       }
+      if(endId - startId > 100000)
+          endId = startId + 100000;
       readItensInOffsetOrder(startId, endId);
       startId = endId + 1;
 
