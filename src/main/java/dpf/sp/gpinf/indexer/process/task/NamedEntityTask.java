@@ -106,7 +106,9 @@ public class NamedEntityTask extends AbstractTask {
             System.setProperty(CoreNLPNERecogniser.MODEL_PROP_NAME, modelPath);
             NamedEntityParser nerParser = new NamedEntityParser();
             //first call to initialize
-            nerParser.parse(new EmptyInputStream(), new IgnoreContentHandler(), new Metadata(), new ParseContext());
+            Metadata metadata = new Metadata();
+            metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
+            nerParser.parse(new EmptyInputStream(), new IgnoreContentHandler(), metadata, new ParseContext());
             nerParserPerLang.put(lang, nerParser);
             System.out.println(lang + ":" + nerParser);
         }
