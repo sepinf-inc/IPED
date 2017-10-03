@@ -336,7 +336,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.4.2-p02</version>
+                                    <version>4.4.2-p03</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
