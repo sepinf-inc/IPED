@@ -12,7 +12,8 @@ import dpf.sp.gpinf.indexer.process.Manager;
 public class AppMain {
 	
 	private static final String appLogFileName = "IPED-SearchApp.log";
-	private static final String MIN_JAVA_VER = "1.8";
+	private static final int MIN_JAVA_VER = 8;
+	private static final int MAX_JAVA_VER = 9;
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -29,12 +30,21 @@ public class AppMain {
             SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
-                      String javaVersion = System.getProperty("java.version");
-                      if(javaVersion.compareTo(MIN_JAVA_VER) < 0){
+                      String versionStr = System.getProperty("java.version");
+                      if(versionStr.startsWith("1."))
+                          versionStr = versionStr.substring(2, 3);
+                      int version = Integer.valueOf(versionStr);
+                      
+                      if(version < MIN_JAVA_VER){
                           JOptionPane.showMessageDialog(App.get(), 
                               "É necessário atualizar o Java para a versão " + MIN_JAVA_VER + " ou superior!", 
                               "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
                           System.exit(1);
+                      }
+                      if(version > MAX_JAVA_VER){
+                          JOptionPane.showMessageDialog(App.get(), 
+                              "Java versão " + version + " não testado, podem ocorrer erros inesperados!", 
+                              "Alerta na inicialização", JOptionPane.WARNING_MESSAGE);
                       }
                   }
               });
@@ -71,7 +81,7 @@ public class AppMain {
 				  jarFile = new File(url.toURI().getSchemeSpecificPart());
 			  
 			  //Caso para teste
-		      //jarFile = new File("E:\\1-1973-3.12.5/indexador/lib/iped-search-app.jar");
+		      //jarFile = new File("E:\\1-pchp-3.13-blind/indexador/lib/iped-search-app.jar");
 			  
 		      if(casePath != null)
 				  jarFile = new File(casePath, "indexador/lib/iped-search-app.jar");
