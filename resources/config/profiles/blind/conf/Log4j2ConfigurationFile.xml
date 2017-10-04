@@ -5,11 +5,11 @@
   	</CustomLevels>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="IPED-%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
-            <PackageRegexpFilter regex="(.*org\.icepdf.*)|(.*org\.apache\.pdfbox.*)" onMatch="DENY" onMismatch="ACCEPT"/>
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%class{3}]\t\t\t%msg%n" />
+            <PackageRegexpFilter regex="(.*org\.icepdf.*)|(.*org\.apache\.pdfbox.*)|(.*com\.levigo\.jbig2.*)" onMatch="DENY" onMismatch="ACCEPT"/>
         </Console>
         <File name="LogFile" fileName="${sys:logFileNamePath}" immediateFlush="true" append="true" bufferSize="4096">
-            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t%msg%n" />
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%class{3}]\t\t\t%msg%n" />
         </File>
     </Appenders>
     <Loggers>
