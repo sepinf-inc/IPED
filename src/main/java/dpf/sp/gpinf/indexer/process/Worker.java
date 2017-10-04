@@ -103,8 +103,8 @@ public class Worker extends Thread {
     for (AbstractTask task : tasks) {
       if (this.getName().equals(workerNamePrefix + 0)) {
         LOGGER.info("Inicializando " + task.getClass().getSimpleName());
+        IndexFiles.getInstance().firePropertyChange("mensagem", "", "Inicializando " + task.getClass().getSimpleName());
       }
-      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Inicializando " + task.getClass().getSimpleName() + "...");
       task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
     }
 
