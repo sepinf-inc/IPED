@@ -373,6 +373,7 @@
         <glob pattern="*.exe"/>
         <glob pattern="*.dll"/>
         <glob pattern="*.com"/>
+        <glob pattern="*.bat"/>
         <magic priority="50">
             <match value="MZ" type="string" offset="0"/>
         </magic>
