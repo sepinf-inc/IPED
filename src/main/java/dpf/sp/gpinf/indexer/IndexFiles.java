@@ -19,9 +19,13 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.slf4j.Logger;
@@ -32,6 +36,7 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
+import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
 /**
@@ -48,7 +53,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   public boolean fromCmdLine = false;
   public boolean appendIndex = false;
 
-  String configPath;
+  String rootPath, configPath;
   boolean nogui = false;
   boolean nologfile = false;
   File palavrasChave;
@@ -121,7 +126,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   private void setConfigPath() throws Exception {
 	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 	  //configPath = System.getProperty("user.dir");
-	  configPath = new File(url.toURI()).getParent();
+	  rootPath = new File(url.toURI()).getParent();
+	  configPath = rootPath;
 	  
 	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){
 		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0);
@@ -156,23 +162,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   @Override
   protected Boolean doInBackground() {
     try {
-      if (fromCmdLine) 
-    	  setConfigPath();
-    	
-      logConfiguration = new LogConfiguration(logFile);
-      logConfiguration.configureLogParameters(configPath, nologfile);
-      
-      LOGGER = LoggerFactory.getLogger(IndexFiles.class);
-      
-      if(nogui){
-    	 ProgressConsole console = new ProgressConsole();
-    	 this.addPropertyChangeListener(console);
-      }
-
-      LOGGER.info(Versao.APP_NAME);
-
-      Configuration.getConfiguration(configPath);
-
       manager = new Manager(dataSource, output, palavrasChave);
       cmdLineParams.saveIntoCaseData(manager.getCaseData());
       manager.process();
@@ -189,11 +178,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     	  LOGGER.error("Erro no processamento:", e);
 
     } finally {
+      done = true;
       if(manager != null)
        	manager.setProcessingFinished(true);
       if(manager == null || !manager.isSearchAppOpen())
     	logConfiguration.closeConsoleLogFile();
-      done = true;
     }
 
     return success;
@@ -214,28 +203,24 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   volatile boolean done = false, success = false;
 
   /**
-   * Executa o processamento com janela de progresso.
-   */
-  public boolean executeWithProgressBar() {
-    progressFrame = new ProgressFrame(this);
-    this.addPropertyChangeListener(progressFrame);
-    progressFrame.setVisible(true);
-    return executar();
-  }
-
-  /**
-   * Executa o processamento sem janela de progresso. Chamado pelo AsAP.
+   * Instancia listener de progresso, executa o processamento e aguarda.
    */
   public boolean executar() {
+    if(!nogui){
+        SwingUtilities.invokeLater(new Runnable(){
+            public void run(){
+                progressFrame = new ProgressFrame(lastInstance);
+                lastInstance.addPropertyChangeListener(progressFrame);
+                progressFrame.setVisible(true);
+            }
+        });
+    }else{
+        ProgressConsole console = new ProgressConsole();
+        this.addPropertyChangeListener(console);
+    }
+    
     this.execute();
-    /*try {
-     return this.get();
-		
-     } catch (InterruptedException | ExecutionException e) {
-     //e.printStackTrace();
-     return false;
-     }
-     * */
+    
     while (!done) {
       try {
         Thread.sleep(2000);
@@ -251,30 +236,58 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    * Entrada principal da aplicação para processamento de evidências
    */
   public static void main(String[] args) {
-
-    IndexFiles indexador;
-    indexador = new IndexFiles(args);
-    boolean success;
-
-    if (!indexador.nogui) {
-      success = indexador.executeWithProgressBar();
-    } else {
-      success = indexador.executar();
+      
+    boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
+    String logPath = null;
+    if(fromCustomLoader) {
+        logPath = CustomLoader.getLogPathFromCustomArgs(args);
+        args = CustomLoader.clearCustomLoaderArgs(args);
     }
 
+    IndexFiles indexador = new IndexFiles(args);
+    PrintStream SystemOut = System.out;
+    boolean success = false;
+    
+    try {
+        indexador.setConfigPath();
+        indexador.logConfiguration = new LogConfiguration(indexador, logPath);
+        indexador.logConfiguration.configureLogParameters(indexador.nologfile, fromCustomLoader);
+        
+        LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+        if(!fromCustomLoader)
+            LOGGER.info(Versao.APP_NAME);
+        
+        Configuration.getConfiguration(indexador.configPath);
+        
+        if(!fromCustomLoader) {
+            List<File> jars = new ArrayList<File>();
+            jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
+            jars.add(Configuration.tskJarFile);
+            
+            String[] customArgs = CustomLoader.getCustomLoaderArgs(args, indexador.logFile);
+            CustomLoader.run(customArgs, jars);
+            
+        }else{
+            success = indexador.executar();
+        }
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    
     if (!success) {
-    	getInstance().logConfiguration.getSystemOut().println("\nERRO!!!");
+        SystemOut.println("\nERRO!!!");
     } else {
-    	getInstance().logConfiguration.getSystemOut().println("\n" + Versao.APP_EXT + " finalizado.");
+        SystemOut.println("\n" + Versao.APP_EXT + " finalizado.");
     }
 
-    if (!indexador.nologfile) {
-    	getInstance().logConfiguration.getSystemOut().println("Consulte o LOG na pasta \"IPED/log\".");
+    if (indexador.logFile != null) {
+        SystemOut.println("Consulte o LOG em " + indexador.logFile.getAbsolutePath());
     }
     
     if(getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
-    	System.exit((success)?0:1);
-
+        System.exit((success)?0:1);
+    
     // PARA ASAP:
     // IndexFiles indexador = new IndexFiles(List<File> reports, File
     // output, String configPath, File logFile, File keywordList);

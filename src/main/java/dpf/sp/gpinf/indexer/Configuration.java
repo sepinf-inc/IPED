@@ -43,9 +43,9 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -85,10 +85,12 @@ public class Configuration {
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
   public static boolean robustImageReading = false;
+  public static File optionalJarDir;
+  public static File tskJarFile;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
-  public static String getAppRoot(String configPath){
+  private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
 	  if(appRoot.contains("profiles"))
 	   	appRoot = new File(appRoot).getParentFile().getParent();
@@ -105,8 +107,13 @@ public class Configuration {
 
     // DataSource.testConnection(configPathStr);
     LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
-
-    Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
+    
+    Logger LOGGER = null;
+    if(Configuration.class.getClassLoader().getClass().getName()
+            .equals(CustomURLClassLoader.class.getName()))
+        LOGGER = LoggerFactory.getLogger(Configuration.class);
+    
+    if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr);
 
     configPath = configPathStr;
     appRoot = getAppRoot(configPath);
@@ -130,7 +137,7 @@ public class Configuration {
       if (value != null && !value.equalsIgnoreCase("default")) {
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
-          LOGGER.info("Não foi possível criar diretório temporário {}", newTmp.getAbsolutePath());
+            if(LOGGER != null) LOGGER.info("Não foi possível criar diretório temporário " + newTmp.getAbsolutePath());
         } else {
           tmp = newTmp;
         }
@@ -436,16 +443,14 @@ public class Configuration {
     	else
     		throw new IPEDException("Obrigatório configurar tskJarPath em LocalConfig.txt!");
     	
-    	File tskJarFile = new File(tskJarPath);
+    	tskJarFile = new File(tskJarPath);
     	if(!tskJarFile.exists())
-    		throw new IPEDException("Arquivo não encontrado " + tskJarPath + ". Configure tskJarPath em conf/AdvancedConfig.txt!");
-    	
-    	new JarLoader().loadJar(tskJarFile);
+    		throw new IPEDException("Arquivo não encontrado " + tskJarPath + ". Configure tskJarPath em LocalConfig.txt!");
     }
     
     String optional_jars = properties.getProperty("optional_jars");
     if(optional_jars != null)
-        new JarLoader().loadJarDir(new File(appRoot + "/" + optional_jars.trim()));
+        optionalJarDir = new File(appRoot + "/" + optional_jars.trim());
 
     String regripperFolder = properties.getProperty("regripperFolder");
     if(regripperFolder != null)

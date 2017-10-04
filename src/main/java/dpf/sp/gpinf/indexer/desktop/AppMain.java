@@ -97,8 +97,8 @@ public class AppMain {
 		      File logFile = new File(logParent, appLogFileName).getCanonicalFile();
 		      LogConfiguration logConfiguration = null;
 		      if(processingManager == null){
-		    	  logConfiguration = new LogConfiguration(logFile);
-		    	  logConfiguration.configureLogParameters(libDir.getParentFile().getAbsolutePath(), nolog);
+		    	  logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
+		    	  logConfiguration.configureLogParameters(nolog, true);
 		      }
 			  
 		      App.get().getSearchParams().codePath = libDir.getAbsolutePath();
