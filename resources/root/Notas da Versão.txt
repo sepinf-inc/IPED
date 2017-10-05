@@ -1,7 +1,13 @@
-26/09/2017: IPED-3.13.1
-- Corrige lentidão na tabela na interface de análise com dados multivalorados (3.13-beta)
-- Compatibilização com java 9 (atualiza tika-core, parsing de java.version)
+04/10/2017: IPED-3.13.1
+- Compatibilização com java 9 (e alerta para novas versões do java)
 - WhatsAppParser: trata vCards com fotos e mimetypes com sufixos (PCF Pfeifer)
+- Configuração no logging para imprimir classe de origem da mensagem
+- Atualização do Manual.pdf
+Correções:
+- Lentidão na tabela na interface de análise com dados multivalorados (3.13)
+- SkypeParser: fileslacks obtidos do cache de midias no lugar dos anexos (3.12.x)
+- Não criação de marcadores de envios via Skype ao desabilitar hash MD5 (3.12.x)
+- Patch no Sleuthkit-4.4.2 para melhorar processamento de time machines hfs+
 
 14/09/2017: IPED-3.13-final
 Melhorias:
