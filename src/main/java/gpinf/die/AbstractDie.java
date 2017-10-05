@@ -32,6 +32,10 @@ public abstract class AbstractDie {
 }
 
 class DieClassLoader extends ClassLoader {
+    
+  public DieClassLoader() {
+    super(DieClassLoader.class.getClassLoader());
+  }
 
   public Class<?> loadClass(byte[] classData) throws ClassNotFoundException {
     return defineClass("gpinf.die.Die", classData, 0, classData.length);
