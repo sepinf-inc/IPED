@@ -81,14 +81,8 @@ public class LogConfiguration {
 		File configFile = null;
 	    if (noLog)
 	    	configFile = new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml");
-	    
 	    else {
 	    	configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml");
-	    	
-	    	if(finalClassLoader)
-	    	    if(!setConsoleLogFile(false))
-	    	        setConsoleLogFile(true);
-		      
             System.setProperty("logFileNamePath", logFile.getPath());
         }
         
@@ -102,7 +96,10 @@ public class LogConfiguration {
             LogManager.getRootLogger();
 	    }else
 	    	System.out.println(df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath());
-	    
+        
+        if(!noLog && finalClassLoader)
+            if(!setConsoleLogFile(false))
+                setConsoleLogFile(true);
 	  }
 	  
 	  public PrintStream getSystemOut(){

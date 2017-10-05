@@ -61,6 +61,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -306,13 +307,13 @@ public class Manager {
 
     while (someWorkerAlive) {
       if (IndexFiles.getInstance().isCancelled()) {
-        exception = new InterruptedException("Indexação cancelada!");
+        exception = new IPEDException("Indexação cancelada!");
       }
 
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
-        exception = new InterruptedException("Indexação cancelada!");
+        exception = new IPEDException("Indexação cancelada!");
       }
 
       String currentDir = contador.currentDirectory();

@@ -182,7 +182,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
       if(manager != null)
        	manager.setProcessingFinished(true);
       if(manager == null || !manager.isSearchAppOpen())
-    	logConfiguration.closeConsoleLogFile();
+        logConfiguration.closeConsoleLogFile();
     }
 
     return success;
@@ -266,6 +266,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             
             String[] customArgs = CustomLoader.getCustomLoaderArgs(args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
+            return;
             
         }else{
             success = indexador.executar();
