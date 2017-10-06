@@ -1,3 +1,6 @@
+06/10/2017: IPED-3.13.2
+- Correção de ClassCastException na detecção de nudez após alterar ClassLoader (3.13.1)
+
 04/10/2017: IPED-3.13.1
 - Compatibilização com java 9 (e alerta para novas versões do java)
 - WhatsAppParser: trata vCards com fotos e mimetypes com sufixos (PCF Pfeifer)
