@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
@@ -87,6 +86,7 @@ public class Configuration {
   public static boolean robustImageReading = false;
   public static File optionalJarDir;
   public static File tskJarFile;
+  public static String loaddbPathWin;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -418,10 +418,9 @@ public class Configuration {
       if(System.getProperty("os.arch").contains("64"))
     	  arch = "x64";
       
-      String loaddbPath = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb";
-      SleuthkitReader.setTskPath(loaddbPath);
+      loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb";
 
-      File nativelibs = new File(loaddbPath).getParentFile().getParentFile();
+      File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
       nativelibs = new File(nativelibs, arch);
       
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
