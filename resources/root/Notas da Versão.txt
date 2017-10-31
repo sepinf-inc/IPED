@@ -1,3 +1,8 @@
+31/10/2017: IPED-3.13.3
+- Corrige NullPointer que impedia a descompactação do LibreOffice em novas máquinas (3.13-final)
+- Corrige carregamento do tsk_datamodel.jar em sistemas Linux (3.13.1)
+- Corrige erro ao importar base de hashes NSRL (3.12.x)
+
 06/10/2017: IPED-3.13.2
 - Correção de ClassCastException na detecção de nudez após alterar ClassLoader (3.13.1)
 
