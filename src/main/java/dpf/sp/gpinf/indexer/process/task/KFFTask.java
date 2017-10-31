@@ -102,8 +102,6 @@ public class KFFTask extends AbstractTask {
       excluded = 0;
 
       File kffDb = new File(kffDbPath.trim());
-      if(!kffDb.exists())
-    	  throw new IPEDException("Caminho para base KFF inexistente: " + kffDb.getAbsolutePath());
     	  
       try {
         db = DBMaker.newFileDB(kffDb)
@@ -155,6 +153,9 @@ public class KFFTask extends AbstractTask {
   }
 
   public void importKFF(File kffDir) throws IOException {
+      
+    if(!taskEnabled)
+        throw new IPEDException("Habilite " + ENABLE_PARAM + " em IPEDConfig.txt");
 
     File NSRLProd = new File(kffDir, "NSRLProd.txt");
     BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));
