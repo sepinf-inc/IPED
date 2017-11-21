@@ -150,11 +150,6 @@ public class IndexItem {
   }
 
   public static void saveMetadataTypes(File confDir) throws IOException {
-    for (String key : newtypesMap.keySet()) {
-      if (!typesMap.containsKey(key)) {
-        typesMap.put(key, newtypesMap.get(key));
-      }
-    }
     File metadataTypesFile = new File(confDir, attrTypesFilename);
     UTF8Properties props = new UTF8Properties();
     for (Entry<String, Class> e : typesMap.entrySet()) {
@@ -486,6 +481,7 @@ public class IndexItem {
             oValue = Double.valueOf(value);
             if (type == null) {
               newtypesMap.put(key, Double.class);
+              typesMap.put(key, Double.class);
             }
           } else if (type.equals(Integer.class)) {
             oValue = Integer.valueOf(value);
@@ -496,7 +492,7 @@ public class IndexItem {
           }
 
         } catch (NumberFormatException e) {
-          if (type == null) {
+          if (newtypesMap.containsKey(key)) {
             typesMap.put(key, String.class);
           }
         }
