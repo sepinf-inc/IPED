@@ -58,6 +58,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -143,6 +144,8 @@ public class IndexItem {
     ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
     ignoredMetadata.add("File Name");
     ignoredMetadata.add("File Size");
+    //ocrCharCount is already copied to an extra attribute
+    ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
   }
 
   public static Map<String, Class> getMetadataTypes() {
