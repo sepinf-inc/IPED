@@ -2602,7 +2602,6 @@ nbPage = java.lang.Integer
 nbPara = java.lang.Integer
 nbTab = java.lang.Integer
 nbWord = java.lang.Integer
-ocrCharCount = java.lang.Integer
 office:Application-Name = java.lang.String
 office:Application-Version = java.lang.Float
 office:Category = java.lang.String
