@@ -11,8 +11,6 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.IndexFiles;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,13 +23,13 @@ public final class CustomLoader {
     private CustomLoader() {}
     
     public static boolean isFromCustomLoader(String[] args) {
-        return args.length > 0 && args[args.length - 1].equals("--customLoader");
+        return args != null && args.length > 0 && args[args.length - 1].equals("--customLoader");
     }
     
-    public static String[] getCustomLoaderArgs(String[] args, File logFile) {
+    public static String[] getCustomLoaderArgs(String mainClassName, String[] args, File logFile) {
         String[] newArgs = new String[args.length + 3];
         System.arraycopy(args, 0, newArgs, 1, args.length);
-        newArgs[0] = IndexFiles.class.getName();
+        newArgs[0] = mainClassName;
         newArgs[newArgs.length - 2] = logFile.getAbsolutePath();
         newArgs[newArgs.length - 1] = "--customLoader";
         return newArgs;

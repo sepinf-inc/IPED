@@ -2,18 +2,31 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.LogConfiguration;
+import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.util.CustomLoader;
 
 public class AppMain {
 	
 	private static final String appLogFileName = "IPED-SearchApp.log";
 	private static final int MIN_JAVA_VER = 8;
 	private static final int MAX_JAVA_VER = 9;
+	
+	File casePath;
+	//File casePath = new File("E:\\1-pchp-3.13-blind");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -54,6 +67,33 @@ public class AppMain {
 	}
 	
 	private void start(String[] args) {	
+		
+		casePath = detectCasePath();
+		
+		start(casePath, null, args);
+	}
+	
+	private File detectCasePath() {
+		URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
+		File jarFile = null;
+		try {
+			if(url.toURI().getAuthority() == null)
+				  jarFile = new File(url.toURI());
+			  else
+				  jarFile = new File(url.toURI().getSchemeSpecificPart());
+			
+			return jarFile.getParentFile().getParentFile().getParentFile();
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	private void loadArgs(String[] args) {
+		if(args == null)
+			return;
+		
 		for(int i = 0; i < args.length; i++){
 			if(args[i].equals("--nologfile"))
 				  nolog = true;
@@ -63,32 +103,24 @@ public class AppMain {
 					
 				  if(!casesPathFile.exists()){
 					  System.out.println("Arquivo de casos inexistente: " + args[1]);
-					  return;
+					  System.exit(1);
 				  }
 			}
 		}
-		start(null, null);
 	}
 		  
-	public void start(File casePath, Manager processingManager) {	
+	public void start(File casePath, Manager processingManager, String[] args) {
 		
-		  URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
 		  try {
-			  File jarFile;
-			  if(url.toURI().getAuthority() == null)
-				  jarFile = new File(url.toURI());
-			  else
-				  jarFile = new File(url.toURI().getSchemeSpecificPart());
+			  boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
+			  if(fromCustomLoader)
+			      args = CustomLoader.clearCustomLoaderArgs(args);
 			  
-			  //Caso para teste
-		      //jarFile = new File("E:\\1-pchp-3.13-blind/indexador/lib/iped-search-app.jar");
+			  loadArgs(args);
 			  
-		      if(casePath != null)
-				  jarFile = new File(casePath, "indexador/lib/iped-search-app.jar");
-			  
-			  File libDir = jarFile.getParentFile();
+			  File libDir = new File(new File(casePath, "indexador"), "lib");
 		      if(casesPathFile == null)
-		    	  casesPathFile = libDir.getParentFile().getParentFile();
+		    	  casesPathFile = casePath;
 		      
 		      File logParent = casesPathFile;
 		      if(isMultiCase && casesPathFile.isFile())
@@ -96,16 +128,36 @@ public class AppMain {
 		      
 		      File logFile = new File(logParent, appLogFileName).getCanonicalFile();
 		      LogConfiguration logConfiguration = null;
+		      
 		      if(processingManager == null){
 		    	  logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
-		    	  logConfiguration.configureLogParameters(nolog, true);
+		    	  logConfiguration.configureLogParameters(nolog, fromCustomLoader);
+		    	  
+		    	  Logger LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+			      if(!fromCustomLoader)
+			    	  LOGGER.info(Versao.APP_NAME);
+			      
+			      Configuration.getConfiguration(libDir.getParentFile().getAbsolutePath());
 		      }
-			  
-		      App.get().getSearchParams().codePath = libDir.getAbsolutePath();
-			  App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-			  
-			  InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
-			  init.execute();
+		      
+		      if(!fromCustomLoader && processingManager == null) {
+		            List<File> jars = new ArrayList<File>();
+		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
+		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
+		            jars.add(Configuration.tskJarFile);
+		            
+		            String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
+		            
+		            CustomLoader.run(customArgs, jars);
+		            return;
+		            
+		        }else{
+		        	App.get().getSearchParams().codePath = libDir.getAbsolutePath();
+					App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
+					  
+					InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
+					init.execute();
+		        }
 			  
 		  } catch (Exception e) {
 			e.printStackTrace();

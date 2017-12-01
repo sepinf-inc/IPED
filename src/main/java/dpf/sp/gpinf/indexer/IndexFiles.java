@@ -261,10 +261,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         
         if(!fromCustomLoader) {
             List<File> jars = new ArrayList<File>();
-            jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
+            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
+            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
             jars.add(Configuration.tskJarFile);
             
-            String[] customArgs = CustomLoader.getCustomLoaderArgs(args, indexador.logFile);
+            String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
             return;
             

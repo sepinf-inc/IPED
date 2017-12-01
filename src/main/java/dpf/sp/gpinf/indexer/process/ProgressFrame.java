@@ -458,7 +458,7 @@ public void actionPerformed(ActionEvent e) {
 	if(e.getSource().equals(openApp)){
 		if(!App.get().isVisible()){
 			JOptionPane.showMessageDialog(this, "A árvore de diretórios só estará completa ao fim do processamento!");
-			new AppMain().start(workers[0].output.getParentFile(), workers[0].manager);
+			new AppMain().start(workers[0].output.getParentFile(), workers[0].manager, null);
 		}else
 			JOptionPane.showMessageDialog(this, "O aplicativo de análise já está aberto!");
 	}
