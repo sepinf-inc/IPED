@@ -385,15 +385,19 @@ public class VideoThumbTask extends AbstractTask {
         mainTmpFile.delete();
       }
 
-      //Atualiza atributo HasThumb do item
-      evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-      saveMetadata(r, evidence.getMetadata());
+      if (r != null) {
+    	  //Atualiza atributo HasThumb do item
+          evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
+          saveMetadata(r, evidence.getMetadata());
 
-      //Guarda resultado do processamento
-      synchronized (processedVideos) {
-        processedVideos.put(evidence.getHash(), r);
-        processedVideos.notifyAll();
-      }
+          //Guarda resultado do processamento
+          synchronized (processedVideos) {
+            processedVideos.put(evidence.getHash(), r);
+            processedVideos.notifyAll();
+          }
+      }else
+    	  evidence.setExtraAttribute(HAS_THUMB, false);
+      
     }
   }
   
