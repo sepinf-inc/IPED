@@ -452,7 +452,11 @@ public class IPEDSource implements Closeable{
 	}
 
 	public int getTextSize(int id) {
-		return textSizes[id];
+		if(id < textSizes.length)
+			return textSizes[id];
+		else
+			//we currently save text size at the end of processing, --append enters here
+			return 0;
 	}
 	
 	boolean isSplited(int id){
