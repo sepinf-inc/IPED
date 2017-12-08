@@ -12,7 +12,7 @@ import dpf.sp.gpinf.indexer.util.SearchStateFilter;
 
 public class MarcadoresController {
 	
-	public static final String HISTORY_DIV = "-----------------------Histórico-----------------------";
+	public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 	
 	private static MarcadoresController instance;
 	
@@ -73,7 +73,7 @@ public class MarcadoresController {
 					App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
 					App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
 				}
-				App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " + App.get().appCase.getTotalItens());
+				App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " + App.get().appCase.getTotalItens()); //$NON-NLS-1$
 				App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
 				App.get().bookmarksListener.updateModelAndSelection();
 				GerenciadorMarcadores.updateCounters();
@@ -91,11 +91,11 @@ public class MarcadoresController {
 				App.get().appCase.getMultiMarcadores().loadState(file);
 				atualizarGUIandHistory();
 				GerenciadorMarcadores.get().updateList();
-				JOptionPane.showMessageDialog(App.get(), "Marcadores carregados com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), Messages.getString("BookmarksController.LoadSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 
 			} catch (Exception e1) {
 				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao carregar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadError"), Messages.getString("BookmarksController.LoadError.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 	}
@@ -127,11 +127,11 @@ public class MarcadoresController {
 
 			try {
 				App.get().appCase.getMultiMarcadores().saveState(file);
-				JOptionPane.showMessageDialog(App.get(), "Marcadores salvos com sucesso", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.SaveSuccess"), Messages.getString("BookmarksController.SaveSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 
 			} catch (IOException e1) {
 				e1.printStackTrace();
-				JOptionPane.showMessageDialog(App.get(), "Erro ao salvar marcadores!", "Erro", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.SaveError"), Messages.getString("BookmarksController.SaveError.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 
 		}

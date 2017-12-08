@@ -75,7 +75,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			searcher.setQuery(getQueryWithUIFilter());
 			
 		} catch (ParseException | QueryNodeException e) {
-			JOptionPane.showMessageDialog(App.get(), "Erro de sintaxe de pesquisa: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(App.get(), Messages.getString("UISearcher.Error.Msg") + e.getMessage(), Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 			//e.printStackTrace();
 		}
 	}
@@ -161,7 +161,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 						allItemsCache = new SoftReference(result.clone());
 				}
 
-				String filtro = "";
+				String filtro = ""; //$NON-NLS-1$
 				if(App.get().filtro.getSelectedItem() != null)
 					filtro = App.get().filtro.getSelectedItem().toString();
 				
@@ -268,7 +268,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
   @Override
 	public boolean doCancel(boolean mayInterruptIfRunning) {
 		
-		LOGGER.error("Pesquisa cancelada!");
+		LOGGER.error(Messages.getString("UISearcher.Canceled")); //$NON-NLS-1$
 		searcher.cancel();
 		try {
 			App.get().appCase.reopen();

@@ -21,7 +21,7 @@ import dpf.sp.gpinf.indexer.util.CustomLoader;
 
 public class AppMain {
 	
-	private static final String appLogFileName = "IPED-SearchApp.log";
+	private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 	private static final int MIN_JAVA_VER = 8;
 	private static final int MAX_JAVA_VER = 9;
 	
@@ -43,21 +43,21 @@ public class AppMain {
             SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
-                      String versionStr = System.getProperty("java.version");
-                      if(versionStr.startsWith("1."))
+                      String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
+                      if(versionStr.startsWith("1.")) //$NON-NLS-1$
                           versionStr = versionStr.substring(2, 3);
                       int version = Integer.valueOf(versionStr);
                       
                       if(version < MIN_JAVA_VER){
                           JOptionPane.showMessageDialog(App.get(), 
-                              "É necessário atualizar o Java para a versão " + MIN_JAVA_VER + " ou superior!", 
-                              "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
+                              Messages.getString("AppMain.javaVerError.1") + MIN_JAVA_VER + Messages.getString("AppMain.javaVerError.2"),  //$NON-NLS-1$ //$NON-NLS-2$
+                              Messages.getString("AppMain.error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
                           System.exit(1);
                       }
                       if(version > MAX_JAVA_VER){
                           JOptionPane.showMessageDialog(App.get(), 
-                              "Java versão " + version + " não testado, podem ocorrer erros inesperados!", 
-                              "Alerta na inicialização", JOptionPane.WARNING_MESSAGE);
+                              Messages.getString("AppMain.javaVerWarn.1") + version + Messages.getString("AppMain.javaVerWarn.2"),  //$NON-NLS-1$ //$NON-NLS-2$
+                              Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                       }
                   }
               });
@@ -95,14 +95,14 @@ public class AppMain {
 			return;
 		
 		for(int i = 0; i < args.length; i++){
-			if(args[i].equals("--nologfile"))
+			if(args[i].equals("--nologfile")) //$NON-NLS-1$
 				  nolog = true;
-			if(args[i].equals("-multicases")){
+			if(args[i].equals("-multicases")){ //$NON-NLS-1$
 				  isMultiCase = true;
 				  casesPathFile = new File(args[i + 1]).getAbsoluteFile();
 					
 				  if(!casesPathFile.exists()){
-					  System.out.println("Arquivo de casos inexistente: " + args[1]);
+					  System.out.println(Messages.getString("AppMain.NoCasesFile") + args[1]); //$NON-NLS-1$
 					  System.exit(1);
 				  }
 			}
@@ -118,7 +118,7 @@ public class AppMain {
 			  
 			  loadArgs(args);
 			  
-			  File libDir = new File(new File(casePath, "indexador"), "lib");
+			  File libDir = new File(new File(casePath, "indexador"), "lib"); //$NON-NLS-1$ //$NON-NLS-2$
 		      if(casesPathFile == null)
 		    	  casesPathFile = casePath;
 		      

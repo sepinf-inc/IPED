@@ -49,12 +49,12 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
 
-    private static final File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat");
+    private static final File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat"); //$NON-NLS-1$ //$NON-NLS-2$
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
-    public static final String[] groupNames = {"Básicas", "Avançadas", "Email", "Audio", "Image", "Video", 
-                                                "PDF", "Office", "HTML", "Regex", "Language", "Entidades Mencionadas", "Outras"};
+    public static final String[] groupNames = {Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Email"), Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"),  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                                                Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.Other")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
 	
 	private static final String[] defaultFields =
 		{ 
@@ -181,10 +181,10 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private ColumnsManager(){
 		
 		dialog.setBounds(new Rectangle(400, 400));
-		dialog.setTitle("Colunas visíveis");
+		dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
 		dialog.setAlwaysOnTop(true);
 		
-		JLabel label = new JLabel("Exibir colunas:");
+		JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 		
 		listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
@@ -219,7 +219,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private void loadSavedCols(){
 		boolean lastColsOk = false;
 		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-		caseCols = new File(moduleDir, "visibleCols.dat");
+		caseCols = new File(moduleDir, "visibleCols.dat"); //$NON-NLS-1$
 		File cols = caseCols;
 		if(!cols.exists())
 			cols = globalCols;
@@ -251,7 +251,7 @@ public class ColumnsManager implements ActionListener, Serializable{
             }
 		}
 		if(!lastColsOk){
-			LOGGER.info("Loading default columns");
+			LOGGER.info("Loading default columns"); //$NON-NLS-1$
 		    for(String col : defaultFields)
 		        loadedFields.add(col);
 		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();

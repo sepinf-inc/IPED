@@ -23,10 +23,10 @@ public class ExternalFileOpen {
 	          } catch (Exception e) {
 	            // e.printStackTrace();
 	            try {
-	              if (System.getProperty("os.name").startsWith("Windows")) {
-	                Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""});
+	              if (System.getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+	                Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""}); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	              } else {
-	                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()});
+	                Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()}); //$NON-NLS-1$
 	              }
 
 	            } catch (Exception e2) {

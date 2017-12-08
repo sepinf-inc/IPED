@@ -36,7 +36,7 @@ public class TextParserListener implements PropertyChangeListener {
 		// if(progressMonitor.isCanceled())
 		// this.cancel(false);
 
-		if ("progress" == evt.getPropertyName()) {
+		if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 					fileParser.getProgressMonitor().setProgress((Long) evt.getNewValue());
@@ -45,10 +45,10 @@ public class TextParserListener implements PropertyChangeListener {
 
 		}
 
-		if ("hits".equals(evt.getPropertyName())) {
+		if ("hits".equals(evt.getPropertyName())) { //$NON-NLS-1$
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					fileParser.getProgressMonitor().setNote("Encontradas " + evt.getNewValue() + " ocorrências");
+					fileParser.getProgressMonitor().setNote(Messages.getString("TextParserListener.Found") + evt.getNewValue() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 			});
 
@@ -59,7 +59,7 @@ public class TextParserListener implements PropertyChangeListener {
 				} catch (Exception e) {
 				}
 
-			App.get().tabbedHits.setTitleAt(0, fileParser.getHits().size() + " Ocorrências");
+			App.get().tabbedHits.setTitleAt(0, fileParser.getHits().size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
 
 		}
 

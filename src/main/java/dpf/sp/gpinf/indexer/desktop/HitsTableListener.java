@@ -37,7 +37,7 @@ public class HitsTableListener implements ListSelectionListener {
   public HitsTableListener(Font font) {
     resizer.setFont(font);
     resizer.setBorder(BorderFactory.createEmptyBorder());
-    resizer.setContentType("text/html");
+    resizer.setContentType("text/html"); //$NON-NLS-1$
   }
 
   private int getWidth(String html) {

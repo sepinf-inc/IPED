@@ -67,7 +67,7 @@ public class AutoCompletarColunas {
                                     if (lastIdx >= l.size()) lastIdx = 0;
                                     else if (lastIdx < 0) lastIdx = l.size() - 1;
                                 }
-                                editor.setText(editor.getText().substring(0, pos) + addEscape(l.get(lastIdx)) + ":");
+                                editor.setText(editor.getText().substring(0, pos) + addEscape(l.get(lastIdx)) + ":"); //$NON-NLS-1$
                                 editor.setCaretPosition(editor.getText().length());
                             }
                         }

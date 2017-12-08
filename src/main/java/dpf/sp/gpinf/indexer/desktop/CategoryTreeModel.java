@@ -20,8 +20,8 @@ import javax.swing.tree.TreePath;
 
 public class CategoryTreeModel implements TreeModel {
 
-  public static String rootName = "Categorias";
-  private static String CONF_FILE = "conf/CategoryHierarchy.txt";
+  public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
+  private static String CONF_FILE = "conf/CategoryHierarchy.txt"; //$NON-NLS-1$
 
   public Category root;
   
@@ -86,13 +86,13 @@ public class CategoryTreeModel implements TreeModel {
   
   private String upperCaseChars(String cat){
 	  StringBuilder str = new StringBuilder();
-	  for(String s : cat.split(" "))
+	  for(String s : cat.split(" ")) //$NON-NLS-1$
 		  if(s.length() == 3)
-			  str.append(s.toUpperCase() + " ");
+			  str.append(s.toUpperCase() + " "); //$NON-NLS-1$
 		  else if(s.length() > 3)
-			  str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " ");
+			  str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " "); //$NON-NLS-1$
 		  else
-			  str.append(s + " ");
+			  str.append(s + " "); //$NON-NLS-1$
 	  return str.toString().trim();
   }
 
@@ -103,19 +103,19 @@ public class CategoryTreeModel implements TreeModel {
 	ArrayList<Category> categoryList = getLeafCategories(root);
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
-        new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8"));
+        new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8")); //$NON-NLS-1$
 
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
-      if (line.startsWith("#")) {
+      if (line.startsWith("#")) { //$NON-NLS-1$
         continue;
       }
-      String[] keyValuePair = line.split("=");
+      String[] keyValuePair = line.split("="); //$NON-NLS-1$
       if (keyValuePair.length == 2) {
     	Category category = new Category(keyValuePair[0].trim(), root);
     	category = tryAddAndGet(categoryList, category);
         String subcats = keyValuePair[1].trim();
-        for (String subcat : subcats.split(";")) {
+        for (String subcat : subcats.split(";")) { //$NON-NLS-1$
           Category sub = new Category(subcat.trim(), category);
           Category cat = tryAddAndGet(categoryList, sub);
           cat.parent = category;

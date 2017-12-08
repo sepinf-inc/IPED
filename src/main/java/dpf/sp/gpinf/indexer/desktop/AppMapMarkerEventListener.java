@@ -18,7 +18,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         MultiSearchResult results = App.get().getResults();
         for (int i = 0; i < results.getLength(); i++) {
         	ItemId item = App.get().getResults().getItem(i);
-			String gid = item.getSourceId() + "-" + item.getId();
+			String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
         	if(gid.equals(mid)){
         		pos = i;
         		break;

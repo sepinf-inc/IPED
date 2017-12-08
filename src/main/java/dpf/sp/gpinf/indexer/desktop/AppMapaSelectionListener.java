@@ -22,7 +22,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
 
         for (int i = 0; i < App.get().getResults().getLength(); i++) {
 			ItemId item = App.get().getResults().getItem(i);
-			String gid = item.getSourceId() + "-" + item.getId();
+			String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
 			
 			if(Arrays.binarySearch(mids, gid) >= 0){
     	        int row = t.convertRowIndexToView(i);

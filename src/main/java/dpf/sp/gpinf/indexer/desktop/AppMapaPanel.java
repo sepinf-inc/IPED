@@ -56,7 +56,7 @@ public class AppMapaPanel extends JPanel {
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
 						ItemId item = app.getResults().getItem(i);
-						String gid = item.getSourceId() + "-" + item.getId();
+						String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
 			        	selecoes.put(gid, selected);
 					}
 					browserCanvas.enviaSelecoes(selecoes);
@@ -91,7 +91,7 @@ public class AppMapaPanel extends JPanel {
 					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
 				}
 
-			    String kml = "";
+			    String kml = ""; //$NON-NLS-1$
 			    try {
 			    	kml = KMLResult.getResultsKML(app);
 			    	browserCanvas.setKML(kml);

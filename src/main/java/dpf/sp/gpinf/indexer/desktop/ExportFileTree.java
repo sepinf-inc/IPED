@@ -80,9 +80,9 @@ public class ExportFileTree extends CancelableWorker {
         id = doc.get(IndexItem.ID);
       }
 
-      String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id;
+      String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-      textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")";
+      textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
@@ -196,7 +196,7 @@ public class ExportFileTree extends CancelableWorker {
 
     if (!isParent) {
       progressDialog.setProgress(++progress);
-      progressDialog.setNote("Copiados " + progress + " de " + total);
+      progressDialog.setNote(Messages.getString("ExportFileTree.Copied") + progress + Messages.getString("ExportFileTree.from") + total); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     return dst;
@@ -212,16 +212,16 @@ public class ExportFileTree extends CancelableWorker {
             zaos = new ZipArchiveOutputStream(baseDir);
         
         item = App.get().appCase.getItemByLuceneID(docId);
-        String dstName = item.getName().replace("/", "-").trim();
+        String dstName = item.getName().replace("/", "-").trim(); //$NON-NLS-1$ //$NON-NLS-2$
         if(dstName.isEmpty())
-            dstName = "-";
+            dstName = "-"; //$NON-NLS-1$
         
         dst = dstName;
         if(subdir != baseDir)
             dst = subdir + dstName;
         
         if (item.isDir() || isParent)
-            dst += "/";
+            dst += "/"; //$NON-NLS-1$
         
         ZipArchiveEntry entry = new ZipArchiveEntry(dst);
         
@@ -253,7 +253,7 @@ public class ExportFileTree extends CancelableWorker {
 
       if (!isParent) {
         progressDialog.setProgress(++progress);
-        progressDialog.setNote("Copiados " + progress + " de " + total);
+        progressDialog.setNote(Messages.getString("ExportFileTree.Copied") + progress + Messages.getString("ExportFileTree.from") + total); //$NON-NLS-1$ //$NON-NLS-2$
       }
 
       return dst;
@@ -293,7 +293,7 @@ public class ExportFileTree extends CancelableWorker {
 
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
     if (baseDocId == root.docId) {
-      JOptionPane.showMessageDialog(null, "Selecione outro nó base diferente de " + root.toString());
+      JOptionPane.showMessageDialog(null, Messages.getString("ExportFileTree.SelectOtherNode") + root.toString()); //$NON-NLS-1$
       return;
     }
     try {
@@ -306,8 +306,8 @@ public class ExportFileTree extends CancelableWorker {
       
       if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
         File baseDir = fileChooser.getSelectedFile();
-        if(toZip && !baseDir.getName().toLowerCase().endsWith(".zip"))
-            baseDir = new File(baseDir.getAbsolutePath() + ".zip");
+        if(toZip && !baseDir.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
+            baseDir = new File(baseDir.getAbsolutePath() + ".zip"); //$NON-NLS-1$
         (new ExportFileTree(baseDir, baseDocId, onlyChecked, toZip)).execute();
       }
     } catch (Exception e) {

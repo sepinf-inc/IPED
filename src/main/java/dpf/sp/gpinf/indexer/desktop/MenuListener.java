@@ -49,7 +49,7 @@ public class MenuListener implements ActionListener {
   JFileChooser fileChooser = new JFileChooser();
   FileFilter defaultFilter = fileChooser.getFileFilter(), csvFilter = new Filtro();
   MenuClass menu;
-  static String CSV = ".csv";
+  static String CSV = ".csv"; //$NON-NLS-1$
 
   public MenuListener(MenuClass menu) {
     this.menu = menu;
@@ -73,7 +73,7 @@ public class MenuListener implements ActionListener {
 
     @Override
     public String getDescription() {
-      return "Comma Separeted Values (" + CSV + ")";
+      return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
   }
@@ -231,7 +231,7 @@ public class MenuListener implements ActionListener {
         
         TreePath[] paths = App.get().tree.getSelectionPaths();
         if (paths == null || paths.length != 1) {
-          JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
+          JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
         } else {
           Node treeNode = (Node) paths[0].getLastPathComponent();
           boolean onlyChecked = e.getSource() != menu.exportTree;
@@ -260,14 +260,14 @@ public class MenuListener implements ActionListener {
 
       JDialog dialog = new JDialog();
       dialog.setModal(true);
-      dialog.setTitle("Galeria");
+      dialog.setTitle(Messages.getString("MenuListener.Gallery")); //$NON-NLS-1$
       dialog.setBounds(0, 0, 180, 140);
       SpinnerNumberModel model = new SpinnerNumberModel(App.get().galleryModel.colCount, 1, MAX_GALLERY_COLS, 1);
       model.setValue(App.get().galleryModel.colCount);
 
-      JLabel msg = new JLabel("Colunas:");
+      JLabel msg = new JLabel(Messages.getString("MenuListener.Cols")); //$NON-NLS-1$
       JSpinner spinner = new JSpinner(model);
-      JButton button = new JButton("OK");
+      JButton button = new JButton(Messages.getString("MenuListener.OK")); //$NON-NLS-1$
 
       msg.setBounds(20, 15, 50, 20);
       spinner.setBounds(80, 10, 50, 30);
@@ -311,7 +311,7 @@ public class MenuListener implements ActionListener {
     } else if(e.getSource() == menu.similarDocs){
         int selIdx = App.get().resultsTable.getSelectedRow();
         if (selIdx != -1) {
-      	  int percent = Integer.parseInt(JOptionPane.showInputDialog("Porcentual de similaridade (0 a 100)", 70));
+      	  int percent = Integer.parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
       	  ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
       	  
       	  Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent);

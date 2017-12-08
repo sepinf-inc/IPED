@@ -58,8 +58,8 @@ public class AppListener implements ActionListener, MouseListener {
       App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
     }
     App.get().resultsTable.getRowSorter().setSortKeys(null);
-    App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
-    App.get().status.setText(" ");
+    App.get().tabbedHits.setTitleAt(0, Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
+    App.get().status.setText(" "); //$NON-NLS-1$
 
     App.get().compositeViewer.clear();
 
@@ -71,13 +71,13 @@ public class AppListener implements ActionListener, MouseListener {
       App.get().tabbedHits.removeTabAt(1);
     }
 
-    String texto = "";
+    String texto = ""; //$NON-NLS-1$
     if (App.get().termo.getSelectedItem() != null) {
       texto = App.get().termo.getSelectedItem().toString();
       if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
-        texto = "";
+        texto = ""; //$NON-NLS-1$
         clearSearchBox = true;
-        App.get().termo.setSelectedItem("");
+        App.get().termo.setSelectedItem(""); //$NON-NLS-1$
       }
       texto = texto.trim();
       MarcadoresController.get().addToRecentSearches(texto);
@@ -106,7 +106,7 @@ public class AppListener implements ActionListener, MouseListener {
   @Override
   public void actionPerformed(ActionEvent evt) {
 
-    if (!clearSearchBox && (evt.getActionCommand().equals("comboBoxChanged")) &&
+    if (!clearSearchBox && (evt.getActionCommand().equals("comboBoxChanged")) && //$NON-NLS-1$
     	!App.get().filterManager.isUpdatingFilter() && !MarcadoresController.get().updatingHistory) {
 
       int filterIndex = App.get().filtro.getSelectedIndex(); 
@@ -131,7 +131,7 @@ public class AppListener implements ActionListener, MouseListener {
 
     if (evt.getSource() == App.get().checkBox) {
       if (App.get().appCase.getMultiMarcadores().getTotalSelected() > 0) {
-        int result = JOptionPane.showConfirmDialog(App.get(), "Deseja realmente desmarcar todos os itens?", "Confirmar", JOptionPane.YES_NO_OPTION);
+        int result = JOptionPane.showConfirmDialog(App.get(), Messages.getString("AppListener.UncheckAll"), Messages.getString("AppListener.UncheckAll.Title"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$ //$NON-NLS-2$
         if (result == JOptionPane.YES_OPTION) {
           App.get().appCase.getMultiMarcadores().clearSelected();
         }
@@ -177,7 +177,7 @@ public class AppListener implements ActionListener, MouseListener {
     Object termo = App.get().termo.getSelectedItem();
     if (termo != null && termo.equals(App.SEARCH_TOOL_TIP) && App.get().termo.isAncestorOf((Component) evt.getSource())) {
       clearSearchBox = true;
-      App.get().termo.setSelectedItem("");
+      App.get().termo.setSelectedItem(""); //$NON-NLS-1$
     }
 
   }
