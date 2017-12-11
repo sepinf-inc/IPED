@@ -5,7 +5,7 @@ import ag.ion.bion.officelayer.application.ILazyApplicationInfo;
 import ag.ion.bion.officelayer.application.OfficeApplicationException;
 import ag.ion.bion.officelayer.internal.application.ApplicationAssistant;
 import dpf.sp.gpinf.indexer.IFileProcessor;
-
+import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.StreamSource;
@@ -53,7 +53,7 @@ public class ViewerControl implements IViewerControl {
 
   private volatile int result = JOptionPane.NO_OPTION;
 
-  private String pathLO = System.getProperty("user.home") + "/.indexador/libreoffice4";
+  private String pathLO = System.getProperty("user.home") + "/.indexador/libreoffice4"; //$NON-NLS-1$ //$NON-NLS-2$
 
   private LibreOfficeViewer officeViewer = null;
 
@@ -116,17 +116,17 @@ public class ViewerControl implements IViewerControl {
 
         boolean useLO = false;
         String systemLO = null;
-        String compressedLO = params.codePath + "/../tools/libreoffice.zip";
-        final String useLOMsg = "Deseja ativar o visualizador de formatos Office?";
+        String compressedLO = params.codePath + "/../tools/libreoffice.zip"; //$NON-NLS-1$
+        final String useLOMsg = Messages.getString("EnableLibreOffice"); //$NON-NLS-1$
 
-        if (System.getProperty("os.name").startsWith("Linux")) {
+        if (System.getProperty("os.name").startsWith("Linux")) { //$NON-NLS-1$ //$NON-NLS-2$
           try {
-            IApplicationAssistant ass = new ApplicationAssistant(params.codePath + "/../lib/nativeview");
+            IApplicationAssistant ass = new ApplicationAssistant(params.codePath + "/../lib/nativeview"); //$NON-NLS-1$
             ILazyApplicationInfo[] ila = ass.getLocalApplications();
             if (ila.length != 0) {
-              LOGGER.info("Detected LibreOffice {} {}", ila[0].getMajorVersion(), ila[0].getHome());
+              LOGGER.info("Detected LibreOffice {} {}", ila[0].getMajorVersion(), ila[0].getHome()); //$NON-NLS-1$
               if (ila[0].getMajorVersion() != 4 && ila[0].getMajorVersion() != 5) {
-                LOGGER.info("Install LibreOffice 4/5 to enable the Libreoffice viewer!");
+                LOGGER.info("Install LibreOffice 4/5 to enable the Libreoffice viewer!"); //$NON-NLS-1$
               } else {
                 systemLO = ila[0].getHome();
               }
@@ -137,7 +137,7 @@ public class ViewerControl implements IViewerControl {
           }
         }
 
-        if (systemLO != null || (System.getProperty("os.name").startsWith("Windows") && (new File(pathLO).exists() || new File(compressedLO).exists()))) {
+        if (systemLO != null || (System.getProperty("os.name").startsWith("Windows") && (new File(pathLO).exists() || new File(compressedLO).exists()))) { //$NON-NLS-1$ //$NON-NLS-2$
 
           try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -146,7 +146,7 @@ public class ViewerControl implements IViewerControl {
                 result
                     = JOptionPane.showConfirmDialog(
                         params.mainFrame, useLOMsg,
-                        "",
+                        "", //$NON-NLS-1$
                         JOptionPane.YES_NO_OPTION);
               }
             });
@@ -174,7 +174,7 @@ public class ViewerControl implements IViewerControl {
             SwingUtilities.invokeAndWait(new Runnable() {
               @Override
               public void run() {
-                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO);
+                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
                 viewersRepository.addViewer(officeViewer);
               }
             });
@@ -223,22 +223,22 @@ public class ViewerControl implements IViewerControl {
 
   @Override
   public void addViewer(Viewer viewer) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
   }
 
   @Override
   public void initViewers() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
   }
 
   @Override
   public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
   }
 
   @Override
   public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
   }
 
 }
