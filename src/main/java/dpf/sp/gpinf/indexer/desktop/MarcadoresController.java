@@ -8,7 +8,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.util.SearchStateFilter;
 
 public class MarcadoresController {
 	

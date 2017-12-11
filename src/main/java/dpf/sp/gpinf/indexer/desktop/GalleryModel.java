@@ -48,7 +48,6 @@ import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UnsupportedIcon;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryModel extends AbstractTableModel {
