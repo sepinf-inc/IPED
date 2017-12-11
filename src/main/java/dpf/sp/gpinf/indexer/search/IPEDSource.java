@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -70,9 +71,9 @@ public class IPEDSource implements Closeable{
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 	
-	public static final String INDEX_DIR = "index";
-	public static final String MODULE_DIR = "indexador";
-	public static final String SLEUTH_DB = "sleuth.db";
+	public static final String INDEX_DIR = "index"; //$NON-NLS-1$
+	public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
+	public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
 	
 	/** workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia para FS_INFO*/
 	private static List<SleuthkitCase> tskCaseList = new ArrayList<SleuthkitCase>();
@@ -155,15 +156,15 @@ public class IPEDSource implements Closeable{
             
 			
             /**FTK specific, will be removed*/
-			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids");
+			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids"); //$NON-NLS-1$
 			if (viewToRawFile.exists())
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
 			
-			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists();
-			isReport = new File(moduleDir, "data/containsReport.flag").exists();
+			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+			isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 			
 			
-			File textSizesFile = new File(moduleDir, "data/texts.size");
+			File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
 			if(textSizesFile.exists())
 				textSizes = (int[]) Util.readObject(textSizesFile.getAbsolutePath());
 			else
@@ -173,9 +174,9 @@ public class IPEDSource implements Closeable{
 			
 			loadKeywords();
 			
-			IndexItem.loadMetadataTypes(new File(moduleDir, "conf"));
+			IndexItem.loadMetadataTypes(new File(moduleDir, "conf")); //$NON-NLS-1$
 			
-			File extraAttrFile = new File(moduleDir, "data/" + IndexTask.extraAttrFilename);
+			File extraAttrFile = new File(moduleDir, "data/" + IndexTask.extraAttrFilename); //$NON-NLS-1$
 			if(extraAttrFile.exists()){
 				extraAttributes = (Set<String>)Util.readObject(extraAttrFile.getAbsolutePath());
 				EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
@@ -192,7 +193,7 @@ public class IPEDSource implements Closeable{
 	
 	public void populateLuceneIdToIdMap() throws IOException{
 		
-		LOGGER.info("Creating LuceneId to ID mapping...");
+		LOGGER.info("Creating LuceneId to ID mapping..."); //$NON-NLS-1$
 	    ids = new int[reader.maxDoc()];
 	    
 	    NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
@@ -234,7 +235,7 @@ public class IPEDSource implements Closeable{
 		*/
 		
 		// ignora tree nodes
-		IPEDSearcher pesquisa = new IPEDSearcher(this, "");
+		IPEDSearcher pesquisa = new IPEDSearcher(this, ""); //$NON-NLS-1$
 	    try {
 			totalItens = pesquisa.search().getLength();
 			
@@ -262,7 +263,7 @@ public class IPEDSource implements Closeable{
 	private void loadKeywords(){
 		ArrayList<String> words;
 		try {
-			words = Util.loadKeywords(moduleDir.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");
+			words = Util.loadKeywords(moduleDir.getAbsolutePath() + "/palavras-chave.txt", "UTF-8");  //$NON-NLS-1$//$NON-NLS-2$
 		} catch (IOException e) {
 		   	words = new ArrayList<String>();
 		}
@@ -271,7 +272,7 @@ public class IPEDSource implements Closeable{
 	}
 	
 	private void openIndex(File index, IndexWriter iw) throws IOException{
-		LOGGER.info("Openning index " + index.getAbsolutePath());
+		LOGGER.info("Openning index " + index.getAbsolutePath()); //$NON-NLS-1$
 		
 		if(iw == null){
 			Directory directory = FSDirectory.open(index);
@@ -284,7 +285,7 @@ public class IPEDSource implements Closeable{
 		
 		openSearcher();
 		
-		LOGGER.info("Index opened");
+		LOGGER.info("Index opened"); //$NON-NLS-1$
 	}
 	
 	protected void openSearcher(){
@@ -343,7 +344,7 @@ public class IPEDSource implements Closeable{
 	        List<String> paths = imgPaths.get(id);
 	        for(String path : paths){
 	        	if(!new File(path).exists())
-	        		throw new IPEDException("Arquivo de Imagem não encontrado: " + new File(path).getAbsolutePath());
+	        		throw new IPEDException(Messages.getString("IPEDSource.ImageNotFound") + new File(path).getAbsolutePath()); //$NON-NLS-1$
 	        }
 		}
 	}
@@ -356,7 +357,7 @@ public class IPEDSource implements Closeable{
 		  if(sleuthCase == null)
 			  return;
 		  try{
-			  File sleuthFile = new File(sleuthCase.getDbDirPath() + "/" + SLEUTH_DB);
+			  File sleuthFile = new File(sleuthCase.getDbDirPath() + "/" + SLEUTH_DB); //$NON-NLS-1$
 			  Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 		      for (Long id : imgPaths.keySet()) {
 		        List<String> paths = imgPaths.get(id);
@@ -376,7 +377,7 @@ public class IPEDSource implements Closeable{
 		          sleuthCase.setImagePaths(id, newPaths);
 		      }  
 		  }catch(Exception e){
-			  LOGGER.error("Erro ao converter referências para imagens para caminhos relativos");
+			  LOGGER.error("Error converting image references to relative paths"); //$NON-NLS-1$
 		  }
 	  }
 	
@@ -398,7 +399,7 @@ public class IPEDSource implements Closeable{
 	        			File baseFile = sleuthFile;
 		        		while((baseFile = baseFile.getParentFile()) != null){
 		        			File file = new File(path);
-		        			String relPath = "";
+		        			String relPath = ""; //$NON-NLS-1$
 		        			do{
 		        				relPath = File.separator + file.getName() + relPath;
 		        				newPath = baseFile.getAbsolutePath() + relPath;
@@ -416,7 +417,7 @@ public class IPEDSource implements Closeable{
 	        }
 	        if (newPaths.size() > 0) {
 	          if (tmpCase == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
-	            tmpCase = File.createTempFile("sleuthkit-", ".db");
+	            tmpCase = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
 	            tmpCase.deleteOnExit();
 	            sleuthCase.close();
 	            IOUtil.copiaArquivo(sleuthFile, tmpCase);
