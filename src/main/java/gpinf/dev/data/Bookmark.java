@@ -99,6 +99,6 @@ public class Bookmark implements Serializable {
    */
   @Override
   public String toString() {
-    return name + " (" + evidenceFiles.size() + ")";
+    return name + " (" + evidenceFiles.size() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
   }
 }

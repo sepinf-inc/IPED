@@ -5,6 +5,8 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.util.List;
 
+import dpf.sp.gpinf.indexer.Messages;
+
 public class OriginalEmailFileType extends EvidenceFileType {
 
   /**
@@ -14,7 +16,7 @@ public class OriginalEmailFileType extends EvidenceFileType {
 
   @Override
   public String getLongDescr() {
-    return "E-mail de Origem";
+    return Messages.getString("OriginalEmailFileType.ParentEmail"); //$NON-NLS-1$
   }
 
   @Override

@@ -249,7 +249,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     }
     if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
       if (!file.delete()) {
-        LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+        LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
       }
     }
   }
@@ -284,7 +284,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return o nome das categorias do item concatenadas
    */
   public String getCategories() {
-    String names = "";
+    String names = ""; //$NON-NLS-1$
     int i = 0;
     for (String bookmark : categories) {
       names += bookmark;
@@ -377,7 +377,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     if (exportedFile != null) {
       return exportedFile.trim();
     } else {
-      return "";
+      return ""; //$NON-NLS-1$
     }
   }
 
@@ -477,9 +477,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return ids dos itens pai concatenados com espaço
    */
   public String getParentIdsString() {
-    String parents = "";
+    String parents = ""; //$NON-NLS-1$
     for (Integer id : parentIds) {
-      parents += id + " ";
+      parents += id + " "; //$NON-NLS-1$
     }
 
     return parents;
@@ -597,11 +597,11 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       if (tis != null && tis.hasFile()) {
         tmpFile = tis.getFile();
       } else {
-        String ext = ".tmp";
+        String ext = ".tmp"; //$NON-NLS-1$
         if (type != null && !type.toString().isEmpty()) {
-          ext = Util.getValidFilename("." + type.toString());
+          ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
         }
-        final Path path = Files.createTempFile("iped", ext);
+        final Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
         tmpResources.addResource(new Closeable() {
           public void close() throws IOException {
         	  Files.delete(path);
@@ -966,8 +966,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setName(String name) {
     this.name = name;
-    int p = name.lastIndexOf(".");
-    extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase();
+    int p = name.lastIndexOf("."); //$NON-NLS-1$
+    extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
   }
 
   /**
@@ -1092,23 +1092,23 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Arquivo: " + name);
-    sb.append("\n\t\tCaminho: ").append(getPath());
+    sb.append("File: " + name); //$NON-NLS-1$
+    sb.append("\n\t\tPath: ").append(getPath()); //$NON-NLS-1$
     if (type != null) {
-      sb.append("\n\t\t").append("Tipo de Arquivo: ")
+      sb.append("\n\t\t").append("File type: ") //$NON-NLS-1$ //$NON-NLS-2$
           .append(type.getLongDescr());
     }
     if (creationDate != null) {
-      sb.append("\n\t\tData de Criação: ").append(creationDate.toString());
+      sb.append("\n\t\tCreation: ").append(creationDate.toString()); //$NON-NLS-1$
     }
     if (modificationDate != null) {
-      sb.append("\n\t\tData de Modificação: ").append(modificationDate.toString());
+      sb.append("\n\t\tModification: ").append(modificationDate.toString()); //$NON-NLS-1$
     }
     if (accessDate != null) {
-      sb.append("\n\t\tData de Último Acesso: ").append(accessDate.toString());
+      sb.append("\n\t\tLast Accessed: ").append(accessDate.toString()); //$NON-NLS-1$
     }
     if (length != null) {
-      sb.append("\n\t\tTamanho do Arquivo: ").append(length);
+      sb.append("\n\t\tSize: ").append(length); //$NON-NLS-1$
     }
     return sb.toString();
   }

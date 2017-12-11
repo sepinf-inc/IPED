@@ -40,7 +40,7 @@ public class ProcessUtil {
       out.close();
       return ret.toString();
     } catch (IOException e) {
-      System.err.println("Erro executando comando '" + program + "':");
+      System.err.println("Error running program '" + program + "':"); //$NON-NLS-1$ //$NON-NLS-2$
       e.printStackTrace();
     }
     return null;
