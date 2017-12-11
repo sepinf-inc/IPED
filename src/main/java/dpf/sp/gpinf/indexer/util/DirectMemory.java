@@ -12,7 +12,7 @@ public class DirectMemory {
 
   static {
     try {
-      Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe");
+      Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe"); //$NON-NLS-1$
       singleoneInstanceField.setAccessible(true);
       unsafe = (Unsafe) singleoneInstanceField.get(null);
 

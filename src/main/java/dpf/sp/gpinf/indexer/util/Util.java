@@ -47,13 +47,13 @@ public class Util {
       if (bytes[0] == (byte) 0xEF && bytes[1] == (byte) 0xBB && bytes[2] == (byte) 0xBF) {
         bytes[0] = bytes[1] = bytes[2] = 0;
       }
-      String content = new String(bytes, "UTF-8");
+      String content = new String(bytes, "UTF-8"); //$NON-NLS-1$
       return content;
   }
 	
   public static boolean isPhysicalDrive(File file) {
-	return file.getName().toLowerCase().contains("physicaldrive")
-	        || file.getAbsolutePath().toLowerCase().contains("/dev/");
+	return file.getName().toLowerCase().contains("physicaldrive") //$NON-NLS-1$
+	        || file.getAbsolutePath().toLowerCase().contains("/dev/"); //$NON-NLS-1$
   }
 
   public static File getRelativeFile(String basePath, String export) {
@@ -100,10 +100,10 @@ public class Util {
   public static String concat(String filename, int num) {
     int extIndex = filename.lastIndexOf('.');
     if (extIndex == -1) {
-      return filename + " (" + num + ")";
+      return filename + " (" + num + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     } else {
       String ext = filename.substring(extIndex);
-      return filename.substring(0, filename.length() - ext.length()) + " (" + num + ")" + ext;
+      return filename.substring(0, filename.length() - ext.length()) + " (" + num + ")" + ext; //$NON-NLS-1$ //$NON-NLS-2$
     }
   }
   
@@ -118,21 +118,21 @@ public class Util {
   public static String getValidFilename(String filename) {
     filename = filename.trim();
 
-    String invalidChars = "\\/:;*?\"<>|";
+    String invalidChars = "\\/:;*?\"<>|"; //$NON-NLS-1$
     char[] chars = filename.toCharArray();
     for (int i = 0; i < chars.length; i++) {
       if ((invalidChars.indexOf(chars[i]) >= 0) || (chars[i] < '\u0020')) {
-        filename = filename.replace(chars[i] + "", "");
+        filename = filename.replace(chars[i] + "", ""); //$NON-NLS-1$ //$NON-NLS-2$
       }
     }
 
-    String[] invalidNames = {"CON", "PRN", "AUX", "NUL",
-      "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-      "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"};
+    String[] invalidNames = {"CON", "PRN", "AUX", "NUL", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+      "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+      "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
     for (String name : invalidNames) {
-      if (filename.equalsIgnoreCase(name) || filename.toUpperCase().startsWith(name + ".")) {
-        filename = "1" + filename;
+      if (filename.equalsIgnoreCase(name) || filename.toUpperCase().startsWith(name + ".")) { //$NON-NLS-1$
+        filename = "1" + filename; //$NON-NLS-1$
       }
     }
 
@@ -169,8 +169,8 @@ public class Util {
         changeEncoding(subFile);
       }
     } else {
-      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"));
-      String contents = "";
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252")); //$NON-NLS-1$
+      String contents = ""; //$NON-NLS-1$
       char[] buf = new char[(int) file.length()];
       int count;
       while ((count = reader.read(buf)) != -1) {
@@ -178,7 +178,7 @@ public class Util {
       }
 
       reader.close();
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
       writer.write(contents);
       writer.close();
     }
@@ -216,7 +216,7 @@ public class Util {
     file.createNewFile();
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding));
     for (int i = 0; i < keywords.size(); i++) {
-      writer.write(keywords.get(i) + "\r\n");
+      writer.write(keywords.get(i) + "\r\n"); //$NON-NLS-1$
     }
     writer.close();
   }
@@ -244,7 +244,7 @@ public class Util {
     file.createNewFile();
     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding));
     for (String keyword : keywords) {
-      writer.write(keyword + "\r\n");
+      writer.write(keyword + "\r\n"); //$NON-NLS-1$
     }
     writer.close();
   }
@@ -309,12 +309,12 @@ public class Util {
    * compressor.deflate(buf); stream.write(buf, 0, count); } stream.close(); }
    */
   public static void compactarArquivo(String filePath) throws Exception {
-    File file = new File(filePath + ".compressed");
+    File file = new File(filePath + ".compressed"); //$NON-NLS-1$
     if (file.exists()) {
       return;
     }
     BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(file), 1000000);
-    BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(filePath + ".extracted_text")), 1000000);
+    BufferedInputStream inStream = new BufferedInputStream(new FileInputStream(new File(filePath + ".extracted_text")), 1000000); //$NON-NLS-1$
     Deflater compressor = new Deflater();
     compressor.setLevel(Deflater.BEST_COMPRESSION);
     int bufLen = 1000000;
@@ -346,10 +346,10 @@ public class Util {
    */
   public static void loadNatLibs(File libDir) {
 	  
-	  if (System.getProperty("os.name").startsWith("Windows")) {
+	  if (System.getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 	      LinkedList<File> libList = new LinkedList<File>(); 
 	      for(File file : libDir.listFiles())
-	    	  if(file.getName().endsWith(".dll"))
+	    	  if(file.getName().endsWith(".dll")) //$NON-NLS-1$
 	    		  libList.addFirst(file);
 	      
 	      int fail = 0;
@@ -397,7 +397,7 @@ public class Util {
       return null;
     }
     hash = hash.toUpperCase();
-    File hashDir = new File(baseDir, hash.charAt(0) + "/" + hash.charAt(1));
+    File hashDir = new File(baseDir, hash.charAt(0) + "/" + hash.charAt(1)); //$NON-NLS-1$
     if (hashDir.exists()) {
       for (File file : hashDir.listFiles()) {
         if (file.getName().startsWith(hash)) {

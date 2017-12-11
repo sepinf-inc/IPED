@@ -23,7 +23,7 @@ public final class CustomLoader {
     private CustomLoader() {}
     
     public static boolean isFromCustomLoader(String[] args) {
-        return args != null && args.length > 0 && args[args.length - 1].equals("--customLoader");
+        return args != null && args.length > 0 && args[args.length - 1].equals("--customLoader"); //$NON-NLS-1$
     }
     
     public static String[] getCustomLoaderArgs(String mainClassName, String[] args, File logFile) {
@@ -31,7 +31,7 @@ public final class CustomLoader {
         System.arraycopy(args, 0, newArgs, 1, args.length);
         newArgs[0] = mainClassName;
         newArgs[newArgs.length - 2] = logFile.getAbsolutePath();
-        newArgs[newArgs.length - 1] = "--customLoader";
+        newArgs[newArgs.length - 1] = "--customLoader"; //$NON-NLS-1$
         return newArgs;
     }
     
@@ -60,7 +60,7 @@ public final class CustomLoader {
             ClassLoader cl = getCustomLoader(extensionJars);
             Thread.currentThread().setContextClassLoader(cl);
             Class<?> c = cl.loadClass( className );
-            Method m = c.getMethod( "main", new Class[] { String[].class } );
+            Method m = c.getMethod( "main", new Class[] { String[].class } ); //$NON-NLS-1$
             m.invoke( null, new Object[] { args } );
         }
     }
@@ -70,14 +70,14 @@ public final class CustomLoader {
 
             ArrayList<URL> vec = new ArrayList<URL>();
             
-            String classpath = System.getProperty( "java.class.path" );
+            String classpath = System.getProperty( "java.class.path" ); //$NON-NLS-1$
             addUrls(vec, classpath, File.pathSeparator);
             
             for(File f : extensionJars)
-                if(f != null && f.getName().toLowerCase().endsWith(".jar"))
+                if(f != null && f.getName().toLowerCase().endsWith(".jar")) //$NON-NLS-1$
                     try {
                         vec.add(f.toURI().toURL());
-                        LOGGER.info("Adding to classpath: " + f.getCanonicalPath());
+                        LOGGER.info("Adding to classpath: " + f.getCanonicalPath()); //$NON-NLS-1$
                         
                     } catch (IOException e) {
                         e.printStackTrace();
