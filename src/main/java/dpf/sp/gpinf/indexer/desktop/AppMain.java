@@ -26,7 +26,7 @@ public class AppMain {
 	private static final int MAX_JAVA_VER = 9;
 	
 	File casePath;
-	//File casePath = new File("E:\\1-pchp-3.13-blind");
+	//File casePath = new File("F:\\pedo-3.13.3-test");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -68,7 +68,8 @@ public class AppMain {
 	
 	private void start(String[] args) {	
 		
-		casePath = detectCasePath();
+		if(casePath == null)
+			casePath = detectCasePath();
 		
 		start(casePath, null, args);
 	}
