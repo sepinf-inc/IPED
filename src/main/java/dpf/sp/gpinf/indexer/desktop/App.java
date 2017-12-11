@@ -75,6 +75,7 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;

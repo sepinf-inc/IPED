@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import javax.swing.event.ListSelectionListener;
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
+import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.MapaModelUpdateListener;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 

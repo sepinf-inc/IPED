@@ -1,10 +1,11 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.mt.gpinf.mapas.impl;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MapSelectionListener;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 

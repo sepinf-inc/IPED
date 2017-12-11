@@ -1,10 +1,11 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.event.MouseEvent;
 
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MarkerEventListener;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
