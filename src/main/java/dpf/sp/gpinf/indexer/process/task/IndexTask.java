@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
@@ -178,8 +179,7 @@ public class IndexTask extends BaseCarveTask {
         } while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
 
       }catch(IOException e){
-    	  if(e.getMessage() != null && (e.getMessage().toLowerCase().startsWith("espaço insuficiente no disco") ||
-    	     e.getMessage().toLowerCase().startsWith("no space left on device")))
+    	  if(IOUtil.isDiskFull(e))
     		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
     	  else
     	  	  throw e;
