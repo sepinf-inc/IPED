@@ -238,7 +238,6 @@ public class KFFTask extends AbstractTask {
         } else {
           if (excludeKffIgnorable) {
             evidence.setToIgnore(true);
-            stats.incIgnored();
             synchronized (lock) {
               excluded++;
             }
