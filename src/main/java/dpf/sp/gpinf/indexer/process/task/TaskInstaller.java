@@ -20,12 +20,12 @@ public class TaskInstaller {
 
     tasks.add(new IgnoreHardLinkTask(worker));
     tasks.add(new TempFileTask(worker));
-    tasks.add(new HashTask(worker));
     
     tasks.add(new SignatureTask(worker));
     tasks.add(new SetTypeTask(worker));
     tasks.add(new SetCategoryTask(worker));
     //tarefas que ignoram itens após categorização para incluir categoria de ignorados no csv
+    tasks.add(new HashTask(worker));
     tasks.add(new KFFTask(worker));
     tasks.add(new LedKFFTask(worker));
     tasks.add(new DuplicateTask(worker));
