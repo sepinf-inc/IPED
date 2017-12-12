@@ -220,7 +220,7 @@ public abstract class AbstractTask {
       if (t.getCause() instanceof TikaException && evidence.isCarved()) {
         stats.incCorruptCarveIgnored();
         //System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
-        evidence.setToIgnore(true);
+        evidence.setToIgnore(true, false);
         evidence.setAddToCase(false);
       } else {
         throw t;
