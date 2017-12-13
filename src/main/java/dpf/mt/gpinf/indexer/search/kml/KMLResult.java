@@ -137,7 +137,7 @@ public class KMLResult {
 			  df.setTimeZone(TimeZone.getTimeZone("GMT"));
 			  
 			  if(progress != null){
-				  progress.setNote("Obtendo coordenadas...");
+				  progress.setNote("Obtendo coordenadas" + "...");
 				  progress.setMaximum(results.getLength()); 
 			  }
 			  
@@ -171,7 +171,7 @@ public class KMLResult {
 				  
 				  if(lat != null && longit != null){
 					  
-					  if(progress != null) progress.setNote("Obtendo coordenadas: " + (++itemsWithGPS));
+					  if(progress != null) progress.setNote("Obtendo coordenadas" + ": " + (++itemsWithGPS));
 					  
 					  //necessário para múltiplos casos carregados, pois ids se repetem
 					  String gid = item.getSourceId() + "-" + item.getId();

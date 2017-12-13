@@ -68,7 +68,7 @@ public class LetterDigitTokenizer extends CharTokenizer {
 
     ArrayList<Integer> codePoints = new ArrayList<Integer>();
 
-    for (String c : chars.split(" ")) {
+    for (String c : chars.split(" ")) { //$NON-NLS-1$
       codePoints.add(c.codePointAt(0));
     }
 
