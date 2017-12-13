@@ -33,7 +33,6 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
-import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -1061,17 +1060,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * do caso
    */
   public void setToIgnore(boolean toIgnore) {
-	  setToIgnore(toIgnore, true);
-  }
-  
-  /**
-   * @param toIgnore se o item deve ser ignorado pela tarefas de processamento seguintes e excluído
-   * do caso
-   */
-  public void setToIgnore(boolean toIgnore, boolean updateStats) {
     this.toIgnore = toIgnore;
-    if(updateStats && toIgnore)
-    	Statistics.get().incIgnored();
   }
 
   /**
