@@ -141,7 +141,7 @@ public class App extends JFrame implements WindowListener {
   JPanel multiFilterAlert;
   boolean disposicaoVertical = false;
 
-  ResultTableModel resultsModel;
+  public ResultTableModel resultsModel;
   List resultSortKeys;
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();

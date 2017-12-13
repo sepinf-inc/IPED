@@ -3,8 +3,6 @@ package dpf.sp.gpinf.indexer.desktop;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-import dpf.mt.gpinf.mapas.swt.MapaCanvas;
-
 /**
  * Monitora mudanças nos resultados das pesquisas para alterar o conteúdo
  * do mapa.
