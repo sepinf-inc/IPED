@@ -148,7 +148,7 @@ public abstract class AbstractTask {
     AbstractTask prevTask = worker.runningTask;
     worker.runningTask = this;
 
-    if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
+    if (!evidence.isToIgnore() || processIgnoredItem()) {
       long t = System.nanoTime() / 1000;
       processMonitorTimeout(evidence);
       Long subitensTime = subitemProcessingTime.remove(evidence.getId());
