@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -21,6 +23,8 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
 
 public class LanguageDetectTask extends AbstractTask {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(LanguageDetectTask.class);
     
     private static final String ENABLE_PARAM = "enableLanguageDetect";
     
@@ -81,7 +85,14 @@ public class LanguageDetectTask extends AbstractTask {
             text = text.substring(0, MAX_CHARS);
         
         int i = 0;
-        List<DetectedLanguage> langs = detector.getProbabilities(text);
+        List<DetectedLanguage> langs = null;
+        try {
+        	langs = detector.getProbabilities(text);
+        }catch(RuntimeException e) {
+        	LOGGER.info("Error detecting language from " + evidence.getPath(), e);
+        	return;
+        }
+        
         List<String> langList = new ArrayList<String>();
         for (DetectedLanguage lang : langs) {
             if(++i > MAX_LANGS)
