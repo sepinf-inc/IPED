@@ -244,7 +244,7 @@ public class DIETask extends AbstractTask {
   private BufferedImage getBufferedImage(EvidenceFile evidence) {
     BufferedImage img = null;
     try {
-      if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = ImageUtil.getThumb(stream);

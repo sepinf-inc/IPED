@@ -819,7 +819,7 @@ public class HTMLReportTask extends AbstractTask {
 
     try {
       BufferedImage img = null;
-      if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = ImageUtil.getThumb(stream);

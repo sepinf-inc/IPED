@@ -39,6 +39,8 @@ public class ImageThumbTask extends AbstractTask {
   private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
   
   private static final int samplingRatio = 3;
+  
+  public static boolean extractThumb = true;
 
   public int thumbSize = 160;
 
@@ -84,6 +86,12 @@ public class ImageThumbTask extends AbstractTask {
     if (value != null && !value.trim().isEmpty()) {
       thumbSize = Integer.valueOf(value.trim());
     }
+    
+    value = properties.getProperty("extractThumb");
+    if (value != null && !value.trim().isEmpty()) {
+    	extractThumb = Boolean.valueOf(value.trim());
+    }
+    
   }
 
   @Override
@@ -139,7 +147,7 @@ public class ImageThumbTask extends AbstractTask {
       try (BufferedInputStream stream = evidence.getBufferedStream()){
     	  dimension = ImageUtil.getImageFileDimension(stream);
       }
-      if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) {
         try (BufferedInputStream stream = evidence.getBufferedStream()){
           img = ImageUtil.getThumb(stream);
         }
