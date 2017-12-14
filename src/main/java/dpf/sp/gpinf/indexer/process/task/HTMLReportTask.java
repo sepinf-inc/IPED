@@ -107,6 +107,11 @@ public class HTMLReportTask extends AbstractTask {
    * Registros sem marcador.
    */
   private static final List<ReportEntry> entriesNoLabel = new ArrayList<ReportEntry>();
+  
+  /**
+   * Tag para registros sem marcador
+   */
+  private static final String NO_LABEL_NAME = "[Sem Marcador]";
 
   /**
    * Indicador de inicialização, para controle de sincronização entre instâncias da classe.
@@ -368,6 +373,9 @@ public class HTMLReportTask extends AbstractTask {
       long t = System.currentTimeMillis();
 
       reportSubFolder.mkdirs();
+      
+      if(!entriesByLabel.isEmpty())
+    	  entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
       modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content;
       processBookmarks(templatesFolder);
