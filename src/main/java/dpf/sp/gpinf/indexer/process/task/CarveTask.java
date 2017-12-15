@@ -651,7 +651,7 @@ public class CarveTask extends BaseCarveTask {
       enableCarving = Boolean.valueOf(value);
     }
     
-    if(enableCarving && !Configuration.addUnallocated)
+    if(signatures == null && enableCarving && !Configuration.addUnallocated)
         LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!");
 
     loadConfigFile(new File(confDir, CARVE_CONFIG));
