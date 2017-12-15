@@ -124,8 +124,14 @@ public class IPEDSource implements Closeable{
 		index = new File(moduleDir, INDEX_DIR);
 		this.iw = iw;
 		
-		if((!index.exists() && iw == null) || casePath == null)
+		//return if multicase
+		if(casePath == null)
 			return;
+		
+		if(!index.exists() && iw == null) {
+			LOGGER.error("Index not found: " + index.getAbsolutePath());
+			return;
+		}
 		
 		//sourceId = nextId.getAndIncrement();
 		
