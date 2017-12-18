@@ -135,8 +135,7 @@ public class IndexTask extends BaseCarveTask {
     	  worker.writer.addDocument(doc);
     	  
       }catch(IOException e){
-    	  if(e.getMessage().toLowerCase().startsWith("espaço insuficiente no disco") ||
-    	     e.getMessage().toLowerCase().startsWith("no space left on device"))
+    	  if(IOUtil.isDiskFull(e))
     		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
     	  else
     		  throw e;
