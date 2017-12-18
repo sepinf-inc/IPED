@@ -41,13 +41,13 @@ public class FTK42FileTypes {
 
   private static Map<Integer, String> mapTypeDesc;
 
-  private static String CONFIG_FILE = "FTKCategoriesConfig.txt";
+  private static String CONFIG_FILE = "FTKCategoriesConfig.txt"; //$NON-NLS-1$
 
   private static Logger LOGGER = LoggerFactory.getLogger(FTK42FileTypes.class);
 
   private static void getFTK42FileTypes(String configPath) throws IOException {
     Properties properties = new Properties();
-    File file = new File(configPath + "/conf/" + CONFIG_FILE);
+    File file = new File(configPath + "/conf/" + CONFIG_FILE); //$NON-NLS-1$
     try {
       properties.load(new FileInputStream(file));
       mapTypeDesc = new HashMap<Integer, String>();
@@ -59,10 +59,10 @@ public class FTK42FileTypes {
         mapTypeDesc.put(i, desc);
       }
     } catch (FileNotFoundException e) {
-      LOGGER.error("Conf file not found: {}", file.getAbsolutePath());
+      LOGGER.error("Conf file not found: {}", file.getAbsolutePath()); //$NON-NLS-1$
       throw e;
     } catch (IOException e) {
-      LOGGER.error("Error loading {}", file.getAbsolutePath());
+      LOGGER.error("Error loading {}", file.getAbsolutePath()); //$NON-NLS-1$
       throw e;
     }
 
@@ -76,7 +76,7 @@ public class FTK42FileTypes {
 
     String desc = mapTypeDesc.get(type);
     if (desc == null) {
-      desc = "Outros";
+      desc = "Other"; //$NON-NLS-1$
     }
     return desc;
   }
