@@ -54,12 +54,12 @@ import gpinf.dev.data.EvidenceFile;
 public class IndexTask extends BaseCarveTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
-  private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES";
+  private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
 
   public static boolean indexFileContents = true;
   public static boolean indexUnallocated = false;
 
-  public static final String extraAttrFilename = "extraAttributes.dat";
+  public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
   private IndexerDefaultParser autoParser;
   private List<IdLenPair> textSizes;
@@ -93,10 +93,10 @@ public class IndexTask extends BaseCarveTask {
 
     if (!evidence.isToAddToCase()) {
       if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
-        textCache = "";
+        textCache = ""; //$NON-NLS-1$
         evidence.setSleuthId(null);
         evidence.setExportedFile(null);
-        evidence.setExtraAttribute(IndexItem.TREENODE, "true");
+        evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.getCategorySet().clear();
       } else {
         return;
@@ -120,7 +120,7 @@ public class IndexTask extends BaseCarveTask {
             	return;
         }
     	//if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE))
-    		textCache = "";
+    		textCache = ""; //$NON-NLS-1$
     }
 
     if (textCache != null) {
@@ -136,7 +136,7 @@ public class IndexTask extends BaseCarveTask {
     	  
       }catch(IOException e){
     	  if(IOUtil.isDiskFull(e))
-    		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
+    		  throw new IPEDException("Not enough space for the index on " + worker.manager.getIndexTemp().getAbsolutePath()); //$NON-NLS-1$
     	  else
     		  throw e;
       }
@@ -153,7 +153,7 @@ public class IndexTask extends BaseCarveTask {
         try {
             tis = evidence.getTikaStream();
         } catch (IOException e) {
-            LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+            LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
         }
         if(tis != null){
         	reader = new ParsingReader(this.autoParser, tis, metadata, context);
@@ -170,7 +170,7 @@ public class IndexTask extends BaseCarveTask {
         do {
           if (++fragments > 1) {
             stats.incSplits();
-            LOGGER.debug("{} Dividindo texto de {}", Thread.currentThread().getName(), evidence.getPath());
+            LOGGER.debug("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
           }
 
           worker.writer.addDocument(doc);
@@ -179,7 +179,7 @@ public class IndexTask extends BaseCarveTask {
 
       }catch(IOException e){
     	  if(IOUtil.isDiskFull(e))
-    		  throw new IPEDException("Espaço insuficiente para o indice em " + worker.manager.getIndexTemp().getAbsolutePath());
+    		  throw new IPEDException("Not enough space for the index on " + worker.manager.getIndexTemp().getAbsolutePath()); //$NON-NLS-1$
     	  else
     	  	  throw e;
       }finally {
@@ -227,7 +227,7 @@ public class IndexTask extends BaseCarveTask {
 
     // Tratamento p/ acentos de subitens de ZIP
     ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850");
+    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
     context.set(ArchiveStreamFactory.class, factory);
     
     //Indexa conteudo de todos os elementos de HTMLs, como script, etc
@@ -248,7 +248,7 @@ public class IndexTask extends BaseCarveTask {
   @Override
   public void init(Properties properties, File confDir) throws Exception {
 
-    String value = properties.getProperty("indexFileContents");
+    String value = properties.getProperty("indexFileContents"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -256,7 +256,7 @@ public class IndexTask extends BaseCarveTask {
       indexFileContents = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("indexUnallocated");
+    value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -269,7 +269,7 @@ public class IndexTask extends BaseCarveTask {
       textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
       caseData.putCaseObject(TEXT_SIZES, textSizes);
 
-      File prevFile = new File(output, "data/texts.size");
+      File prevFile = new File(output, "data/texts.size"); //$NON-NLS-1$
       if (prevFile.exists()) {
         FileInputStream fileIn = new FileInputStream(prevFile);
         ObjectInputStream in = new ObjectInputStream(fileIn);
@@ -291,7 +291,7 @@ public class IndexTask extends BaseCarveTask {
 
     if(IndexItem.getMetadataTypes().size() == 0){
     	IndexItem.loadMetadataTypes(confDir);
-    	IndexItem.loadMetadataTypes(new File(output, "conf"));
+    	IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
     }
     loadExtraAttributes();
 
@@ -307,21 +307,21 @@ public class IndexTask extends BaseCarveTask {
 
       saveExtraAttributes();
 
-      IndexItem.saveMetadataTypes(new File(output, "conf"));
+      IndexItem.saveMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
     }
     caseData.putCaseObject(TEXT_SIZES, null);
 
   }
 
   private void saveExtraAttributes() throws IOException {
-    File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
+    File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
     Set<String> extraAttr = EvidenceFile.getAllExtraAttributes();
     Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
   }
 
   private void loadExtraAttributes() throws ClassNotFoundException, IOException {
 
-    File extraAttributtesFile = new File(output, "data/" + extraAttrFilename);
+    File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
     if (extraAttributtesFile.exists()) {
     	Set<String> extraAttributes = (Set<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
     	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
@@ -330,8 +330,8 @@ public class IndexTask extends BaseCarveTask {
 
   private void salvarTamanhoTextosExtraidos() throws Exception {
 
-    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Salvando tamanho dos textos extraídos...");
-    LOGGER.info("Salvando tamanho dos textos extraídos...");
+    IndexFiles.getInstance().firePropertyChange("mensagem", "", "Saving extracted text sizes..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    LOGGER.info("Saving extracted text sizes..."); //$NON-NLS-1$
 
     int[] textSizesArray = new int[stats.getLastId() + 1];
 
@@ -340,7 +340,7 @@ public class IndexTask extends BaseCarveTask {
       textSizesArray[pair.id] = pair.length;
     }
 
-    Util.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size");
+    Util.writeObject(textSizesArray, output.getAbsolutePath() + "/data/texts.size"); //$NON-NLS-1$
   }
 
 }

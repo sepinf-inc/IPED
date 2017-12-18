@@ -107,8 +107,8 @@ public abstract class DataSourceReader {
     CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
     List<String> params = cmdArgs.getCmdArgs().get(CmdLineArgs.ALL_ARGS);
     for (int i = 0; i < params.size(); i++) {
-      if (params.get(i).equals("-d") && datasource.equals(new File(params.get(i + 1)))
-          && i + 2 < params.size() && params.get(i + 2).equals("-dname")) {
+      if (params.get(i).equals("-d") && datasource.equals(new File(params.get(i + 1))) //$NON-NLS-1$
+          && i + 2 < params.size() && params.get(i + 2).equals("-dname")) { //$NON-NLS-1$
         return params.get(i + 3);
       }
     }

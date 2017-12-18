@@ -84,7 +84,7 @@ public class IPEDReader extends DataSourceReader {
 
   public int read(File file) throws Exception {
 	  
-	Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE);
+	Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE); //$NON-NLS-1$
 
     caseData.setContainsReport(true);
     caseData.setIpedReport(true);
@@ -169,7 +169,7 @@ public class IPEDReader extends DataSourceReader {
     for (int docID : result.getLuceneIds()) {
       String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
       if(!parentIds.trim().isEmpty())
-	      for (String parentId : parentIds.trim().split(" ")) {
+	      for (String parentId : parentIds.trim().split(" ")) { //$NON-NLS-1$
 	        isParentToAdd[Integer.parseInt(parentId)] = true;
 	      }
     }
@@ -197,7 +197,7 @@ public class IPEDReader extends DataSourceReader {
 
   private void insertPSTAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (!args.getCmdArgs().containsKey("--nopstattachs")) {
+    if (!args.getCmdArgs().containsKey("--nopstattachs")) { //$NON-NLS-1$
       boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
       boolean hasPSTEmail = false;
       for (int docID : result.getLuceneIds()) {
@@ -314,7 +314,7 @@ public class IPEDReader extends DataSourceReader {
 
       value = doc.get(IndexItem.PARENTIDs);
       ArrayList<Integer> parents = new ArrayList<Integer>();
-      for (String parent : value.split(" ")) {
+      for (String parent : value.split(" ")) { //$NON-NLS-1$
         if (!parent.isEmpty()) {
         	id = Integer.valueOf(parent);
       	    newId = oldToNewIdMap[id];
@@ -362,11 +362,11 @@ public class IPEDReader extends DataSourceReader {
 
       String path = doc.get(IndexItem.PATH);
       if(deviceName != null){
-    	  int idx = path.indexOf("/", 1);
+    	  int idx = path.indexOf("/", 1); //$NON-NLS-1$
     	  if(idx == -1)
-    		  path = "/" + deviceName;
+    		  path = "/" + deviceName; //$NON-NLS-1$
     	  else
-    		  path = "/" + deviceName + path.substring(idx);
+    		  path = "/" + deviceName + path.substring(idx); //$NON-NLS-1$
       }
       evidence.setPath(path);
       
@@ -382,7 +382,7 @@ public class IPEDReader extends DataSourceReader {
       }
 
       if (treeNode) {
-        evidence.setExtraAttribute(IndexItem.TREENODE, "true");
+        evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.setAddToCase(false);
       }
 
@@ -399,27 +399,27 @@ public class IPEDReader extends DataSourceReader {
         evidence.setHash(value);
 
         if (!value.isEmpty()) {
-          File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value);
+          File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
           }
 
           //Copia resultado prévio do OCR
-          String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1);
+          String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1); //$NON-NLS-1$ //$NON-NLS-2$
           File ocrSrc = new File(indexDir.getParentFile(), ocrPrefix);
           File ocrDst = new File(output, ocrPrefix);
           if (ocrSrc.exists()) {
             ocrDst.mkdirs();
             for (String name : ocrSrc.list()) {
-              if (name.equals(value + ".txt") || name.startsWith(value + "-child")) {
+              if (name.equals(value + ".txt") || name.startsWith(value + "-child")) { //$NON-NLS-1$ //$NON-NLS-2$
                 IOUtil.copiaArquivo(new File(ocrSrc, name), new File(ocrDst, name));
               }
             }
           }
 
           //Copia miniaturas
-          File thumbSrc = Util.getFileFromHash(new File(indexDir.getParentFile(), ImageThumbTask.thumbsFolder), value, "jpg");
-          File thumbDst = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), value, "jpg");
+          File thumbSrc = Util.getFileFromHash(new File(indexDir.getParentFile(), ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
+          File thumbDst = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
           if (thumbSrc.exists()) {
             thumbDst.getParentFile().mkdirs();
             IOUtil.copiaArquivo(thumbSrc, thumbDst);
@@ -457,7 +457,7 @@ public class IPEDReader extends DataSourceReader {
       
       value = doc.get(ParsingTask.HAS_SUBITEM);
       if(value != null)
-    	evidence.setExtraAttribute(ParsingTask.HAS_SUBITEM, "true");
+    	evidence.setExtraAttribute(ParsingTask.HAS_SUBITEM, "true"); //$NON-NLS-1$
 
       value = doc.get(IndexItem.OFFSET);
       if (value != null) {
