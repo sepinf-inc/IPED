@@ -43,11 +43,11 @@ public class HashTask extends AbstractTask {
   private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
   
   public enum HASH{
-      MD5 ("md5"), 
-      SHA1 ("sha-1"), 
-      SHA256 ("sha-256"), 
-      SHA512 ("sha-512"), 
-      EDONKEY ("edonkey");
+      MD5 ("md5"),  //$NON-NLS-1$
+      SHA1 ("sha-1"),  //$NON-NLS-1$
+      SHA256 ("sha-256"),  //$NON-NLS-1$
+      SHA512 ("sha-512"),  //$NON-NLS-1$
+      EDONKEY ("edonkey"); //$NON-NLS-1$
       
       private String name;
       
@@ -73,18 +73,18 @@ public class HashTask extends AbstractTask {
 
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
-    String value = confProps.getProperty("hash");
+    String value = confProps.getProperty("hash"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
-      for (String algorithm : value.split(";")) {
+      for (String algorithm : value.split(";")) { //$NON-NLS-1$
         algorithm = algorithm.trim();
         MessageDigest digest = null;
         if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
           digest = MessageDigest.getInstance(algorithm.toUpperCase());
         } else {
-          digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider());
+          digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider()); //$NON-NLS-1$
         }
         digestMap.put(algorithm, digest);
       }
@@ -145,10 +145,10 @@ public class HashTask extends AbstractTask {
 
     } catch (Exception e) {
       if (e instanceof IOException) {
-        evidence.setExtraAttribute("ioError", "true");
+        evidence.setExtraAttribute("ioError", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         stats.incIoErrors();
       }
-      LOGGER.warn("{} Erro ao calcular hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      LOGGER.warn("{} Error computing hash {}\t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
       //e.printStackTrace();
 
     } finally {
@@ -202,7 +202,7 @@ public class HashTask extends AbstractTask {
   public static String getHashString(byte[] hash) {
     StringBuilder result = new StringBuilder();
     for (byte b : hash) {
-      result.append(String.format("%1$02X", b));
+      result.append(String.format("%1$02X", b)); //$NON-NLS-1$
     }
 
     return result.toString();

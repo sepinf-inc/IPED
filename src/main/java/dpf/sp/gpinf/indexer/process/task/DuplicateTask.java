@@ -20,7 +20,7 @@ import dpf.sp.gpinf.indexer.util.HashValue;
  */
 public class DuplicateTask extends AbstractTask {
 
-  public static String HASH_MAP = HashTask.class.getSimpleName() + "HashMap";
+  public static String HASH_MAP = HashTask.class.getSimpleName() + "HashMap"; //$NON-NLS-1$
 
   private HashMap<HashValue, HashValue> hashMap;
 
@@ -54,7 +54,7 @@ public class DuplicateTask extends AbstractTask {
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
 
-    String value = confProps.getProperty("ignoreDuplicates");
+    String value = confProps.getProperty("ignoreDuplicates"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -67,7 +67,7 @@ public class DuplicateTask extends AbstractTask {
       hashMap = new HashMap<HashValue, HashValue>();
       caseData.putCaseObject(HASH_MAP, hashMap);
 
-      File indexDir = new File(worker.output, "index");
+      File indexDir = new File(worker.output, "index"); //$NON-NLS-1$
       if (indexDir.exists() && indexDir.list().length > 5) {
         IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
         for (int i = 0; i < reader.maxDoc(); i++) {

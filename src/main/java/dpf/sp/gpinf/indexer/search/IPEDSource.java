@@ -129,7 +129,7 @@ public class IPEDSource implements Closeable{
 			return;
 		
 		if(!index.exists() && iw == null) {
-			LOGGER.error("Index not found: " + index.getAbsolutePath());
+			LOGGER.error("Index not found: " + index.getAbsolutePath()); //$NON-NLS-1$
 			return;
 		}
 		

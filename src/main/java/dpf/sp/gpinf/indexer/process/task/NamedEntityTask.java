@@ -31,9 +31,9 @@ public class NamedEntityTask extends AbstractTask {
     
     public static final String NER_PREFIX = NamedEntityParser.MD_KEY_PREFIX;
     
-    public static final String ENABLE_PARAM = "enableNamedEntityRecogniton";
+    public static final String ENABLE_PARAM = "enableNamedEntityRecogniton"; //$NON-NLS-1$
     
-    private static final String CONF_FILE = "NamedEntityRecognitionConfig.txt";
+    private static final String CONF_FILE = "NamedEntityRecognitionConfig.txt"; //$NON-NLS-1$
     
     private static final int MAX_TEXT_LEN = 100000;
     
@@ -77,29 +77,29 @@ public class NamedEntityTask extends AbstractTask {
         UTF8Properties props = new UTF8Properties();
         props.load(confFile);
         
-        String nerImpl = props.getProperty("NERImpl");
-        if(nerImpl.contains("CoreNLPNERecogniser"))
+        String nerImpl = props.getProperty("NERImpl"); //$NON-NLS-1$
+        if(nerImpl.contains("CoreNLPNERecogniser")) //$NON-NLS-1$
             try{
-                Class.forName("edu.stanford.nlp.ie.crf.CRFClassifier");
+                Class.forName("edu.stanford.nlp.ie.crf.CRFClassifier"); //$NON-NLS-1$
                 
             }catch(ClassNotFoundException e){
                 isEnabled = false;
-                LOGGER.error("StanfordCoreNLP not found. Did you put the jar in the optional lib folder?");
+                LOGGER.error("StanfordCoreNLP not found. Did you put the jar in the optional lib folder?"); //$NON-NLS-1$
                 return;
             }
         System.setProperty(NamedEntityParser.SYS_PROP_NER_IMPL, nerImpl);
         
         String langAndModel;
         int i = 0;
-        while((langAndModel = props.getProperty("langModel_" + i++)) != null){
-            String[] strs = langAndModel.split(":");
+        while((langAndModel = props.getProperty("langModel_" + i++)) != null){ //$NON-NLS-1$
+            String[] strs = langAndModel.split(":"); //$NON-NLS-1$
             String lang = strs[0].trim();
             String modelPath = strs[1].trim();
             
-            URL resource = this.getClass().getResource("/" + modelPath);
+            URL resource = this.getClass().getResource("/" + modelPath); //$NON-NLS-1$
             if(resource == null){
                 isEnabled = false;
-                LOGGER.error(modelPath + " not found. Did you put the model in the optional lib folder?");
+                LOGGER.error(modelPath + " not found. Did you put the model in the optional lib folder?"); //$NON-NLS-1$
                 return;
             }
             
@@ -110,18 +110,18 @@ public class NamedEntityTask extends AbstractTask {
             metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
             nerParser.parse(new EmptyInputStream(), new IgnoreContentHandler(), metadata, new ParseContext());
             nerParserPerLang.put(lang, nerParser);
-            System.out.println(lang + ":" + nerParser);
+            System.out.println(lang + ":" + nerParser); //$NON-NLS-1$
         }
         
-        String mimes = props.getProperty("mimeTypesToIgnore");
-        for(String mime : mimes.split(";"))
+        String mimes = props.getProperty("mimeTypesToIgnore"); //$NON-NLS-1$
+        for(String mime : mimes.split(";")) //$NON-NLS-1$
             mimeTypesToIgnore.add(mime.trim());
         
-        String categories = props.getProperty("categoriesToIgnore");
-        for(String cat : categories.split(";"))
+        String categories = props.getProperty("categoriesToIgnore"); //$NON-NLS-1$
+        for(String cat : categories.split(";")) //$NON-NLS-1$
             categoriesToIgnore.add(cat.trim());
         
-        minLangScore = Float.valueOf(props.getProperty("minLangScore").trim());
+        minLangScore = Float.valueOf(props.getProperty("minLangScore").trim()); //$NON-NLS-1$
         
     }
 
@@ -157,18 +157,18 @@ public class NamedEntityTask extends AbstractTask {
             text = text.substring(0, i);
         
         NamedEntityParser nerParser = null;
-        Float langScore = (Float)evidence.getExtraAttribute("language:detected_score_1");
-        String lang = (String)evidence.getExtraAttribute("language:detected_1");
+        Float langScore = (Float)evidence.getExtraAttribute("language:detected_score_1"); //$NON-NLS-1$
+        String lang = (String)evidence.getExtraAttribute("language:detected_1"); //$NON-NLS-1$
         if(langScore != null && langScore >= minLangScore)
             nerParser = nerParserPerLang.get(lang);
         if(nerParser == null){
-            langScore = (Float)evidence.getExtraAttribute("language:detected_score_2");
-            lang = (String)evidence.getExtraAttribute("language:detected_2");
+            langScore = (Float)evidence.getExtraAttribute("language:detected_score_2"); //$NON-NLS-1$
+            lang = (String)evidence.getExtraAttribute("language:detected_2"); //$NON-NLS-1$
             if(langScore != null && langScore >= minLangScore)
                 nerParser = nerParserPerLang.get(lang);
         }
         if(nerParser == null)
-            nerParser = nerParserPerLang.get("default");
+            nerParser = nerParserPerLang.get("default"); //$NON-NLS-1$
         
         Metadata metadata = evidence.getMetadata();
         String originalContentType = metadata.get(Metadata.CONTENT_TYPE);

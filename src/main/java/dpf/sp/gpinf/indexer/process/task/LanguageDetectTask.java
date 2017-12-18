@@ -26,13 +26,13 @@ public class LanguageDetectTask extends AbstractTask {
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(LanguageDetectTask.class);
     
-    private static final String ENABLE_PARAM = "enableLanguageDetect";
+    private static final String ENABLE_PARAM = "enableLanguageDetect"; //$NON-NLS-1$
     
-    public static final String LANGUAGE_PREFIX = "language:";
+    public static final String LANGUAGE_PREFIX = "language:"; //$NON-NLS-1$
     
-    private static final String LANGUAGE_NAMES = LANGUAGE_PREFIX + "all_detected";
-    private static final String LANGUAGE_NAME = LANGUAGE_PREFIX + "detected_";
-    private static final String LANGUAGE_SCORE = LANGUAGE_PREFIX + "detected_score_";
+    private static final String LANGUAGE_NAMES = LANGUAGE_PREFIX + "all_detected"; //$NON-NLS-1$
+    private static final String LANGUAGE_NAME = LANGUAGE_PREFIX + "detected_"; //$NON-NLS-1$
+    private static final String LANGUAGE_SCORE = LANGUAGE_PREFIX + "detected_score_"; //$NON-NLS-1$
     
     private static final int MAX_LANGS = 2;
     
@@ -89,7 +89,7 @@ public class LanguageDetectTask extends AbstractTask {
         try {
         	langs = detector.getProbabilities(text);
         }catch(RuntimeException e) {
-        	LOGGER.info("Error detecting language from " + evidence.getPath(), e);
+        	LOGGER.info("Error detecting language from " + evidence.getPath(), e); //$NON-NLS-1$
         	return;
         }
         

@@ -18,7 +18,7 @@ public class DatabaseTask extends AbstractTask {
     // TODO Auto-generated constructor stub
   }
 
-  private static String databaseName = "iped.db";
+  private static String databaseName = "iped.db"; //$NON-NLS-1$
   private static int MAX_LIST_LEN = 200;
   private static boolean schemaDone = false;
   private Connection con;
@@ -28,8 +28,8 @@ public class DatabaseTask extends AbstractTask {
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 
-    Class.forName("org.sqlite.JDBC");
-    con = DriverManager.getConnection("jdbc:sqlite:" + this.output.getCanonicalPath() + "/" + databaseName);
+    Class.forName("org.sqlite.JDBC"); //$NON-NLS-1$
+    con = DriverManager.getConnection("jdbc:sqlite:" + this.output.getCanonicalPath() + "/" + databaseName); //$NON-NLS-1$ //$NON-NLS-2$
     //con.setAutoCommit(false);
 
     if (schemaDone) {
@@ -38,30 +38,30 @@ public class DatabaseTask extends AbstractTask {
 
     Statement stmt = con.createStatement();
 
-    String sql = "CREATE TABLE ITEMS ("
-        + "ID            INT PRIMARY KEY     NOT NULL,"
-        + "PARENTID      INT, "
-        + "SLEUTHID      INT, "
-        + "NAME          TEXT    NOT NULL, "
-        + "TYPE          TEXT    NOT NULL, "
-        + "CATEGORY      TEXT    NOT NULL, "
-        + "PATH          TEXT    NOT NULL, "
-        + "EXPORT        TEXT, "
-        + "HASH          TEXT,"
-        + "MIMETYPE      TEXT,"
-        + "LENGTH        LONG, "
-        + "CARVEDOFFSET  LONG,"
-        + "ISCARVED      BOOLEAN,"
-        + "ISSUBITEM     BOOLEAN,"
-        + "HASCHILD      BOOLEAN,"
-        + "ISROOT        BOOLEAN,"
-        + "ISDIR         BOOLEAN,"
-        + "ISDELETED     BOOLEAN,"
-        + "ISDUPLICATE   BOOLEAN,"
-        + "TIMEOUT       BOOLEAN,"
-        + "MODIFIED      TEXT, "
-        + "CREATED       TEXT, "
-        + "ACCESSED      TEXT)";
+    String sql = "CREATE TABLE ITEMS (" //$NON-NLS-1$
+        + "ID            INT PRIMARY KEY     NOT NULL," //$NON-NLS-1$
+        + "PARENTID      INT, " //$NON-NLS-1$
+        + "SLEUTHID      INT, " //$NON-NLS-1$
+        + "NAME          TEXT    NOT NULL, " //$NON-NLS-1$
+        + "TYPE          TEXT    NOT NULL, " //$NON-NLS-1$
+        + "CATEGORY      TEXT    NOT NULL, " //$NON-NLS-1$
+        + "PATH          TEXT    NOT NULL, " //$NON-NLS-1$
+        + "EXPORT        TEXT, " //$NON-NLS-1$
+        + "HASH          TEXT," //$NON-NLS-1$
+        + "MIMETYPE      TEXT," //$NON-NLS-1$
+        + "LENGTH        LONG, " //$NON-NLS-1$
+        + "CARVEDOFFSET  LONG," //$NON-NLS-1$
+        + "ISCARVED      BOOLEAN," //$NON-NLS-1$
+        + "ISSUBITEM     BOOLEAN," //$NON-NLS-1$
+        + "HASCHILD      BOOLEAN," //$NON-NLS-1$
+        + "ISROOT        BOOLEAN," //$NON-NLS-1$
+        + "ISDIR         BOOLEAN," //$NON-NLS-1$
+        + "ISDELETED     BOOLEAN," //$NON-NLS-1$
+        + "ISDUPLICATE   BOOLEAN," //$NON-NLS-1$
+        + "TIMEOUT       BOOLEAN," //$NON-NLS-1$
+        + "MODIFIED      TEXT, " //$NON-NLS-1$
+        + "CREATED       TEXT, " //$NON-NLS-1$
+        + "ACCESSED      TEXT)"; //$NON-NLS-1$
 
     stmt.executeUpdate(sql);
     stmt.close();
@@ -88,40 +88,40 @@ public class DatabaseTask extends AbstractTask {
 
     Statement stmt = con.createStatement();
     StringBuilder sql = new StringBuilder();
-    sql.append("INSERT INTO ITEMS VALUES ");
+    sql.append("INSERT INTO ITEMS VALUES "); //$NON-NLS-1$
 
     for (int i = 0; i < itemList.size(); i++) {
       EvidenceFile e = itemList.get(i);
-      sql.append("("
-          + e.getId() + ","
-          + e.getParentId() + ","
-          + e.getSleuthId() + ",\'"
-          + e.getName() + "\',\'"
-          + e.getType().getLongDescr() + "\',\'"
-          + e.getCategories() + "\',\'"
-          + e.getPath() + "\',\'"
-          + e.getExportedFile() + "\',\'"
-          + e.getHash() + "\',\'"
-          + e.getMediaType().getBaseType() + "\',"
-          + e.getLength() + ","
-          + e.getFileOffset() + ","
-          + (e.isCarved() ? 1 : 0) + ","
-          + (e.isSubItem() ? 1 : 0) + ","
-          + (e.hasChildren() ? 1 : 0) + ","
-          + (e.isRoot() ? 1 : 0) + ","
-          + (e.isDir() ? 1 : 0) + ","
-          + (e.isDeleted() ? 1 : 0) + ","
-          + (e.isDuplicate() ? 1 : 0) + ","
-          + (e.isTimedOut() ? 1 : 0) + ",\'"
-          + e.getModDate() + "\',\'"
-          + e.getCreationDate() + "\',\'"
-          + e.getAccessDate() + "\'"
-          + ")");
+      sql.append("(" //$NON-NLS-1$
+          + e.getId() + "," //$NON-NLS-1$
+          + e.getParentId() + "," //$NON-NLS-1$
+          + e.getSleuthId() + ",\'" //$NON-NLS-1$
+          + e.getName() + "\',\'" //$NON-NLS-1$
+          + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
+          + e.getCategories() + "\',\'" //$NON-NLS-1$
+          + e.getPath() + "\',\'" //$NON-NLS-1$
+          + e.getExportedFile() + "\',\'" //$NON-NLS-1$
+          + e.getHash() + "\',\'" //$NON-NLS-1$
+          + e.getMediaType().getBaseType() + "\'," //$NON-NLS-1$
+          + e.getLength() + "," //$NON-NLS-1$
+          + e.getFileOffset() + "," //$NON-NLS-1$
+          + (e.isCarved() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isSubItem() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.hasChildren() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isRoot() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isDir() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isDeleted() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isDuplicate() ? 1 : 0) + "," //$NON-NLS-1$
+          + (e.isTimedOut() ? 1 : 0) + ",\'" //$NON-NLS-1$
+          + e.getModDate() + "\',\'" //$NON-NLS-1$
+          + e.getCreationDate() + "\',\'" //$NON-NLS-1$
+          + e.getAccessDate() + "\'" //$NON-NLS-1$
+          + ")"); //$NON-NLS-1$
 
       if (i < itemList.size() - 1) {
-        sql.append(",");
+        sql.append(","); //$NON-NLS-1$
       } else {
-        sql.append(";");
+        sql.append(";"); //$NON-NLS-1$
       }
     }
 

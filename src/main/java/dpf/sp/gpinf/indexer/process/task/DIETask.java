@@ -62,17 +62,17 @@ public class DIETask extends AbstractTask {
   /**
    * Nome da tarefa.
    */
-  private static final String taskName = "Detecção de Imagens Explícitas (DIE)";
+  private static final String taskName = "Explicit Image detection (DIE)"; //$NON-NLS-1$
 
   /**
    * Nome do atributo incluído com o resultado (score de 1 a 1000) da detecção.
    */
-  public static String DIE_SCORE = "scoreNudez";
+  public static String DIE_SCORE = "scoreNudez"; //$NON-NLS-1$
 
   /**
    * Nome do atributo incluído com a classificação (de 1 a 5) do resultado da detecção.
    */
-  public static String DIE_CLASS = "classeNudez";
+  public static String DIE_CLASS = "classeNudez"; //$NON-NLS-1$
 
   /**
    * Indica se a tarefa está habilitada ou não.
@@ -104,7 +104,7 @@ public class DIETask extends AbstractTask {
    */
   private static final AtomicLong totalTime = new AtomicLong();
   
-  private static final String ENABLE_PARAM = "enableLedDie";
+  private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
   /**
    * Construtor.
@@ -131,36 +131,36 @@ public class DIETask extends AbstractTask {
         if(enableParam != null)
         	taskEnabled = Boolean.valueOf(enableParam.trim());
         
-        String diePath = confParams.getProperty("ledDie");
+        String diePath = confParams.getProperty("ledDie"); //$NON-NLS-1$
         if(taskEnabled && diePath == null)
-          throw new IPEDException("Configure o caminho para a base DIE em " + Configuration.LOCAL_CONFIG);
+          throw new IPEDException("Configure DIE path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
         
         //backwards compatibility
         if(enableParam == null && diePath != null)
         	taskEnabled = true;
         
         if (!taskEnabled) {
-            Log.info(taskName, "Tarefa desabilitada.");
+            Log.info(taskName, "Task disabled."); //$NON-NLS-1$
             init.set(true);
             return;
           }
         
         File dieDat = new File(diePath.trim());
         if (!dieDat.exists() || !dieDat.canRead())
-          throw new IPEDException("Arquivo de dados do DIE não encontrado em " + dieDat.getAbsolutePath());
+          throw new IPEDException("DIE database file not found: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
         
         //Cria objeto responsável pela detecção
         predictor = RandomForestPredictor.load(dieDat, -1);
         if (predictor == null)
-          throw new IPEDException("Erro inicializando arquivo de dados do DIE: " + dieDat.getAbsolutePath());
+          throw new IPEDException("Error loading DIE database file: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
         
         //Cria objeto responsável pela extração de features
         die = AbstractDie.loadImplementation(dieDat);
         if (die == null)
-          throw new IPEDException("Erro inicializando classe do DIE: " + dieDat.getAbsolutePath());
+          throw new IPEDException("Error loading DIE implementation: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
         
-        Log.info(taskName, "Tarefa habilitada.");
-        Log.info(taskName, "Árvores carregadas: " + predictor.size());
+        Log.info(taskName, "Task enabled."); //$NON-NLS-1$
+        Log.info(taskName, "Trees loaded: " + predictor.size()); //$NON-NLS-1$
         init.set(true);
       }
     }
@@ -172,11 +172,11 @@ public class DIETask extends AbstractTask {
   public void finish() throws Exception {
     synchronized (finished) {
       if (taskEnabled && !finished.get()) {
-        Log.info(taskName, "Total de Imagens Processadas: " + totalProcessed);
-        Log.info(taskName, "Total de Imagens Não Processadas: " + totalFailed);
+        Log.info(taskName, "Total images processed: " + totalProcessed); //$NON-NLS-1$
+        Log.info(taskName, "Total images not processed: " + totalFailed); //$NON-NLS-1$
         long total = totalProcessed.longValue() + totalFailed.longValue();
         if (total != 0) {
-          Log.info(taskName, "Tempo de Processamento Médio por Imagem (em milisegundos): " + (totalTime.longValue() / total));
+          Log.info(taskName, "Mean processing time per image (milliseconds): " + (totalTime.longValue() / total)); //$NON-NLS-1$
         }
         finished.set(true);
       }
@@ -197,7 +197,7 @@ public class DIETask extends AbstractTask {
     //Chama o método de detecção
     try {
       long t = System.currentTimeMillis();
-      File thumbFile = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), evidence.getHash(), "jpg");
+      File thumbFile = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
       BufferedImage img;
       if (thumbFile.exists()) {
         img = ImageIO.read(thumbFile);
@@ -235,7 +235,7 @@ public class DIETask extends AbstractTask {
    * Verifica se é imagem.
    */
   public static boolean isImageType(MediaType mediaType) {
-    return mediaType.getType().equals("image");
+    return mediaType.getType().equals("image"); //$NON-NLS-1$
   }
 
   /**
@@ -244,7 +244,7 @@ public class DIETask extends AbstractTask {
   private BufferedImage getBufferedImage(EvidenceFile evidence) {
     BufferedImage img = null;
     try {
-      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = ImageUtil.getThumb(stream);

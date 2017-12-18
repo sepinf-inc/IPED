@@ -210,7 +210,7 @@ public abstract class AbstractTask {
       this.process(evidence);
 
     } catch (TimeoutException e) {
-      LOGGER.warn("{} TIMEOUT ao processar {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e);
+      LOGGER.warn("{} TIMEOUT processing {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e); //$NON-NLS-1$
       stats.incTimeouts();
       evidence.setTimeOut(true);
       processMonitorTimeout(evidence);

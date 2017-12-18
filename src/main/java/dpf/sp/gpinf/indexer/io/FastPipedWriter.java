@@ -86,9 +86,9 @@ public class FastPipedWriter extends Writer {
     if (snk == null) {
       throw new NullPointerException();
     } else if (sink != null || snk.connected) {
-      throw new IOException("Already connected");
+      throw new IOException("Already connected"); //$NON-NLS-1$
     } else if (snk.closedByReader || closed) {
-      throw new IOException("Pipe closed");
+      throw new IOException("Pipe closed"); //$NON-NLS-1$
     }
 
     sink = snk;
@@ -112,7 +112,7 @@ public class FastPipedWriter extends Writer {
   @Override
   public void write(int c) throws IOException {
     if (sink == null) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     }
     sink.receive(c);
   }
@@ -133,7 +133,7 @@ public class FastPipedWriter extends Writer {
   @Override
   public void write(char cbuf[], int off, int len) throws IOException {
     if (sink == null) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     } else if ((off | len | (off + len) | (cbuf.length - (off + len))) < 0) {
       throw new IndexOutOfBoundsException();
     }
@@ -150,7 +150,7 @@ public class FastPipedWriter extends Writer {
   public synchronized void flush() throws IOException {
     if (sink != null) {
       if (sink.closedByReader || closed) {
-        throw new IOException("Pipe closed");
+        throw new IOException("Pipe closed"); //$NON-NLS-1$
       }
       synchronized (sink) {
         sink.notifyAll();

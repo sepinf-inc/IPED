@@ -54,7 +54,7 @@ public class SignatureTask extends AbstractTask {
             type = detector.detect(tis, metadata).getBaseType();
 
           } catch (IOException e) {
-            LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), evidence.getPath(),
+            LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
                 evidence.getLength(), e.toString());
           } finally {
             //Fecha handle p/ renomear subitem p/ hash posteriormente. Demais itens são fechados via evidence.dispose()
@@ -65,9 +65,9 @@ public class SignatureTask extends AbstractTask {
         }
 
         //Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
-        if (type != null && type.toString().equals("application/x-tika-ooxml-protected")
-            && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) {
-          type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase());
+        if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
+            && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
+          type = MediaType.application("x-tika-ooxml-protected-" + evidence.getExt().toLowerCase()); //$NON-NLS-1$
         }
 
         if (type == null) {
@@ -77,7 +77,7 @@ public class SignatureTask extends AbstractTask {
       } catch (Exception | OutOfMemoryError e) {
         type = MediaType.OCTET_STREAM;
 
-        LOGGER.warn("{} Detecção de tipo abortada: {} ({} bytes)\t\t{}", Thread.currentThread().getName(),
+        LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), //$NON-NLS-1$
             evidence.getPath(), evidence.getLength(), e.toString());
       }
     }
@@ -86,7 +86,7 @@ public class SignatureTask extends AbstractTask {
 
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
-    String value = confProps.getProperty("processFileSignatures");
+    String value = confProps.getProperty("processFileSignatures"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }

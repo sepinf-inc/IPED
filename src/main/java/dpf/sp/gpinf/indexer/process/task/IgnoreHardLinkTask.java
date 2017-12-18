@@ -19,7 +19,7 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
-  public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink";
+  public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink"; //$NON-NLS-1$
 
   private static Map<Long, Map<HardLink, Object>> fileSystemOrigMap = new HashMap<Long, Map<HardLink, Object>>();
   private static Map<Long, Map<HardLink, Object>> fileSystemSlackMap = new HashMap<Long, Map<HardLink, Object>>();
@@ -34,7 +34,7 @@ public class IgnoreHardLinkTask extends AbstractTask {
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 
-    String value = confParams.getProperty("ignoreHardLinks");
+    String value = confParams.getProperty("ignoreHardLinks"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -74,7 +74,7 @@ public class IgnoreHardLinkTask extends AbstractTask {
       long metaAddr = fsContent.getMetaAddr();
       HardLink hardLink;
       //Testa se é AlternateDataStream ou ResourceFork
-      if (!evidence.getName().contains(":")) {
+      if (!evidence.getName().contains(":")) { //$NON-NLS-1$
         hardLink = new HardLink(metaAddr);
       } else {
         hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
@@ -102,7 +102,7 @@ public class IgnoreHardLinkTask extends AbstractTask {
 
       if (ignore) {
         evidence.setSleuthFile(null);
-        evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true");
+        evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true"); //$NON-NLS-1$
       }
 
     }
