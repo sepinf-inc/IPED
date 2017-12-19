@@ -129,11 +129,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	  rootPath = new File(url.toURI()).getParent();
 	  configPath = rootPath;
 	  
-	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){
-		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0);
-		  configPath = new File(configPath, "profiles/" + profile).getAbsolutePath();
+	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){ //$NON-NLS-1$
+		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0); //$NON-NLS-1$
+		  configPath = new File(configPath, "profiles/" + profile).getAbsolutePath(); //$NON-NLS-1$
 		  if(!new File(configPath).exists())
-			  throw new IPEDException("Profile informado inexistente!");
+			  throw new IPEDException("No such profile!"); //$NON-NLS-1$
 	  }
   }
 
@@ -166,16 +166,16 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
       cmdLineParams.saveIntoCaseData(manager.getCaseData());
       manager.process();
 
-      this.firePropertyChange("mensagem", "", "Finalizado");
-      LOGGER.info("{} finalizado.", Versao.APP_EXT);
+      this.firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      LOGGER.info("{} finished.", Versao.APP_EXT); //$NON-NLS-1$
       success = true;
 
     } catch (Throwable e) {
       success = false;
       if(e instanceof IPEDException)
-    	  LOGGER.error("Erro no processamento: " + e.getMessage());
+    	  LOGGER.error("Processing Error: " + e.getMessage()); //$NON-NLS-1$
       else
-    	  LOGGER.error("Erro no processamento:", e);
+    	  LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
 
     } finally {
       done = true;
@@ -278,13 +278,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     }
     
     if (!success) {
-        SystemOut.println("\nERRO!!!");
+        SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
     } else {
-        SystemOut.println("\n" + Versao.APP_EXT + " finalizado.");
+        SystemOut.println("\n" + Versao.APP_EXT + "finished."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     if (indexador.logFile != null) {
-        SystemOut.println("Consulte o LOG em " + indexador.logFile.getAbsolutePath());
+        SystemOut.println("Check the log at " + indexador.logFile.getAbsolutePath()); //$NON-NLS-1$
     }
     
     if(getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
