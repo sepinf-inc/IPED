@@ -33,7 +33,7 @@ public class SignatureTask extends AbstractTask {
   
   @Override
   public boolean isEnabled() {
-    return processFileSignatures;
+    return true;
   }
 
   public void process(EvidenceFile evidence) {
