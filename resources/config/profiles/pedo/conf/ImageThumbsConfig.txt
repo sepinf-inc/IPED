@@ -25,3 +25,7 @@ extractThumb = true
 # Número de threads de geração de miniaturas na galeria. "default" utiliza o número de processadores.
 # Diminua o valor caso haja problemas de consumo de memória.
 galleryThreads = default
+
+# Loga a renderização de cada imagem na galeria. Pode deixar o log grande
+# ou tornar a galeria mais lenta dependendo da localização do log. 
+logGalleryRendering = false

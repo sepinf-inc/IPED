@@ -37,6 +37,8 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -51,10 +53,13 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryModel extends AbstractTableModel {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
   public int colCount = 10;
   private int thumbSize = 160;
   private int galleryThreads = 1;
+  private boolean logRendering = false;
   ImageThumbTask imgThumbTask;
 
   public Map<ItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<ItemId, GalleryValue>());
@@ -100,6 +105,7 @@ public class GalleryModel extends AbstractTableModel {
         imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf")); //$NON-NLS-1$
         thumbSize = imgThumbTask.thumbSize;
         galleryThreads = imgThumbTask.galleryThreads;
+        logRendering = imgThumbTask.logGalleryRendering;
 
       } catch (Exception e) {
         e.printStackTrace();
@@ -152,6 +158,11 @@ public class GalleryModel extends AbstractTableModel {
 
           if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false))) {
             return;
+          }
+        
+          if(logRendering) {
+        	  String path = doc.get(IndexItem.PATH);
+              LOGGER.info("Gallery rendering " + path);
           }
 
           String hash = doc.get(IndexItem.HASH);

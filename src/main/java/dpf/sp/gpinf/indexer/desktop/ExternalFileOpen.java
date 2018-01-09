@@ -3,9 +3,14 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.Desktop;
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import gpinf.dev.data.EvidenceFile;
 
 public class ExternalFileOpen {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(ExternalFileOpen.class);
 	
 	public static void open(final int luceneId){
 		new Thread() {
@@ -15,6 +20,8 @@ public class ExternalFileOpen {
 	        	  EvidenceFile item = App.get().appCase.getItemByLuceneID(luceneId);
 	              file = item.getTempFile();
 	              file.setReadOnly();
+	              
+	              LOGGER.info("Externally Opening file " + item.getPath());
 
 	            if (file != null) {
 	              Desktop.getDesktop().open(file.getCanonicalFile());

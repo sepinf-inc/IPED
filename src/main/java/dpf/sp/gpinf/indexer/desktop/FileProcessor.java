@@ -110,7 +110,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
   private void process() {
 
-    LOGGER.info(doc.get(IndexItem.PATH));
+    LOGGER.info("Opening " + doc.get(IndexItem.PATH));
 
     if (listSubItens) {
       // listRelatedItens();

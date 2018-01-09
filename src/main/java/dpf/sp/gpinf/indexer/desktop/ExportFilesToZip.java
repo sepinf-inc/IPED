@@ -29,11 +29,15 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.ItemId;
 import gpinf.dev.data.EvidenceFile;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(ExportFilesToZip.class);
 
   ArrayList<ItemId> uniqueIds;
   File file, subdir;
@@ -52,6 +56,8 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     
     if(!file.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
     	file = new File(file.getAbsolutePath() + ".zip"); //$NON-NLS-1$
+    
+    LOGGER.info("Exporting files to " + file.getAbsolutePath());
     
     ZipArchiveOutputStream zaos = new ZipArchiveOutputStream(file);
     byte[] buf = new byte[8 * 1024 * 1024];
@@ -80,6 +86,9 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         	entry.setSize(e.getLength());
         
         zaos.putArchiveEntry(entry);
+        
+        LOGGER.info("Exporting file " + e.getPath());
+        
         try (InputStream in = e.getBufferedStream()){
             int len = 0;
             while((len = in.read(buf)) != -1 && !this.isCancelled())

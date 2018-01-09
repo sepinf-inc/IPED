@@ -30,16 +30,17 @@ import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
-import org.apache.lucene.document.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(CopiarArquivos.class);
 
   ArrayList<ItemId> uniqueIds;
   File dir, subdir;
@@ -70,6 +71,10 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
   @Override
   protected Boolean doInBackground() throws Exception {
+    
+    LOGGER.info("Exporting files to " + dir.getAbsolutePath());
+    dir.mkdirs();
+    
     int progress = 0, subdirCount = 1;
     for (ItemId item : uniqueIds) {
       try {
@@ -90,6 +95,8 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
         }
 
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
+        
+        LOGGER.info("Exporting file " + e.getPath());
 
         IOUtil.copiaArquivo(in, out);
 

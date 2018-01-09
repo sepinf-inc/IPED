@@ -32,6 +32,8 @@ import javax.swing.JOptionPane;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.lucene.document.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -44,6 +46,8 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class ExportFileTree extends CancelableWorker {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTree.class);
 
   int baseDocId;
   boolean onlyChecked, toZip;
@@ -178,6 +182,8 @@ public class ExportFileTree extends CancelableWorker {
           Files.createDirectories(dst.toPath());
         }
       } else {
+    	LOGGER.info("Exporting file " + item.getPath());
+    	
         try (InputStream in = item.getBufferedStream()) {
           dst = getNonExistingFile(dst);
           Files.copy(in, dst.toPath());
@@ -234,6 +240,7 @@ public class ExportFileTree extends CancelableWorker {
         zaos.putArchiveEntry(entry);
         
         if(!item.isDir() && !isParent){
+          LOGGER.info("Exporting file " + item.getPath());
           try (InputStream in = item.getBufferedStream()) {
               int len = 0;
               while((len = in.read(buf)) != -1 && !this.isCancelled())
@@ -308,6 +315,8 @@ public class ExportFileTree extends CancelableWorker {
         File baseDir = fileChooser.getSelectedFile();
         if(toZip && !baseDir.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
             baseDir = new File(baseDir.getAbsolutePath() + ".zip"); //$NON-NLS-1$
+        
+        LOGGER.info("Exporting files to " + baseDir.getAbsolutePath());
         (new ExportFileTree(baseDir, baseDocId, onlyChecked, toZip)).execute();
       }
     } catch (Exception e) {

@@ -45,6 +45,8 @@ public class ImageThumbTask extends AbstractTask {
   public int thumbSize = 160;
 
   public int galleryThreads = 1;
+  
+  public boolean logGalleryRendering = false;
 
   private boolean taskEnabled = false;
 
@@ -90,6 +92,11 @@ public class ImageThumbTask extends AbstractTask {
     value = properties.getProperty("extractThumb"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
     	extractThumb = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("logGalleryRendering");
+    if (value != null && !value.trim().isEmpty()) {
+    	logGalleryRendering = Boolean.valueOf(value.trim());
     }
     
   }
