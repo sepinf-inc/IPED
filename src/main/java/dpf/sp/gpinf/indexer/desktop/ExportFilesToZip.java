@@ -57,7 +57,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     if(!file.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
     	file = new File(file.getAbsolutePath() + ".zip"); //$NON-NLS-1$
     
-    LOGGER.info("Exporting files to " + file.getAbsolutePath());
+    LOGGER.info("Exporting files to " + file.getAbsolutePath()); //$NON-NLS-1$
     
     ZipArchiveOutputStream zaos = new ZipArchiveOutputStream(file);
     byte[] buf = new byte[8 * 1024 * 1024];
@@ -87,7 +87,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         
         zaos.putArchiveEntry(entry);
         
-        LOGGER.info("Exporting file " + e.getPath());
+        LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
         
         try (InputStream in = e.getBufferedStream()){
             int len = 0;

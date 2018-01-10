@@ -21,7 +21,7 @@ public class ExternalFileOpen {
 	              file = item.getTempFile();
 	              file.setReadOnly();
 	              
-	              LOGGER.info("Externally Opening file " + item.getPath());
+	              LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
 
 	            if (file != null) {
 	              Desktop.getDesktop().open(file.getCanonicalFile());

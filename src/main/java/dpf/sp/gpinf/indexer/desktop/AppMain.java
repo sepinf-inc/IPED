@@ -46,7 +46,7 @@ public class AppMain {
                       String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
                       if(versionStr.startsWith("1.")) //$NON-NLS-1$
                           versionStr = versionStr.substring(2, 3);
-                      int dotIdx = versionStr.indexOf(".");
+                      int dotIdx = versionStr.indexOf("."); //$NON-NLS-1$
                       if(dotIdx > -1)
                     	  versionStr = versionStr.substring(0, dotIdx);
                       int version = Integer.valueOf(versionStr);

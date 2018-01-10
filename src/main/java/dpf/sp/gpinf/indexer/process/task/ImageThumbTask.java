@@ -94,7 +94,7 @@ public class ImageThumbTask extends AbstractTask {
     	extractThumb = Boolean.valueOf(value.trim());
     }
     
-    value = properties.getProperty("logGalleryRendering");
+    value = properties.getProperty("logGalleryRendering"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
     	logGalleryRendering = Boolean.valueOf(value.trim());
     }

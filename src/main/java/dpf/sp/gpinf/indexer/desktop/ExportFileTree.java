@@ -182,7 +182,7 @@ public class ExportFileTree extends CancelableWorker {
           Files.createDirectories(dst.toPath());
         }
       } else {
-    	LOGGER.info("Exporting file " + item.getPath());
+    	LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
     	
         try (InputStream in = item.getBufferedStream()) {
           dst = getNonExistingFile(dst);
@@ -240,7 +240,7 @@ public class ExportFileTree extends CancelableWorker {
         zaos.putArchiveEntry(entry);
         
         if(!item.isDir() && !isParent){
-          LOGGER.info("Exporting file " + item.getPath());
+          LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
           try (InputStream in = item.getBufferedStream()) {
               int len = 0;
               while((len = in.read(buf)) != -1 && !this.isCancelled())
@@ -316,7 +316,7 @@ public class ExportFileTree extends CancelableWorker {
         if(toZip && !baseDir.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
             baseDir = new File(baseDir.getAbsolutePath() + ".zip"); //$NON-NLS-1$
         
-        LOGGER.info("Exporting files to " + baseDir.getAbsolutePath());
+        LOGGER.info("Exporting files to " + baseDir.getAbsolutePath()); //$NON-NLS-1$
         (new ExportFileTree(baseDir, baseDocId, onlyChecked, toZip)).execute();
       }
     } catch (Exception e) {

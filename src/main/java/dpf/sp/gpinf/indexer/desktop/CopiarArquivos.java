@@ -72,7 +72,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
   @Override
   protected Boolean doInBackground() throws Exception {
     
-    LOGGER.info("Exporting files to " + dir.getAbsolutePath());
+    LOGGER.info("Exporting files to " + dir.getAbsolutePath()); //$NON-NLS-1$
     dir.mkdirs();
     
     int progress = 0, subdirCount = 1;
@@ -96,7 +96,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
         
-        LOGGER.info("Exporting file " + e.getPath());
+        LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
         IOUtil.copiaArquivo(in, out);
 

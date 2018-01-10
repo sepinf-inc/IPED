@@ -162,7 +162,7 @@ public class GalleryModel extends AbstractTableModel {
         
           if(logRendering) {
         	  String path = doc.get(IndexItem.PATH);
-              LOGGER.info("Gallery rendering " + path);
+              LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
           }
 
           String hash = doc.get(IndexItem.HASH);

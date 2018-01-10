@@ -102,7 +102,7 @@ public class IPEDSearcher {
 		if(query == null)
 			query = new QueryBuilder(ipedCase).getQuery(queryText);
 		
-		LOGGER.info("Searching for query " + query.toString());
+		LOGGER.info("Searching for query " + query.toString()); //$NON-NLS-1$
 		
 		if(!treeQuery)
 			query = getNonTreeQuery();
