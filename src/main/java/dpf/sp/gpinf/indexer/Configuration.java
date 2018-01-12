@@ -298,6 +298,16 @@ public class Configuration {
       PDFToImage.PDFLIB = value;
     }
     
+    value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      PDFToImage.externalConversion = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      PDFToImage.externalConvMaxMem = value.trim();
+    }
+    
     value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
