@@ -152,6 +152,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 				}
 				
 				Query q = searcher.getQuery();
+				LOGGER.info("Searching for query " + q.toString()); //$NON-NLS-1$
+				
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
 					result = allItemsCache.get();
 				
@@ -168,11 +170,17 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 				if (filtro.equals(App.FILTRO_SELECTED)){
 					result = App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
 					numFilters++;
+					LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
 				}
 				
 				HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
 				if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
 					numFilters++;
+					StringBuilder bookmarks = new StringBuilder();
+					for(String bookmark : bookmarkSelection)
+						bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+					LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
+					
 					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
 						if(bookmarkSelection.size() == 1)
 							result = App.get().appCase.getMultiMarcadores().filtrarSemMarcadores(result);
