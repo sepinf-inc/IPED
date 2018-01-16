@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -86,12 +87,12 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Nome da tarefa.
    */
-  private static final String taskName = "Geração de Relatório HTML";
+  private static final String taskName = "HTML Report Task"; //$NON-NLS-1$
 
   /**
    * Nome da subpasta com versões de visualização dos arquivos.
    */
-  public static final String viewFolder = "view";
+  public static final String viewFolder = "view"; //$NON-NLS-1$
 
   /**
    * Registros organizados por marcador.
@@ -111,7 +112,7 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Tag para registros sem marcador
    */
-  private static final String NO_LABEL_NAME = "[Sem Marcador]";
+  private static final String NO_LABEL_NAME = Messages.getString("HTMLReportTask.NoBookmarks"); //$NON-NLS-1$
 
   /**
    * Indicador de inicialização, para controle de sincronização entre instâncias da classe.
@@ -126,12 +127,12 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Nome da pasta com miniatutas de imagem.
    */
-  public static String thumbsFolderName = "thumbs";
+  public static String thumbsFolderName = "thumbs"; //$NON-NLS-1$
 
   /**
    * Nome da subpasta destino dos os arquivos do relatório.
    */
-  public static String reportSubFolderName = "relatorio";
+  public static String reportSubFolderName = Messages.getString("HTMLReportTask.ReportSubFolder"); //$NON-NLS-1$
 
   /**
    * Subpasta com a maior parte dos arquivos HTML e arquivos auxiliares. Static porque pode ser
@@ -200,7 +201,7 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Constante com o nome utilizado para o arquivo de propriedades.
    */
-  private static final String configFileName = "HTMLReportConfig.txt";
+  private static final String configFileName = "HTMLReportConfig.txt"; //$NON-NLS-1$
 
   /**
    * Set com arquivos em processamento, estático e sincronizado para evitar que duas threads
@@ -234,12 +235,12 @@ public class HTMLReportTask extends AbstractTask {
     synchronized (init) {
       if (!init.get()) {
         //Verifica se tarefa está habilitada
-        String value = confParams.getProperty("enableHTMLReport");
-        if (value != null && value.trim().equalsIgnoreCase("true")) {
+        String value = confParams.getProperty("enableHTMLReport"); //$NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
           taskEnabled = true;
-          Log.info(taskName, "Tarefa habilitada.");
+          Log.info(taskName, "Task enabled."); //$NON-NLS-1$
         } else {
-          Log.info(taskName, "Tarefa desabilitada.");
+          Log.info(taskName, "Task disabled."); //$NON-NLS-1$
           init.set(true);
           return;
         }
@@ -253,88 +254,88 @@ public class HTMLReportTask extends AbstractTask {
         try {
           properties.load(confFile);
 
-          value = properties.getProperty("ItemsPerPage");
+          value = properties.getProperty("ItemsPerPage"); //$NON-NLS-1$
           if (value != null) {
             itemsPerPage = Integer.parseInt(value.trim());
           }
 
-          value = properties.getProperty("ThumbsPerPage");
+          value = properties.getProperty("ThumbsPerPage"); //$NON-NLS-1$
           if (value != null) {
             thumbsPerPage = Integer.parseInt(value.trim());
           }
 
-          value = properties.getProperty("ThumbSize");
+          value = properties.getProperty("ThumbSize"); //$NON-NLS-1$
           if (value != null) {
             thumbSize = Integer.parseInt(value.trim());
           }
 
-          value = properties.getProperty("EnableImageThumbs");
-          if (value != null && value.equalsIgnoreCase("true")) {
+          value = properties.getProperty("EnableImageThumbs"); //$NON-NLS-1$
+          if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
             imageThumbsEnabled = true;
           }
 
-          value = properties.getProperty("EnableVideoThumbs");
-          if (value != null && value.equalsIgnoreCase("true")) {
+          value = properties.getProperty("EnableVideoThumbs"); //$NON-NLS-1$
+          if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
             videoThumbsEnabled = true;
           }
 
-          value = properties.getProperty("FramesPerStripe");
+          value = properties.getProperty("FramesPerStripe"); //$NON-NLS-1$
           if (value != null) {
             framesPerStripe = Integer.parseInt(value.trim());
           }
 
-          value = properties.getProperty("VideoStripeWidth");
+          value = properties.getProperty("VideoStripeWidth"); //$NON-NLS-1$
           if (value != null) {
             videoStripeWidth = Integer.parseInt(value.trim());
           }
 
-          value = properties.getProperty("EnableCategoriesList");
-          if (value != null && value.equalsIgnoreCase("true")) {
+          value = properties.getProperty("EnableCategoriesList"); //$NON-NLS-1$
+          if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
             categoriesListEnabled = true;
           }
 
-          value = properties.getProperty("EnableThumbsGallery");
-          if (value != null && value.equalsIgnoreCase("true")) {
+          value = properties.getProperty("EnableThumbsGallery"); //$NON-NLS-1$
+          if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
             thumbsPageEnabled = true;
           }
 
-          info.cabecalho = properties.getProperty("Cabecalho");
-          info.classe.add(properties.getProperty("Classe"));
-          info.dataLaudo = properties.getProperty("DataLaudo");
-          info.dataDocumento = properties.getProperty("DataDocumento");
-          info.dataProtocolo = properties.getProperty("DataProtocolo");
-          info.documento = properties.getProperty("Documento");
-          info.ipl = properties.getProperty("Ipl");
-          info.laudo = properties.getProperty("Laudo");
-          info.material = properties.getProperty("Material");
-          info.matricula.add(properties.getProperty("Matricula"));
-          info.perito.add(properties.getProperty("Perito"));
-          info.protocolo = properties.getProperty("Protocolo");
-          info.solicitante = properties.getProperty("Solicitante");
-          info.titulo = properties.getProperty("Titulo");
+          info.cabecalho = properties.getProperty("Header"); //$NON-NLS-1$
+          //info.classe.add(properties.getProperty("Classe"));
+          info.dataLaudo = properties.getProperty("ReportDate"); //$NON-NLS-1$
+          info.dataDocumento = properties.getProperty("RequestDate"); //$NON-NLS-1$
+          info.dataProtocolo = properties.getProperty("RecordDate"); //$NON-NLS-1$
+          info.documento = properties.getProperty("RequestDoc"); //$NON-NLS-1$
+          info.ipl = properties.getProperty("Investigation"); //$NON-NLS-1$
+          info.laudo = properties.getProperty("Report"); //$NON-NLS-1$
+          info.material = properties.getProperty("Material"); //$NON-NLS-1$
+          info.matricula.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
+          info.perito.add(properties.getProperty("Examiner")); //$NON-NLS-1$
+          info.protocolo = properties.getProperty("Record"); //$NON-NLS-1$
+          info.solicitante = properties.getProperty("Requester"); //$NON-NLS-1$
+          info.titulo = properties.getProperty("Title"); //$NON-NLS-1$
         } catch (Exception e) {
           e.printStackTrace();
           init.set(true);
-          throw new RuntimeException("Erro lendo arquivo de configuração da tarefa de geração de relatório HTML:" + confFile.getAbsolutePath());
+          throw new RuntimeException("Error loading conf file: " + confFile.getAbsolutePath()); //$NON-NLS-1$
         }
 
         //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args != null) {
-          List<String> info = args.getCmdArgs().get("-asap");
+          List<String> info = args.getCmdArgs().get("-asap"); //$NON-NLS-1$
           if (info != null && info.size() > 0) {
             File infoFile = new File(info.get(0));
             if (infoFile != null) {
-              Log.info(taskName, "Processando arquivo com informações do caso: " + infoFile.getAbsolutePath());
+              Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               if (!infoFile.exists()) {
-                throw new RuntimeException("Arquivo não encontrado:" + infoFile.getAbsolutePath());
+                throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               }
               try {
                 readInfoFile(infoFile);
               } catch (Exception e) {
                 e.printStackTrace();
                 init.set(true);
-                throw new RuntimeException("Erro processando arquivo com informações do caso:" + infoFile.getAbsolutePath());
+                throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               }
             }
           }
@@ -354,20 +355,20 @@ public class HTMLReportTask extends AbstractTask {
 
       String reportRoot = "relatorio.htm";
       if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
-        Log.error(taskName, "Relatório HTML já existente, atualização do relatório ainda não implementada!");
+        Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
         return;
       }
 
-      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Gerando relatório HTML...");
+      IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("HTMLReportTask.MakingHtmlReport")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       // Pasta com arquivos HTML formatado que são utilizados como entrada.
       String codePath = Configuration.appRoot;
-      File templatesFolder = new File(new File(codePath), "htmlreport");
+      File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
 
-      Log.info(taskName, "Pasta do relatório: " + reportSubFolder.getAbsolutePath());
-      Log.info(taskName, "Pasta de modelos:   " + templatesFolder.getAbsolutePath());
+      Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
+      Log.info(taskName, "Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
       if (!templatesFolder.exists()) {
-        throw new FileNotFoundException("Para de modelos não encontrada!");
+        throw new FileNotFoundException("Template folder not found!"); //$NON-NLS-1$
       }
 
       long t = System.currentTimeMillis();
@@ -377,19 +378,19 @@ public class HTMLReportTask extends AbstractTask {
       if(!entriesByLabel.isEmpty())
     	  entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
-      modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content;
+      modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content; //$NON-NLS-2$
       processBookmarks(templatesFolder);
       if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
         createThumbsPage();
       }
-      processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm"));
-      processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm"));
+      processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$ //$NON-NLS-2$
+      processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
       copyFile(new File(templatesFolder, reportRoot), reportSubFolder.getParentFile());
       copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder);
-      copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res"));
+      copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
       t = (System.currentTimeMillis() - t + 500) / 1000;
-      Log.info(taskName, "Tempo de Geração do Relatório (em segundos):  " + t);
+      Log.info(taskName, "Report creation time (seconds): " + t); //$NON-NLS-1$
     }
   }
 
@@ -410,7 +411,7 @@ public class HTMLReportTask extends AbstractTask {
     reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
     reg.length = evidence.getLength();
     reg.ext = evidence.getExt();
-    reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | ");
+    reg.category = evidence.getCategories().replace(CategoryTokenizer.SEPARATOR + "", " | "); //$NON-NLS-1$ //$NON-NLS-2$
     reg.hash = evidence.getHash();
     if (reg.hash != null && reg.hash.isEmpty()) {
       reg.hash = null;
@@ -422,8 +423,8 @@ public class HTMLReportTask extends AbstractTask {
     reg.created = evidence.getCreationDate();
     reg.path = evidence.getPath();
 
-    String[] labels = evidence.getLabels() == null ? new String[] {""} : evidence.getLabels().split("\\|");
-    String[] categories = reg.category.split("\\|");
+    String[] labels = evidence.getLabels() == null ? new String[] {""} : evidence.getLabels().split("\\|"); //$NON-NLS-1$ //$NON-NLS-2$
+    String[] categories = reg.category.split("\\|"); //$NON-NLS-1$
     synchronized (init) {
       for (String label : labels) {
         label = label.trim();
@@ -493,19 +494,18 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private void processCaseInfo(File src, File target) throws Exception {
-    EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1");
-    replace(arq.content, "%LAUDO%", info.laudo);
-    replace(arq.content, "%DATALAUDO%", info.dataLaudo);
-    replace(arq.content, "%SIG%", info.perito.size() > 1 ? "s" : "");
-    replace(arq.content, "%PERITOS%", formatPeritos());
-    replace(arq.content, "%CABECALHO%", info.cabecalho);
-    replace(arq.content, "%TITULO%", info.titulo);
-    replace(arq.content, "%IPL%", info.ipl);
-    replace(arq.content, "%DOC%", info.documento + " de " + info.dataDocumento);
-    replace(arq.content, "%SOL%", info.solicitante);
-    replace(arq.content, "%PROT%", info.protocolo);
-    replace(arq.content, "%DATAPROT%", info.dataProtocolo);
-    replace(arq.content, "%MATERIAL%", info.material);
+    EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1"); //$NON-NLS-1$
+    replace(arq.content, "%REPORT%", info.laudo); //$NON-NLS-1$
+    replace(arq.content, "%REPORT_DATE%", info.dataLaudo); //$NON-NLS-1$
+    replace(arq.content, "%EXAMINERS%", formatPeritos()); //$NON-NLS-1$
+    replace(arq.content, "%HEADER%", info.cabecalho); //$NON-NLS-1$
+    replace(arq.content, "%TITLE%", info.titulo); //$NON-NLS-1$
+    replace(arq.content, "%INVESTIGATION%", info.ipl); //$NON-NLS-1$
+    replace(arq.content, "%REQUEST_DOC%", info.documento + Messages.getString("HTMLReportTask.of") + info.dataDocumento); //$NON-NLS-1$ //$NON-NLS-2$
+    replace(arq.content, "%REQUESTER%", info.solicitante); //$NON-NLS-1$
+    replace(arq.content, "%RECORD%", info.protocolo); //$NON-NLS-1$
+    replace(arq.content, "%RECORD_DATE%", info.dataProtocolo); //$NON-NLS-1$
+    replace(arq.content, "%EVIDENCE%", info.material); //$NON-NLS-1$
     arq.file = target;
     arq.write();
   }
@@ -514,13 +514,13 @@ public class HTMLReportTask extends AbstractTask {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < info.perito.size(); i++) {
       if (i > 0) {
-        ret.append("<br><br>\n");
+        ret.append("<br><br>\n"); //$NON-NLS-1$
       }
       StringBuilder s = new StringBuilder();
       s.append(modeloPerito);
-      replace(s, "%PERITO%", info.perito.get(i));
-      replace(s, "%CLASSE%", info.classe.size() > i ? formatClass(info.classe.get(i)) : "");
-      replace(s, "%MAT%", info.matricula.size() > i ? info.matricula.get(i) : "");
+      replace(s, "%EXAMINER%", info.perito.get(i)); //$NON-NLS-1$
+      //replace(s, "%CLASSE%", info.classe.size() > i ? formatClass(info.classe.get(i)) : ""); //$NON-NLS-2$
+      replace(s, "%EXAMINER_ID%", info.matricula.size() > i ? info.matricula.get(i) : "");  //$NON-NLS-1$//$NON-NLS-2$
       ret.append(s);
     }
     return ret.toString();
@@ -530,9 +530,9 @@ public class HTMLReportTask extends AbstractTask {
     if (str != null && str.length() == 1) {
       char c = str.charAt(0);
       if (c >= '1' && c <= '3') {
-        str = c + "a Classe";
+        str = c + "a Classe"; //$NON-NLS-1$
       } else if (Character.toUpperCase(c) == 'E') {
-        str = "Classe Especial";
+        str = "Classe Especial"; //$NON-NLS-1$
       }
     }
     return str;
@@ -543,41 +543,41 @@ public class HTMLReportTask extends AbstractTask {
 
     int idx = 1;
     if (!entriesByLabel.isEmpty()) {
-      sb.append("<p>\n");
-      sb.append("\t<span class=\"SmallText1\">Marcadores</span>\n");
+      sb.append("<p>\n"); //$NON-NLS-1$
+      sb.append("\t<span class=\"SmallText1\">"+Messages.getString("HTMLReportTask.Bookmarks")+"</span>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       for (String marcador : entriesByLabel.keySet()) {
-        sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq");
-        sb.append(String.format("%06d", idx));
-        sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">");
+        sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq"); //$NON-NLS-1$
+        sb.append(String.format("%06d", idx)); //$NON-NLS-1$
+        sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
         sb.append(marcador);
-        sb.append("</a>\n");
+        sb.append("</a>\n"); //$NON-NLS-1$
         idx++;
       }
-      sb.append("</p>\n");
+      sb.append("</p>\n"); //$NON-NLS-1$
     }
 
     if (categoriesListEnabled && !entriesByCategory.isEmpty()) {
-      sb.append("<p>\n");
-      sb.append("\t<span class=\"SmallText1\">Categorias</span>\n");
+      sb.append("<p>\n"); //$NON-NLS-1$
+      sb.append("\t<span class=\"SmallText1\">"+Messages.getString("HTMLReportTask.Categories")+"</span>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       for (String categoria : entriesByCategory.keySet()) {
-        sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq");
-        sb.append(String.format("%06d", idx));
-        sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">");
+        sb.append("\t\t<br />&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"arq"); //$NON-NLS-1$
+        sb.append(String.format("%06d", idx)); //$NON-NLS-1$
+        sb.append("(1).html\" target=\"ReportPage\" class=\"MenuText\">"); //$NON-NLS-1$
         sb.append(categoria);
-        sb.append("</a>\n");
+        sb.append("</a>\n"); //$NON-NLS-1$
         idx++;
       }
-      sb.append("</p>");
+      sb.append("</p>"); //$NON-NLS-1$
     }
 
     if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
-      sb.append("<p>\n");
-      sb.append("<b><a href=\"miniaturas_001.htm\" class=\"SmallText2\" target=\"ReportPage\">");
-      sb.append("Galeria de Imagens</a></b></p>\n");
+      sb.append("<p>\n"); //$NON-NLS-1$
+      sb.append("<b><a href=\"thumbs_001.htm\" class=\"SmallText2\" target=\"ReportPage\">"); //$NON-NLS-1$
+      sb.append(Messages.getString("HTMLReportTask.GalleryLink")+"</a></b></p>\n"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1");
-    replace(arq.content, "%BOOKMARKS%", sb.toString());
+    EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1"); //$NON-NLS-1$
+    replace(arq.content, "%BOOKMARKS%", sb.toString()); //$NON-NLS-1$
 
     arq.file = target;
     arq.write();
@@ -585,12 +585,12 @@ public class HTMLReportTask extends AbstractTask {
 
   private void processBookmarks(File templatesFolder) throws Exception {
     sortRegs();
-    StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content;
-    replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize));
-    StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content;
+    StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content; //$NON-NLS-2$
+    replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
+    StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content; //$NON-NLS-2$
     int idx = 1;
     for (String marcador : entriesByLabel.keySet()) {
-      String id = String.format("arq%06d", idx);
+      String id = String.format("arq%06d", idx); //$NON-NLS-1$
       List<ReportEntry> regs = entriesByLabel.get(marcador);
       processaBookmark(marcador, id, modelo, item, true, regs);
       idx++;
@@ -602,7 +602,7 @@ public class HTMLReportTask extends AbstractTask {
     }
     if (categoriesListEnabled) {
       for (String categoria : entriesByCategory.keySet()) {
-        String id = String.format("arq%06d", idx);
+        String id = String.format("arq%06d", idx); //$NON-NLS-1$
         List<ReportEntry> regs = entriesByCategory.get(categoria);
         processaBookmark(categoria, id, modelo, item, false, regs);
         idx++;
@@ -658,8 +658,8 @@ public class HTMLReportTask extends AbstractTask {
       final int idx = i;
       (threads[i] = new Thread() {
         public void run() {
-          DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-          NumberFormat longFormat = new DecimalFormat("#,##0");
+          DateFormat dateFormat = new SimpleDateFormat(Messages.getString("HTMLReportTask.Dateformat")); //$NON-NLS-1$
+          NumberFormat longFormat = new DecimalFormat(Messages.getString("HTMLReportTask.DecimalFormat")); //$NON-NLS-1$
           for (int page = 1; page <= numPages; page++) {
             if (page % numThreads != idx) continue;
             int start = (page - 1) * itemsPerPage;
@@ -683,7 +683,7 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private String getPageId(String id, int page) {
-    return id + "(" + page + ").html";
+    return id + "(" + page + ").html"; //$NON-NLS-1$ //$NON-NLS-2$
   }
 
   private void createBookmarkPage(DateFormat dateFormat, NumberFormat longFormat, String name, String id, StringBuilder model, StringBuilder item, int pag, int totPags, int totRegs, List<ReportEntry> regs, boolean isLabel) throws Exception {
@@ -702,22 +702,22 @@ public class HTMLReportTask extends AbstractTask {
       if (reg.isImage && imageThumbsEnabled && reg.hash != null) {
         File thumbFile = getImageThumbFile(reg.hash);
         if (thumbFile.exists() && thumbFile.length() > 0) {
-          it.append("<table width=\"100%\"><tr><td>");
+          it.append("<table width=\"100%\"><tr><td>"); //$NON-NLS-1$
 
           StringBuilder img = new StringBuilder();
           if (reg.export != null) {
-            img.append("<a href=\"");
-            img.append("../").append(reg.export);
-            img.append("\">");
+            img.append("<a href=\""); //$NON-NLS-1$
+            img.append("../").append(reg.export); //$NON-NLS-1$
+            img.append("\">"); //$NON-NLS-1$
           }
-          img.append("<img src=\"");
+          img.append("<img src=\""); //$NON-NLS-1$
           img.append(getRelativePath(thumbFile, reportSubFolder));
-          img.append("\" class=\"thumb\" />");
+          img.append("\" class=\"thumb\" />"); //$NON-NLS-1$
           if (reg.export != null) {
-            img.append("</a>");
+            img.append("</a>"); //$NON-NLS-1$
           }
           it.append(img);
-          it.append("</td></tr></table>\n");
+          it.append("</td></tr></table>\n"); //$NON-NLS-1$
           if (isLabel || entriesByLabel.isEmpty()) {
             reg.img = img.toString();
           }
@@ -727,71 +727,73 @@ public class HTMLReportTask extends AbstractTask {
         File stripeFile = getVideoStripeFile(reg.hash);
         if (stripeFile.exists()) {
           Dimension dim = ImageUtil.getImageFileDimension(stripeFile);
-          it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Cenas Extraídas do Vídeo</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
+          it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">" //$NON-NLS-1$
+        		  + Messages.getString("HTMLReportTask.VideoThumbs") + "</span><span class=\"bkmkColRight bkmkValue\"><a href=\""); //$NON-NLS-1$ //$NON-NLS-2$
           it.append(getRelativePath(videoThumbsFile, reportSubFolder));
-          it.append("\"><img src=\"");
-          it.append(getRelativePath(stripeFile, reportSubFolder)).append("\"");
+          it.append("\"><img src=\""); //$NON-NLS-1$
+          it.append(getRelativePath(stripeFile, reportSubFolder)).append("\""); //$NON-NLS-1$
           if (dim != null) {
-            it.append(" width=\"").append(dim.width).append("\"");
-            it.append(" height=\"").append(dim.height).append("\"");
+            it.append(" width=\"").append(dim.width).append("\""); //$NON-NLS-1$ //$NON-NLS-2$
+            it.append(" height=\"").append(dim.height).append("\""); //$NON-NLS-1$ //$NON-NLS-2$
           }
-          it.append(">");
-          it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n");
+          it.append(">"); //$NON-NLS-1$
+          it.append("</a></span></div><div class=\"row\">&nbsp;</div>\n"); //$NON-NLS-1$
         }
       } else if (!reg.isVideo && reg.hash != null) {
         File view = Util.findFileFromHash(new File(this.output, viewFolder), reg.hash);
         if (view != null) {
-          it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">Versão de Visualização</span><span class=\"bkmkColRight bkmkValue\"><a href=\"");
+          it.append("<div class=\"row\"><span class=\"bkmkColLeft bkmkValue labelBorderless clrBkgrnd\" width=\"100%\" border=\"1\">" //$NON-NLS-1$
+        		  + Messages.getString("HTMLReportTask.PreviewReport")+"</span><span class=\"bkmkColRight bkmkValue\"><a href=\""); //$NON-NLS-1$ //$NON-NLS-2$
           it.append(getRelativePath(view, reportSubFolder));
-          it.append("\">");
+          it.append("\">"); //$NON-NLS-1$
           it.append(view.getName());
-          it.append("</a></span></div>\n");
+          it.append("</a></span></div>\n"); //$NON-NLS-1$
         }
       }
-      replace(it, "%SEQ%", reg.hash);
-      replace(it, "%NOME%", reg.name);
-      replace(it, "%CAMINHO%", reg.path);
-      replace(it, "%TIPO%", reg.category);
-      replace(it, "%TAMANHO%", formatNumber(reg.length, longFormat));
-      replace(it, "%EXCLUIDO%", reg.deleted ? "Sim" : "N&atilde;o");
-      replace(it, "%CARVED%", reg.carved ? "Sim" : "N&atilde;o");
-      replace(it, "%HASH%", reg.hash);
-      String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>";
-      replace(it, "%EXP%", export);
-      replace(it, "%DT_CRIACAO%", formatDate(reg.created, dateFormat));
-      replace(it, "%DT_MOD%", formatDate(reg.modified, dateFormat));
-      replace(it, "%DT_ACESSO%", formatDate(reg.accessed, dateFormat));
+      replace(it, "%SEQ%", reg.hash); //$NON-NLS-1$
+      replace(it, "%NAME%", reg.name); //$NON-NLS-1$
+      replace(it, "%PATH%", reg.path); //$NON-NLS-1$
+      replace(it, "%TYPE%", reg.category); //$NON-NLS-1$
+      replace(it, "%SIZE%", formatNumber(reg.length, longFormat)); //$NON-NLS-1$
+      replace(it, "%DELETED%", reg.deleted ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      replace(it, "%CARVED%", reg.carved ? Messages.getString("HTMLReportTask.Yes") : Messages.getString("HTMLReportTask.No")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      replace(it, "%HASH%", reg.hash); //$NON-NLS-1$
+      String export = reg.export == null ? "-" : "<a href=\"../" + reg.export + "\">" + reg.export + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+      replace(it, "%EXPORTED%", export); //$NON-NLS-1$
+      replace(it, "%CREATED%", formatDate(reg.created, dateFormat)); //$NON-NLS-1$
+      replace(it, "%MODIFIED%", formatDate(reg.modified, dateFormat)); //$NON-NLS-1$
+      replace(it, "%ACCESSED%", formatDate(reg.accessed, dateFormat)); //$NON-NLS-1$
       items.append(it);
     }
 
     StringBuilder p = new StringBuilder();
-    p.append("<table width=\"100%\">\n");
-    p.append("<tr><td>P&aacute;gina %PAG% de %TOTPAG%</td>");
-    replace(p, "%PAG%", String.valueOf(pag));
-    replace(p, "%TOTPAG%", String.valueOf(totPags));
+    p.append("<table width=\"100%\">\n"); //$NON-NLS-1$
+    p.append("<tr><td>"+Messages.getString("HTMLReportTask.Page")+" %PAG%"+ Messages.getString("HTMLReportTask.of") + "%TOTPAG%</td>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    replace(p, "%PAG%", String.valueOf(pag)); //$NON-NLS-1$
+    replace(p, "%TOTPAG%", String.valueOf(totPags)); //$NON-NLS-1$
     if (totPags > 1) {
       if (pag > 1) {
-        p.append("<td><a href=\"").append(getPageId(id, 1)).append("\">&lt;&lt;&lt;&lt;Primeira P&aacute;gina</a></td>\n");
-        p.append("<td><a href=\"").append(getPageId(id, pag - 1)).append("\">&lt;&lt;P&aacute;gina anterior</a></td>\n");
+        p.append("<td><a href=\"").append(getPageId(id, 1)).append("\">&lt;&lt;&lt;&lt;"+Messages.getString("HTMLReportTask.FirstPage")+"</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        p.append("<td><a href=\"").append(getPageId(id, pag - 1)).append("\">&lt;&lt;"+Messages.getString("HTMLReportTask.PrevPage")+"</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
       }
       if (pag < totPags) {
-        p.append("<td><a href=\"").append(getPageId(id, pag + 1)).append("\">Pr&oacute;xima p&aacute;gina&gt;&gt;</a></td>\n");
-        p.append("<td><a href=\"").append(getPageId(id, totPags)).append("\">&Uacute;ltima P&aacute;gina&gt;&gt;&gt;&gt;</a></td>\n");
+        p.append("<td><a href=\"").append(getPageId(id, pag + 1)).append("\">"+Messages.getString("HTMLReportTask.NextPage")+"&gt;&gt;</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        p.append("<td><a href=\"").append(getPageId(id, totPags)).append("\">"+Messages.getString("HTMLReportTask.LastPage")+"&gt;&gt;&gt;&gt;</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
       }
     }
-    p.append("</tr></table>\n");
+    p.append("</tr></table>\n"); //$NON-NLS-1$
 
-    replace(sb, "%CATEGORIA%", (isLabel ? "Marcador" : "Categoria") + ": " + name);
-    replace(sb, "%CONTARQ%", String.valueOf(totRegs));
-    replace(sb, "%ITEMS%", items.toString());
-    replace(sb, "%PAGS%", p.toString());
+    replace(sb, "%CATEGORY%", (isLabel ? Messages.getString("HTMLReportTask.Bookmark") : Messages.getString("HTMLReportTask.Category")) + ": " + name); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    replace(sb, "%TOTALCOUNT%", String.valueOf(totRegs)); //$NON-NLS-1$
+    replace(sb, "%ITEMS%", items.toString()); //$NON-NLS-1$
+    replace(sb, "%PAGS%", p.toString()); //$NON-NLS-1$
 
-    EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq);
+    EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
     ef.write();
   }
 
   private File getVideoStripeFile(String hash) {
-    File file = Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg");
+    File file = Util.getFileFromHash(new File(reportSubFolder, thumbsFolderName), hash, "jpg"); //$NON-NLS-1$
     if (!file.getParentFile().exists()) {
       file.getParentFile().mkdirs();
     }
@@ -799,7 +801,7 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private File getImageThumbFile(String hash) {
-    File file = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), hash, "jpg");
+    File file = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
     if (!file.getParentFile().exists()) {
       file.getParentFile().mkdirs();
     }
@@ -807,7 +809,7 @@ public class HTMLReportTask extends AbstractTask {
   }
 
   private File getVideoThumbsFile(String hash) {
-    File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg");
+    File file = Util.getFileFromHash(new File(this.output, viewFolder), hash, "jpg"); //$NON-NLS-1$
     if (!file.getParentFile().exists()) {
       file.getParentFile().mkdirs();
     }
@@ -827,7 +829,7 @@ public class HTMLReportTask extends AbstractTask {
 
     try {
       BufferedImage img = null;
-      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = ImageUtil.getThumb(stream);
@@ -857,7 +859,7 @@ public class HTMLReportTask extends AbstractTask {
           img = resizeThumb(img);
         }
         img = ImageUtil.getCenteredImage(img, thumbSize, thumbSize);
-        ImageIO.write(img, "jpeg", thumbFile);
+        ImageIO.write(img, "jpeg", thumbFile); //$NON-NLS-1$
       }
     } catch (Exception e) {
       e.printStackTrace();
@@ -881,7 +883,7 @@ public class HTMLReportTask extends AbstractTask {
       String comment = (String) read[1];
       int nRows = 1;
       int nCols = 1;
-      if (comment != null && comment.startsWith("Frames")) {
+      if (comment != null && comment.startsWith("Frames")) { //$NON-NLS-1$
         int p1 = comment.indexOf('=');
         int p2 = comment.indexOf('x');
         if (p1 > 0 && p2 > 0) {
@@ -921,7 +923,7 @@ public class HTMLReportTask extends AbstractTask {
       }
       g2.dispose();
 
-      ImageIO.write(stripe, "jpeg", out);
+      ImageIO.write(stripe, "jpeg", out); //$NON-NLS-1$
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -943,18 +945,18 @@ public class HTMLReportTask extends AbstractTask {
   private static void replace(StringBuilder sb, String a, String b) {
     int pos = 0;
     while ((pos = sb.indexOf(a, pos)) >= 0) {
-      String rep = b == null ? "-" : b;
+      String rep = b == null ? "-" : b; //$NON-NLS-1$
       sb.replace(pos, pos + a.length(), rep);
       pos += rep.length();
     }
   }
 
   private static String formatDate(Date date, DateFormat dateFormat) {
-    return date == null ? "-" : dateFormat.format(date);
+    return date == null ? "-" : dateFormat.format(date); //$NON-NLS-1$
   }
 
   private static String formatNumber(Long val, NumberFormat longFormat) {
-    return val == null ? "-" : longFormat.format(val);
+    return val == null ? "-" : longFormat.format(val); //$NON-NLS-1$
   }
 
   /**
@@ -979,7 +981,7 @@ public class HTMLReportTask extends AbstractTask {
       for (String s : l) {
         n++;
         sb.append(s);
-        sb.append("\n");
+        sb.append("\n"); //$NON-NLS-1$
         if (n >= thumbsPerPage) {
           addPageControl(page, np, sb);
           writeThumbsPage(sb, new File(reportSubFolder, pageName(page)));
@@ -1000,44 +1002,47 @@ public class HTMLReportTask extends AbstractTask {
 
   private void addPageControl(int page, int np, StringBuilder sb) {
     StringBuilder sp = new StringBuilder();
-    sp.append("<table width=\"100%\"><tr><td>P&aacute;gina ").append(page).append(" de ").append(np).append("</td>");
+    sp.append("<table width=\"100%\"><tr><td>"+Messages.getString("HTMLReportTask.Page")+" ").append(page).append(Messages.getString("HTMLReportTask.of")).append(np).append("</td>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
     if (page > 1) {
-      sp.append("<td><a href=\"").append(pageName(1)).append("\">&lt;&lt;&lt;&lt;Primeira P&aacute;gina</a></td>\n");
-      sp.append("<td><a href=\"").append(pageName(page - 1)).append("\">&lt;&lt;P&aacute;gina anterior</a></td>\n");
+      sp.append("<td><a href=\"").append(pageName(1)).append("\">&lt;&lt;&lt;&lt;"+Messages.getString("HTMLReportTask.FirstPage")+"</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+      sp.append("<td><a href=\"").append(pageName(page - 1)).append("\">&lt;&lt;"+Messages.getString("HTMLReportTask.PrevPage")+"</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     }
     if (page < np) {
-      sp.append("<td><a href=\"").append(pageName(page + 1)).append("\">Pr&oacute;xima p&aacute;gina&gt;&gt;</a></td>\n");
-      sp.append("<td><a href=\"").append(pageName(np)).append("\">&Uacute;ltima P&aacute;gina&gt;&gt;&gt;&gt;</a></td>\n");
+      sp.append("<td><a href=\"").append(pageName(page + 1)).append("\">"+Messages.getString("HTMLReportTask.NextPage")+"&gt;&gt;</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+      sp.append("<td><a href=\"").append(pageName(np)).append("\">"+Messages.getString("HTMLReportTask.LastPage")+"&gt;&gt;&gt;&gt;</a></td>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     }
 
-    sp.append("</tr></table>\n");
+    sp.append("</tr></table>\n"); //$NON-NLS-1$
 
     sb.insert(0, sp.toString());
     sb.append(sp.toString());
   }
 
   private String pageName(int page) {
-    return "miniaturas_" + (page / 100) + "" + (page % 100 / 10) + "" + page % 10 + ".htm";
+    return "thumbs_" + (page / 100) + "" + (page % 100 / 10) + "" + page % 10 + ".htm";  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
   }
 
   private void addBookmarkTitle(StringBuilder sb, String bookmark, int size, boolean isLabel) {
-    sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">");
+    sb.append("<table width=\"100%\"><tr><th class=\"columnHead\" colspan=\"1\" style=\"font-size:16px\">"); //$NON-NLS-1$
     if (isLabel) {
-      sb.append("Marcador: ");
+      sb.append(Messages.getString("HTMLReportTask.Bookmark")+": "); //$NON-NLS-1$ //$NON-NLS-2$
     } else {
-      sb.append("Categoria: ");
+      sb.append(Messages.getString("HTMLReportTask.Category")+": "); //$NON-NLS-1$ //$NON-NLS-2$
     }
     sb.append(bookmark);
-    sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">Contagem de arquivos: </span>");
+    sb.append("</th></tr><tr><td class=\"clrBkgrnd\"><span style=\"font-weight:bold\">"+Messages.getString("HTMLReportTask.FileCount")+": </span>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     sb.append(size);
-    sb.append("</td></tr></table>");
+    sb.append("</td></tr></table>"); //$NON-NLS-1$
   }
 
   private void writeThumbsPage(StringBuilder sb, File f) {
-    sb.insert(0, "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/common.css\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/bookmarks.css\"/><title>Miniaturas</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n");
-    sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p></body></html>");
-    EncodedFile ef = new EncodedFile(sb, Charset.forName("UTF-8"), f);
+    String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/common.css\"/><link rel=\"stylesheet\" type=\"text/css\" href=\"res/bookmarks.css\"/><title>" //$NON-NLS-1$
+    		+ Messages.getString("HTMLReportTask.GalleryTitle") //$NON-NLS-1$
+    		+"</title><style>\n.thumb {width:auto; height:auto; max-width:112px; max-height:112px;}\n</style></head><body>\n<p><img border=\"0\" src=\"res/header.gif\"/>\n\n"; //$NON-NLS-1$
+    sb.insert(0, header); 
+    sb.append("\n<p><img border=\"0\" src=\"res/header.gif\"/></p></body></html>"); //$NON-NLS-1$
+    EncodedFile ef = new EncodedFile(sb, Charset.forName("UTF-8"), f); //$NON-NLS-1$
     try {
       ef.write();
     } catch (Exception e) {
@@ -1049,69 +1054,69 @@ public class HTMLReportTask extends AbstractTask {
    * Lê arquivo com informações do caso (para inclusão em página informativa do relatório).
    */
   private void readInfoFile(File asap) throws IOException {
-    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(asap), Charset.forName("cp1252")));
+    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(asap), Charset.forName("cp1252"))); //$NON-NLS-1$
     String str = null;
-    String subTit = "";
-    String numero = "";
-    String unidade = "";
-    String matDesc = "";
-    String matNum = "";
+    String subTit = ""; //$NON-NLS-1$
+    String numero = ""; //$NON-NLS-1$
+    String unidade = ""; //$NON-NLS-1$
+    String matDesc = ""; //$NON-NLS-1$
+    String matNum = ""; //$NON-NLS-1$
     info.perito.clear();
     info.matricula.clear();
-    info.classe.clear();
+    //info.classe.clear();
     while ((str = in.readLine()) != null) {
-      String[] s = str.split("=", 2);
+      String[] s = str.split("=", 2); //$NON-NLS-1$
       if (s.length < 2) {
         continue;
       }
       String chave = s[0];
       String valor = s[1];
-      if (chave.equalsIgnoreCase("Titulo")) {
+      if (chave.equalsIgnoreCase("Titulo")) { //$NON-NLS-1$
         info.titulo = valor;
-      } else if (chave.equalsIgnoreCase("Subtitulo")) {
+      } else if (chave.equalsIgnoreCase("Subtitulo")) { //$NON-NLS-1$
         subTit = valor;
-      } else if (chave.equalsIgnoreCase("Unidade")) {
+      } else if (chave.equalsIgnoreCase("Unidade")) { //$NON-NLS-1$
         unidade = valor;
-      } else if (chave.equalsIgnoreCase("Numero")) {
+      } else if (chave.equalsIgnoreCase("Numero")) { //$NON-NLS-1$
         numero = valor;
-      } else if (chave.equalsIgnoreCase("Data")) {
+      } else if (chave.equalsIgnoreCase("Data")) { //$NON-NLS-1$
         info.dataLaudo = valor;
-      } else if (chave.toUpperCase().startsWith("PCF")) {
-        String[] v = valor.split("\\|");
+      } else if (chave.toUpperCase().startsWith("PCF")) { //$NON-NLS-1$
+        String[] v = valor.split("\\|"); //$NON-NLS-1$
         if (v.length >= 1 && v[0].length() > 0) {
           info.perito.add(v[0]);
           if (v.length >= 2) {
             info.matricula.add(v[1]);
           }
           if (v.length >= 3) {
-            info.classe.add(v[2]);
+            //info.classe.add(v[2]);
           }
         }
-      } else if (chave.equalsIgnoreCase("MATERIAL_DESCR")) {
+      } else if (chave.equalsIgnoreCase("MATERIAL_DESCR")) { //$NON-NLS-1$
         matDesc = valor;
-      } else if (chave.equalsIgnoreCase("MATERIAL_NUMERO")) {
+      } else if (chave.equalsIgnoreCase("MATERIAL_NUMERO")) { //$NON-NLS-1$
         matNum = valor;
-      } else if (chave.equalsIgnoreCase("NUMERO_IPL")) {
+      } else if (chave.equalsIgnoreCase("NUMERO_IPL")) { //$NON-NLS-1$
         info.ipl = valor;
-      } else if (chave.equalsIgnoreCase("AUTORIDADE")) {
+      } else if (chave.equalsIgnoreCase("AUTORIDADE")) { //$NON-NLS-1$
         info.solicitante = valor;
-      } else if (chave.equalsIgnoreCase("DOCUMENTO")) {
+      } else if (chave.equalsIgnoreCase("DOCUMENTO")) { //$NON-NLS-1$
         info.documento = valor;
-      } else if (chave.equalsIgnoreCase("DATA_DOCUMENTO")) {
+      } else if (chave.equalsIgnoreCase("DATA_DOCUMENTO")) { //$NON-NLS-1$
         info.dataDocumento = valor;
-      } else if (chave.equalsIgnoreCase("NUMERO_CRIMINALISTICA")) {
+      } else if (chave.equalsIgnoreCase("NUMERO_CRIMINALISTICA")) { //$NON-NLS-1$
         info.protocolo = valor;
-      } else if (chave.equalsIgnoreCase("DATA_CRIMINALISTICA")) {
+      } else if (chave.equalsIgnoreCase("DATA_CRIMINALISTICA")) { //$NON-NLS-1$
         info.dataProtocolo = valor;
       }
     }
     in.close();
 
-    info.titulo += " (" + subTit + ")";
-    info.laudo = numero + "-" + unidade;
+    info.titulo += " (" + subTit + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+    info.laudo = numero + "-" + unidade; //$NON-NLS-1$
 
-    String[] md = matDesc.split("\\|");
-    String[] mn = matNum.split("\\|");
+    String[] md = matDesc.split("\\|"); //$NON-NLS-1$
+    String[] mn = matNum.split("\\|"); //$NON-NLS-1$
     if (md.length != mn.length) {
       md = new String[] {matDesc};
       mn = new String[] {matNum};
@@ -1119,9 +1124,9 @@ public class HTMLReportTask extends AbstractTask {
     StringBuilder mat = new StringBuilder();
     for (int i = 0; i < md.length; i++) {
       if (i > 0) {
-        mat.append("<br>\n");
+        mat.append("<br>\n"); //$NON-NLS-1$
       }
-      mat.append(md[i]).append(" (Registro Interno do Material: ").append(mn[i]).append(")");
+      mat.append(md[i]).append(" (Registro Interno do Material: ").append(mn[i]).append(")"); //$NON-NLS-1$ //$NON-NLS-2$
     }
     info.material = mat.toString();
   }
@@ -1145,7 +1150,7 @@ class ReportEntry {
 class ReportInfo {
 
   String laudo, dataLaudo, cabecalho, titulo, ipl, documento, solicitante, protocolo, dataProtocolo, material, dataDocumento;
-  List<String> perito = new ArrayList<String>(), classe = new ArrayList<String>(), matricula = new ArrayList<String>();
+  List<String> perito = new ArrayList<String>(), matricula = new ArrayList<String>();
 }
 
 /**
@@ -1190,7 +1195,7 @@ class EncodedFile {
  */
 class CustomComparator implements Comparator<String> {
   private final char[] map = new char[Character.MAX_VALUE + 1];
-  private static final String[] mappings = new String[] {"A","ÁÀÂÃÄáàâãä","E","ÉÈÊËéèêë","I","ÍÌÎÏíìîï","O","ÓÒÕÔÖóòõôö","U","ÚÙÜÛúùüû","C","Çç","N","Ññ"};
+  private static final String[] mappings = new String[] {"A","ÁÀÂÃÄáàâãä","E","ÉÈÊËéèêë","I","ÍÌÎÏíìîï","O","ÓÒÕÔÖóòõôö","U","ÚÙÜÛúùüû","C","Çç","N","Ññ"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$ //$NON-NLS-13$ //$NON-NLS-14$
 
   public CustomComparator() {
     for (int i = 0; i < mappings.length; i += 2) {
