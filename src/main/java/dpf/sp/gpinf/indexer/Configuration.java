@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
@@ -87,6 +88,7 @@ public class Configuration {
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;
+  public static Locale locale = Locale.getDefault();
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -176,6 +178,12 @@ public class Configuration {
       numThreads = Integer.valueOf(value);
     } else {
       numThreads = Runtime.getRuntime().availableProcessors();
+    }
+    
+    value = properties.getProperty("locale"); //$NON-NLS-1$
+    if (value != null && !value.trim().equals("default")) {
+      locale = Locale.forLanguageTag(value.trim());
+      System.setProperty("iped-locale", value.trim());
     }
 
     value = properties.getProperty("forceMerge"); //$NON-NLS-1$

@@ -82,7 +82,7 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
    */
-  private static final Collator collator = Collator.getInstance(new Locale("pt", "BR"));
+  private static final Collator collator = Collator.getInstance(Configuration.locale);
 
   /**
    * Nome da tarefa.
@@ -353,8 +353,9 @@ public class HTMLReportTask extends AbstractTask {
 
     if (taskEnabled && caseData.containsReport() && info != null) {
 
-      String reportRoot = "relatorio.htm";
-      if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
+      String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
+      String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
+      if (new File(reportSubFolder.getParentFile(), reportRootModel).exists()) {
         Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
         return;
       }
@@ -378,15 +379,15 @@ public class HTMLReportTask extends AbstractTask {
       if(!entriesByLabel.isEmpty())
     	  entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
-      modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content; //$NON-NLS-2$
+      modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content;  //$NON-NLS-1$//$NON-NLS-2$
       processBookmarks(templatesFolder);
       if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
         createThumbsPage();
       }
       processCaseInfo(new File(templatesFolder, "caseinformation.htm"), new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$ //$NON-NLS-2$
       processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
-      copyFile(new File(templatesFolder, reportRoot), reportSubFolder.getParentFile());
-      copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder);
+      Files.copy(new File(templatesFolder, reportRootModel).toPath(), new File(reportSubFolder.getParentFile(), reportRoot).toPath());
+      copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder); //$NON-NLS-1$
       copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
       t = (System.currentTimeMillis() - t + 500) / 1000;
@@ -585,9 +586,9 @@ public class HTMLReportTask extends AbstractTask {
 
   private void processBookmarks(File templatesFolder) throws Exception {
     sortRegs();
-    StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content; //$NON-NLS-2$
+    StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content;  //$NON-NLS-1$//$NON-NLS-2$
     replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
-    StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content; //$NON-NLS-2$
+    StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content;  //$NON-NLS-1$//$NON-NLS-2$
     int idx = 1;
     for (String marcador : entriesByLabel.keySet()) {
       String id = String.format("arq%06d", idx); //$NON-NLS-1$
