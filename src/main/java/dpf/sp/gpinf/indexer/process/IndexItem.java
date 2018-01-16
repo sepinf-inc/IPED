@@ -59,6 +59,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -74,37 +75,10 @@ import gpinf.dev.filetypes.GenericFileType;
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens que será
  * adicionado ao índice.
  */
-public class IndexItem {
-
-  public static final String ID = "id"; //$NON-NLS-1$
+public class IndexItem extends BasicProps{
+	
   public static final String FTKID = "ftkId"; //$NON-NLS-1$
-  public static final String PARENTID = "parentId"; //$NON-NLS-1$
-  public static final String PARENTIDs = "parentIds"; //$NON-NLS-1$
   public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-  public static final String EVIDENCE_UUID = "evidenceUUID"; //$NON-NLS-1$
-  public static final String NAME = "nome"; //$NON-NLS-1$
-  public static final String TYPE = "tipo"; //$NON-NLS-1$
-  public static final String LENGTH = "tamanho"; //$NON-NLS-1$
-  public static final String CREATED = "criacao"; //$NON-NLS-1$
-  public static final String ACCESSED = "acesso"; //$NON-NLS-1$
-  public static final String MODIFIED = "modificacao"; //$NON-NLS-1$
-  public static final String RECORDDATE = "alteracao do registro"; //$NON-NLS-1$
-  public static final String PATH = "caminho"; //$NON-NLS-1$
-  public static final String EXPORT = "export"; //$NON-NLS-1$
-  public static final String CATEGORY = "categoria"; //$NON-NLS-1$
-  public static final String HASH = "hash"; //$NON-NLS-1$
-  public static final String ISDIR = "isDir"; //$NON-NLS-1$
-  public static final String ISROOT = "isRoot"; //$NON-NLS-1$
-  public static final String DELETED = "deletado"; //$NON-NLS-1$
-  public static final String HASCHILD = "hasChildren"; //$NON-NLS-1$
-  public static final String CARVED = "carved"; //$NON-NLS-1$
-  public static final String SUBITEM = "subitem"; //$NON-NLS-1$
-  public static final String OFFSET = "offset"; //$NON-NLS-1$
-  public static final String DUPLICATE = "duplicate"; //$NON-NLS-1$
-  public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
-  public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
-  public static final String CONTENT = "conteudo"; //$NON-NLS-1$
-  public static final String TREENODE = "treeNode"; //$NON-NLS-1$
 
   public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
