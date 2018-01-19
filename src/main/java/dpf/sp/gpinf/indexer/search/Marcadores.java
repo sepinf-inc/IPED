@@ -26,9 +26,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
@@ -66,7 +66,9 @@ public class Marcadores implements Serializable {
 		labels = new ArrayList<byte[]>();
 		indexDir = new File(modulePath, "index");
 		long date = indexDir.lastModified();
-		cookie = new File(Configuration.javaTmpDir, "indexer" + date + EXT);
+        String tempdir = System.getProperty("java.io.basetmpdir");
+        if (tempdir == null) System.getProperty("java.io.tmpdir");
+		cookie = new File(tempdir, "indexer" + date + EXT);
 		stateFile = new File(modulePath, STATEFILENAME);
 		try {
 			stateFile = stateFile.getCanonicalFile();
@@ -311,6 +313,8 @@ public class Marcadores implements Serializable {
 
 	public void saveState() {
 		try {			
+	        Log.error("stateFile",stateFile.getAbsolutePath());
+            Log.error("cookie",cookie.getAbsolutePath());
 			if(stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
 				saveState(stateFile);
 			else
@@ -323,6 +327,7 @@ public class Marcadores implements Serializable {
 
 	public void saveState(File file) throws IOException {
 		//SaveStateThread.getInstance().saveState(this, file);
+	    Log.error("Marcadores",file.getAbsolutePath());
 		Util.writeObject(this, file.getAbsolutePath());
 	}
 

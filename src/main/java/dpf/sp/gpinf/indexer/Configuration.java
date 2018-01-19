@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -76,7 +77,7 @@ public class Configuration {
   public static boolean addFileSlacks = false;
   public static long unallocatedFragSize = 1024 * 1024 * 1024;
   public static long minItemSizeToFragment = 100 * 1024 * 1024;
-  public static String javaTmpDir = System.getProperty("java.io.tmpdir");
+  //public static String javaTmpDir = System.getProperty("java.io.tmpdir");
   public static boolean indexTempOnSSD = false;
   public static boolean outputOnSSD = false;
   public static boolean entropyTest = true;
@@ -149,7 +150,10 @@ public class Configuration {
         indexerTemp.mkdirs();
       }
       if (indexerTemp.exists()) {
-        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+        if (System.getProperty("java.io.basetmpdir") == null) {
+          System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir"));
+          System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+        }
       }
       if (tmp == newTmp) {
         indexTemp = new File(indexerTemp, "index");
