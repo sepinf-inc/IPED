@@ -152,8 +152,8 @@ public class Configuration {
       if (indexerTemp.exists()) {
         if (System.getProperty("java.io.basetmpdir") == null) {
           System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir"));
-          System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
         }
+        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
       }
       if (tmp == newTmp) {
         indexTemp = new File(indexerTemp, "index");
