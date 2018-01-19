@@ -77,22 +77,21 @@ public class Util {
 
   public static void writeObject(Object obj, String filePath) throws IOException {
     FileOutputStream fileOut = new FileOutputStream(new File(filePath));
-    ObjectOutputStream out = new ObjectOutputStream(fileOut);
+    BufferedOutputStream bufOut = new BufferedOutputStream(fileOut); 
+    ObjectOutputStream out = new ObjectOutputStream(bufOut);
     out.writeObject(obj);
     out.close();
-    fileOut.close();
   }
 
   public static Object readObject(String filePath) throws IOException, ClassNotFoundException {
     FileInputStream fileIn = new FileInputStream(new File(filePath));
-    ObjectInputStream in = new ObjectInputStream(fileIn);
+    BufferedInputStream bufIn = new BufferedInputStream(fileIn);
+    ObjectInputStream in = new ObjectInputStream(bufIn);
     Object result;
     try {
       result = in.readObject();
-
     } finally {
       in.close();
-      fileIn.close();
     }
     return result;
   }
