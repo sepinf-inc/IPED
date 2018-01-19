@@ -467,6 +467,12 @@ public class Configuration {
     String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
     if(optional_jars != null)
         optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
+    
+    File[] jars = optionalJarDir.listFiles();
+    if(jars != null)
+    	for(File jar : jars)
+    		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
+    			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
 
     String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)
