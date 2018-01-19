@@ -24,9 +24,12 @@ import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 public class SleuthkitClient {
 
   static Logger logger = LoggerFactory.getLogger(SleuthkitServer.class);
+  
+  private static final int START_PORT = 2000;
+  private static final int MAX_PORT = 65535;
 
   static volatile String dbDirPath;
-  static AtomicInteger portStart = new AtomicInteger(43522);
+  static AtomicInteger portStart = new AtomicInteger(START_PORT);
 
   Process process;
   Socket socket;
@@ -72,11 +75,20 @@ public class SleuthkitClient {
   private void start() {
 
     int port = portStart.getAndIncrement();
+    
+    if(port > MAX_PORT) {
+    	port = START_PORT;
+    	portStart.set(port + 1);
+    }
 
     String pipePath = Configuration.indexerTemp + "/pipe-" + port; //$NON-NLS-1$
+    
+    String classpath = Configuration.appRoot + "/iped.jar"; //$NON-NLS-1$
+    if(Configuration.tskJarFile != null)
+    	classpath += ";" + Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
 
-    String[] cmd = {"java", "-cp", Configuration.appRoot + "/iped.jar", "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-      SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath}; //$NON-NLS-1$
+    String[] cmd = {"java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath}; //$NON-NLS-1$
 
     try {
       ProcessBuilder pb = new ProcessBuilder(cmd);
