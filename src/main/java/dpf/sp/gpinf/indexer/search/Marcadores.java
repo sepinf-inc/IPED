@@ -26,12 +26,16 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
 
 	/**
 	 * 
@@ -313,8 +317,6 @@ public class Marcadores implements Serializable {
 
 	public void saveState() {
 		try {			
-	        Log.error("stateFile",stateFile.getAbsolutePath());
-            Log.error("cookie",cookie.getAbsolutePath());
 			if(stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
 				saveState(stateFile);
 			else
@@ -327,7 +329,7 @@ public class Marcadores implements Serializable {
 
 	public void saveState(File file) throws IOException {
 		//SaveStateThread.getInstance().saveState(this, file);
-	    Log.error("Marcadores",file.getAbsolutePath());
+		LOGGER.info("Saving state to file " + file.getAbsolutePath());
 		Util.writeObject(this, file.getAbsolutePath());
 	}
 
@@ -376,6 +378,7 @@ public class Marcadores implements Serializable {
 	}
 	
 	public static Marcadores load(File file) throws ClassNotFoundException, IOException{
+		LOGGER.info("Loading state from file " + file.getAbsolutePath());
 		return (Marcadores) Util.readObject(file.getAbsolutePath());
 	}
 	
