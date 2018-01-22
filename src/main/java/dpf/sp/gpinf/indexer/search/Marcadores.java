@@ -69,14 +69,18 @@ public class Marcadores implements Serializable {
 		selected = new boolean[lastId + 1];
 		labels = new ArrayList<byte[]>();
 		indexDir = new File(modulePath, "index");
-		long date = indexDir.lastModified();
-        String tempdir = System.getProperty("java.io.basetmpdir");
-        if (tempdir == null) System.getProperty("java.io.tmpdir");
-		cookie = new File(tempdir, "indexer" + date + EXT);
 		stateFile = new File(modulePath, STATEFILENAME);
+		updateCookie();
 		try {
 			stateFile = stateFile.getCanonicalFile();
 		} catch (IOException e) {}
+	}
+	
+	public void updateCookie() {
+        long date = indexDir.lastModified();
+        String tempdir = System.getProperty("java.io.basetmpdir");
+        if (tempdir == null) tempdir = System.getProperty("java.io.tmpdir");
+        cookie = new File(tempdir, "indexer" + date + EXT);
 	}
 	
 	public int getLastId(){
@@ -355,7 +359,6 @@ public class Marcadores implements Serializable {
 	}
 
 	public void loadState(File file) throws IOException, ClassNotFoundException {
-
 		Marcadores state = load(file);
 		
 		if(state.selected != null /*&&  state.read != null*/){

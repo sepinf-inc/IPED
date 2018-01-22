@@ -251,7 +251,9 @@ public class MultiMarcadores implements Serializable {
 	  public void loadState(File file) throws ClassNotFoundException, IOException{
 		  MultiMarcadores state = (MultiMarcadores) Util.readObject(file.getAbsolutePath());
 		  this.map = state.map;
-	  }
+		  for(Marcadores marcador : this.map.values())
+              marcador.updateCookie();
+      }
 	  
 	  public void saveState(){
 		  for(Marcadores m : map.values())
