@@ -181,10 +181,9 @@ public class Configuration {
     }
     
     value = properties.getProperty("locale"); //$NON-NLS-1$
-    if (value != null && !value.trim().equals("default")) {
+    if (value != null && !value.trim().equals("default")) //$NON-NLS-1$
       locale = Locale.forLanguageTag(value.trim());
-      System.setProperty("iped-locale", value.trim());
-    }
+    System.setProperty("iped-locale", locale.toLanguageTag()); //$NON-NLS-1$
 
     value = properties.getProperty("forceMerge"); //$NON-NLS-1$
     if (value != null) {
