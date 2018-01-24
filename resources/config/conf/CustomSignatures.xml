@@ -115,9 +115,19 @@
         <glob pattern="msgstore*.db"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-chatstorage">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="ChatStorage.sqlite"/>
+    </mime-type>
+    
     <mime-type type="application/x-whatsapp-wadb">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="wa*.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-contactsv2">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="ContactsV2.sqlite"/>
     </mime-type>
     
     <mime-type type="contact/x-whatsapp-contact">     
