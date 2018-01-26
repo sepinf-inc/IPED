@@ -333,7 +333,8 @@ public class VideoThumbTask extends AbstractTask {
         }
         VideoProcessResult r = processedVideos.get(evidence.getHash());
         evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-        saveMetadata(r, evidence.getMetadata());
+        if(r.isSuccess())
+        	saveMetadata(r, evidence.getMetadata());
         return;
       } else {
         processedVideos.put(evidence.getHash(), null);
@@ -385,18 +386,19 @@ public class VideoThumbTask extends AbstractTask {
         mainTmpFile.delete();
       }
 
-      if (r != null) {
-    	  //Atualiza atributo HasThumb do item
-          evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-          saveMetadata(r, evidence.getMetadata());
-
-          //Guarda resultado do processamento
-          synchronized (processedVideos) {
-            processedVideos.put(evidence.getHash(), r);
-            processedVideos.notifyAll();
-          }
-      }else
-    	  evidence.setExtraAttribute(HAS_THUMB, false);
+      if(r == null)
+    	  r = new VideoProcessResult();
+      
+      //Atualiza atributo HasThumb do item
+      evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
+      if(r.isSuccess())
+    	  saveMetadata(r, evidence.getMetadata());
+      
+      //Guarda resultado do processamento
+      synchronized (processedVideos) {
+        processedVideos.put(evidence.getHash(), r);
+        processedVideos.notifyAll();
+      }
       
     }
   }
