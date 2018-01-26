@@ -52,8 +52,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   
   private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
 
-  public static String BOOKMARK_COL = "marcador";
-  public static String SCORE_COL = "score";
+  public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
+  public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
 
   public static String[] fields;
 

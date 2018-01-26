@@ -83,7 +83,7 @@ public class RegexValidation {
             return verifyCnh(hit);
         else if(regex.name.equals("PISPASEP")) //$NON-NLS-1$
             return verifyPisPasep(hit);
-        else if(regex.name.equals("CARTAO_CREDITO"))
+        else if(regex.name.equals("CREDIT_CARD")) //$NON-NLS-1$
             return verifyCreditCard(hit);
         else if(regex.name.equals("BOLETO")) //$NON-NLS-1$
             return verifyBoleto(hit);

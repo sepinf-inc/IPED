@@ -280,7 +280,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     if (!success) {
         SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
     } else {
-        SystemOut.println("\n" + Versao.APP_EXT + "finished."); //$NON-NLS-1$ //$NON-NLS-2$
+        SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     if (indexador.logFile != null) {
