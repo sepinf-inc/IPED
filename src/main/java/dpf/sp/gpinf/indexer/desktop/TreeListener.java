@@ -160,8 +160,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
     
-    int index = SwingUtil.getIndexOfTab(App.get().treeTab, Messages.getString("TreeViewModel.RootName")); //$NON-NLS-1$
-    App.get().treeTab.setSelectedIndex(index);
+    App.get().moveEvidenveTabToFront();
 
     TreePath treePath = new TreePath(path.toArray());
     App.get().tree.setExpandsSelectedPaths(true);

@@ -36,7 +36,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
   @Override
   public void valueChanged(ListSelectionEvent e) {
 
-    if (App.get().resultTab.getSelectedIndex() == 1 && !e.getValueIsAdjusting()) {
+    if (App.get().galleryTabDock.isShowing() && !e.getValueIsAdjusting()) {
       App.get().resultsTable.clearSelection();
       App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
       int[] selRows = App.get().gallery.getSelectedCells();

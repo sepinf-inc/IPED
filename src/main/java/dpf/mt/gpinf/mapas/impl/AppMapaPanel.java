@@ -1,6 +1,7 @@
 package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -52,7 +53,7 @@ public class AppMapaPanel extends JPanel {
 			public void valueChanged(ListSelectionEvent e) {
 			    if(e.getValueIsAdjusting()) return;
 
-				if((app.getResultTab().getSelectedIndex()!=2)&&(!mapaDesatualizado)){
+				if((!App.get().mapTabDock.isShowing())&&(!mapaDesatualizado)){
 					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 					HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>(); 
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
@@ -67,6 +68,8 @@ public class AppMapaPanel extends JPanel {
 		});
 
 	    // provoca a atualização do mapa na mudança de tabs
+	    //TODO: Verificar atualizacao de mapa apos mudanca para docking
+	    /*
 	    app.getResultTab().addChangeListener(new ChangeListener() {
 	    	@Override
 			public void stateChanged(ChangeEvent e) {
@@ -74,7 +77,7 @@ public class AppMapaPanel extends JPanel {
 					redesenhaMapa();
 				}
 			}		
-		});
+		});*/
 
 	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
 
@@ -90,7 +93,10 @@ public class AppMapaPanel extends JPanel {
 					browserCanvas.connect();
 
 					//força a rederização do Mapa (resolvendo o bug da primeira renderização 
-					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
+					for (Component c : app.mapTabDock.getContentPane().getComponents()) {
+						c.repaint();
+					}
+					app.mapTabDock.getContentPane().repaint();
 				}
 
 			    String kml = ""; //$NON-NLS-1$

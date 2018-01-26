@@ -696,9 +696,9 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     
     private void updateTabColor(){
         if(!list.isSelectionEmpty())
-            App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+        	App.get().setMetadataDefaultColor(false);
         else
-            App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+        	App.get().setMetadataDefaultColor(true);
     }
     
     public Set<ItemId> getFilteredItemIds() throws ParseException, QueryNodeException{

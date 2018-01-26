@@ -25,7 +25,6 @@ import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ComponentAdapter;
@@ -35,13 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -57,7 +53,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
@@ -68,7 +63,6 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -76,20 +70,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
+import bibliothek.extension.gui.dock.theme.EclipseTheme;
+import bibliothek.gui.dock.StackDockStation;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.ColorMap;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
-import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import dpf.sp.gpinf.indexer.util.JarLoader;
-import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.util.JarLoader;
 
 public class App extends JFrame implements WindowListener {
   /**
@@ -123,19 +123,28 @@ public class App extends JFrame implements WindowListener {
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
   MetadataPanel metadataPanel;
+  JScrollPane categoriesPanel, bookmarksPanel;
+  JPanel evidencePanel;
   TreeListener treeListener;
   CategoryTreeListener categoryListener;
   BookmarksTreeListener bookmarksListener;
   HitsTable parentItemTable;
-  public JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
+  CControl dockingControl;
+  DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+  DefaultSingleCDockable tableTabDock, galleryTabDock;
+  public DefaultSingleCDockable mapTabDock;
+  DefaultSingleCDockable tabbedHitsDock, compositeViewerDock;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
 
-  public JTabbedPane tabbedHits, resultTab, treeTab;
-  Color defaultTabColor;
+  public JTabbedPane tabbedHits;
+  Color defaultColor;
+  Color defaultFocusedColor;
+  Color defaultSelectedColor;
   private JScrollPane subItemScroll, parentItemScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
+  JScrollPane mapsScroll;
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
@@ -147,7 +156,9 @@ public class App extends JFrame implements WindowListener {
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
 
-  Color alertColor = Color.RED;//new Color(0xFFFF5050);
+  Color alertColor = Color.RED;
+  Color alertFocusedColor = Color.RED;
+  Color alertSelectedColor = Color.RED;
 
   private int zoomLevel;
 
@@ -311,19 +322,6 @@ public class App extends JFrame implements WindowListener {
     this.setVisible(true);
     ToolTipManager.sharedInstance().setInitialDelay(10);
 
-    treeTab = new JTabbedPane();
-    treeTab.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
-    //Possibilita pintar aba selecionada
-    treeTab.setUI(new MetalTabbedPaneUI() {
-      protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
-          int x, int y, int w, int h, boolean isSelected) {
-        if (tabPane.getBackgroundAt(tabIndex) == alertColor) {
-          isSelected = false;
-        }
-        super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
-      }
-    });
-
     try {
       boolean nimbusFound = false;
       for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -439,14 +437,9 @@ public class App extends JFrame implements WindowListener {
       }
     });
     
-    resultTab = new JTabbedPane();
-    resultTab.addTab(Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$
-    resultTab.addTab(Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$
-    
     if(new JarLoader().loadJavaFX()) {
         browserPane = new AppMapaPanel(this);
-        JScrollPane mapsScroll = new JScrollPane(browserPane);
-        resultTab.addTab(Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$
+        mapsScroll = new JScrollPane(browserPane);
     }
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
@@ -492,24 +485,6 @@ public class App extends JFrame implements WindowListener {
 
     compositeViewer = new CompositeViewer();
     appSearchParams.compositeViewer = compositeViewer;
-
-    horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabbedHits, compositeViewer);
-    horizontalSplitPane.setDividerSize(5);
-    horizontalSplitPane.setOneTouchExpandable(true);
-    horizontalSplitPane.setContinuousLayout(true);
-    horizontalSplitPane.setResizeWeight(0.4);
-
-    verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, horizontalSplitPane);
-    verticalSplitPane.setDividerSize(5);
-    verticalSplitPane.setOneTouchExpandable(true);
-    verticalSplitPane.setContinuousLayout(true);
-    verticalSplitPane.setResizeWeight(0.5);
-
-    treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeTab, verticalSplitPane);
-    treeSplitPane.setOneTouchExpandable(true);
-    treeSplitPane.setDividerSize(5);
-    treeSplitPane.setContinuousLayout(true);
-    treeSplitPane.setResizeWeight(0.1);
     
     categoryTree = new JTree(new Object[0]);
 	categoryTree.setRootVisible(true);
@@ -525,12 +500,9 @@ public class App extends JFrame implements WindowListener {
     bookmarksTree.setExpandsSelectedPaths(false);
     
     metadataPanel = new MetadataPanel();
-
-    treeTab.add(Messages.getString("CategoryTreeModel.RootName"), new JScrollPane(categoryTree)); //$NON-NLS-1$
-    treeTab.add(Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$
-    treeTab.add(Messages.getString("BookmarksTreeModel.RootName"), new JScrollPane(bookmarksTree)); //$NON-NLS-1$
-    defaultTabColor = treeTab.getBackgroundAt(0);
-
+    categoriesPanel = new JScrollPane(categoryTree);
+    bookmarksPanel = new JScrollPane(bookmarksTree);
+    
     boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
 
     if (!isFTKReport) {
@@ -544,23 +516,34 @@ public class App extends JFrame implements WindowListener {
       tree.addTreeSelectionListener(treeListener);
       tree.addTreeExpansionListener(treeListener);
 
-      JPanel evidencePanel = new JPanel(new BorderLayout());
+      evidencePanel = new JPanel(new BorderLayout());
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-      treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null, evidencePanel, null, 2); //$NON-NLS-1$
+      //treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null, evidencePanel, null, 2); //$NON-NLS-1$
     }
 
-    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
+    /*if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
         int index = SwingUtil.getIndexOfTab(treeTab, Messages.getString("App.Bookmarks")); //$NON-NLS-1$
         treeTab.setSelectedIndex(index);
-    }
+    }*/
 
+    
+    dockingControl = new CControl(this);
+    dockingControl.getController().setTheme(new EclipseTheme());
+    dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
+    this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
+    defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
+    defaultFocusedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED);
+    defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
+    
+    refazLayout(false);
+    
     status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-    this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+    //this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
     this.getContentPane().add(status, BorderLayout.PAGE_END);
 
     progressBar = new JProgressBar(0, 1);
@@ -635,7 +618,127 @@ public class App extends JFrame implements WindowListener {
     
     new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());    
   }
-
+  
+  private void createAllDockables() {
+	categoriesTabDock = createDockable("categoriestab", Messages.getString("CategoryTreeModel.RootName"), categoriesPanel); //$NON-NLS-1$ //$NON-NLS-2$
+	metadataTabDock = createDockable("metadatatab", Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$ //$NON-NLS-2$
+	if(evidencePanel != null) {
+		evidenceTabDock = createDockable("evidencetab", Messages.getString("TreeViewModel.RootName"), evidencePanel); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	bookmarksTabDock = createDockable("bookmarkstab", Messages.getString("BookmarksTreeModel.RootName"), bookmarksPanel); //$NON-NLS-1$ //$NON-NLS-2$
+    
+	tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	if (mapsScroll != null) {
+		mapTabDock = createDockable("maptab", Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	
+	
+	tabbedHitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), tabbedHits); //$NON-NLS-1$ //$NON-NLS-2$
+	compositeViewerDock = createDockable("compositeviewer", "Visualizador Composto", compositeViewer);
+	
+	dockingControl.addDockable(categoriesTabDock);
+	dockingControl.addDockable(metadataTabDock);
+	if (evidenceTabDock != null) {
+		dockingControl.addDockable(evidenceTabDock);
+	}
+	dockingControl.addDockable(bookmarksTabDock);
+	dockingControl.addDockable(tableTabDock);
+	dockingControl.addDockable(galleryTabDock);
+	dockingControl.addDockable(mapTabDock);
+	dockingControl.addDockable(tabbedHitsDock);
+	dockingControl.addDockable(compositeViewerDock);
+	
+	setDockablesColors();
+  }
+  
+  private void removeAllDockables() {
+	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
+	  compositeViewerDock, tabbedHitsDock, tableTabDock, galleryTabDock,
+	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
+	
+	for (DefaultSingleCDockable dockable : dockables) {
+	  if (dockable != null) {
+		Component c = dockable.getContentPane().getComponent(0);
+		  dockable.remove(c);
+		  dockingControl.removeDockable(dockable);
+		}
+	}
+  }
+  
+  private DefaultSingleCDockable createDockable(String id, String title, JComponent component) {
+	DefaultSingleCDockable dockable = new DefaultSingleCDockable(id, title);
+	dockable.setLayout(new BorderLayout());
+	dockable.add(component, BorderLayout.CENTER);
+	return dockable;
+  }
+  
+  private boolean categoriesDefaultColor = true;
+  private boolean metadataDefaultColor = true;
+  private boolean evidenceDefaultColor = true;
+  private boolean bookmarksDefaultColor = true;
+  
+  public void setCategoriesDefaultColor(boolean defaultColor) {
+	if (categoriesDefaultColor != defaultColor) {
+	  categoriesDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setMetadataDefaultColor(boolean defaultColor) {
+	if (metadataDefaultColor != defaultColor) {
+	  metadataDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setEvidenceDefaultColor(boolean defaultColor) {
+	if (evidenceDefaultColor != defaultColor) {
+	  evidenceDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setBookmarksDefaultColor(boolean defaultColor) {
+	if (bookmarksDefaultColor != defaultColor) {
+	  bookmarksDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  private void setDockablesColors() {
+	setTabColor(categoriesTabDock, categoriesDefaultColor);
+	setTabColor(metadataTabDock, metadataDefaultColor);
+	setTabColor(evidenceTabDock, evidenceDefaultColor);
+	setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+  }
+  
+  private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
+	if (dock == null)
+	  return;
+	if (isDefault) {
+	  setTabColor(dock, defaultColor, defaultFocusedColor, defaultSelectedColor);
+	} else {
+	  setTabColor(dock, alertColor, alertFocusedColor, alertSelectedColor);
+	}
+  }
+  
+  private void setTabColor(DefaultSingleCDockable dock, Color colorBackground, Color colorFocused, Color colorSelected) {
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED, colorFocused);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED, colorSelected);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND_FOCUSED, colorFocused);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND_SELECTED, colorSelected);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TITLE_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TITLE_BACKGROUND_FOCUSED, colorFocused);
+  }
+  
+  public void moveEvidenveTabToFront() {
+	if (evidenceTabDock != null) {
+	  evidenceTabDock.toFront();
+	}
+  }
   private void zoomFont(Component c, int inc) {
     if (c instanceof Container) {
       Component[] childs = ((Container) c).getComponents();
@@ -653,68 +756,106 @@ public class App extends JFrame implements WindowListener {
     repaint();
   }
 
-  public void alterarDisposicao() {
+  private void refazLayout(boolean remove) {
+	if (disposicaoVertical) {
+	  if (remove)
+		removeAllDockables();
+	  createAllDockables();
 
-    if (disposicaoVertical) {
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
+      tableTabDock.setVisible(true);
+	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
+	  
+	  galleryTabDock.setLocation(nextLocation);
+	  galleryTabDock.setVisible(true);
+	  nextLocation = galleryTabDock.getBaseLocation().aside();
+	  
+	  if (mapTabDock != null) {
+	    mapTabDock.setLocation(nextLocation);
+	    mapTabDock.setVisible(true);
+	  }
+	        
+	  tabbedHitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.5));
+	  tabbedHitsDock.setVisible(true);
 
-      horizontalSplitPane.remove(verticalSplitPane);
-      horizontalSplitPane.remove(compositeViewer);
-      verticalSplitPane.remove(resultTab);
-      verticalSplitPane.remove(tabbedHits);
-      treeSplitPane.remove(treeTab);
-      treeSplitPane.remove(horizontalSplitPane);
-      app.getContentPane().removeAll();
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.5));
+	  compositeViewerDock.setVisible(true);
+	  
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+	  categoriesTabDock.setVisible(true);
+	        
+	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
+	  metadataTabDock.setVisible(true);
+	        
+	  nextLocation = metadataTabDock.getBaseLocation().aside();
+	        
+	  if (evidenceTabDock != null) {
+		evidenceTabDock.setLocation(nextLocation);
+	    evidenceTabDock.setVisible(true);
+	    nextLocation = evidenceTabDock.getBaseLocation().aside();
+	  }
+	        
+	  bookmarksTabDock.setLocation(nextLocation);
+	  bookmarksTabDock.setVisible(true);
+	  categoriesTabDock.toFront();
+	  tableTabDock.toFront();
+	} else {
+	  if (remove)
+	    removeAllDockables();
+	  createAllDockables();
+	        
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.7));
+	  tableTabDock.setVisible(true);
+	  
+	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 
-      horizontalSplitPane.add(tabbedHits);
-      horizontalSplitPane.add(compositeViewer);
-      verticalSplitPane.add(resultTab);
-      verticalSplitPane.add(horizontalSplitPane);
-
-      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      app.getContentPane().add(status, BorderLayout.PAGE_END);
-      treeSplitPane.add(treeTab);
-      treeSplitPane.add(verticalSplitPane);
-      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-
-      app.getContentPane().invalidate();
-      app.getContentPane().validate();
-      app.getContentPane().repaint();
-      verticalSplitPane.setDividerLocation(0.5);
-      horizontalSplitPane.setDividerLocation(0.4);
-
-      disposicaoVertical = false;
-
-    } else {
-      horizontalSplitPane.remove(tabbedHits);
-      horizontalSplitPane.remove(compositeViewer);
-      verticalSplitPane.remove(resultTab);
-      verticalSplitPane.remove(horizontalSplitPane);
-      treeSplitPane.remove(treeTab);
-      treeSplitPane.remove(horizontalSplitPane);
-      app.getContentPane().removeAll();
-
-      verticalSplitPane.add(resultTab);
-      verticalSplitPane.add(tabbedHits);
-      horizontalSplitPane.add(verticalSplitPane);
-      horizontalSplitPane.add(compositeViewer);
-
-      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      app.getContentPane().add(status, BorderLayout.PAGE_END);
-      treeSplitPane.add(treeTab);
-      treeSplitPane.add(horizontalSplitPane);
-      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-
-      app.getContentPane().invalidate();
-      app.getContentPane().validate();
-      app.getContentPane().repaint();
-      verticalSplitPane.setDividerLocation(0.7);
-      horizontalSplitPane.setDividerLocation(0.6);
-
-      disposicaoVertical = true;
+	  galleryTabDock.setLocation(nextLocation);
+	  galleryTabDock.setVisible(true);
+	  nextLocation = galleryTabDock.getBaseLocation().aside();
+	        
+	  if (mapTabDock != null) {
+	    mapTabDock.setLocation(nextLocation);
+	    mapTabDock.setVisible(true);
+	  }
+	        
+	  tabbedHitsDock.setLocation(CLocation.base().normalSouth(0.3));
+	  tabbedHitsDock.setVisible(true);
+	       
+	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.3));
+	  compositeViewerDock.setVisible(true);
+	       
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+      categoriesTabDock.setVisible(true);
+      
+      metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
+      metadataTabDock.setVisible(true);
+      
+      nextLocation = metadataTabDock.getBaseLocation().aside();
+      
+      if (evidenceTabDock != null) {
+        evidenceTabDock.setLocation(nextLocation);
+        evidenceTabDock.setVisible(true);
+        nextLocation = evidenceTabDock.getBaseLocation().aside();
+      }
+      
+      bookmarksTabDock.setLocation(nextLocation);
+      bookmarksTabDock.setVisible(true);
+      categoriesTabDock.toFront();
+      tableTabDock.toFront();
     }
 
     viewerControl.restartLibreOffice();
+  }
+  
+  public void alterarDisposicao() {
 
+    if (disposicaoVertical) {   	
+      disposicaoVertical = false;
+    } else {
+      disposicaoVertical = true;
+    }
+    
+    refazLayout(true);
   }
 
   @Override
@@ -769,10 +910,6 @@ public class App extends JFrame implements WindowListener {
 
   public TreeListener getTreeListener() {
 	return treeListener;
-  }
-
-  public JTabbedPane getResultTab() {
-	return resultTab;
   }
 
   public AppMapaPanel getBrowserPane() {
