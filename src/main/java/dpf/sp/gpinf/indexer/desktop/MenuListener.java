@@ -84,6 +84,8 @@ public class MenuListener implements ActionListener {
     if (e.getSource() == menu.disposicao) {
       App.get().alterarDisposicao();
 
+    } else if (e.getSource() == menu.layoutPadrao) {
+    	App.get().refazLayout(true);
     } else if (e.getSource() == menu.marcarSelecionados) {
       MarcadoresController.get().setMultiSetting(true);
       int col = App.get().resultsTable.convertColumnIndexToView(1);
