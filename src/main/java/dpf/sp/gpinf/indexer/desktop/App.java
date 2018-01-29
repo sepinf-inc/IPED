@@ -76,6 +76,7 @@ import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -530,7 +531,7 @@ public class App extends JFrame implements WindowListener {
 
     
     dockingControl = new CControl(this);
-    dockingControl.getController().setTheme(new EclipseTheme());
+    dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
     dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
     this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
     defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
@@ -735,10 +736,27 @@ public class App extends JFrame implements WindowListener {
   }
   
   public void moveEvidenveTabToFront() {
-	if (evidenceTabDock != null) {
-	  evidenceTabDock.toFront();
-	}
+	selectDockableTab(evidenceTabDock);
   }
+  
+  private void selectDockableTab(DefaultSingleCDockable dock) {
+	  Container cont = dock.getContentPane();
+	  if (cont != null) {
+		  Container parent;
+		  while ( (parent = cont.getParent()) != null) {
+			  if (parent instanceof JTabbedPane) {
+				  JTabbedPane tabbedPane = (JTabbedPane) parent;
+				  Component selectedTab = tabbedPane.getSelectedComponent();
+				  if (selectedTab != cont) {
+					  tabbedPane.setSelectedComponent(cont);
+				  }
+				  break;
+			  }
+			  cont = parent;
+		  }
+	  }
+  }
+  
   private void zoomFont(Component c, int inc) {
     if (c instanceof Container) {
       Component[] childs = ((Container) c).getComponents();
@@ -797,8 +815,8 @@ public class App extends JFrame implements WindowListener {
 	        
 	  bookmarksTabDock.setLocation(nextLocation);
 	  bookmarksTabDock.setVisible(true);
-	  categoriesTabDock.toFront();
-	  tableTabDock.toFront();
+	  selectDockableTab(categoriesTabDock);
+	  selectDockableTab(tableTabDock);
 	} else {
 	  if (remove)
 	    removeAllDockables();
@@ -840,8 +858,8 @@ public class App extends JFrame implements WindowListener {
       
       bookmarksTabDock.setLocation(nextLocation);
       bookmarksTabDock.setVisible(true);
-      categoriesTabDock.toFront();
-      tableTabDock.toFront();
+      selectDockableTab(categoriesTabDock);
+	  selectDockableTab(tableTabDock);
     }
 
     viewerControl.restartLibreOffice();
