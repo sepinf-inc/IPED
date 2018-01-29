@@ -757,7 +757,7 @@ public class App extends JFrame implements WindowListener {
   }
 
   private void refazLayout(boolean remove) {
-	if (disposicaoVertical) {
+	if (!disposicaoVertical) {
 	  if (remove)
 		removeAllDockables();
 	  createAllDockables();
