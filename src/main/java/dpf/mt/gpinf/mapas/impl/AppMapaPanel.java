@@ -65,18 +65,6 @@ public class AppMapaPanel extends JPanel {
 			}
 		});
 
-	    // provoca a atualização do mapa na mudança de tabs
-	    //TODO: Verificar atualizacao de mapa apos mudanca para docking
-	    /*
-	    app.getResultTab().addChangeListener(new ChangeListener() {
-	    	@Override
-			public void stateChanged(ChangeEvent e) {
-				if(app.getResultTab().getSelectedIndex()==2){
-					redesenhaMapa();
-				}
-			}		
-		});*/
-
 	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
 
 	    this.add(browserCanvas.getContainer(), BorderLayout.CENTER);

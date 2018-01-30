@@ -647,7 +647,7 @@ public class App extends JFrame implements WindowListener {
 	
 	
 	tabbedHitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), tabbedHits); //$NON-NLS-1$ //$NON-NLS-2$
-	compositeViewerDock = createDockable("compositeviewer", "Visualizador Composto", compositeViewer);
+	compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), compositeViewer); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	dockingControl.addDockable(categoriesTabDock);
 	dockingControl.addDockable(metadataTabDock);
