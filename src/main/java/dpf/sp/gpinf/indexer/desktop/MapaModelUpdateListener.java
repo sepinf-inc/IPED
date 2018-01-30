@@ -25,7 +25,7 @@ public class MapaModelUpdateListener implements TableModelListener {
 			app.getBrowserPane().setMapaDesatualizado(true);
 
 			/* somente chamado se o tab de mapas estiver sendo exibido */ 
-		    if(app.mapTabDock.isShowing()){
+		    if(app.mapTabDock != null && app.mapTabDock.isShowing()){
 		    	app.getBrowserPane().redesenhaMapa();
 		    }
 		}else{

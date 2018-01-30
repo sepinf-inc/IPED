@@ -70,12 +70,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
-import bibliothek.extension.gui.dock.theme.EclipseTheme;
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.StackDockStation;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CDockableLocationEvent;
+import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
@@ -632,6 +635,14 @@ public class App extends JFrame implements WindowListener {
 	galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	if (mapsScroll != null) {
 		mapTabDock = createDockable("maptab", Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+		mapTabDock.addCDockableLocationListener(new CDockableLocationListener() {
+			@Override
+			public void changed(CDockableLocationEvent event) {
+				if (event.isShowingChanged() && event.getNewShowing()) {
+					browserPane.redesenhaMapa();
+				}
+			}
+		});
 	}
 	
 	
@@ -751,6 +762,10 @@ public class App extends JFrame implements WindowListener {
 					  tabbedPane.setSelectedComponent(cont);
 				  }
 				  break;
+			  } else if (parent instanceof EclipseTabPaneContent) {
+				  EclipseTabPaneContent eclipseTPC = (EclipseTabPaneContent) parent;
+				  EclipseTabPane eclipseTab = eclipseTPC.getPane();
+				  eclipseTab.setSelectedDockable(dock.intern());
 			  }
 			  cont = parent;
 		  }
@@ -932,6 +947,5 @@ public class App extends JFrame implements WindowListener {
 
   public AppMapaPanel getBrowserPane() {
 	return browserPane;
-  }
-  
+  }  
 }
