@@ -173,9 +173,9 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   public void actionPerformed(ActionEvent e) {
 
     if ((App.get().recursiveTreeList.isSelected() && rootSelected) || selection.isEmpty()) {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+      App.get().setEvidenceDefaultColor(true);
     } else {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+      App.get().setEvidenceDefaultColor(false);
     }
 
     App.get().appletListener.updateFileListing();
