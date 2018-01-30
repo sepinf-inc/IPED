@@ -102,7 +102,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       OCRParser.EXECTESS = false;
       
       if(!updateItems){
-    	  LOGGER.info("Loading Columns");
+    	  LOGGER.info("Loading Columns"); //$NON-NLS-1$
           App.get().resultsModel.initCols();
     	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
     	  
@@ -118,10 +118,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
           this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
           App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
           
-          LOGGER.info("Listing all items");
+          LOGGER.info("Listing all items"); //$NON-NLS-1$
           PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
           pesquisa.execute();
-          LOGGER.info("Listing all items Finished");
+          LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
       }
       
       treeModel = new TreeViewModel();
@@ -139,10 +139,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
           @Override
           public void run(){
               JOptionPane.showMessageDialog(App.get(), 
-                      "Erro ao abrir o caso. O processamento finalizou com sucesso?\n"
-                      + "Caso sim, entre em contato com o desenvolvedor e envie o log\n"
-                      + "de erros \"IPED-SearchApp.log\". Resumo do erro:\n" + e.getMessage(), 
-                      "Erro na inicialização", JOptionPane.ERROR_MESSAGE);
+                      Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
+                      + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
+                      + Messages.getString("AppLazyInitializer.errorMsg.line3") + e.getMessage(),  //$NON-NLS-1$
+                      Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
               
               App.get().dialogBar.setVisible(false);
           }

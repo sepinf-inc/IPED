@@ -44,8 +44,8 @@ public class SetTypeTask extends AbstractTask {
 
   public String getExtBySig(EvidenceFile evidence) {
 
-    String ext = "";
-    String ext1 = "." + evidence.getExt();
+    String ext = ""; //$NON-NLS-1$
+    String ext1 = "." + evidence.getExt(); //$NON-NLS-1$
     MediaType mediaType = evidence.getMediaType();
     if (!mediaType.equals(MediaType.OCTET_STREAM)) {
       try {
@@ -67,7 +67,7 @@ public class SetTypeTask extends AbstractTask {
       }
     }
 
-    if (ext.isEmpty() || ext.equals(".txt")) {
+    if (ext.isEmpty() || ext.equals(".txt")) { //$NON-NLS-1$
       ext = ext1;
     }
 

@@ -14,8 +14,8 @@ import javax.swing.tree.TreePath;
 
 public class BookmarksTreeModel implements TreeModel {
 
-  public static String ROOT = "Marcadores";
-  public static String NO_BOOKMARKS = "[Sem Marcadores]";
+  public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
+  public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
   public Set<String> labels;
 
   static class Bookmark implements Comparator<Bookmark> {
@@ -98,7 +98,7 @@ public class BookmarksTreeModel implements TreeModel {
 
   @Override
   public int getIndexOfChild(Object parent, Object child) {
-    System.out.println("get index of child");
+    System.out.println("get index of child"); //$NON-NLS-1$
     return 0;
   }
 

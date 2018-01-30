@@ -30,16 +30,17 @@ import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
-import org.apache.lucene.document.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(CopiarArquivos.class);
 
   ArrayList<ItemId> uniqueIds;
   File dir, subdir;
@@ -50,7 +51,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
     this.subdir = dir;
     this.uniqueIds = uniqueIds;
 
-    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, uniqueIds.size());
+    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, uniqueIds.size()); //$NON-NLS-1$ //$NON-NLS-2$
     this.addPropertyChangeListener(this);
   }
 
@@ -59,8 +60,8 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
     if ((srcExtIndex = srcName.lastIndexOf('.')) > -1) {
       String srcExt = srcName.substring(srcExtIndex);
       if (!dstName.endsWith(srcExt)) {
-        if (srcName.endsWith(".[AD]" + srcExt)) {
-          srcExt = ".[AD]" + srcExt;
+        if (srcName.endsWith(".[AD]" + srcExt)) { //$NON-NLS-1$
+          srcExt = ".[AD]" + srcExt; //$NON-NLS-1$
         }
         dstName += srcExt;
       }
@@ -70,6 +71,10 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
   @Override
   protected Boolean doInBackground() throws Exception {
+    
+    LOGGER.info("Exporting files to " + dir.getAbsolutePath()); //$NON-NLS-1$
+    dir.mkdirs();
+    
     int progress = 0, subdirCount = 1;
     for (ItemId item : uniqueIds) {
       try {
@@ -90,6 +95,8 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
         }
 
         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(dst));
+        
+        LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
         IOUtil.copiaArquivo(in, out);
 
@@ -103,7 +110,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
         e1.printStackTrace();
       }
 
-      this.firePropertyChange("progress", progress, ++progress);
+      this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
 
       if (this.isCancelled()) {
         break;
@@ -115,10 +122,10 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if ("progress" == evt.getPropertyName()) {
+    if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
       int progress = (Integer) evt.getNewValue();
       progressMonitor.setProgress(progress);
-      progressMonitor.setNote("Copiando " + progress + " de " + uniqueIds.size());
+      progressMonitor.setNote(Messages.getString("ExportFiles.Copying") + progress + Messages.getString("ExportFiles.of") + uniqueIds.size()); //$NON-NLS-1$ //$NON-NLS-2$
     }
     if (progressMonitor.isCanceled()) {
       this.cancel(true);

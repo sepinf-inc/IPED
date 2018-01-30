@@ -41,7 +41,7 @@ public class TreeViewModel implements TreeModel {
 
   private Vector<TreeModelListener> treeModelListeners = new Vector<TreeModelListener>();
   private Node root;
-  private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore";
+  private static String FIRST_STRING = "Texto para agilizar primeiro acesso ao método toString, chamado para todos os filhos, inclusive fora da janela de visualização da árvore"; //$NON-NLS-1$
 
   /*private RowComparator getComparator1() {
     return new RowComparator(IndexItem.NAME) {
@@ -124,9 +124,9 @@ public class TreeViewModel implements TreeModel {
       }
 
       String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-      String textQuery = IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+      String textQuery = IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-      textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)";
+      textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
       try {
 		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
@@ -147,9 +147,9 @@ public class TreeViewModel implements TreeModel {
   public TreeViewModel() {
     root = new Node(-1);
     root.doc = new Document();
-    root.doc.add(new StoredField(IndexItem.NAME, "Evidências"));
+    root.doc.add(new StoredField(IndexItem.NAME, Messages.getString("TreeViewModel.RootName"))); //$NON-NLS-1$
     try {
-      IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true");
+      IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true"); //$NON-NLS-1$
 	  task.setTreeQuery(true);
       root.children = task.luceneSearch();
       Integer[] array = ArrayUtils.toObject(root.children.getLuceneIds());

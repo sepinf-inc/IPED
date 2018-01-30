@@ -57,6 +57,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -91,10 +92,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 
-  public static final String EXPAND_CONFIG = "CategoriesToExpand.txt";
-  public static final String ENABLE_PARSING = "enableFileParsing";
-  public static final String ENCRYPTED = "encrypted";
-  public static final String HAS_SUBITEM = "hasSubitem";
+  public static final String EXPAND_CONFIG = "CategoriesToExpand.txt"; //$NON-NLS-1$
+  public static final String ENABLE_PARSING = "enableFileParsing"; //$NON-NLS-1$
+  public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
+  public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
 
   public static boolean expandContainers = false;
   private static boolean enableFileParsing = true;
@@ -160,7 +161,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     // Tratamento p/ acentos de subitens de ZIP
     ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850");
+    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
     context.set(ArchiveStreamFactory.class, factory);
     
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
@@ -192,16 +193,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
 	metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
 	if (evidence.isTimedOut()) {
-	  metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true");
+	  metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true"); //$NON-NLS-1$
 	}
   }
 
   public static void load(File file) throws FileNotFoundException, IOException {
     categoriesToExpand = new HashSet<String>();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
-      if (line.trim().startsWith("#") || line.trim().isEmpty()) {
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
         continue;
       }
       categoriesToExpand.add(line.trim());
@@ -311,7 +312,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       tis = evidence.getTikaStream();
 
     } catch (IOException e) {
-      LOGGER.warn("{} Erro ao abrir: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
       return;
     }
 
@@ -372,7 +373,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       //Ajusta metadados:
       Metadata metadata = evidence.getMetadata();
       if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
-        evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true");
+        evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true"); //$NON-NLS-1$
       }
       metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 
@@ -381,7 +382,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         int charCount = Integer.parseInt(value);
         evidence.setExtraAttribute(OCRParser.OCR_CHAR_COUNT, charCount);
         metadata.remove(OCRParser.OCR_CHAR_COUNT);
-        if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) {
+        if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
           evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
         }
       }
@@ -410,7 +411,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     if (name == null || name.isEmpty()) {
-      name = "[Sem Nome]-" + child;
+      name = Messages.getString("ParsingTask.UnNamed") + child; //$NON-NLS-1$
     }
 
     if (name.length() > NAME_MAX_LEN) {
@@ -449,17 +450,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if (context.get(EmbeddedParent.class) != null) {
         parent = (EvidenceFile) context.get(EmbeddedParent.class).getObj();
         parentPath = parent.getPath();
-        subitemPath = parentPath + "/" + name;
+        subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
-        subitemPath = parentPath + ">>" + name;
+        subitemPath = parentPath + ">>" + name; //$NON-NLS-1$
       }
 
       EvidenceFile subItem = new EvidenceFile();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 
-      String embeddedPath = subitemPath.replace(firstParentPath + ">>", "");
-      char[] nameChars = (embeddedPath + "\n\n").toCharArray();
+      String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
+      char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
       handler.characters(nameChars, 0, nameChars.length);
 
       if (extractEmbedded && output == null) {
@@ -485,7 +486,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
       subItem.setName(name);
       if (hasTitle) {
-        subItem.setExtension("");
+        subItem.setExtension(""); //$NON-NLS-1$
       }
 
       subItem.setParent(parent);
@@ -494,7 +495,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           subItem.setHasChildren(true);
       
       //indica se o conteiner tem subitens
-      evidence.setExtraAttribute(HAS_SUBITEM, "true");
+      evidence.setExtraAttribute(HAS_SUBITEM, "true"); //$NON-NLS-1$
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
           metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
@@ -538,15 +539,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     } catch (SAXException e) {
       // TODO Provavelmente PipedReader foi interrompido, interrompemos
       // aqui tb, deve ser melhorado...
-      if (e.toString().contains("Error writing")) {
+      if (e.toString().contains("Error writing")) { //$NON-NLS-1$
         Thread.currentThread().interrupt();
       }
 
       //e.printStackTrace();
-      LOGGER.warn("{} Erro ao extrair subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString());
+      LOGGER.warn("{} SAX error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
 
     } catch (Exception e) {
-      LOGGER.warn("{} Erro ao extrair Subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString());
+      LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
       //e.printStackTrace();
 
     } finally {
@@ -568,7 +569,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     load(new File(confDir, EXPAND_CONFIG));
 
-    String value = confProps.getProperty("expandContainers");
+    String value = confProps.getProperty("expandContainers"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -588,7 +589,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   @Override
   public void finish() throws Exception {
       if(totalText != null)
-          LOGGER.info("Volume de texto extraído: " + totalText.get());
+          LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
       totalText = null;
 
   }

@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 
-  private static File userFilters = new File(System.getProperty("user.home") + "/.indexador/ipedFilters.txt");
+  private static File userFilters = new File(System.getProperty("user.home") + "/.indexador/ipedFilters.txt"); //$NON-NLS-1$ //$NON-NLS-2$
   private File defaultFilter;
 
   private UTF8Properties filters = new UTF8Properties();
@@ -34,13 +34,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
   JDialog dialog;
 
-  JLabel msg = new JLabel("Filtros:");
-  JLabel texto = new JLabel("Expressão:");
+  JLabel msg = new JLabel(Messages.getString("FilterManager.Filters")); //$NON-NLS-1$
+  JLabel texto = new JLabel(Messages.getString("FilterManager.Expresion")); //$NON-NLS-1$
 
-  JButton save = new JButton("Salvar");
-  JButton rename = new JButton("Renomear");
-  JButton novo = new JButton("Criar");
-  JButton delete = new JButton("Apagar");
+  JButton save = new JButton(Messages.getString("FilterManager.Save")); //$NON-NLS-1$
+  JButton rename = new JButton(Messages.getString("FilterManager.Rename")); //$NON-NLS-1$
+  JButton novo = new JButton(Messages.getString("FilterManager.New")); //$NON-NLS-1$
+  JButton delete = new JButton(Messages.getString("FilterManager.Delete")); //$NON-NLS-1$
 
   DefaultListModel<String> listModel = new DefaultListModel<String>();
   JList<String> list = new JList<String>(listModel);
@@ -57,7 +57,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
       }
       
       if(defaultFilter == null)
-    	  defaultFilter = new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), "conf/DefaultFilters.txt");
+    	  defaultFilter = new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), "conf/DefaultFilters.txt"); //$NON-NLS-1$
 
       filters.load(defaultFilter);
 
@@ -115,17 +115,17 @@ public class FilterManager implements ActionListener, ListSelectionListener {
   private void createDialog() {
     dialog = new JDialog();
     dialog.setLayout(null);
-    dialog.setTitle("Filtros");
+    dialog.setTitle(Messages.getString("FilterManager.Title")); //$NON-NLS-1$
     dialog.setBounds(0, 0, 680, 350);
     dialog.setAlwaysOnTop(true);
 
     expression.setLineWrap(true);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    expression.setToolTipText("Expressão do Filtro");
-    novo.setToolTipText("Criar novo filtro");
-    save.setToolTipText("Salvar alterações");
-    delete.setToolTipText("Apagar filtro selecionado");
+    expression.setToolTipText(Messages.getString("FilterManager.Expression.Tip")); //$NON-NLS-1$
+    novo.setToolTipText(Messages.getString("FilterManager.New.Tip")); //$NON-NLS-1$
+    save.setToolTipText(Messages.getString("FilterManager.Save.Tip")); //$NON-NLS-1$
+    delete.setToolTipText(Messages.getString("FilterManager.Del.Tip")); //$NON-NLS-1$
 
     msg.setBounds(20, 20, 200, 20);
     texto.setBounds(300, 20, 200, 20);
@@ -175,7 +175,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
   @Override
   public void actionPerformed(ActionEvent e) {
     if (e.getSource() == novo) {
-      String newLabel = JOptionPane.showInputDialog(dialog, "Nome do novo filtro", list.getSelectedValue());
+      String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("FilterManager.NewName"), list.getSelectedValue()); //$NON-NLS-1$
       if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
         filters.put(newLabel.trim(), expression.getText());
       }

@@ -26,7 +26,7 @@ public class KFFCarveTask extends BaseCarveTask {
   /**
    * Nome da tarefa.
    */
-  private static final String taskName = "KFF Carving";
+  private static final String taskName = "KFF Carving"; //$NON-NLS-1$
 
   /**
    * Indica se a tarefa está habilitada ou não.
@@ -91,21 +91,21 @@ public class KFFCarveTask extends BaseCarveTask {
   public void init(Properties confParams, File confDir) throws Exception {
     synchronized (init) {
       if (!init.get()) {
-        String value = confParams.getProperty("enableKFFCarving");
-        if (value != null && value.trim().equalsIgnoreCase("true")) {
+        String value = confParams.getProperty("enableKFFCarving"); //$NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
           if (LedKFFTask.kffItems != null) {
-            md5_512 = LedHashes.hashMap.get("md5-512");
-            Log.info(taskName, "Hashes carregados: " + md5_512.length);
+            md5_512 = LedHashes.hashMap.get("md5-512"); //$NON-NLS-1$
+            Log.info(taskName, "Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
             taskEnabled = true;
           } else {
-            Log.error(taskName, "Base do LED precisa ser carregada para o KFFCarving funcionar.");
+            Log.error(taskName, "LED database must be loaded to enable KFFCarving."); //$NON-NLS-1$
           }
         }
-        Log.info(taskName, taskEnabled ? "Tarefa habilitada." : "Tarefa desabilitada.");
+        Log.info(taskName, taskEnabled ? "Task enabled." : "Task disabled."); //$NON-NLS-1$ //$NON-NLS-2$
         init.set(true);
       }
     }
-    if (taskEnabled) digest = MessageDigest.getInstance("MD5");
+    if (taskEnabled) digest = MessageDigest.getInstance("MD5"); //$NON-NLS-1$
   }
 
   /**
@@ -115,10 +115,10 @@ public class KFFCarveTask extends BaseCarveTask {
     synchronized (finished) {
       if (taskEnabled && !finished.get()) {
         finished.set(true);
-        NumberFormat nf = new DecimalFormat("#,##0");
-        Log.info(taskName, "Arquivos carveados: " + nf.format(numCarvedItems.get()));
-        Log.info(taskName, "Blocos de 512 (Hits / Total): " + nf.format(num512hit.get()) + " / " + nf.format(num512total.get()));
-        Log.info(taskName, "Bytes com hash calculado: " + nf.format(bytesHashed.get()));
+        NumberFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
+        Log.info(taskName, "Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
+        Log.info(taskName, "512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " + nf.format(num512total.get())); //$NON-NLS-1$ //$NON-NLS-2$
+        Log.info(taskName, "Bytes hashes: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
       }
     }
   }
@@ -167,12 +167,12 @@ public class KFFCarveTask extends BaseCarveTask {
               HashValue hash64K = new HashValue(digest.digest());
               KffItem kffItem = KffItem.kffSearch(LedKFFTask.kffItems, hash64K);
               if (kffItem != null) {
-                String name = "CarvedKff-" + offset;
+                String name = "CarvedKff-" + offset; //$NON-NLS-1$
                 String ext = kffItem.getExt();
                 if (ext != null) name += '.' + ext.toLowerCase();
                 EvidenceFile carvedItem = createCarvedFile(evidence, offset, kffItem.getLength(), name, null);
                 if (carvedItem != null) {
-                  carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString());
+                  carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString()); //$NON-NLS-1$
                   cntCarvedItems++;
                   if (offsets == null) {
                     offsets = new HashSet<Long>();
@@ -191,7 +191,7 @@ public class KFFCarveTask extends BaseCarveTask {
       }
     } catch (Exception e) {
       e.printStackTrace();
-      Log.warning(taskName, "Erro no KFF Carving: " + evidence.getPath() + " : " + e);
+      Log.warning(taskName, "Error KFFCarving on: " + evidence.getPath() + " : " + e); //$NON-NLS-1$ //$NON-NLS-2$
     } finally {
       IOUtil.closeQuietly(is);
     }

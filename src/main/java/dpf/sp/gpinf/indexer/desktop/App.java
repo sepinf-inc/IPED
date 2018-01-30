@@ -75,6 +75,7 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -140,7 +141,7 @@ public class App extends JFrame implements WindowListener {
   JPanel multiFilterAlert;
   boolean disposicaoVertical = false;
 
-  ResultTableModel resultsModel;
+  public ResultTableModel resultsModel;
   List resultSortKeys;
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
@@ -158,9 +159,9 @@ public class App extends JFrame implements WindowListener {
   // "NÃ£o foi possÃ­vel visualizar o texto. Clique duas vezes sobre o arquivo para acessar o original!";
   // final String MSG_NO_HITS =
   // "NÃ£o foi possÃ­vel destacar as ocorrÃªncias. Clique duas vezes sobre o arquivo para acessar o original!";
-  final static String FILTRO_TODOS = "[Sem Filtro]";
-  final static String FILTRO_SELECTED = "[Selecionados]";
-  public final static String SEARCH_TOOL_TIP = "[Digite ou escolha a expressão a ser pesquisada]";
+  final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
+  final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
+  public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
   public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
 
@@ -178,8 +179,8 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams = new AppSearchParams();
     this.appSearchParams.mainFrame = (JFrame) this;
     this.appSearchParams.viewerControl = ViewerControl.getInstance();    
-    this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
-    this.appSearchParams.HIGHLIGHT_END_TAG = "</font>";
+    this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
+    this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
     this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
     this.appSearchParams.FRAG_SIZE = FRAG_SIZE;
     this.appSearchParams.MAX_LINES = MAX_LINES;
@@ -213,12 +214,12 @@ public class App extends JFrame implements WindowListener {
     	  processingManager.setSearchAppOpen(true);
       
       LOGGER = LoggerFactory.getLogger(App.class);
-      LOGGER.info("Starting...");
+      LOGGER.info("Starting..."); //$NON-NLS-1$
       
      
 		if(SwingUtilities.isEventDispatchThread()){
 			createGUI();
-			LOGGER.info("GUI created");
+			LOGGER.info("GUI created"); //$NON-NLS-1$
 		}else{
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -226,7 +227,7 @@ public class App extends JFrame implements WindowListener {
 				    public void run() {
 				    	try{
 				    		createGUI();
-				    		LOGGER.info("GUI created");
+				    		LOGGER.info("GUI created"); //$NON-NLS-1$
 				    		
 				    	}catch(Throwable t){
 				    		t.printStackTrace();
@@ -300,12 +301,12 @@ public class App extends JFrame implements WindowListener {
 
   public void createGUI() {
 
-    String tab = "     ";
-    this.setTitle(Versao.APP_NAME + tab + "[Caso: " + casesPathFile + "]");
+    String tab = "     "; //$NON-NLS-1$
+    this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") +": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     this.setSize(new Dimension(800, 600));
     this.setExtendedState(Frame.MAXIMIZED_BOTH);
     this.addWindowListener(this);
-    URL image = getClass().getResource("search.png");
+    URL image = getClass().getResource("search.png"); //$NON-NLS-1$
     this.setIconImage(new ImageIcon(image).getImage());
     this.setVisible(true);
     ToolTipManager.sharedInstance().setInitialDelay(10);
@@ -326,14 +327,14 @@ public class App extends JFrame implements WindowListener {
     try {
       boolean nimbusFound = false;
       for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-        if ("Nimbus".equals(info.getName())) {
-          UIManager.put("nimbusOrange", new Color(47, 92, 180));
-          UIManager.put("nimbusRed", Color.BLUE);
+        if ("Nimbus".equals(info.getName())) { //$NON-NLS-1$
+          UIManager.put("nimbusOrange", new Color(47, 92, 180)); //$NON-NLS-1$
+          UIManager.put("nimbusRed", Color.BLUE); //$NON-NLS-1$
           UIManager.setLookAndFeel(info.getClassName());
           UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-          defaults.put("ScrollBar.thumbHeight", 12);
+          defaults.put("ScrollBar.thumbHeight", 12); //$NON-NLS-1$
           //Workaround JDK-8134828
-          defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+          defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30)); //$NON-NLS-1$
           nimbusFound = true;
           break;
         }
@@ -352,24 +353,24 @@ public class App extends JFrame implements WindowListener {
     termo.setSelectedItem(SEARCH_TOOL_TIP);
     termo.setMaximumRowCount(30);
 
-    pesquisar = new JButton("Pesquisar");
-    opcoes = new JButton("Opções");
-    atualizar = new JButton("Atualizar");
-    ajuda = new JButton("Ajuda");
-    checkBox = new JCheckBox("0");
+    pesquisar = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
+    opcoes = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
+    atualizar = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
+    ajuda = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
+    checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
     filtro = new JComboBox<String>();
     filtro.setMaximumSize(new Dimension(100, 50));
     filtro.setMaximumRowCount(30);
     filtro.addItem(App.FILTRO_TODOS);
-    filtro.setToolTipText("Filtro");
+    filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
     filterManager = new FilterManager(filtro);
 
     topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
     topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-    JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
+    JLabel alertLabel = new JLabel(Messages.getString("App.FilterWarn")); //$NON-NLS-1$
     alertLabel.setForeground(Color.WHITE);
     multiFilterAlert = new JPanel();
     multiFilterAlert.add(alertLabel);
@@ -380,7 +381,7 @@ public class App extends JFrame implements WindowListener {
 
     topPanel.add(filtro);
     topPanel.add(multiFilterAlert);
-    topPanel.add(new JLabel("    Pesquisar:"));
+    topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
     topPanel.add(termo);
     topPanel.add(opcoes);
     if(processingManager != null)
@@ -398,8 +399,8 @@ public class App extends JFrame implements WindowListener {
     resultsTable.setShowGrid(false);
     resultsTable.setAutoscrolls(false);
     InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
-    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
+    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
     
     gallery = new GalleryTable(galleryModel);
     galleryScroll = new JScrollPane(gallery);
@@ -421,8 +422,8 @@ public class App extends JFrame implements WindowListener {
     gallery.addKeyListener(keyListener);
 
     inputMap = gallery.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
-    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
+    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
 
     gallery.addComponentListener(new ComponentAdapter() {
       @Override
@@ -439,13 +440,13 @@ public class App extends JFrame implements WindowListener {
     });
     
     resultTab = new JTabbedPane();
-    resultTab.addTab("Tabela", resultsScroll);
-    resultTab.addTab("Galeria", galleryScroll);
+    resultTab.addTab(Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$
+    resultTab.addTab(Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$
     
     if(new JarLoader().loadJavaFX()) {
         browserPane = new AppMapaPanel(this);
         JScrollPane mapsScroll = new JScrollPane(browserPane);
-        resultTab.addTab("Mapa", mapsScroll);
+        resultTab.addTab(Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$
     }
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
@@ -486,7 +487,7 @@ public class App extends JFrame implements WindowListener {
     parentItemTable.setShowGrid(false);
 
     tabbedHits = new JTabbedPane();
-    tabbedHits.addTab("Ocorrências", hitsScroll);
+    tabbedHits.addTab(Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$
     appSearchParams.tabbedHits = tabbedHits;
 
     compositeViewer = new CompositeViewer();
@@ -525,15 +526,15 @@ public class App extends JFrame implements WindowListener {
     
     metadataPanel = new MetadataPanel();
 
-    treeTab.add("Categorias", new JScrollPane(categoryTree));
-    treeTab.add("Metadados", metadataPanel);
-    treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
+    treeTab.add(Messages.getString("CategoryTreeModel.RootName"), new JScrollPane(categoryTree)); //$NON-NLS-1$
+    treeTab.add(Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$
+    treeTab.add(Messages.getString("BookmarksTreeModel.RootName"), new JScrollPane(bookmarksTree)); //$NON-NLS-1$
     defaultTabColor = treeTab.getBackgroundAt(0);
 
-    boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists();
+    boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
 
     if (!isFTKReport) {
-      recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
+      recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
       recursiveTreeList.setSelected(true);
 
       tree = new JTree(new Object[0]);
@@ -547,15 +548,15 @@ public class App extends JFrame implements WindowListener {
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-      treeTab.insertTab("Evidências", null, evidencePanel, null, 2);
+      treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null, evidencePanel, null, 2); //$NON-NLS-1$
     }
 
-    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) {
-        int index = SwingUtil.getIndexOfTab(treeTab, "Marcadores");
+    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
+        int index = SwingUtil.getIndexOfTab(treeTab, Messages.getString("App.Bookmarks")); //$NON-NLS-1$
         treeTab.setSelectedIndex(index);
     }
 
-    status = new JLabel(" ");
+    status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
@@ -564,7 +565,7 @@ public class App extends JFrame implements WindowListener {
 
     progressBar = new JProgressBar(0, 1);
     progressBar.setValue(0);
-    progressBar.setString("Aguarde...");
+    progressBar.setString(Messages.getString("App.Wait")); //$NON-NLS-1$
     progressBar.setForeground(Color.WHITE);
     progressBar.setStringPainted(true);
     progressBar.setIndeterminate(true);

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -21,14 +23,16 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
 
 public class LanguageDetectTask extends AbstractTask {
+	
+	private static Logger LOGGER = LoggerFactory.getLogger(LanguageDetectTask.class);
     
-    private static final String ENABLE_PARAM = "enableLanguageDetect";
+    private static final String ENABLE_PARAM = "enableLanguageDetect"; //$NON-NLS-1$
     
-    public static final String LANGUAGE_PREFIX = "language:";
+    public static final String LANGUAGE_PREFIX = "language:"; //$NON-NLS-1$
     
-    private static final String LANGUAGE_NAMES = LANGUAGE_PREFIX + "all_detected";
-    private static final String LANGUAGE_NAME = LANGUAGE_PREFIX + "detected_";
-    private static final String LANGUAGE_SCORE = LANGUAGE_PREFIX + "detected_score_";
+    private static final String LANGUAGE_NAMES = LANGUAGE_PREFIX + "all_detected"; //$NON-NLS-1$
+    private static final String LANGUAGE_NAME = LANGUAGE_PREFIX + "detected_"; //$NON-NLS-1$
+    private static final String LANGUAGE_SCORE = LANGUAGE_PREFIX + "detected_score_"; //$NON-NLS-1$
     
     private static final int MAX_LANGS = 2;
     
@@ -81,7 +85,14 @@ public class LanguageDetectTask extends AbstractTask {
             text = text.substring(0, MAX_CHARS);
         
         int i = 0;
-        List<DetectedLanguage> langs = detector.getProbabilities(text);
+        List<DetectedLanguage> langs = null;
+        try {
+        	langs = detector.getProbabilities(text);
+        }catch(RuntimeException e) {
+        	LOGGER.info("Error detecting language from " + evidence.getPath(), e); //$NON-NLS-1$
+        	return;
+        }
+        
         List<String> langList = new ArrayList<String>();
         for (DetectedLanguage lang : langs) {
             if(++i > MAX_LANGS)

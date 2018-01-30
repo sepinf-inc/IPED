@@ -58,7 +58,7 @@ public class SleuthkitServer {
       //System.setOut(System.err);
 
       int size = 10 * 1024 * 1024;
-      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw");
+      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
       raf.setLength(size);
       FileChannel fc = raf.getChannel();
       out = fc.map(MapMode.READ_WRITE, 0, size);
@@ -73,10 +73,10 @@ public class SleuthkitServer {
       InputStream in = clientSocket.getInputStream();
       os = clientSocket.getOutputStream();
 
-      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador");
+      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
       sleuthCase = SleuthkitCase.openCase(dbPath);
 
-      java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
+      java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$
 
       commitByte(out, 0, FLAGS.DONE);
       notify(os);
@@ -115,7 +115,7 @@ public class SleuthkitServer {
 
         } catch (Throwable e) {
           //e.printStackTrace(System.err);
-          byte[] msgBytes = e.getMessage().getBytes("UTF-8");
+          byte[] msgBytes = e.getMessage().getBytes("UTF-8"); //$NON-NLS-1$
           out.putInt(13, msgBytes.length);
           out.position(17);
           out.put(msgBytes);
@@ -154,7 +154,7 @@ public class SleuthkitServer {
     in.read();
     byte cmd;
     while (!FLAGS.isClientCmd(cmd = getByte(out, 0))) {
-      System.err.println("Waiting Client Memory Write...");
+      System.err.println("Waiting Client Memory Write..."); //$NON-NLS-1$
       Thread.sleep(1);
     }
     return cmd;

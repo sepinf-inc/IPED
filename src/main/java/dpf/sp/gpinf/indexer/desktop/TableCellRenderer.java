@@ -38,9 +38,9 @@ public class TableCellRenderer extends DefaultTableCellRenderer {
    */
   private static final long serialVersionUID = 1L;
 
-  private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon");
-  private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon");
-  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+  private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
+  private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
+  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {

@@ -81,17 +81,17 @@ public class VideoThumbsOutputConfig {
 
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("VideoThumbsOutputConfig [imageFile=");
+    builder.append("VideoThumbsOutputConfig [imageFile="); //$NON-NLS-1$
     builder.append(outFile);
-    builder.append(", thumbWidth=");
+    builder.append(", thumbWidth="); //$NON-NLS-1$
     builder.append(thumbWidth);
-    builder.append(", rows=");
+    builder.append(", rows="); //$NON-NLS-1$
     builder.append(rows);
-    builder.append(", columns=");
+    builder.append(", columns="); //$NON-NLS-1$
     builder.append(columns);
-    builder.append(", border=");
+    builder.append(", border="); //$NON-NLS-1$
     builder.append(border);
-    builder.append("]");
+    builder.append("]"); //$NON-NLS-1$
     return builder.toString();
   }
 }

@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -52,9 +53,9 @@ import gpinf.dev.data.EvidenceFile;
 public class ExportFileTask extends AbstractTask {
 
   private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
-  public static final String EXTRACT_CONFIG = "CategoriesToExport.txt";
-  public static final String EXTRACT_DIR = "Exportados/arquivos";
-  private static final String SUBITEM_DIR = "subitens";
+  public static final String EXTRACT_CONFIG = "CategoriesToExport.txt"; //$NON-NLS-1$
+  public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
+  private static final String SUBITEM_DIR = "subitens"; //$NON-NLS-1$
   
   private static final int MAX_SUBITEM_COMPRESSION = 100;
   private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
@@ -94,8 +95,8 @@ public class ExportFileTask extends AbstractTask {
   public static void load(File file) throws FileNotFoundException, IOException {
 
     String content = Util.readUTF8Content(file);
-    for (String line : content.split("\n")) {
-      if (line.trim().startsWith("#") || line.trim().isEmpty()) {
+    for (String line : content.split("\n")) { //$NON-NLS-1$
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
         continue;
       }
       categoriesToExtract.add(line.trim());
@@ -172,14 +173,14 @@ public class ExportFileTask extends AbstractTask {
   private boolean doNotExport(EvidenceFile evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-      noContentLabels = args.getCmdArgs().get("-nocontent");
+      noContentLabels = args.getCmdArgs().get("-nocontent"); //$NON-NLS-1$
       if (noContentLabels == null) {
         noContentLabels = Collections.emptyList();
       }
     }
     for (String noContentLabel : noContentLabels) {
       if (evidence.getLabels() != null && !evidence.getLabels().isEmpty()) {
-        for (String label : evidence.getLabels().split(" \\| ")) {
+        for (String label : evidence.getLabels().split(" \\| ")) { //$NON-NLS-1$
           if (label.equalsIgnoreCase(noContentLabel)) {
             return true;
           }
@@ -204,7 +205,7 @@ public class ExportFileTask extends AbstractTask {
       evidence.setFileOffset(-1);
 
     } catch (IOException e) {
-      LOGGER.warn("{} Erro ao extrair {} \t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+      LOGGER.warn("{} Error exporting {} \t{}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
 
     } finally {
       IOUtil.closeQuietly(is);
@@ -215,7 +216,7 @@ public class ExportFileTask extends AbstractTask {
     File viewFile = evidence.getViewFile();
     if (viewFile != null) {
       String viewName = viewFile.getName();
-      File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName);
+      File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       destFile.getParentFile().mkdirs();
       try {
         IOUtil.copiaArquivo(viewFile, destFile);
@@ -226,7 +227,7 @@ public class ExportFileTask extends AbstractTask {
   }
 
   private File getHashFile(String hash, String ext) {
-    String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext);
+    String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext); //$NON-NLS-1$ //$NON-NLS-2$
     if (extractDir == null) {
       setExtractDir();
     }
@@ -250,7 +251,7 @@ public class ExportFileTask extends AbstractTask {
       File file = evidence.getFile();
       String ext = evidence.getType().getLongDescr();
       if (!ext.isEmpty()) {
-        ext = "." + ext;
+        ext = "." + ext; //$NON-NLS-1$
       }
       ext = Util.removeNonLatin1Chars(ext);
       
@@ -274,10 +275,10 @@ public class ExportFileTask extends AbstractTask {
             if (hashFile.exists()) {
               changeTargetFile(evidence, hashFile);
               if (!file.delete()) {
-                LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+                LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
               }
             } else {
-              LOGGER.warn("{} Falha ao renomear para o hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex());
+              LOGGER.warn("{} Error renaming to hash: {}", Thread.currentThread().getName(), evidence.getFileToIndex()); //$NON-NLS-1$
               e.printStackTrace();
             }
           }
@@ -285,7 +286,7 @@ public class ExportFileTask extends AbstractTask {
         } else {
           changeTargetFile(evidence, hashFile);
           if (!file.delete()) {
-            LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+            LOGGER.warn("{} Error Deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
           }
         }
       }
@@ -306,12 +307,12 @@ public class ExportFileTask extends AbstractTask {
     File outputFile = null;
     Object hashLock = new Object();
 
-    String ext = "";
+    String ext = ""; //$NON-NLS-1$
     if (evidence.getType() != null) {
       ext = evidence.getType().getLongDescr();
     }
     if (!ext.isEmpty()) {
-      ext = "." + ext;
+      ext = "." + ext; //$NON-NLS-1$
     }
     
     ext = Util.removeNonLatin1Chars(ext);
@@ -330,7 +331,7 @@ public class ExportFileTask extends AbstractTask {
       }
 
     } else {
-      outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext));
+      outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext)); //$NON-NLS-1$
       if (!outputFile.getParentFile().exists()) {
         outputFile.getParentFile().mkdirs();
       }
@@ -349,16 +350,14 @@ public class ExportFileTask extends AbstractTask {
   			total += len;
   			if(parentSize != null && total >= ZIPBOMB_MIN_SIZE && 
   					total > parentSize * MAX_SUBITEM_COMPRESSION)
-  				throw new IOException("Potential zip bomb while extracting subitem!");
+  				throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
   		  }
   		
         } catch (IOException e) {
-          String msg = e.getMessage();
-          if(msg != null && (msg.toLowerCase().startsWith("espaço insuficiente no disco") ||
-             msg.toLowerCase().startsWith("no space left on device")))
-        	  LOGGER.error("Erro ao extrair {}\t{}", evidence.getPath(), "No space left on output disk!");
+          if(IOUtil.isDiskFull(e))
+        	  LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
           else
-        	  LOGGER.warn("Erro ao extrair {}\t{}", evidence.getPath(), e.toString());
+        	  LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
 
         } finally {
           if (bos != null) {
@@ -384,7 +383,7 @@ public class ExportFileTask extends AbstractTask {
       caseData.setContainsReport(true);
     }
 
-    String value = confProps.getProperty("hash");
+    String value = confProps.getProperty("hash"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }

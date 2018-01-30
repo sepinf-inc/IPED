@@ -48,7 +48,7 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
   protected Boolean doInBackground() {
 
     try {
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
+      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
 
       String[] field = {IndexItem.NAME, IndexItem.CONTENT};
       long progress = 0;
@@ -92,9 +92,9 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
 
         while (termsEnum.next() != null) {
           writer.write(termsEnum.term().utf8ToString());
-          writer.write("\r\n");
+          writer.write("\r\n"); //$NON-NLS-1$
           if (++progress % (1000000) == 0) {
-            this.firePropertyChange("progress", 0, progress);
+            this.firePropertyChange("progress", 0, progress); //$NON-NLS-1$
             if (this.isCancelled()) {
               break;
             }
@@ -112,7 +112,7 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
       e.printStackTrace();
     }
 
-    this.firePropertyChange("close", 0, 1);
+    this.firePropertyChange("close", 0, 1); //$NON-NLS-1$
 
     return null;
   }
@@ -122,15 +122,15 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
 
     if (progressMonitor.isCanceled()) {
       this.cancel(true);
-    } else if ("progress" == evt.getPropertyName()) {
+    } else if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
       long progress = (Long) evt.getNewValue();
       //progressMonitor.setProgress((int)(progress/1000));
-      progressMonitor.setNote("Exportados " + progress + " de termos.");// + " de " + total);
+      progressMonitor.setNote(Messages.getString("ExportIndexedTerms.Exported") + progress + Messages.getString("ExportIndexedTerms.ofWords"));// + " de " + total); //$NON-NLS-1$ //$NON-NLS-2$
 
-    } else if ("total" == evt.getPropertyName()) {
+    } else if ("total" == evt.getPropertyName()) { //$NON-NLS-1$
       progressMonitor.setMaximum((int) (total / 1000));
 
-    } else if ("close" == evt.getPropertyName()) {
+    } else if ("close" == evt.getPropertyName()) { //$NON-NLS-1$
       progressMonitor.close();
     }
 

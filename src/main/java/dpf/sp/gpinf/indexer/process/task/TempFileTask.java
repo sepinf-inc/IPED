@@ -36,7 +36,7 @@ public class TempFileTask extends AbstractTask {
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
-    String value = confParams.getProperty("indexTempOnSSD");
+    String value = confParams.getProperty("indexTempOnSSD"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -61,7 +61,7 @@ public class TempFileTask extends AbstractTask {
           evidence.getTempFile();
         }
       } catch (IOException e) {
-        LOGGER.warn("{} Erro ao criar temporário {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString());
+        LOGGER.warn("{} Error creating temp file {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
       }
     }
 

@@ -23,7 +23,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
   /**
    * Delimitadores considerados na separação de diretórios.
    */
-  private static final String[] delimiters = new String[]{"\\", "/", ">>"};
+  private static final String[] delimiters = new String[]{"\\", "/", ">>"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
   /**
    * Nome do nó (pasta).

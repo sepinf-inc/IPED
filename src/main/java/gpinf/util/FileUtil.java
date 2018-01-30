@@ -29,15 +29,15 @@ public final class FileUtil {
    */
   public static final String read(File file, boolean removeLineBreaks, long sizeLimit) throws IOException {
     if (!file.exists()) {
-      throw new FileNotFoundException("Arquivo " + file.getAbsolutePath() + " não encontrado.");
+      throw new FileNotFoundException("File " + file.getAbsolutePath() + " not found."); //$NON-NLS-1$ //$NON-NLS-2$
     }
     StringBuilder fileData = new StringBuilder();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"), 64 << 10);
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "windows-1252"), 64 << 10); //$NON-NLS-1$
     String line = null;
     while ((line = reader.readLine()) != null) {
       fileData.append(line);
       if (!removeLineBreaks) {
-        fileData.append("\n");
+        fileData.append("\n"); //$NON-NLS-1$
       }
       if (fileData.length() >= sizeLimit) {
         break;

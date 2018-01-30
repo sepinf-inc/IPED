@@ -26,7 +26,7 @@ public class ParseUtil {
       calendar.set(Integer.parseInt(strDateTime.substring(6, 10)), Integer.parseInt(strDateTime.substring(3, 5)) - 1, Integer.parseInt(strDateTime.substring(0, 2)),
           Integer.parseInt(strDateTime.substring(11, 13)), Integer.parseInt(strDateTime.substring(14, 16)), Integer.parseInt(strDateTime.substring(17, 19)));
     } catch (Exception ex) {
-      throw new DateFormatException("Formato de data inválido: " + strDateTime + ".\nFormato esperado: DD/MM/YYYY HH:MI:SS.");
+      throw new DateFormatException("Invalid date format: " + strDateTime + ".\nExpected: DD/MM/YYYY HH:MI:SS."); //$NON-NLS-1$ //$NON-NLS-2$
     }
     return calendar.getTime();
   }
@@ -53,7 +53,7 @@ public class ParseUtil {
     try {
       return Long.parseLong(new String(c, 0, pos));
     } catch (NumberFormatException nfe) {
-      throw new NumberFormatException("Número inválido: " + strNumber + "\n.Esperado número apenas com separador de milhar.");
+      throw new NumberFormatException("Invalid number: " + strNumber + "\n.Only dots are permited as thousand separator."); //$NON-NLS-1$ //$NON-NLS-2$
     }
   }
 }

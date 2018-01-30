@@ -5,6 +5,8 @@ import gpinf.dev.data.EvidenceFile;
 import java.io.File;
 import java.util.List;
 
+import dpf.sp.gpinf.indexer.Messages;
+
 public class AttachmentFileType extends EvidenceFileType {
 
   /**
@@ -16,7 +18,7 @@ public class AttachmentFileType extends EvidenceFileType {
 
   @Override
   public String getLongDescr() {
-    return "Anexo de Email";
+    return Messages.getString("AttachmentFileType.EmailAttach"); //$NON-NLS-1$
   }
 
   @Override

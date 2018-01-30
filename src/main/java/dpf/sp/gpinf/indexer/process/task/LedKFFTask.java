@@ -37,13 +37,13 @@ public class LedKFFTask extends AbstractTask {
   private static Object lock = new Object();
   private static HashMap<String, HashValue[]> hashArrays;
   public static KffItem[] kffItems;
-  private static final String taskName = "Consulta Base de Hashes do LED";
-  private static final String[] ledHashOrder = {"md5",null,"edonkey","sha-1","md5-512",null,null};
+  private static final String taskName = "LED Database Search"; //$NON-NLS-1$
+  private static final String[] ledHashOrder = {"md5",null,"edonkey","sha-1","md5-512",null,null}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
   private static final int idxMd5 = 0;
   private static final int idxMd5_64K = 1;
   private static final int idxLength = 5;
   private static final int idxName = 6;
-  private static final String ENABLE_PARAM = "enableLedWkff";
+  private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
   private static boolean taskEnabled = false;
 
   public LedKFFTask(Worker worker) {
@@ -62,10 +62,10 @@ public class LedKFFTask extends AbstractTask {
       if(enabled != null)
     	  taskEnabled = Boolean.valueOf(enabled.trim());
       
-      String hash = confParams.getProperty("hash");
-      String ledWkffPath = confParams.getProperty("ledWkffPath");
+      String hash = confParams.getProperty("hash"); //$NON-NLS-1$
+      String ledWkffPath = confParams.getProperty("ledWkffPath"); //$NON-NLS-1$
       if (taskEnabled && ledWkffPath == null)
-    	throw new IPEDException("Configure o caminho para a base de hashes do LED em " + Configuration.LOCAL_CONFIG);
+    	throw new IPEDException("Configure LED database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
 
       //backwards compatibility
       if(enabled == null && ledWkffPath != null)
@@ -76,12 +76,12 @@ public class LedKFFTask extends AbstractTask {
       
       File wkffDir = new File(ledWkffPath.trim());
       if (!wkffDir.exists()) {
-        throw new IPEDException("Caminho para base de hashes do LED inválido: " + wkffDir.getAbsolutePath());
+        throw new IPEDException("Invalid LED database path: " + wkffDir.getAbsolutePath()); //$NON-NLS-1$
       }
 
       hash = hash.toLowerCase();
-      if (!hash.contains("md5") && !hash.contains("sha-1")) {
-        throw new IPEDException("Habilite o hash md5 ou sha-1 para consultar a base do LED!");
+      if (!hash.contains("md5") && !hash.contains("sha-1")) { //$NON-NLS-1$ //$NON-NLS-2$
+        throw new IPEDException("Enable md5 or sha-1 hash to search on LED database!"); //$NON-NLS-1$
       }
 
       List<KffItem> kffList = new ArrayList<KffItem>();
@@ -90,7 +90,7 @@ public class LedKFFTask extends AbstractTask {
       for (int col = 0; col < ledHashOrder.length; col++) {
         hashList.add(new ArrayList<HashValue>());
       }
-      Pattern pattern = Pattern.compile(" \\*");
+      Pattern pattern = Pattern.compile(" \\*"); //$NON-NLS-1$
       File[] wkffFiles = wkffDir.listFiles();
       Arrays.sort(wkffFiles, new Comparator<File>() {
         public int compare(File o1, File o2) {
@@ -103,7 +103,7 @@ public class LedKFFTask extends AbstractTask {
         sb.append('|').append(wkffFile.getName()).append('|').append(wkffFile.length());
       }
       String cacheKey = sb.toString();
-      File ledWkffCache = new File(System.getProperty("user.home"), ".indexador/ledWkff.cache");
+      File ledWkffCache = new File(System.getProperty("user.home"), ".indexador/ledWkff.cache"); //$NON-NLS-1$ //$NON-NLS-2$
       if (ledWkffCache.exists() && ledWkffCache.canRead()) {
         readCache(ledWkffCache, cacheKey);
       }
@@ -153,7 +153,7 @@ public class LedKFFTask extends AbstractTask {
         Arrays.sort(kffItems);
         writeCache(ledWkffCache, cacheKey);
       }
-      Log.info(taskName, "Hashes carregados: " + hashArrays.get(ledHashOrder[0]).length);
+      Log.info(taskName, "Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
       LedHashes.hashMap = hashArrays;
     }
   }
@@ -281,7 +281,7 @@ public class LedKFFTask extends AbstractTask {
 
   private String readString(BufferedInputStream is) throws IOException {
     int len = ((is.read() & 0xFF) << 8) | (is.read() & 0xFF);
-    if (len == 0) return "";
+    if (len == 0) return ""; //$NON-NLS-1$
     byte[] bytes = new byte[len];
     is.read(bytes);
     return new String(bytes);
@@ -319,7 +319,7 @@ public class LedKFFTask extends AbstractTask {
         String hash = (String) evidence.getExtraAttribute(ledHashOrder[col]);
         if (hash != null) {
           if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
-            evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo");
+            evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
           }
           break;
         }

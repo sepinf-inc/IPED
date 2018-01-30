@@ -78,12 +78,12 @@ public abstract class EvidenceFileType implements Serializable {
         break;
       }
     }
-    String view = DEVConstants.VIEW_DIR + ((p1 == fileName.length()) ? ("/" + fileName) : fileName.substring(p1));
+    String view = DEVConstants.VIEW_DIR + ((p1 == fileName.length()) ? ("/" + fileName) : fileName.substring(p1)); //$NON-NLS-1$
     p1 = view.lastIndexOf('.');
     if (p1 >= 0) {
       return view.substring(0, p1 + 1) + extension;
     }
-    return view + "." + extension;
+    return view + "." + extension; //$NON-NLS-1$
   }
 
   /**

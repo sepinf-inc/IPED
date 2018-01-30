@@ -21,6 +21,6 @@ public class DateFormatException extends Exception {
    * @param msg mensagem explicativa da causa da exceção
    */
   public DateFormatException(String msg) {
-    super(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date()) + "\t[AVISO]\t" + msg);
+    super(DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date()) + "\t[WARN]\t" + msg); //$NON-NLS-1$
   }
 }

@@ -1,10 +1,11 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.event.MouseEvent;
 
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.mapas.MarkerEventListener;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 
@@ -18,7 +19,7 @@ public class AppMapMarkerEventListener implements MarkerEventListener {
         MultiSearchResult results = App.get().getResults();
         for (int i = 0; i < results.getLength(); i++) {
         	ItemId item = App.get().getResults().getItem(i);
-			String gid = item.getSourceId() + "-" + item.getId();
+			String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
         	if(gid.equals(mid)){
         		pos = i;
         		break;

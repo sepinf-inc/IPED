@@ -61,7 +61,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
     if (col == 2)
       return IndexItem.NAME;
     
-    return "";
+    return ""; //$NON-NLS-1$
   }
   
   @Override
@@ -103,7 +103,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       } catch (Exception e) {
         // e.printStackTrace();
       }
-      return "";
+      return ""; //$NON-NLS-1$
     }
   }
   
@@ -162,16 +162,16 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
     String textQuery = null;
     String parentId = doc.get(IndexItem.PARENTID);
     if (parentId != null) {
-      textQuery = IndexItem.ID + ":" + parentId;
+      textQuery = IndexItem.ID + ":" + parentId; //$NON-NLS-1$
     }
 
     String ftkId = doc.get(IndexItem.FTKID);
     if (ftkId != null) {
-      textQuery = IndexItem.FTKID + ":" + parentId;
+      textQuery = IndexItem.FTKID + ":" + parentId; //$NON-NLS-1$
     }
     
     String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 
     results = new LuceneSearchResult(0);
 
@@ -189,7 +189,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          App.get().tabbedHits.addTab("1 Item de Origem", App.get().getParams().parentItemScroll);
+          App.get().tabbedHits.addTab(Messages.getString("ParentTableModel.ParentCount"), App.get().getParams().parentItemScroll); //$NON-NLS-1$
         }
       });
     }

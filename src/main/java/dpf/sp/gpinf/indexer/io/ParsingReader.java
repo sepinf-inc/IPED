@@ -201,7 +201,7 @@ public class ParsingReader extends Reader {
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "ParsingThread-" + i.getAndIncrement());
+      Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "ParsingThread-" + i.getAndIncrement()); //$NON-NLS-1$
       t.setDaemon(true);
       return t;
     }
@@ -268,7 +268,7 @@ public class ParsingReader extends Reader {
       } catch (OutOfMemoryError t) {
         ItemInfo itemInfo = context.get(ItemInfo.class);
         String filePath = itemInfo.getPath();
-        LOGGER.error("{} Estouro de memória com '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
+        LOGGER.error("{} OutOfMemory processing '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString()); //$NON-NLS-1$
 
       } catch (Throwable t) {
 
@@ -279,7 +279,7 @@ public class ParsingReader extends Reader {
         if (!(t instanceof SAXException)) {
           ItemInfo itemInfo = context.get(ItemInfo.class);
           String filePath = itemInfo.getPath();
-          LOGGER.warn("{} Erro ao processar '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString());
+          LOGGER.warn("{} Error processing '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString()); //$NON-NLS-1$
         }
 
       }finally{
@@ -341,7 +341,7 @@ public class ParsingReader extends Reader {
       if (throwable instanceof IOException) {
         throw (IOException) throwable;
       } else {
-        IOException exception = new IOException("");
+        IOException exception = new IOException(""); //$NON-NLS-1$
         exception.initCause(throwable);
         throw exception;
       }

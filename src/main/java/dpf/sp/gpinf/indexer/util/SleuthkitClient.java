@@ -24,9 +24,12 @@ import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 public class SleuthkitClient {
 
   static Logger logger = LoggerFactory.getLogger(SleuthkitServer.class);
+  
+  private static final int START_PORT = 2000;
+  private static final int MAX_PORT = 65535;
 
   static volatile String dbDirPath;
-  static AtomicInteger portStart = new AtomicInteger(43522);
+  static AtomicInteger portStart = new AtomicInteger(START_PORT);
 
   Process process;
   Socket socket;
@@ -72,11 +75,20 @@ public class SleuthkitClient {
   private void start() {
 
     int port = portStart.getAndIncrement();
+    
+    if(port > MAX_PORT) {
+    	port = START_PORT;
+    	portStart.set(port + 1);
+    }
 
-    String pipePath = Configuration.indexerTemp + "/pipe-" + port;
+    String pipePath = Configuration.indexerTemp + "/pipe-" + port; //$NON-NLS-1$
+    
+    String classpath = Configuration.appRoot + "/iped.jar"; //$NON-NLS-1$
+    if(Configuration.tskJarFile != null)
+    	classpath += ";" + Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
 
-    String[] cmd = {"java", "-cp", Configuration.appRoot + "/iped.jar", "-Xmx128M",
-      SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath};
+    String[] cmd = {"java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath}; //$NON-NLS-1$
 
     try {
       ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -96,13 +108,13 @@ public class SleuthkitClient {
       socket.setReceiveBufferSize(1);
       socket.setSendBufferSize(1);
       socket.setTcpNoDelay(true);
-      socket.connect(new InetSocketAddress("127.0.0.1", port));
+      socket.connect(new InetSocketAddress("127.0.0.1", port)); //$NON-NLS-1$
       socket.setSoTimeout(60000);
       is = socket.getInputStream();
       os = socket.getOutputStream();
 
       int size = 10 * 1024 * 1024;
-      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw");
+      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
       raf.setLength(size);
       fc = raf.getChannel();
       out = fc.map(MapMode.READ_WRITE, 0, size);
@@ -115,7 +127,7 @@ public class SleuthkitClient {
       }
 
       if (!ok) {
-        throw new Exception("Error starting SleuthkitServer");
+        throw new Exception("Error starting SleuthkitServer"); //$NON-NLS-1$
       }
 
     } catch (Exception e) {
@@ -136,7 +148,7 @@ public class SleuthkitClient {
           while ((r = is.read(b)) != -1) {
         	String msg = new String(b, 0, r).trim();
         	if(!msg.isEmpty())
-        		logger.info("SleuthkitServer port" + port + ": " + msg);
+        		logger.info("SleuthkitServer port" + port + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
           }
 
         } catch (Exception e) {
@@ -154,7 +166,7 @@ public class SleuthkitClient {
       }
       process = null;
       if (!serverError) 
-        logger.info("Restarting SleuthkitServer to clean possible resource leaks.");
+        logger.info("Restarting SleuthkitServer to clean possible resource leaks."); //$NON-NLS-1$
       serverError = false;
       openedStreams = 0;
       currentStreams.clear();

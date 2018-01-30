@@ -8,7 +8,7 @@ import org.apache.tika.metadata.Metadata;
 
 public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodingDetector {
 
-  private static String utf8Header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+  private static String utf8Header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"; //$NON-NLS-1$
 
   @Override
   public Charset detect(InputStream input, Metadata metadata) throws IOException {
@@ -32,9 +32,9 @@ public class HtmlEncodingDetector extends org.apache.tika.parser.html.HtmlEncodi
     }
 
     if (len > 3 && header[0] == (byte) 0xEF && header[1] == (byte) 0xBB && header[2] == (byte) 0xBF) {
-      String str = new String(header, 3, len - 3, "UTF-8");
+      String str = new String(header, 3, len - 3, "UTF-8"); //$NON-NLS-1$
       if (str.startsWith(utf8Header)) {
-        return Charset.forName("UTF-8");
+        return Charset.forName("UTF-8"); //$NON-NLS-1$
       }
     }
 

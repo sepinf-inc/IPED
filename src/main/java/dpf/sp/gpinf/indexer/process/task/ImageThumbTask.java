@@ -28,21 +28,25 @@ public class ImageThumbTask extends AbstractTask {
     super(worker);
   }
 
-  public static final String thumbsFolder = "thumbs";
+  public static final String thumbsFolder = "thumbs"; //$NON-NLS-1$
 
-  private static final String enableProperty = "enableImageThumbs";
+  private static final String enableProperty = "enableImageThumbs"; //$NON-NLS-1$
 
-  public static final String HAS_THUMB = "hasThumb";
+  public static final String HAS_THUMB = "hasThumb"; //$NON-NLS-1$
 
-  public static final String THUMB_TIMEOUT = "thumbTimeout";
+  public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
-  private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt";
+  private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
   
   private static final int samplingRatio = 3;
+  
+  public static boolean extractThumb = true;
 
   public int thumbSize = 160;
 
   public int galleryThreads = 1;
+  
+  public boolean logGalleryRendering = false;
 
   private boolean taskEnabled = false;
 
@@ -55,35 +59,46 @@ public class ImageThumbTask extends AbstractTask {
     File confFile = new File(confDir, TASK_CONFIG_FILE);
     properties.load(confFile);
 
-    String value = properties.getProperty("externalConversionTool");
+    String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
-      if (!value.trim().equals("graphicsmagick")) {
+      if (!value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
         GraphicsMagicConverter.USE_GM = false;
       }
     } else {
       GraphicsMagicConverter.enabled = false;
     }
 
-    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
       GraphicsMagicConverter.setWinToolPathPrefix(Configuration.appRoot);
     }
 
-    value = properties.getProperty("imgConvTimeout");
+    value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
       GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
     }
 
-    value = properties.getProperty("galleryThreads");
-    if (value != null && !value.trim().equalsIgnoreCase("default")) {
+    value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
+    if (value != null && !value.trim().equalsIgnoreCase("default")) { //$NON-NLS-1$
       galleryThreads = Integer.valueOf(value.trim());
     } else {
       galleryThreads = Runtime.getRuntime().availableProcessors();
     }
 
-    value = properties.getProperty("imgThumbSize");
+    value = properties.getProperty("imgThumbSize"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
       thumbSize = Integer.valueOf(value.trim());
     }
+    
+    value = properties.getProperty("extractThumb"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+    	extractThumb = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("logGalleryRendering"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+    	logGalleryRendering = Boolean.valueOf(value.trim());
+    }
+    
   }
 
   @Override
@@ -104,7 +119,7 @@ public class ImageThumbTask extends AbstractTask {
       return;
     }
 
-    File thumbFile = Util.getFileFromHash(new File(output, thumbsFolder), evidence.getHash(), "jpg");
+    File thumbFile = Util.getFileFromHash(new File(output, thumbsFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
     if (!thumbFile.getParentFile().exists()) {
       thumbFile.getParentFile().mkdirs();
     }
@@ -127,7 +142,7 @@ public class ImageThumbTask extends AbstractTask {
    * Verifica se é imagem.
    */
   public static boolean isImageType(MediaType mediaType) {
-    return mediaType.getType().equals("image");
+    return mediaType.getType().equals("image"); //$NON-NLS-1$
   }
 
   private void createImageThumb(EvidenceFile evidence, File thumbFile) {
@@ -139,7 +154,7 @@ public class ImageThumbTask extends AbstractTask {
       try (BufferedInputStream stream = evidence.getBufferedStream()){
     	  dimension = ImageUtil.getImageFileDimension(stream);
       }
-      if (evidence.getMediaType().getSubtype().startsWith("jpeg")) {
+      if (extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
         try (BufferedInputStream stream = evidence.getBufferedStream()){
           img = ImageUtil.getThumb(stream);
         }
@@ -149,24 +164,24 @@ public class ImageThumbTask extends AbstractTask {
           BooleanWrapper renderException = new BooleanWrapper();
           img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio, renderException);
           if(img != null && renderException.value)
-        	  evidence.setExtraAttribute("thumbException", "true");
+        	  evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
       if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
         try (BufferedInputStream stream = evidence.getBufferedStream()){
           img = new GraphicsMagicConverter().getImage(stream, thumbSize * samplingRatio, true);
           if(img != null)
-        	  evidence.setExtraAttribute("externalThumb", "true");
+        	  evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
           dimension = null;
         } catch (TimeoutException e) {
           stats.incTimeouts();
-          evidence.setExtraAttribute(THUMB_TIMEOUT, "true");
-          Log.warning(getClass().getSimpleName(), "Timeout ao gerar miniatura externamente: "
-              + evidence.getPath() + "(" + evidence.getLength() + " bytes)");
+          evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
+          Log.warning(getClass().getSimpleName(), "Timeout creating thumb: " //$NON-NLS-1$
+              + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
 
-      tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder));
+      tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder)); //$NON-NLS-1$ //$NON-NLS-2$
 
       if (img != null) {
         if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize) && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
@@ -174,12 +189,12 @@ public class ImageThumbTask extends AbstractTask {
         }
         img = ImageUtil.getOpaqueImage(img);
 
-        ImageIO.write(img, "jpg", tmp);
+        ImageIO.write(img, "jpg", tmp); //$NON-NLS-1$
       }
 
     } catch (Throwable e) {
-      Log.warning(getClass().getSimpleName(), "Erro ao gerar miniatura: "
-          + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString());
+      Log.warning(getClass().getSimpleName(), "Error creating thumb: " //$NON-NLS-1$
+          + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
 
     } finally {
       if (tmp != null && !tmp.renameTo(thumbFile)) {

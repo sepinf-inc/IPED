@@ -40,8 +40,8 @@ public class RemoteKFFTask extends AbstractTask {
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
-    digestMD5_512 = MessageDigest.getInstance("MD5");
-    digestMD5_64k = MessageDigest.getInstance("MD5");
+    digestMD5_512 = MessageDigest.getInstance("MD5"); //$NON-NLS-1$
+    digestMD5_64k = MessageDigest.getInstance("MD5"); //$NON-NLS-1$
   }
 
   @Override
@@ -54,8 +54,8 @@ public class RemoteKFFTask extends AbstractTask {
     InputStream in = evidence.getStream();
     try {
       String[] partialHashes = partialMd5Digest(in);
-      evidence.setExtraAttribute("MD5_512", partialHashes[0]);
-      evidence.setExtraAttribute("MD5_64K", partialHashes[1]);
+      evidence.setExtraAttribute("MD5_512", partialHashes[0]); //$NON-NLS-1$
+      evidence.setExtraAttribute("MD5_64K", partialHashes[1]); //$NON-NLS-1$
 
       //System.out.println(evidence.getPath()+ " " + partialHashes[0]);
     } finally {
@@ -129,14 +129,14 @@ public class RemoteKFFTask extends AbstractTask {
   private void saveListEvidenceFile(List<EvidenceFile> listEvidenceFile) throws Exception {
     File fileTmp;
 
-    fileTmp = File.createTempFile("tmp", ".txt");
+    fileTmp = File.createTempFile("tmp", ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
     PrintWriter out = new PrintWriter(fileTmp);
     for (EvidenceFile item : listEvidenceFile) {
-      String partialMD5_512 = (String) item.getExtraAttribute("MD5_512");
-      String partialMD5_64k = (String) item.getExtraAttribute("MD5_64K");
+      String partialMD5_512 = (String) item.getExtraAttribute("MD5_512"); //$NON-NLS-1$
+      String partialMD5_64k = (String) item.getExtraAttribute("MD5_64K"); //$NON-NLS-1$
       String fullPath = (String) item.getPath();
       String fileSize = Long.toString(item.getLength());
-      out.println(item.getId() + ";" + item.getExtraAttribute("MD5_512") + ";" + item.getExtraAttribute("MD5_64K") + ";" + item.getPath() + ";" + item.getLength());
+      out.println(item.getId() + ";" + item.getExtraAttribute("MD5_512") + ";" + item.getExtraAttribute("MD5_64K") + ";" + item.getPath() + ";" + item.getLength()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
     }
     out.close();
     System.out.println(fileTmp.getAbsolutePath());

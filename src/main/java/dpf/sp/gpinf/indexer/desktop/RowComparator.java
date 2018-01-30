@@ -78,9 +78,9 @@ public class RowComparator implements Comparator<Integer> {
         scoreCol = true;
       
       else{
-          LOGGER.info("Loading sort data for Column: " + fields[col]);
+          LOGGER.info("Loading sort data for Column: " + fields[col]); //$NON-NLS-1$
           loadDocValues(fields[col]);
-          LOGGER.info("Sort data loaded for Column: " + fields[col]);
+          LOGGER.info("Sort data loaded for Column: " + fields[col]); //$NON-NLS-1$
       }   
     }
   }
@@ -109,24 +109,24 @@ public class RowComparator implements Comparator<Integer> {
         ndv = atomicReader.getNumericDocValues(indexedField);
         docsWithField = atomicReader.getDocsWithField(indexedField);
         if (ndv == null) {
-          ndv = atomicReader.getNumericDocValues("_num_" + indexedField);
-          docsWithField = atomicReader.getDocsWithField("_num_" + indexedField);
+          ndv = atomicReader.getNumericDocValues("_num_" + indexedField); //$NON-NLS-1$
+          docsWithField = atomicReader.getDocsWithField("_num_" + indexedField); //$NON-NLS-1$
         }
         if (ndv == null) {
             sndv = atomicReader.getSortedNumericDocValues(indexedField);
             if (sndv == null)
-                sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField);
+                sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField); //$NON-NLS-1$
         }
       }
       if (ndv == null && sndv == null) {
           ssdv = atomicReader.getSortedSetDocValues(indexedField);
           if (ssdv == null)
-              ssdv = atomicReader.getSortedSetDocValues("_" + indexedField);
+              ssdv = atomicReader.getSortedSetDocValues("_" + indexedField); //$NON-NLS-1$
       }
       if (ndv == null && sndv == null && ssdv == null) {
         sdv = atomicReader.getSortedDocValues(indexedField);
         if (sdv == null)
-          sdv = atomicReader.getSortedDocValues("_" + indexedField);
+          sdv = atomicReader.getSortedDocValues("_" + indexedField); //$NON-NLS-1$
       }
 
     } catch (IOException e) {
@@ -146,7 +146,7 @@ public class RowComparator implements Comparator<Integer> {
   public final int compare(Integer a, Integer b) {
 		
 		if(Thread.currentThread().isInterrupted())
-			throw new RuntimeException("Ordenação cancelada.");
+			throw new RuntimeException(Messages.getString("RowComparator.SortCanceled")); //$NON-NLS-1$
 		
 		if(scoreCol)
           return (int)(app.ipedResult.getScore(a) - app.ipedResult.getScore(b));

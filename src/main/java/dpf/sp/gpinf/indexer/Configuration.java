@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
@@ -53,11 +54,11 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class Configuration {
 
-  public static final String CONFIG_FILE = "IPEDConfig.txt";
-  public static final String LOCAL_CONFIG = "LocalConfig.txt";
-  public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
-  public static final String PARSER_CONFIG = "ParserConfig.xml";
-  public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml";
+  public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
+  public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
+  public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
+  public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
+  public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
 
   public static UTF8Properties properties = new UTF8Properties();
   public static File indexTemp, indexerTemp;
@@ -86,12 +87,13 @@ public class Configuration {
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;
+  public static Locale locale = Locale.getDefault();
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
   private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
-	  if(appRoot.contains("profiles"))
+	  if(appRoot.contains("profiles")) //$NON-NLS-1$
 	   	appRoot = new File(appRoot).getParentFile().getParent();
 	  return appRoot;
   }
@@ -105,57 +107,57 @@ public class Configuration {
 		  return;
 
     // DataSource.testConnection(configPathStr);
-    LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
+    LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
     
     Logger LOGGER = null;
     if(Configuration.class.getClassLoader().getClass().getName()
             .equals(CustomURLClassLoader.class.getName()))
         LOGGER = LoggerFactory.getLogger(Configuration.class);
     
-    if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr);
+    if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr); //$NON-NLS-1$
 
     configPath = configPathStr;
     appRoot = getAppRoot(configPath);
 
-    System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
-    System.setProperty(CustomDetector.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG);
+    System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty(CustomDetector.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
-    properties.load(new File(appRoot + "/" + LOCAL_CONFIG));
-    properties.load(new File(configPath + "/" + CONFIG_FILE));
-    properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE));
+    properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
+    properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
+    properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
 
     String value;
 
-    if (System.getProperty("java.io.basetmpdir") == null) {
-        System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir"));
+    if (System.getProperty("java.io.basetmpdir") == null) { //$NON-NLS-1$
+        System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir")); //$NON-NLS-1$ //$NON-NLS-2$
     }
     
-    File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir"));
+    File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
 
-    value = properties.getProperty("indexTemp");
+    value = properties.getProperty("indexTemp"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (indexerTemp == null) {
-      if (value != null && !value.equalsIgnoreCase("default")) {
+      if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
-            if(LOGGER != null) LOGGER.info("Não foi possível criar diretório temporário " + newTmp.getAbsolutePath());
+            if(LOGGER != null) LOGGER.info("Fail to create temp directory" + newTmp.getAbsolutePath()); //$NON-NLS-1$
         } else {
           tmp = newTmp;
         }
       }
-      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
       if (!indexerTemp.mkdirs()) {
-        tmp = new File(System.getProperty("java.io.basetmpdir"));
-        indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+        tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
+        indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
         indexerTemp.mkdirs();
       }
       if (indexerTemp.exists()) {
-        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath()); //$NON-NLS-1$
       }
       if (tmp == newTmp) {
-        indexTemp = new File(indexerTemp, "index");
+        indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
       }
     }
     if (indexerTemp != null) {
@@ -163,7 +165,7 @@ public class Configuration {
     }
     ConstantsViewer.indexerTemp = indexerTemp;
 
-    value = properties.getProperty("robustImageReading");
+    value = properties.getProperty("robustImageReading"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -171,25 +173,30 @@ public class Configuration {
       robustImageReading = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("numThreads");
+    value = properties.getProperty("numThreads"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
-    if (value != null && !value.equalsIgnoreCase("default")) {
+    if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
       numThreads = Integer.valueOf(value);
     } else {
       numThreads = Runtime.getRuntime().availableProcessors();
     }
+    
+    value = properties.getProperty("locale"); //$NON-NLS-1$
+    if (value != null && !value.trim().equals("default")) //$NON-NLS-1$
+      locale = Locale.forLanguageTag(value.trim());
+    System.setProperty("iped-locale", locale.toLanguageTag()); //$NON-NLS-1$
 
-    value = properties.getProperty("forceMerge");
+    value = properties.getProperty("forceMerge"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
-    if (value != null && value.equalsIgnoreCase("false")) {
+    if (value != null && value.equalsIgnoreCase("false")) { //$NON-NLS-1$
       forceMerge = false;
     }
 
-    value = properties.getProperty("timeOut");
+    value = properties.getProperty("timeOut"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -197,7 +204,7 @@ public class Configuration {
       timeOut = Integer.valueOf(value);
     }
     
-    value = properties.getProperty("timeOutPerMB");
+    value = properties.getProperty("timeOutPerMB"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -209,7 +216,7 @@ public class Configuration {
     ParsingReader.setTextOverlapSize(textOverlapSize);
     FastPipedReader.setTimeout(timeOut);
 
-    value = properties.getProperty("entropyTest");
+    value = properties.getProperty("entropyTest"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -217,7 +224,7 @@ public class Configuration {
       entropyTest = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("indexUnknownFiles");
+    value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -229,7 +236,7 @@ public class Configuration {
 
     errorParser = new RawStringParser(entropyTest);
 
-    value = properties.getProperty("minRawStringSize");
+    value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -237,7 +244,7 @@ public class Configuration {
       RawStringParser.MIN_SIZE = Integer.valueOf(value);
     }
 
-    value = properties.getProperty("enableOCR");
+    value = properties.getProperty("enableOCR"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -245,7 +252,7 @@ public class Configuration {
       OCRParser.ENABLED = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("OCRLanguage");
+    value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -253,7 +260,7 @@ public class Configuration {
       OCRParser.LANGUAGE = value;
     }
 
-    value = properties.getProperty("minFileSize2OCR");
+    value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -261,7 +268,7 @@ public class Configuration {
       OCRParser.MIN_SIZE = Long.valueOf(value);
     }
 
-    value = properties.getProperty("maxFileSize2OCR");
+    value = properties.getProperty("maxFileSize2OCR"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -269,7 +276,7 @@ public class Configuration {
       OCRParser.MAX_SIZE = Long.valueOf(value);
     }
 
-    value = properties.getProperty("pageSegMode");
+    value = properties.getProperty("pageSegMode"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -277,7 +284,7 @@ public class Configuration {
       OCRParser.PAGESEGMODE = value;
     }
 
-    value = properties.getProperty("maxPDFTextSize2OCR");
+    value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -285,7 +292,7 @@ public class Configuration {
       PDFOCRTextParser.MAXCHARS2OCR = Integer.valueOf(value);
     }
 
-    value = properties.getProperty("pdfToImgResolution");
+    value = properties.getProperty("pdfToImgResolution"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -293,7 +300,7 @@ public class Configuration {
       PDFToImage.RESOLUTION = Integer.valueOf(value);
     }
 
-    value = properties.getProperty("pdfToImgLib");
+    value = properties.getProperty("pdfToImgLib"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -301,7 +308,17 @@ public class Configuration {
       PDFToImage.PDFLIB = value;
     }
     
-    value = properties.getProperty("processImagesInPDFs");
+    value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      PDFToImage.externalConversion = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      PDFToImage.externalConvMaxMem = value.trim();
+    }
+    
+    value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -309,7 +326,7 @@ public class Configuration {
       PDFOCRTextParser.processEmbeddedImages = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("embutirLibreOffice");
+    value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -317,7 +334,7 @@ public class Configuration {
       embutirLibreOffice = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("sortPDFChars");
+    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -325,7 +342,7 @@ public class Configuration {
       sortPDFChars = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("extraCharsToIndex");
+    value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -333,7 +350,7 @@ public class Configuration {
       LetterDigitTokenizer.load(value);
     }
 
-    value = properties.getProperty("convertCharsToLowerCase");
+    value = properties.getProperty("convertCharsToLowerCase"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -341,7 +358,7 @@ public class Configuration {
       LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("addUnallocated");
+    value = properties.getProperty("addUnallocated"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -349,7 +366,7 @@ public class Configuration {
       addUnallocated = Boolean.valueOf(value);
     }
     
-    value = properties.getProperty("addFileSlacks");
+    value = properties.getProperty("addFileSlacks"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -357,7 +374,7 @@ public class Configuration {
       addFileSlacks = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("unallocatedFragSize");
+    value = properties.getProperty("unallocatedFragSize"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -365,7 +382,7 @@ public class Configuration {
       unallocatedFragSize = Long.valueOf(value);
     }
     
-    value = properties.getProperty("minItemSizeToFragment");
+    value = properties.getProperty("minItemSizeToFragment"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -373,7 +390,7 @@ public class Configuration {
     	minItemSizeToFragment = Long.valueOf(value);
     }
 
-    value = properties.getProperty("indexTempOnSSD");
+    value = properties.getProperty("indexTempOnSSD"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -381,7 +398,7 @@ public class Configuration {
       indexTempOnSSD = Boolean.valueOf(value);
     }
     
-    value = properties.getProperty("outputOnSSD");
+    value = properties.getProperty("outputOnSSD"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -391,7 +408,7 @@ public class Configuration {
     if(outputOnSSD)
     	indexTemp = null;
 
-    value = properties.getProperty("addFatOrphans");
+    value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -399,7 +416,7 @@ public class Configuration {
       addFatOrphans = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("minOrphanSizeToIgnore");
+    value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -407,7 +424,7 @@ public class Configuration {
       minOrphanSizeToIgnore = Long.valueOf(value);
     }
 
-    value = properties.getProperty("searchThreads");
+    value = properties.getProperty("searchThreads"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -415,48 +432,54 @@ public class Configuration {
       searchThreads = Integer.valueOf(value);
     }
 
-    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
-      String arch = "x86";
-      if(System.getProperty("os.arch").contains("64"))
-    	  arch = "x64";
+      String arch = "x86"; //$NON-NLS-1$
+      if(System.getProperty("os.arch").contains("64")) //$NON-NLS-1$ //$NON-NLS-2$
+    	  arch = "x64"; //$NON-NLS-1$
       
-      loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb";
+      loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb"; //$NON-NLS-1$ //$NON-NLS-2$
 
       File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
       nativelibs = new File(nativelibs, arch);
       
-      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
-      Util.loadNatLibs(new File(indexerTemp, "nativelibs"));
+      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
+      Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
 
-      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract";
-      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/";
-      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/";
-      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/";
+      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract"; //$NON-NLS-1$
+      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/"; //$NON-NLS-1$
+      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/"; //$NON-NLS-1$
+      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/"; //$NON-NLS-1$
       
-      String mplayerPath = properties.getProperty("mplayerPath");
+      String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
       if(mplayerPath != null)
           VideoThumbTask.mplayerWin = mplayerPath.trim();
     
     }else{
-    	String tskJarPath = properties.getProperty("tskJarPath");
+    	String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
     	if (tskJarPath != null && !tskJarPath.isEmpty())
         	tskJarPath = tskJarPath.trim();
     	else
-    		throw new IPEDException("Obrigatório configurar tskJarPath em LocalConfig.txt!");
+    		throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
     	
     	tskJarFile = new File(tskJarPath);
     	if(!tskJarFile.exists())
-    		throw new IPEDException("Arquivo não encontrado " + tskJarPath + ". Configure tskJarPath em LocalConfig.txt!");
+    		throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
     }
     
-    String optional_jars = properties.getProperty("optional_jars");
+    String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
     if(optional_jars != null)
-        optionalJarDir = new File(appRoot + "/" + optional_jars.trim());
+        optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
+    
+    File[] jars = optionalJarDir.listFiles();
+    if(jars != null)
+    	for(File jar : jars)
+    		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
+    			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
 
-    String regripperFolder = properties.getProperty("regripperFolder");
+    String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)
-        RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim();
+        RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim(); //$NON-NLS-1$
 
   }
 

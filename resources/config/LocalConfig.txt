@@ -2,6 +2,10 @@
 # Configurações Locais do Ambiente
 ########################################################################
 
+# Define a localização/idioma do programa. "default" utiliza a configuração do sistema operacional.
+# Atualmente há localizações para pt-BR e en-US.
+locale = pt-BR
+
 # Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.
 # Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
 indexTemp = default

@@ -37,15 +37,15 @@ import gpinf.dev.data.EvidenceFile;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 	
-  protected static MediaType mtPageFile = MediaType.application("x-pagefile");
-  protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow");
-  protected static MediaType mtDiskImage = MediaType.application("x-disk-image");
-  protected static MediaType mtVmdk = MediaType.application("x-vmdk");
-  protected static MediaType mtVhd = MediaType.application("x-vhd");
-  protected static MediaType mtVdi = MediaType.application("x-vdi");
-  protected static MediaType mtUnknown = MediaType.application("octet-stream");
+  protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
+  protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
+  protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
+  protected static MediaType mtVmdk = MediaType.application("x-vmdk"); //$NON-NLS-1$
+  protected static MediaType mtVhd = MediaType.application("x-vhd"); //$NON-NLS-1$
+  protected static MediaType mtVdi = MediaType.application("x-vdi"); //$NON-NLS-1$
+  protected static MediaType mtUnknown = MediaType.application("octet-stream"); //$NON-NLS-1$
 
-  public static final String FILE_FRAGMENT = "fileFragment";
+  public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
 
   protected static HashSet<MediaType> TYPES_TO_PROCESS;
   protected static HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
@@ -71,7 +71,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
   
   protected void addFragmentFile(EvidenceFile parentEvidence, long off, long len, int fragNum){
-      String name = parentEvidence.getName() + "_" + fragNum;
+      String name = parentEvidence.getName() + "_" + fragNum; //$NON-NLS-1$
 	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
 	  fragFile.setExtension(parentEvidence.getExt());
 	  fragFile.setAccessDate(parentEvidence.getAccessDate());
@@ -110,7 +110,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
 	EvidenceFile offsetFile = new EvidenceFile();
     offsetFile.setName(name);
-    offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
+    offsetFile.setPath(parentEvidence.getPath() + ">>" + name); //$NON-NLS-1$
     len = Math.min(len, parentEvidence.getLength() - off);
     offsetFile.setLength(len);
     offsetFile.setSumVolume(false);

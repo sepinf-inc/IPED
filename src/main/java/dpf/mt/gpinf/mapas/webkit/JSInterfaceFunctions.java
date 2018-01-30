@@ -20,7 +20,7 @@ public class JSInterfaceFunctions {
     
     public void selecionaMarcadorBF(JSObject markers){
     	String arguments =  markers.toString();
-    	StringTokenizer st = new StringTokenizer(arguments, ",");
+    	StringTokenizer st = new StringTokenizer(arguments, ","); //$NON-NLS-1$
     	String o[] = new String[st.countTokens()];
     	
     	int i=0;
@@ -36,14 +36,14 @@ public class JSInterfaceFunctions {
     }
     
     public void alert(String alert){
-    	System.out.println("App.Alert:"+alert);
+    	System.out.println("App.Alert:"+alert); //$NON-NLS-1$
     }
     
     public void markerMouseClickedBF(String markerId, int button, String modfJS){
     	MarkerEventListener l = map.getMarkerEventListener();
 		if(l!=null){
 			int modf = 0;
-			if(modfJS.toString().equals("shift")){
+			if(modfJS.toString().equals("shift")){ //$NON-NLS-1$
 				modf = MouseEvent.SHIFT_DOWN_MASK;
 			}
 
@@ -68,7 +68,7 @@ public class JSInterfaceFunctions {
     }
     
     public void markerMouseDblClickedBF(String markerId, int button){
-    	markerMouseClickedBF(markerId, button, "");    	
+    	markerMouseClickedBF(markerId, button, "");    	 //$NON-NLS-1$
     }
     
     public void markerMousePressedBF(String markerId){

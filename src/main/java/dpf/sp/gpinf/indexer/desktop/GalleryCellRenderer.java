@@ -74,7 +74,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     cLabel.setText(cellValue.name);
 
     if (cellValue.icon == null && cellValue.image == null) {
-      label.setText("...");
+      label.setText("..."); //$NON-NLS-1$
       label.setIcon(null);
     } else {
       label.setText(null);

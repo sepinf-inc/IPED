@@ -49,9 +49,9 @@ public class QueryBuilder {
 					if (clause.getQuery() instanceof PhraseQuery && ((PhraseQuery) clause.getQuery()).getSlop() == 0) {
 						String queryStr = clause.getQuery().toString();
 						// System.out.println("phrase: " + queryStr);
-						String field = IndexItem.CONTENT + ":\"";
+						String field = IndexItem.CONTENT + ":\""; //$NON-NLS-1$
 						if (queryStr.startsWith(field)) {
-							String term = queryStr.substring(queryStr.indexOf(field) + field.length(), queryStr.lastIndexOf("\""));
+							String term = queryStr.substring(queryStr.indexOf(field) + field.length(), queryStr.lastIndexOf("\"")); //$NON-NLS-1$
 							result.add(term.toLowerCase());
 							// System.out.println(term);
 						}

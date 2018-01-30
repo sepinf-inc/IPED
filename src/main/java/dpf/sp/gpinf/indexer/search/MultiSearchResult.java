@@ -54,7 +54,7 @@ public class MultiSearchResult {
 
 		@Override
 		public void remove() {
-			throw new UnsupportedOperationException("Remove not allowed");
+			throw new UnsupportedOperationException("Remove not allowed"); //$NON-NLS-1$
 		}
 	}	
 	

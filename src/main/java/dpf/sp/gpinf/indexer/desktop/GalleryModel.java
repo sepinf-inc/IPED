@@ -37,6 +37,8 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -48,14 +50,16 @@ import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UnsupportedIcon;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class GalleryModel extends AbstractTableModel {
+	
+  private static Logger LOGGER = LoggerFactory.getLogger(GalleryModel.class);
 
   public int colCount = 10;
   private int thumbSize = 160;
   private int galleryThreads = 1;
+  private boolean logRendering = false;
   ImageThumbTask imgThumbTask;
 
   public Map<ItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<ItemId, GalleryValue>());
@@ -98,9 +102,10 @@ public class GalleryModel extends AbstractTableModel {
     if (imgThumbTask == null) {
       try {
         imgThumbTask = new ImageThumbTask(null);
-        imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf"));
+        imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf")); //$NON-NLS-1$
         thumbSize = imgThumbTask.thumbSize;
         galleryThreads = imgThumbTask.galleryThreads;
+        logRendering = imgThumbTask.logGalleryRendering;
 
       } catch (Exception e) {
         e.printStackTrace();
@@ -109,7 +114,7 @@ public class GalleryModel extends AbstractTableModel {
 
     int idx = row * colCount + col;
     if (idx >= App.get().ipedResult.getLength()) {
-      return new GalleryValue("", null, null);
+      return new GalleryValue("", null, null); //$NON-NLS-1$
     }
 
     idx = App.get().resultsTable.convertRowIndexToModel(idx);
@@ -127,7 +132,7 @@ public class GalleryModel extends AbstractTableModel {
       doc = App.get().appCase.getSearcher().doc(docId);
 
     } catch (IOException e) {
-      return new GalleryValue("", errorIcon, id);
+      return new GalleryValue("", errorIcon, id); //$NON-NLS-1$
     }
 
     final String mediaType = doc.get(IndexItem.CONTENTTYPE);
@@ -153,6 +158,11 @@ public class GalleryModel extends AbstractTableModel {
 
           if (!App.get().gallery.getVisibleRect().intersects(App.get().gallery.getCellRect(row, col, false))) {
             return;
+          }
+        
+          if(logRendering) {
+        	  String path = doc.get(IndexItem.PATH);
+              LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
           }
 
           String hash = doc.get(IndexItem.HASH);
@@ -189,7 +199,7 @@ public class GalleryModel extends AbstractTableModel {
               stream.reset();
           }
 
-          if (image == null && stream != null && mediaType.equals("image/jpeg")) {
+          if (image == null && stream != null && ImageThumbTask.extractThumb && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
             image = ImageUtil.getThumb(new CloseShieldInputStream(stream));
             stream.reset();
           }
@@ -257,7 +267,7 @@ public class GalleryModel extends AbstractTableModel {
       baseFolder = new File(baseFolder, ImageThumbTask.thumbsFolder);
     }
 
-    File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg");
+    File hashFile = Util.getFileFromHash(baseFolder, hash, "jpg"); //$NON-NLS-1$
     if (hashFile.exists()) {
       BufferedImage image = ImageIO.read(hashFile);
       if (image == null) {
@@ -275,19 +285,19 @@ public class GalleryModel extends AbstractTableModel {
 
     BufferedImage image = null;
     try {
-      int i0 = export.lastIndexOf("/");
+      int i0 = export.lastIndexOf("/"); //$NON-NLS-1$
       String nome = export.substring(i0 + 1);
-      int extIdx = nome.indexOf(".");
+      int extIdx = nome.indexOf("."); //$NON-NLS-1$
       if (extIdx > -1) {
         nome = nome.substring(0, extIdx);
       }
-      nome += ".jpg";
+      nome += ".jpg"; //$NON-NLS-1$
 
       // Report FTK3+
-      int i1 = export.indexOf("files/");
+      int i1 = export.indexOf("files/"); //$NON-NLS-1$
       File file = null;
       if (i1 > -1) {
-        String thumbPath = export.substring(0, i1) + "thumbnails/" + nome;
+        String thumbPath = export.substring(0, i1) + "thumbnails/" + nome; //$NON-NLS-1$
         file = Util.getRelativeFile(basePath, thumbPath);
       }
       if (file != null && file.exists()) {

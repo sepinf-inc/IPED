@@ -43,7 +43,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
   /**
    * Nome da tarefa.
    */
-  private static final String taskName = "Carving de known.met do e-Mule";
+  private static final String taskName = "E-Mule known.met Carver"; //$NON-NLS-1$
 
   /**
    * Indica se a tarefa está habilitada ou não.
@@ -69,7 +69,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
    * Media type dos arquivos recuperados.
    */
 
-  private static final MediaType eMuleMediaType = MediaType.application("x-emule");
+  private static final MediaType eMuleMediaType = MediaType.application("x-emule"); //$NON-NLS-1$
 
   /**
    * Passo para verificação do início do arquivo.
@@ -107,12 +107,12 @@ public class KnownMetCarveTask extends BaseCarveTask {
     synchronized (init) {
       if (!init.get()) {
         //Verifica se tarefa está habilitada
-        String value = confParams.getProperty("enableKnownMetCarving");
-        if (value != null && value.trim().equalsIgnoreCase("true")) {
+        String value = confParams.getProperty("enableKnownMetCarving"); //$NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
           taskEnabled = true;
-          Log.info(taskName, "Tarefa habilitada.");
+          Log.info(taskName, "Task enabled."); //$NON-NLS-1$
         } else {
-          Log.info(taskName, "Tarefa desabilitada.");
+          Log.info(taskName, "Task disabled."); //$NON-NLS-1$
           init.set(true);
           return;
         }
@@ -129,7 +129,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
     synchronized (finished) {
       if (taskEnabled && !finished.get()) {
         finished.set(true);
-        Log.info(taskName, "Arquivos carveados: " + numCarvedItems.get());
+        Log.info(taskName, "Carved Items: " + numCarvedItems.get()); //$NON-NLS-1$
       }
     }
   }
@@ -169,7 +169,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
                     inParse.skip(offset);
                     List<KnownMetEntry> l = KnownMetParser.parseToList(inParse, len);
                     if (!l.isEmpty()) {
-                      addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", eMuleMediaType);
+                      addCarvedFile(evidence, offset, len, "Carved-" + offset + "-known.met", eMuleMediaType); //$NON-NLS-1$ //$NON-NLS-2$
                       numCarvedItems.incrementAndGet();
                     }
                   } catch (Exception e) {} finally {
@@ -185,7 +185,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
         offset += step;
       }
     } catch (Exception e) {
-      Log.warning(taskName, "Erro no Carving de Known.met: " + evidence.getPath() + " : " + e);
+      Log.warning(taskName, "Known.met carving error: " + evidence.getPath() + " : " + e);  //$NON-NLS-1$//$NON-NLS-2$
     } finally {
       IOUtil.closeQuietly(is);
     }
