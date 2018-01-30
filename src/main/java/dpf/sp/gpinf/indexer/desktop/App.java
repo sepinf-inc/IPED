@@ -526,13 +526,7 @@ public class App extends JFrame implements WindowListener {
 
       //treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null, evidencePanel, null, 2); //$NON-NLS-1$
     }
-
-    /*if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
-        int index = SwingUtil.getIndexOfTab(treeTab, Messages.getString("App.Bookmarks")); //$NON-NLS-1$
-        treeTab.setSelectedIndex(index);
-    }*/
-
-    
+   
     dockingControl = new CControl(this);
     dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
     dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
@@ -542,6 +536,10 @@ public class App extends JFrame implements WindowListener {
     defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
     
     refazLayout(false);
+    
+    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
+        selectDockableTab(bookmarksTabDock);
+    }
     
     status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
