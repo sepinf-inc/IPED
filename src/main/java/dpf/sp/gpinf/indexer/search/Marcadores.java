@@ -333,7 +333,7 @@ public class Marcadores implements Serializable {
 
 	public void saveState(File file) throws IOException {
 		//SaveStateThread.getInstance().saveState(this, file);
-		LOGGER.info("Saving state to file " + file.getAbsolutePath());
+		LOGGER.info("Saving state to file " + file.getAbsolutePath()); //$NON-NLS-1$
 		Util.writeObject(this, file.getAbsolutePath());
 	}
 
@@ -381,7 +381,7 @@ public class Marcadores implements Serializable {
 	}
 	
 	public static Marcadores load(File file) throws ClassNotFoundException, IOException{
-		LOGGER.info("Loading state from file " + file.getAbsolutePath());
+		LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
 		return (Marcadores) Util.readObject(file.getAbsolutePath());
 	}
 	
