@@ -349,7 +349,7 @@ public class IPEDSource implements Closeable{
 		for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
 	        for(String path : paths){
-	        	if(!new File(path).exists())
+	        	if(!new File(path).exists() && !path.toLowerCase().contains("physicaldrive")) //$NON-NLS-1$
 	        		throw new IPEDException(Messages.getString("IPEDSource.ImageNotFound") + new File(path).getAbsolutePath()); //$NON-NLS-1$
 	        }
 		}
