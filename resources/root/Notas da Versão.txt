@@ -1,3 +1,34 @@
+02/02/2018: IPED-3.13.5
+- Detecção de itens 7zip cifrados que omitem nomes dos subitens
+- Habilita ignoreHardLinks por padrão em todos os perfis de processamento
+- Expõe novamente opção textSplitSize no AdvancedConfig.txt
+- Aborta processamento no caso de conflito em CustomSignatures.xml
+Correções:
+- Carregamento de cookie de marcadores em casos somente leitura (3.13.1 - PCF Wladimir)
+- Não funcionamento da opção robustImageReading no Linux (3.13.1)
+- Travamento eventual no processamento durante geração de thumbs de vídeos (3.13.3)
+- Falso alerta de "imagem não encontrada" ao abrir casos com discos físicos no Windows (3.13)
+- Conversão externa de PDF p/ imagem via PDFBox não incluia imagens jbig2 (3.13.4)
+- Não cria marcadores automáticos p/ itens pequenos com hash comum (3.11)
+- IgnoreHardLinks ignorava hash de itens enviados para filas posteriores de processamento (3.12)
+
+12/01/2018: IPED-3.13.4
+Melhorias:
+- Opção no OCR para converter PDF p/ imagem externamente, isolando hangs e OutOfMemoryErrors
+- Gera galeria e relatório html para itens sem marcador
+- Move HashTask no pipeline de processamento, permitindo ignorar o hash de itens via javascript
+- Opção para desligar uso de thumbs embutidos em imagens JPG como miniaturas
+- Log de mais infos durante análise (pesquisas, filtros, itens exportados e duplo clique)
+Correções:
+- Compatibiliza alerta de versão java e atalho IPED-SearchApp.exe com Java 9
+- NullPointer no WhatsAppParser com chat vazio que abortava extração de chats seguintes (3.12.x)
+- NullPointer fatal no processamento ao desabilitar detecção de idioma (3.13)
+- Erro raro IllegalArgumentException durante detecção de idioma (3.13)
+- Detecção de disco cheio (temp e destino) no Windows 10 e Linux (3.10)
+- Descarte de thumbs rotacionados embutidos em JPGs ao gerar miniaturas (PCF Wladimir)
+- Não linkagem de tranferências Skype com itens enviados qdo duplicados na evidência (3.12.x)
+
+>>>>>>> 8f8344a Habilita ignoreHardLinks por padrão
 05/12/2017: IPED-3.13.3
 Correções:
 - NullPointer que impedia a descompactação do LibreOffice em novas máquinas (3.13-final)

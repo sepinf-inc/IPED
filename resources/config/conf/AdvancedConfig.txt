@@ -47,7 +47,7 @@ convertCharsToLowerCase = true
 # Não re-processa hard links apontando para itens já processados. Os hard links são adicionados ao caso,
 # porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
 # Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
-ignoreHardLinks = false
+ignoreHardLinks = true
 
 # Configure caso queira ignorar arquivos orphans com base no seu tamanho.
 # Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
