@@ -194,6 +194,8 @@ public class ParsingReader extends Reader {
   private Future future;
   
   private volatile boolean parseDone = false;
+  
+  private Object lock = new Object();
 
   private static class ParsingThreadFactory implements ThreadFactory {
 
@@ -239,7 +241,10 @@ public class ParsingReader extends Reader {
     if(waitCleanup)
 	    try {
 	    	//wait some time to cancel task, kill external process, close file handles, etc
-			Thread.sleep(5000);
+	    	synchronized(lock) {
+    			if(!parseDone)
+    				lock.wait(5000);
+      	    }
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
@@ -283,7 +288,10 @@ public class ParsingReader extends Reader {
         }
 
       }finally{
-    	  parseDone = true;
+    	  synchronized(lock) {
+    		  lock.notify();
+    		  parseDone = true;
+    	  }
       }
 
       try {
