@@ -212,6 +212,11 @@ public class Configuration {
     	timeOutPerMB = Integer.valueOf(value);
     }    
 
+    value = properties.getProperty("textSplitSize"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+    	textSplitSize = Integer.valueOf(value.trim());
+    }
+    
     ParsingReader.setTextSplitSize(textSplitSize);
     ParsingReader.setTextOverlapSize(textOverlapSize);
     FastPipedReader.setTimeout(timeOut);
