@@ -81,7 +81,7 @@ public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
     public BackgroundSort(List<? extends SortKey> sortKeys) {
       this.sortKeys = sortKeys;
       progressMonitor = new ProgressDialog(App.get(), this, true, 200, Dialog.ModalityType.APPLICATION_MODAL);
-      progressMonitor.setNote("Ordenando...");
+      progressMonitor.setNote(Messages.getString("ResultTableRowSorter.Sorting")); //$NON-NLS-1$
     }
 
     @Override

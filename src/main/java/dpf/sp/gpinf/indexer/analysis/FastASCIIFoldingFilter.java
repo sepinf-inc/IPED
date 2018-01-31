@@ -109,7 +109,7 @@ public final class FastASCIIFoldingFilter extends TokenFilter {
   @Override
   public boolean incrementToken() throws IOException {
     if (state != null) {
-      assert preserveOriginal : "state should only be captured if preserveOriginal is true";
+      assert preserveOriginal : "state should only be captured if preserveOriginal is true"; //$NON-NLS-1$
       restoreState(state);
       posIncAttr.setPositionIncrement(0);
       state = null;

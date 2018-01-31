@@ -16,37 +16,38 @@
  * You should have received a copy of the GNU General Public License
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
-package dpf.sp.gpinf.indexer.util;
+package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.File;
-import java.io.Serializable;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
-import javax.swing.filechooser.FileFilter;
+import javax.swing.ImageIcon;
 
-import dpf.sp.gpinf.indexer.search.Marcadores;
-
-public class SearchStateFilter extends FileFilter implements Serializable {
+public class UnsupportedIcon extends ImageIcon {
 
   /**
    *
    */
   private static final long serialVersionUID = 1L;
+  private int width = 60;
+  private int height = 20;
 
   @Override
-  public boolean accept(File f) {
-    if (f.isDirectory()) {
-      return true;
-    }
-    if (f.getName().endsWith(Marcadores.EXT)) {
-      return true;
-    }
+  public void paintIcon(Component c, Graphics g, int x, int y) {
+    Graphics2D g2d = (Graphics2D) g.create();
+    g2d.setColor(Color.RED);
+    g2d.drawString(Messages.getString("UnsupportedIcon.Unavailable"), x, y + 10); //$NON-NLS-1$
 
-    return false;
+    g2d.dispose();
   }
 
-  @Override
-  public String getDescription() {
-    return "Marcadores da Pesquisa";
+  public int getIconWidth() {
+    return width;
   }
 
+  public int getIconHeight() {
+    return height;
+  }
 }

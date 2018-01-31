@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class MakePreviewTask extends AbstractTask {
 
-  public static String viewFolder = "view";
+  public static String viewFolder = "view"; //$NON-NLS-1$
   
   private Parser parser = new AutoDetectParser();
 
@@ -59,22 +59,22 @@ public class MakePreviewTask extends AbstractTask {
   }
 
   public boolean isSupportedType(String contentType) {
-    return contentType.equals("application/x-msaccess")
-        || contentType.equals("application/x-sqlite3")
-        || contentType.equals("application/sqlite-skype")
-        || contentType.equals("application/x-lnk")
-        || contentType.equals("application/x-whatsapp-db")
-        || contentType.equals("application/x-whatsapp-chatstorage")
-        || contentType.equals("application/x-shareaza-searches-dat")
-        || contentType.equals("application/x-msie-cache")
+    return contentType.equals("application/x-msaccess") //$NON-NLS-1$
+        || contentType.equals("application/x-sqlite3") //$NON-NLS-1$
+        || contentType.equals("application/sqlite-skype") //$NON-NLS-1$
+        || contentType.equals("application/x-lnk") //$NON-NLS-1$
+        || contentType.equals("application/x-whatsapp-db") //$NON-NLS-1$
+        || contentType.equals("application/x-whatsapp-chatstorage") //$NON-NLS-1$
+        || contentType.equals("application/x-shareaza-searches-dat") //$NON-NLS-1$
+        || contentType.equals("application/x-msie-cache") //$NON-NLS-1$
         || mayContainLinks(contentType)
         || isSupportedTypeCSV(contentType);
   }
   
   private boolean mayContainLinks(String contentType){
-	  return contentType.equals("application/x-emule")
-			  || contentType.equals("application/x-ares-galaxy")
-			  || contentType.equals("application/x-shareaza-library-dat");
+	  return contentType.equals("application/x-emule") //$NON-NLS-1$
+			  || contentType.equals("application/x-ares-galaxy") //$NON-NLS-1$
+			  || contentType.equals("application/x-shareaza-library-dat"); //$NON-NLS-1$
   }
 
   private boolean isSupportedTypeCSV(String contentType) {
@@ -98,9 +98,9 @@ public class MakePreviewTask extends AbstractTask {
       return;
     }
 
-    String ext = "html";
+    String ext = "html"; //$NON-NLS-1$
     if (isSupportedTypeCSV(mediaType)) {
-      ext = "csv";
+      ext = "csv"; //$NON-NLS-1$
     }
 
     File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
@@ -116,7 +116,7 @@ public class MakePreviewTask extends AbstractTask {
       makeHtmlPreview(evidence, viewFile, mediaType);
 
     } catch (Throwable e) {
-      Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
+      Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString());  //$NON-NLS-1$//$NON-NLS-2$
     }
 
   }
@@ -144,9 +144,9 @@ public class MakePreviewTask extends AbstractTask {
     	String comment = null;
     	if(mayContainLinks(mediaType))
     		comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
-        handler = new ToXMLContentHandlerWithComment(outStream, "UTF-8", comment);
+        handler = new ToXMLContentHandlerWithComment(outStream, "UTF-8", comment); //$NON-NLS-1$
       } else {
-        handler = new ToCSVContentHandler(outStream, "UTF-8");
+        handler = new ToCSVContentHandler(outStream, "UTF-8"); //$NON-NLS-1$
       }
       final ProgressContentHandler pch = new ProgressContentHandler(handler);
       
@@ -197,7 +197,7 @@ public class MakePreviewTask extends AbstractTask {
 	  public void startDocument() throws SAXException{
 		  super.startDocument();
 		  if(comment != null)
-			  this.write(comment + "\n");
+			  this.write(comment + "\n"); //$NON-NLS-1$
 	  }
   }
   

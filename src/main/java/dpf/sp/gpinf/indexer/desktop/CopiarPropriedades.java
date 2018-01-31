@@ -50,7 +50,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
     this.uniqueIds = uniqueIds;
     this.total = uniqueIds.size();
 
-    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total);
+    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total); //$NON-NLS-1$ //$NON-NLS-2$
     this.addPropertyChangeListener(this);
   }
 
@@ -58,7 +58,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
   protected Boolean doInBackground() throws Exception {
 
 	FileOutputStream fos = new FileOutputStream(file);
-    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8"); //$NON-NLS-1$
     byte[] utf8bom = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
     fos.write(utf8bom);
 
@@ -68,16 +68,16 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
     }
 
     for (int col = 0; col < fields.size(); col++) {
-      writer.write("\"" + fields.get(col).toUpperCase() + "\"" + ";");
+      writer.write("\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
-    writer.write("\r\n");
+    writer.write("\r\n"); //$NON-NLS-1$
 
     int progress = 0;
     App app = App.get();
-    SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
-    df.setTimeZone(TimeZone.getTimeZone("GMT"));
+    SimpleDateFormat df = new SimpleDateFormat(Messages.getString("CopyProperties.CSVDateFormat")); //$NON-NLS-1$
+    df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     for (Integer docId : uniqueIds) {
-      this.firePropertyChange("progress", progress, ++progress);
+      this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
       try {
         Document doc = App.get().appCase.getSearcher().doc(docId);
         for (int col = 0; col < fields.size(); col++) {
@@ -90,25 +90,25 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
             values[0] = App.get().appCase.getMultiMarcadores().getLabels(item);
           }
           if (values.length > 0 && values[0] == null)
-            values[0] = "";
+            values[0] = ""; //$NON-NLS-1$
           
           if (field.equals(IndexItem.CATEGORY))
               for(String val : values)
-                  val = val.replace("" + CategoryTokenizer.SEPARATOR, " | ");
+                  val = val.replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
 
           if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
                   || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.RECORDDATE))) {
             values[0] = df.format(DateUtil.stringToDate(values[0]));
           }
-          String value = "";
+          String value = ""; //$NON-NLS-1$
           for(int i = 0; i < values.length; i++){
-              if(i != 0) value += " | ";
+              if(i != 0) value += " | "; //$NON-NLS-1$
               value += values[i];
           }
           
-          writer.write("\"" + value.replace("\"", "\"\"") + "\";");
+          writer.write("\"" + value.replace("\"", "\"\"") + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         }
-        writer.write("\r\n");
+        writer.write("\r\n"); //$NON-NLS-1$
 
       } catch (Exception e1) {
         e1.printStackTrace();
@@ -127,10 +127,10 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 
     if (progressMonitor.isCanceled()) {
       this.cancel(true);
-    } else if ("progress" == evt.getPropertyName()) {
+    } else if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
       int progress = (Integer) evt.getNewValue();
       progressMonitor.setProgress(progress);
-      progressMonitor.setNote("Copiando " + progress + " de " + total);
+      progressMonitor.setNote(Messages.getString("CopyProperties.Copying") + progress + Messages.getString("CopyProperties.from") + total); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
   }

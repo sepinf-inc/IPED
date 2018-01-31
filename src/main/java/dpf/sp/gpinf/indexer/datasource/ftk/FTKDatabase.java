@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
  */
 public abstract class FTKDatabase {
 
-  private static String FTKDatabaseConfig = "/conf/FTKDatabaseConfig.txt";
+  private static String FTKDatabaseConfig = "/conf/FTKDatabaseConfig.txt"; //$NON-NLS-1$
   /*
    * Dados para conexÃ£o com o banco Oracle
    */
@@ -56,7 +56,7 @@ public abstract class FTKDatabase {
   String caso;
   String databaseType;
 
-  static String schemaVersion = "";
+  static String schemaVersion = ""; //$NON-NLS-1$
   File report;
 
   /*
@@ -73,17 +73,17 @@ public abstract class FTKDatabase {
 
     Properties properties = new Properties();
     properties.load(new FileInputStream(Configuration.appRoot + FTKDatabaseConfig));
-    schemaVersion = properties.getProperty("VersaoFTK");
+    schemaVersion = properties.getProperty("VersaoFTK"); //$NON-NLS-1$
 
-    if (schemaVersion.equalsIgnoreCase("auto")) {
+    if (schemaVersion.equalsIgnoreCase("auto")) { //$NON-NLS-1$
       String version = FTK3ReportReader.getFTKVersion(report);
       schemaVersion = translateFTKToDBVersion(version);
       if (schemaVersion == null) {
-        throw new Exception("Nova Versão do FTK detectada. Defina manualmente a versão do schema de dados em 'VersaoFTK' no IndexerConfig.txt.");
+        throw new Exception("New FTK version detected. Configure the database schema 'VersaoFTK' on " + FTKDatabaseConfig); //$NON-NLS-1$
       }
     }
 
-    if (schemaVersion.compareTo("42") > 0) {
+    if (schemaVersion.compareTo("42") > 0) { //$NON-NLS-1$
       return new FTK42Database(properties, caseName, report);
     } else {
       return new FTK3Database(properties, caseName, report);
@@ -95,18 +95,18 @@ public abstract class FTKDatabase {
 
     Properties props = new Properties();
     props.load(new FileInputStream(configPathStr + FTKDatabaseConfig));
-    schemaVersion = props.getProperty("VersaoFTK");
+    schemaVersion = props.getProperty("VersaoFTK"); //$NON-NLS-1$
     FTKDatabase dataSrc;
-    if (schemaVersion.equalsIgnoreCase("auto")) {
-      dataSrc = new FTK42Database(props, "", null);
+    if (schemaVersion.equalsIgnoreCase("auto")) { //$NON-NLS-1$
+      dataSrc = new FTK42Database(props, "", null); //$NON-NLS-1$
       Connection conn = dataSrc.ods.getConnection();
       conn.close();
       return true;
     } else {
-      if (schemaVersion.compareTo("42") > 0) {
-        dataSrc = new FTK42Database(props, "", null);
+      if (schemaVersion.compareTo("42") > 0) { //$NON-NLS-1$
+        dataSrc = new FTK42Database(props, "", null); //$NON-NLS-1$
       } else {
-        dataSrc = new FTK3Database(props, "", null);
+        dataSrc = new FTK3Database(props, "", null); //$NON-NLS-1$
       }
 
       dataSrc.conn = dataSrc.ods.getConnection();
@@ -117,7 +117,7 @@ public abstract class FTKDatabase {
 
       } catch (SQLException e) {
         dataSrc.conn.close();
-        if (e.toString().contains("Nome do caso")) {
+        if (e instanceof CaseNameException) {
           return true;
         } else {
           throw e;
@@ -130,52 +130,52 @@ public abstract class FTKDatabase {
 
   protected FTKDatabase(Properties properties, String caseName, File report) {
     this.report = report;
-    user = properties.getProperty("User");
-    password = properties.getProperty("Password");
-    driverType = properties.getProperty("DriverType");
-    serviceName = properties.getProperty("ServiceName");
-    serverName = properties.getProperty("ServerName");
-    portNumber = Integer.parseInt(properties.getProperty("PortNumber"));
-    databaseType = properties.getProperty("DatabaseType");
+    user = properties.getProperty("User"); //$NON-NLS-1$
+    password = properties.getProperty("Password"); //$NON-NLS-1$
+    driverType = properties.getProperty("DriverType"); //$NON-NLS-1$
+    serviceName = properties.getProperty("ServiceName"); //$NON-NLS-1$
+    serverName = properties.getProperty("ServerName"); //$NON-NLS-1$
+    portNumber = Integer.parseInt(properties.getProperty("PortNumber")); //$NON-NLS-1$
+    databaseType = properties.getProperty("DatabaseType"); //$NON-NLS-1$
     caso = caseName;
   }
 
   private static String translateFTKToDBVersion(String ftkVersion) {
-    if (ftkVersion.startsWith("6.0")) {
-      return "ADG6";
+    if (ftkVersion.startsWith("6.0")) { //$NON-NLS-1$
+      return "ADG6"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("5.6")) {
-      return "ADG510";
+    if (ftkVersion.startsWith("5.6")) { //$NON-NLS-1$
+      return "ADG510"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("5.1")) {
-      return "ADG55";
+    if (ftkVersion.startsWith("5.1")) { //$NON-NLS-1$
+      return "ADG55"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("5.0")) {
-      return "ADG54";
+    if (ftkVersion.startsWith("5.0")) { //$NON-NLS-1$
+      return "ADG54"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("4.2")) {
-      return "ADG53";
+    if (ftkVersion.startsWith("4.2")) { //$NON-NLS-1$
+      return "ADG53"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("4.1")) {
-      return "42";
+    if (ftkVersion.startsWith("4.1")) { //$NON-NLS-1$
+      return "42"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("4.0")) {
-      return "41";
+    if (ftkVersion.startsWith("4.0")) { //$NON-NLS-1$
+      return "41"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("3.4")) {
-      return "40";
+    if (ftkVersion.startsWith("3.4")) { //$NON-NLS-1$
+      return "40"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("3.3")) {
-      return "33";
+    if (ftkVersion.startsWith("3.3")) { //$NON-NLS-1$
+      return "33"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("3.2")) {
-      return "32";
+    if (ftkVersion.startsWith("3.2")) { //$NON-NLS-1$
+      return "32"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("3.1")) {
-      return "31";
+    if (ftkVersion.startsWith("3.1")) { //$NON-NLS-1$
+      return "31"; //$NON-NLS-1$
     }
-    if (ftkVersion.startsWith("30")) {
-      return "30";
+    if (ftkVersion.startsWith("30")) { //$NON-NLS-1$
+      return "30"; //$NON-NLS-1$
     }
 
     return null;
@@ -190,7 +190,7 @@ public abstract class FTKDatabase {
     loadTableSpace();
     bookmarksMap = getBookmarksMap(report);
     for (String bookmark : bookmarksMap.values()) {
-      caseData.addBookmark(new FileGroup(bookmark, "", ""));
+      caseData.addBookmark(new FileGroup(bookmark, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     HashMap<Integer, ArrayList<String>> fileList = new HashMap<Integer, ArrayList<String>>();
@@ -208,30 +208,30 @@ public abstract class FTKDatabase {
     if (names != null) {
       for (int k = 0; k < names.length; k++) {
         if (Thread.interrupted()) {
-          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+          throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
         }
 
         File subFile = new File(file, names[k]);
         if (subFile.isDirectory()) {
-          lerListaDeArquivos(caseData, path + "/" + names[k], subFile, fileList, ADList);
+          lerListaDeArquivos(caseData, path + "/" + names[k], subFile, fileList, ADList); //$NON-NLS-1$
         } else {
           int id;
           try {
-            if (names[k].contains(".")) {
-              id = Integer.valueOf(names[k].substring(0, names[k].indexOf(".")));
+            if (names[k].contains(".")) { //$NON-NLS-1$
+              id = Integer.valueOf(names[k].substring(0, names[k].indexOf("."))); //$NON-NLS-1$
             } else {
               id = Integer.valueOf(names[k]);
             }
           } catch (NumberFormatException e) {
-            throw new NumberFormatException("ID do arquivo '" + path + "/" + names[k] + "' não identificado. Os arquivos foram exportados usando o ID como nomenclatura?");
+            throw new NumberFormatException("File ID '" + path + "/" + names[k] + "' not detected. The files were exported using their IDs as filename?"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           }
-          if (names[k].contains("[AD]") || !ADList.contains(id)) {
+          if (names[k].contains("[AD]") || !ADList.contains(id)) { //$NON-NLS-1$
             ArrayList<String> paths = fileList.get(id);
             if (paths == null) {
               paths = new ArrayList<String>();
             }
 
-            paths.add(path + "/" + names[k]);
+            paths.add(path + "/" + names[k]); //$NON-NLS-1$
             fileList.put(id, paths);
 
             if (fileList.size() % 1000 == 0) {

@@ -52,13 +52,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   
   private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
 
-  public static String BOOKMARK_COL = "marcador";
-  public static String SCORE_COL = "score";
+  public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
+  public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
 
   public static String[] fields;
 
   private static int fixedColdWidths[] = {55, 20};
-  public static String[] fixedCols = {"", ""};
+  public static String[] fixedCols = {"", ""}; //$NON-NLS-1$ //$NON-NLS-2$
 
   private static String[] columnNames = {};
 
@@ -106,14 +106,14 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     columnNames = cols.toArray(new String[0]);
   }
 
-  private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
-  private SimpleDateFormat fatAccessedDf = new SimpleDateFormat("dd/MM/yyyy");
+  private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
+  private SimpleDateFormat fatAccessedDf = new SimpleDateFormat(Messages.getString("ResultTableModel.FATDateFormat")); //$NON-NLS-1$
   private Collator collator = Collator.getInstance();
 
   public ResultTableModel() {
     super();
-    df.setTimeZone(TimeZone.getTimeZone("UTC"));
-    fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    df.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
+    fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
     collator.setStrength(Collator.PRIMARY);
   }
 
@@ -142,10 +142,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         int col = App.get().resultsTable.convertColumnIndexToView(i);
         if (mb == -1) {
           App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-              columnNames[i] + " (...)");
+              columnNames[i] + " (...)"); //$NON-NLS-1$
         } else {
           App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-              columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)");
+              columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
     }
@@ -199,7 +199,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	if (col == 0)
 		return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
 	      
-	String value = "";
+	String value = ""; //$NON-NLS-1$
 	
 	ItemId item = App.get().ipedResult.getItem(row);
     int docId = App.get().appCase.getLuceneId(item);
@@ -209,7 +209,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 			doc = app.appCase.getSearcher().doc(docId);
 		} catch (IOException e) {
 			e.printStackTrace();
-	        return "ERRO";
+	        return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$
 		}
     }
     lastDocRead = docId;
@@ -232,7 +232,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         
         SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);
         if(sndv == null)
-            sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field);
+            sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
         
         boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
         
@@ -252,7 +252,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < values.length; i++){
             sb.append(values[i]);
-            if(i != values.length - 1) sb.append(" | ");
+            if(i != values.length - 1) sb.append(" | "); //$NON-NLS-1$
         }
         
         value = sb.toString().trim();
@@ -279,13 +279,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         } else if (field.equals(IndexItem.NAME)) {
           TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
           if (fragments[0].getScore() > 0) {
-            value = "<html><nobr>" + fragments[0].toString() + "</html>";
+            value = "<html><nobr>" + fragments[0].toString() + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$
           }
         }
 
       } catch (Exception e) {
         e.printStackTrace();
-        return "ERRO";
+        return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$
       }
     }
 

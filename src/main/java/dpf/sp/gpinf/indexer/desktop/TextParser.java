@@ -48,6 +48,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
@@ -58,7 +59,7 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 	
-  public static final String TEXT_SIZE = "textSize";
+  public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -170,7 +171,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
   @Override
   public void done() {
 	
-    App.get().tabbedHits.setTitleAt(0, hits.size() + " Ocorrências");
+    App.get().tabbedHits.setTitleAt(0, hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
     if (progressMonitor != null) {
       progressMonitor.close();
     }
@@ -206,12 +207,12 @@ public class TextParser extends CancelableWorker implements ITextParser {
     context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
 
     ParsingTask expander = new ParsingTask(context);
-    expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
+    expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
     context.set(EmbeddedDocumentExtractor.class, expander);
 
     // Tratamento p/ acentos de subitens de ZIP
     ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850");
+    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
     context.set(ArchiveStreamFactory.class, factory);
     
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
@@ -265,10 +266,10 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
       tmp.dispose();
       File tmpFile = tmp.createTemporaryFile();
-      parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel();
+      parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
       tmp.addResource(parsedFile);
 
-      String contents, fieldName = "conteudo";
+      String contents, fieldName = IndexItem.CONTENT;
       int read = 0, lastRowInserted = -1;
       long totalRead = 0, lastNewLinePos = 0;
       boolean lineBreak = false;
@@ -285,7 +286,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
           off += read;
           totalRead += read;
           if(cis == null)
-        	  this.firePropertyChange("progress", 0, totalRead);
+        	  this.firePropertyChange("progress", 0, totalRead); //$NON-NLS-1$
         }
 
         if (this.isCancelled()) {
@@ -376,7 +377,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             // atualiza lista de hits
             appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
-            this.firePropertyChange("hits", numHits, numHits + 1);
+            this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
           }
 
           // adiciona linha no viewer para o fragmento

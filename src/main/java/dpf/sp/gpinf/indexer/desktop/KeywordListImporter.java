@@ -79,12 +79,12 @@ public class KeywordListImporter extends CancelableWorker {
     if (errors.size() > 0) {
       StringBuilder errorTerms = new StringBuilder();
       for (String s : errors) {
-        errorTerms.append("\n" + s);
+        errorTerms.append("\n" + s); //$NON-NLS-1$
       }
-      JOptionPane.showMessageDialog(null, "Erro de sintaxe nas seguintes expressões: " + errorTerms);
+      JOptionPane.showMessageDialog(null, Messages.getString("KeywordListImporter.SyntaxError") + errorTerms); //$NON-NLS-1$
     }
 
-    JOptionPane.showMessageDialog(null, "Importada(s) " + result.size() + " expressão(ões) com ocorrência(s) do total de " + keywords.size());
+    JOptionPane.showMessageDialog(null, Messages.getString("KeywordListImporter.Msg.1") + result.size() + Messages.getString("KeywordListImporter.Msg.2") + keywords.size()); //$NON-NLS-1$ //$NON-NLS-2$
   }
 
 }

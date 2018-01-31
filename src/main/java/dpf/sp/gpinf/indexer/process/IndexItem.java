@@ -59,6 +59,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -74,39 +75,12 @@ import gpinf.dev.filetypes.GenericFileType;
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens que será
  * adicionado ao índice.
  */
-public class IndexItem {
+public class IndexItem extends BasicProps{
+	
+  public static final String FTKID = "ftkId"; //$NON-NLS-1$
+  public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
 
-  public static final String ID = "id";
-  public static final String FTKID = "ftkId";
-  public static final String PARENTID = "parentId";
-  public static final String PARENTIDs = "parentIds";
-  public static final String SLEUTHID = "sleuthId";
-  public static final String EVIDENCE_UUID = "evidenceUUID";
-  public static final String NAME = "nome";
-  public static final String TYPE = "tipo";
-  public static final String LENGTH = "tamanho";
-  public static final String CREATED = "criacao";
-  public static final String ACCESSED = "acesso";
-  public static final String MODIFIED = "modificacao";
-  public static final String RECORDDATE = "alteracao do registro";
-  public static final String PATH = "caminho";
-  public static final String EXPORT = "export";
-  public static final String CATEGORY = "categoria";
-  public static final String HASH = "hash";
-  public static final String ISDIR = "isDir";
-  public static final String ISROOT = "isRoot";
-  public static final String DELETED = "deletado";
-  public static final String HASCHILD = "hasChildren";
-  public static final String CARVED = "carved";
-  public static final String SUBITEM = "subitem";
-  public static final String OFFSET = "offset";
-  public static final String DUPLICATE = "duplicate";
-  public static final String TIMEOUT = "timeout";
-  public static final String CONTENTTYPE = "contentType";
-  public static final String CONTENT = "conteudo";
-  public static final String TREENODE = "treeNode";
-
-  public static final String attrTypesFilename = "metadataTypes.txt";
+  public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
   private static final int MAX_DOCVALUE_SIZE = 4096;
 
@@ -142,8 +116,8 @@ public class IndexItem {
     ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
     ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
     ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
-    ignoredMetadata.add("File Name");
-    ignoredMetadata.add("File Size");
+    ignoredMetadata.add("File Name"); //$NON-NLS-1$
+    ignoredMetadata.add("File Size"); //$NON-NLS-1$
     //ocrCharCount is already copied to an extra attribute
     ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
   }
@@ -217,7 +191,7 @@ public class IndexItem {
 
     String value = evidence.getName();
     if (value == null) {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     Field nameField = new TextField(NAME, value, Field.Store.YES);
     nameField.setBoost(1000.0f);
@@ -228,7 +202,7 @@ public class IndexItem {
     if (fileType != null) {
       value = fileType.getLongDescr();
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(TYPE, new BytesRef(normalize(value))));
@@ -243,7 +217,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(CREATED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(CREATED, new BytesRef(value)));
@@ -252,7 +226,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(ACCESSED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(ACCESSED, new BytesRef(value)));
@@ -261,7 +235,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(MODIFIED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
@@ -270,14 +244,14 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(RECORDDATE, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
 
     value = evidence.getPath();
     if (value == null) {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
     if (value.length() > MAX_DOCVALUE_SIZE) {
@@ -297,7 +271,7 @@ public class IndexItem {
     if (type != null) {
       value = type.toString();
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(CONTENTTYPE, new BytesRef(value)));
@@ -387,9 +361,9 @@ public class IndexItem {
     /* utilizar docvalue de outro tipo com mesmo nome provoca erro,
      * entao usamos um prefixo no nome para diferenciar
      */
-    String keyPrefix = "";
+    String keyPrefix = ""; //$NON-NLS-1$
     if (isMetadataKey) {
-      keyPrefix = "_num_";
+      keyPrefix = "_num_"; //$NON-NLS-1$
     }
     if (oValue instanceof Date) {
       String value = DateUtil.dateToString((Date) oValue);
@@ -434,7 +408,7 @@ public class IndexItem {
         value = value.substring(0, MAX_DOCVALUE_SIZE);
       }
       if (isMetadataKey) {
-        keyPrefix = "_";
+        keyPrefix = "_"; //$NON-NLS-1$
       }
       if(!isMultiValued) doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
       else doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
@@ -458,7 +432,7 @@ public class IndexItem {
     }
 
     for (String key : names) {
-      if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
+      if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
         continue;
       }
       boolean isMultiValued = true;//metadata.getValues(key).length > 1;
@@ -507,7 +481,7 @@ public class IndexItem {
   private static void guessMetadataTypes(Metadata metadata) {
 
     for (String key : metadata.names()) {
-      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
+      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
         continue;
       }
       if (metadata.getValues(key).length > 1) {
@@ -666,7 +640,7 @@ public class IndexItem {
         evidence.setHash(value);
 
         if (!value.isEmpty()) {
-          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
+          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value); //$NON-NLS-1$
           if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
             viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
           }

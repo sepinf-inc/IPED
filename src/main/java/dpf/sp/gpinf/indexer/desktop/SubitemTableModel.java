@@ -60,7 +60,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
     if (col == 2)
       return IndexItem.NAME;
     
-    return "";
+    return ""; //$NON-NLS-1$
   }
   
   @Override
@@ -102,7 +102,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
       } catch (Exception e) {
         // e.printStackTrace();
       }
-      return "";
+      return ""; //$NON-NLS-1$
     }
   }
 
@@ -156,10 +156,10 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
       parentId = doc.get(IndexItem.ID);
     }
 
-    String textQuery = IndexItem.PARENTID + ":" + parentId;
+    String textQuery = IndexItem.PARENTID + ":" + parentId; //$NON-NLS-1$
     
     String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;
+    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 
     try {
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
@@ -171,7 +171,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            App.get().tabbedHits.addTab(sumSubitens + " Anexos/Subitens", App.get().getParams().subItemScroll);
+            App.get().tabbedHits.addTab(sumSubitens + Messages.getString("SubitemTableModel.Subitens"), App.get().getParams().subItemScroll); //$NON-NLS-1$
           }
         });
       }

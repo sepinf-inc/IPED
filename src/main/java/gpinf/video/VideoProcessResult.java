@@ -104,26 +104,26 @@ public class VideoProcessResult {
       
       setFPS(getFPS(info));
       setBitRate(getBitRate(info));
-      setVideoFormat(getStringInfo(info, "ID_VIDEO_FPS"));
-      setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC"));
+      setVideoFormat(getStringInfo(info, "ID_VIDEO_FPS")); //$NON-NLS-1$
+      setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC")); //$NON-NLS-1$
       
       getClipInfos(info);
       
   }
   
     private void getClipInfos(String info) throws Exception {
-      String nameKey = "ID_CLIP_INFO_NAME";
-      String valueKey = "ID_CLIP_INFO_VALUE";
+      String nameKey = "ID_CLIP_INFO_NAME"; //$NON-NLS-1$
+      String valueKey = "ID_CLIP_INFO_VALUE"; //$NON-NLS-1$
       int i = 0;
       while(true){
-          String s1 = nameKey + i + "=";
+          String s1 = nameKey + i + "="; //$NON-NLS-1$
           int p1 = info.indexOf(s1);
           if(p1 == -1)
               break;
           int p2 = info.indexOf('\n', p1);
           String name = info.substring(p1 + s1.length(), p2).trim();
           
-          s1 = valueKey + i + "=";
+          s1 = valueKey + i + "="; //$NON-NLS-1$
           p1 = info.indexOf(s1);
           if(p1 == -1)
               break;
@@ -137,7 +137,7 @@ public class VideoProcessResult {
     }
   
     private long getDuration(String info) throws Exception {
-      String s1 = "ID_LENGTH=";
+      String s1 = "ID_LENGTH="; //$NON-NLS-1$
       int p1 = info.indexOf(s1);
       if (p1 < 0) {
         return -1;
@@ -153,7 +153,7 @@ public class VideoProcessResult {
     }
     
     private float getFPS(String info) throws Exception {
-        String s1 = "ID_VIDEO_FPS=";
+        String s1 = "ID_VIDEO_FPS="; //$NON-NLS-1$
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
           return -1;
@@ -169,7 +169,7 @@ public class VideoProcessResult {
     }
     
     private String getStringInfo(String info, String s1) throws Exception {
-        s1 += "=";
+        s1 += "="; //$NON-NLS-1$
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
           return null;
@@ -180,7 +180,7 @@ public class VideoProcessResult {
     }
     
     private long getBitRate(String info) throws Exception {
-        String s1 = "ID_VIDEO_BITRATE=";
+        String s1 = "ID_VIDEO_BITRATE="; //$NON-NLS-1$
         int p1 = info.indexOf(s1);
         if (p1 < 0) {
           return -1;
@@ -196,7 +196,7 @@ public class VideoProcessResult {
     }
 
     private String getVideoStream(String info) throws Exception {
-      String s1 = "Video stream found, -vid ";
+      String s1 = "Video stream found, -vid "; //$NON-NLS-1$
       int p1 = info.indexOf(s1);
       if (p1 < 0) {
         return null;
@@ -216,7 +216,7 @@ public class VideoProcessResult {
     }
 
     private Dimension getDimension(String info) throws Exception {
-      String s1 = "ID_VIDEO_WIDTH=";
+      String s1 = "ID_VIDEO_WIDTH="; //$NON-NLS-1$
       int p1 = info.indexOf(s1);
       if (p1 < 0) {
         return null;
@@ -225,7 +225,7 @@ public class VideoProcessResult {
       if (p2 < 0) {
         return null;
       }
-      String s3 = "ID_VIDEO_HEIGHT=";
+      String s3 = "ID_VIDEO_HEIGHT="; //$NON-NLS-1$
       int p3 = info.indexOf(s3);
       if (p3 < 0) {
         return null;

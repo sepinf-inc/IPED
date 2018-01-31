@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
   private long lastKeyTime = -1;
-  private String lastKeyString = "";
+  private String lastKeyString = ""; //$NON-NLS-1$
   private Collator collator = Collator.getInstance();
 
   public ResultTableListener() {
@@ -104,7 +104,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
-        App.get().tabbedHits.setTitleAt(0, "0 Ocorrências");
+        App.get().tabbedHits.setTitleAt(0, Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
         while (App.get().tabbedHits.getTabCount() > 1) {
           App.get().tabbedHits.removeTabAt(1);
         }
@@ -175,7 +175,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         return;
       }
       String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
-      value = value.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, "");
+      value = value.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
       StringSelection selection = new StringSelection(value);
       Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       clipboard.setContents(selection, selection);
@@ -225,7 +225,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     long t = System.currentTimeMillis();
     if (t - lastKeyTime > 500) {
-      lastKeyString = "";
+      lastKeyString = ""; //$NON-NLS-1$
     }
     lastKeyTime = t;
     if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c) {
@@ -276,7 +276,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
   private String getCell(JTable table, int row, int col) {
     String cell = table.getValueAt(row, col).toString();
-    return cell.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, "");
+    return cell.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "").replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
   }
 
 }

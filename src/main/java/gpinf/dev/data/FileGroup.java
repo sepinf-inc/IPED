@@ -97,6 +97,6 @@ public class FileGroup implements Serializable {
    */
   @Override
   public String toString() {
-    return "<html><b>" + name + " </b>(" + evidenceFiles.size() + ")</html>";
+    return "<html><b>" + name + " </b>(" + evidenceFiles.size() + ")</html>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
   }
 }

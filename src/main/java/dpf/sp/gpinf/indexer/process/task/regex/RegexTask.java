@@ -15,6 +15,7 @@ import dk.brics.automaton.BasicOperations;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
@@ -24,15 +25,15 @@ import gpinf.dev.data.EvidenceFile;
 
 public class RegexTask extends AbstractTask{
     
-    public static final String REGEX_PREFIX = "Regex:";
+    public static final String REGEX_PREFIX = "Regex:"; //$NON-NLS-1$
     
-	private static final String REGEX_CONFIG = "RegexConfig.txt";
+	private static final String REGEX_CONFIG = "RegexConfig.txt"; //$NON-NLS-1$
 	
-	private static final String KEYWORDS_CONFIG = "KeywordsToExport.txt";
+	private static final String KEYWORDS_CONFIG = "KeywordsToExport.txt"; //$NON-NLS-1$
 	
-	private static final String KEYWORDS_NAME = "KEYWORDS";
+	private static final String KEYWORDS_NAME = "KEYWORDS"; //$NON-NLS-1$
 	
-	private static final String ENABLE_PARAM = "enableRegexSearch";
+	private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
 	
 	private static List<Regex> regexList;
 	
@@ -124,16 +125,16 @@ public class RegexTask extends AbstractTask{
 			
 			File confFile = new File(confDir, REGEX_CONFIG);
             String content = Util.readUTF8Content(confFile);
-            for(String line : content.split("\n")){
+            for(String line : content.split("\n")){ //$NON-NLS-1$
 	              line = line.trim();
-	              if (line.startsWith("#") || line.isEmpty())
+	              if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
 	                continue;
 	              else{
-	                  String[] values = line.split("=", 2);
+	                  String[] values = line.split("=", 2); //$NON-NLS-1$
 	                  if(values.length < 2)
-	                      throw new IPEDException("Caracter '=' não encontrado em " + REGEX_CONFIG + " linha: " + line);
+	                      throw new IPEDException(Messages.getString("RegexTask.SeparatorNotFound.1") + REGEX_CONFIG + Messages.getString("RegexTask.SeparatorNotFound.2") + line); //$NON-NLS-1$ //$NON-NLS-2$
 	                  String name = values[0].trim();
-	                  String[] params = name.split(",");
+	                  String[] params = name.split(","); //$NON-NLS-1$
 	                  String regexName = params[0].trim();
 	                  int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
 	                  int sufix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
@@ -145,9 +146,9 @@ public class RegexTask extends AbstractTask{
 			
 			confFile = new File(confDir, KEYWORDS_CONFIG);
 			content = Util.readUTF8Content(confFile);
-            for(String line : content.split("\n")){
+            for(String line : content.split("\n")){ //$NON-NLS-1$
                 line = line.trim();
-                if (line.startsWith("#") || line.isEmpty())
+                if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
                   continue;
                 else{
                   String regex = replace(line);
@@ -161,17 +162,17 @@ public class RegexTask extends AbstractTask{
 			for(Regex regex : regexList)
 				automatonList.add(regex.automaton);
 			Automaton automata = BasicOperations.union(automatonList);
-			regexFull = new Regex("FULL", automata);
+			regexFull = new Regex("FULL", automata); //$NON-NLS-1$
 		}
 		
 	}
 	
 	private static final String replace(String s){
-	    return s.replace("\\t", "\t")
-	            .replace("\\r", "\r")
-	            .replace("\\n", "\n")
-	            .replace("\\f", "\f")
-	            .replace("\\s", "[ \t\r\n\f]");
+	    return s.replace("\\t", "\t") //$NON-NLS-1$ //$NON-NLS-2$
+	            .replace("\\r", "\r") //$NON-NLS-1$ //$NON-NLS-2$
+	            .replace("\\n", "\n") //$NON-NLS-1$ //$NON-NLS-2$
+	            .replace("\\f", "\f") //$NON-NLS-1$ //$NON-NLS-2$
+	            .replace("\\s", "[ \t\r\n\f]"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	@Override

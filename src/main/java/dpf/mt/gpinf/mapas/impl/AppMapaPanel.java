@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -14,6 +14,8 @@ import javax.swing.event.ListSelectionListener;
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
+import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.MapaModelUpdateListener;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
@@ -56,7 +58,7 @@ public class AppMapaPanel extends JPanel {
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
 						ItemId item = app.getResults().getItem(i);
-						String gid = item.getSourceId() + "-" + item.getId();
+						String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
 			        	selecoes.put(gid, selected);
 					}
 					browserCanvas.enviaSelecoes(selecoes);
@@ -91,7 +93,7 @@ public class AppMapaPanel extends JPanel {
 					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
 				}
 
-			    String kml = "";
+			    String kml = ""; //$NON-NLS-1$
 			    try {
 			    	kml = KMLResult.getResultsKML(app);
 			    	browserCanvas.setKML(kml);

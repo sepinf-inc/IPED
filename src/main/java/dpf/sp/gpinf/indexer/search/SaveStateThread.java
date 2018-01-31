@@ -40,11 +40,11 @@ public class SaveStateThread extends Thread{
 			}
 			if(file != null)
 				try {
-					File tmp = new File(file.getAbsolutePath() + ".tmp");
+					File tmp = new File(file.getAbsolutePath() + ".tmp"); //$NON-NLS-1$
 					if(tmp.exists())
 						tmp.delete();
 					Util.writeObject(state, tmp.getAbsolutePath());
-					File bkp = new File(file.getAbsolutePath() + ".bkp");
+					File bkp = new File(file.getAbsolutePath() + ".bkp"); //$NON-NLS-1$
 					if(!file.exists() || file.renameTo(bkp)){
 						if(tmp.renameTo(file))
 							bkp.delete();

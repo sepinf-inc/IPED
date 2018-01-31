@@ -41,6 +41,7 @@ import org.apache.tika.mime.CustomDetector;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.Worker;
 
 /**
@@ -50,11 +51,11 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetCategoryTask extends AbstractTask {
 
-  public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt";
-  public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt";
+  public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt"; //$NON-NLS-1$
+  public static String CATEGORIES_BY_PROPS = "CategoriesByPropsConfig.txt"; //$NON-NLS-1$
 
-  private static String FOLDER_CATEGORY = "Pastas";
-  public static String SCANNED_CATEGORY = "Possíveis Digitalizações";
+  private static String FOLDER_CATEGORY = Messages.getString("SetCategoryTask.Folders"); //$NON-NLS-1$
+  public static String SCANNED_CATEGORY = Messages.getString("SetCategoryTask.ScannedDocs"); //$NON-NLS-1$
 
   private static HashMap<String, String> mimetypeToCategoryMap = new HashMap<String, String>();
   private static TreeSet<String> categories;
@@ -90,19 +91,19 @@ public class SetCategoryTask extends AbstractTask {
     categories.add(FOLDER_CATEGORY);
     categories.add(SCANNED_CATEGORY);
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
 
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
-      if (line.startsWith("#")) {
+      if (line.startsWith("#")) { //$NON-NLS-1$
         continue;
       }
-      String[] keyValuePair = line.split("=");
+      String[] keyValuePair = line.split("="); //$NON-NLS-1$
       if (keyValuePair.length == 2) {
         String category = keyValuePair[0].trim();
         categories.add(category);
         String mimeTypes = keyValuePair[1].trim();
-        for (String mimeType : mimeTypes.split(";")) {
+        for (String mimeType : mimeTypes.split(";")) { //$NON-NLS-1$
           mimeType = mimeType.trim();
           MediaType mt = MediaType.parse(mimeType);
           if(mt != null)
@@ -122,15 +123,15 @@ public class SetCategoryTask extends AbstractTask {
       return;
     }
 
-    InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
+    InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8"); //$NON-NLS-1$
 
     ScriptEngineManager manager = new ScriptEngineManager();
-    engine = manager.getEngineByName("javascript");
+    engine = manager.getEngineByName("javascript"); //$NON-NLS-1$
     engine.eval(reader);
     inv = (Invocable) engine;
 
     int size = categories.size();
-    inv.invokeFunction("addNewCategories", categories);
+    inv.invokeFunction("addNewCategories", categories); //$NON-NLS-1$
     if (categories.size() > size) {
       refineCategories = true;
     }
@@ -153,7 +154,7 @@ public class SetCategoryTask extends AbstractTask {
 
     } while (type != null);
 
-    return "";
+    return ""; //$NON-NLS-1$
   }
 
   public static TreeSet<String> getCategories() {
@@ -179,7 +180,7 @@ public class SetCategoryTask extends AbstractTask {
     e.addCategory(category);
 
     if (refineCategories) {
-      inv.invokeFunction("addCategory", e);
+      inv.invokeFunction("addCategory", e); //$NON-NLS-1$
     }
   }
 

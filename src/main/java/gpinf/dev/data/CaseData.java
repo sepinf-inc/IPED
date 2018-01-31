@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 
 /**
@@ -84,7 +85,7 @@ public class CaseData implements Serializable {
   /**
    * Árvore de arquivos de evidência.
    */
-  private final PathNode root = new PathNode("Caso");
+  private final PathNode root = new PathNode(Messages.getString("CaseData.Case")); //$NON-NLS-1$
 
   /**
    * indica que o caso se trata de um relatório

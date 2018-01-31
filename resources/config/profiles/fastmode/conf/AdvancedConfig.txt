@@ -88,12 +88,20 @@ pdfToImgResolution = 250
 maxPDFTextSize2OCR = 100
 
 # Biblioteca para conversão de PDFs para imagem antes do OCR.
-# Valores possíveis: pdfbox (mais rápido) ou icepdf (teoricamente mais estável)
+# Valores possíveis: pdfbox ou icepdf (geralmente mais rápido)
 pdfToImgLib = icepdf
+
+# Realiza a conversão de PDFs para imagem em outro processo, isolando OutOfMemoryErrors
+# e uso de CPU por threads desconectadas. Mais estável, porém torna o OCR mais lento.
+externalPdfToImgConv = false
+
+# Memória heap máxima a utilizar POR WORKER durante conversão externa de PDFs p/ imagem.
+externalConvMaxMem = 512M
 
 # Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
 # Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
-# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR. 
+# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR.
+# Além disso, com essa opção o OCR de imagens jbig2 em PDFs não funciona, pois o tesseract não suporta esse formato. 
 processImagesInPDFs = false
 
 ########################################################################

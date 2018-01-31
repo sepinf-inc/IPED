@@ -79,14 +79,14 @@ public class IPEDSearcher {
 	
 	public SearchResult search() throws Exception {
 		if(ipedCase instanceof IPEDMultiSource)
-			throw new Exception("Use multiSearch() method for IPEDMultiSource!");
+			throw new Exception("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 		
 		return SearchResult.get(ipedCase, luceneSearch());
 	}
 	
 	public MultiSearchResult multiSearch() throws Exception {
 		if(!(ipedCase instanceof IPEDMultiSource))
-			throw new Exception("Use search() method for only one IPEDSource!");
+			throw new Exception("Use search() method for only one IPEDSource!"); //$NON-NLS-1$
 		
 		return MultiSearchResult.get((IPEDMultiSource)ipedCase, luceneSearch());
 	}
@@ -137,7 +137,7 @@ public class IPEDSearcher {
 	private Query getNonTreeQuery(){
 		BooleanQuery result = new BooleanQuery();
 		result.add(query, Occur.MUST);
-		result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT);
+		result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT); //$NON-NLS-1$
 		return result;
 	}
 

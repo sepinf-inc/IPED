@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dpf.sp.gpinf.indexer.Messages;
+
 public class RandomForestPredictor {
 
   private final int[] roots;
@@ -75,7 +77,7 @@ public class RandomForestPredictor {
     int ver = in.readInt();
     if (ver != version) {
       in.close();
-      throw new Exception("Vers�o incorreta do arquivo de dados (" + file.getAbsolutePath() + ").");
+      throw new Exception(Messages.getString("RandomForestPredictor.VersionError") + ": " + file.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
     }
     int trees = in.readInt();
     int[] t = new int[trees];

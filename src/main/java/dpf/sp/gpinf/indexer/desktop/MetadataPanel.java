@@ -56,11 +56,11 @@ import dpf.sp.gpinf.indexer.search.QueryBuilder;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener{
     
-    private static final String SORT_COUNT = "Ocorrências";
-    private static final String SORT_ALFANUM = "Alfanumérica";
-    private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "VALOR_MONETARIO";
-    private static final String LINEAR_SCALE = "Linear";
-    private static final String LOG_SCALE = "Logarítmica";
+    private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
+    private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
+    private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
+    private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
+    private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
     
     private volatile static AtomicReader reader;
     
@@ -70,7 +70,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
     JComboBox<String> scale = new JComboBox<String>();
-    JButton update = new JButton("Atualizar");
+    JButton update = new JButton(Messages.getString("MetadataPanel.Update")); //$NON-NLS-1$
     
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -116,25 +116,25 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         list.addListSelectionListener(this);
         
         JPanel l1 = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("Grupo:");
+        JLabel label = new JLabel(Messages.getString("MetadataPanel.Group")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l1.add(label, BorderLayout.WEST);
         l1.add(groups, BorderLayout.CENTER);
         
         JPanel l2 = new JPanel(new BorderLayout());
-        label = new JLabel("Propriedade:");
+        label = new JLabel(Messages.getString("MetadataPanel.Property")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l2.add(label, BorderLayout.WEST);
         l2.add(props, BorderLayout.CENTER);
         
         JPanel l4 = new JPanel(new BorderLayout());
-        label = new JLabel("Escala:");
+        label = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l4.add(label, BorderLayout.WEST);
         l4.add(scale, BorderLayout.CENTER);
         
         JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel("Ordenação:");
+        label = new JLabel(Messages.getString("MetadataPanel.Sort")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l3.add(label, BorderLayout.WEST);
         l3.add(sort, BorderLayout.CENTER);
@@ -198,12 +198,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 
             }catch(Exception e){
                 //LookupOrd fica inválido (IndexReader fechado) ao atualizar interface durante processamento
-                return "[Clique em Atualizar]";
+                return Messages.getString("MetadataPanel.UpdateWarn"); //$NON-NLS-1$
             }
         }
         @Override
         public String toString() {
-            return getVal() + " (" + count + ")";
+            return getVal() + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
     
@@ -219,13 +219,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         public String toString() {
             String startStr = NumberFormat.getNumberInstance().format(start);
             String endStr = NumberFormat.getNumberInstance().format(end);
-            return startStr + " TO " + endStr + " (" + count + ")";
+            return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
     }
     
     private static class MoneyCount extends ValueCount implements Comparable<MoneyCount>{
         
-        private static Pattern pattern = Pattern.compile("[\\$\\s\\.\\,]");
+        private static Pattern pattern = Pattern.compile("[\\$\\s\\.\\,]"); //$NON-NLS-1$
         //String val;
         long money;
         
@@ -236,7 +236,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             if(centChar == '.' || centChar == ',')
                 val = val.substring(0, val.length() - 3);
             Matcher matcher = pattern.matcher(val);
-            money = Long.valueOf(matcher.replaceAll(""));
+            money = Long.valueOf(matcher.replaceAll("")); //$NON-NLS-1$
         }
         @Override
         public int compareTo(MoneyCount o) {
@@ -288,16 +288,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         //System.out.println("getDocValues");
         numValues = reader.getNumericDocValues(field);
         if(numValues == null)
-            numValues = reader.getNumericDocValues("_num_" + field);
+            numValues = reader.getNumericDocValues("_num_" + field); //$NON-NLS-1$
         numValuesSet = reader.getSortedNumericDocValues(field);
         if(numValuesSet == null)
-            numValuesSet = reader.getSortedNumericDocValues("_num_" + field);
+            numValuesSet = reader.getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
         docValues = reader.getSortedDocValues(field);
         if(docValues == null)
-            docValues = reader.getSortedDocValues("_" + field);
+            docValues = reader.getSortedDocValues("_" + field); //$NON-NLS-1$
         docValuesSet = reader.getSortedSetDocValues(field);
         if(docValuesSet == null)
-            docValuesSet = reader.getSortedSetDocValues("_" + field);
+            docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
     }
     
     public static final boolean isFloat(String field){
@@ -739,10 +739,10 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             return null;
         
         StringBuilder str = new StringBuilder();
-        str.append(IndexItem.CONTENT + ":(");
+        str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
         for(ValueCount item : list.getSelectedValuesList())
-            str.append("\"" + escape(item.getVal()) + "\" ");
-        str.append(")");
+            str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        str.append(")"); //$NON-NLS-1$
         
         return new QueryBuilder(App.get().appCase).getQuery(str.toString());
         

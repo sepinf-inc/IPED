@@ -38,6 +38,6 @@ class DieClassLoader extends ClassLoader {
   }
 
   public Class<?> loadClass(byte[] classData) throws ClassNotFoundException {
-    return defineClass("gpinf.die.Die", classData, 0, classData.length);
+    return defineClass("gpinf.die.Die", classData, 0, classData.length); //$NON-NLS-1$
   }
 }

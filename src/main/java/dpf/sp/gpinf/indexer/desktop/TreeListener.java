@@ -84,11 +84,11 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     }
 
     if (rootSelected || selection.isEmpty()) {
-      treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
+      treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
       recursiveTreeQuery = null;
 
     } else {
-      String treeQueryStr = "";
+      String treeQueryStr = ""; //$NON-NLS-1$
       recursiveTreeQuery = new BooleanQuery();
 
       for (TreePath path : selection) {
@@ -99,7 +99,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
           parentId = doc.get(IndexItem.ID);
         
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ") ";
+        treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ") "; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
         BooleanQuery subQuery = new BooleanQuery();
         subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
@@ -134,10 +134,10 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
                 docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
                 path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
             }else{
-                String textQuery = IndexItem.FTKID + ":" + parentId;
+                String textQuery = IndexItem.FTKID + ":" + parentId; //$NON-NLS-1$
                 if (textQuery != null) {
                   String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-                  textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; 
+                  textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;  //$NON-NLS-1$ //$NON-NLS-2$
                     
                   IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
                   task.setTreeQuery(true);
@@ -160,7 +160,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
     
-    int index = SwingUtil.getIndexOfTab(App.get().treeTab, "Evidências");
+    int index = SwingUtil.getIndexOfTab(App.get().treeTab, Messages.getString("TreeViewModel.RootName")); //$NON-NLS-1$
     App.get().treeTab.setSelectedIndex(index);
 
     TreePath treePath = new TreePath(path.toArray());

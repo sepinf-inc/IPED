@@ -18,7 +18,7 @@ public class LogConfiguration {
 	File logFile;
 	String configPath;
 	private PrintStream log, out, err;
-	private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss"); //$NON-NLS-1$
 	
 	public LogConfiguration(String configPath, File log){
 	    this.configPath = configPath;
@@ -32,7 +32,7 @@ public class LogConfiguration {
 	    }else {
 	        logFile = indexador.logFile;
 	        if (logFile == null)
-	            logFile = new File(indexador.rootPath, "log/IPED-" + df.format(new Date()) + ".log");
+	            logFile = new File(indexador.rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
 	    }
 	    indexador.logFile = logFile;
 	}
@@ -40,13 +40,13 @@ public class LogConfiguration {
 	private boolean setConsoleLogFile(boolean createLogInTemp) {
 		try{
 			if(createLogInTemp)
-				logFile = File.createTempFile("IPED", ".log");
+				logFile = File.createTempFile("IPED", ".log"); //$NON-NLS-1$ //$NON-NLS-2$
 			
 			logFile.getParentFile().mkdirs();
 		    out = System.out;
 		    err = System.err;
 		    FileOutputStream fos = new FileOutputStream(logFile, true);
-		    log = new PrintStream(new FilterOutputStream(fos, out, "IPED"));
+		    log = new PrintStream(new FilterOutputStream(fos, out, "IPED")); //$NON-NLS-1$
 		    System.setOut(log);
 		    System.setErr(log);
 		    
@@ -77,13 +77,13 @@ public class LogConfiguration {
 
 	  public void configureLogParameters(boolean noLog, boolean finalClassLoader) throws MalformedURLException {
 	    
-		System.setProperty("logFileDate", df.format(new Date()));
+		System.setProperty("logFileDate", df.format(new Date())); //$NON-NLS-1$
 		File configFile = null;
 	    if (noLog)
-	    	configFile = new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml");
+	    	configFile = new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml"); //$NON-NLS-1$
 	    else {
-	    	configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml");
-            System.setProperty("logFileNamePath", logFile.getPath());
+	    	configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml"); //$NON-NLS-1$
+            System.setProperty("logFileNamePath", logFile.getPath()); //$NON-NLS-1$
         }
         
         // instala bridge para capturar logs gerados pelo java.util.logging
@@ -92,10 +92,10 @@ public class LogConfiguration {
 
         //instancia o logger
         if(configFile.exists()){
-            System.setProperty("log4j.configurationFile", configFile.toURI().toURL().toString());
+            System.setProperty("log4j.configurationFile", configFile.toURI().toURL().toString()); //$NON-NLS-1$
             LogManager.getRootLogger();
 	    }else
-	    	System.out.println(df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath());
+	    	System.out.println(df.format(new Date()) + " Log4j2 configuration file not found: " + configFile.getAbsolutePath()); //$NON-NLS-1$
         
         if(!noLog && finalClassLoader)
             if(!setConsoleLogFile(false))

@@ -45,7 +45,7 @@ public class FolderTreeReader extends DataSourceReader {
 	
   private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
   
-  public static final String FS_OWNER = "fileSystemOwner";
+  public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
 
   private File rootFile;
   private String category;
@@ -70,7 +70,7 @@ public class FolderTreeReader extends DataSourceReader {
 
     if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
       category = file.getName();
-      caseData.addBookmark(new FileGroup(category, "", ""));
+      caseData.addBookmark(new FileGroup(category, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     new FolderVisitor().walk(file);
@@ -98,7 +98,7 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceFile.setExportedFile(relativePath);
         evidenceFile.setFile(file);
       } catch (InvalidPathException e) {
-    	LOGGER.error("File content will not be processed " + e.toString());
+    	LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
       }
 
       String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
@@ -198,7 +198,7 @@ public class FolderTreeReader extends DataSourceReader {
       removedInPreVisit = false;
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[ALERTA]\t" + "Item ignorado: " + path.toFile().getAbsolutePath() + " " + exception.toString());
+        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
 
       return FileVisitResult.CONTINUE;
@@ -208,7 +208,7 @@ public class FolderTreeReader extends DataSourceReader {
     public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[ALERTA]\t" + "Item ignorado: " + path.toFile().getAbsolutePath() + " " + exception.toString());
+        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
 
       return FileVisitResult.CONTINUE;

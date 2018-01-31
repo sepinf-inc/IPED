@@ -42,8 +42,8 @@ public class Marcadores implements Serializable {
 	 */
 	private static final long serialVersionUID = -4728708012271393485L;
 	
-	public static String EXT = "." + Versao.APP_EXT.toLowerCase();
-	public static String STATEFILENAME = "marcadores" + EXT;
+	public static String EXT = "." + Versao.APP_EXT.toLowerCase(); //$NON-NLS-1$
+	public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
 	
 	static int labelBits = Byte.SIZE;
 
@@ -68,7 +68,7 @@ public class Marcadores implements Serializable {
 		this.lastId = lastId;
 		selected = new boolean[lastId + 1];
 		labels = new ArrayList<byte[]>();
-		indexDir = new File(modulePath, "index");
+		indexDir = new File(modulePath, "index"); //$NON-NLS-1$
 		stateFile = new File(modulePath, STATEFILENAME);
 		updateCookie();
 		try {
@@ -78,9 +78,9 @@ public class Marcadores implements Serializable {
 	
 	public void updateCookie() {
         long date = indexDir.lastModified();
-        String tempdir = System.getProperty("java.io.basetmpdir");
-        if (tempdir == null) tempdir = System.getProperty("java.io.tmpdir");
-        cookie = new File(tempdir, "indexer" + date + EXT);
+        String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
+        if (tempdir == null) tempdir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
+        cookie = new File(tempdir, "indexer" + date + EXT); //$NON-NLS-1$
 	}
 	
 	public int getLastId(){
@@ -129,11 +129,11 @@ public class Marcadores implements Serializable {
 	public String getLabels(int id) {
 
 		ArrayList<Integer> labelIds = getLabelIds(id);
-		String result = "";
+		String result = ""; //$NON-NLS-1$
 		for (int i = 0; i < labelIds.size(); i++) {
 			result += labelNames.get(labelIds.get(i));
 			if (i < labelIds.size() - 1)
-				result += " | ";
+				result += " | "; //$NON-NLS-1$
 		}
 
 		return result;
@@ -333,7 +333,7 @@ public class Marcadores implements Serializable {
 
 	public void saveState(File file) throws IOException {
 		//SaveStateThread.getInstance().saveState(this, file);
-		LOGGER.info("Saving state to file " + file.getAbsolutePath());
+		LOGGER.info("Saving state to file " + file.getAbsolutePath()); //$NON-NLS-1$
 		Util.writeObject(this, file.getAbsolutePath());
 	}
 
@@ -381,7 +381,7 @@ public class Marcadores implements Serializable {
 	}
 	
 	public static Marcadores load(File file) throws ClassNotFoundException, IOException{
-		LOGGER.info("Loading state from file " + file.getAbsolutePath());
+		LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
 		return (Marcadores) Util.readObject(file.getAbsolutePath());
 	}
 	

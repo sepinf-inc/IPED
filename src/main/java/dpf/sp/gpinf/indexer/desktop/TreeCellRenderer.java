@@ -32,7 +32,7 @@ public class TreeCellRenderer extends DefaultTreeCellRenderer {
 
   private static final long serialVersionUID = 1L;
 
-  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon");
+  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
   public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 

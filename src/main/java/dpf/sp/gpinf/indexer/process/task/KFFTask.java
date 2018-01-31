@@ -39,11 +39,11 @@ import gpinf.dev.data.EvidenceFile;
 public class KFFTask extends AbstractTask {
 
   private Logger LOGGER = LoggerFactory.getLogger(KFFTask.class);
-  private static final String CONF_FILE = "KFFTaskConfig.txt";
-  private static final String ENABLE_PARAM = "enableKff";
+  private static final String CONF_FILE = "KFFTaskConfig.txt"; //$NON-NLS-1$
+  private static final String ENABLE_PARAM = "enableKff"; //$NON-NLS-1$
 
-  public static final String KFF_STATUS = "kffstatus";
-  public static final String KFF_GROUP = "kffgroup";
+  public static final String KFF_STATUS = "kffstatus"; //$NON-NLS-1$
+  public static final String KFF_GROUP = "kffgroup"; //$NON-NLS-1$
 
   public static int excluded = 0;
   private static Object lock = new Object();
@@ -71,13 +71,13 @@ public class KFFTask extends AbstractTask {
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 
-    String hashes = confParams.getProperty("hash");
+    String hashes = confParams.getProperty("hash"); //$NON-NLS-1$
     if (hashes == null) {
       return;
     }
-    if (hashes.contains("md5")) {
+    if (hashes.contains("md5")) { //$NON-NLS-1$
       md5 = true;
-    } else if (hashes.contains("sha-1")) {
+    } else if (hashes.contains("sha-1")) { //$NON-NLS-1$
       md5 = false;
     }
 
@@ -85,11 +85,11 @@ public class KFFTask extends AbstractTask {
     if(enableParam != null)
     	taskEnabled = Boolean.valueOf(enableParam.trim());
     
-    excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim());
+    excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim()); //$NON-NLS-1$
 
-    String kffDbPath = confParams.getProperty("kffDb");
+    String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
     if (taskEnabled && kffDbPath == null)
-      throw new IPEDException("Configure o caminho para a base KFF em " + Configuration.LOCAL_CONFIG);
+      throw new IPEDException("Configure hash database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
     
     //backwards compatibility
     if(enableParam == null && kffDbPath != null)
@@ -113,13 +113,13 @@ public class KFFTask extends AbstractTask {
             .make();
 
       } catch (ArrayIndexOutOfBoundsException e) {
-        throw new Exception("Base KFF corrompida. Importe ou copie novamente 'AMBOS' os arquivos "
-            + "kff.db e kff.db.p para a pasta " + kffDb.getParent());
+        throw new Exception("Hash database seems corrupted. Import or copy again BOTH files " //$NON-NLS-1$
+            + "kff.db and kff.db.p to database folder " + kffDb.getParent()); //$NON-NLS-1$
       }
 
-      md5Map = db.getHashMap("md5Map");
-      sha1Map = db.getHashMap("sha1Map");
-      products = db.getHashMap("productMap");
+      md5Map = db.getHashMap("md5Map"); //$NON-NLS-1$
+      sha1Map = db.getHashMap("sha1Map"); //$NON-NLS-1$
+      products = db.getHashMap("productMap"); //$NON-NLS-1$
 
       if (md5) {
         map = md5Map;
@@ -133,7 +133,7 @@ public class KFFTask extends AbstractTask {
         BufferedReader reader = new BufferedReader(new FileReader(confFile));
         String line = reader.readLine();
         while ((line = reader.readLine()) != null) {
-          if (line.startsWith("#")) {
+          if (line.startsWith("#")) { //$NON-NLS-1$
             continue;
           }
           alertProducts.add(line.trim());
@@ -147,7 +147,7 @@ public class KFFTask extends AbstractTask {
   @Override
   public void finish() throws Exception {
     if (excluded != -1) {
-      LOGGER.info("Itens ignorados via KFF: {}", excluded);
+      LOGGER.info("Items ignored by hash database lookup: {}", excluded); //$NON-NLS-1$
     }
     excluded = -1;
   }
@@ -155,32 +155,32 @@ public class KFFTask extends AbstractTask {
   public void importKFF(File kffDir) throws IOException {
       
     if(!taskEnabled)
-        throw new IPEDException("Habilite " + ENABLE_PARAM + " em IPEDConfig.txt");
+        throw new IPEDException("Enable " + ENABLE_PARAM + " on IPEDConfig.txt"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    File NSRLProd = new File(kffDir, "NSRLProd.txt");
+    File NSRLProd = new File(kffDir, "NSRLProd.txt"); //$NON-NLS-1$
     BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
       int idx = line.indexOf(',');
       String key = line.substring(0, idx);
-      String[] values = line.substring(idx + 2).split("\",\"");
+      String[] values = line.substring(idx + 2).split("\",\""); //$NON-NLS-1$
       String[] prod = {values[0], values[1]};
       products.put(Integer.valueOf(key), prod);
     }
     reader.close();
     for (File kffFile : kffDir.listFiles()) {
-      if (!kffFile.getName().equals("NSRLFile.txt")) {
+      if (!kffFile.getName().equals("NSRLFile.txt")) { //$NON-NLS-1$
         continue;
       }
       long length = kffFile.length();
       long progress = 0;
       int i = 0;
-      ProgressMonitor monitor = new ProgressMonitor(null, "", "Importando " + kffFile.getName(), 0, (int) (length / 1000));
+      ProgressMonitor monitor = new ProgressMonitor(null, "", "Importing " + kffFile.getName(), 0, (int) (length / 1000)); //$NON-NLS-1$ //$NON-NLS-2$
       reader = new BufferedReader(new FileReader(kffFile));
       line = reader.readLine();
-      String[] ignoreStrs = {"\"\"", "\"D\""};
+      String[] ignoreStrs = {"\"\"", "\"D\""}; //$NON-NLS-1$ //$NON-NLS-2$
       while ((line = reader.readLine()) != null) {
-        String[] values = line.split(",");
+        String[] values = line.split(","); //$NON-NLS-1$
         KffAttr attr = new KffAttr();
         attr.group = Integer.valueOf(values[values.length - 3]);
         if (values[values.length - 1].equals(ignoreStrs[0]) || values[values.length - 1].equals(ignoreStrs[1])) {
@@ -234,19 +234,18 @@ public class KFFTask extends AbstractTask {
         String[] product = products.get(Math.abs(attr));
         if (attr > 0 || alertProducts.contains(product[0])) //evidence.addCategory(ALERT);
         {
-          evidence.setExtraAttribute(KFF_STATUS, "alert");
+          evidence.setExtraAttribute(KFF_STATUS, "alert"); //$NON-NLS-1$
         } else {
           if (excludeKffIgnorable) {
             evidence.setToIgnore(true);
-            stats.incIgnored();
             synchronized (lock) {
               excluded++;
             }
           } else {
-            evidence.setExtraAttribute(KFF_STATUS, "ignore");
+            evidence.setExtraAttribute(KFF_STATUS, "ignore"); //$NON-NLS-1$
           }
         }
-        evidence.setExtraAttribute(KFF_GROUP, product[0] + " " + product[1]);
+        evidence.setExtraAttribute(KFF_GROUP, product[0] + " " + product[1]); //$NON-NLS-1$
       }
     }
   }
