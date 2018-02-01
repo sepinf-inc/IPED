@@ -73,6 +73,7 @@ public class P2PBookmarker {
 				    hashes.append(hash).append(" "); //$NON-NLS-1$
 				
 				StringBuilder queryBuilder = new StringBuilder();
+				queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND "); //$NON-NLS-1$
 				queryBuilder.append(program.hashName + ":("); //$NON-NLS-1$
 				queryBuilder.append(hashes.toString());
 				queryBuilder.append(")"); //$NON-NLS-1$
