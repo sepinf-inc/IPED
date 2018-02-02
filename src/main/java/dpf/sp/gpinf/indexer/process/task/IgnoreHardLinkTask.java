@@ -93,10 +93,12 @@ public class IgnoreHardLinkTask extends AbstractTask {
           fileSystemMap.put(fsId, hardLinkMap);
         }
 
-        if (hardLinkMap.containsKey(hardLink)) {
+        Object id = hardLinkMap.get(hardLink);
+        //test if it is not the same item from other processing queue
+        if (id != null && !id.equals(evidence.getId())) {
           ignore = true;
         } else {
-          hardLinkMap.put(hardLink, null);
+          hardLinkMap.put(hardLink, evidence.getId());
         }
       }
 
