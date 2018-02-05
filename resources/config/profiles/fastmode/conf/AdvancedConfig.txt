@@ -44,7 +44,7 @@ extraCharsToIndex =
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
 
-# Não re-processa hard links apontando para itens já processados. Os hard links são adicionados ao caso,
+# Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
 # porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
 # Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
 ignoreHardLinks = true
