@@ -376,7 +376,7 @@ public class HTMLReportTask extends AbstractTask {
 
       reportSubFolder.mkdirs();
       
-      if(!entriesByLabel.isEmpty())
+      if(!entriesByLabel.isEmpty() && !entriesNoLabel.isEmpty())
     	  entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
       modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content;  //$NON-NLS-1$//$NON-NLS-2$
