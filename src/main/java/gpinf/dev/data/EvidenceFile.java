@@ -564,7 +564,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
-          stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId), path);
+          stream = sleuthProcess.getInputStream((int)sleuthFile.getId(), path);
         }
       } else {
         return new EmptyInputStream();

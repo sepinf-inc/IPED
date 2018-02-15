@@ -44,10 +44,10 @@ extraCharsToIndex =
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
 
-# Não re-processa hard links apontando para itens já processados. Os hard links são adicionados ao caso,
+# Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
 # porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
 # Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
-ignoreHardLinks = false
+ignoreHardLinks = true
 
 # Configure caso queira ignorar arquivos orphans com base no seu tamanho.
 # Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
@@ -62,6 +62,10 @@ unallocatedFragSize = 10737418240
 # específico são divididos em fragmentos de 10MB antes de serem indexados, facilitando o destaque de hits e a exportação 
 # de trechos com hits de itens grandes como pagefile, vss, etc
 minItemSizeToFragment = 104857600
+
+# Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
+# não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
+textSplitSize = 100000000
 
 ########################################################################
 # Configurações OCR

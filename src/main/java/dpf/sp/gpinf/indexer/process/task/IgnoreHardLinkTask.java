@@ -65,11 +65,10 @@ public class IgnoreHardLinkTask extends AbstractTask {
     Content content = evidence.getSleuthFile();
     if (content != null && content instanceof FsContent) {
       FsContent fsContent = (FsContent) content;
-      /*TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType(); 
-       if(!fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS) && 
-       !fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS_DETECT))
-       return;
-       */
+      TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType(); 
+      if(!fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS) && 
+         !fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS_DETECT))
+          return;
       long fsId = fsContent.getFileSystemId();
       long metaAddr = fsContent.getMetaAddr();
       HardLink hardLink;
@@ -93,10 +92,13 @@ public class IgnoreHardLinkTask extends AbstractTask {
           fileSystemMap.put(fsId, hardLinkMap);
         }
 
-        if (hardLinkMap.containsKey(hardLink)) {
-          ignore = true;
+        Object id = hardLinkMap.get(hardLink);
+        //test if it is not the same item from other processing queue
+        if (id != null) {
+        	if(!id.equals(evidence.getSleuthId()))
+                ignore = true;
         } else {
-          hardLinkMap.put(hardLink, null);
+            hardLinkMap.put(hardLink, evidence.getSleuthId());
         }
       }
 
