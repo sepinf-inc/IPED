@@ -62,6 +62,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -654,6 +655,31 @@ public class IndexItem extends BasicProps{
           }
 
         }
+      }
+      
+      value = doc.get(HashTask.HASH.MD5.toString());
+      if (value != null) {
+    	  evidence.setExtraAttribute(HashTask.HASH.MD5.toString(), value);
+      }
+      
+      value = doc.get(HashTask.HASH.SHA1.toString());
+      if (value != null) {
+    	  evidence.setExtraAttribute(HashTask.HASH.SHA1.toString(), value);
+      }
+      
+      value = doc.get(HashTask.HASH.SHA256.toString());
+      if (value != null) {
+    	  evidence.setExtraAttribute(HashTask.HASH.SHA256.toString(), value);
+      }
+      
+      value = doc.get(HashTask.HASH.SHA512.toString());
+      if (value != null) {
+    	  evidence.setExtraAttribute(HashTask.HASH.SHA512.toString(), value);
+      }
+      
+      value = doc.get(HashTask.HASH.EDONKEY.toString());
+      if (value != null) {
+    	  evidence.setExtraAttribute(HashTask.HASH.EDONKEY.toString(), value);
       }
 
       value = doc.get(IndexItem.DELETED);
