@@ -1,0 +1,41 @@
+﻿########################################################################
+# Configuração para exportação AUTOMATICA de arquivos.
+# Útil em casos de extração cega de dados.
+# Descomente as Categorias que deverão ser EXPORTADAS.
+# Os itens serão exportados para a pasta 'Exportados'
+# Nesse caso, somente os arquivos exportados serão indexados.
+########################################################################
+
+Emails
+Text Documents
+PDF Documents
+HTML Documents
+RTF Documents
+Other Documents
+XML Files
+Databases
+Spreadsheets
+Presentations
+Contacts
+Chats
+Internet History
+Link files
+URL links
+Peer-to-peer
+Temporary Internet Texts
+Texts in System Folders
+Other Texts
+Scanned Documents
+Temporary Internet Images
+#Images in System Folders
+Other Images
+#Videos
+#Audios
+#OLE files
+#Compressed Archives
+#Mailboxes
+Windows Registry
+#Programs and Libraries
+#Unallocated
+#Other files
+#Empty Files

@@ -189,16 +189,6 @@ public class CmdLineArgs {
       } else if (args[i].compareTo("--append") == 0) { //$NON-NLS-1$
         IndexFiles.getInstance().appendIndex = true;
 
-      } else if (args[i].compareTo("-profile") == 0){ //$NON-NLS-1$
-    	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
-		try {
-			String appRoot = new File(url.toURI()).getParent();
-			if(!new File(appRoot, "profiles/" + args[i + 1]).exists()) //$NON-NLS-1$
-				  throw new IPEDException("No such Profile!"); //$NON-NLS-1$
-			
-		} catch (URISyntaxException e) {
-			throw new IPEDException(e.getMessage());
-		}
       }
 
     }

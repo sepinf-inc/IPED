@@ -49,12 +49,21 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
 
-    private static final File globalCols = new File(System.getProperty("user.home") + "/.indexador/visibleCols.dat"); //$NON-NLS-1$ //$NON-NLS-2$
+    private static final File globalCols = getGlobalColsFile();
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
     public static final String[] groupNames = {Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Email"), Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"),  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
                                                 Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.Other")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+    
+    private static final File getGlobalColsFile() {
+    	String name = "visibleCols"; //$NON-NLS-1$
+    	String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+    	if(locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
+    		name += "-" + locale; //$NON-NLS-1$
+    	name += ".dat"; //$NON-NLS-1$
+    	return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 	
 	private static final String[] defaultFields =
 		{ 

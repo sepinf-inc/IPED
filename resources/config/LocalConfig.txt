@@ -2,8 +2,7 @@
 # Configurações Locais do Ambiente
 ########################################################################
 
-# Define a localização/idioma do programa. "default" utiliza a configuração do sistema operacional.
-# Atualmente há localizações para pt-BR e en-US.
+# Define a localização/idioma do programa. Atualmente há localizações para pt-BR e en.
 locale = pt-BR
 
 # Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.

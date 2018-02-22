@@ -19,6 +19,7 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém compatibilidade com
@@ -128,13 +130,27 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	  //configPath = System.getProperty("user.dir");
 	  rootPath = new File(url.toURI()).getParent();
 	  configPath = rootPath;
+	  String locale = getProfileLocale();
+	  
+	  String profile = null;
 	  
 	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){ //$NON-NLS-1$
-		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0); //$NON-NLS-1$
-		  configPath = new File(configPath, "profiles/" + profile).getAbsolutePath(); //$NON-NLS-1$
-		  if(!new File(configPath).exists())
-			  throw new IPEDException("No such profile!"); //$NON-NLS-1$
-	  }
+		  profile = cmdLineParams.getCmdArgs().get("-profile").get(0); //$NON-NLS-1$
+	  }else if(!locale.equals("pt-BR")) //$NON-NLS-1$
+		  profile = "default"; //$NON-NLS-1$
+	  
+	  if(profile != null)
+		  configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
+	  
+	  if(!new File(configPath).exists())
+		  throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
+  }
+  
+  public String getProfileLocale() throws IOException {
+	  UTF8Properties props = new UTF8Properties();
+	  props.load(new File(rootPath, Configuration.LOCAL_CONFIG));
+	  String locale = props.getProperty("locale").trim(); //$NON-NLS-1$
+	  return locale;
   }
 
   /**

@@ -1,0 +1,13 @@
+﻿############################################################################
+# Configuração de Exportação Automática de dados por palavras-chave/regex
+# 
+# Adicione palavras ou regex abaixo, uma por linha, para exportar e indexar
+# APENAS os itens que contiverem alguma das palavras ou regex definidas.
+# 
+# Sintaxe das regex: http://www.brics.dk/automaton/doc/index.html
+# 
+# Para facilitar a definição das palavras ou regex, diferenças de 
+# capitalização e acentuação são ignoradas.
+#
+# Os hits são adicionadas ao metadado Regex:KEYWORDS dos itens
+############################################################################

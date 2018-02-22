@@ -94,7 +94,7 @@ public class Configuration {
   private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
 	  if(appRoot.contains("profiles")) //$NON-NLS-1$
-	   	appRoot = new File(appRoot).getParentFile().getParent();
+	   	appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
 	  return appRoot;
   }
 
@@ -184,8 +184,9 @@ public class Configuration {
     }
     
     value = properties.getProperty("locale"); //$NON-NLS-1$
-    if (value != null && !value.trim().equals("default")) //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty())
       locale = Locale.forLanguageTag(value.trim());
+    
     System.setProperty("iped-locale", locale.toLanguageTag()); //$NON-NLS-1$
 
     value = properties.getProperty("forceMerge"); //$NON-NLS-1$
