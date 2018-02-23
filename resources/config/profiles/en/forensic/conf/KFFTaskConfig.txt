@@ -3,6 +3,7 @@
 # Alterações automaticamente são aplicadas em novos processamentos, sem necessidade de reimportar a base.
 
 NSRL_Alert
+eMule
 Legion
 Nmap-Hacker Tool
 Grinder
