@@ -32,11 +32,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Fields;
@@ -193,7 +196,7 @@ public class IPEDSource implements Closeable{
 			globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 	
@@ -388,16 +391,16 @@ public class IPEDSource implements Closeable{
 	  }
 	
 	private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
-		  File tmpCase = null;
 		  char letter = casePath.getAbsolutePath().charAt(0);
 	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 	      for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
-	        ArrayList<String> newPaths = new ArrayList<String>();
+	        ArrayList<String> newPaths = null;
 	        for(String path : paths){
 	        	if(new File(path).exists())
 	        		break;
 	        	else{
+	        	    newPaths = new ArrayList<String>();
 	        		String newPath = letter + path.substring(1);
 	        		if(new File(newPath).exists())
 	        			newPaths.add(newPath);	        				
@@ -421,18 +424,94 @@ public class IPEDSource implements Closeable{
 	        		}
 	        	}
 	        }
-	        if (newPaths.size() > 0) {
-	          if (tmpCase == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
-	            tmpCase = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
-	            tmpCase.deleteOnExit();
-	            sleuthCase.close();
-	            IOUtil.copiaArquivo(sleuthFile, tmpCase);
-	            sleuthCase = SleuthkitCase.openCase(tmpCase.getAbsolutePath());
-	          }
-	          sleuthCase.setImagePaths(id, newPaths);
-	        }
+	        if (newPaths != null)
+    	        if(newPaths.size() > 0) {
+    	            testCanWriteToCase(sleuthFile);
+    	            sleuthCase.setImagePaths(id, newPaths);
+    	        }else
+    	            askNewImagePath(id, paths, sleuthFile);
 	      }
-	  }
+	}
+	
+	File tmpCaseFile = null;
+	
+	private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
+	    if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
+	        tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
+	        tmpCaseFile.deleteOnExit();
+            sleuthCase.close();
+            IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
+            sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
+            tskCaseList.add(sleuthCase);
+          }
+	}
+	
+	private class SelectImagePath implements Runnable{
+	    File file;
+	    @Override
+        public void run(){
+	        JOptionPane.showMessageDialog(null, Messages.getString("IPEDSource.ImageNotFound") + file.getAbsolutePath()); //$NON-NLS-1$
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle(Messages.getString("IPEDSource.NewImgPath") + file.getName()); //$NON-NLS-1$
+            fileChooser.setFileFilter(new ImageFilter(file));
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+                file = fileChooser.getSelectedFile();                              
+            }else
+                file = null;
+        }
+	}
+	
+	private class ImageFilter extends FileFilter{
+	    
+	    private String ext;
+	    
+	    public ImageFilter(File file) {
+	        int extIdx = file.getName().lastIndexOf('.');
+	        if(extIdx >= file.getName().length() - 5)
+	            ext = file.getName().substring(extIdx).toLowerCase();
+	    }
+
+        @Override
+        public boolean accept(File pathname) {
+            if(ext != null && pathname.isFile() && !pathname.getName().toLowerCase().endsWith(ext))
+                return false;
+            
+            return true;
+        }
+
+        @Override
+        public String getDescription() {
+            return ext == null ? "*.*" : "*" + ext; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+	    
+	}
+	
+	private void askNewImagePath(long imgId, List<String> paths, File sleuthFile) throws TskCoreException, IOException {
+	    SelectImagePath sip = new SelectImagePath();
+	    try {
+	        sip.file = new File(paths.get(0));
+            SwingUtilities.invokeAndWait(sip);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	    if(sip.file == null)
+	        return;
+        ArrayList<String> newPaths = new ArrayList<String>();
+        if(paths.size() == 1) {
+            newPaths.add(sip.file.getAbsolutePath());
+        }else
+            for(String path : paths) {
+                String ext = path.substring(path.lastIndexOf('.'));
+                String basePath = sip.file.getAbsolutePath().substring(0, sip.file.getAbsolutePath().lastIndexOf('.')); 
+                if(!new File(basePath + ext).exists())
+                    throw new IOException(Messages.getString("IPEDSource.ImgFragNotFound") + basePath + ext); //$NON-NLS-1$
+                newPaths.add(basePath + ext);
+            }
+        testCanWriteToCase(sleuthFile);
+        sleuthCase.setImagePaths(imgId, newPaths);
+	}
 	
 	public int getSourceId(){
 		return sourceId;
