@@ -395,12 +395,12 @@ public class IPEDSource implements Closeable{
 	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 	      for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
-	        ArrayList<String> newPaths = null;
+	        ArrayList<String> newPaths = new ArrayList<String>();
 	        for(String path : paths){
-	        	if(new File(path).exists())
+	        	if(new File(path).exists()) {
+	        	    newPaths = null;
 	        		break;
-	        	else{
-	        	    newPaths = new ArrayList<String>();
+	        	}else{
 	        		String newPath = letter + path.substring(1);
 	        		if(new File(newPath).exists())
 	        			newPaths.add(newPath);	        				
