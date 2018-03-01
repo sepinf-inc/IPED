@@ -661,9 +661,18 @@ public class SleuthkitReader extends DataSourceReader {
       return;
     }
 
-    if (Configuration.minOrphanSizeToIgnore != -1 && absFile.getUniquePath().contains("/$OrphanFiles/") //$NON-NLS-1$
-        && absFile.getSize() >= Configuration.minOrphanSizeToIgnore) {
-      return;
+    if (absFile.getUniquePath().contains("/$OrphanFiles/")) { //$NON-NLS-1$
+        if(absFile instanceof FsContent){
+            FileSystem fs = ((FsContent)absFile).getFileSystem();
+            //ignore orphans greater than its FS
+            if(absFile.getSize() > fs.getSize())
+                return;
+            //ignore orphans greater than its partition
+            if(fs.getParent() != null && fs.getParent().getSize() < absFile.getSize())
+                return;
+        }
+        if(Configuration.minOrphanSizeToIgnore != -1 && absFile.getSize() >= Configuration.minOrphanSizeToIgnore)
+            return;
     }
 
     if (evidence == null) {
