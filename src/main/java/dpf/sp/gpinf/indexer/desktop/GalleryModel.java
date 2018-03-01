@@ -194,8 +194,10 @@ public class GalleryModel extends AbstractTableModel {
           
           if(stream != null && getDimension){
         	  Dimension d = ImageUtil.getImageFileDimension(stream);
-        	  value.originalW = d.width;
-              value.originalH = d.height;
+        	  if(d != null) {
+        	      value.originalW = d.width;
+                  value.originalH = d.height;
+        	  }
               stream.reset();
           }
 
