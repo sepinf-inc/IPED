@@ -136,17 +136,16 @@ public class App extends JFrame implements WindowListener {
   CControl dockingControl;
   DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
   DefaultSingleCDockable tableTabDock, galleryTabDock;
-  public DefaultSingleCDockable mapTabDock;
-  DefaultSingleCDockable tabbedHitsDock, compositeViewerDock;
+  public DefaultSingleCDockable mapTabDock, hitsDock, subitemDock, parentDock;
+  DefaultSingleCDockable compositeViewerDock;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
 
-  public JTabbedPane tabbedHits;
   Color defaultColor;
   Color defaultFocusedColor;
   Color defaultSelectedColor;
-  private JScrollPane subItemScroll, parentItemScroll;
+  private JScrollPane hitsScroll, subItemScroll, parentItemScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
   JScrollPane mapsScroll;
   MenuClass menu;
@@ -448,7 +447,7 @@ public class App extends JFrame implements WindowListener {
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
-    JScrollPane hitsScroll = new JScrollPane(hitsTable);
+    hitsScroll = new JScrollPane(hitsTable);
     hitsTable.setFillsViewportHeight(true);
     hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -482,10 +481,6 @@ public class App extends JFrame implements WindowListener {
     parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
     parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
     parentItemTable.setShowGrid(false);
-
-    tabbedHits = new JTabbedPane();
-    tabbedHits.addTab(Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$
-    appSearchParams.tabbedHits = tabbedHits;
 
     compositeViewer = new CompositeViewer();
     appSearchParams.compositeViewer = compositeViewer;
@@ -643,9 +638,12 @@ public class App extends JFrame implements WindowListener {
 		});
 	}
 	
+	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	parentDock = createDockable("parentitemtab",  Messages.getString("ParentTableModel.ParentCount"), parentItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	
-	tabbedHitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), tabbedHits); //$NON-NLS-1$ //$NON-NLS-2$
 	compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), compositeViewer); //$NON-NLS-1$ //$NON-NLS-2$
+	compositeViewerDock.setTitleShown(false);
 	
 	dockingControl.addDockable(categoriesTabDock);
 	dockingControl.addDockable(metadataTabDock);
@@ -656,7 +654,9 @@ public class App extends JFrame implements WindowListener {
 	dockingControl.addDockable(tableTabDock);
 	dockingControl.addDockable(galleryTabDock);
 	dockingControl.addDockable(mapTabDock);
-	dockingControl.addDockable(tabbedHitsDock);
+	dockingControl.addDockable(hitsDock);
+	dockingControl.addDockable(subitemDock);
+	dockingControl.addDockable(parentDock);
 	dockingControl.addDockable(compositeViewerDock);
 	
 	setDockablesColors();
@@ -664,7 +664,7 @@ public class App extends JFrame implements WindowListener {
   
   private void removeAllDockables() {
 	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
-	  compositeViewerDock, tabbedHitsDock, tableTabDock, galleryTabDock,
+	  compositeViewerDock, hitsDock, subitemDock, parentDock, tableTabDock, galleryTabDock,
 	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
 	
 	for (DefaultSingleCDockable dockable : dockables) {
@@ -806,8 +806,16 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 	        
-	  tabbedHitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.5));
-	  tabbedHitsDock.setVisible(true);
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.5));
+	  hitsDock.setVisible(true);
+	  nextLocation = hitsDock.getBaseLocation().aside();
+	  
+	  subitemDock.setLocation(nextLocation);
+	  subitemDock.setVisible(true);
+      nextLocation = subitemDock.getBaseLocation().aside();
+      
+      parentDock.setLocation(nextLocation);
+      parentDock.setVisible(true);
 
 	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.5));
 	  compositeViewerDock.setVisible(true);
@@ -849,8 +857,16 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 	        
-	  tabbedHitsDock.setLocation(CLocation.base().normalSouth(0.3));
-	  tabbedHitsDock.setVisible(true);
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.3));
+	  hitsDock.setVisible(true);
+	  nextLocation = hitsDock.getBaseLocation().aside();
+      
+      subitemDock.setLocation(nextLocation);
+      subitemDock.setVisible(true);
+      nextLocation = subitemDock.getBaseLocation().aside();
+      
+      parentDock.setLocation(nextLocation);
+      parentDock.setVisible(true);
 	       
 	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.3));
 	  compositeViewerDock.setVisible(true);

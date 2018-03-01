@@ -130,7 +130,7 @@ public class MenuClass extends JPopupMenu {
 
     this.addSeparator();
 
-    layoutPadrao = new JMenuItem("MenuClass.ResetLayout"); //$NON-NLS-1$
+    layoutPadrao = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
     layoutPadrao.addActionListener(menuListener);
     this.add(layoutPadrao);
     

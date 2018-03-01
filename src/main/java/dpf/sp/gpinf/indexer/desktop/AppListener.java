@@ -58,7 +58,9 @@ public class AppListener implements ActionListener, MouseListener {
       App.get().resultSortKeys = App.get().resultsTable.getRowSorter().getSortKeys();
     }
     App.get().resultsTable.getRowSorter().setSortKeys(null);
-    App.get().tabbedHits.setTitleAt(0, Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
+    App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
+    App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+    App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
     App.get().status.setText(" "); //$NON-NLS-1$
 
     App.get().compositeViewer.clear();
@@ -67,9 +69,6 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().subItemModel.fireTableDataChanged();
     App.get().parentItemModel.results = new LuceneSearchResult(0);
     App.get().parentItemModel.fireTableDataChanged();
-    while (App.get().tabbedHits.getTabCount() > 1) {
-      App.get().tabbedHits.removeTabAt(1);
-    }
 
     String texto = ""; //$NON-NLS-1$
     if (App.get().termo.getSelectedItem() != null) {

@@ -104,10 +104,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
-        App.get().tabbedHits.setTitleAt(0, Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
-        while (App.get().tabbedHits.getTabCount() > 1) {
-          App.get().tabbedHits.removeTabAt(1);
-        }
+        App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
+        App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+        App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
 
         FileProcessor parsingTask = new FileProcessor(docId, true);
         parsingTask.execute();
