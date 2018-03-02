@@ -131,7 +131,7 @@ GeoXmlIped.prototype.handlePlacemark = function(mark, idx, depth, fullstyle) {
 	/* Adiciona checkbox ao infoWindow*/
 	
 	var html = m.infoWindow.getContent();
-	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.marcaMarcadorBF("+m.extendedData.id+", this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
+	html = html.substring(0,html.indexOf(">")+1)+"<input type=\"checkbox\" id=\"ck_marcador_"+m.extendedData.id+"\" "+marcado+" onclick=\"window.app.marcaMarcadorBF(\'"+m.extendedData.id+"\', this.checked);gxml.checkMarker("+m.arrayPos+", this.checked);\" />" + html.substring(html.indexOf(">")+1, html.length);
 	m.infoWindow.setContent(html);
 	
 	/* Adiciona listeners */
