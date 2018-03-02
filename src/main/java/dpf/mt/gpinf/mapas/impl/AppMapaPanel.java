@@ -98,6 +98,10 @@ public class AppMapaPanel extends JPanel {
 				browserCanvas.redesenha();
 			}
 	  }
+	
+	public void redesenha() {
+	    browserCanvas.redesenha();
+	}
 
 	public boolean isMapaDesatualizado() {
 		return mapaDesatualizado;

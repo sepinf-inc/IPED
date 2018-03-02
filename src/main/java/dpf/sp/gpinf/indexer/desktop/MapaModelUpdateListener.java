@@ -13,7 +13,8 @@ import javax.swing.event.TableModelListener;
 public class MapaModelUpdateListener implements TableModelListener {
 
 	App app;
-	public static boolean desabilitaTemp=false;
+	public static volatile boolean desabilitaTemp = false;
+	public static volatile boolean updatingSelection = false;
 	
 	public MapaModelUpdateListener(App app){
 		this.app = app;
@@ -26,7 +27,12 @@ public class MapaModelUpdateListener implements TableModelListener {
 
 			/* somente chamado se o tab de mapas estiver sendo exibido */ 
 		    if(app.mapTabDock != null && app.mapTabDock.isShowing()){
-		    	app.getBrowserPane().redesenhaMapa();
+		        if(!updatingSelection)
+		            app.getBrowserPane().redesenhaMapa();
+		        else
+		            app.getBrowserPane().redesenha();
+		        
+		        updatingSelection = false;
 		    }
 		}else{
 			//rehabilita renderização automatica pela alteração no modelo
