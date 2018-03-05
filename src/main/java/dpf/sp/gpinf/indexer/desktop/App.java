@@ -79,6 +79,9 @@ import bibliothek.gui.dock.common.ColorMap;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import bibliothek.gui.dock.common.event.CDockableStateListener;
+import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
@@ -644,6 +647,17 @@ public class App extends JFrame implements WindowListener {
 	
 	compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), compositeViewer); //$NON-NLS-1$ //$NON-NLS-2$
 	compositeViewerDock.setTitleShown(false);
+	compositeViewerDock.addCDockableStateListener(new CDockableStateListener() {
+        @Override
+        public void extendedModeChanged(CDockable arg0, ExtendedMode mode) {
+            if(mode == ExtendedMode.EXTERNALIZED || mode == ExtendedMode.NORMALIZED)
+                viewerControl.restartLibreOfficeFrame();
+        }
+        @Override
+        public void visibilityChanged(CDockable arg0) {
+            // TODO Auto-generated method stub
+        }
+    });
 	
 	dockingControl.addDockable(categoriesTabDock);
 	dockingControl.addDockable(metadataTabDock);
@@ -891,7 +905,7 @@ public class App extends JFrame implements WindowListener {
 	  selectDockableTab(tableTabDock);
     }
 
-    viewerControl.restartLibreOffice();
+    viewerControl.restartLibreOfficeFrame();
   }
   
   public void alterarDisposicao() {
