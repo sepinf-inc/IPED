@@ -167,7 +167,7 @@ public class ImageThumbTask extends AbstractTask {
         	  evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
-      if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
+      if (img == null) {
         try (BufferedInputStream stream = evidence.getBufferedStream()){
           img = new GraphicsMagicConverter().getImage(stream, thumbSize * samplingRatio, true);
           if(img != null)

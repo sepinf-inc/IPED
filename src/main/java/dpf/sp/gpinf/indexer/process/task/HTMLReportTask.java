@@ -846,7 +846,7 @@ public class HTMLReportTask extends AbstractTask {
         } finally {
           IOUtil.closeQuietly(stream);
         }
-        if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
+        if (img == null) {
           stream = evidence.getBufferedStream();
           try {
             img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);

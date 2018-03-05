@@ -260,7 +260,7 @@ public class DIETask extends AbstractTask {
           IOUtil.closeQuietly(stream);
         }
       }
-      if (img == null && !ImageUtil.jdkImagesSupported.contains(evidence.getMediaType().toString())) {
+      if (img == null) {
         BufferedInputStream stream = evidence.getBufferedStream();
         try {
           img = new GraphicsMagicConverter().getImage(stream, die.getExpectedImageSize());

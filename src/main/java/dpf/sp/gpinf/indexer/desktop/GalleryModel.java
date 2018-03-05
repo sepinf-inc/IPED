@@ -212,7 +212,6 @@ public class GalleryModel extends AbstractTableModel {
           }
 
           if (image == null && stream != null) {
-        	if(!ImageUtil.jdkImagesSupported.contains(mediaType))
               image = new GraphicsMagicConverter().getImage(stream, thumbSize);
           }
 
