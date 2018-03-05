@@ -30,7 +30,7 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
@@ -155,6 +155,10 @@ public class MenuClass extends JPopupMenu {
     similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
     similarDocs.addActionListener(menuListener);
     this.add(similarDocs); 
+    
+    openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
+    openViewfile.addActionListener(menuListener);
+    this.add(openViewfile); 
 
   }
 

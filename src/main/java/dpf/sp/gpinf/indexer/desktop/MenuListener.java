@@ -37,14 +37,19 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import gpinf.dev.data.EvidenceFile;
 
 public class MenuListener implements ActionListener {
+    
+  private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
   JFileChooser fileChooser = new JFileChooser();
   FileFilter defaultFilter = fileChooser.getFileFilter(), csvFilter = new Filtro();
@@ -319,6 +324,13 @@ public class MenuListener implements ActionListener {
       	  Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent);
       	  App.get().appletListener.updateFileListing(query);
         }
+    
+    }else if(e.getSource() == menu.openViewfile) {
+        int selIdx = App.get().resultsTable.getSelectedRow();
+        ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+        EvidenceFile item = App.get().appCase.getItemByItemId(itemId);
+        LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
+        ExternalFileOpen.open(item.getViewFile());
     }
 
   }
