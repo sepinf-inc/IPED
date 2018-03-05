@@ -60,6 +60,7 @@ public class GalleryTable extends JTable {
 
   public void setCellSelectionInterval(int minCell, int maxCell) {
     selectedCells.set(minCell, maxCell + 1);
+    this.repaint();
   }
 
   public int[] getSelectedCells() {

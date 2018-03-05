@@ -64,12 +64,17 @@ public class MarcadoresController {
 		atualizarGUI();
 	}
 
+	public void atualizarGUISelection() {
+	    MapaModelUpdateListener.updatingSelection = true;
+	    atualizarGUI();
+	}
+	
 	public void atualizarGUI() {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
 				if (App.get().resultsTable.getRowCount() > 0) {
-					App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
+				    App.get().resultsModel.fireTableRowsUpdated(0, App.get().resultsTable.getRowCount() - 1);
 					App.get().galleryModel.fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
 				}
 				App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " + App.get().appCase.getTotalItens()); //$NON-NLS-1$

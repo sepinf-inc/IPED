@@ -171,7 +171,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            App.get().tabbedHits.addTab(sumSubitens + Messages.getString("SubitemTableModel.Subitens"), App.get().getParams().subItemScroll); //$NON-NLS-1$
+            App.get().subitemDock.setTitleText(sumSubitens + Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
           }
         });
       }

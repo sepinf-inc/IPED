@@ -1,23 +1,22 @@
 package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.io.IOException;
 import java.util.HashMap;
 
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
+import dpf.sp.gpinf.indexer.search.ItemId;
+
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.MapaModelUpdateListener;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
@@ -52,7 +51,7 @@ public class AppMapaPanel extends JPanel {
 			public void valueChanged(ListSelectionEvent e) {
 			    if(e.getValueIsAdjusting()) return;
 
-				if((app.getResultTab().getSelectedIndex()!=2)&&(!mapaDesatualizado)){
+				if((!App.get().mapTabDock.isShowing())&&(!mapaDesatualizado)){
 					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 					HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>(); 
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
@@ -64,16 +63,6 @@ public class AppMapaPanel extends JPanel {
 					browserCanvas.enviaSelecoes(selecoes);
 				}
 			}
-		});
-
-	    // provoca a atualização do mapa na mudança de tabs
-	    app.getResultTab().addChangeListener(new ChangeListener() {
-	    	@Override
-			public void stateChanged(ChangeEvent e) {
-				if(app.getResultTab().getSelectedIndex()==2){
-					redesenhaMapa();
-				}
-			}		
 		});
 
 	    app.resultsModel.addTableModelListener(new MapaModelUpdateListener(app));
@@ -90,7 +79,10 @@ public class AppMapaPanel extends JPanel {
 					browserCanvas.connect();
 
 					//força a rederização do Mapa (resolvendo o bug da primeira renderização 
-					app.treeSplitPane.setDividerLocation(app.treeSplitPane.getDividerLocation()-1);
+					for (Component c : app.mapTabDock.getContentPane().getComponents()) {
+						c.repaint();
+					}
+					app.mapTabDock.getContentPane().repaint();
 				}
 
 			    String kml = ""; //$NON-NLS-1$
@@ -106,6 +98,10 @@ public class AppMapaPanel extends JPanel {
 				browserCanvas.redesenha();
 			}
 	  }
+	
+	public void redesenha() {
+	    browserCanvas.redesenha();
+	}
 
 	public boolean isMapaDesatualizado() {
 		return mapaDesatualizado;

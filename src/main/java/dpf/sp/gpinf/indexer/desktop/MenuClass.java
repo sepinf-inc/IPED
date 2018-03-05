@@ -29,7 +29,7 @@ public class MenuClass extends JPopupMenu {
   private static final long serialVersionUID = 1L;
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
-      carregarMarcadores, aumentarGaleria, diminuirGaleria, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
+      carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
       gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs;
 
   // JCheckBoxMenuItem changeViewerTab;
@@ -130,6 +130,10 @@ public class MenuClass extends JPopupMenu {
 
     this.addSeparator();
 
+    layoutPadrao = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
+    layoutPadrao.addActionListener(menuListener);
+    this.add(layoutPadrao);
+    
     disposicao = new JMenuItem(Messages.getString("MenuClass.ChangeLayout")); //$NON-NLS-1$
     disposicao.addActionListener(menuListener);
     this.add(disposicao);

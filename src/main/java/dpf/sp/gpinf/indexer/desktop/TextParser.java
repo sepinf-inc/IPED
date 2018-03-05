@@ -171,7 +171,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
   @Override
   public void done() {
 	
-    App.get().tabbedHits.setTitleAt(0, hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+    App.get().hitsDock.setTitleText(hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
     if (progressMonitor != null) {
       progressMonitor.close();
     }

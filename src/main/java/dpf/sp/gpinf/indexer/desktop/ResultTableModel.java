@@ -170,7 +170,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();
-    	MarcadoresController.get().atualizarGUI();
+    	MarcadoresController.get().atualizarGUISelection();
     }
   }
 

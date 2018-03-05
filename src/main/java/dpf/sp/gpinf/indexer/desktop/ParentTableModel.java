@@ -189,7 +189,7 @@ public class ParentTableModel extends AbstractTableModel implements MouseListene
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          App.get().tabbedHits.addTab(Messages.getString("ParentTableModel.ParentCount"), App.get().getParams().parentItemScroll); //$NON-NLS-1$
+          App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
         }
       });
     }

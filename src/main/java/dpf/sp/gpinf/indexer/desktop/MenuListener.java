@@ -84,6 +84,8 @@ public class MenuListener implements ActionListener {
     if (e.getSource() == menu.disposicao) {
       App.get().alterarDisposicao();
 
+    } else if (e.getSource() == menu.layoutPadrao) {
+    	App.get().refazLayout(true);
     } else if (e.getSource() == menu.marcarSelecionados) {
       MarcadoresController.get().setMultiSetting(true);
       int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -92,7 +94,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.desmarcarSelecionados) {
     	MarcadoresController.get().setMultiSetting(true);
@@ -102,7 +104,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     }
     if (e.getSource() == menu.lerSelecionados) {
@@ -113,7 +115,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.deslerSelecionados) {
     	MarcadoresController.get().setMultiSetting(true);
@@ -123,7 +125,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.exportarSelecionados) {
       fileChooser.setFileFilter(defaultFilter);

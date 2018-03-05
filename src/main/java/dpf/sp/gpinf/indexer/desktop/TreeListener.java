@@ -160,8 +160,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
     
-    int index = SwingUtil.getIndexOfTab(App.get().treeTab, Messages.getString("TreeViewModel.RootName")); //$NON-NLS-1$
-    App.get().treeTab.setSelectedIndex(index);
+    App.get().moveEvidenveTabToFront();
 
     TreePath treePath = new TreePath(path.toArray());
     App.get().tree.setExpandsSelectedPaths(true);
@@ -174,9 +173,9 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   public void actionPerformed(ActionEvent e) {
 
     if ((App.get().recursiveTreeList.isSelected() && rootSelected) || selection.isEmpty()) {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+      App.get().setEvidenceDefaultColor(true);
     } else {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+      App.get().setEvidenceDefaultColor(false);
     }
 
     App.get().appletListener.updateFileListing();

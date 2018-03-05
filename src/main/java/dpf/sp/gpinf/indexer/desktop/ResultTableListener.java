@@ -41,6 +41,8 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
+    
+  public static boolean syncingSelectedItems = false;
 
   private long lastKeyTime = -1;
   private String lastKeyString = ""; //$NON-NLS-1$
@@ -65,14 +67,15 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     a.setBounds(b.x, a.y, a.width, a.height);
     App.get().resultsTable.scrollRectToVisible(a);
 
-    if (App.get().resultTab.getSelectedIndex() != 1) {
+    if (!syncingSelectedItems) {
+      syncingSelectedItems = true;
       App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
       int galleryRow = resultTableLeadSelIdx / App.get().galleryModel.colCount;
       int galleyCol = resultTableLeadSelIdx % App.get().galleryModel.colCount;
       App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
 
-      App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
       App.get().gallery.clearSelection();
+      App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
       int[] selRows = App.get().resultsTable.getSelectedRows();
       int start = 0;
       while (start < selRows.length) {
@@ -83,7 +86,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         App.get().gallery.setCellSelectionInterval(selRows[start], selRows[i - 1]);
         start = i;
       }
-      App.get().gallery.getSelectionModel().setValueIsAdjusting(true);
+      App.get().gallery.getSelectionModel().setValueIsAdjusting(false);
+      syncingSelectedItems = false;
     }
 
     processSelectedFile();
@@ -104,10 +108,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         App.get().hitsTable.scrollRectToVisible(new Rectangle());
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
-        App.get().tabbedHits.setTitleAt(0, Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
-        while (App.get().tabbedHits.getTabCount() > 1) {
-          App.get().tabbedHits.removeTabAt(1);
-        }
+        App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
+        App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+        App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
 
         FileProcessor parsingTask = new FileProcessor(docId, true);
         parsingTask.execute();

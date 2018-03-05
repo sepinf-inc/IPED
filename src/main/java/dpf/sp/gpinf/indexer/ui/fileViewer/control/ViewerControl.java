@@ -220,6 +220,20 @@ public class ViewerControl implements IViewerControl {
       officeViewer.releaseFocus();
     }
   }
+  
+  @Override
+  public void restartLibreOfficeFrame() {
+      if (officeViewer != null) {
+          Thread process = new Thread() {
+            @Override
+            public void run() {
+              officeViewer.constructLOFrame();
+              officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
+            }
+          };
+          process.start();
+      }
+  }
 
   @Override
   public void addViewer(Viewer viewer) {
