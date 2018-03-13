@@ -26,7 +26,7 @@ Atalhos para arquivos = application/x-lnk
 
 Outros Documentos = application/vnd.ms-xpsdocument; application/vnd.visio; application/vnd.ms-project; application/x-project; application/vnd.ms-works; application/x-quattro-pro; application/sldworks; application/x-tika-ooxml-protected; application/onenote; application/x-msmoney; application/x-mspublisher; application/x-ms-owner; model/vnd.dwfx+xps; application/vnd.ms-graph;
 
-Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
+Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst; application/x-ufed-mails
 
 Caixas de Emails = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
 
@@ -34,13 +34,13 @@ Bases de dados = application/x-edb; application/x-edb-table; application/irpf; a
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli
 
-Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; 
+Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-contacts
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-chats; application/x-ufed-chats-txt
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
-Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer
+Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-apps
 
 Não Alocado = application/x-unallocated;
 
@@ -58,10 +58,60 @@ Outros Arquivos = application/octet-stream; application/x-nls
 
 Peer-to-peer = application/x-p2p
 
-Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; 
+Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-webhistory
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
 Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
 
-Outros Espelhos = application/x-disk-image; 
+Outros Espelhos = application/x-disk-image;
+
+# UFED
+
+Resumo da Extração = application/x-ufed-summary
+
+Chamadas = application/x-ufed-calls
+
+Mensagens SMS = application/x-ufed-sms
+
+Mensagens MMS = application/x-ufed-mms
+
+Dispositivos Bluetooth = application/x-ufed-bluetooth
+
+Dados SIM = application/x-ufed-simdata
+
+Calendário = application/x-ufed-calendar
+
+Logs = application/x-ufed-logs
+
+Usuários = application/x-ufed-users
+
+Pesquisas = application/x-ufed-searches
+
+Favoritos Web = application/x-ufed-bookmarks
+
+Anotações = application/x-ufed-notes
+
+Redes sem fio = application/x-ufed-wifi
+
+Notificações = application/x-ufed-notifications
+
+Localizações = application/x-ufed-locations
+
+Cookies = application/x-ufed-cookies
+
+Configurações = application/x-ufed-configurations
+
+Senhas = application/x-ufed-passwords
+
+Autopreenchimento = application/x-ufed-autofill
+
+Torres de célula = application/x-ufed-celltowers
+
+Eventos de Energia = application/x-ufed-energyevents
+
+Dicionário do usuário = application/x-ufed-userdict
+
+Conexões IP = application/x-ufed-ips
+
+Gravações = application/x-ufed-recordings

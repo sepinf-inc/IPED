@@ -464,5 +464,271 @@
         </magic>
         <glob pattern="*.lnk"/>
     </mime-type> 
+    
+    <!-- UFED specific mimes-->
+    
+    <mime-type type="application/x-ufed-html-report">
+    	<magic priority="60">
+    		<match value="&lt;title&gt;Extraction Report" type="string" offset="100:150"/>
+            <match value="0x3C7469746C653E52656C6174C3B372696F206465206578747261C3A7C3A36F" type="string" offset="100:150"/>
+        </magic>
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-summary">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="window.name=&quot;&quot;;" type="string" offset="84"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-sms">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="smsmessages" type="string" offset="97"/>
+            <match value="mensagenssms" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-mms">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="mmsmessages" type="string" offset="97"/>
+            <match value="mensagensmms" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-calls">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+            <match value="&quot;calllog" type="string" offset="96"/>
+            <match value="registrodechamadas" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-mails">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;emails" type="string" offset="96"/>
+            <match value="&quot;e-mails" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-contacts">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;contacts" type="string" offset="96"/>
+            <match value="&quot;contatos" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-bluetooth">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+            <match value="bluetoothdevices" type="string" offset="97"/>
+            <match value="dispositivosbluetooth" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-simdata">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="simdata" type="string" offset="97"/>
+            <match value="dadossim" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-apps">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="installedapplications" type="string" offset="97"/>
+    		<match value="&quot;applications&quot;" type="string" offset="96"/>
+            <match value="aplicativosinstalados" type="string" offset="97"/>
+            <match value="&quot;aplicativos&quot;" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chats">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+            <match value="&quot;chats" type="string" offset="96"/>
+            <match value="&quot;bate-papos" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-calendar">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+            <match value="&quot;calendar" type="string" offset="96"/>
+            <match value="&quot;calend..rio" type="regex" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-logs">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="logentries" type="string" offset="97"/>
+            <match value="entradasdelog" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-users">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="useraccounts" type="string" offset="97"/>
+    		<match value="deviceusers" type="string" offset="97"/>
+            <match value="contasdeusu..rio" type="regex" offset="97"/>
+            <match value="usu..riosdodispositivo" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-searches">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="searcheditems" type="string" offset="97"/>
+            <match value="itenspesquisados" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-bookmarks">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="webbookmarks" type="string" offset="97"/>
+            <match value="indicadoresdaweb" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-notes">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;notes&quot;" type="string" offset="96"/>
+            <match value="&quot;anota....es" type="regex" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-wifi">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="wirelessnetworks" type="string" offset="97"/>
+            <match value="redessemfio" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-notifications">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="notifications" type="string" offset="97"/>
+    		<match value="devicenotifications" type="string" offset="97"/>
+            <match value="notifica....es" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-locations">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;locations&quot;" type="string" offset="96"/>
+    		<match value="&quot;journeys&quot;" type="string" offset="96"/>
+            <match value="&quot;locais&quot;" type="string" offset="96"/>
+            <match value="&quot;jornadas&quot;" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-cookies">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+            <match value="&quot;cookies" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-webhistory">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="webhistory" type="string" offset="97"/>
+            <match value="hist..ricodaweb" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-configurations">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="configurations" type="string" offset="97"/>
+            <match value="configura....es" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-passwords">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;passwords" type="string" offset="96"/>
+            <match value="&quot;senhas" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-autofill">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="&quot;autofill" type="string" offset="96"/>
+            <match value="&quot;autopreenchimento" type="string" offset="96"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-celltowers">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="celltowers" type="string" offset="97"/>
+    		<match value="cellsites" type="string" offset="97"/>
+            <match value="torresdec..lula" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-energyevents">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="energyevents" type="string" offset="97"/>
+    		<match value="powerevents" type="string" offset="97"/>
+            <match value="eventoscomenergia" type="string" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-userdict">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="userdictionary" type="string" offset="97"/>
+            <match value="dicion..riodousu..rio" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-ips">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="ipconnections" type="string" offset="97"/>
+            <match value="conex..esip" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-recordings">
+    	<sub-class-of type="application/x-ufed-html-report"/>
+    	<magic priority="65">
+    		<match value="recordings" type="string" offset="97"/>
+            <match value="grava....es" type="regex" offset="97"/>
+        </magic>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chats-txt">
+    	<sub-class-of type="text/plain"/>
+    	<magic priority="60">
+    		<match value="Start Time:" type="string" offset="3">
+    			<match value="Last Activity:" type="string" offset="16:53">
+    				<match value="Participants:" type="string" offset="32:96"/>
+    			</match>
+    		</match>
+    		<match value="Hora de in" type="string" offset="3">
+    			<match value="ltima atividade:" type="string" offset="24:60">
+    				<match value="Participantes:" type="string" offset="43:105"/>
+    			</match>
+    		</match>
+        </magic>
+    	<glob pattern="chat.*txt" isregex="true"/>
+    </mime-type>
    
 </mime-info>
