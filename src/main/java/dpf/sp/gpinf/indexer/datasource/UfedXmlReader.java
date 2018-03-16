@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
@@ -108,9 +110,25 @@ public class UfedXmlReader extends DataSourceReader{
         String nameAttr;
         StringBuilder chars = new StringBuilder();
         
-        String df1Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
-        DateFormat df1 = new SimpleDateFormat(df1Pattern);
-        DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        HashMap<String,String> extractionInfoMap = new HashMap<String,String>(); 
+        
+        String df2Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+        DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        DateFormat df2 = new SimpleDateFormat(df2Pattern);
+        
+        HashSet<String> ignoreAttrs = new HashSet<>(Arrays.asList(
+                "path",
+                "size",
+                "deleted",
+                "Tags",
+                "Local Path",
+                "CreationTime",
+                "ModifyTime",
+                "AccessTime",
+                "CoreFileSystemFileSystemNodeCreationTime",
+                "CoreFileSystemFileSystemNodeModifyTime",
+                "CoreFileSystemFileSystemNodeLastAccessTime"
+                ));
         
         @Override
         public void setDocumentLocator(Locator locator) {
@@ -175,7 +193,12 @@ public class UfedXmlReader extends DataSourceReader{
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
             
-            if(qName.equals("file")) {
+            if(qName.equals("extractionInfo")) {
+                String id = atts.getValue("id");
+                String name = atts.getValue("name"); 
+                extractionInfoMap.put(id, name);
+                
+            }else if(qName.equals("file")) {
                 String len = atts.getValue("size");
                 Long size = null;
                 if(len != null)
@@ -190,20 +213,28 @@ public class UfedXmlReader extends DataSourceReader{
                 item = new EvidenceFile();
                 item.setLength(size);
                 
-                String path = rootItem.getName() + atts.getValue("path");
+                String fs = "/" + atts.getValue("fs");
+                String path = rootItem.getName() + fs + atts.getValue("path");
                 item.setPath(path);
                 
                 String name = path.substring(path.lastIndexOf('/') + 1);
                 item.setName(name);
                 
+                item.setParent(getParent(path));
+                
                 boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted"));
                 item.setDeleted(deleted);
                 
-                boolean embedded = "true".equalsIgnoreCase(atts.getValue("embedded"));
-                //item.setSubItem(embedded);
+                String extractionName = extractionInfoMap.get(atts.getValue("extractionId"));
+                item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "extractionName", extractionName);
                 
-                item.setParent(getParent(path));
-                
+                for(int i = 0; i < atts.getLength(); i++) {
+                    String attName = atts.getQName(i);
+                    if(!ignoreAttrs.contains(attName)) {
+                        String value = atts.getValue(i);
+                        item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
+                    }
+                }
             }
             
             nameAttr = atts.getValue("name");
@@ -226,21 +257,26 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setExportedFile(file.getAbsolutePath());
                     item.setFile(file);
                     item.setLength(file.length());
-                }
+                    
+                } else if(!ignoreAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif"))
+                    if(item != null && !chars.toString().trim().isEmpty())
+                        item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + nameAttr, chars.toString().trim());
                 
             }else if(qName.equals("timestamp")) {
                 try {
                     String value = chars.toString().trim();
                     if(!value.isEmpty()) {
-                        DateFormat df = df1;
-                        if(df1Pattern.length() != value.length())
-                            df = df2;
+                        DateFormat df = df2;
+                        if(df2Pattern.length() - 2 != value.length())
+                            df = df1;
                         if(nameAttr.equals("CreationTime"))
                             item.setCreationDate(df.parse(value));
                         else if(nameAttr.equals("ModifyTime"))
                             item.setModificationDate(df.parse(value));
                         else if(nameAttr.equals("AccessTime"))
                             item.setAccessDate(df.parse(value));
+                        else
+                            item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + nameAttr, value);
                     }
                     
                 } catch (ParseException e) {

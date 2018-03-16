@@ -465,7 +465,8 @@ public class IPEDReader extends DataSourceReader {
       }
       
       for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX) ||
+             f.name().startsWith(ExtraProperties.UFED_META_PREFIX))
               evidence.getMetadata().add(f.name(), f.stringValue());
 
       value = doc.get(IndexItem.ISROOT);

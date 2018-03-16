@@ -449,7 +449,7 @@ public class IndexItem extends BasicProps{
       Object oValue = value;
       Class type = typesMap.get(key);
       
-      if (type == null && MetadataUtil.isHtmlMediaType(mimetype))
+      if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
           return;
 
       if (type == null || !type.equals(String.class)) {
@@ -718,7 +718,8 @@ public class IndexItem extends BasicProps{
       }
       
       for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX) ||
+             f.name().startsWith(ExtraProperties.UFED_META_PREFIX))
               evidence.getMetadata().add(f.name(), f.stringValue());
 
       return evidence;
