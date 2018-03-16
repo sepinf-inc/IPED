@@ -98,6 +98,7 @@ public class UfedXmlReader extends DataSourceReader{
         
         pathToParent.put(rootItem.getPath(), rootItem);
         
+        caseData.incDiscoveredEvidences(1);
         caseData.addEvidenceFile(rootItem);
     }
     
@@ -119,7 +120,8 @@ public class UfedXmlReader extends DataSourceReader{
 
         @Override
         public void startDocument() throws SAXException {
-            
+            //TODO remover timezone da exibição? obter da linha de comando?
+            df2.setTimeZone(TimeZone.getTimeZone("GMT"));
         }
 
         @Override
@@ -160,7 +162,9 @@ public class UfedXmlReader extends DataSourceReader{
             pathToParent.put(parentPath, parent);
             
             try {
+                caseData.incDiscoveredEvidences(1);
                 caseData.addEvidenceFile(parent);
+                
             } catch (InterruptedException e) {
                 throw new SAXException(e);
             }
@@ -186,8 +190,8 @@ public class UfedXmlReader extends DataSourceReader{
                 item = new EvidenceFile();
                 item.setLength(size);
                 
-                String path = atts.getValue("path");
-                item.setPath(rootItem.getName() + path);
+                String path = rootItem.getName() + atts.getValue("path");
+                item.setPath(path);
                 
                 String name = path.substring(path.lastIndexOf('/') + 1);
                 item.setName(name);
