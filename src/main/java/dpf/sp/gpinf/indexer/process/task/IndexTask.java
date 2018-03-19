@@ -106,7 +106,7 @@ public class IndexTask extends BaseCarveTask {
     stats.updateLastId(evidence.getId());
     
     //Fragmenta itens grandes indexados via strings
-    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
+    if (evidence.getLength() != null && evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
             && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
     		&& (evidence.getSleuthFile() != null || evidence.getFile() != null)){
     	
