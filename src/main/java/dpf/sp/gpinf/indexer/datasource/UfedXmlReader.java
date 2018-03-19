@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.TimeZone;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -96,7 +98,8 @@ public class UfedXmlReader extends DataSourceReader{
         rootItem.setPath(root.getName());
         rootItem.setName(root.getName());
         rootItem.setHasChildren(true);
-        rootItem.setLength(0L);
+        //rootItem.setLength(0L);
+        rootItem.setHash("");
         
         pathToParent.put(rootItem.getPath(), rootItem);
         
@@ -116,10 +119,25 @@ public class UfedXmlReader extends DataSourceReader{
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
         DateFormat df2 = new SimpleDateFormat(df2Pattern);
         
+        ArrayList<XmlNode> nodeSeq = new ArrayList<>();
+        
+        private class XmlNode{
+            String element;
+            HashMap<String, String> atts = new HashMap<>();
+            
+            private XmlNode(String element, Attributes atts) {
+                this.element = element;
+                for(int i = 0; i < atts.getLength(); i++) {
+                    this.atts.put(atts.getQName(i), atts.getValue(i));
+                }
+            }
+        }
+        
         HashSet<String> ignoreAttrs = new HashSet<>(Arrays.asList(
                 "path",
                 "size",
                 "deleted",
+                "deleted_state",
                 "Tags",
                 "Local Path",
                 "CreationTime",
@@ -174,7 +192,8 @@ public class UfedXmlReader extends DataSourceReader{
             parent.setPath(parentPath);
             parent.setHasChildren(true);
             parent.setIsDir(true);
-            parent.setLength(0L);
+            //parent.setLength(0L);
+            parent.setHash("");
             parent.setParent(getParent(parentPath));
             
             pathToParent.put(parentPath, parent);
@@ -192,6 +211,9 @@ public class UfedXmlReader extends DataSourceReader{
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+            
+            XmlNode node = new XmlNode(qName, atts);
+            nodeSeq.add(node);
             
             if(qName.equals("extractionInfo")) {
                 String id = atts.getValue("id");
@@ -225,16 +247,31 @@ public class UfedXmlReader extends DataSourceReader{
                 boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted"));
                 item.setDeleted(deleted);
                 
-                String extractionName = extractionInfoMap.get(atts.getValue("extractionId"));
-                item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "extractionName", extractionName);
+                fillCommonMeta(atts);
                 
-                for(int i = 0; i < atts.getLength(); i++) {
-                    String attName = atts.getQName(i);
-                    if(!ignoreAttrs.contains(attName)) {
-                        String value = atts.getValue(i);
-                        item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
-                    }
+            }else if(qName.equals("model") && nodeSeq.get(nodeSeq.size() - 2).element.equals("modelType")) {
+                
+                if(listOnly) {
+                    caseData.incDiscoveredEvidences(1);
+                    return;
                 }
+                
+                item = new EvidenceFile();
+                
+                String type = atts.getValue("type");
+                String name = type + "_" + atts.getValue("id");
+                item.setName(name);
+                item.setPath(rootItem.getName() + "/" + name);
+                item.setCategory(type);
+                item.setMediaType(MediaType.application("x-ufed-" + type));
+                item.setHash("");
+                
+                item.setParent(rootItem);
+                
+                boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
+                item.setDeleted(deleted);
+                
+                fillCommonMeta(atts);
             }
             
             nameAttr = atts.getValue("name");
@@ -242,8 +279,23 @@ public class UfedXmlReader extends DataSourceReader{
                 
         }
         
+        private void fillCommonMeta(Attributes atts) {
+            String extractionName = extractionInfoMap.get(atts.getValue("extractionId"));
+            item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "extractionName", extractionName);
+            
+            for(int i = 0; i < atts.getLength(); i++) {
+                String attName = atts.getQName(i);
+                if(!ignoreAttrs.contains(attName)) {
+                    String value = atts.getValue(i);
+                    item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
+                }
+            }
+        }
+        
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
+            
+            XmlNode currNode = nodeSeq.remove(nodeSeq.size() - 1);
             
             if(listOnly)
                 return;
@@ -282,13 +334,22 @@ public class UfedXmlReader extends DataSourceReader{
                 } catch (ParseException e) {
                     throw new SAXException(e);
                 }
-            } else if(qName.equals("file"))
+            } else if(qName.equals("value")) {
+                XmlNode prev = nodeSeq.get(nodeSeq.size() - 1);
+                if(prev.element.equals("field")) {
+                    String meta = prev.atts.get("name");
+                    item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + meta, chars.toString().trim());
+                    //System.out.println(chars.toString().trim());
+                }
+                
+            } else if(qName.equals("file") || (qName.equals("model") && nodeSeq.get(nodeSeq.size() - 1).element.equals("modelType"))) {
                 try {
                     caseData.addEvidenceFile(item);
                     
                 } catch (InterruptedException e) {
                     throw new SAXException(e);
                 }
+            }
             
             chars = new StringBuilder();
             nameAttr = null;
