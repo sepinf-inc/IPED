@@ -35,8 +35,11 @@ public class CategoryTreeModel implements TreeModel {
   public static void install(){
 	  if(App.get().categoryTree.getModel() instanceof CategoryTreeModel)
 		  ((CategoryTreeModel)App.get().categoryTree.getModel()).updateCategories();
-	  else
-		  App.get().categoryTree.setModel(new CategoryTreeModel());
+	  else {
+	      CategoryTreeModel model = new CategoryTreeModel();
+	      App.get().categoryTree.setModel(model);
+	      model.root.updateItemCount();
+	  }
   }
 
   private CategoryTreeModel() {
@@ -44,7 +47,6 @@ public class CategoryTreeModel implements TreeModel {
       collator = Collator.getInstance();
       collator.setStrength(Collator.PRIMARY);
       this.root = loadHierarchy();
-      this.root.updateItemCount();
       
     } catch (IOException e) {
       e.printStackTrace();
@@ -78,7 +80,7 @@ public class CategoryTreeModel implements TreeModel {
       if(this.equals(root))
           return name;
       if(numItems == null) {
-          return name + " (...)            ";
+          return name + " (...)";
       }else
           return name + " (" + numItems + ")";
     }
