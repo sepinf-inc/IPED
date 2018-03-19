@@ -18,6 +18,9 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+
 public class CategoryTreeModel implements TreeModel {
 
   public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
@@ -32,8 +35,11 @@ public class CategoryTreeModel implements TreeModel {
   public static void install(){
 	  if(App.get().categoryTree.getModel() instanceof CategoryTreeModel)
 		  ((CategoryTreeModel)App.get().categoryTree.getModel()).updateCategories();
-	  else
-		  App.get().categoryTree.setModel(new CategoryTreeModel());
+	  else {
+	      CategoryTreeModel model = new CategoryTreeModel();
+	      App.get().categoryTree.setModel(model);
+	      model.root.updateItemCount();
+	  }
   }
 
   private CategoryTreeModel() {
@@ -50,7 +56,8 @@ public class CategoryTreeModel implements TreeModel {
   private void updateCategories(){
 	try {
 		Category newRoot = loadHierarchy();
-		addNewChildren(this.root, newRoot);
+		updateChildren(this.root, newRoot);
+		this.root.updateItemCount();
 		
 	} catch (IOException e) {
 		e.printStackTrace();
@@ -58,10 +65,11 @@ public class CategoryTreeModel implements TreeModel {
   }
 
   class Category implements Comparable<Category> {
-
+    
     String name;
     Category parent;
     TreeSet<Category> children = new TreeSet<Category>();
+    volatile Integer numItems;
 
     private Category(String name, Category parent) {
       this.name = name;
@@ -69,7 +77,59 @@ public class CategoryTreeModel implements TreeModel {
     }
 
     public String toString() {
-      return name;
+      if(this.equals(root))
+          return name;
+      if(numItems == null) {
+          return name + " (...)";
+      }else
+          return name + " (" + numItems + ")";
+    }
+    
+    private synchronized Integer countNumItems() {
+        if(numItems != null)
+            return numItems;
+        
+        if(children.size() > 0) {
+            int num = 0;
+            for(Category child : children)
+                num += child.countNumItems();
+            numItems = num;
+            
+        }else {
+            String query = IndexItem.CATEGORY + ":\"" + name + "\"";
+            IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
+            try {
+                numItems = searcher.multiSearch().getLength();
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        fireNodeChanged(this);
+        return numItems;
+    }
+    
+    private void clearItemCount() {
+        numItems = null;
+        fireNodeChanged(this);
+    }
+    
+    private void updateItemCount() {
+        new Thread() {
+            public void run() {
+                countNumItems();
+            }
+        }.start();
+    }
+    
+    private int getIndexOfChild(Category child) {
+        int idx = 0;
+        for(Category c : children) {
+            if(c.equals(child))
+                return idx;
+            idx++;
+        }
+        return -1;
     }
 
     @Override
@@ -82,6 +142,20 @@ public class CategoryTreeModel implements TreeModel {
       return compareTo((Category)o) == 0;
     }
 
+  }
+  
+  private void fireNodeChanged(Category cat) {
+      if(cat == root)
+          return;
+      int idx = cat.parent.getIndexOfChild(cat);
+      int[] idxs = {idx};
+      LinkedList<Category> path = new LinkedList<Category>();
+      while(cat.parent != null)
+          path.addFirst(cat = cat.parent);
+      Category[] cats = {cat};
+      TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
+      for(TreeModelListener l : listeners)
+          l.treeNodesChanged(e);
   }
   
   private String upperCaseChars(String cat){
@@ -131,15 +205,18 @@ public class CategoryTreeModel implements TreeModel {
     return root;
   }
   
-  private void addNewChildren(Category oldRoot, Category newRoot){
+  private void updateChildren(Category oldRoot, Category newRoot){
 	  int idx = 0;
+	  oldRoot.clearItemCount();
 	  for(Category cat : newRoot.children){
 		  if(!oldRoot.children.contains(cat)){
 			  cat.parent = oldRoot;
 			  oldRoot.children.add(cat);
 			  notifyNewNode(cat, idx);
-		  }else
-			  addNewChildren(getFromSet(oldRoot.children, cat), cat);
+		  }else {
+		      Category oldCat = getFromSet(oldRoot.children, cat); 
+			  updateChildren(oldCat, cat);
+		  }
 		  idx++;
 	  }
   }
@@ -237,14 +314,7 @@ public class CategoryTreeModel implements TreeModel {
   public int getIndexOfChild(Object parent, Object child) {
 	if(parent == null || child == null)
 	  return -1;
-    int i = 0;
-    for (Category cat : ((Category) parent).children) {
-      if (cat.equals(child)) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
+    return ((Category) parent).getIndexOfChild((Category)child);
   }
 
   @Override
