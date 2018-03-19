@@ -26,7 +26,7 @@ Atalhos para arquivos = application/x-lnk
 
 Outros Documentos = application/vnd.ms-xpsdocument; application/vnd.visio; application/vnd.ms-project; application/x-project; application/vnd.ms-works; application/x-quattro-pro; application/sldworks; application/x-tika-ooxml-protected; application/onenote; application/x-msmoney; application/x-mspublisher; application/x-ms-owner; model/vnd.dwfx+xps; application/vnd.ms-graph;
 
-Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst; application/x-ufed-mails
+Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst; application/x-ufed-html-mails
 
 Caixas de Emails = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
 
@@ -34,13 +34,13 @@ Bases de dados = application/x-edb; application/x-edb-table; application/irpf; a
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli
 
-Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-contacts
+Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-chats; application/x-ufed-chats-txt
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
-Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-apps
+Programas e Bibliotecas = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps
 
 Não Alocado = application/x-unallocated;
 
@@ -58,7 +58,7 @@ Outros Arquivos = application/octet-stream; application/x-nls
 
 Peer-to-peer = application/x-p2p
 
-Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-webhistory
+Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
@@ -68,50 +68,50 @@ Outros Espelhos = application/x-disk-image;
 
 # UFED
 
-Resumo da Extração = application/x-ufed-summary
+Resumo da Extração = application/x-ufed-html-summary
 
-Chamadas = application/x-ufed-calls
+Chamadas = application/x-ufed-html-calls
 
-Mensagens SMS = application/x-ufed-sms
+Mensagens SMS = application/x-ufed-html-sms
 
-Mensagens MMS = application/x-ufed-mms
+Mensagens MMS = application/x-ufed-html-mms
 
-Dispositivos Bluetooth = application/x-ufed-bluetooth
+Dispositivos Bluetooth = application/x-ufed-html-bluetooth
 
-Dados SIM = application/x-ufed-simdata
+Dados SIM = application/x-ufed-html-simdata
 
-Calendário = application/x-ufed-calendar
+Calendário = application/x-ufed-html-calendar
 
-Logs = application/x-ufed-logs
+Logs = application/x-ufed-html-logs
 
-Usuários = application/x-ufed-users
+Usuários = application/x-ufed-html-users
 
-Pesquisas = application/x-ufed-searches
+Pesquisas = application/x-ufed-html-searches
 
-Favoritos Web = application/x-ufed-bookmarks
+Favoritos Web = application/x-ufed-html-bookmarks
 
-Anotações = application/x-ufed-notes
+Anotações = application/x-ufed-html-notes
 
-Redes sem fio = application/x-ufed-wifi
+Redes sem fio = application/x-ufed-html-wifi
 
-Notificações = application/x-ufed-notifications
+Notificações = application/x-ufed-html-notifications
 
-Localizações = application/x-ufed-locations
+Localizações = application/x-ufed-html-locations
 
-Cookies = application/x-ufed-cookies
+Cookies = application/x-ufed-html-cookies
 
-Configurações = application/x-ufed-configurations
+Configurações = application/x-ufed-html-configurations
 
-Senhas = application/x-ufed-passwords
+Senhas = application/x-ufed-html-passwords
 
-Autopreenchimento = application/x-ufed-autofill
+Autopreenchimento = application/x-ufed-html-autofill
 
-Torres de célula = application/x-ufed-celltowers
+Torres de célula = application/x-ufed-html-celltowers
 
-Eventos de Energia = application/x-ufed-energyevents
+Eventos de Energia = application/x-ufed-html-energyevents
 
-Dicionário do usuário = application/x-ufed-userdict
+Dicionário do usuário = application/x-ufed-html-userdict
 
-Conexões IP = application/x-ufed-ips
+Conexões IP = application/x-ufed-html-ips
 
-Gravações = application/x-ufed-recordings
+Gravações = application/x-ufed-html-recordings
