@@ -72,7 +72,6 @@ public class Configuration {
   public static Parser errorParser = new RawStringParser(true);
   public static Parser fallBackParser = new RawStringParser(true);
   public static boolean embutirLibreOffice = true;
-  public static boolean sortPDFChars = false;
   public static boolean addUnallocated = false;
   public static boolean addFileSlacks = false;
   public static long unallocatedFragSize = 1024 * 1024 * 1024;
@@ -345,7 +344,7 @@ public class Configuration {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
-      sortPDFChars = Boolean.valueOf(value);
+      PDFOCRTextParser.sortPDFChars = Boolean.valueOf(value);
     }
 
     value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
