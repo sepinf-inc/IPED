@@ -730,5 +730,13 @@
         </magic>
     	<glob pattern="chat.*txt" isregex="true"/>
     </mime-type>
+    
+    <mime-type type="application/x-ufed-contact">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-useraccount">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
    
 </mime-info>
