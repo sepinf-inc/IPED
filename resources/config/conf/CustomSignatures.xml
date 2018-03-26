@@ -738,5 +738,9 @@
     <mime-type type="application/x-ufed-useraccount">
     	<sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-ufed-email">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
    
 </mime-info>

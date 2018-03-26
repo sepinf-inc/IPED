@@ -35,6 +35,8 @@ import gpinf.dev.data.EvidenceFile;
 public class UfedXmlReader extends DataSourceReader{
     
     private static String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path";
+    private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path";
+    private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names";
     
     File root;
     EvidenceFile rootItem;
@@ -440,9 +442,10 @@ public class UfedXmlReader extends DataSourceReader{
                     throw new SAXException(e);
                 }
             } else if(qName.equals("value")) {
-                if(parentNode.element.equals("field") || parentNode.element.equals("multiField")) 
-                    if(!ignoreNameAttrs.contains(parentNode.atts.get("name"))){
-                        String meta = ExtraProperties.UFED_META_PREFIX + parentNode.atts.get("name");
+                if(parentNode.element.equals("field") || parentNode.element.equals("multiField")) {
+                    String parentNameAttr = parentNode.atts.get("name");
+                    if(!ignoreNameAttrs.contains(parentNameAttr)){
+                        String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
                         String type = currentNode.atts.get("type");
                         String value = chars.toString().trim();
                         boolean added = false;
@@ -455,7 +458,8 @@ public class UfedXmlReader extends DataSourceReader{
                             }
                         if(!added)
                             item.getMetadata().add(meta, value);
-                    }    
+                    }
+                }   
             } else if(qName.equals("targetid") && parentNode.element.equals("jumptargets")){
                 item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + parentNode.element, chars.toString().trim());
             
@@ -475,13 +479,15 @@ public class UfedXmlReader extends DataSourceReader{
                 itemSeq.remove(itemSeq.size() - 1);
                 String type = currentNode.atts.get("type");
                 if("Contact".equals(type) || "UserAccount".equals(type)) {
-                    File viewFile = createContactPreview(item);
-                    if(viewFile != null) {
-                        item.setExportedFile(viewFile.getAbsolutePath());
-                        item.setFile(viewFile);
-                        item.setLength(viewFile.length());
-                        item.setHash(null);
-                    }
+                    createContactPreview(item);
+                    
+                }else if("Email".equals(type)) {
+                    createEmailPreview(item);
+                    
+                }else if("Attachment".equals(type)) {
+                    handleAttachment(item);
+                    EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
+                    parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                 }
                 if(mergeInParentNode.contains(type)) {
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
@@ -547,6 +553,78 @@ public class UfedXmlReader extends DataSourceReader{
             
         }
         
+        private void handleAttachment(EvidenceFile item) {
+            String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename");
+            if(name != null) {
+                item.setName(name);
+                item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + name);
+            }
+            item.setMediaType(null);
+            item.setCategory(null);
+            item.setHash(null);
+            String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
+            if(extracted_path != null) {
+                File file = new File(root, extracted_path);
+                if(file.exists()) {
+                    item.setExportedFile(file.getAbsolutePath());
+                    item.setFile(file);
+                    item.setLength(file.length());
+                }
+            }
+        }
+        
+        private File createEmailPreview(EvidenceFile email) {
+            File file = new File(output, "view/emails/view-" + email.getId() + ".html");
+            file.getParentFile().mkdirs();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))){
+                bw.write("<!DOCTYPE html>\n"
+                + "<html>\n" //$NON-NLS-1$
+                + "<head>\n" //$NON-NLS-1$
+                + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                +"</head>\n");
+                bw.write("<body>");
+                //bw.write("<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">\n"); //$NON-NLS-1$
+                
+                String[] headers = {"Subject", "From", "To", "Cc", "Bcc", "TimeStamp"};
+                String party = "Party:";
+                for(int i = 0; i < headers.length; i++) {
+                    String prefix = i == 0 || i == headers.length - 1 ? "" : party;   
+                    String value = email.getMetadata().get(ExtraProperties.UFED_META_PREFIX + prefix + headers[i]);
+                    if(value != null)
+                        bw.write("<b>" + headers[i] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>");
+                }
+                
+                String[] attachNames = email.getMetadata().getValues(EMAIL_ATTACH_KEY);
+                if(attachNames != null && attachNames.length > 0) {
+                    bw.write("<b>" + "Attachments" + " (" + attachNames.length + "):</b><br>");
+                    for(String attach : attachNames) {
+                        bw.write(SimpleHTMLEncoder.htmlEncode(attach) + "<br>");
+                    }
+                }
+                
+                bw.write("<hr>");
+                
+                String bodyMeta = ExtraProperties.UFED_META_PREFIX + "Body";
+                String body = email.getMetadata().get(bodyMeta);
+                email.getMetadata().remove(bodyMeta);
+                if(body == null)
+                    body = email.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Snippet");
+                if(body != null)
+                    bw.write(body);
+                
+                bw.write("</body></html>");                
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            email.setExportedFile(file.getAbsolutePath());
+            email.setFile(file);
+            email.setLength(file.length());
+            email.setHash(null);
+            
+            return file;
+        }
+        
         private File createContactPreview(EvidenceFile contact) {
             
             File file = new File(output, "view/contacts/view-" + contact.getId() + ".html");
@@ -576,13 +654,18 @@ public class UfedXmlReader extends DataSourceReader{
                         if(i != vals.length - 1)
                             bw.write(" | ");
                     }
-                    bw.write("<br>\n");
+                    bw.write("<br>");
                 }
                 bw.write("</body></html>");
                 
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            contact.setExportedFile(file.getAbsolutePath());
+            contact.setFile(file);
+            contact.setLength(file.length());
+            contact.setHash(null);
+            
             return file;
         }
 
