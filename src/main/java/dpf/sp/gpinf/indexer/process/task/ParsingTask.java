@@ -190,8 +190,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 	}
 	metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 	metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
-	metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
-	metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+	if(evidence.getMediaType() != null) {
+	    metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
+	    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+	}
 	if (evidence.isTimedOut()) {
 	  metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true"); //$NON-NLS-1$
 	}

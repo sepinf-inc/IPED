@@ -818,7 +818,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setCategory(String category) {
     categories = new HashSet<String>();
-    categories.add(category);
+    if(category != null)
+        categories.add(category);
   }
 
   /**

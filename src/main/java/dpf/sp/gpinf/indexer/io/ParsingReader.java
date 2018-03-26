@@ -159,7 +159,7 @@ public class ParsingReader extends Reader {
 
     String timeout = metadata.get(IndexerDefaultParser.INDEXER_TIMEOUT);
     String mediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-    if (timeout != null || mediaType.equals(MediaType.OCTET_STREAM.toString())) {
+    if (timeout != null || MediaType.OCTET_STREAM.toString().equals(mediaType)) {
       pipedReader.setTimeoutPaused(true);
     }
 
