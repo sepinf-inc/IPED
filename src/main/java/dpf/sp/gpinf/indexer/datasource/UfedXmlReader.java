@@ -627,6 +627,14 @@ public class UfedXmlReader extends DataSourceReader{
         
         private File createContactPreview(EvidenceFile contact) {
             
+            String name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
+            if(name == null)
+                name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
+            if(name != null) {
+                contact.setName(name);
+                contact.setPath(contact.getPath().substring(0, contact.getPath().lastIndexOf('/') + 1) + name);
+            }
+            
             File file = new File(output, "view/contacts/view-" + contact.getId() + ".html");
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))){
