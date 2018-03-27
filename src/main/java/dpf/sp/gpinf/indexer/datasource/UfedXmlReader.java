@@ -64,7 +64,6 @@ public class UfedXmlReader extends DataSourceReader{
                 int off = 0, i = 0;
                 while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
                     off += i;
-                System.out.println(new String(cbuf));
                 if(new String(cbuf).startsWith(XML_HEADER))
                     return true;
                 
@@ -644,7 +643,7 @@ public class UfedXmlReader extends DataSourceReader{
             if(name == null)
                 name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
             if(name != null) {
-                name = "Contact_" + name;
+                name = contact.getName().substring(0, contact.getName().indexOf('_') + 1) + name;
                 contact.setName(name);
                 contact.setPath(contact.getPath().substring(0, contact.getPath().lastIndexOf('/') + 1) + name);
             }
