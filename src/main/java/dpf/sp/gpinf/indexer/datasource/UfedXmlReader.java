@@ -2,8 +2,10 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.text.DateFormat;
@@ -34,6 +36,8 @@ import gpinf.dev.data.EvidenceFile;
 
 public class UfedXmlReader extends DataSourceReader{
     
+    private static String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<project id="; //$NON-NLS-1$
+    
     private static String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path";
     private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path";
     private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names";
@@ -53,12 +57,21 @@ public class UfedXmlReader extends DataSourceReader{
         if(!file.exists())
             return false;
         
-        file = new File(datasource, "pages");
-        if(!file.exists())
-            return false;
-        
-        if(getXmlFile(datasource) != null)
-            return true;
+        File xml = getXmlFile(datasource);
+        if(xml != null) {
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(xml), "UTF-8")){
+                char[] cbuf = new char[XML_HEADER.length()];
+                int off = 0, i = 0;
+                while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
+                    off += i;
+                System.out.println(new String(cbuf));
+                if(new String(cbuf).startsWith(XML_HEADER))
+                    return true;
+                
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         
         return false;
     }
@@ -631,6 +644,7 @@ public class UfedXmlReader extends DataSourceReader{
             if(name == null)
                 name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
             if(name != null) {
+                name = "Contact_" + name;
                 contact.setName(name);
                 contact.setPath(contact.getPath().substring(0, contact.getPath().lastIndexOf('/') + 1) + name);
             }
