@@ -49,7 +49,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
@@ -322,7 +321,7 @@ public class HTMLReportTask extends AbstractTask {
         //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args != null) {
-          List<String> info = args.getCmdArgs().get("-asap"); //$NON-NLS-1$
+          List<String> info = args.asap;
           if (info != null && info.size() > 0) {
             File infoFile = new File(info.get(0));
             if (infoFile != null) {

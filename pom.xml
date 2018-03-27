@@ -37,6 +37,11 @@
     </repositories>
     
     <dependencies>
+      <dependency>
+          <groupId>com.beust</groupId>
+          <artifactId>jcommander</artifactId>
+          <version>1.29</version>
+      </dependency>
     	<dependency>
     		<groupId>dk.brics.automaton</groupId>
     		<artifactId>automaton</artifactId>

@@ -228,22 +228,20 @@ public class SleuthkitReader extends DataSourceReader {
     checkTSKVersion();
 
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (args.getCmdArgs().containsKey("-profile")) { //$NON-NLS-1$
-    	if(args.getCmdArgs().get("-profile").get(0).equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
+    if (args.profile != null) {
+    	if(args.profile.equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
     		fastmode = true;
     }
     
     int offset = TimeZone.getDefault().getRawOffset() / 3600000;
     String timezone = "GMT" + (-offset); //$NON-NLS-1$
-    if (args.getCmdArgs().containsKey("-tz")) { //$NON-NLS-1$
-    	timezone = args.getCmdArgs().get("-tz").get(0); //$NON-NLS-1$
+    if (args.tz != null) { //$NON-NLS-1$
+    	timezone = args.tz;
     	if(timezone.contains("+")) timezone = timezone.replace('+', '-'); //$NON-NLS-1$
     	else timezone = timezone.replace('-', '+');
     }
     
-    String sectorSize = null;
-    if (args.getCmdArgs().containsKey("-b")) //$NON-NLS-1$
-    	sectorSize = args.getCmdArgs().get("-b").get(0); //$NON-NLS-1$
+    int sectorSize = args.b;
 
     firstId = null;
     lastId = null;
@@ -297,7 +295,7 @@ public class SleuthkitReader extends DataSourceReader {
         
         int cmdLen = TSK_CMD.length;
         if(isTskPatched) cmdLen += 2;
-        if(sectorSize != null) cmdLen += 2;
+        if(sectorSize > 0) cmdLen += 2;
 
         String[] cmd = new String[cmdLen];
         for (int i = 0; i < TSK_CMD.length; i++) {
@@ -309,9 +307,9 @@ public class SleuthkitReader extends DataSourceReader {
               	cmd[TSK_CMD.length - 1] = "-z"; //$NON-NLS-1$
               	cmd[TSK_CMD.length] = timezone;
               }
-              if(sectorSize != null){
+              if(sectorSize > 0){
               	cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
-              	cmd[cmdLen - 2] = sectorSize;
+              	cmd[cmdLen - 2] = "" + sectorSize;
               }
               cmd[cmdLen - 1] = image.getAbsolutePath();
           }

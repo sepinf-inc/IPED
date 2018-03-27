@@ -197,7 +197,7 @@ public class IPEDReader extends DataSourceReader {
 
   private void insertPSTAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (!args.getCmdArgs().containsKey("--nopstattachs")) { //$NON-NLS-1$
+    if (!args.nopstattachs) {
       boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
       boolean hasPSTEmail = false;
       for (int docID : result.getLuceneIds()) {

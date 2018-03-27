@@ -22,7 +22,6 @@ import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 
 import java.io.File;
-import java.util.List;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 
@@ -105,11 +104,12 @@ public abstract class DataSourceReader {
    */
   public String getEvidenceName(File datasource) {
     CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
-    List<String> params = cmdArgs.getCmdArgs().get(CmdLineArgs.ALL_ARGS);
-    for (int i = 0; i < params.size(); i++) {
-      if (params.get(i).equals("-d") && datasource.equals(new File(params.get(i + 1))) //$NON-NLS-1$
-          && i + 2 < params.size() && params.get(i + 2).equals("-dname")) { //$NON-NLS-1$
-        return params.get(i + 3);
+    if (cmdArgs.dname == null || cmdArgs.dname.size() == 0) {
+      return null;
+    }
+    for (int i = 0; i < cmdArgs.datasources.size(); i++) {
+      if (datasource.equals(cmdArgs.datasources.get(i))){
+        return cmdArgs.dname.get(i);
       }
     }
 
