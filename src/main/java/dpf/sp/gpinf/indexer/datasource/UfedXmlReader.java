@@ -437,9 +437,9 @@ public class UfedXmlReader extends DataSourceReader{
                 try {
                     String value = chars.toString().trim();
                     if(!value.isEmpty()) {
-                        DateFormat df = df2;
-                        if(df2Pattern.length() - 2 != value.length())
-                            df = df1;
+                        DateFormat df = df1;
+                        if(df2Pattern.length() - 2 == value.length())
+                            df = df2;
                         if(nameAttr.equals("CreationTime"))
                             item.setCreationDate(df.parse(value));
                         else if(nameAttr.equals("ModifyTime"))
@@ -460,15 +460,16 @@ public class UfedXmlReader extends DataSourceReader{
                         String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
                         String type = currentNode.atts.get("type");
                         String value = chars.toString().trim();
-                        boolean added = false;
+                        DateFormat df = df1;
+                        if(df2Pattern.length() - 2 == value.length())
+                            df = df2;
                         if(type.equals("TimeStamp"))
                             try {
-                                item.getMetadata().add(meta, df1.format(df1.parse(value)));
-                                added = true;
+                                item.getMetadata().add(meta, df.format(df.parse(value)));
                             } catch (ParseException e) {
                                 e.printStackTrace();
                             }
-                        if(!added)
+                        else
                             item.getMetadata().add(meta, value);
                     }
                 }   
@@ -499,19 +500,29 @@ public class UfedXmlReader extends DataSourceReader{
                 }else if("Attachment".equals(type)) {
                     handleAttachment(item);
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
-                    parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
+                    if(parentItem.getMediaType().toString().contains("email"))
+                        parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                 }
                 if(mergeInParentNode.contains(type)) {
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
                     if("Party".equals(type)) {
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role");
                         if(role == null || role.equals("General"))
+                            role = parentNode.atts.get("name");
+                        if(role.equals("Parties"))
                             role = "Participants";
+                        String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner");
+                        boolean fromOwner = false;
+                        if(Boolean.valueOf(isOwner) && "From".equals(role))
+                            fromOwner = true;
                         role = "Party:" + role;
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier");
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
-                        String value = name == null || name.equals(identifier) ? identifier : name + " (" + identifier + ")";
+                        String value = name == null || name.equals(identifier) ? identifier : 
+                            identifier == null ? name : name + " (" + identifier + ")";
                         parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
+                        if(fromOwner)
+                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "fromOwner", String.valueOf(fromOwner));
                         
                     }else if("PhoneNumber".equals(type) || "EmailAddress".equals(type)) {
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category");
@@ -664,6 +675,7 @@ public class UfedXmlReader extends DataSourceReader{
                     contact.getMetadata().remove(AVATAR_PATH_META);
                     byte[] bytes = Files.readAllBytes(new File(avatarPath).toPath());
                     bw.write("<img src=\"data:image/jpg;base64," + Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n");
+                    contact.setThumb(bytes);
                 }
                 String[] metas = contact.getMetadata().names();
                 Arrays.sort(metas);
