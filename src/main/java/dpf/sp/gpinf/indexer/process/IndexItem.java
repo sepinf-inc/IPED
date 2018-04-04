@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -316,6 +317,9 @@ public class IndexItem extends BasicProps{
     value = Boolean.toString(evidence.isSubItem());
     doc.add(new StringField(SUBITEM, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(SUBITEM, new BytesRef(value)));
+    
+    if(evidence.getThumb() != null)
+        doc.add(new StoredField(THUMB, evidence.getThumb()));
 
     long off = evidence.getFileOffset();
     if (off != -1) {
@@ -575,7 +579,7 @@ public class IndexItem extends BasicProps{
       value = doc.get(IndexItem.EVIDENCE_UUID);
       if(value != null){
     	//TODO obter source corretamente
-          DataSource dataSource = new DataSource(null);
+          DataSource dataSource = new DataSource();
           dataSource.setUUID(value);
           evidence.setDataSource(dataSource);
       }
@@ -634,17 +638,31 @@ public class IndexItem extends BasicProps{
       if (value != null) {
         evidence.setTimeOut(Boolean.parseBoolean(value));
       }
-
+      
       value = doc.get(IndexItem.HASH);
       if (value != null) {
         value = value.toUpperCase();
         evidence.setHash(value);
-
-        if (!value.isEmpty()) {
-          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value); //$NON-NLS-1$
-          if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+      }
+      
+      if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+          
+          if(Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
+              String mimePrefix = evidence.getMediaType().getType();
+              if(doc.getBinaryValue(THUMB) != null) {
+                  evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
+                  
+              }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) {
+                  String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view";
+                  File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg");
+                  evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+              }
           }
+          
+          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
+          /*if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
+            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+          }*/
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
           }
@@ -653,8 +671,6 @@ public class IndexItem extends BasicProps{
             evidence.setTempFile(viewFile);
             evidence.setMediaType(null);
           }
-
-        }
       }
       
       value = doc.get(HashTask.HASH.MD5.toString());

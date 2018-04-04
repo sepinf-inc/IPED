@@ -34,6 +34,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.process.Statistics;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -207,6 +208,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private Integer sleuthId;
 
   private TikaInputStream tis;
+  
+  private byte[] thumb;
 
   static final int BUF_LEN = 8 * 1024 * 1024;
 
@@ -1155,5 +1158,15 @@ public DataSource getDataSource() {
 public void setDataSource(DataSource evidence) {
 	this.dataSource = evidence;
 }
+
+    @Override
+    public byte[] getThumb() {
+        return thumb;
+    }
+    
+    public void setThumb(byte[] thumb) {
+        this.thumb = thumb;
+        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+    }
 
 }
