@@ -239,7 +239,7 @@ public class IndexTask extends BaseCarveTask {
     context.set(OfficeParserConfig.class, opc);
     
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    
+    context.set(Item.class, evidence);
     context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     return context;

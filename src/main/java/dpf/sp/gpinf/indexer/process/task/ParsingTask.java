@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
@@ -173,7 +174,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     context.set(OfficeParserConfig.class, opc);
     
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    
+    context.set(Item.class, evidence);
     context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     setContext(context);
@@ -185,10 +186,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   
   public static void fillMetadata(EvidenceFile evidence, Metadata metadata){
 	Long len = evidence.getLength();
-	if (len == null) {
-	  len = 0L;
-	}
-	metadata.set(Metadata.CONTENT_LENGTH, len.toString());
+	if (len != null)
+	    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 	metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
 	if(evidence.getMediaType() != null) {
 	    metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
