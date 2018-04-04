@@ -14,13 +14,13 @@
 @font-face
 {
 	font-family: 'Roboto-Light';
-	src: url("../../assets/fonts/Roboto-Light.ttf");
+	src: url("../../../../indexador/htm/whatsapp/fonts/Roboto-Light.ttf");
 }
 
 @font-face
 {
 	font-family: 'Roboto-Medium';
-	src: url("../../assets/fonts/Roboto-Medium.ttf");
+	src: url("../../../../indexador/htm/whatsapp/fonts/Roboto-Medium.ttf");
 }
 
 /***********
@@ -29,7 +29,7 @@
 
 body
 {
-	background-image:url("../../assets/img/wallpaper.jpg");
+	background-image:url("../../../../indexador/htm/whatsapp/img/wallpaper.jpg");
 	background-size: 642px;
 	background-repeat:repeat-y;
 	margin:0 auto;
@@ -255,4 +255,9 @@ body
 {
 	box-shadow: -2px 2px 2px 0 rgba(178,178,178,.4);
 	left: -9px;           
+}
+
+#conversation .thumb {
+	max-width: 160px;
+	max-height: 160px;
 }
