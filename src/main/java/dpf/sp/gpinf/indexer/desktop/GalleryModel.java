@@ -167,7 +167,7 @@ public class GalleryModel extends AbstractTableModel {
               image = ImageIO.read(new ByteArrayInputStream(doc.getBinaryValue(IndexItem.THUMB).bytes));
 
           String hash = doc.get(IndexItem.HASH);
-          if (image == null && hash != null) {
+          if (image == null && hash != null && !hash.isEmpty()) {
         	image = getViewImage(docId, hash, !isSupportedImage(mediaType));
             int resizeTolerance = 4;
             if (image != null) {
