@@ -502,6 +502,20 @@ public class UfedXmlReader extends DataSourceReader{
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
                     if(parentItem.getMediaType().toString().contains("email"))
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
+                }else if("Chat".equals(type)) {
+                    String name = "Chat";
+                    String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+                    if(source != null)
+                        name += "_" + source;
+                    String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Party:Participants");
+                    if(parties != null && parties.length > 2) {
+                        name += "_Group_" + item.getName().split("_")[1];
+                    }else if(parties != null && parties.length > 0){
+                        name += "_" + parties[0];
+                        if(parties.length > 1)
+                            name += "_" + parties[1];
+                    }
+                    item.setName(name);
                 }
                 if(mergeInParentNode.contains(type)) {
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
@@ -519,7 +533,7 @@ public class UfedXmlReader extends DataSourceReader{
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier");
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
                         String value = name == null || name.equals(identifier) ? identifier : 
-                            identifier == null ? name : name + " (" + identifier + ")";
+                            identifier == null ? name : name + "(" + identifier + ")";
                         parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         if(fromOwner)
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "fromOwner", String.valueOf(fromOwner));
