@@ -289,7 +289,10 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	  StringBuilder msg = new StringBuilder();
 	  msg.append(Messages.getString("ProgressFrame.ParserTimes")); //$NON-NLS-1$
 	  msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
-	  long totalTime = (System.currentTimeMillis() - indexStart.getTime()) / 1000 + 1;
+	  long totalTime = 0;
+	  for(AtomicLong time : ParsingTask.times.values())
+	      totalTime += time.get();
+	  totalTime = totalTime / (1000000 * Configuration.numThreads) + 1;
 	  for(Entry<String , AtomicLong> e : ParsingTask.times.entrySet()){
 	    	msg.append("<tr><td>"); //$NON-NLS-1$
 	        msg.append(e.getKey());
