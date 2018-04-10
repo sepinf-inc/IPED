@@ -43,7 +43,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.desktop.App;
@@ -266,13 +265,13 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         totalTime += worker.tasks.get(i).getTaskTime();
       }
     }
-    totalTime = totalTime / (1000000 * Configuration.numThreads);
+    totalTime = totalTime / (1000000 * workers.length);
     if (totalTime == 0) {
       totalTime = 1;
     }
     for (int i = 0; i < taskTimes.length; i++) {
       AbstractTask task = workers[0].tasks.get(i);
-      long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
+      long sec = taskTimes[i] / (1000000 * workers.length);
       msg.append("<tr><td>"); //$NON-NLS-1$
       msg.append(task.getClass().getSimpleName());
       msg.append("</td><td>"); //$NON-NLS-1$
@@ -290,14 +289,16 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	  msg.append(Messages.getString("ProgressFrame.ParserTimes")); //$NON-NLS-1$
 	  msg.append("<table cellspacing=0 cellpadding=1 border=1>"); //$NON-NLS-1$
 	  long totalTime = 0;
-	  for(AtomicLong time : ParsingTask.times.values())
-	      totalTime += time.get();
-	  totalTime = totalTime / (1000000 * Configuration.numThreads) + 1;
+	  for (Worker worker : workers)
+	      for (AbstractTask task : worker.tasks)
+	          if(task.getClass().equals(ParsingTask.class))
+	              totalTime += task.getTaskTime();
+	  totalTime = totalTime / (1000000 * workers.length) + 1;
 	  for(Entry<String , AtomicLong> e : ParsingTask.times.entrySet()){
 	    	msg.append("<tr><td>"); //$NON-NLS-1$
 	        msg.append(e.getKey());
 	        msg.append("</td><td>"); //$NON-NLS-1$
-	        long sec = e.getValue().get() / (1000000 * Configuration.numThreads);
+	        long sec = e.getValue().get() / (1000000 * workers.length);
 	        msg.append(sec + "s (" + (100 * sec) / totalTime + "%)"); //$NON-NLS-1$ //$NON-NLS-2$
 	        msg.append("</td></tr>"); //$NON-NLS-1$
 	    }
