@@ -44,6 +44,8 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.NumericUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -55,6 +57,8 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener{
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
     
     private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
     private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
@@ -414,10 +418,15 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         
         loadDocValues(field);
         
+        boolean mayBeNumeric = mayBeNumeric(field);
+        final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
+        boolean isFloat = isFloat(field);
+        boolean isDouble = isDouble(field);
+        
         SwingUtilities.invokeLater(new Runnable(){
             @Override
             public void run() {
-                if(numValues != null || numValuesSet != null)
+                if(isNumeric)
                     scale.setEnabled(true);
                 else
                     scale.setEnabled(false);
@@ -434,10 +443,6 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             ipedResult = App.get().ipedResult;
             updatingResult = false;
         }
-        
-        boolean isNumeric = mayBeNumeric(field);
-        boolean isFloat = isFloat(field);
-        boolean isDouble = isDouble(field);
         
         //System.out.println("counting");
         int[] valueCount = null;
@@ -576,7 +581,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }
         //System.out.println("new");
         ArrayList<ValueCount> list = new ArrayList<ValueCount>();
-        if(numValues != null || numValuesSet != null){
+        if(isNumeric){
             for(int ord = 0; ord < valueCount.length; ord++)
                 if(valueCount[ord] > 0){
                     if(logScale){
