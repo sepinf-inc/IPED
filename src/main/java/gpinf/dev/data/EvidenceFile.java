@@ -1155,4 +1155,10 @@ public void setDataSource(DataSource evidence) {
 	this.dataSource = evidence;
 }
 
+@Override
+public byte[] getThumb() {
+    // TODO Auto-generated method stub
+    return null;
+}
+
 }
