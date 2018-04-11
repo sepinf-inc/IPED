@@ -122,6 +122,9 @@ public class IndexItem extends BasicProps{
     ignoredMetadata.add("File Size"); //$NON-NLS-1$
     //ocrCharCount is already copied to an extra attribute
     ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+    
+    BasicProps.SET.add(FTKID);
+    BasicProps.SET.add(SLEUTHID);
   }
 
   public static Map<String, Class> getMetadataTypes() {
@@ -733,11 +736,17 @@ public class IndexItem extends BasicProps{
         evidence.setFileOffset(Long.parseLong(value));
       }
       
-      for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX) ||
-             f.name().startsWith(ExtraProperties.UFED_META_PREFIX))
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              Class<?> c = typesMap.get(f.name());
+              if(Date.class.equals(c))
+                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
+          }else
               evidence.getMetadata().add(f.name(), f.stringValue());
-
+      }
+      
       return evidence;
 
     } catch (Exception e) {

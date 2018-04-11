@@ -26,6 +26,7 @@ import gpinf.dev.filetypes.GenericFileType;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -43,6 +44,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
@@ -464,10 +466,16 @@ public class IPEDReader extends DataSourceReader {
         evidence.setFileOffset(Long.parseLong(value));
       }
       
-      for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX) ||
-             f.name().startsWith(ExtraProperties.UFED_META_PREFIX))
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              Class<?> c = IndexItem.getMetadataTypes().get(f.name());
+              if(Date.class.equals(c))
+                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
+          }else
               evidence.getMetadata().add(f.name(), f.stringValue());
+      }
 
       value = doc.get(IndexItem.ISROOT);
       if (value != null) {
