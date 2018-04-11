@@ -739,7 +739,7 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="application/x-ufed-email">
+    <mime-type type="message/x-ufed-email">
     	<sub-class-of type="text/html"/>
     </mime-type>
     
