@@ -54,11 +54,15 @@ public class UfedXmlReader extends DataSourceReader{
 
     @Override
     public boolean isSupported(File datasource) {
-        File file = new File(datasource, "files");
+        
+        if(!datasource.getName().toLowerCase().endsWith(".xml"))
+            return false;
+        
+        File file = new File(datasource.getParentFile(), "files");
         if(!file.exists())
             return false;
         
-        File xml = getXmlFile(datasource);
+        File xml = datasource;
         if(xml != null) {
             try (InputStreamReader reader = new InputStreamReader(new FileInputStream(xml), "UTF-8")){
                 char[] cbuf = new char[XML_HEADER.length()];
@@ -77,13 +81,11 @@ public class UfedXmlReader extends DataSourceReader{
     }
 
     @Override
-    public int read(File root) throws Exception {
+    public int read(File xml) throws Exception {
         
-        this.root = root;
+        this.root = xml.getParentFile();
         addRootItem();
         addVirtualDecodedFolder();
-        
-        File xml = getXmlFile(root);
         
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
@@ -93,17 +95,6 @@ public class UfedXmlReader extends DataSourceReader{
         xmlReader.parse(xml.toURI().toString());
         
         return 0;
-    }
-    
-    private File getXmlFile(File root) {
-        File[] files = root.listFiles();
-        if(files != null)
-            for(File f : files)
-                if(f.getName().toLowerCase().endsWith("report.xml") ||
-                   f.getName().toLowerCase().endsWith("relatório.xml")) {
-                    return f;
-                }
-        return null;
     }
     
     private void addRootItem() throws InterruptedException {
@@ -300,8 +291,8 @@ public class UfedXmlReader extends DataSourceReader{
                     size = Long.valueOf(len.trim());
                 
                 if(listOnly) {
-                    //caseData.incDiscoveredEvidences(1);
-                    //caseData.incDiscoveredVolume(size);
+                    caseData.incDiscoveredEvidences(1);
+                    caseData.incDiscoveredVolume(size);
                     return;
                 }
                 
@@ -479,11 +470,11 @@ public class UfedXmlReader extends DataSourceReader{
             
             } else if(qName.equals("file")) {
                 itemSeq.remove(itemSeq.size() - 1);
-                /*try {
+                try {
                     caseData.addEvidenceFile(item);
                 } catch (InterruptedException e) {
                     throw new SAXException(e);
-                }*/
+                }
                     
             } else if(qName.equals("model") && (
                     parentNode.element.equals("modelType") ||
