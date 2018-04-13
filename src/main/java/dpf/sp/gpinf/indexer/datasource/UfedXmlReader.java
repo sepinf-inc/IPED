@@ -507,7 +507,7 @@ public class UfedXmlReader extends DataSourceReader{
                         if(parties.length > 1)
                             name += "_" + parties[1];
                     }
-                    item.setName(name);
+                    updateName(item, name);
                 }
                 if("InstantMessage".equals(type) || "Email".equals(type)) {
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
@@ -610,12 +610,15 @@ public class UfedXmlReader extends DataSourceReader{
             
         }
         
+        private void updateName(EvidenceFile item, String newName) {
+            item.setName(newName);
+            item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
+        }
+        
         private void handleAttachment(EvidenceFile item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename");
-            if(name != null) {
-                item.setName(name);
-                item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + name);
-            }
+            if(name != null)
+                updateName(item, name);
             item.setMediaType(null);
             item.setCategory(null);
             item.setHash(null);
@@ -696,8 +699,7 @@ public class UfedXmlReader extends DataSourceReader{
                 name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
             if(name != null) {
                 name = contact.getName().substring(0, contact.getName().indexOf('_') + 1) + name;
-                contact.setName(name);
-                contact.setPath(contact.getPath().substring(0, contact.getPath().lastIndexOf('/') + 1) + name);
+                updateName(contact, name);
             }
             
             File file = new File(output, "view/contacts/view-" + contact.getId() + ".html");
