@@ -48,6 +48,7 @@ public class MakePreviewTask extends AbstractTask {
   public MakePreviewTask(Worker worker) {
     super(worker);
     parser.setPrintMetadata(false);
+    parser.setIgnoreStyle(false);
   }
 
   @Override
