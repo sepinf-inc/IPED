@@ -331,7 +331,6 @@ public class UfedXmlReader extends DataSourceReader{
                     String path = decodedFolder.getPath() + "/" + type + "/" + name;
                     item.setPath(path);
                     item.setParent(getParent(path));
-                    item.setCategory(type);
                     item.setMediaType(MediaType.application("x-ufed-" + type));
                     item.setHash("");
                                         
@@ -359,7 +358,6 @@ public class UfedXmlReader extends DataSourceReader{
                         name = prevNameAtt + "_" + name;
                     item.setName(name);
                     item.setPath(parent.getPath() + "/" + name);
-                    item.setCategory(type);
                     item.setMediaType(MediaType.application("x-ufed-" + type));
                     item.setHash("");
                     
@@ -412,7 +410,7 @@ public class UfedXmlReader extends DataSourceReader{
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
             
             if(qName.equals("item")) {
-                if("Tags".equals(nameAttr)) {
+                if("Tags".equals(nameAttr) && "Configuration".equals(chars.toString())) {
                     item.setCategory(chars.toString());
                     
                 } else if("Local Path".equals(nameAttr)) {
@@ -620,7 +618,6 @@ public class UfedXmlReader extends DataSourceReader{
             if(name != null)
                 updateName(item, name);
             item.setMediaType(null);
-            item.setCategory(null);
             item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {

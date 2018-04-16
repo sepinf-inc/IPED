@@ -26,7 +26,7 @@ Link files = application/x-lnk
 
 Other Documents = application/vnd.ms-xpsdocument; application/vnd.visio; application/vnd.ms-project; application/x-project; application/vnd.ms-works; application/x-quattro-pro; application/sldworks; application/x-tika-ooxml-protected; application/onenote; application/x-msmoney; application/x-mspublisher; application/x-ms-owner; model/vnd.dwfx+xps; application/vnd.ms-graph;
 
-Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
+Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst; application/x-ufed-html-mails; message/x-ufed-email
 
 Mailboxes = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
 
@@ -34,13 +34,13 @@ Databases = application/x-edb; application/x-edb-table; application/irpf; applic
 
 Compressed Archives = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli
 
-Contacts = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; 
+Contacts = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat
 
 Windows Registry = application/x-windows-registry; application/x-windows-registry-report
 
-Programs and Libraries = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer
+Programs and Libraries = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
 
 Unallocated = application/x-unallocated;
 
@@ -58,10 +58,63 @@ Other files = application/octet-stream; application/x-nls
 
 Peer-to-peer = application/x-p2p
 
-Internet History = application/x-msie-cache; application/x-webcache; application/x-webcache-table; 
+Internet History = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-ufed-visitedpage
 
 ISO disks = application/x-iso9660-image; application/x-udf-image;
 
 Virtual disks = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
 
-Other disks = application/x-disk-image; 
+Other disks = application/x-disk-image;
+
+# UFED
+
+Extraction Summary = application/x-ufed-html-summary
+
+Calls = application/x-ufed-html-calls; application/x-ufed-call
+
+SMS Messages = application/x-ufed-html-sms; application/x-ufed-sms
+
+MMS Messages = application/x-ufed-html-mms; application/x-ufed-mms
+
+Instant Messages = application/x-ufed-instantmessage
+
+Bluetooth Devices = application/x-ufed-html-bluetooth; application/x-ufed-bluetoothdevice
+
+SIM Data = application/x-ufed-html-simdata; application/x-ufed-simdata
+
+Calendar = application/x-ufed-html-calendar; application/x-ufed-calendarentry
+
+Logs = application/x-ufed-html-logs; application/x-ufed-logentry
+
+User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount
+
+Searches = application/x-ufed-html-searches; application/x-ufed-searcheditem
+
+Web Bookmarks = application/x-ufed-html-bookmarks; application/x-ufed-webbookmark
+
+Notes = application/x-ufed-html-notes; application/x-ufed-note
+
+Wireless Networks = application/x-ufed-html-wifi; application/x-ufed-wirelessnetwork
+
+Notifications = application/x-ufed-html-notifications; application/x-ufed-notification
+
+Locations = application/x-ufed-html-locations; application/x-ufed-location
+
+Cookies = application/x-ufed-html-cookies; application/x-ufed-cookie
+
+Configuration = application/x-ufed-html-configurations
+
+Passwords = application/x-ufed-html-passwords; application/x-ufed-password
+
+Autofill = application/x-ufed-html-autofill; application/x-ufed-autofill
+
+Cell Towers = application/x-ufed-html-celltowers; application/x-ufed-celltower
+
+Power Events = application/x-ufed-html-energyevents; application/x-ufed-energyevent; application/x-ufed-powerevent
+
+User Dictionaries = application/x-ufed-html-userdict; application/x-ufed-dictionaryword
+
+IP Connections = application/x-ufed-html-ips; application/x-ufed-ipconnection
+
+Recordings = application/x-ufed-html-recordings; application/x-ufed-recording
+
