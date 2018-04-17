@@ -31,6 +31,7 @@ import org.xml.sax.XMLReader;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
@@ -44,6 +45,7 @@ public class UfedXmlReader extends DataSourceReader{
     private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path";
     private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names";
     
+    public static final String UFED_MIME_PREFIX = "x-ufed-";
     public static final String UFED_EMAIL_MIME = "message/x-ufed-email";
     
     File root;
@@ -334,8 +336,7 @@ public class UfedXmlReader extends DataSourceReader{
                     String path = decodedFolder.getPath() + "/" + type + "/" + name;
                     item.setPath(path);
                     item.setParent(getParent(path));
-                    item.setMediaType(MediaType.application("x-ufed-" + type));
-                    item.setHash("");
+                    item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
                                         
                     boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
                     item.setDeleted(deleted);
@@ -361,8 +362,7 @@ public class UfedXmlReader extends DataSourceReader{
                         name = prevNameAtt + "_" + name;
                     item.setName(name);
                     item.setPath(parent.getPath() + "/" + name);
-                    item.setMediaType(MediaType.application("x-ufed-" + type));
-                    item.setHash("");
+                    item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
                     
                     item.setParent(parent);
                     if(!mergeInParentNode.contains(type))
@@ -473,7 +473,7 @@ public class UfedXmlReader extends DataSourceReader{
                 itemSeq.remove(itemSeq.size() - 1);
                 try {
                     caseData.addEvidenceFile(item);
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     throw new SAXException(e);
                 }
                     
@@ -601,6 +601,9 @@ public class UfedXmlReader extends DataSourceReader{
                     }
                 }else
                     try {
+                        if(item.getFile() == null)
+                            item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+                        
                         caseData.addEvidenceFile(item);
                         
                     } catch (InterruptedException e) {
@@ -623,7 +626,6 @@ public class UfedXmlReader extends DataSourceReader{
             if(name != null)
                 updateName(item, name);
             item.setMediaType(null);
-            item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {
                 File file = new File(root, extracted_path);
@@ -689,7 +691,6 @@ public class UfedXmlReader extends DataSourceReader{
             email.setExportedFile(file.getAbsolutePath());
             email.setFile(file);
             email.setLength(file.length());
-            email.setHash(null);
             
             return file;
         }
@@ -742,7 +743,6 @@ public class UfedXmlReader extends DataSourceReader{
             contact.setExportedFile(file.getAbsolutePath());
             contact.setFile(file);
             contact.setLength(file.length());
-            contact.setHash(null);
             
             return file;
         }

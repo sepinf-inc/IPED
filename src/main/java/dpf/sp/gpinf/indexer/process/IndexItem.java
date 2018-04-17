@@ -617,6 +617,11 @@ public class IndexItem extends BasicProps{
       }
 
       evidence.setPath(doc.get(IndexItem.PATH));
+      
+      value = doc.get(IndexItem.CONTENTTYPE);
+      if (value != null) {
+        evidence.setMediaType(MediaType.parse(value));
+      }
 
       boolean hasFile = false;
       value = doc.get(IndexItem.EXPORT);
@@ -630,11 +635,6 @@ public class IndexItem extends BasicProps{
           evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
         }
-      }
-
-      value = doc.get(IndexItem.CONTENTTYPE);
-      if (value != null) {
-        evidence.setMediaType(MediaType.parse(value));
       }
 
       value = doc.get(IndexItem.TIMEOUT);

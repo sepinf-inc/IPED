@@ -59,6 +59,7 @@ import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
@@ -372,6 +373,11 @@ public class IPEDReader extends DataSourceReader {
       }
       evidence.setPath(path);
       
+      String mimetype = doc.get(IndexItem.CONTENTTYPE);
+      if (mimetype != null) {
+        evidence.setMediaType(MediaType.parse(mimetype));
+      }
+      
       value = doc.get(IndexItem.EXPORT);
       if (value != null && !value.isEmpty() && !treeNode) {
         evidence.setFile(Util.getRelativeFile(basePath, value));
@@ -380,17 +386,14 @@ public class IPEDReader extends DataSourceReader {
         if (value != null && !value.isEmpty() && !treeNode) {
           evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-        }
+          
+        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
       }
 
       if (treeNode) {
         evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.setAddToCase(false);
-      }
-
-      String mimetype = doc.get(IndexItem.CONTENTTYPE);
-      if (mimetype != null) {
-        evidence.setMediaType(MediaType.parse(mimetype));
       }
 
       evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
