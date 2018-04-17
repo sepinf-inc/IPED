@@ -132,7 +132,7 @@ public class IPEDReader extends DataSourceReader {
 	    insertIntoProcessQueue(result, false);
 
 	    //Inclui anexos de emails de PST
-	    insertPSTAttachs(result);
+	    insertEmailAttachs(result);
 
 	    //Inclui pais para visualização em árvore
 	    insertParentTreeNodes(result);
@@ -197,19 +197,19 @@ public class IPEDReader extends DataSourceReader {
     }
   }
 
-  private void insertPSTAttachs(LuceneSearchResult result) throws Exception {
+  private void insertEmailAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.getCmdArgs().containsKey("--nopstattachs")) { //$NON-NLS-1$
-      boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
-      boolean hasPSTEmail = false;
+      boolean[] isSelectedEmail = new boolean[ipedCase.getLastId() + 1];
+      boolean hasEmail = false;
       for (int docID : result.getLuceneIds()) {
         String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
-        if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
-          hasPSTEmail = true;
-          isSelectedPSTEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
+        if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype) || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)) {
+          hasEmail = true;
+          isSelectedEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
         }
       }
-      if(!hasPSTEmail)
+      if(!hasEmail)
         return;
       
       //search attachs
@@ -217,7 +217,7 @@ public class IPEDReader extends DataSourceReader {
       boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
       BooleanQuery query = new BooleanQuery();
       for (int i = 0; i <= ipedCase.getLastId(); i++) {
-          if (isSelectedPSTEmail[i]) {
+          if (isSelectedEmail[i]) {
         	  query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, i, i, true, true), Occur.SHOULD);
               num++;
           }
