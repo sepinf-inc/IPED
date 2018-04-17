@@ -29,6 +29,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import gpinf.dev.data.CaseData;
@@ -42,6 +43,8 @@ public class UfedXmlReader extends DataSourceReader{
     private static String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path";
     private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path";
     private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names";
+    
+    public static final String UFED_EMAIL_MIME = "message/x-ufed-email";
     
     File root;
     EvidenceFile rootItem;
@@ -535,10 +538,7 @@ public class UfedXmlReader extends DataSourceReader{
                             role = parentNameAttr;
                         if(role.equals("Parties"))
                             role = "Participants";
-                        String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner");
-                        boolean fromOwner = false;
-                        if(Boolean.valueOf(isOwner) && "From".equals(role))
-                            fromOwner = true;
+                        
                         String identifier = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Identifier");
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
                         String value = name == null || name.equals(identifier) ? identifier : 
@@ -553,8 +553,13 @@ public class UfedXmlReader extends DataSourceReader{
                             parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
                         else
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
-                        if(fromOwner)
-                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + "fromOwner", String.valueOf(fromOwner));
+                        
+                        String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner");
+                        if(Boolean.valueOf(isOwner) && parentItem.getMediaType().toString().contains("chat"))
+                            parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                        
+                        if(Boolean.valueOf(isOwner) && "From".equals(role))
+                            parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
                         
                     }else if("PhoneNumber".equals(type) || "EmailAddress".equals(type)) {
                         String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category");
@@ -595,7 +600,7 @@ public class UfedXmlReader extends DataSourceReader{
                         }
                     }
                 }else
-                    try {   
+                    try {
                         caseData.addEvidenceFile(item);
                         
                     } catch (InterruptedException e) {
@@ -680,7 +685,7 @@ public class UfedXmlReader extends DataSourceReader{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            email.setMediaType(MediaType.parse("message/x-ufed-email"));
+            email.setMediaType(MediaType.parse(UFED_EMAIL_MIME));
             email.setExportedFile(file.getAbsolutePath());
             email.setFile(file);
             email.setLength(file.length());
