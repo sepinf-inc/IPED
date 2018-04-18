@@ -635,10 +635,8 @@ public class IndexItem extends BasicProps{
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty()) {
           evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
-          
-        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
-            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value))); 
+        }
       }
 
       value = doc.get(IndexItem.TIMEOUT);
