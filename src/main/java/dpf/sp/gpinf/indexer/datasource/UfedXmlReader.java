@@ -338,6 +338,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setPath(path);
                     item.setParent(getParent(path));
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+                    item.setHash("");
                                         
                     boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
                     item.setDeleted(deleted);
@@ -364,6 +365,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setName(name);
                     item.setPath(parent.getPath() + "/" + name);
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+                    item.setHash("");
                     
                     item.setParent(parent);
                     if(!mergeInParentNode.contains(type))
@@ -629,6 +631,7 @@ public class UfedXmlReader extends DataSourceReader{
             if(name != null)
                 updateName(item, name);
             item.setMediaType(null);
+            item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {
                 File file = new File(root, extracted_path);
@@ -698,6 +701,7 @@ public class UfedXmlReader extends DataSourceReader{
             email.setExportedFile(file.getAbsolutePath());
             email.setFile(file);
             email.setLength(file.length());
+            email.setHash(null);
             
             return file;
         }
@@ -750,6 +754,7 @@ public class UfedXmlReader extends DataSourceReader{
             contact.setExportedFile(file.getAbsolutePath());
             contact.setFile(file);
             contact.setLength(file.length());
+            contact.setHash(null);
             
             return file;
         }
