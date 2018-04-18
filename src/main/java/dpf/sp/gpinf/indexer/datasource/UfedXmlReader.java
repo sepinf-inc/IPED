@@ -40,7 +40,7 @@ import gpinf.dev.data.EvidenceFile;
 
 public class UfedXmlReader extends DataSourceReader{
     
-    private static String XML_HEADER = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<project id="; //$NON-NLS-1$
+    private static final String[] HEADER_STRINGS = {"project id", "extractionType", "sourceExtractions"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     
     private static String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path";
     private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path";
@@ -61,37 +61,44 @@ public class UfedXmlReader extends DataSourceReader{
     @Override
     public boolean isSupported(File datasource) {
         
-        if(!datasource.getName().toLowerCase().endsWith(".xml"))
-            return false;
-        
-        File file = new File(datasource.getParentFile(), "files");
-        if(!file.exists())
-            return false;
-        
-        File xml = datasource;
-        if(xml != null) {
-            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(xml), "UTF-8")){
-                char[] cbuf = new char[XML_HEADER.length()];
-                int off = 0, i = 0;
-                while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
-                    off += i;
-                if(new String(cbuf).startsWith(XML_HEADER))
-                    return true;
-                
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        File xmlReport = getXmlReport(datasource);
+        if(xmlReport != null)
+            return true;
         
         return false;
     }
+    
+    private File getXmlReport(File root) {
+        File[] files = root.listFiles();
+        if(files != null)
+            for(File file : files)
+                if(file.getName().toLowerCase().endsWith(".xml"))
+                    try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")){
+                        char[] cbuf = new char[1024];
+                        int off = 0, i = 0;
+                        while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
+                            off += i;
+                        String header = new String(cbuf, 0, off); 
+                        for(String str : HEADER_STRINGS)
+                            if(!header.contains(str))
+                                return null;
+                        
+                        return file;
+                        
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+        
+        return null;
+    }
 
     @Override
-    public int read(File xml) throws Exception {
+    public int read(File root) throws Exception {
         
-        this.root = xml.getParentFile();
+        this.root = root;
         addRootItem();
         addVirtualDecodedFolder();
+        File xml = getXmlReport(root);
         
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
