@@ -58,6 +58,7 @@ import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -634,7 +636,9 @@ public class IndexItem extends BasicProps{
         if (value != null && !value.isEmpty()) {
           evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
-        }
+          
+        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
       }
 
       value = doc.get(IndexItem.TIMEOUT);

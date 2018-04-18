@@ -36,7 +36,7 @@ Compressed Archives = application/x-tika-ooxml; application/zlib; application/ap
 
 Contacts = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-preview
 
 Windows Registry = application/x-windows-registry; application/x-windows-registry-report
 

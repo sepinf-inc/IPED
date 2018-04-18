@@ -743,7 +743,7 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="application/x-ufed-chat">
+    <mime-type type="application/x-ufed-chat-preview">
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
    

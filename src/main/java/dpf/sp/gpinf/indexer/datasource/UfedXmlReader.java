@@ -31,6 +31,7 @@ import org.xml.sax.XMLReader;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import gpinf.dev.data.CaseData;
@@ -509,6 +510,8 @@ public class UfedXmlReader extends DataSourceReader{
                             name += "_" + parties[1];
                     }
                     updateName(item, name);
+                    if(item.hasChildren())
+                        item.setExtraAttribute(IndexItem.TREENODE, "true");
                 }
                 if("InstantMessage".equals(type) || "Email".equals(type)) {
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp");

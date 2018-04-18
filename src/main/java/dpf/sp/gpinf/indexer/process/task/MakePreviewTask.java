@@ -79,8 +79,7 @@ public class MakePreviewTask extends AbstractTask {
   private boolean mayContainLinks(String contentType){
 	  return contentType.equals("application/x-emule") //$NON-NLS-1$
 			  || contentType.equals("application/x-ares-galaxy") //$NON-NLS-1$
-			  || contentType.equals("application/x-shareaza-library-dat") //$NON-NLS-1$
-			  || contentType.equals(UFEDChatParser.UFED_CHAT_MIME.toString());
+			  || contentType.equals("application/x-shareaza-library-dat"); //$NON-NLS-1$
   }
 
   private boolean isSupportedTypeCSV(String contentType) {
@@ -100,7 +99,7 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     String mediaType = evidence.getMediaType().toString();
-    if(evidence.getLength() == Long.valueOf(0) || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
+    if(evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty() || !isSupportedType(mediaType) || !evidence.isToAddToCase()) {
       return;
     }
 
@@ -109,12 +108,7 @@ public class MakePreviewTask extends AbstractTask {
       ext = "csv"; //$NON-NLS-1$
     }
     
-    File viewFile;
-    boolean noHash = evidence.getHash() == null || evidence.getHash().isEmpty(); 
-    if(noHash)
-        viewFile = new File(output, viewFolder + "/nohash/0/" + evidence.getId() + "." + ext);
-    else
-        viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
+    File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
     
     if (viewFile.exists()) {
       return;
@@ -130,12 +124,6 @@ public class MakePreviewTask extends AbstractTask {
     } catch (Throwable e) {
       Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString());  //$NON-NLS-1$//$NON-NLS-2$
       
-    }finally {
-        if(noHash) {
-            evidence.setExportedFile(viewFile.getAbsolutePath());
-            evidence.setFile(viewFile);
-            evidence.setLength(viewFile.length());
-        }
     }
 
   }

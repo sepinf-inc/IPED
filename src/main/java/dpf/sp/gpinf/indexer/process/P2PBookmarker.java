@@ -55,7 +55,7 @@ public class P2PBookmarker {
 		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares")); //$NON-NLS-1$
 		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza")); //$NON-NLS-1$
 		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp")); //$NON-NLS-1$
-		p2pPrograms.put(UFEDChatParser.UFED_CHAT_MIME.toString(), new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats")); //$NON-NLS-1$
+		p2pPrograms.put(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString(), new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats")); //$NON-NLS-1$
 		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		
@@ -87,8 +87,10 @@ public class P2PBookmarker {
 					continue;
 				
 				String bookmarkSufix = program.appName;
-				if(UFEDChatParser.UFED_CHAT_MIME.toString().equals(mediaType)) {
-				    bookmarkSufix = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+				if(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
+				    String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+				    if(source != null)
+				        bookmarkSufix = source;
 				    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
 				    if(phoneOwner != null && !phoneOwner.isEmpty())
 				        bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
