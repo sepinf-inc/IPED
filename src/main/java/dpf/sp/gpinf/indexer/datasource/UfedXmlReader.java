@@ -662,9 +662,13 @@ public class UfedXmlReader extends DataSourceReader{
                         };
                 String[] printHeaders = {"Subject", "From", "To", "Cc", "Bcc", "Date"};
                 for(int i = 0; i < printHeaders.length; i++) {
-                    String value = email.getMetadata().get(ufedMetas[i]);
-                    if(value != null)
-                        bw.write("<b>" + printHeaders[i] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>");
+                    String[] values = email.getMetadata().getValues(ufedMetas[i]);
+                    if(values.length > 0) {
+                        bw.write("<b>" + printHeaders[i] + ":</b>");
+                        for(String value : values)
+                            bw.write(" " + SimpleHTMLEncoder.htmlEncode(value));
+                        bw.write("<br>");
+                    }
                 }
                 
                 String[] attachNames = email.getMetadata().getValues(EMAIL_ATTACH_KEY);
