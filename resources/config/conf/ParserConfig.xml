@@ -78,9 +78,13 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
-        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser"></parser>
+        
+        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
+        	<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>
+        </parser>
+        
         <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>

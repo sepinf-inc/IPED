@@ -509,6 +509,8 @@ public class UfedXmlReader extends DataSourceReader{
                 }else if("Chat".equals(type)) {
                     String name = "Chat";
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source");
+                    if("whatsapp".equalsIgnoreCase(source))
+                        item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
                     if(source != null)
                         name += "_" + source;
                     String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
