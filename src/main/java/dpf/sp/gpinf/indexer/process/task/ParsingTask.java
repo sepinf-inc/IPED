@@ -340,7 +340,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       do {
         numFrags++;
         writer = new StringWriter();
-        if(metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
+        if(numFrags > 1 && metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
         	break;
         while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
           writer.write(cbuf, 0, len);
