@@ -28,12 +28,12 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
@@ -428,7 +428,8 @@ public class UfedXmlReader extends DataSourceReader{
                     
                 } else if("Local Path".equals(nameAttr)) {
                     File file = new File(root, chars.toString());
-                    item.setExportedFile(file.getAbsolutePath());
+                    String relativePath = Util.getRelativePath(output, file);
+                    item.setExportedFile(relativePath);
                     item.setFile(file);
                     item.setLength(file.length());
                     
@@ -519,8 +520,7 @@ public class UfedXmlReader extends DataSourceReader{
                             name += "_" + parties[1];
                     }
                     updateName(item, name);
-                    if(item.hasChildren())
-                        item.setExtraAttribute(IndexItem.TREENODE, "true");
+                    item.setExtraAttribute(IndexItem.TREENODE, "true");
                 }
                 if("InstantMessage".equals(type) || "Email".equals(type)) {
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
@@ -643,7 +643,8 @@ public class UfedXmlReader extends DataSourceReader{
             if(extracted_path != null) {
                 File file = new File(root, extracted_path);
                 if(file.exists()) {
-                    item.setExportedFile(file.getAbsolutePath());
+                    String relativePath = Util.getRelativePath(output, file);
+                    item.setExportedFile(relativePath);
                     item.setFile(file);
                     item.setLength(file.length());
                 }
@@ -705,7 +706,8 @@ public class UfedXmlReader extends DataSourceReader{
                 e.printStackTrace();
             }
             email.setMediaType(MediaType.parse(UFED_EMAIL_MIME));
-            email.setExportedFile(file.getAbsolutePath());
+            String relativePath = Util.getRelativePath(output, file);
+            email.setExportedFile(relativePath);
             email.setFile(file);
             email.setLength(file.length());
             email.setHash(null);
@@ -738,7 +740,7 @@ public class UfedXmlReader extends DataSourceReader{
                 if(avatarPath != null) {
                     contact.getMetadata().remove(AVATAR_PATH_META);
                     byte[] bytes = Files.readAllBytes(new File(avatarPath).toPath());
-                    bw.write("<img src=\"data:image/jpg;base64," + Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n");
+                    bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n");
                     contact.setThumb(bytes);
                 }
                 String[] metas = contact.getMetadata().names();
@@ -758,7 +760,8 @@ public class UfedXmlReader extends DataSourceReader{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            contact.setExportedFile(file.getAbsolutePath());
+            String relativePath = Util.getRelativePath(output, file);
+            contact.setExportedFile(relativePath);
             contact.setFile(file);
             contact.setLength(file.length());
             contact.setHash(null);
