@@ -345,6 +345,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setPath(path);
                     item.setParent(getParent(path));
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+                    item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash("");
                                         
                     boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state"));
@@ -372,6 +373,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setName(name);
                     item.setPath(parent.getPath() + "/" + name);
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
+                    item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash("");
                     
                     item.setParent(parent);
@@ -615,9 +617,6 @@ public class UfedXmlReader extends DataSourceReader{
                     }
                 }else
                     try {
-                        if(item.getFile() == null)
-                            item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
-                        
                         caseData.addEvidenceFile(item);
                         
                     } catch (InterruptedException e) {
@@ -640,6 +639,7 @@ public class UfedXmlReader extends DataSourceReader{
             if(name != null)
                 updateName(item, name);
             item.setMediaType(null);
+            item.setInputStreamFactory(null);
             item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {
@@ -651,6 +651,14 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setLength(file.length());
                 }
             }
+            if(item.getFile() == null)
+                try {
+                    String ufedSize = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Size");
+                    if(ufedSize != null)
+                        item.setLength(Long.parseLong(ufedSize.trim()));
+                }catch(NumberFormatException e) {
+                    //ignore
+                }
         }
         
         private File createEmailPreview(EvidenceFile email) {
@@ -712,6 +720,7 @@ public class UfedXmlReader extends DataSourceReader{
             email.setExportedFile(relativePath);
             email.setFile(file);
             email.setLength(file.length());
+            email.setInputStreamFactory(null);
             email.setHash(null);
             
             return file;
@@ -766,6 +775,7 @@ public class UfedXmlReader extends DataSourceReader{
             contact.setExportedFile(relativePath);
             contact.setFile(file);
             contact.setLength(file.length());
+            contact.setInputStreamFactory(null);
             contact.setHash(null);
             
             return file;
