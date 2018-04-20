@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TimeZone;
@@ -28,6 +29,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -100,6 +103,8 @@ public class UfedXmlReader extends DataSourceReader{
         addVirtualDecodedFolder();
         File xml = getXmlReport(root);
         
+        configureParsers();
+        
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
         SAXParser saxParser = spf.newSAXParser();
@@ -108,6 +113,14 @@ public class UfedXmlReader extends DataSourceReader{
         xmlReader.parse(xml.toURI().toString());
         
         return 0;
+    }
+    
+    private void configureParsers() {
+        if(Configuration.phoneParsersToUse.equals("internal")) {
+            UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            
+        }else if(Configuration.phoneParsersToUse.equals("external"))
+            WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
     }
     
     private void addRootItem() throws InterruptedException {

@@ -82,7 +82,7 @@
         
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
-        	<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>
+        	<!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>

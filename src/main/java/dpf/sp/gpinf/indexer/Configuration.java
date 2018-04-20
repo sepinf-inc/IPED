@@ -83,6 +83,7 @@ public class Configuration {
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
   public static boolean robustImageReading = false;
+  public static String phoneParsersToUse = "external";
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;
@@ -435,6 +436,11 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
+    }
+    
+    value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        phoneParsersToUse = value.trim();
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
