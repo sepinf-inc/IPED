@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -234,8 +235,15 @@ public class ExportFileTree extends CancelableWorker {
         if(item.getLength() != null)
             entry.setSize(item.getLength());
         
-        if(item.getModDate() != null)
+        if(item.getModDate() != null) {
             entry.setTime(item.getModDate().getTime());
+            entry.setLastModifiedTime(FileTime.fromMillis(item.getModDate().getTime()));
+        }
+        if(item.getAccessDate() != null)
+            entry.setLastAccessTime(FileTime.fromMillis(item.getAccessDate().getTime()));
+        
+        if(item.getCreationDate() != null)
+            entry.setCreationTime(FileTime.fromMillis(item.getCreationDate().getTime()));
         
         zaos.putArchiveEntry(entry);
         

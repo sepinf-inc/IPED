@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 
 import javax.swing.ProgressMonitor;
@@ -29,6 +30,7 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.eclipse.swt.internal.win32.FILETIME;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,8 +81,15 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName); //$NON-NLS-1$
         
-        if(e.getModDate() != null)
+        if(e.getModDate() != null) {
             entry.setTime(e.getModDate().getTime());
+            entry.setLastModifiedTime(FileTime.fromMillis(e.getModDate().getTime()));
+        }
+        if(e.getAccessDate() != null)
+            entry.setLastAccessTime(FileTime.fromMillis(e.getAccessDate().getTime()));
+        
+        if(e.getCreationDate() != null)
+            entry.setCreationTime(FileTime.fromMillis(e.getCreationDate().getTime()));
         
         if(e.getLength() != null)
         	entry.setSize(e.getLength());
