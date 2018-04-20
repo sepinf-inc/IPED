@@ -20,7 +20,9 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
@@ -30,9 +32,11 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.eclipse.swt.internal.win32.FILETIME;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.search.ItemId;
 import gpinf.dev.data.EvidenceFile;
@@ -44,6 +48,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
   ArrayList<ItemId> uniqueIds;
   File file, subdir;
   ProgressMonitor progressMonitor;
+  HashingOutputStream hos;
 
   public ExportFilesToZip(File file, ArrayList<ItemId> uniqueIds) {
     this.file = file;
@@ -61,7 +66,10 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     
     LOGGER.info("Exporting files to " + file.getAbsolutePath()); //$NON-NLS-1$
     
-    ZipArchiveOutputStream zaos = new ZipArchiveOutputStream(file);
+    BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
+    hos = new HashingOutputStream(Hashing.md5(), bos);
+    ZipArchiveOutputStream zaos = new ZipArchiveOutputStream(hos);
+    
     byte[] buf = new byte[8 * 1024 * 1024];
     int subdir = 0;
     int progress = 0;
@@ -119,6 +127,16 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     zaos.close();
 
     return null;
+  }
+  
+  @Override
+  protected void done() {
+      if(hos != null) {
+          String hash = hos.hash().toString().toUpperCase();
+          LOGGER.info("MD5 of " + file.getAbsolutePath() + ": " + hash);
+          HashDialog dialog = new HashDialog(hash);
+          dialog.setVisible(true);
+      }
   }
 
   @Override
