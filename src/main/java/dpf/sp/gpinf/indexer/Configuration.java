@@ -231,17 +231,19 @@ public class Configuration {
     }
 
     value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !Boolean.valueOf(value)) {
+    if (value != null && !Boolean.valueOf(value.trim())) {
       fallBackParser = new EmptyParser();
     } else {
       fallBackParser = new RawStringParser(entropyTest);
     }
-
-    errorParser = new RawStringParser(entropyTest);
-
+    
+    value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
+    if (value != null && !Boolean.valueOf(value.trim())) {
+        errorParser = null;
+    } else {
+        errorParser = new RawStringParser(entropyTest);
+    }
+    
     value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
