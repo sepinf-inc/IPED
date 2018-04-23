@@ -42,7 +42,11 @@ function addCategory(e){
 
 	if(length == 0)
 		e.addCategory("Tamanho Zero");
-
+		
+	if(e.getExt().toLowerCase().equals("mts")){
+		e.setMediaTypeStr("video/mp2t");
+		e.setCategory("Vídeos");
+	}
 
 	if(categorias.indexOf("Imagens") > -1){
 

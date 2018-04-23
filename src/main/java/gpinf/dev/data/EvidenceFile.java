@@ -963,6 +963,10 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   public void setMediaType(MediaType mediaType) {
     this.mediaType = mediaType;
   }
+  
+  public void setMediaTypeStr(String mediaType) {
+      this.mediaType = MediaType.parse(mediaType);
+    }
 
   /**
    * @param modificationDate data da última modificação do arquivo
