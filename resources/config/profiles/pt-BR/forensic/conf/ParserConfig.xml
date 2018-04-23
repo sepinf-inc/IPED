@@ -40,10 +40,22 @@
         <parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
 		<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
-        <parser class="org.apache.tika.parser.microsoft.OfficeParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.OfficeParser">
+        	<params>
+                <param name="extractMacros" type="bool">true</param>
+                <param name="includeDeletedContent" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="org.apache.tika.parser.microsoft.OldExcelParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.TNEFParser"></parser>
-        <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser"></parser>
+        <parser class="org.apache.tika.parser.microsoft.ooxml.OOXMLParser">
+        	<params>
+                <param name="useSAXDocxExtractor" type="bool">false</param>
+                <param name="useSAXPptxExtractor" type="bool">false</param>
+                <param name="extractMacros" type="bool">true</param>
+                <param name="includeDeletedContent" type="bool">true</param>
+            </params>
+        </parser>
         <parser class="org.apache.tika.parser.microsoft.ooxml.xwpf.ml2006.Word2006MLParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.xml.WordMLParser"></parser>
         <parser class="org.apache.tika.parser.microsoft.xml.SpreadsheetMLParser"></parser>

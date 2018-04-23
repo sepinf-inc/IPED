@@ -233,11 +233,6 @@ public class IndexTask extends BaseCarveTask {
     //Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
-    OfficeParserConfig opc = new OfficeParserConfig();
-    opc.setExtractMacros(true);
-    opc.setIncludeDeletedContent(true);
-    context.set(OfficeParserConfig.class, opc);
-    
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
     context.set(Item.class, evidence);
     context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
