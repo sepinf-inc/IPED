@@ -74,7 +74,12 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IncrediMailParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.OutlookPSTParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.OutlookPSTParser">
+        	<params>
+                <param name="recoverDeleted" type="bool">true</param>
+				<param name="useLibpffParser" type="bool">true</param>
+			</params>
+        </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
