@@ -84,16 +84,18 @@ public class ExportFileTree extends CancelableWorker {
   private int[] getItemsToExport() {
 
     try {
-      Document doc = App.get().appCase.getReader().document(baseDocId);
+      String textQuery = "*:*";
+      if(baseDocId != root.docId) {
+          Document doc = App.get().appCase.getReader().document(baseDocId);
 
-      String id = doc.get(IndexItem.FTKID);
-      if (id == null) {
-        id = doc.get(IndexItem.ID);
+          String id = doc.get(IndexItem.FTKID);
+          if (id == null)
+            id = doc.get(IndexItem.ID);
+
+          textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+          textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
-
-      String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-      textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
@@ -125,13 +127,14 @@ public class ExportFileTree extends CancelableWorker {
       try {
         Document doc = App.get().appCase.getReader().document(docId);
         
+        int parentDocId = root.docId;
         String parentIdStr = doc.get(IndexItem.PARENTID);
-        int parentId = Integer.parseInt(parentIdStr);
-        
-        IPEDSource source = App.get().appCase.getAtomicSource(docId);
-        int baseLuceneId = App.get().appCase.getBaseLuceneId(source);
-        
-        int parentDocId = source.getLuceneId(parentId) + baseLuceneId;
+        if(parentIdStr != null) {
+            int parentId = Integer.parseInt(parentIdStr);
+            IPEDSource source = App.get().appCase.getAtomicSource(docId);
+            int baseLuceneId = App.get().appCase.getBaseLuceneId(source);
+            parentDocId = source.getLuceneId(parentId) + baseLuceneId;
+        }
         Object exportedParent = parentCache.get(parentDocId);
         if (exportedParent == null) {
           exportedParent = exportItem(parentDocId, true);
@@ -169,8 +172,11 @@ public class ExportFileTree extends CancelableWorker {
 
   private Object exportItem(int docId, Object subdir, boolean isParent) {
 
-    if (subdir == null)
+    if(docId == root.docId)
       return null;
+        
+    if (subdir == null)
+      subdir = baseDir;
 
     if(toZip)
         return exportItemToZip(docId, subdir, isParent);
@@ -326,10 +332,6 @@ public class ExportFileTree extends CancelableWorker {
   }
 
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
-    if (baseDocId == root.docId) {
-      JOptionPane.showMessageDialog(null, Messages.getString("ExportFileTree.SelectOtherNode") + root.toString()); //$NON-NLS-1$
-      return;
-    }
     try {
       JFileChooser fileChooser = new JFileChooser();
       fileChooser.setFileFilter(null);

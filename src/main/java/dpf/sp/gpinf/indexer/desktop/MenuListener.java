@@ -237,13 +237,17 @@ public class MenuListener implements ActionListener {
             e.getSource() == menu.exportCheckedTreeToZip) {
         
         TreePath[] paths = App.get().tree.getSelectionPaths();
-        if (paths == null || paths.length != 1) {
+        if (paths != null && paths.length > 1) {
           JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
         } else {
-          Node treeNode = (Node) paths[0].getLastPathComponent();
+          int baseDocId = -1;
+          if(paths != null) {
+              Node treeNode = (Node) paths[0].getLastPathComponent();
+              baseDocId = treeNode.docId;
+          }
           boolean onlyChecked = e.getSource() != menu.exportTree;
           boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
-          ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked, toZip);
+          ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
         }
 
     } else if (e.getSource() == menu.limparBuscas) {
