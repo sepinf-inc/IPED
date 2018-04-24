@@ -332,9 +332,9 @@ public class Marcadores implements Serializable {
 	}
 
 	public void saveState(File file) throws IOException {
-		//SaveStateThread.getInstance().saveState(this, file);
 		LOGGER.info("Saving state to file " + file.getAbsolutePath()); //$NON-NLS-1$
-		Util.writeObject(this, file.getAbsolutePath());
+		//Util.writeObject(this, file.getAbsolutePath());
+		SaveStateThread.getInstance().saveState(this, file);
 	}
 
 	public void addToTypedWords(String texto) {

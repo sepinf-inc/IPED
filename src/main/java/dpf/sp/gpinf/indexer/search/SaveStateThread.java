@@ -7,20 +7,24 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class SaveStateThread extends Thread{
 	
-	private static SaveStateThread instance = new SaveStateThread();
+	private static SaveStateThread instance = getInstance();
 	
-	static{
-		instance.setDaemon(true);
-		instance.start();
-	}
+	private static final String BKP_DIR = "bkp";
+	public static int MAX_BACKUPS = 10;
+	public static long BKP_INTERVAL = 60; //seconds
 	
-	private File file;
-	private Marcadores state;
+	private volatile File file;
+	private volatile Marcadores state;
 	
 	private SaveStateThread(){
 	}
 	
 	public static SaveStateThread getInstance(){
+	    if(instance == null) {
+	        instance = new SaveStateThread();
+	        instance.setDaemon(true);
+	        instance.start();
+	    }
 		return instance;
 	}
 	
@@ -44,12 +48,12 @@ public class SaveStateThread extends Thread{
 					if(tmp.exists())
 						tmp.delete();
 					Util.writeObject(state, tmp.getAbsolutePath());
-					File bkp = new File(file.getAbsolutePath() + ".bkp"); //$NON-NLS-1$
-					if(!file.exists() || file.renameTo(bkp)){
-						if(tmp.renameTo(file))
-							bkp.delete();
-						else
-							bkp.renameTo(file);
+					if(!file.exists()){
+						tmp.renameTo(file);
+					}else {
+					    File bkp = backupAndDelete(file);
+					    if(!tmp.renameTo(file))
+                            bkp.renameTo(file);
 					}
 					
 				} catch (IOException e1) {
@@ -61,5 +65,34 @@ public class SaveStateThread extends Thread{
 				break;
 			}
 		}
+	}
+	
+	private File backupAndDelete(File file) {
+	    File oldestBkp = null;
+	    File newestBkp = null;
+	    int numBkps = 0;
+	    File bkpDir = new File(file.getParentFile(), BKP_DIR);
+	    bkpDir.mkdir();
+	    for(File subfile : bkpDir.listFiles())
+	        if(subfile.getName().endsWith(".bkp.iped")) {
+	            numBkps++;
+	            if(newestBkp == null || newestBkp.lastModified() < subfile.lastModified())
+	                newestBkp = subfile;
+	            if(oldestBkp == null || oldestBkp.lastModified() > subfile.lastModified())
+	                oldestBkp = subfile;
+	        }
+	    if(numBkps < MAX_BACKUPS) {
+	        String baseName = file.getName().substring(0, file.getName().lastIndexOf('.'));
+	        oldestBkp = new File(bkpDir, baseName + "." + numBkps + ".bkp.iped");
+	    }
+	    if(newestBkp == null || (System.currentTimeMillis() - newestBkp.lastModified()) / 1000 > BKP_INTERVAL) {
+	        oldestBkp.delete();
+	        file.renameTo(oldestBkp);
+	        oldestBkp.setLastModified(System.currentTimeMillis());
+	        return oldestBkp;
+	    }else {
+	        file.delete();
+	        return newestBkp;
+	    }
 	}
 }
