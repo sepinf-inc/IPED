@@ -164,7 +164,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private HashSet<String> categories = new HashSet<String>();
 
-  private String labels;
+  private List<String> labels = new ArrayList<>();
 
   private Metadata metadata;
 
@@ -428,9 +428,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   /**
    *
-   * @return os marcadores do item concatenados
+   * @return lista de marcadores do item
    */
-  public String getLabels() {
+  public List<String> getLabels() {
     return labels;
   }
 
@@ -942,9 +942,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   /**
    * Define os marcadores do item
    *
-   * @param labels marcadores concatenados
+   * @param labels lista de marcadores
    */
-  public void setLabels(String labels) {
+  public void setLabels(List<String> labels) {
     this.labels = labels;
   }
 

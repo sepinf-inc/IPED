@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.zip.Deflater;
 
@@ -94,6 +95,18 @@ public class Util {
       in.close();
     }
     return result;
+  }
+  
+  public static String concatStrings(List<String> strings) {
+      if(strings == null)
+          return null;
+      StringBuilder result = new StringBuilder();
+      for (int i = 0; i < strings.size(); i++) {
+          result.append(strings.get(i));
+          if (i < strings.size() - 1)
+              result.append(" | "); //$NON-NLS-1$
+      }
+      return result.toString();
   }
 
   public static String concat(String filename, int num) {

@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -35,12 +37,12 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class Marcadores implements Serializable {
 	
-	private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
-
 	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -4728708012271393485L;
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
 	
 	public static String EXT = "." + Versao.APP_EXT.toLowerCase(); //$NON-NLS-1$
 	public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
@@ -50,6 +52,8 @@ public class Marcadores implements Serializable {
 	private boolean[] selected;
 	private ArrayList<byte[]> labels;
 	private TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
+	private TreeMap<Integer, String> labelComments = new TreeMap<Integer, String>();
+	
 	private int selectedItens = 0, totalItems, lastId;
 
 	private LinkedHashSet<String> typedWords = new LinkedHashSet<String>();
@@ -95,7 +99,7 @@ public class Marcadores implements Serializable {
 		return indexDir;
 	}
 	
-	public TreeMap<Integer, String> getLabelMap(){
+	public Map<Integer, String> getLabelMap(){
 		return labelNames;
 	}
 	
@@ -125,19 +129,15 @@ public class Marcadores implements Serializable {
           selected[ipedCase.getId(i)] = true;
         }
 	}
-
-	public String getLabels(int id) {
-
-		ArrayList<Integer> labelIds = getLabelIds(id);
-		String result = ""; //$NON-NLS-1$
-		for (int i = 0; i < labelIds.size(); i++) {
-			result += labelNames.get(labelIds.get(i));
-			if (i < labelIds.size() - 1)
-				result += " | "; //$NON-NLS-1$
-		}
-
-		return result;
-	}
+	
+	public List<String> getLabelList(int itemId) {
+        ArrayList<Integer> labelIds = getLabelIds(itemId);
+        ArrayList<String> result = new ArrayList<>();
+        for (Integer labelId : labelIds) {
+            result.add(labelNames.get(labelId));
+        }
+        return result;
+    }
 	
 	public ArrayList<Integer> getLabelIds(int id){
 		ArrayList<Integer> labelIds = new ArrayList<Integer>();
@@ -227,6 +227,7 @@ public class Marcadores implements Serializable {
 			labelId = labelNames.size();
 
 		labelNames.put(labelId, labelName);
+		labelComments.put(labelId, null);
 
 		return labelId;
 	}
@@ -235,6 +236,7 @@ public class Marcadores implements Serializable {
 		if(label == -1)
 			return;
 		labelNames.remove(label);
+		labelComments.remove(label);
 		
 		int labelOrder = label / labelBits;
 		int labelMod = label % labelBits;
@@ -253,12 +255,19 @@ public class Marcadores implements Serializable {
 			if (labelNames.get(i).equals(labelName))
 				return i;
 		}
-
 		return -1;
 	}
 	
 	public String getLabelName(int labelId){
 		return labelNames.get(labelId);
+	}
+	
+	public void setLabelComment(int labelId, String comment) {
+	    labelComments.put(labelId, comment);
+	}
+	
+	public String getLabelComment(int labelId) {
+	    return labelComments.get(labelId);
 	}
 	
 	public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
@@ -377,7 +386,7 @@ public class Marcadores implements Serializable {
 		this.typedWords = state.typedWords;
 		this.selectedItens = state.selectedItens;
 		this.labelNames = state.labelNames;
-
+		this.labelComments = state.labelComments;
 	}
 	
 	public static Marcadores load(File file) throws ClassNotFoundException, IOException{

@@ -44,9 +44,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.ProgressMonitor;
-import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -62,7 +63,7 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 
-public class GerenciadorMarcadores implements ActionListener {
+public class GerenciadorMarcadores implements ActionListener, ListSelectionListener {
 
   private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
@@ -76,8 +77,10 @@ public class GerenciadorMarcadores implements ActionListener {
   JButton remove = new JButton(Messages.getString("BookmarksManager.Remove")); //$NON-NLS-1$
   JButton rename = new JButton(Messages.getString("BookmarksManager.Rename")); //$NON-NLS-1$
   JTextField newLabel = new JTextField();
+  JTextArea comments = new JTextArea();
   JLabel texto = new JLabel(Messages.getString("BookmarksManager.Bookmarks")); //$NON-NLS-1$
   JButton novo = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
+  JButton updateComment = new JButton("Update");
   JButton delete = new JButton(Messages.getString("BookmarksManager.Delete")); //$NON-NLS-1$
   DefaultListModel<String> listModel = new DefaultListModel<String>();
   JList<String> list = new JList<String>(listModel);
@@ -99,7 +102,7 @@ public class GerenciadorMarcadores implements ActionListener {
   private GerenciadorMarcadores() {
 
     dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
-    dialog.setBounds(0, 0, 450, 450);
+    dialog.setBounds(0, 0, 500, 500);
     dialog.setAlwaysOnTop(true);
 
     group.add(highlighted);
@@ -111,6 +114,8 @@ public class GerenciadorMarcadores implements ActionListener {
     updateList();
 
     newLabel.setToolTipText(Messages.getString("BookmarksManager.NewLabel.Tip")); //$NON-NLS-1$
+    comments.setToolTipText("Bookmark comments");
+    updateComment.setToolTipText("Update Comments");
     novo.setToolTipText(Messages.getString("BookmarksManager.New.Tip")); //$NON-NLS-1$
     add.setToolTipText(Messages.getString("BookmarksManager.Add.Tip")); //$NON-NLS-1$
     remove.setToolTipText(Messages.getString("BookmarksManager.Remove.Tip")); //$NON-NLS-1$
@@ -129,7 +134,8 @@ public class GerenciadorMarcadores implements ActionListener {
     JPanel left1 = new JPanel();
     left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
     left1.add(novo);
-    left1.add(Box.createRigidArea(new Dimension(0, 10)));
+    left1.add(updateComment);
+    left1.add(Box.createRigidArea(new Dimension(0, 35)));
     left1.add(add);
     left1.add(remove);
 
@@ -140,9 +146,17 @@ public class GerenciadorMarcadores implements ActionListener {
     JPanel left = new JPanel(new BorderLayout());
     left.add(left1, BorderLayout.PAGE_START);
     left.add(left2, BorderLayout.PAGE_END);
+    
+    comments.setLineWrap(true);
+    comments.setWrapStyleWord(true);
+    JScrollPane commentScroll = new JScrollPane(comments);
+    commentScroll.setPreferredSize(new Dimension(300, 50));
 
     JPanel center = new JPanel(new BorderLayout(0, 10));
-    center.add(newLabel, BorderLayout.PAGE_START);
+    JPanel bookmark = new JPanel(new BorderLayout()); 
+    bookmark.add(newLabel, BorderLayout.PAGE_START);
+    bookmark.add(commentScroll, BorderLayout.CENTER);
+    center.add(bookmark, BorderLayout.PAGE_START);
     center.add(scrollList, BorderLayout.CENTER);
 
     JPanel pane = new JPanel(new BorderLayout(10, 10));
@@ -153,10 +167,13 @@ public class GerenciadorMarcadores implements ActionListener {
     dialog.getContentPane().add(pane);
 
     add.addActionListener(this);
+    updateComment.addActionListener(this);
     remove.addActionListener(this);
     rename.addActionListener(this);
     novo.addActionListener(this);
     delete.addActionListener(this);
+    
+    list.addListSelectionListener(this);
 
     dialog.setLocationRelativeTo(App.get());
 
@@ -222,8 +239,10 @@ public class GerenciadorMarcadores implements ActionListener {
 
     if (evt.getSource() == novo) {
       String texto = newLabel.getText().trim();
+      String comment = comments.getText().trim();
       if (!texto.isEmpty() && !listModel.contains(texto)) {
         App.get().appCase.getMultiMarcadores().newLabel(texto);
+        App.get().appCase.getMultiMarcadores().setLabelComment(texto, comment);
         updateList();
       }
       for (int i = 0; i < listModel.size(); i++) {
@@ -233,6 +252,15 @@ public class GerenciadorMarcadores implements ActionListener {
       }
 
     }
+    if(evt.getSource() == updateComment) {
+        int idx = list.getSelectedIndex();
+        if(idx != -1) {
+            String labelName = list.getModel().getElementAt(idx);
+            App.get().appCase.getMultiMarcadores().setLabelComment(labelName, comments.getText());
+            App.get().appCase.getMultiMarcadores().saveState();
+        }
+    }
+    
     if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
 
       App app = App.get();
@@ -313,5 +341,17 @@ public class GerenciadorMarcadores implements ActionListener {
     }
 
   }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+        int idx = list.getSelectedIndex();
+        if(idx == -1) {
+            comments.setText(null);
+            return;
+        }
+        String labelName = list.getModel().getElementAt(idx);
+        String comment = App.get().appCase.getMultiMarcadores().getLabelComment(labelName);
+        comments.setText(comment);
+    }
 
 }

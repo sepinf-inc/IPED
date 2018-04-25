@@ -179,8 +179,8 @@ public class ExportFileTask extends AbstractTask {
       }
     }
     for (String noContentLabel : noContentLabels) {
-      if (evidence.getLabels() != null && !evidence.getLabels().isEmpty()) {
-        for (String label : evidence.getLabels().split(" \\| ")) { //$NON-NLS-1$
+      if (!evidence.getLabels().isEmpty()) {
+        for (String label : evidence.getLabels()) { //$NON-NLS-1$
           if (label.equalsIgnoreCase(noContentLabel)) {
             return true;
           }

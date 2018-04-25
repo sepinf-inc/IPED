@@ -157,7 +157,9 @@ public class IPEDReader extends DataSourceReader {
   	
       for(int oldLabelId : selectedLabels){
     	  String labelName = state.getLabelName(oldLabelId);
+    	  String labelComment = state.getLabelComment(oldLabelId);
     	  int newLabelId = reportState.newLabel(labelName);
+    	  reportState.setLabelComment(newLabelId, labelComment);
     	  ArrayList<Integer> newIds = new ArrayList<Integer>();
     	  for(int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
     		  if(state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
@@ -302,7 +304,7 @@ public class IPEDReader extends DataSourceReader {
         }
       }
 
-      evidence.setLabels(state.getLabels(id));
+      evidence.setLabels(state.getLabelList(id));
 
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {

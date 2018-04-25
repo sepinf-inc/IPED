@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class RowComparator implements Comparator<Integer> {
 	
@@ -166,7 +167,8 @@ public class RowComparator implements Comparator<Integer> {
               return 1;
 		
 		}else if(bookmarkCol)
-          return app.appCase.getMultiMarcadores().getLabels(itemA).compareTo(app.appCase.getMultiMarcadores().getLabels(itemB));
+          return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemA))
+                  .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
       
 		else if(sdv != null)
 			return sdv.getOrd(a) - sdv.getOrd(b);
