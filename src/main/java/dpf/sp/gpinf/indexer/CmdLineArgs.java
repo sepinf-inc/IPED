@@ -75,28 +75,6 @@ public class CmdLineArgs {
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
       + "fastmode, blind. More details in manual.", validateWith=FileExistsValidator.class)
   public String profile;
-  
-  private String configPath;
-  public String getConfigPath() {
-    if (configPath == null) {
-      configPath = getRootPath();
-    }
-    return configPath;
-  }
-  
-  private String rootPath;
-  public String getRootPath() {
-    if (rootPath == null) {
-      URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
-      try {
-        rootPath = new File(url.toURI()).getParent();
-      } catch (URISyntaxException e) {
-        e.printStackTrace();
-        System.exit(1);
-      }
-    }
-    return rootPath;
-  }
 
   @Parameter(names="--addowner", description="index file owner info when processing local folders (slow over network)")
   public boolean addowner;
@@ -178,6 +156,11 @@ public class CmdLineArgs {
     IndexFiles.getInstance().dataSource = new ArrayList<File>();
     OCRParser.bookmarksToOCR = new ArrayList<String>();
     
+    if (this.importkff != null) {
+        IndexFiles.getInstance().importKFF(this.importkff);
+        System.exit(0);
+    }
+    
     if (this.reportDir != null) {
       IndexFiles.getInstance().dataSource.add(this.reportDir);
     }
@@ -188,6 +171,10 @@ public class CmdLineArgs {
         }
         IndexFiles.getInstance().dataSource.add(dataSource);
       }
+    }
+    
+    if (reportDir == null && (datasources == null || datasources.isEmpty())) {
+        throw new IPEDException("parameter '-d' or '-r' required.");
     }
     
     if (this.dname != null) {
@@ -205,10 +192,7 @@ public class CmdLineArgs {
     if (this.logFile != null) {
       IndexFiles.getInstance().logFile = this.logFile;
     }
-    if (this.importkff != null) {
-      IndexFiles.getInstance().importKFF(this.importkff);
-      System.exit(0);
-    }
+    
     IndexFiles.getInstance().nogui = this.nogui;
     IndexFiles.getInstance().nologfile = this.nologfile;
     IndexFiles.getInstance().appendIndex = this.appendIndex;
@@ -217,7 +201,7 @@ public class CmdLineArgs {
       if (!(new File(reportDir, "files")).exists() &&
           !(new File(reportDir, "Report_files/files")).exists() &&
           !(new File(reportDir, "Export")).exists()) {
-        throw new IPEDException("reportDir malformed content!");
+        throw new IPEDException("malformed report folder content!");
       }
     }
 
@@ -236,9 +220,6 @@ public class CmdLineArgs {
     } else if (reportDir != null) {
       IndexFiles.getInstance().output = new File(reportDir, "indexador");
     } else {
-      if (datasources == null || datasources.size() == 0) {
-        throw new IPEDException("parameter '-d' or '-r' required.");
-      }
       IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador");
     }
 
