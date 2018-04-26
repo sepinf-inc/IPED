@@ -14,6 +14,7 @@ import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -54,6 +55,7 @@ public class P2PBookmarker {
 		p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares")); //$NON-NLS-1$
 		p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE, new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza")); //$NON-NLS-1$
 		p2pPrograms.put(WhatsAppParser.WHATSAPP_CHAT.toString(), new P2PProgram(HashTask.HASH.SHA256.toString(), "WhatsApp")); //$NON-NLS-1$
+		p2pPrograms.put(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString(), new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats")); //$NON-NLS-1$
 		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		
@@ -84,7 +86,17 @@ public class P2PBookmarker {
 				if(result.getLength() == 0)
 					continue;
 				
-				int labelId = ipedSrc.getMarcadores().newLabel(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + program.appName); //$NON-NLS-1$
+				String bookmarkSufix = program.appName;
+				if(UFEDChatParser.UFED_CHAT_PREVIEW_MIME.toString().equals(mediaType)) {
+				    String source = doc.get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+				    if(source != null)
+				        bookmarkSufix = source;
+				    String phoneOwner = doc.get(UFEDChatParser.META_PHONE_OWNER);
+				    if(phoneOwner != null && !phoneOwner.isEmpty())
+				        bookmarkSufix += " by " + phoneOwner; //$NON-NLS-1$
+				}
+				
+				int labelId = ipedSrc.getMarcadores().newLabel(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
 				ArrayList<Integer> ids = new ArrayList<Integer>();
 				for (int j = 0; j < result.getLength(); j++)
 					ids.add(result.getId(j));

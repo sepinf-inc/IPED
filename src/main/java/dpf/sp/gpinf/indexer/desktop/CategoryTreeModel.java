@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.SwingUtilities;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -144,18 +145,23 @@ public class CategoryTreeModel implements TreeModel {
 
   }
   
-  private void fireNodeChanged(Category cat) {
-      if(cat == root)
+  private void fireNodeChanged(final Category category) {
+      if(category == root)
           return;
-      int idx = cat.parent.getIndexOfChild(cat);
-      int[] idxs = {idx};
-      LinkedList<Category> path = new LinkedList<Category>();
-      while(cat.parent != null)
-          path.addFirst(cat = cat.parent);
-      Category[] cats = {cat};
-      TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
-      for(TreeModelListener l : listeners)
-          l.treeNodesChanged(e);
+      SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+              Category cat = category;
+              int idx = cat.parent.getIndexOfChild(cat);
+              int[] idxs = {idx};
+              LinkedList<Category> path = new LinkedList<Category>();
+              while(cat.parent != null)
+                  path.addFirst(cat = cat.parent);
+              Category[] cats = {cat};
+              TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
+              for(TreeModelListener l : listeners)
+                  l.treeNodesChanged(e);
+          }
+      });
   }
   
   private String upperCaseChars(String cat){

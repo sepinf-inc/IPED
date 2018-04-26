@@ -37,6 +37,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -87,7 +88,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
             values = doc.getValues(fields.get(col));
           } else {
             ItemId item = App.get().appCase.getItemId(docId);
-            values[0] = App.get().appCase.getMultiMarcadores().getLabels(item);
+            values[0] = Util.concatStrings(App.get().appCase.getMultiMarcadores().getLabelList(item));
           }
           if (values.length > 0 && values[0] == null)
             values[0] = ""; //$NON-NLS-1$

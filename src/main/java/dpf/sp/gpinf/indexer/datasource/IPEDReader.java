@@ -26,6 +26,7 @@ import gpinf.dev.filetypes.GenericFileType;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -43,6 +44,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
@@ -57,6 +59,7 @@ import dpf.sp.gpinf.indexer.search.SearchResult;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
@@ -130,7 +133,7 @@ public class IPEDReader extends DataSourceReader {
 	    insertIntoProcessQueue(result, false);
 
 	    //Inclui anexos de emails de PST
-	    insertPSTAttachs(result);
+	    insertEmailAttachs(result);
 
 	    //Inclui pais para visualização em árvore
 	    insertParentTreeNodes(result);
@@ -154,7 +157,9 @@ public class IPEDReader extends DataSourceReader {
   	
       for(int oldLabelId : selectedLabels){
     	  String labelName = state.getLabelName(oldLabelId);
+    	  String labelComment = state.getLabelComment(oldLabelId);
     	  int newLabelId = reportState.newLabel(labelName);
+    	  reportState.setLabelComment(newLabelId, labelComment);
     	  ArrayList<Integer> newIds = new ArrayList<Integer>();
     	  for(int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
     		  if(state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
@@ -195,19 +200,19 @@ public class IPEDReader extends DataSourceReader {
     }
   }
 
-  private void insertPSTAttachs(LuceneSearchResult result) throws Exception {
+  private void insertEmailAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (!args.nopstattachs) {
-      boolean[] isSelectedPSTEmail = new boolean[ipedCase.getLastId() + 1];
-      boolean hasPSTEmail = false;
+      boolean[] isSelectedEmail = new boolean[ipedCase.getLastId() + 1];
+      boolean hasEmail = false;
       for (int docID : result.getLuceneIds()) {
         String mimetype = ipedCase.getReader().document(docID).get(IndexItem.CONTENTTYPE);
-        if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype)) {
-          hasPSTEmail = true;
-          isSelectedPSTEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
+        if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype) || UfedXmlReader.UFED_EMAIL_MIME.equals(mimetype)) {
+          hasEmail = true;
+          isSelectedEmail[Integer.parseInt(ipedCase.getReader().document(docID).get(IndexItem.ID))] = true;
         }
       }
-      if(!hasPSTEmail)
+      if(!hasEmail)
         return;
       
       //search attachs
@@ -215,7 +220,7 @@ public class IPEDReader extends DataSourceReader {
       boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
       BooleanQuery query = new BooleanQuery();
       for (int i = 0; i <= ipedCase.getLastId(); i++) {
-          if (isSelectedPSTEmail[i]) {
+          if (isSelectedEmail[i]) {
         	  query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, i, i, true, true), Occur.SHOULD);
               num++;
           }
@@ -299,7 +304,7 @@ public class IPEDReader extends DataSourceReader {
         }
       }
 
-      evidence.setLabels(state.getLabels(id));
+      evidence.setLabels(state.getLabelList(id));
 
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
@@ -370,6 +375,11 @@ public class IPEDReader extends DataSourceReader {
       }
       evidence.setPath(path);
       
+      String mimetype = doc.get(IndexItem.CONTENTTYPE);
+      if (mimetype != null) {
+        evidence.setMediaType(MediaType.parse(mimetype));
+      }
+      
       value = doc.get(IndexItem.EXPORT);
       if (value != null && !value.isEmpty() && !treeNode) {
         evidence.setFile(Util.getRelativeFile(basePath, value));
@@ -378,17 +388,14 @@ public class IPEDReader extends DataSourceReader {
         if (value != null && !value.isEmpty() && !treeNode) {
           evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-        }
+          
+        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
       }
 
       if (treeNode) {
         evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.setAddToCase(false);
-      }
-
-      String mimetype = doc.get(IndexItem.CONTENTTYPE);
-      if (mimetype != null) {
-        evidence.setMediaType(MediaType.parse(mimetype));
       }
 
       evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
@@ -464,9 +471,16 @@ public class IPEDReader extends DataSourceReader {
         evidence.setFileOffset(Long.parseLong(value));
       }
       
-      for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              Class<?> c = IndexItem.getMetadataTypes().get(f.name());
+              if(Date.class.equals(c))
+                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
+          }else
               evidence.getMetadata().add(f.name(), f.stringValue());
+      }
 
       value = doc.get(IndexItem.ISROOT);
       if (value != null) {

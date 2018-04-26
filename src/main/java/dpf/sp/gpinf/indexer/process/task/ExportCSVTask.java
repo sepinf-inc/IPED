@@ -34,6 +34,7 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.Util;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
@@ -107,7 +108,7 @@ public class ExportCSVTask extends AbstractTask {
     }
     list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
 
-    value = evidence.getLabels();
+    value = Util.concatStrings(evidence.getLabels());
     if (value == null) {
       value = ""; //$NON-NLS-1$
     }

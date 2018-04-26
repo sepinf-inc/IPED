@@ -32,6 +32,8 @@ public class ItemSearcherImpl implements ItemSearcher{
 				iSource = new IPEDSource(caseFolder, iw);
 			
 			IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
+			searcher.setTreeQuery(true);
+			searcher.setNoScoring(true);
 			SearchResult result = searcher.search();
 			
 			for(int i = 0; i < result.getLength();i ++){

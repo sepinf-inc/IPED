@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
@@ -167,13 +168,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
-    OfficeParserConfig opc = new OfficeParserConfig();
-    opc.setExtractMacros(true);
-    opc.setIncludeDeletedContent(true);
-    context.set(OfficeParserConfig.class, opc);
-    
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    
+    context.set(Item.class, evidence);
     context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     setContext(context);
@@ -185,13 +181,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   
   public static void fillMetadata(EvidenceFile evidence, Metadata metadata){
 	Long len = evidence.getLength();
-	if (len == null) {
-	  len = 0L;
-	}
-	metadata.set(Metadata.CONTENT_LENGTH, len.toString());
+	if (len != null)
+	    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
 	metadata.set(Metadata.RESOURCE_NAME_KEY, evidence.getName());
-	metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
-	metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+	if(evidence.getMediaType() != null) {
+	    metadata.set(Metadata.CONTENT_TYPE, evidence.getMediaType().toString());
+	    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, evidence.getMediaType().toString());
+	}
 	if (evidence.isTimedOut()) {
 	  metadata.set(IndexerDefaultParser.INDEXER_TIMEOUT, "true"); //$NON-NLS-1$
 	}
@@ -251,7 +247,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     long start = System.nanoTime()/1000;
     
-    if (!evidence.isTimedOut() && ((evidence.getLength() != null && 
+    if (!evidence.isTimedOut() && ((evidence.getLength() == null || 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
     		isSpecificParser(parser) )) {
         try{
@@ -339,7 +335,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       do {
         numFrags++;
         writer = new StringWriter();
-        if(metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
+        if(numFrags > 1 && metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
         	break;
         while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
           writer.write(cbuf, 0, len);

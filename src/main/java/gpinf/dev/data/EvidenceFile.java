@@ -34,12 +34,14 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.process.Statistics;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
@@ -162,7 +164,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private HashSet<String> categories = new HashSet<String>();
 
-  private String labels;
+  private List<String> labels = new ArrayList<>();
 
   private Metadata metadata;
 
@@ -207,6 +209,10 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private Integer sleuthId;
 
   private TikaInputStream tis;
+  
+  private byte[] thumb;
+  
+  private SeekableInputStreamFactory inputStreamFactory;
 
   static final int BUF_LEN = 8 * 1024 * 1024;
 
@@ -422,9 +428,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   /**
    *
-   * @return os marcadores do item concatenados
+   * @return lista de marcadores do item
    */
-  public String getLabels() {
+  public List<String> getLabels() {
     return labels;
   }
 
@@ -557,8 +563,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       }
     }
 
-    if (stream == null) {
-      if (sleuthFile != null) {
+    if (stream == null && sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
         if (sleuthcase == null || !Configuration.robustImageReading) {
           stream = new SleuthkitInputStream(sleuthFile);
@@ -566,14 +571,17 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
           stream = sleuthProcess.getInputStream((int)sleuthFile.getId(), path);
         }
-      } else {
-        return new EmptyInputStream();
-      }
     }
     
-    if (startOffset != -1) {
+    if(stream == null && inputStreamFactory != null)
+        stream = inputStreamFactory.getSeekableInputStream();
+    
+    if (stream != null && startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);
     }
+    
+    if(stream == null)
+        return new EmptyInputStream();
 
     return stream;
   }
@@ -818,7 +826,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setCategory(String category) {
     categories = new HashSet<String>();
-    categories.add(category);
+    if(category != null)
+        categories.add(category);
   }
 
   /**
@@ -933,9 +942,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   /**
    * Define os marcadores do item
    *
-   * @param labels marcadores concatenados
+   * @param labels lista de marcadores
    */
-  public void setLabels(String labels) {
+  public void setLabels(List<String> labels) {
     this.labels = labels;
   }
 
@@ -954,6 +963,10 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   public void setMediaType(MediaType mediaType) {
     this.mediaType = mediaType;
   }
+  
+  public void setMediaTypeStr(String mediaType) {
+      this.mediaType = MediaType.parse(mediaType);
+    }
 
   /**
    * @param modificationDate data da última modificação do arquivo
@@ -1147,12 +1160,30 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     this.metadata = metadata;
   }
 
-public DataSource getDataSource() {
+  public DataSource getDataSource() {
 	return dataSource;
-}
+  }
 
-public void setDataSource(DataSource evidence) {
+  public void setDataSource(DataSource evidence) {
 	this.dataSource = evidence;
-}
+  }
+
+    @Override
+    public byte[] getThumb() {
+        return thumb;
+    }
+    
+    public void setThumb(byte[] thumb) {
+        this.thumb = thumb;
+        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+    }
+
+    public SeekableInputStreamFactory getInputStreamFactory() {
+        return inputStreamFactory;
+    }
+
+    public void setInputStreamFactory(SeekableInputStreamFactory inputStreamFactory) {
+        this.inputStreamFactory = inputStreamFactory;
+    }
 
 }

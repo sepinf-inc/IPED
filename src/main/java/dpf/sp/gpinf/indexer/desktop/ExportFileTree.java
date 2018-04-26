@@ -20,10 +20,13 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import gpinf.dev.data.EvidenceFile;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -34,6 +37,9 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.hash.Hashing;
+import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -59,6 +65,7 @@ public class ExportFileTree extends CancelableWorker {
   HashMap<Integer, Object> parentCache = new HashMap<Integer, Object>();
   
   ZipArchiveOutputStream zaos;
+  HashingOutputStream hos;
   byte[] buf = new byte[8 * 1024 * 1024];
 
   static Node root = (Node) App.get().tree.getModel().getRoot();
@@ -77,16 +84,18 @@ public class ExportFileTree extends CancelableWorker {
   private int[] getItemsToExport() {
 
     try {
-      Document doc = App.get().appCase.getReader().document(baseDocId);
+      String textQuery = "*:*";
+      if(baseDocId != root.docId) {
+          Document doc = App.get().appCase.getReader().document(baseDocId);
 
-      String id = doc.get(IndexItem.FTKID);
-      if (id == null) {
-        id = doc.get(IndexItem.ID);
+          String id = doc.get(IndexItem.FTKID);
+          if (id == null)
+            id = doc.get(IndexItem.ID);
+
+          textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+          textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
-
-      String textQuery = IndexItem.PARENTIDs + ":" + id + " " + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-      textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
@@ -118,13 +127,14 @@ public class ExportFileTree extends CancelableWorker {
       try {
         Document doc = App.get().appCase.getReader().document(docId);
         
+        int parentDocId = root.docId;
         String parentIdStr = doc.get(IndexItem.PARENTID);
-        int parentId = Integer.parseInt(parentIdStr);
-        
-        IPEDSource source = App.get().appCase.getAtomicSource(docId);
-        int baseLuceneId = App.get().appCase.getBaseLuceneId(source);
-        
-        int parentDocId = source.getLuceneId(parentId) + baseLuceneId;
+        if(parentIdStr != null) {
+            int parentId = Integer.parseInt(parentIdStr);
+            IPEDSource source = App.get().appCase.getAtomicSource(docId);
+            int baseLuceneId = App.get().appCase.getBaseLuceneId(source);
+            parentDocId = source.getLuceneId(parentId) + baseLuceneId;
+        }
         Object exportedParent = parentCache.get(parentDocId);
         if (exportedParent == null) {
           exportedParent = exportItem(parentDocId, true);
@@ -162,8 +172,11 @@ public class ExportFileTree extends CancelableWorker {
 
   private Object exportItem(int docId, Object subdir, boolean isParent) {
 
-    if (subdir == null)
+    if(docId == root.docId)
       return null;
+        
+    if (subdir == null)
+      subdir = baseDir;
 
     if(toZip)
         return exportItemToZip(docId, subdir, isParent);
@@ -214,8 +227,11 @@ public class ExportFileTree extends CancelableWorker {
       String dst = null;
       EvidenceFile item = null;
       try {
-        if(zaos == null)
-            zaos = new ZipArchiveOutputStream(baseDir);
+        if(zaos == null) {
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(baseDir));
+            hos = new HashingOutputStream(Hashing.md5(), bos);
+            zaos = new ZipArchiveOutputStream(hos);
+        }
         
         item = App.get().appCase.getItemByLuceneID(docId);
         String dstName = item.getName().replace("/", "-").trim(); //$NON-NLS-1$ //$NON-NLS-2$
@@ -234,8 +250,15 @@ public class ExportFileTree extends CancelableWorker {
         if(item.getLength() != null)
             entry.setSize(item.getLength());
         
-        if(item.getModDate() != null)
+        if(item.getModDate() != null) {
             entry.setTime(item.getModDate().getTime());
+            entry.setLastModifiedTime(FileTime.fromMillis(item.getModDate().getTime()));
+        }
+        if(item.getAccessDate() != null)
+            entry.setLastAccessTime(FileTime.fromMillis(item.getAccessDate().getTime()));
+        
+        if(item.getCreationDate() != null)
+            entry.setCreationTime(FileTime.fromMillis(item.getCreationDate().getTime()));
         
         zaos.putArchiveEntry(entry);
         
@@ -297,12 +320,18 @@ public class ExportFileTree extends CancelableWorker {
 
     return null;
   }
+  
+  @Override
+  protected void done() {
+      if(hos != null) {
+          String hash = hos.hash().toString().toUpperCase();
+          LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash);
+          HashDialog dialog = new HashDialog(hash);
+          dialog.setVisible(true);
+      }
+  }
 
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
-    if (baseDocId == root.docId) {
-      JOptionPane.showMessageDialog(null, Messages.getString("ExportFileTree.SelectOtherNode") + root.toString()); //$NON-NLS-1$
-      return;
-    }
     try {
       JFileChooser fileChooser = new JFileChooser();
       fileChooser.setFileFilter(null);

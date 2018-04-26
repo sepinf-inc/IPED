@@ -59,9 +59,9 @@ public class MultiMarcadores implements Serializable {
 	public void setSelected(boolean value, ItemId item, IPEDSource ipedCase) {
 		map.get(item.getSourceId()).setSelected(value, item.getId(), ipedCase);
 	}
-
-	public String getLabels(ItemId item) {
-		return map.get(item.getSourceId()).getLabels(item.getId());
+	
+	public List<String> getLabelList(ItemId item) {
+	    return map.get(item.getSourceId()).getLabelList(item.getId());
 	}
 
 	public final boolean hasLabel(ItemId item){
@@ -147,6 +147,20 @@ public class MultiMarcadores implements Serializable {
 		for(Marcadores m : map.values())
 			m.changeLabel(m.getLabelId(oldLabel), newLabel);
 	}
+	
+	public void setLabelComment(String labelName, String comment) {
+	    for(Marcadores m : map.values())
+	        m.setLabelComment(m.getLabelId(labelName), comment);
+    }
+    
+    public String getLabelComment(String labelName) {
+        for(Marcadores m : map.values()) {
+            String comm = m.getLabelComment(m.getLabelId(labelName));
+            if(comm != null)
+                return comm;
+        }
+        return null;
+    }
 	
 	public TreeSet<String> getLabelMap(){
 		TreeSet<String> labels = new TreeSet<String>();
@@ -249,8 +263,16 @@ public class MultiMarcadores implements Serializable {
 	  }
 	  
 	  public void loadState(File file) throws ClassNotFoundException, IOException{
-		  MultiMarcadores state = (MultiMarcadores) Util.readObject(file.getAbsolutePath());
-		  this.map = state.map;
+	      Object obj = Util.readObject(file.getAbsolutePath());
+	      if(obj instanceof MultiMarcadores) {
+	          MultiMarcadores state = (MultiMarcadores) obj;
+	          map = state.map;
+	      }else {
+	          Marcadores m = (Marcadores) obj;
+	          if(map.size() > 1)
+	              throw new IOException("Invalid state file!");
+	          map.put(map.keySet().iterator().next(), m);
+	      }
 		  for(Marcadores marcador : this.map.values())
               marcador.updateCookie();
       }

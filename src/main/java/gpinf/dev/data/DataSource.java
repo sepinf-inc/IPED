@@ -15,6 +15,9 @@ public class DataSource {
 	private String name;
 	private UUID uuid;
 	
+	public DataSource() {
+	}
+	
 	public DataSource(File source){
 		this.sourceFile = source;
 		this.uuid = UUID.randomUUID();

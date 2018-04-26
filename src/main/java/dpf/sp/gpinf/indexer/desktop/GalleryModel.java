@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -136,10 +137,7 @@ public class GalleryModel extends AbstractTableModel {
     }
 
     final String mediaType = doc.get(IndexItem.CONTENTTYPE);
-    if (!isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
-      return new GalleryValue(doc.get(IndexItem.NAME), unsupportedIcon, id);
-    }
-
+    
     if (executor == null) {
       executor = Executors.newFixedThreadPool(galleryThreads);
     }
@@ -164,9 +162,12 @@ public class GalleryModel extends AbstractTableModel {
         	  String path = doc.get(IndexItem.PATH);
               LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
           }
+          
+          if(doc.getBinaryValue(IndexItem.THUMB) != null)
+              image = ImageIO.read(new ByteArrayInputStream(doc.getBinaryValue(IndexItem.THUMB).bytes));
 
           String hash = doc.get(IndexItem.HASH);
-          if (hash != null) {
+          if (image == null && hash != null && !hash.isEmpty()) {
         	image = getViewImage(docId, hash, !isSupportedImage(mediaType));
             int resizeTolerance = 4;
             if (image != null) {
@@ -182,6 +183,11 @@ public class GalleryModel extends AbstractTableModel {
           if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
             image = getThumbFromFTKReport(App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
             getDimension = false;
+          }
+          
+          if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
+              image = errorImg;
+              value.icon = unsupportedIcon;
           }
           
           if (image == null && stream == null && isSupportedImage(mediaType)) {
@@ -216,7 +222,8 @@ public class GalleryModel extends AbstractTableModel {
           }
 
           if (image == null || image == errorImg) {
-            value.icon = errorIcon;
+              if(value.icon == null)
+                  value.icon = errorIcon;
           }
 
         } catch (Exception e) {

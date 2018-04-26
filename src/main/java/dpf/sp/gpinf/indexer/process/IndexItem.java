@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -57,6 +58,7 @@ import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
@@ -65,6 +67,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -121,6 +124,9 @@ public class IndexItem extends BasicProps{
     ignoredMetadata.add("File Size"); //$NON-NLS-1$
     //ocrCharCount is already copied to an extra attribute
     ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+    
+    BasicProps.SET.add(FTKID);
+    BasicProps.SET.add(SLEUTHID);
   }
 
   public static Map<String, Class> getMetadataTypes() {
@@ -316,6 +322,9 @@ public class IndexItem extends BasicProps{
     value = Boolean.toString(evidence.isSubItem());
     doc.add(new StringField(SUBITEM, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(SUBITEM, new BytesRef(value)));
+    
+    if(evidence.getThumb() != null)
+        doc.add(new StoredField(THUMB, evidence.getThumb()));
 
     long off = evidence.getFileOffset();
     if (off != -1) {
@@ -449,7 +458,7 @@ public class IndexItem extends BasicProps{
       Object oValue = value;
       Class type = typesMap.get(key);
       
-      if (type == null && MetadataUtil.isHtmlMediaType(mimetype))
+      if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
           return;
 
       if (type == null || !type.equals(String.class)) {
@@ -575,7 +584,7 @@ public class IndexItem extends BasicProps{
       value = doc.get(IndexItem.EVIDENCE_UUID);
       if(value != null){
     	//TODO obter source corretamente
-          DataSource dataSource = new DataSource(null);
+          DataSource dataSource = new DataSource();
           dataSource.setUUID(value);
           evidence.setDataSource(dataSource);
       }
@@ -610,6 +619,11 @@ public class IndexItem extends BasicProps{
       }
 
       evidence.setPath(doc.get(IndexItem.PATH));
+      
+      value = doc.get(IndexItem.CONTENTTYPE);
+      if (value != null) {
+        evidence.setMediaType(MediaType.parse(value));
+      }
 
       boolean hasFile = false;
       value = doc.get(IndexItem.EXPORT);
@@ -621,30 +635,39 @@ public class IndexItem extends BasicProps{
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty()) {
           evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value))); 
         }
-      }
-
-      value = doc.get(IndexItem.CONTENTTYPE);
-      if (value != null) {
-        evidence.setMediaType(MediaType.parse(value));
       }
 
       value = doc.get(IndexItem.TIMEOUT);
       if (value != null) {
         evidence.setTimeOut(Boolean.parseBoolean(value));
       }
-
+      
       value = doc.get(IndexItem.HASH);
       if (value != null) {
         value = value.toUpperCase();
         evidence.setHash(value);
-
-        if (!value.isEmpty()) {
-          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value); //$NON-NLS-1$
-          if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+      }
+      
+      if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+          
+          if(Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
+              String mimePrefix = evidence.getMediaType().getType();
+              if(doc.getBinaryValue(THUMB) != null) {
+                  evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
+                  
+              }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) {
+                  String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view";
+                  File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg");
+                  evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+              }
           }
+          
+          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
+          /*if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
+            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+          }*/
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
           }
@@ -653,8 +676,6 @@ public class IndexItem extends BasicProps{
             evidence.setTempFile(viewFile);
             evidence.setMediaType(null);
           }
-
-        }
       }
       
       value = doc.get(HashTask.HASH.MD5.toString());
@@ -717,10 +738,17 @@ public class IndexItem extends BasicProps{
         evidence.setFileOffset(Long.parseLong(value));
       }
       
-      for(IndexableField f : doc.getFields())
-          if(f.name().startsWith(ExtraProperties.VIDEO_META_PREFIX))
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              Class<?> c = typesMap.get(f.name());
+              if(Date.class.equals(c))
+                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
+          }else
               evidence.getMetadata().add(f.name(), f.stringValue());
-
+      }
+      
       return evidence;
 
     } catch (Exception e) {

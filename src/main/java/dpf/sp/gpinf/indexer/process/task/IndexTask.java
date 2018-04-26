@@ -7,7 +7,6 @@ import java.io.ObjectInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -30,6 +29,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
@@ -106,7 +106,7 @@ public class IndexTask extends BaseCarveTask {
     stats.updateLastId(evidence.getId());
     
     //Fragmenta itens grandes indexados via strings
-    if (evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
+    if (evidence.getLength() != null && evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
             && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
     		&& (evidence.getSleuthFile() != null || evidence.getFile() != null)){
     	
@@ -233,13 +233,8 @@ public class IndexTask extends BaseCarveTask {
     //Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
-    OfficeParserConfig opc = new OfficeParserConfig();
-    opc.setExtractMacros(true);
-    opc.setIncludeDeletedContent(true);
-    context.set(OfficeParserConfig.class, opc);
-    
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    
+    context.set(Item.class, evidence);
     context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     return context;

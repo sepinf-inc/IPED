@@ -6,22 +6,25 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
@@ -36,7 +39,7 @@ public class MakePreviewTask extends AbstractTask {
 
   public static String viewFolder = "view"; //$NON-NLS-1$
   
-  private Parser parser = new AutoDetectParser();
+  private IndexerDefaultParser parser = new IndexerDefaultParser();
 
   private static boolean enableFileParsing = true;
   
@@ -44,6 +47,8 @@ public class MakePreviewTask extends AbstractTask {
 
   public MakePreviewTask(Worker worker) {
     super(worker);
+    parser.setPrintMetadata(false);
+    parser.setIgnoreStyle(false);
   }
 
   @Override
@@ -102,8 +107,9 @@ public class MakePreviewTask extends AbstractTask {
     if (isSupportedTypeCSV(mediaType)) {
       ext = "csv"; //$NON-NLS-1$
     }
-
+    
     File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
+    
     if (viewFile.exists()) {
       return;
     }
@@ -117,6 +123,7 @@ public class MakePreviewTask extends AbstractTask {
 
     } catch (Throwable e) {
       Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString());  //$NON-NLS-1$//$NON-NLS-2$
+      
     }
 
   }
@@ -132,6 +139,8 @@ public class MakePreviewTask extends AbstractTask {
       
       final ParseContext context = new ParseContext();
       context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+      context.set(Item.class, evidence);
+      context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
       
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
@@ -182,6 +191,21 @@ public class MakePreviewTask extends AbstractTask {
     } finally {
       IOUtil.closeQuietly(outStream);
     }
+  }
+  
+  private class EmptyEmbeddedDocumentExtractor implements EmbeddedDocumentExtractor{
+
+    @Override
+    public void parseEmbedded(InputStream arg0, ContentHandler arg1, Metadata arg2, boolean arg3)
+            throws SAXException, IOException {
+        // ignore
+    }
+
+    @Override
+    public boolean shouldParseEmbedded(Metadata arg0) {
+        return false;
+    }
+      
   }
   
   private class ToXMLContentHandlerWithComment extends ToXMLContentHandler{

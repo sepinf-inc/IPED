@@ -47,8 +47,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
@@ -62,6 +65,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -112,6 +116,11 @@ public class HTMLReportTask extends AbstractTask {
    * Tag para registros sem marcador
    */
   private static final String NO_LABEL_NAME = Messages.getString("HTMLReportTask.NoBookmarks"); //$NON-NLS-1$
+  
+  /**
+   * Mapa de marcadores para seus comentários
+   */
+  private Map<String, String> labelcomments = new HashMap<>();
 
   /**
    * Indicador de inicialização, para controle de sincronização entre instâncias da classe.
@@ -372,6 +381,14 @@ public class HTMLReportTask extends AbstractTask {
       }
 
       long t = System.currentTimeMillis();
+      
+      try(IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)){
+          for(int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
+              String labelName = ipedCase.getMarcadores().getLabelName(labelId);
+              String comments = ipedCase.getMarcadores().getLabelComment(labelId);
+              labelcomments.put(labelName, comments);
+          }
+      }
 
       reportSubFolder.mkdirs();
       
@@ -423,7 +440,9 @@ public class HTMLReportTask extends AbstractTask {
     reg.created = evidence.getCreationDate();
     reg.path = evidence.getPath();
 
-    String[] labels = evidence.getLabels() == null ? new String[] {""} : evidence.getLabels().split("\\|"); //$NON-NLS-1$ //$NON-NLS-2$
+    String[] labels = new String[] {""}; //$NON-NLS-1$
+    if(!evidence.getLabels().isEmpty())
+        labels = evidence.getLabels().toArray(new String[0]);
     String[] categories = reg.category.split("\\|"); //$NON-NLS-1$
     synchronized (init) {
       for (String label : labels) {
@@ -784,12 +803,20 @@ public class HTMLReportTask extends AbstractTask {
     p.append("</tr></table>\n"); //$NON-NLS-1$
 
     replace(sb, "%CATEGORY%", (isLabel ? Messages.getString("HTMLReportTask.Bookmark") : Messages.getString("HTMLReportTask.Category")) + ": " + name); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    replace(sb, "%COMMENTS%", getComments(name)); //$NON-NLS-1$
     replace(sb, "%TOTALCOUNT%", String.valueOf(totRegs)); //$NON-NLS-1$
     replace(sb, "%ITEMS%", items.toString()); //$NON-NLS-1$
     replace(sb, "%PAGS%", p.toString()); //$NON-NLS-1$
 
     EncodedFile ef = new EncodedFile(sb, Charset.forName("utf-8"), arq); //$NON-NLS-1$
     ef.write();
+  }
+  
+  private String getComments(String bookmark) {
+      String comments = labelcomments.get(bookmark);
+      if(comments == null || comments.trim().isEmpty())
+          comments = "-";
+      return comments;
   }
 
   private File getVideoStripeFile(String hash) {

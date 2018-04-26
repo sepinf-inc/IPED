@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class FilterManager implements ActionListener, ListSelectionListener {
 
-  private static File userFilters = new File(System.getProperty("user.home") + "/.indexador/ipedFilters.txt"); //$NON-NLS-1$ //$NON-NLS-2$
+  private static File userFilters = getGlobalFilterFile(); //$NON-NLS-1$ //$NON-NLS-2$
   private File defaultFilter;
 
   private UTF8Properties filters = new UTF8Properties();
@@ -49,6 +49,15 @@ public class FilterManager implements ActionListener, ListSelectionListener {
   JTextArea expression = new JTextArea();
   JScrollPane scrollExpression = new JScrollPane(expression);
   Color defaultColor;
+  
+  private static final File getGlobalFilterFile() {
+      String name = "ipedFilters"; //$NON-NLS-1$
+      String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+      if(locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
+          name += "-" + locale; //$NON-NLS-1$
+      name += ".txt"; //$NON-NLS-1$
+      return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+  }
 
   public void loadFilters() {
     try {

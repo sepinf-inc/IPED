@@ -68,6 +68,7 @@ public class ItemProducer extends Thread {
       FTK3ReportReader.class,
       SleuthkitReader.class,
       IPEDReader.class,
+      UfedXmlReader.class,
       FolderTreeReader.class //deve ser o último
     };
 

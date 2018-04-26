@@ -83,6 +83,7 @@ public class Configuration {
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
   public static boolean robustImageReading = false;
+  public static String phoneParsersToUse = "external";
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;
@@ -230,17 +231,19 @@ public class Configuration {
     }
 
     value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !Boolean.valueOf(value)) {
+    if (value != null && !Boolean.valueOf(value.trim())) {
       fallBackParser = new EmptyParser();
     } else {
       fallBackParser = new RawStringParser(entropyTest);
     }
-
-    errorParser = new RawStringParser(entropyTest);
-
+    
+    value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
+    if (value != null && !Boolean.valueOf(value.trim())) {
+        errorParser = null;
+    } else {
+        errorParser = new RawStringParser(entropyTest);
+    }
+    
     value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
@@ -435,6 +438,11 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
+    }
+    
+    value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        phoneParsersToUse = value.trim();
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$

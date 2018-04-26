@@ -53,8 +53,8 @@ public class ColumnsManager implements ActionListener, Serializable{
     
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
-    public static final String[] groupNames = {Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Email"), Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"),  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-                                                Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.Other")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+    public static final String[] groupNames = {Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"),  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                                                Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
     
     private static final File getGlobalColsFile() {
     	String name = "visibleCols"; //$NON-NLS-1$
@@ -290,6 +290,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		ArrayList<String> officeFields = new ArrayList<String>();
 		ArrayList<String> htmlFields = new ArrayList<String>();
 		ArrayList<String> nerFields = new ArrayList<String>();
+		ArrayList<String> ufedFields = new ArrayList<String>();
 		
 		for(String f : allExtraAttrs){
 		    if(f.startsWith(RegexTask.REGEX_PREFIX))
@@ -314,7 +315,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    else if(f.startsWith(ExtraProperties.HTML_META_PREFIX))
 		        htmlFields.add(f);
 		    else if(f.startsWith(NamedEntityTask.NER_PREFIX))
-                nerFields.add(f); 
+                nerFields.add(f);
+		    else if(f.startsWith(ExtraProperties.UFED_META_PREFIX))
+		        ufedFields.add(f); 
 		}
 		
 		String[][] customGroups = new String[][] {
@@ -329,7 +332,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    htmlFields.toArray(new String[0]),
 		    regexFields.toArray(new String[0]),
 		    languageFields.toArray(new String[0]),
-		    nerFields.toArray(new String[0])
+		    nerFields.toArray(new String[0]),
+		    ufedFields.toArray(new String[0])
 		    };
 		
 		ArrayList<String> otherFields = new ArrayList<String>();

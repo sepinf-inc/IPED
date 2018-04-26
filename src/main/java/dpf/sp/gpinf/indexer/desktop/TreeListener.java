@@ -179,6 +179,12 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     }
 
     App.get().appletListener.updateFileListing();
+    
+    if(selection.size() == 1 && !rootSelected){
+        int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
+        FileProcessor parsingTask = new FileProcessor(luceneId, false);
+        parsingTask.execute();
+    }
 
   }
 

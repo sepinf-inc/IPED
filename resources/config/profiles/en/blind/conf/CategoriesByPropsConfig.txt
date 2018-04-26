@@ -43,6 +43,10 @@ function addCategory(e){
 	if(length == 0)
 		e.addCategory("Empty Files");
 
+	if(e.getExt().toLowerCase().equals("mts")){
+		e.setMediaTypeStr("video/mp2t");
+		e.setCategory("Videos");
+	}
 
 	if(categorias.indexOf("Images") > -1){
 

@@ -245,6 +245,7 @@ public class IPEDSource implements Closeable{
 		
 		// ignora tree nodes
 		IPEDSearcher pesquisa = new IPEDSearcher(this, ""); //$NON-NLS-1$
+		pesquisa.setNoScoring(true);
 	    try {
 			totalItens = pesquisa.search().getLength();
 			

@@ -26,7 +26,7 @@ public class AppMain {
 	private static final int MAX_JAVA_VER = 9;
 	
 	File casePath;
-	//File casePath = new File("F:\\pedo-3.13.3-test");
+    File testPath;// = new File("E:\\1-Laudo-66-sameItem12");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -71,6 +71,9 @@ public class AppMain {
 	
 	private void start(String[] args) {	
 		
+	    if(testPath != null)
+	        casePath = testPath;
+	    
 		if(casePath == null)
 			casePath = detectCasePath();
 		
@@ -120,6 +123,8 @@ public class AppMain {
 			  if(fromCustomLoader)
 			      args = CustomLoader.clearCustomLoaderArgs(args);
 			  
+			  boolean finalLoader = testPath != null || fromCustomLoader;
+			  
 			  loadArgs(args);
 			  
 			  File libDir = new File(new File(casePath, "indexador"), "lib"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -135,7 +140,7 @@ public class AppMain {
 		      
 		      if(processingManager == null){
 		    	  logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
-		    	  logConfiguration.configureLogParameters(nolog, fromCustomLoader);
+		    	  logConfiguration.configureLogParameters(nolog, finalLoader);
 		    	  
 		    	  Logger LOGGER = LoggerFactory.getLogger(IndexFiles.class);
 			      if(!fromCustomLoader)
@@ -144,7 +149,7 @@ public class AppMain {
 			      Configuration.getConfiguration(libDir.getParentFile().getAbsolutePath());
 		      }
 		      
-		      if(!fromCustomLoader && processingManager == null) {
+		      if(!finalLoader && processingManager == null) {
 		            List<File> jars = new ArrayList<File>();
 		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
 		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));

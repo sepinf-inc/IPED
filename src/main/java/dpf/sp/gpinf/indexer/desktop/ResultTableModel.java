@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
 
@@ -227,7 +228,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
+          return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
         }
         
         SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);

@@ -44,7 +44,7 @@ public class IPEDSearcher {
 	IPEDSource ipedCase;
 	Query query;
 	String queryText;
-	boolean treeQuery;
+	boolean treeQuery, noScore;
 	NoScoringCollector collector;
 	
 	private volatile boolean canceled;
@@ -61,6 +61,10 @@ public class IPEDSearcher {
 	
 	public void setTreeQuery(boolean treeQuery){
 		this.treeQuery = treeQuery;
+	}
+	
+	public void setNoScoring(boolean noScore) {
+	    this.noScore = noScore;
 	}
 	
 	public void setQuery(Query query){
@@ -113,7 +117,7 @@ public class IPEDSearcher {
 			//e.printStackTrace();
 		}
 		//não calcula scores (lento) quando resultado é mto grande
-		if(collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
+		if(noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
 			return collector.getSearchResults();
 		
 		//obtém resultados calculando score

@@ -62,6 +62,10 @@ indexFileContents = true
 # Nesse caso são indexadas strings brutas em claro extraídas dos arquivos.
 indexUnknownFiles = true
 
+# Indexa arquivos corrompidos via strings. Por exemplo, imagens apagadas sobrescritas
+# parcialmente podem conter texto em claro relevante.
+indexCorruptedFiles = true
+
 # Habilita o OCR em imagens e PDFs digitalizados. Pode aumentar consideravelmente o tempo de processamento.
 # Os resultados dependem da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.
 # Opções avançadas do OCR, como o caminho do Tesseract no Linux, podem ser alteradas em conf/AdvancedConfig.txt

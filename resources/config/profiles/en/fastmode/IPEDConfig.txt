@@ -19,6 +19,7 @@ enableLanguageDetect = false
 enableNamedEntityRecogniton = false
 indexFileContents = false
 indexUnknownFiles = false
+indexCorruptedFiles = false
 enableOCR = false
 addUnallocated = false
 indexUnallocated = false
