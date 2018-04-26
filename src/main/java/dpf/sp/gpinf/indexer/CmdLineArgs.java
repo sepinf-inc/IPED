@@ -6,8 +6,11 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -48,7 +51,7 @@ public class CmdLineArgs {
   public File palavrasChave;
 
   @Parameter(names="-ocr", description="only run OCR on a specific category or bookmark (can be used multiple times)")
-  public String ocr;
+  public List<String> ocr;
 
   @Parameter(names="-log", description="Redirect log to another file")
   public File logFile = new File("IPED.log");
@@ -115,6 +118,9 @@ public class CmdLineArgs {
 
   @Parameter(names = {"--help", "-h", "/?"}, help = true)
   private boolean help;
+  
+  @DynamicParameter(names = "-X", description = "used to specify extra module options")
+  private Map<String, String> extraParams = new HashMap<>();
 
   public static class FileExistsValidator implements IParameterValidator{
     @Override
@@ -155,7 +161,7 @@ public class CmdLineArgs {
   private JCommander fillOptions(String[] args) throws ParameterException{
     JCommander jc;
     jc = new JCommander(this, args);
-    jc.setProgramName("java -jar iped.jar");
+    jc.setProgramName("java -jar iped.jar [--no_arg_option] -option");
     return jc;
   }
 
@@ -189,7 +195,7 @@ public class CmdLineArgs {
     }
     
     if (this.ocr != null) {
-      OCRParser.bookmarksToOCR.add(this.ocr);
+      OCRParser.bookmarksToOCR.addAll(this.ocr);
     }
     if (this.palavrasChave != null) {
       IndexFiles.getInstance().palavrasChave = this.palavrasChave;
