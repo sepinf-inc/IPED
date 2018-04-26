@@ -34,13 +34,13 @@ public class CmdLineArgs {
 
   @Parameter(names="-d", description="input data (can be used multiple times): "
       + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
-      + "or *.iped file (with tagged files to export and reindex)", validateWith=FileExistsValidator.class)
+      + "or *.iped file (with tagged files to export and reindex)", validateWith=FileExistsValidator.class, order = 0)
   public List<File> datasources;
 
-  @Parameter(names="-dname", description="display name (optional) of data added with -d")
+  @Parameter(names="-dname", description="display name (optional) of data added with -d", order = 1)
   public List<String> dname;
 
-  @Parameter(names="-o", description="output folder")
+  @Parameter(names="-o", description="output folder", order = 2)
   public File outputDir;
 
   @Parameter(names="-r", description="FTK3+ report folder", validateWith=FileExistsValidator.class)
@@ -116,7 +116,7 @@ public class CmdLineArgs {
   @Parameter(names="--portable", description="use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
   public boolean portable;
 
-  @Parameter(names = {"--help", "-h", "/?"}, help = true)
+  @Parameter(names = {"--help", "-h", "/?"}, help = true, description="display this help")
   private boolean help;
   
   @DynamicParameter(names = "-X", description = "used to specify extra module options")
@@ -145,24 +145,26 @@ public class CmdLineArgs {
    * Interpreta parâmetros informados via linha de comando.
    */
   void takeArgs(String[] args){
-    JCommander jc = null;
+    JCommander jc = new JCommander(this);
+    jc.setProgramName("java -jar iped.jar [--no_arg_option] -option");
     try {
-      jc = fillOptions(args);
+      jc.parse(args);
+      if(help)
+          printUsageAndExit(jc, null);
+      
       handleSpecificArgs();
-    } catch (IPEDException | ParameterException e) {
-      System.out.println(Versao.APP_NAME);
-      System.out.println("Error: "+ e.getMessage());
-      if (jc != null) {
-        jc.usage();
-      }
-      System.exit(1);
+      
+    } catch (Exception e) {
+        printUsageAndExit(jc, e);
     }
   }
-  private JCommander fillOptions(String[] args) throws ParameterException{
-    JCommander jc;
-    jc = new JCommander(this, args);
-    jc.setProgramName("java -jar iped.jar [--no_arg_option] -option");
-    return jc;
+  
+  private void printUsageAndExit(JCommander jc, Exception e) {
+      System.out.println(Versao.APP_NAME);
+      if(e != null)
+          System.out.println("Error: "+ e.getMessage() + "\n");
+      jc.usage();
+      System.exit(1);
   }
 
   /**
@@ -235,7 +237,7 @@ public class CmdLineArgs {
       IndexFiles.getInstance().output = new File(reportDir, "indexador");
     } else {
       if (datasources == null || datasources.size() == 0) {
-        throw new IPEDException("parameter '-d' required.");
+        throw new IPEDException("parameter '-d' or '-r' required.");
       }
       IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador");
     }
