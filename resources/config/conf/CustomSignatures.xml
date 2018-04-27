@@ -70,42 +70,18 @@
         <glob pattern="*-Member-v*"/>
         <glob pattern="*-MemberShadow-v*"/>
     </mime-type>
-   
-   <mime-type type="message/rfc822">
-    <magic priority="60">
-      <match value="Relay-Version:" type="stringignorecase" offset="0"/>
-      <match value="#!\ rnews" type="string" offset="0"/>
-      <match value="N#!\ rnews" type="string" offset="0"/>
-      <match value="Forward\ to" type="string" offset="0"/>
-      <match value="Pipe\ to" type="string" offset="0"/>
-      <match value="Subject:" type="string" offset="0"/>
-      <match value="From:" type="string" offset="0"/>
-      <match value="Date:" type="string" offset="0"/>
-      <match value="Reply-To:" type="string" offset="0"/>
-      <match value="Return-Path:" type="stringignorecase" offset="0"/>
-      <match value="Delivered-To:" type="string" offset="0"/>
-      <match value="X-Originating-IP:" type="stringignorecase" offset="0"/>
-      <match value="Received:" type="stringignorecase" offset="0"/>
-      <match value="Message-ID:" type="stringignorecase" offset="0"/>  
-      <match value="Content-Type: multipart/" type="string" offset="0"/>
-      <match value="\nReturn-Path:" type="stringignorecase" offset="0:1000"/>
-      <match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
-      <match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
-      <match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
-      <match value="MIME-Version:" type="stringignorecase" offset="0"/>
-    </magic>
-    <sub-class-of type="text/html"/>
-    <glob pattern="*.eml"/>
-    <glob pattern="*.mime"/>
-    <glob pattern="*.mht"/>
-    <glob pattern="*.mhtml"/>
-   </mime-type>
     
     <mime-type type="image/cdr">
-        <magic priority="60">
-            <match value="RIFF....CDR" type="string" offset="0"  mask="0xFFFFFFFF00000000FFFFFF"/>
-            <match value="RIFF....CDR" type="string" offset="50" mask="0xFFFFFFFF00000000FFFFFF"/>
-        </magic>
+    	<magic priority="60">
+          <match value="RIFF" type="string" offset="0">
+           	<match value="CDR" type="stringignorecase" offset="8" />
+           	<match value="DES" type="stringignorecase" offset="8" />
+          </match>
+          <match value="RIFF" type="string" offset="50">
+           	<match value="CDR" type="stringignorecase" offset="58" />
+           	<match value="DES" type="stringignorecase" offset="58" />
+          </match>
+     	</magic>
         <glob pattern="*.cdr"/>
         <sub-class-of type="application/zip"/>
     </mime-type>
@@ -216,10 +192,13 @@
         <magic priority="80">
             <match value="From " type="string" offset="0">
             	<match value="\nReturn-Path:" type="stringignorecase" offset="0:1000"/>
+            	<match value="\nReply-To:" type="stringignorecase" offset="0:1000"/>
       			<match value="\nX-Originating-IP:" type="stringignorecase" offset="0:1000"/>
       			<match value="\nReceived:" type="stringignorecase" offset="0:1000"/>
+      			<match value="\nDelivered-To: " type="string" offset="32:1000"/>
       			<match value="\nMessage-ID:" type="stringignorecase" offset="0:1000"/>
       			<match value="\nSubject:" type="string" offset="0:1000"/>
+      			<match value="\nMime-Version: " type="string" offset="32:256"/>
       		</match>
         </magic>
         <sub-class-of type="text/plain"/>
@@ -282,11 +261,12 @@
     
     <mime-type type="application/xhtml+xml">
         <sub-class-of type="text/html"/>
-        <magic priority="50">
+        <magic priority="45">
             <match value="&lt;html xmlns=" type="string" offset="0:8192"/>
         </magic>
         <root-XML namespaceURI="http://www.w3.org/1999/xhtml" localName="html"/>
         <glob pattern="*.xhtml"/>
+        <glob pattern="*.xhtml2"/>
         <glob pattern="*.xht"/>
     </mime-type>
     
