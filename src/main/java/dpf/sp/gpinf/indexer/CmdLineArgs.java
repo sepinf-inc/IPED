@@ -4,6 +4,7 @@ import gpinf.dev.data.CaseData;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class CmdLineArgs {
   @Parameter(names= {"-o", "-output"}, description="output folder", order = 2)
   private File outputDir;
 
-  @Parameter(names= {"-r", "-report"}, description="FTK3+ report folder", validateWith=ReportExistsValidator.class)
+  @Parameter(names= {"-r", "-report"}, description="FTK3+ report folder", validateWith=FTKReportValidator.class)
   private File reportDir;
 
   @Parameter(names= {"-l", "-keywordlist"}, description="line file with keywords to be imported into case. "
@@ -96,6 +97,8 @@ public class CmdLineArgs {
   
   @DynamicParameter(names = "-X", description = "used to specify extra module options")
   private Map<String, String> extraParams = new HashMap<>();
+  
+  private List<String> allArgs;
   
   public List<File> getDatasources() {
       return datasources;
@@ -180,6 +183,17 @@ public class CmdLineArgs {
   public Map<String, String> getExtraParams() {
       return extraParams;
   }
+  
+  public String getDataSourceName(File datasource) {
+      for (int i = 0; i < allArgs.size(); i++) {
+          if ((allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) 
+                  && datasource.equals(new File(allArgs.get(i + 1))) //$NON-NLS-1$
+                  && i + 2 < allArgs.size() && allArgs.get(i + 2).equals("-dname")) { //$NON-NLS-1$
+              return allArgs.get(i + 3);
+          }
+      }
+      return null;
+  }
 
   public static class FileExistsValidator implements IParameterValidator{
     @Override
@@ -201,7 +215,7 @@ public class CmdLineArgs {
       }
     }
   
-  public static class ReportExistsValidator implements IParameterValidator{
+  public static class FTKReportValidator implements IParameterValidator{
       @Override
       public void validate(String name, String value) throws ParameterException {
         File reportDir = new File(value);
@@ -233,6 +247,7 @@ public class CmdLineArgs {
       if(help)
           printUsageAndExit(jc, null);
       
+      allArgs = Arrays.asList(args);
       handleSpecificArgs();
       
     } catch (Exception e) {
@@ -273,12 +288,6 @@ public class CmdLineArgs {
     if (this.datasources != null) {
       for (File dataSource : this.datasources) {
         IndexFiles.getInstance().dataSource.add(dataSource);
-      }
-    }
-    
-    if (this.dname != null) {
-      if (this.dname.size() != this.datasources.size()) {
-        throw new ParameterException("There must be one '-dname' parameter for each '-d', or none at all.");
       }
     }
     

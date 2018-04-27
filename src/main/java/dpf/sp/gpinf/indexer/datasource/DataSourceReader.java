@@ -107,12 +107,6 @@ public abstract class DataSourceReader {
     if (cmdArgs.getDname() == null || cmdArgs.getDname().size() == 0) {
       return null;
     }
-    for (int i = 0; i < cmdArgs.getDatasources().size(); i++) {
-      if (datasource.equals(cmdArgs.getDatasources().get(i))){
-        return cmdArgs.getDname().get(i);
-      }
-    }
-
-    return null;
+    return cmdArgs.getDataSourceName(datasource);
   }
 }
