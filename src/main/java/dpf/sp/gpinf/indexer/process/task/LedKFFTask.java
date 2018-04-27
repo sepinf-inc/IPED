@@ -79,6 +79,9 @@ public class LedKFFTask extends AbstractTask {
         throw new IPEDException("Invalid LED database path: " + wkffDir.getAbsolutePath()); //$NON-NLS-1$
       }
 
+      if(hash == null || hash.trim().isEmpty())
+          throw new IPEDException("Configure a hash algorithm in configuration!"); //$NON-NLS-1$
+      
       hash = hash.toLowerCase();
       if (!hash.contains("md5") && !hash.contains("sha-1")) { //$NON-NLS-1$ //$NON-NLS-2$
         throw new IPEDException("Enable md5 or sha-1 hash to search on LED database!"); //$NON-NLS-1$
