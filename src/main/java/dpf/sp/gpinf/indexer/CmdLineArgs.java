@@ -3,8 +3,6 @@ package dpf.sp.gpinf.indexer;
 import gpinf.dev.data.CaseData;
 
 import java.io.File;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +15,6 @@ import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -34,7 +31,7 @@ public class CmdLineArgs {
 
   @Parameter(names="-d", description="input data (can be used multiple times): "
       + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
-      + "or *.iped file (with tagged files to export and reindex)", validateWith=FileExistsValidator.class, order = 0)
+      + "or *.iped file (with tagged files to export and reindex)", validateWith=DatasourceExistsValidator.class, order = 0)
   public List<File> datasources;
 
   @Parameter(names="-dname", description="display name (optional) of data added with -d", order = 1)
@@ -43,7 +40,7 @@ public class CmdLineArgs {
   @Parameter(names="-o", description="output folder", order = 2)
   public File outputDir;
 
-  @Parameter(names="-r", description="FTK3+ report folder", validateWith=FileExistsValidator.class)
+  @Parameter(names="-r", description="FTK3+ report folder", validateWith=ReportExistsValidator.class)
   public File reportDir;
 
   @Parameter(names="-l", description="line file with keywords to be imported into case. "
@@ -56,7 +53,7 @@ public class CmdLineArgs {
   @Parameter(names="-log", description="Redirect log to another file")
   public File logFile = new File("IPED.log");
 
-  @Parameter(names="-asap", description=".asap file (Brazilian Federal Police) with case info to be included in html report")
+  @Parameter(names="-asap", validateWith=FileExistsValidator.class, description=".asap file (Brazilian Federal Police) with case info to be included in html report")
   public List<String> asap;
 
   @Parameter(names="-nocontent", description="do not export to report file contents of a specific category/bookmark, only thumbs and properties")
@@ -109,6 +106,28 @@ public class CmdLineArgs {
       }
     }
   }
+  
+  public static class DatasourceExistsValidator implements IParameterValidator{
+      @Override
+      public void validate(String name, String value) throws ParameterException {
+        File f = new File(value);
+        if (!f.exists() && !Util.isPhysicalDrive(f)) {
+          throw new ParameterException("File not found: " + value);
+        }
+      }
+    }
+  
+  public static class ReportExistsValidator implements IParameterValidator{
+      @Override
+      public void validate(String name, String value) throws ParameterException {
+        File reportDir = new File(value);
+        if (!(new File(reportDir, "files")).exists() &&
+            !(new File(reportDir, "Report_files/files")).exists() &&
+            !(new File(reportDir, "Export")).exists()) {
+            throw new ParameterException("Invalid FTK report folder!");
+        }
+      }
+    }
 
   /**
    * Salva os parâmetros no objeto do caso, para serem consultados pelos módulos.
@@ -154,11 +173,14 @@ public class CmdLineArgs {
   private void handleSpecificArgs() {
 
     IndexFiles.getInstance().dataSource = new ArrayList<File>();
-    OCRParser.bookmarksToOCR = new ArrayList<String>();
     
     if (this.importkff != null) {
         IndexFiles.getInstance().importKFF(this.importkff);
         System.exit(0);
+    }
+    
+    if (reportDir == null && (datasources == null || datasources.isEmpty())) {
+        throw new ParameterException("parameter '-d' or '-r' required.");
     }
     
     if (this.reportDir != null) {
@@ -166,23 +188,17 @@ public class CmdLineArgs {
     }
     if (this.datasources != null) {
       for (File dataSource : this.datasources) {
-        if (!dataSource.exists() && !Util.isPhysicalDrive(dataSource)) {
-          throw new IPEDException("datasource not found: " + dataSource.toString());
-        }
         IndexFiles.getInstance().dataSource.add(dataSource);
       }
     }
     
-    if (reportDir == null && (datasources == null || datasources.isEmpty())) {
-        throw new IPEDException("parameter '-d' or '-r' required.");
-    }
-    
     if (this.dname != null) {
       if (this.dname.size() != this.datasources.size()) {
-        throw new IPEDException("There must be one '-dname' parameter for each '-d', or none at all.");
+        throw new ParameterException("There must be one '-dname' parameter for each '-d', or none at all.");
       }
     }
     
+    OCRParser.bookmarksToOCR = new ArrayList<String>();
     if (this.ocr != null) {
       OCRParser.bookmarksToOCR.addAll(this.ocr);
     }
@@ -197,16 +213,8 @@ public class CmdLineArgs {
     IndexFiles.getInstance().nologfile = this.nologfile;
     IndexFiles.getInstance().appendIndex = this.appendIndex;
 
-    if (reportDir != null) {
-      if (!(new File(reportDir, "files")).exists() &&
-          !(new File(reportDir, "Report_files/files")).exists() &&
-          !(new File(reportDir, "Export")).exists()) {
-        throw new IPEDException("malformed report folder content!");
-      }
-    }
-
     if (outputDir != null && reportDir != null) {
-      throw new RuntimeException("Option -o can not be used with FTK reports!");
+      throw new ParameterException("Option -o can not be used with FTK reports!");
     }
 
     if (new File(reportDir, "Report_files/files").exists()) {
@@ -227,7 +235,7 @@ public class CmdLineArgs {
     while (file != null) {
       for (File source : IndexFiles.getInstance().dataSource) {
     	  if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
-              throw new RuntimeException("Output folder can not be equal or subdir of input!");
+              throw new ParameterException("Output folder can not be equal or subdir of input!");
             }
       }
       file = file.getParentFile();
