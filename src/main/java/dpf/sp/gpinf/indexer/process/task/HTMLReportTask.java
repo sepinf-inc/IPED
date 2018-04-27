@@ -330,9 +330,7 @@ public class HTMLReportTask extends AbstractTask {
         //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args != null) {
-          List<String> info = args.asap;
-          if (info != null && info.size() > 0) {
-            File infoFile = new File(info.get(0));
+            File infoFile = args.asap;
             if (infoFile != null) {
               Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               if (!infoFile.exists()) {
@@ -346,7 +344,6 @@ public class HTMLReportTask extends AbstractTask {
                 throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               }
             }
-          }
         }
         init.set(true);
       }

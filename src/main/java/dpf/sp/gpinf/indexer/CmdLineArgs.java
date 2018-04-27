@@ -54,7 +54,7 @@ public class CmdLineArgs {
   public File logFile;
 
   @Parameter(names="-asap", validateWith=FileExistsValidator.class, description=".asap file (Brazilian Federal Police) with case info to be included in html report")
-  public List<String> asap;
+  public File asap;
 
   @Parameter(names="-nocontent", description="do not export to report file contents of a specific category/bookmark, only thumbs and properties")
   public List<String> nocontent;
