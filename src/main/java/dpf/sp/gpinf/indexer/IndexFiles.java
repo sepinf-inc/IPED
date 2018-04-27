@@ -158,13 +158,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    *
    * @param kffPath caminho para base de hashes.
    */
-  void importKFF(String kffPath) {
+  void importKFF(File kffPath) {
     try {
       setConfigPath();
       Configuration.getConfiguration(configPath);
       KFFTask kff = new KFFTask(null);
       kff.init(Configuration.properties, null);
-      kff.importKFF(new File(kffPath));
+      kff.importKFF(kffPath);
     } catch (Exception e) {
       e.printStackTrace();
     }

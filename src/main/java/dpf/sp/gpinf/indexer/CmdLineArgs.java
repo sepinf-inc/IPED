@@ -59,8 +59,8 @@ public class CmdLineArgs {
   @Parameter(names="-nocontent", description="do not export to report file contents of a specific category/bookmark, only thumbs and properties")
   public List<String> nocontent;
 
-  @Parameter(names="-importkff", description="import and index hash database in NIST NSRL format")
-  public String importkff;
+  @Parameter(names="-importkff", validateWith=FileExistsValidator.class, description="import and index hash database in NIST NSRL format")
+  public File importkff;
 
   @Parameter(names="-tz", description="original timezone of FAT devices: GMT-3, GMT-4... "
       + "If unspecified, local system timezone is used.")
