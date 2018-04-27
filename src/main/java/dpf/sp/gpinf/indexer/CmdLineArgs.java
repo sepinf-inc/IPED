@@ -51,7 +51,7 @@ public class CmdLineArgs {
   public List<String> ocr;
 
   @Parameter(names="-log", description="Redirect log to another file")
-  public File logFile = new File("IPED.log");
+  public File logFile;
 
   @Parameter(names="-asap", validateWith=FileExistsValidator.class, description=".asap file (Brazilian Federal Police) with case info to be included in html report")
   public List<String> asap;
@@ -70,7 +70,7 @@ public class CmdLineArgs {
   public int b;
 
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
-      + "fastmode, blind. More details in manual.", validateWith=FileExistsValidator.class)
+      + "fastmode, blind. More details in manual.")
   public String profile;
 
   @Parameter(names="--addowner", description="index file owner info when processing local folders (slow over network)")
