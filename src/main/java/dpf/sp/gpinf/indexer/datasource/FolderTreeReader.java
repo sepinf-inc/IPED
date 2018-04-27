@@ -109,7 +109,7 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceFile.addCategory(category);
       }
       
-      if (args.addowner)
+      if (args.isAddowner())
 	      try {
 	    	evidenceFile.setExtraAttribute(FS_OWNER, Files.getOwner(path));
 	    	

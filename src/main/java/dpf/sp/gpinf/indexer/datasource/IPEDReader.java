@@ -202,7 +202,7 @@ public class IPEDReader extends DataSourceReader {
 
   private void insertEmailAttachs(LuceneSearchResult result) throws Exception {
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (!args.nopstattachs) {
+    if (!args.isNopstattachs()) {
       boolean[] isSelectedEmail = new boolean[ipedCase.getLastId() + 1];
       boolean hasEmail = false;
       for (int docID : result.getLuceneIds()) {

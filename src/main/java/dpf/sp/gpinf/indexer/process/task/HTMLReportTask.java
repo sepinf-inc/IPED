@@ -330,7 +330,7 @@ public class HTMLReportTask extends AbstractTask {
         //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args != null) {
-            File infoFile = args.asap;
+            File infoFile = args.getAsap();
             if (infoFile != null) {
               Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               if (!infoFile.exists()) {

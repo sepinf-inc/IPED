@@ -405,7 +405,7 @@ public class Manager {
   
   private void updateImagePaths(){
 	  CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-	  if(args.portable){ //$NON-NLS-1$
+	  if(args.isPortable()){ //$NON-NLS-1$
 		  IPEDSource ipedCase = new IPEDSource(output.getParentFile());
 		  ipedCase.updateImagePathsToRelative();
 		  ipedCase.close();

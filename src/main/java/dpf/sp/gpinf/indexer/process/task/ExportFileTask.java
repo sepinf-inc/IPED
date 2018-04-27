@@ -172,7 +172,7 @@ public class ExportFileTask extends AbstractTask {
   private boolean doNotExport(EvidenceFile evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-      noContentLabels = args.nocontent; //$NON-NLS-1$
+      noContentLabels = args.getNocontent(); //$NON-NLS-1$
       if (noContentLabels == null) {
         noContentLabels = Collections.emptyList();
       }

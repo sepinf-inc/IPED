@@ -29,73 +29,157 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class CmdLineArgs {
 
-  @Parameter(names="-d", description="input data (can be used multiple times): "
+  @Parameter(names= {"-d", "-data"}, description="input data (can be used multiple times): "
       + "folder, DD, 001, E01 images (+AFF on Linux), ISO, physical drive, "
       + "or *.iped file (with tagged files to export and reindex)", validateWith=DatasourceExistsValidator.class, order = 0)
-  public List<File> datasources;
+  private List<File> datasources;
 
   @Parameter(names="-dname", description="display name (optional) of data added with -d", order = 1)
-  public List<String> dname;
+  private List<String> dname;
 
-  @Parameter(names="-o", description="output folder", order = 2)
-  public File outputDir;
+  @Parameter(names= {"-o", "-output"}, description="output folder", order = 2)
+  private File outputDir;
 
-  @Parameter(names="-r", description="FTK3+ report folder", validateWith=ReportExistsValidator.class)
-  public File reportDir;
+  @Parameter(names= {"-r", "-report"}, description="FTK3+ report folder", validateWith=ReportExistsValidator.class)
+  private File reportDir;
 
-  @Parameter(names="-l", description="line file with keywords to be imported into case. "
+  @Parameter(names= {"-l", "-keywordlist"}, description="line file with keywords to be imported into case. "
       + "Keywords with no hits are filtered out.", validateWith=FileExistsValidator.class)
-  public File palavrasChave;
+  private File palavrasChave;
 
   @Parameter(names="-ocr", description="only run OCR on a specific category or bookmark (can be used multiple times)")
-  public List<String> ocr;
+  private List<String> ocr;
 
   @Parameter(names="-log", description="Redirect log to another file")
-  public File logFile;
+  private File logFile;
 
   @Parameter(names="-asap", validateWith=FileExistsValidator.class, description=".asap file (Brazilian Federal Police) with case info to be included in html report")
-  public File asap;
+  private File asap;
 
   @Parameter(names="-nocontent", description="do not export to report file contents of a specific category/bookmark, only thumbs and properties")
-  public List<String> nocontent;
+  private List<String> nocontent;
 
   @Parameter(names="-importkff", validateWith=FileExistsValidator.class, description="import and index hash database in NIST NSRL format")
-  public File importkff;
+  private File importkff;
 
-  @Parameter(names="-tz", description="original timezone of FAT devices: GMT-3, GMT-4... "
+  @Parameter(names= {"-tz", "-timezone"}, description="original timezone of FAT devices: GMT-3, GMT-4... "
       + "If unspecified, local system timezone is used.")
-  public String tz;
+  private String timezone;
 
-  @Parameter(names="-b", description="sector block size (bytes), must set to 4k sector devices")
-  public int b;
+  @Parameter(names= {"-b", "-blocksize"}, description="sector block size (bytes), must set to 4k sector devices")
+  private int blocksize;
 
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
       + "fastmode, blind. More details in manual.")
-  public String profile;
+  private String profile;
 
   @Parameter(names="--addowner", description="index file owner info when processing local folders (slow over network)")
-  public boolean addowner;
+  private boolean addowner;
 
   @Parameter(names="--append", description="add data to be processed to an existent case")
-  public boolean appendIndex;
+  private boolean appendIndex;
 
   @Parameter(names="--nogui", description="do not open progress windows, text mode processing")
-  public boolean nogui;
+  private boolean nogui;
 
   @Parameter(names="--nologfile", description="log messages to standard output")
-  public boolean nologfile;
+  private boolean nologfile;
 
   @Parameter(names="--nopstattachs", description="do not export automatically to report PST/OST email attachments")
-  public boolean nopstattachs;
+  private boolean nopstattachs;
 
   @Parameter(names="--portable", description="use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
-  public boolean portable;
+  private boolean portable;
 
   @Parameter(names = {"--help", "-h", "/?"}, help = true, description="display this help")
   private boolean help;
   
   @DynamicParameter(names = "-X", description = "used to specify extra module options")
   private Map<String, String> extraParams = new HashMap<>();
+  
+  public List<File> getDatasources() {
+      return datasources;
+  }
+
+  public List<String> getDname() {
+      return dname;
+  }
+
+  public File getOutputDir() {
+      return outputDir;
+  }
+
+  public File getReportDir() {
+      return reportDir;
+  }
+
+  public File getPalavrasChave() {
+      return palavrasChave;
+  }
+
+  public List<String> getOcr() {
+      return ocr;
+  }
+
+  public File getLogFile() {
+      return logFile;
+  }
+
+  public File getAsap() {
+      return asap;
+  }
+
+  public List<String> getNocontent() {
+      return nocontent;
+  }
+
+  public File getImportkff() {
+      return importkff;
+  }
+
+  public String getTimezone() {
+      return timezone;
+  }
+
+  public int getBlocksize() {
+      return blocksize;
+  }
+
+  public String getProfile() {
+      return profile;
+  }
+
+  public boolean isAddowner() {
+      return addowner;
+  }
+
+  public boolean isAppendIndex() {
+      return appendIndex;
+  }
+
+  public boolean isNogui() {
+      return nogui;
+  }
+
+  public boolean isNologfile() {
+      return nologfile;
+  }
+
+  public boolean isNopstattachs() {
+      return nopstattachs;
+  }
+
+  public boolean isPortable() {
+      return portable;
+  }
+
+  public boolean isHelp() {
+      return help;
+  }
+
+  public Map<String, String> getExtraParams() {
+      return extraParams;
+  }
 
   public static class FileExistsValidator implements IParameterValidator{
     @Override

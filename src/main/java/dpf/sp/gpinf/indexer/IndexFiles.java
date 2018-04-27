@@ -134,8 +134,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	  
 	  String profile = null;
 	  
-	  if(cmdLineParams.profile != null){
-		  profile = cmdLineParams.profile;
+	  if(cmdLineParams.getProfile() != null){
+		  profile = cmdLineParams.getProfile();
 	  }else if(!locale.equals("pt-BR")) //$NON-NLS-1$
 		  profile = "default"; //$NON-NLS-1$
 	  

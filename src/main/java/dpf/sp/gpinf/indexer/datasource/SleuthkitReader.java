@@ -228,20 +228,20 @@ public class SleuthkitReader extends DataSourceReader {
     checkTSKVersion();
 
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-    if (args.profile != null) {
-    	if(args.profile.equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
+    if (args.getProfile() != null) {
+    	if(args.getProfile().equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
     		fastmode = true;
     }
     
     int offset = TimeZone.getDefault().getRawOffset() / 3600000;
     String timezone = "GMT" + (-offset); //$NON-NLS-1$
-    if (args.tz != null) { //$NON-NLS-1$
-    	timezone = args.tz;
+    if (args.getTimezone() != null) { //$NON-NLS-1$
+    	timezone = args.getTimezone();
     	if(timezone.contains("+")) timezone = timezone.replace('+', '-'); //$NON-NLS-1$
     	else timezone = timezone.replace('-', '+');
     }
     
-    int sectorSize = args.b;
+    int sectorSize = args.getBlocksize();
 
     firstId = null;
     lastId = null;
