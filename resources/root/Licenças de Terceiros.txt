@@ -74,6 +74,10 @@ ICE JNI Registry
 - Site: http://www.trustice.com/java/jnireg/
 - License: Public Domain
 
+ZSTD-jni
+- Site: https://github.com/luben/zstd-jni
+- License: BSD 2 clause
+
 --------------------------------------------
 
 Eclipse SWT
