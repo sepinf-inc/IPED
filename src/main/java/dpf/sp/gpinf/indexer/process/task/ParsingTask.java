@@ -70,6 +70,7 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -123,6 +124,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     super(null);
     setContext(context);
   }
+  
+  public ParsingTask(ParseContext context, EvidenceFile evidence) {
+      super(null);
+      setContext(context);
+      this.evidence = evidence;
+    }
   
   @Override
   public boolean isEnabled() {
@@ -388,7 +395,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   }
   
   @Override
-  public boolean shouldParseEmbedded(Metadata arg0) {
+  public boolean shouldParseEmbedded(Metadata subitemMeta) {
+      
+    if(evidence != null && MetadataUtil.isHtmlSubType(evidence.getMediaType())) {
+        String type = subitemMeta == null ? null : subitemMeta.get(Metadata.CONTENT_TYPE);
+        if(type != null && type.startsWith("image"))
+            return false;
+    }
     return true;
   }
 

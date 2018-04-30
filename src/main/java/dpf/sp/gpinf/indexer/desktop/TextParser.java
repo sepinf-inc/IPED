@@ -201,12 +201,12 @@ public class TextParser extends CancelableWorker implements ITextParser {
     return null;
   }
 
-  private ParseContext getTikaContext() throws Exception {
+  private ParseContext getTikaContext(EvidenceFile item) throws Exception {
     ParseContext context = new ParseContext();
     context.set(Parser.class, (Parser) App.get().getAutoParser());
     context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
 
-    ParsingTask expander = new ParsingTask(context);
+    ParsingTask expander = new ParsingTask(context, item);
     expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
     context.set(EmbeddedDocumentExtractor.class, expander);
 
@@ -246,7 +246,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       Metadata metadata = item.getMetadata();
       ParsingTask.fillMetadata(item, metadata);
 
-      ParseContext context = getTikaContext();
+      ParseContext context = getTikaContext(item);
       InputStream is = item.getTikaStream();
       
       CountInputStream cis = null;
