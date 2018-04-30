@@ -21,6 +21,7 @@ Spreadsheets
 Presentations
 RTF Documents
 PDF Documents
+HTML Documents
 
 # Para expandir arquivos jar, comente a linha <mime>application/java-archive</mime> em ParserConfig.xml
 #Programs and Libraries
