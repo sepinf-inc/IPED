@@ -36,7 +36,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.tika.mime.CustomDetector;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.ParseContext;
@@ -85,7 +85,7 @@ public class CarveTask extends BaseCarveTask {
 
   public CarveTask(Worker worker) {
     super(worker);
-    this.registry = new CustomDetector().getMediaTypeRegistry();
+    this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
   @Override

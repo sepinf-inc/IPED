@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.mime.CustomDetector;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
@@ -120,7 +120,7 @@ public class Configuration {
     appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty(CustomDetector.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
+    System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
     properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
     properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
