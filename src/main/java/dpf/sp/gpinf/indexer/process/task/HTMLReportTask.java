@@ -85,7 +85,7 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
    */
-  private static final Collator collator = Collator.getInstance(Configuration.locale);
+  private static final Collator collator = getCollator();
 
   /**
    * Nome da tarefa.
@@ -222,12 +222,11 @@ public class HTMLReportTask extends AbstractTask {
    */
   private StringBuilder modeloPerito;
 
-  /**
-   * Construtor.
-   */
-  public HTMLReportTask(Worker worker) {
-    super(worker);
-    collator.setStrength(Collator.TERTIARY);
+  
+  private static Collator getCollator() {
+    Collator c = Collator.getInstance(Configuration.locale);
+    c.setStrength(Collator.TERTIARY);
+    return c;
   }
 
   @Override

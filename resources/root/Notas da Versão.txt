@@ -25,7 +25,7 @@ xx/05/2018: IPED-3.14
 - Atualização p/ sleuthkit-4.6 (suporte a itens HFS comprimidos via LZVN, correções diversas)
 Correções:
 - Relatório HTML com link [Sem Marcador] vazio (3.13.5)
-- Falha eventual ao gerar miniaturas de imagens de formatos suportados pelo java (3.13)
+- Falha eventual ao gerar miniaturas de imagens devido a bug no java (3.13)
 - Itens orphans corrompidos maiores que sua partição automaticamente ignorados
 - Travamento raro na detecção de assinatura de certos ZIPs corrompidos
 - Correções no parser de WhatsApp p/ Android (thumb p/ anexos documentais, algumas msgs descartadas)

@@ -20,8 +20,7 @@ public class SetTypeTask extends AbstractTask {
 
   TikaConfig tikaConfig;
 
-  public SetTypeTask(Worker worker) {
-    super(worker);
+  public SetTypeTask() {
     tikaConfig = TikaConfig.getDefaultConfig();
   }
 

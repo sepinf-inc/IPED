@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.process.task;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.nio.file.FileSystem;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -12,10 +11,6 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
-
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
@@ -26,10 +21,6 @@ public class IgnoreHardLinkTask extends AbstractTask {
   
   private static Object lock = new Object();
   private boolean taskEnabled = false;
-
-  public IgnoreHardLinkTask(Worker worker) {
-    super(worker);
-  }
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {

@@ -121,12 +121,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private IndexerDefaultParser autoParser;
 
   public ParsingTask(ParseContext context) {
-    super(null);
     setContext(context);
   }
   
   public ParsingTask(ParseContext context, EvidenceFile evidence) {
-      super(null);
       setContext(context);
       this.evidence = evidence;
     }
@@ -136,15 +134,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     return enableFileParsing;
   }
 
-  public ParsingTask(Worker worker) {
-    super(worker);
+  public ParsingTask() {
     this.autoParser = new IndexerDefaultParser();
     this.autoParser.setFallback(Configuration.fallBackParser);
     this.autoParser.setErrorParser(Configuration.errorParser);
   }
   
   public ParsingTask(Worker worker, IndexerDefaultParser parser) {
-	  super(worker);
+      this.setWorker(worker);
 	  this.autoParser = parser;
   }
 
@@ -533,7 +530,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       subItem.setSubItem(true);
       subItem.setSumVolume(false);
       
-      ExportFileTask extractor = new ExportFileTask(worker);
+      ExportFileTask extractor = new ExportFileTask();
+      extractor.setWorker(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());
 
       // pausa contagem de timeout do pai antes de extrair e processar subitem

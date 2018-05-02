@@ -83,8 +83,7 @@ public class CarveTask extends BaseCarveTask {
   byte[] buf = new byte[1024 * 1024];
   byte[] cBuf;
 
-  public CarveTask(Worker worker) {
-    super(worker);
+  public CarveTask() {
     this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
@@ -155,7 +154,9 @@ public class CarveTask extends BaseCarveTask {
       return;
     }
     //Nova instancia pois o mesmo objeto é reusado e nao é imutável
-    new CarveTask(worker).safeProcess(evidence);
+    CarveTask carver = new CarveTask();
+    carver.setWorker(worker);
+    carver.safeProcess(evidence);
     
     //Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de itens
     //carveados através do KFF, esta pode ser removida. 

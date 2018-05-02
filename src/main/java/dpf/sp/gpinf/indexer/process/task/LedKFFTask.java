@@ -46,10 +46,6 @@ public class LedKFFTask extends AbstractTask {
   private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
   private static boolean taskEnabled = false;
 
-  public LedKFFTask(Worker worker) {
-    super(worker);
-  }
-
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 

@@ -1,9 +1,12 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 
 /**
  * Instancia e instala as tarefas de processamento em um Worker. A ordem de execução das tarefas
@@ -13,42 +16,34 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
  * do processamento, por isso deve ser configurada com cautela.
  */
 public class TaskInstaller {
+    
+  private static final String TASKS_CONFIG_XML = "conf/TaskInstaller.xml";
 
   public void installProcessingTasks(Worker worker) throws Exception {
-
+      
     List<AbstractTask> tasks = worker.tasks;
-
-    tasks.add(new IgnoreHardLinkTask(worker));
-    tasks.add(new TempFileTask(worker));
+    File taskConfig = new File(worker.output, TASKS_CONFIG_XML);
     
-    tasks.add(new SignatureTask(worker));
-    tasks.add(new SetTypeTask(worker));
-    tasks.add(new SetCategoryTask(worker));
-    //tarefas que ignoram itens após categorização para incluir categoria de ignorados no csv
-    tasks.add(new HashTask(worker));
-    tasks.add(new KFFTask(worker));
-    tasks.add(new LedKFFTask(worker));
-    tasks.add(new DuplicateTask(worker));
-
-    tasks.add(new ParsingTask(worker));
-    tasks.add(new RegexTask(worker));
-    tasks.add(new LanguageDetectTask(worker));
-    tasks.add(new NamedEntityTask(worker));
-    tasks.add(new ExportFileTask(worker));
-    tasks.add(new MakePreviewTask(worker));
-    tasks.add(new ImageThumbTask(worker));
-    tasks.add(new VideoThumbTask(worker));
-    tasks.add(new DIETask(worker));
-    tasks.add(new HTMLReportTask(worker));
-    //Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
-    //e antes da indexação (pois pode setar propriedade hasChildren nos itens)
-    tasks.add(new KFFCarveTask(worker));
-    tasks.add(new CarveTask(worker));
-    tasks.add(new KnownMetCarveTask(worker));
-    tasks.add(new EntropyTask(worker));
-    tasks.add(new IndexTask(worker));
-    tasks.add(new ExportCSVTask(worker));
-
+    loadTasks(taskConfig, tasks);
+    
+    for(AbstractTask t : tasks) {
+        t.setWorker(worker);
+    }
+  }
+  
+  private List<AbstractTask> loadTasks(File file, List<AbstractTask> tasks) throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException{
+      List<String> lines = Files.readAllLines(file.toPath());
+      List<String> names = new ArrayList<>();
+      String prefix = "task class=\"";
+      for(String line : lines) {
+          int i = line.indexOf(prefix);
+          if(i > -1)
+              names.add(line.substring(i + prefix.length(), line.indexOf("\"></task>")));
+      }
+      for(String className : names)
+          tasks.add((AbstractTask)Class.forName(className).newInstance());
+      
+      return tasks;
   }
 
 }

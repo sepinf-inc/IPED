@@ -28,8 +28,7 @@ public class SignatureTask extends AbstractTask {
   private TikaConfig config;
   private Detector detector;
 
-  public SignatureTask(Worker worker) {
-    super(worker);
+  public SignatureTask() {
     config = TikaConfig.getDefaultConfig();
     detector = config.getDetector();
   }

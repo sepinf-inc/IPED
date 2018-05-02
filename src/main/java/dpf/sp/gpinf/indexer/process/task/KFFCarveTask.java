@@ -73,13 +73,6 @@ public class KFFCarveTask extends BaseCarveTask {
    */
   private static HashValue[] md5_512;
 
-  /**
-   * Construtor.
-   */
-  public KFFCarveTask(Worker worker) {
-    super(worker);
-  }
-
   @Override
   public boolean isEnabled() {
     return taskEnabled;

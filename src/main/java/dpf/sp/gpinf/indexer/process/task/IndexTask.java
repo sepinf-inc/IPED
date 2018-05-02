@@ -64,8 +64,7 @@ public class IndexTask extends BaseCarveTask {
   private IndexerDefaultParser autoParser;
   private List<IdLenPair> textSizes;
 
-  public IndexTask(Worker worker) {
-    super(worker);
+  public IndexTask() {
     this.autoParser = new IndexerDefaultParser();
     this.autoParser.setFallback(Configuration.fallBackParser);
     this.autoParser.setErrorParser(Configuration.errorParser);

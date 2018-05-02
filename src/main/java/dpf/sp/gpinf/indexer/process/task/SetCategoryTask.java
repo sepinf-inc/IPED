@@ -64,10 +64,6 @@ public class SetCategoryTask extends AbstractTask {
   private static Invocable inv;
   private static boolean refineCategories = false;
 
-  public SetCategoryTask(Worker worker) {
-    super(worker);
-  }
-
   //TODO inserir parametro no init referente a arquivo e diretorio de configuraÃ§Ã£o	
   @Override
   public void init(Properties confProps, File configPath) throws Exception {

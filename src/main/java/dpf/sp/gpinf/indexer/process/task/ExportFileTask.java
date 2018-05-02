@@ -68,8 +68,7 @@ public class ExportFileTask extends AbstractTask {
   private HashMap<HashValue, HashValue> hashMap;
   private List<String> noContentLabels;
 
-  public ExportFileTask(Worker worker) {
-    super(worker);
+  public ExportFileTask() {
     ExportFolder.setExportPath(EXTRACT_DIR);
   }
 

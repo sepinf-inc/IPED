@@ -58,10 +58,6 @@ public abstract class BaseCarveTask extends AbstractTask {
 
   protected static final Map<EvidenceFile, Set<Long>> kffCarved = new HashMap<EvidenceFile, Set<Long>>();   
 
-  public BaseCarveTask(Worker worker) {
-    super(worker);
-  }
-
   private final synchronized static void incItensCarved() {
     itensCarved++;
   }

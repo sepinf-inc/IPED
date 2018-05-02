@@ -45,8 +45,7 @@ public class MakePreviewTask extends AbstractTask {
   
   private volatile Throwable exception;
 
-  public MakePreviewTask(Worker worker) {
-    super(worker);
+  public MakePreviewTask() {
     parser.setPrintMetadata(false);
     parser.setIgnoreStyle(false);
   }

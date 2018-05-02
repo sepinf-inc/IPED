@@ -24,10 +24,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class ImageThumbTask extends AbstractTask {
 
-  public ImageThumbTask(Worker worker) {
-    super(worker);
-  }
-
   public static final String thumbsFolder = "thumbs"; //$NON-NLS-1$
 
   private static final String enableProperty = "enableImageThumbs"; //$NON-NLS-1$

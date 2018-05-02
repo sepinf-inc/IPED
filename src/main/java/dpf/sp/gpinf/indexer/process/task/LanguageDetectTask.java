@@ -41,10 +41,6 @@ public class LanguageDetectTask extends AbstractTask {
     private static LanguageDetector detector;
     
     private boolean isEnabled = true;
-
-    public LanguageDetectTask(Worker worker) {
-        super(worker);
-    }
     
     @Override
     public boolean isEnabled() {
