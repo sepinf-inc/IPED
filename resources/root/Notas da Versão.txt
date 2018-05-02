@@ -1,3 +1,38 @@
+xx/05/2018: IPED-3.14
+- Internacionalização e suporte ao idioma inglês
+- Suporte aos relatórios XML do UFED Physical Analyser (importação de categorias e metadados)
+- Destaque de painéis da interface via DockingFrames (PCF Pfeifer)
+- Parser de WhatsApp para Iphone (PCF Pfeifer)
+- Opção phoneParsersToUse no AdvancedConfig.xml para habilitar parsers internos ou do UFED (padrão external)
+- Melhor configuração de parâmetros da linha de comando (PCF Átila)
+- Marcadores automáticos p/ itens enviados via chats interpretados pelo PA
+- Novo perfil triage para uso em locais de busca por documentos (PCF Sicoli)
+- Visualização de itens selecionados na árvore de diretórios
+- Opção no menu de contexto para abrir versão de visualização dos itens externamente
+- Cálculo simultâneo de MD5 ao exportar itens para ZIP
+- Exportação de itens em árvore sem necessidade de escolher nó base
+- Re-externalização da opção indexCorruptFiles (padrão true)
+- Opções no ParserConfig.xml para usar SAX parsers p/ docx e pptx (usam mto menos memória, padrão false)
+- Opções no ParserConfig.xml para PSTParser: recoverDeleted e useLibpffParser (padrão true)
+- Lista nomes de anexos no preview de emails extraídos de PST/OST
+- Menor consumo de memória ao processar PDFs usando arquivos temporários
+- Criação automática de backups de marcadores em caso/indexador/bkp
+- Pergunta ao usuário novo caminho para imagem forense caso não localizada
+- Comentários para marcadores
+- Extração de imagens embutidas em HTMLs no perfil pedo
+- Exibição do número de itens por categoria
+- Atualização p/ Tika 1.18 (parser XPS, inúmeras melhorias e correções)
+- Atualização p/ sleuthkit-4.6 (suporte a itens HFS comprimidos via LZVN, correções diversas)
+Correções:
+- Relatório HTML com link [Sem Marcador] vazio (3.13.5)
+- Falha eventual ao gerar miniaturas de imagens de formatos suportados pelo java (3.13)
+- Itens orphans corrompidos maiores que sua partição automaticamente ignorados
+- Travamento raro na detecção de assinatura de certos ZIPs corrompidos
+- Correções no parser de WhatsApp p/ Android (thumb p/ anexos documentais, algumas msgs descartadas)
+- Classificação correta de vídeos MTS
+- Corrige abertura de HTMLs gigantes externamente
+- NullPointer ao desabilitar certas opções do processamento
+
 02/02/2018: IPED-3.13.5
 - Detecção de itens 7zip cifrados que omitem nomes dos subitens
 - Habilita ignoreHardLinks por padrão em todos os perfis de processamento
