@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -438,6 +439,16 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
+    }
+    
+    value = properties.getProperty("maxBackups"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.MAX_BACKUPS = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("backupInterval"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.BKP_INTERVAL = Long.valueOf(value.trim());
     }
     
     value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$

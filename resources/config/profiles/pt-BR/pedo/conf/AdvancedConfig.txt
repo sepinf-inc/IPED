@@ -119,3 +119,10 @@ processImagesInPDFs = true
 # Número de threads utilizadas para pesquisar o índice. Pode agilizar pesquisas em índices grandes.
 # Valores altos podem degradar a pesquisa caso o índice esteja num disco lento.
 searchThreads = 1
+
+# Número máximo de backups do estado da análise (marcadores, seleções, histórico de busca)
+# Os backups são salvos na pasta do caso em indexador/bkp
+maxBackups = 10
+
+# Intervalo (em segundos) entre a realização dos backups
+backupInterval = 60
