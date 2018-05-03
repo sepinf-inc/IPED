@@ -71,7 +71,7 @@ public class CmdLineArgs {
   private int blocksize;
 
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
-      + "fastmode, blind. More details in manual.")
+      + "fastmode, blind, triage. More details in manual.")
   private String profile;
 
   @Parameter(names="--addowner", description="index file owner info when processing local folders (slow over network)")
