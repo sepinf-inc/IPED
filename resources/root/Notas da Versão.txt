@@ -6,7 +6,7 @@ xx/05/2018: IPED-3.14
 - Opção phoneParsersToUse no AdvancedConfig.xml para habilitar parsers internos ou do UFED (padrão external)
 - Melhor configuração de parâmetros da linha de comando (PCF Átila)
 - Marcadores automáticos p/ itens enviados via chats interpretados pelo PA
-- Novo perfil triage para uso em locais de busca por documentos (PCF Sicoli)
+- Integra perfil triage para uso em locais de busca por documentos
 - Visualização de itens selecionados na árvore de diretórios
 - Opção no menu de contexto para abrir versão de visualização dos itens externamente
 - Cálculo simultâneo de MD5 ao exportar itens para ZIP
@@ -16,7 +16,7 @@ xx/05/2018: IPED-3.14
 - Opções no ParserConfig.xml para PSTParser: recoverDeleted e useLibpffParser (padrão true)
 - Lista nomes de anexos no preview de emails extraídos de PST/OST
 - Menor consumo de memória ao processar PDFs usando arquivos temporários
-- Criação automática de backups de marcadores em caso/indexador/bkp
+- Backups automáticos de marcadores: opções maxBackups e backupInterval em AdvancedConfig.txt
 - Pergunta ao usuário novo caminho para imagem forense caso não localizada
 - Comentários para marcadores
 - Extração de imagens embutidas em HTMLs no perfil pedo
