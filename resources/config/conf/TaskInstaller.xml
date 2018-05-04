@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 	Instalador de tarefas de processamento.
-	É possível desinstalar ou instalar novas tarefas adicionadas na pasta de plug-ins
-	ou mesmo alterar a ordem de execução das tarefas.
-	Altere este arquivo apenas se souber exatamente o que está fazendo,
-	pois algumas tarefas dependem de outras, então a ordem é muito sensível.
+	É possível desinstalar ou instalar novas tarefas adicionadas na pasta de plugins ou na pasta de scripts.
+	A ordem de execução das tarefas é muito sensível, pois algumas tarefas dependem de outras.
 -->
 <tasks>
-    <task script="TestScriptTask.js"></task>
+    <!--<task script="TestScriptTask.js"></task>-->
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.SignatureTask"></task>

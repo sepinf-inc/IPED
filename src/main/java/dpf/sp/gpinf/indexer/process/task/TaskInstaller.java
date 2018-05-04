@@ -2,8 +2,16 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -35,23 +43,25 @@ public class TaskInstaller {
     }
   }
   
-  private List<AbstractTask> loadTasks(File file, List<AbstractTask> tasks) throws InstantiationException, IllegalAccessException, IOException, ClassNotFoundException{
+  private List<AbstractTask> loadTasks(File file, List<AbstractTask> tasks) throws InstantiationException, IllegalAccessException, IOException, ClassNotFoundException, ParserConfigurationException, SAXException{
       
-      String classPrefix = "task class=\"";
-      String scriptPrefix = "task script=\"";
-      List<String> lines = Files.readAllLines(file.toPath());
-      for(String line : lines) {
-          int i = line.indexOf(classPrefix);
-          if(i > -1) {
-              String className = line.substring(i + classPrefix.length(), line.indexOf("\"></task>"));
+      DocumentBuilder dombuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+      Document dom = dombuilder.parse(file);
+      NodeList list = dom.getElementsByTagName("task");
+      for(int i = 0; i < list.getLength(); i++) {
+          Node node = list.item(i);
+          Node attr = node.getAttributes().getNamedItem("class");
+          if(attr != null) {
+              String className = attr.getNodeValue();
               tasks.add((AbstractTask)Class.forName(className).newInstance());
           }
-          i = line.indexOf(scriptPrefix);
-          if(i > -1) {
-              String scriptName = line.substring(i + scriptPrefix.length(), line.indexOf("\"></task>"));
+          attr = node.getAttributes().getNamedItem("script");
+          if(attr != null) {
+              String scriptName = attr.getNodeValue();
               tasks.add(getScriptTask(scriptName));
           }
       }
+      
       return tasks;
   }
   
