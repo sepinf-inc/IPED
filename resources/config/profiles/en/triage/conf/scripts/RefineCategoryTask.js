@@ -3,22 +3,13 @@
  * Utiliza linguagem javascript para permitir flexibilidade nas definições
  */
 
-
-/*
- *  Adiciona as novas categorias que serão exibidas na lista de categorias.
- *  Caso não haja categorias adicionais, o script não será executado.
- */
-function addNewCategories(set)
-{
-	set.add("Temporary Internet Images");
-	set.add("Temporary Internet Texts");
-	set.add("Empty Files");
-	set.add("Images in System Folders");
-	set.add("Texts in System Folders");
-	set.add("Other Images");
-	set.add("Windows Recycle");
-	set.add("URL links");
+function getName(){
+	return "RefineCategoryTask";
 }
+
+function init(confProps, configFolder){}
+
+function finish(){}
 
 /*
  * Função que adiciona categoria ao objeto EvidenceFile "e", segundo regras baseadas nas propriedades.
@@ -34,7 +25,7 @@ function addNewCategories(set)
  * Para remover a categoria: 	 e.removeCategory(String)
  *
  */
-function addCategory(e){
+function process(e){
 
 	var categorias = e.getCategories();
 	var length = e.getLength();

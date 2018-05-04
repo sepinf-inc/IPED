@@ -3,23 +3,13 @@
  * Utiliza linguagem javascript para permitir flexibilidade nas definições
  */
 
-
-/*
- *  Adiciona as novas categorias que serão exibidas na lista de categorias.
- *  Caso não haja categorias adicionais, o script não será executado.
- */
-function addNewCategories(set)
-{
-	set.add("Imagens Temporárias Internet");
-	set.add("Textos Temporários Internet");
-	set.add("Tamanho Zero");
-	set.add("Imagens em Pasta de Sistema");
-	set.add("Outras Imagens");
-	set.add("Textos em Pasta de Sistema");
-	set.add("Lixeira do Windows");
-	set.add("Atalhos para URLs");
+function getName(){
+	return "RefineCategoryTask";
 }
 
+function init(confProps, configFolder){}
+
+function finish(){}
 
 /*
  * Função que adiciona categoria ao objeto EvidenceFile "e", segundo regras baseadas nas propriedades.
@@ -35,7 +25,7 @@ function addNewCategories(set)
  * Para remover a categoria: 	 e.removeCategory(String)
  *
  */
-function addCategory(e){
+function process(e){
 
 	var categorias = e.getCategories();
 	var length = e.getLength();
