@@ -243,4 +243,8 @@ public abstract class AbstractTask {
   public boolean isEnabled() {
     return true;
   }
+  
+  public String getName() {
+      return this.getClass().getSimpleName();
+  }
 }

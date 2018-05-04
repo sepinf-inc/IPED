@@ -166,7 +166,7 @@ public class Statistics {
     totalTime = totalTime / (1000000 * Configuration.numThreads);
     for (int i = 0; i < taskTimes.length; i++) {
       long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
-      LOGGER.info(workers[0].tasks.get(i).getClass().getSimpleName() + ":\tProcessing Time:\t" + sec + "s (" + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      LOGGER.info(workers[0].tasks.get(i).getName() + ":\tProcessing Time:\t" + sec + "s (" + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
     LOGGER.info("File Splits: {}", getSplits()); //$NON-NLS-1$

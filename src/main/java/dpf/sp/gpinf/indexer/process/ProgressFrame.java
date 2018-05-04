@@ -225,7 +225,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       }else if(workers[i].state == STATE.PAUSING){
     	  msg.append(Messages.getString("ProgressFrame.Pausing")); //$NON-NLS-1$
       }else if (task != null) {
-        msg.append(task.getClass().getSimpleName());
+        msg.append(task.getName());
       } else {
         msg.append("  -  "); //$NON-NLS-1$
       }
@@ -273,7 +273,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
       AbstractTask task = workers[0].tasks.get(i);
       long sec = taskTimes[i] / (1000000 * workers.length);
       msg.append("<tr><td>"); //$NON-NLS-1$
-      msg.append(task.getClass().getSimpleName());
+      msg.append(task.getName());
       msg.append("</td><td>"); //$NON-NLS-1$
       msg.append(task.isEnabled() ? sec + "s (" + (100 * sec) / totalTime + "%)" : "-"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       msg.append("</td></tr>"); //$NON-NLS-1$
