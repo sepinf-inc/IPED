@@ -61,7 +61,7 @@ public class SaveStateThread extends Thread{
 					e1.printStackTrace();
 				}
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(200);
 			} catch (InterruptedException e) {
 				break;
 			}
