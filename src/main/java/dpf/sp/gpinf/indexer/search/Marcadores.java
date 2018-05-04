@@ -151,7 +151,7 @@ public class Marcadores implements Serializable {
 	}
 
 
-	public void addLabel(ArrayList<Integer> ids, int label) {
+	public void addLabel(List<Integer> ids, int label) {
 		int labelOrder = label / labelBits;
 		int labelMod = label % labelBits;
 		for (int i = 0; i < ids.size(); i++) {
@@ -196,7 +196,7 @@ public class Marcadores implements Serializable {
 
 	}
 
-	public void removeLabel(ArrayList<Integer> ids, int label) {
+	public void removeLabel(List<Integer> ids, int label) {
 		int labelOrder = label / labelBits;
 		int labelMod = label % labelBits;
 		for (int i = 0; i < ids.size(); i++) {

@@ -48,6 +48,10 @@ public class IPEDSearcher {
 	NoScoringCollector collector;
 	
 	private volatile boolean canceled;
+	
+	public IPEDSearcher(IPEDSource ipedCase) {
+        this.ipedCase = ipedCase;
+    }
 
 	public IPEDSearcher(IPEDSource ipedCase, Query query) {
 		this.ipedCase = ipedCase;
@@ -70,6 +74,10 @@ public class IPEDSearcher {
 	public void setQuery(Query query){
 		this.query = query;
 	}
+	
+	public void setQuery(String query){
+        this.queryText = query;
+    }
 	
 	public Query getQuery(){
 		return query;
