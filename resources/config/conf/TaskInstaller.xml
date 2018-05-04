@@ -7,6 +7,7 @@
 	pois algumas tarefas dependem de outras, então a ordem é muito sensível.
 -->
 <tasks>
+    <task script="TestScriptTask.js"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.SignatureTask"></task>
