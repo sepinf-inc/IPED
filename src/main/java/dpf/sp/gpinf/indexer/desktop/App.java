@@ -496,6 +496,8 @@ public class App extends JFrame implements WindowListener {
 	categoryTree.addTreeExpansionListener(categoryListener);
 
     bookmarksTree = new JTree(new BookmarksTreeModel());
+    bookmarksTree.setCellRenderer(new BookmarkTreeCellRenderer());
+    ToolTipManager.sharedInstance().registerComponent(bookmarksTree);
     bookmarksListener = new BookmarksTreeListener();
     bookmarksTree.addTreeSelectionListener(bookmarksListener);
     bookmarksTree.addTreeExpansionListener(bookmarksListener);
