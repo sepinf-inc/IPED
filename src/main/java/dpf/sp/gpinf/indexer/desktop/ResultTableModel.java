@@ -168,6 +168,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   public void setValueAt(Object value, int row, int col) {
 
 	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);	
+   	App.get().resultsModel.fireTableCellUpdated(row, col);
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();

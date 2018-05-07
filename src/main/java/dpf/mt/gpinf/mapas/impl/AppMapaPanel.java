@@ -51,16 +51,20 @@ public class AppMapaPanel extends JPanel {
 			public void valueChanged(ListSelectionEvent e) {
 			    if(e.getValueIsAdjusting()) return;
 
-				if((!App.get().mapTabDock.isShowing())&&(!mapaDesatualizado)){
+				if((!mapaDesatualizado)){
 					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 					HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>(); 
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
 						ItemId item = app.getResults().getItem(i);
-						String gid = item.getSourceId() + "-" + item.getId(); //$NON-NLS-1$
+						String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
 			        	selecoes.put(gid, selected);
 					}
 					browserCanvas.enviaSelecoes(selecoes);
+					
+					if(App.get().mapTabDock.isShowing()){
+						browserCanvas.redesenha();
+					}
 				}
 			}
 		});
@@ -101,6 +105,7 @@ public class AppMapaPanel extends JPanel {
 	
 	public void redesenha() {
 	    browserCanvas.redesenha();
+	    mapaDesatualizado = false;
 	}
 
 	public boolean isMapaDesatualizado() {
@@ -109,6 +114,10 @@ public class AppMapaPanel extends JPanel {
 
 	public void setMapaDesatualizado(boolean mapaDesatualizado) {
 		this.mapaDesatualizado = mapaDesatualizado;
+	}
+	
+	public void selecionaMarcador(String mid, boolean b){
+		browserCanvas.selecionaMarcador(mid, b);
 	}
 
 }

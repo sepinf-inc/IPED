@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
@@ -152,12 +154,29 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 				public void run() {
 					for(int i = 0; i<marks.length; i++){
 						Boolean b = selecoesAfazerCopy.get(marks[i]);
-						webEngine.executeScript("gxml.seleciona("+marks[i]+",'"+b+"');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+						try{
+							webEngine.executeScript("gxml.seleciona(\""+marks[i]+"\",'"+b+"');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+						}catch(Exception e){
+							e.printStackTrace();
+						}
 					}
 				}
 			});
 			this.selecoesAfazer = null;
 		}
+	}
+
+	@Override
+	public void selecionaMarcador(final String mid, final boolean b) {
+		Platform.runLater(new Runnable() {
+			public void run() {
+				try{
+ 					webEngine.executeScript("gxml.marca(\""+mid+"\",'"+b+"');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 }

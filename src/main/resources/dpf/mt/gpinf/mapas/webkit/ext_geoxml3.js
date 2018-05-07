@@ -203,3 +203,26 @@ GeoXmlIped.prototype.seleciona = function(mid, selecionado) {
 		}		
 	}
 }
+
+/* função para seleção programática de item no mapa */
+GeoXmlIped.prototype.marca = function(mid, marcado) {
+	for (i = 0; i <this.overlayman.markers.length; i++) {
+		var m = this.overlayman.markers[i];
+		if(m.extendedData.id == mid){
+			if(marcado == 'true'){
+				m.extendedData.checked = 'false';
+				ckbox = document.getElementById("ck_marcador_"+mid);
+				if(ckbox != null){
+					ckbox.checked = false;
+				}
+			}else{
+				m.extendedData.checked = 'true';
+				ckbox = document.getElementById("ck_marcador_"+mid);
+				if(ckbox != null){
+					ckbox.checked = true;
+				}
+			}
+			this.ajustaIcone(m);			
+		}		
+	}
+}
