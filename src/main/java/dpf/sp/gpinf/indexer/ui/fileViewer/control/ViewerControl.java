@@ -16,6 +16,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.IcePDFViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
@@ -88,6 +89,7 @@ public class ViewerControl implements IViewerControl {
               params.compositeViewer.addViewer(new HexViewer());
               params.textViewer = new TextViewer(params);
               params.compositeViewer.addViewer(params.textViewer);
+              params.compositeViewer.addViewer(new MetadataViewer());
               params.compositeViewer.addViewer(viewersRepository);
 
               viewersRepository.addViewer(new ImageViewer());
