@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -471,22 +472,32 @@ public class IPEDReader extends DataSourceReader {
         evidence.setFileOffset(Long.parseLong(value));
       }
       
-      for(IndexableField f : doc.getFields()) {
-          if(BasicProps.SET.contains(f.name()))
-              continue;
-          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
-              Class<?> c = IndexItem.getMetadataTypes().get(f.name());
-              if(Date.class.equals(c))
-                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
-          }else
-              evidence.getMetadata().add(f.name(), f.stringValue());
-      }
-
       value = doc.get(IndexItem.ISROOT);
       if (value != null) {
         evidence.setRoot(true);
         if(deviceName != null)
-        	evidence.setName(deviceName);
+            evidence.setName(deviceName);
+      }
+      
+      Set<String> multiValuedFields = new HashSet<>();
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              if(multiValuedFields.contains(f.name()))
+                  continue;
+              Class<?> c = IndexItem.getMetadataTypes().get(f.name());
+              IndexableField[] fields = doc.getFields(f.name());
+              if(fields.length > 1) {
+                  multiValuedFields.add(f.name());
+                  List<Object> fieldList = new ArrayList<>();
+                  for(IndexableField field : fields)
+                      fieldList.add(IndexItem.getCastedValue(c, field));
+                  evidence.setExtraAttribute(f.name(), fieldList);
+              }else
+                  evidence.setExtraAttribute(f.name(), IndexItem.getCastedValue(c, f));
+          }else
+              evidence.getMetadata().add(f.name(), f.stringValue());
       }
 
       caseData.addEvidenceFile(evidence);
