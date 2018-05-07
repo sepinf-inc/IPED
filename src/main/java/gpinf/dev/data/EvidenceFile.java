@@ -670,6 +670,13 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   public EvidenceFileType getType() {
     return type;
   }
+  
+  public String getTypeExt() {
+      if(type == null)
+          return null;
+      else
+          return type.getLongDescr();
+  }
 
   /**
    * Obtém o arquivo de visualização. Retorna nulo caso inexistente.
