@@ -220,8 +220,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
     context.set(StreamSource.class, content);
     
-    OCROutputFolder ocrOut = (OCROutputFolder)item.getExtraAttribute(OCROutputFolder.class.getName());
-    context.set(OCROutputFolder.class, ocrOut);
+    context.set(OCROutputFolder.class, new OCROutputFolder());
 
     return context;
   }
