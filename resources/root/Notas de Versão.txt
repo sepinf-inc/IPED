@@ -1,9 +1,12 @@
 xx/05/2018: IPED-3.14
 - Internacionalização e suporte ao idioma inglês
-- Suporte aos relatórios XML do UFED Physical Analyser (importação de categorias e metadados)
+- Suporte aos relatórios XML do UFED Physical Analyser (importação de itens, categorias e metadados)
 - Destaque de painéis da interface via DockingFrames (PCF Pfeifer)
 - Parser de WhatsApp para Iphone (PCF Pfeifer)
-- Opção phoneParsersToUse no AdvancedConfig.xml para habilitar parsers internos ou do UFED (padrão external)
+- Opção phoneParsersToUse no AdvancedConfig.xml para escolher parsers de celulares (padrão ufed)
+- Externaliza instalador de tarefas de processamento para conf/TaskInstaller.xml
+- Tarefas de processamento via script: podem acessar propriedades, texto, ignorar itens, criar propriedades extras e marcadores, etc
+- Novo visualizador de propriedades e metadados
 - Melhor configuração de parâmetros da linha de comando (PCF Átila)
 - Marcadores automáticos p/ itens enviados via chats interpretados pelo PA
 - Integra perfil triage para uso em locais de busca por documentos
@@ -18,14 +21,14 @@ xx/05/2018: IPED-3.14
 - Menor consumo de memória ao processar PDFs usando arquivos temporários
 - Backups automáticos de marcadores: opções maxBackups e backupInterval em AdvancedConfig.txt
 - Pergunta ao usuário novo caminho para imagem forense caso não localizada
-- Comentários para marcadores
 - Extração de imagens embutidas em HTMLs no perfil pedo
 - Exibição do número de itens por categoria
+- Comentários para marcadores
 - Atualização p/ Tika 1.18 (parser XPS, inúmeras melhorias e correções)
 - Atualização p/ sleuthkit-4.6 (suporte a itens HFS comprimidos via LZVN, correções diversas)
 Correções:
 - Relatório HTML com link [Sem Marcador] vazio (3.13.5)
-- Falha eventual ao gerar miniaturas de imagens devido a bug no java (3.13)
+- Falha eventual ao gerar miniaturas de imagens devido a bug no java
 - Itens orphans corrompidos maiores que sua partição automaticamente ignorados
 - Travamento raro na detecção de assinatura de certos ZIPs corrompidos
 - Correções no parser de WhatsApp p/ Android (thumb p/ anexos documentais, algumas msgs descartadas)
