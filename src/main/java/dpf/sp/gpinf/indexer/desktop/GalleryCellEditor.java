@@ -115,6 +115,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
       int idx = row * App.get().galleryModel.colCount + col;
       App.get().resultsTable.setValueAt(check.isSelected(), idx, 1);
     }
+    
+    this.stopCellEditing();
 
   }
 
