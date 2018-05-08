@@ -26,10 +26,6 @@ public class DuplicateTask extends AbstractTask {
 
   public static boolean ignoreDuplicates = false;
 
-  public DuplicateTask(Worker worker) {
-    super(worker);
-  }
-
   public void process(EvidenceFile evidence) {
 
     // Verificação de duplicados

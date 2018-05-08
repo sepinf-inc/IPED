@@ -70,6 +70,7 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -120,24 +121,27 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private IndexerDefaultParser autoParser;
 
   public ParsingTask(ParseContext context) {
-    super(null);
     setContext(context);
   }
+  
+  public ParsingTask(ParseContext context, EvidenceFile evidence) {
+      setContext(context);
+      this.evidence = evidence;
+    }
   
   @Override
   public boolean isEnabled() {
     return enableFileParsing;
   }
 
-  public ParsingTask(Worker worker) {
-    super(worker);
+  public ParsingTask() {
     this.autoParser = new IndexerDefaultParser();
     this.autoParser.setFallback(Configuration.fallBackParser);
     this.autoParser.setErrorParser(Configuration.errorParser);
   }
   
   public ParsingTask(Worker worker, IndexerDefaultParser parser) {
-	  super(worker);
+      this.setWorker(worker);
 	  this.autoParser = parser;
   }
 
@@ -388,7 +392,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   }
   
   @Override
-  public boolean shouldParseEmbedded(Metadata arg0) {
+  public boolean shouldParseEmbedded(Metadata subitemMeta) {
+      
+    //do not extract images from html generated previews
+    if(evidence != null && MetadataUtil.isHtmlSubType(evidence.getMediaType())) {
+        String type = subitemMeta == null ? null : subitemMeta.get(Metadata.CONTENT_TYPE);
+        if(type != null && type.startsWith("image"))
+            return false;
+    }
     return true;
   }
 
@@ -519,7 +530,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       subItem.setSubItem(true);
       subItem.setSumVolume(false);
       
-      ExportFileTask extractor = new ExportFileTask(worker);
+      ExportFileTask extractor = new ExportFileTask();
+      extractor.setWorker(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());
 
       // pausa contagem de timeout do pai antes de extrair e processar subitem

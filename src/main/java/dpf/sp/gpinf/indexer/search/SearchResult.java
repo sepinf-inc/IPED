@@ -1,5 +1,8 @@
 package dpf.sp.gpinf.indexer.search;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SearchResult {
 	
 	int[] ids;
@@ -23,6 +26,13 @@ public class SearchResult {
 	
 	public int getLength(){
 		return ids.length;
+	}
+	
+	public List<Integer> getIds(){
+	    List<Integer> ids = new ArrayList<>();
+	    for(int i : this.ids)
+	        ids.add(i);
+	    return ids;
 	}
 	
 	public static SearchResult get(IPEDSource iSource, LuceneSearchResult luceneResult){

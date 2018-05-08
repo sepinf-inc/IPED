@@ -15,10 +15,6 @@ public class EntropyTask extends AbstractTask {
     private static final String COMPRESS_RATIO = RawStringParser.COMPRESS_RATIO;
     
     byte[] buf = new byte[64 * 1024];
-    
-    public EntropyTask(Worker worker) {
-        super(worker);
-    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

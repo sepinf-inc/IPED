@@ -84,19 +84,15 @@ public abstract class AbstractTask {
   public void setNextTask(AbstractTask nextTask) {
     this.nextTask = nextTask;
   }
-
-  /**
-   * Construtor recebendo um worker.
-   *
-   * @param worker O worker que executará esta tarefa
-   */
-  public AbstractTask(Worker worker) {
-    this.worker = worker;
-    if (worker != null) {
-      this.stats = worker.stats;
-      this.caseData = worker.caseData;
-      this.output = worker.output;
-    }
+  
+  
+  public void setWorker(Worker worker) {
+      this.worker = worker;
+      if (worker != null) {
+        this.stats = worker.stats;
+        this.caseData = worker.caseData;
+        this.output = worker.output;
+      }
   }
 
   /**
@@ -246,5 +242,9 @@ public abstract class AbstractTask {
    */
   public boolean isEnabled() {
     return true;
+  }
+  
+  public String getName() {
+      return this.getClass().getSimpleName();
   }
 }

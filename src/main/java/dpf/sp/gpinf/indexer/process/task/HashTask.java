@@ -61,10 +61,6 @@ public class HashTask extends AbstractTask {
   }
 
   private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
-
-  public HashTask(Worker worker) {
-    super(worker);
-  }
   
   @Override
   public boolean isEnabled() {

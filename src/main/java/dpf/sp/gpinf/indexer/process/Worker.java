@@ -103,8 +103,8 @@ public class Worker extends Thread {
   private void initTasks() throws Exception {
     for (AbstractTask task : tasks) {
       if (this.getName().equals(workerNamePrefix + 0)) {
-        LOGGER.info("Starting " + task.getClass().getSimpleName()); //$NON-NLS-1$
-        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Worker.Starting") + task.getClass().getSimpleName()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        LOGGER.info("Starting " + task.getName()); //$NON-NLS-1$
+        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
       task.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
     }

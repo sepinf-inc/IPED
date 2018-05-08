@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -30,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -678,31 +681,6 @@ public class IndexItem extends BasicProps{
           }
       }
       
-      value = doc.get(HashTask.HASH.MD5.toString());
-      if (value != null) {
-    	  evidence.setExtraAttribute(HashTask.HASH.MD5.toString(), value);
-      }
-      
-      value = doc.get(HashTask.HASH.SHA1.toString());
-      if (value != null) {
-    	  evidence.setExtraAttribute(HashTask.HASH.SHA1.toString(), value);
-      }
-      
-      value = doc.get(HashTask.HASH.SHA256.toString());
-      if (value != null) {
-    	  evidence.setExtraAttribute(HashTask.HASH.SHA256.toString(), value);
-      }
-      
-      value = doc.get(HashTask.HASH.SHA512.toString());
-      if (value != null) {
-    	  evidence.setExtraAttribute(HashTask.HASH.SHA512.toString(), value);
-      }
-      
-      value = doc.get(HashTask.HASH.EDONKEY.toString());
-      if (value != null) {
-    	  evidence.setExtraAttribute(HashTask.HASH.EDONKEY.toString(), value);
-      }
-
       value = doc.get(IndexItem.DELETED);
       if (value != null) {
         evidence.setDeleted(Boolean.parseBoolean(value));
@@ -728,23 +706,28 @@ public class IndexItem extends BasicProps{
         evidence.setHasChildren(Boolean.parseBoolean(value));
       }
 
-      value = doc.get(IndexItem.TIMEOUT);
-      if (value != null) {
-        evidence.setTimeOut(Boolean.parseBoolean(value));
-      }
-
       value = doc.get(IndexItem.OFFSET);
       if (value != null) {
         evidence.setFileOffset(Long.parseLong(value));
       }
       
+      Set<String> multiValuedFields = new HashSet<>();
       for(IndexableField f : doc.getFields()) {
           if(BasicProps.SET.contains(f.name()))
               continue;
           if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              if(multiValuedFields.contains(f.name()))
+                  continue;
               Class<?> c = typesMap.get(f.name());
-              if(Date.class.equals(c))
-                  evidence.setExtraAttribute(f.name(), DateUtil.stringToDate(f.stringValue()));
+              IndexableField[] fields = doc.getFields(f.name());
+              if(fields.length > 1) {
+                  multiValuedFields.add(f.name());
+                  List<Object> fieldList = new ArrayList<>();
+                  for(IndexableField field : fields)
+                      fieldList.add(getCastedValue(c, field));
+                  evidence.setExtraAttribute(f.name(), fieldList);
+              }else
+                  evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
           }else
               evidence.getMetadata().add(f.name(), f.stringValue());
       }
@@ -757,6 +740,15 @@ public class IndexItem extends BasicProps{
 
     return null;
 
+  }
+  
+  public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
+      if(Date.class.equals(c))
+          return DateUtil.stringToDate(f.stringValue());
+      else if(Number.class.isAssignableFrom(c))
+          return f.numericValue();
+      else
+          return f.stringValue();
   }
 
 }

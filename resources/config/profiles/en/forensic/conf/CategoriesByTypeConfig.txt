@@ -32,7 +32,7 @@ Mailboxes = application/vnd.ms-outlook-pst; application/outlook-dbx; application
 
 Databases = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db
 
-Compressed Archives = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli
+Compressed Archives = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli; application/zstd; application/deflate64;
 
 Contacts = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact
 
@@ -40,7 +40,7 @@ Chats = application/messenger-plus; application/messenger-chat; application/sqli
 
 Windows Registry = application/x-windows-registry; application/x-windows-registry-report
 
-Programs and Libraries = application/java-archive; application/x-dosexec; application/x-msdownload; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
+Programs and Libraries = application/java-archive; application/x-dosexec; application/x-msdownload; application/x-bat; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
 
 Unallocated = application/x-unallocated;
 

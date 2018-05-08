@@ -75,10 +75,6 @@ public class RegexTask extends AbstractTask{
 		}
 	}
 	
-	public RegexTask(Worker worker){
-		super(worker);
-	}
-	
 	private static Automaton ignoreCases(Automaton a) {
 		Map<Character,Set<Character>> map = new HashMap<Character,Set<Character>>();
 		for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {

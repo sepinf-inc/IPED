@@ -25,15 +25,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /**
@@ -48,14 +45,6 @@ public class ExportCSVTask extends AbstractTask {
   public static volatile boolean headerWritten = false;
 
   private StringBuilder list = new StringBuilder();
-
-  public ExportCSVTask(Worker worker) throws NoSuchAlgorithmException, IOException {
-    super(worker);
-    this.output = new File(output.getParentFile(), CSV_NAME);
-    if (output.exists() && !IndexFiles.getInstance().appendIndex) {
-      Files.delete(output.toPath());
-    }
-  }
 
   /**
    * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados no arquivo
@@ -206,6 +195,11 @@ public class ExportCSVTask extends AbstractTask {
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
 
+    this.output = new File(output.getParentFile(), CSV_NAME);
+    if (output.exists() && !IndexFiles.getInstance().appendIndex) {
+        Files.delete(output.toPath());
+    }
+      
     String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
@@ -215,7 +209,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     headerWritten = false;
-
+    
   }
 
 }

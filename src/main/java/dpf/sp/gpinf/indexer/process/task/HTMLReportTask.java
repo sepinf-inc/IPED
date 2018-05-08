@@ -85,7 +85,7 @@ public class HTMLReportTask extends AbstractTask {
   /**
    * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
    */
-  private static final Collator collator = Collator.getInstance(Configuration.locale);
+  private static final Collator collator = getCollator();
 
   /**
    * Nome da tarefa.
@@ -222,12 +222,11 @@ public class HTMLReportTask extends AbstractTask {
    */
   private StringBuilder modeloPerito;
 
-  /**
-   * Construtor.
-   */
-  public HTMLReportTask(Worker worker) {
-    super(worker);
-    collator.setStrength(Collator.TERTIARY);
+  
+  private static Collator getCollator() {
+    Collator c = Collator.getInstance(Configuration.locale);
+    c.setStrength(Collator.TERTIARY);
+    return c;
   }
 
   @Override
@@ -330,9 +329,7 @@ public class HTMLReportTask extends AbstractTask {
         //Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido especificado 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args != null) {
-          List<String> info = args.getCmdArgs().get("-asap"); //$NON-NLS-1$
-          if (info != null && info.size() > 0) {
-            File infoFile = new File(info.get(0));
+            File infoFile = args.getAsap();
             if (infoFile != null) {
               Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               if (!infoFile.exists()) {
@@ -346,7 +343,6 @@ public class HTMLReportTask extends AbstractTask {
                 throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
               }
             }
-          }
         }
         init.set(true);
       }

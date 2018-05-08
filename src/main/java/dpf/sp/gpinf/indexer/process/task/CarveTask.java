@@ -36,7 +36,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.tika.mime.CustomDetector;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.ParseContext;
@@ -83,9 +83,8 @@ public class CarveTask extends BaseCarveTask {
   byte[] buf = new byte[1024 * 1024];
   byte[] cBuf;
 
-  public CarveTask(Worker worker) {
-    super(worker);
-    this.registry = new CustomDetector().getMediaTypeRegistry();
+  public CarveTask() {
+    this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
   @Override
@@ -155,7 +154,9 @@ public class CarveTask extends BaseCarveTask {
       return;
     }
     //Nova instancia pois o mesmo objeto é reusado e nao é imutável
-    new CarveTask(worker).safeProcess(evidence);
+    CarveTask carver = new CarveTask();
+    carver.setWorker(worker);
+    carver.safeProcess(evidence);
     
     //Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de itens
     //carveados através do KFF, esta pode ser removida. 

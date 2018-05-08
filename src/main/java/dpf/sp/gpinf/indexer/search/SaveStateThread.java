@@ -10,6 +10,7 @@ public class SaveStateThread extends Thread{
 	private static SaveStateThread instance = getInstance();
 	
 	private static final String BKP_DIR = "bkp";
+	
 	public static int MAX_BACKUPS = 10;
 	public static long BKP_INTERVAL = 60; //seconds
 	
@@ -60,7 +61,7 @@ public class SaveStateThread extends Thread{
 					e1.printStackTrace();
 				}
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(200);
 			} catch (InterruptedException e) {
 				break;
 			}

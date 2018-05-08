@@ -50,10 +50,6 @@ public class NamedEntityTask extends AbstractTask {
     private static Set<String> categoriesToIgnore = new HashSet<String>();
     
     private static float minLangScore = 0;
-
-    public NamedEntityTask(Worker worker) {
-        super(worker);
-    }
     
     @Override
     public boolean isEnabled(){

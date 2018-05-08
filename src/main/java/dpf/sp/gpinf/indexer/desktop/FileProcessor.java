@@ -128,10 +128,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 	int textSize = iCase.getTextSize(item.getId());
 	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
 	
-	OCROutputFolder ocrOut = new OCROutputFolder(iCase.getModuleDir());
-	item.setExtraAttribute(OCROutputFolder.class.getName(), ocrOut);
-	EvidenceFile.getAllExtraAttributes().remove(OCROutputFolder.class.getName());
-
+	OCROutputFolder.setStaticPath(iCase.getModuleDir());
+	
     disposeItem(lastItem);
     lastItem = item;
     String contentType = null;

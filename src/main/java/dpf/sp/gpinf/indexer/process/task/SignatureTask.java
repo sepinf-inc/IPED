@@ -4,9 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.CustomDetector;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,11 +25,12 @@ public class SignatureTask extends AbstractTask {
 
   public static boolean processFileSignatures = true;
   
-  CustomDetector detector;
+  private TikaConfig config;
+  private Detector detector;
 
-  public SignatureTask(Worker worker) {
-    super(worker);
-    detector = new CustomDetector();
+  public SignatureTask() {
+    config = TikaConfig.getDefaultConfig();
+    detector = config.getDetector();
   }
   
   @Override
@@ -81,7 +83,7 @@ public class SignatureTask extends AbstractTask {
             evidence.getPath(), evidence.getLength(), e.toString());
       }
     }
-    evidence.setMediaType(detector.getMediaTypeRegistry().normalize(type));
+    evidence.setMediaType(config.getMediaTypeRegistry().normalize(type));
   }
 
   @Override

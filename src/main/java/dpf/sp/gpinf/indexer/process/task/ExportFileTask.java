@@ -37,7 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
@@ -69,8 +68,7 @@ public class ExportFileTask extends AbstractTask {
   private HashMap<HashValue, HashValue> hashMap;
   private List<String> noContentLabels;
 
-  public ExportFileTask(Worker worker) {
-    super(worker);
+  public ExportFileTask() {
     ExportFolder.setExportPath(EXTRACT_DIR);
   }
 
@@ -173,7 +171,7 @@ public class ExportFileTask extends AbstractTask {
   private boolean doNotExport(EvidenceFile evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-      noContentLabels = args.getCmdArgs().get("-nocontent"); //$NON-NLS-1$
+      noContentLabels = args.getNocontent(); //$NON-NLS-1$
       if (noContentLabels == null) {
         noContentLabels = Collections.emptyList();
       }

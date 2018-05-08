@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.mime.CustomDetector;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -120,7 +121,7 @@ public class Configuration {
     appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
-    System.setProperty(CustomDetector.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
+    System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
     properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
     properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
@@ -438,6 +439,16 @@ public class Configuration {
     }
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
+    }
+    
+    value = properties.getProperty("maxBackups"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.MAX_BACKUPS = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("backupInterval"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.BKP_INTERVAL = Long.valueOf(value.trim());
     }
     
     value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$

@@ -87,13 +87,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
    */
   private static final long dateMax = System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 5;
 
-  /**
-   * Construtor.
-   */
-  public KnownMetCarveTask(Worker worker) {
-    super(worker);
-  }
-
   @Override
   public boolean isEnabled() {
     return taskEnabled;

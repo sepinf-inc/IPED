@@ -13,11 +13,6 @@ import dpf.sp.gpinf.indexer.process.Worker;
 
 public class DatabaseTask extends AbstractTask {
 
-  public DatabaseTask(Worker worker) {
-    super(worker);
-    // TODO Auto-generated constructor stub
-  }
-
   private static String databaseName = "iped.db"; //$NON-NLS-1$
   private static int MAX_LIST_LEN = 200;
   private static boolean schemaDone = false;

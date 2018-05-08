@@ -53,8 +53,8 @@ public class Util {
   }
 	
   public static boolean isPhysicalDrive(File file) {
-	return file.getName().toLowerCase().contains("physicaldrive") //$NON-NLS-1$
-	        || file.getAbsolutePath().toLowerCase().contains("/dev/"); //$NON-NLS-1$
+	return file.getName().toLowerCase().startsWith("physicaldrive") //$NON-NLS-1$
+	        || file.getAbsolutePath().toLowerCase().startsWith("/dev/"); //$NON-NLS-1$
   }
 
   public static File getRelativeFile(String basePath, String export) {

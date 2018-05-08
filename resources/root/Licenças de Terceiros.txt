@@ -74,6 +74,10 @@ ICE JNI Registry
 - Site: http://www.trustice.com/java/jnireg/
 - License: Public Domain
 
+ZSTD-jni
+- Site: https://github.com/luben/zstd-jni
+- License: BSD 2 clause
+
 --------------------------------------------
 
 Eclipse SWT
@@ -133,6 +137,10 @@ SevenZipJBinding
 JavaDBF
 - Site: https://github.com/albfernandez/javadbf
 - License: GNU LGPL 3
+
+DockingFrames
+- Site : http://www.docking-frames.org
+- License: GNU LGPL 2.1
 
 --------------------------------------------
 

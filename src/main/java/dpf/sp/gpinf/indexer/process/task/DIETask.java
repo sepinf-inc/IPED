@@ -106,13 +106,6 @@ public class DIETask extends AbstractTask {
   
   private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
-  /**
-   * Construtor.
-   */
-  public DIETask(Worker worker) {
-    super(worker);
-  }
-
   @Override
   public boolean isEnabled() {
     return taskEnabled;

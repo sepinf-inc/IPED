@@ -96,8 +96,8 @@ public class MultiMarcadores implements Serializable {
 		return m.hasLabel(item.getId(), labelId);
 	}
 
-	public void addLabel(ArrayList<ItemId> ids, String labelName) {
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
+	public void addLabel(List<ItemId> ids, String labelName) {
+		HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
 			int labelId = m.getLabelId(labelName);
@@ -107,10 +107,10 @@ public class MultiMarcadores implements Serializable {
 		}
 	}
 	
-	private HashMap<Integer, ArrayList<Integer>> getIdsPerSource(ArrayList<ItemId> ids){
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = new HashMap<Integer, ArrayList<Integer>>(); 
+	private HashMap<Integer, List<Integer>> getIdsPerSource(List<ItemId> ids){
+		HashMap<Integer, List<Integer>> itemsPerSource = new HashMap<>(); 
 		for(ItemId item : ids){
-			ArrayList<Integer> items = itemsPerSource.get(item.getSourceId());
+			List<Integer> items = itemsPerSource.get(item.getSourceId());
 			if(items == null){
 				items = new ArrayList<Integer>();
 				itemsPerSource.put(item.getSourceId(), items);
@@ -120,8 +120,8 @@ public class MultiMarcadores implements Serializable {
 		return itemsPerSource;
 	}
 	
-	public void removeLabel(ArrayList<ItemId> ids, String labelName) {
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
+	public void removeLabel(List<ItemId> ids, String labelName) {
+		HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
 			int labelId = m.getLabelId(labelName);

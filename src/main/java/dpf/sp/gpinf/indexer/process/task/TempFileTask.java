@@ -24,10 +24,6 @@ public class TempFileTask extends AbstractTask {
   private static Logger LOGGER = LoggerFactory.getLogger(TempFileTask.class);
   private static int MAX_TEMPFILE_LEN = 1024 * 1024 * 1024;
   private boolean indexTempOnSSD = false;
-
-  public TempFileTask(Worker worker) {
-    super(worker);
-  }
   
   @Override
   public boolean isEnabled() {

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Instalador de tarefas de processamento.
+	É possível desinstalar ou instalar novas tarefas adicionadas na pasta de plugins ou na pasta de scripts.
+	A ordem de execução das tarefas é muito sensível, pois algumas tarefas dependem de outras.
+-->
+<tasks>
+    <!--<task script="TestScriptTask.js"></task>-->
+    <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
+    
+    <task class="dpf.sp.gpinf.indexer.process.task.SignatureTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.SetTypeTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.SetCategoryTask"></task>
+    <task script="RefineCategoryTask.js"></task>
+    
+    <!--tarefas que ignoram itens após categorização para incluir categoria de ignorados no csv-->
+    <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.KFFTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.LedKFFTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.DuplicateTask"></task>
+    
+    <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.NamedEntityTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.ExportFileTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
+    
+    <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
+    
+    <!--Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
+    e antes da indexação (pois pode setar propriedade hasChildren nos itens)-->
+    <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.CarveTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
+    
+    <task class="dpf.sp.gpinf.indexer.process.task.EntropyTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.IndexTask"></task>
+    
+    <task class="dpf.sp.gpinf.indexer.process.task.ExportCSVTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.HTMLReportTask"></task>
+</tasks>
