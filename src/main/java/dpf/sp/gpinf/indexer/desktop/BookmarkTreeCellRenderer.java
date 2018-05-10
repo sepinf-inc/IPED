@@ -17,7 +17,8 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
         
         if(App.get().appCase != null) {
             String comment = App.get().appCase.getMultiMarcadores().getLabelComment((String)value);
-            setToolTipText(comment);
+            if(comment != null && !comment.trim().isEmpty())
+                setToolTipText(comment.trim());
         }
         return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
     }
