@@ -141,6 +141,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     for (int i = 0; i < columnNames.length; i++) {
       if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
         int col = App.get().resultsTable.convertColumnIndexToView(i);
+        if(col == -1)
+            return;
         if (mb == -1) {
           App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
               columnNames[i] + " (...)"); //$NON-NLS-1$
