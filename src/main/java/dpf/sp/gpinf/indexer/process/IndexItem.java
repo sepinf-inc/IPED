@@ -673,11 +673,12 @@ public class IndexItem extends BasicProps{
           }*/
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
-          }
-          if (viewItem || (!hasFile && evidence.getSleuthId() == null)) {
-            evidence.setFile(viewFile);
-            evidence.setTempFile(viewFile);
-            evidence.setMediaType(null);
+            
+            if (viewItem || (!hasFile && evidence.getSleuthId() == null)) {
+                evidence.setFile(viewFile);
+                evidence.setTempFile(viewFile);
+                evidence.setMediaType(null);
+            }
           }
       }
       
