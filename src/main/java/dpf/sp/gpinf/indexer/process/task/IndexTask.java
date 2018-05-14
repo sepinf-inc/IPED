@@ -73,11 +73,12 @@ public class IndexTask extends BaseCarveTask {
 
   public static class IdLenPair {
 
-    int id, length;
+    int id;
+    long length;
 
     public IdLenPair(int id, long len) {
       this.id = id;
-      this.length = (int) (len / 1000);
+      this.length = len;
     }
 
   }
@@ -268,10 +269,19 @@ public class IndexTask extends BaseCarveTask {
         FileInputStream fileIn = new FileInputStream(prevFile);
         ObjectInputStream in = new ObjectInputStream(fileIn);
 
-        int[] textSizesArray = (int[]) in.readObject();
+        long[] textSizesArray;
+        Object array = (long[]) in.readObject();
+        if(array instanceof long[])
+            textSizesArray = (long[])array;
+        else {
+            int i = 0;
+            textSizesArray = new long[((int[])array).length];
+            for(int size : (int[])array)
+                textSizesArray[i++] = size * 1000L;
+        }
         for (int i = 0; i < textSizesArray.length; i++) {
           if (textSizesArray[i] != 0) {
-            textSizes.add(new IdLenPair(i, textSizesArray[i] * 1000L));
+            textSizes.add(new IdLenPair(i, textSizesArray[i]));
           }
         }
 
@@ -327,7 +337,7 @@ public class IndexTask extends BaseCarveTask {
     IndexFiles.getInstance().firePropertyChange("mensagem", "", "Saving extracted text sizes..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     LOGGER.info("Saving extracted text sizes..."); //$NON-NLS-1$
 
-    int[] textSizesArray = new int[stats.getLastId() + 1];
+    long[] textSizesArray = new long[stats.getLastId() + 1];
 
     for (int i = 0; i < textSizes.size(); i++) {
       IdLenPair pair = textSizes.get(i);

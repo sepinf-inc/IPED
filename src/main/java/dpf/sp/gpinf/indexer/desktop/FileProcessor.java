@@ -125,7 +125,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
 	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 	
-	int textSize = iCase.getTextSize(item.getId());
+	long textSize = iCase.getTextSize(item.getId());
 	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
 	
 	OCROutputFolder.setStaticPath(iCase.getModuleDir());

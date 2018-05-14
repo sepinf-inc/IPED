@@ -99,7 +99,8 @@ public class IPEDSource implements Closeable{
 	private Marcadores marcadores;
 	MultiMarcadores globalMarcadores;
 	
-	private int[] ids, docs, textSizes;
+	private int[] ids, docs;
+	private long[] textSizes;
 	
 	protected int sourceId = -1;
 	
@@ -174,10 +175,18 @@ public class IPEDSource implements Closeable{
 			
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
-			if(textSizesFile.exists())
-				textSizes = (int[]) Util.readObject(textSizesFile.getAbsolutePath());
-			else
-				textSizes = new int[lastId + 1];
+			if(textSizesFile.exists()) {
+			    Object array = Util.readObject(textSizesFile.getAbsolutePath());
+			    if(array instanceof long[])
+			        textSizes = (long[])array;
+			    else if(array instanceof int[]) {
+			        int i = 0;
+			        textSizes = new long[((int[])array).length];
+			        for(int size : (int[])array)
+			            textSizes[i++] = size * 1000L;
+			    }
+			}else
+			    textSizes = new long[lastId + 1];
 			
 			loadCategories();
 			
@@ -538,7 +547,7 @@ public class IPEDSource implements Closeable{
 		return docs[id];
 	}
 
-	public int getTextSize(int id) {
+	public long getTextSize(int id) {
 		if(id < textSizes.length)
 			return textSizes[id];
 		else
