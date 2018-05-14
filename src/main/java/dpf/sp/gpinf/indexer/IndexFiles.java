@@ -129,6 +129,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 	  //configPath = System.getProperty("user.dir");
 	  rootPath = new File(url.toURI()).getParent();
+	  //test for report generation from case folder
+	  if(rootPath.endsWith("indexador" + File.separator + "lib"))
+	      rootPath = new File(url.toURI()).getParentFile().getParent();
+	  
 	  configPath = rootPath;
 	  String locale = getProfileLocale();
 	  

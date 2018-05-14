@@ -129,7 +129,9 @@ public class IPEDReader extends DataSourceReader {
 	    	oldToNewIdMap[i] = -1;
 	    
 	    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-		LuceneSearchResult result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
+	    LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
+	    if(result.getLength() == 0)
+	        result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
 
 	    insertIntoProcessQueue(result, false);
 

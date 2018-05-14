@@ -335,6 +335,9 @@ public class MenuListener implements ActionListener {
         EvidenceFile item = App.get().appCase.getItemByItemId(itemId);
         LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
         ExternalFileOpen.open(item.getViewFile());
+    
+    }else if(e.getSource() == menu.createReport) {
+        new ReportDialog().setVisible();
     }
 
   }

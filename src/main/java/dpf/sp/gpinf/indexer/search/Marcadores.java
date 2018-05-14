@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,7 @@ public class Marcadores implements Serializable {
 	private ArrayList<byte[]> labels;
 	private TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
 	private TreeMap<Integer, String> labelComments = new TreeMap<Integer, String>();
+	private Set<Integer> reportLabels = new TreeSet<Integer>();
 	
 	private int selectedItens = 0, totalItems, lastId;
 
@@ -237,6 +239,7 @@ public class Marcadores implements Serializable {
 			return;
 		labelNames.remove(label);
 		labelComments.remove(label);
+		reportLabels.remove(label);
 		
 		int labelOrder = label / labelBits;
 		int labelMod = label % labelBits;
@@ -268,6 +271,17 @@ public class Marcadores implements Serializable {
 	
 	public String getLabelComment(int labelId) {
 	    return labelComments.get(labelId);
+	}
+	
+	public void setInReport(int labelId, boolean inReport) {
+	    if(inReport)
+	        reportLabels.add(labelId);
+	    else
+	        reportLabels.remove(labelId);
+	}
+	
+	public boolean isInReport(int labelId) {
+	    return reportLabels.contains(labelId);
 	}
 	
 	public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception{
@@ -326,6 +340,24 @@ public class Marcadores implements Serializable {
 	
 			result.clearResults();
 			return result;
+	  }
+	  
+	  public LuceneSearchResult filterInReport(LuceneSearchResult result, IPEDSource ipedCase) throws Exception {
+	      result = result.clone();
+          for (int i = 0; i < result.getLength(); i++) {
+              int itemId = ipedCase.getId(result.getLuceneIds()[i]);
+              List<Integer> labels = getLabelIds(itemId);
+              boolean inReport = false;
+              for(int label : labels)
+                  if(isInReport(label)) {
+                      inReport = true;
+                      break;
+                  }
+              if(!inReport)
+                  result.getLuceneIds()[i] = -1;  
+          }
+          result.clearResults();
+          return result;
 	  }
 
 	public void saveState() {
@@ -387,6 +419,7 @@ public class Marcadores implements Serializable {
 		this.selectedItens = state.selectedItens;
 		this.labelNames = state.labelNames;
 		this.labelComments = state.labelComments;
+		this.reportLabels = state.reportLabels;
 	}
 	
 	public static Marcadores load(File file) throws ClassNotFoundException, IOException{

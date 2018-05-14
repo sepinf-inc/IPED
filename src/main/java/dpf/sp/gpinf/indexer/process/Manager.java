@@ -61,6 +61,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
@@ -598,10 +599,17 @@ public class Manager {
       }
 
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htmlreport"), new File(output, "htmlreport")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
       IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "bin"), output.getParentFile()); //$NON-NLS-1$
+      File binDir = new File(Configuration.appRoot, "bin");
+      if(binDir.exists())
+          IOUtil.copiaDiretorio(binDir, output.getParentFile()); //$NON-NLS-1$
+      else {
+          for(File f : new File(Configuration.appRoot).getParentFile().listFiles(new ExeFileFilter()))
+              IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
+      }
       //copia arquivo de assinaturas customizadas
       IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$ //$NON-NLS-2$
     }

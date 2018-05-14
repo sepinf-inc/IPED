@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.event.ActionListener;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -30,7 +31,7 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
@@ -74,7 +75,7 @@ public class MenuClass extends JPopupMenu {
     gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
     gerenciarColunas.addActionListener(menuListener);
     this.add(gerenciarColunas);
-
+    
     this.addSeparator();
     
     JMenu submenu = new JMenu(Messages.getString("MenuClass.ExportItens")); //$NON-NLS-1$
@@ -159,6 +160,12 @@ public class MenuClass extends JPopupMenu {
     openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
     openViewfile.addActionListener(menuListener);
     this.add(openViewfile); 
+    
+    this.addSeparator();
+    
+    createReport = new JMenuItem("Gerar Relatório Indexado"); //$NON-NLS-1$
+    createReport.addActionListener(menuListener);
+    this.add(createReport);
 
   }
 

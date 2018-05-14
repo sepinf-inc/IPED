@@ -161,6 +161,22 @@ public class MultiMarcadores implements Serializable {
         }
         return null;
     }
+    
+    public void setInReport(String labelName, boolean inReport) {
+        for(Marcadores m : map.values()) {
+            int labelId = m.getLabelId(labelName);
+            m.setInReport(labelId, inReport);
+        }
+    }
+    
+    public boolean isInReport(String labelName) {
+        for(Marcadores m : map.values()) {
+            int labelId = m.getLabelId(labelName);
+            if(m.isInReport(labelId))
+                return true;
+        }
+        return false;
+    }
 	
 	public TreeSet<String> getLabelMap(){
 		TreeSet<String> labels = new TreeSet<String>();
