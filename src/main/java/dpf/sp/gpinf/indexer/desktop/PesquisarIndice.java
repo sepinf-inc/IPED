@@ -254,7 +254,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			try {
 				App.get().ipedResult = this.get();
 				
-				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
 				App.get().resultsTable.getTableHeader().repaint();
 				if(App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null){
@@ -264,6 +263,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 					App.get().resultsModel.fireTableDataChanged();
 					App.get().galleryModel.fireTableStructureChanged();
 				}
+				ColumnsManager.getInstance().updateDinamicCols();
+				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 					
 			} catch (Exception e) {
 				e.printStackTrace();

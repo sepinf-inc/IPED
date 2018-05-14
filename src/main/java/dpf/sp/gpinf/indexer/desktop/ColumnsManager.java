@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -25,8 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.table.TableColumn;
 
+import org.apache.lucene.util.Bits;
 import org.apache.tika.metadata.Message;
-import org.apache.tika.parser.ner.NamedEntityParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
@@ -135,6 +137,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private JDialog dialog = new JDialog();
 	private JPanel listPanel = new JPanel();
 	private JComboBox<Object> combo;
+	private JCheckBox autoManage = new JCheckBox("Gerenciar colunas automaticamente (mais lento)");
+	
+	private boolean autoManageCols = false;
 	
 	public static ColumnsManager getInstance(){
 		if(instance == null)
@@ -194,15 +199,21 @@ public class ColumnsManager implements ActionListener, Serializable{
 		dialog.setAlwaysOnTop(true);
 		
 		JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
-		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+		label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+		label.setAlignmentX(0);
 		
 		listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
 		listPanel.setBackground(Color.WHITE);
 		
 		combo = new JComboBox<Object>(groupNames);
+		combo.setAlignmentX(0);
 		
-		JPanel topPanel = new JPanel();
-		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+		autoManage.setAlignmentX(0);
+		autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+		autoManage.addActionListener(this);
+		
+		Box topPanel = Box.createVerticalBox();
+		topPanel.add(autoManage);
 		topPanel.add(label);
 		topPanel.add(combo);
 		combo.addActionListener(this);
@@ -266,6 +277,63 @@ public class ColumnsManager implements ActionListener, Serializable{
 		    colState.visibleFields = (ArrayList<String>)loadedFields.clone();
 		    colState.initialWidths = defaultWidths;
 		}
+	}
+	
+	public void updateDinamicCols() {
+	    if(!autoManageCols)
+	        return;
+	    
+	    Collator collator = Collator.getInstance();
+	    collator.setStrength(Collator.PRIMARY);
+	    TreeSet<String> dinamicFields = new TreeSet<>(collator);
+	    long t0 = 0, t1 = 0;
+	    for(String field : indexFields) {
+	        try {
+                Bits bits0 = App.get().appCase.getAtomicReader().getDocsWithField(field);
+                Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field);
+                Bits bits2 = App.get().appCase.getAtomicReader().getDocsWithField("_" + field);
+                //long tb = System.currentTimeMillis();
+                for(ItemId item : App.get().ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    //long ta = System.currentTimeMillis();          
+                    if((bits2 != null && bits2.get(doc)) ||
+                       (bits1 != null && bits1.get(doc)) ||
+                       (bits0 != null && bits0.get(doc))) {
+                        dinamicFields.add(field);
+                        break;
+                    }
+                    //t0 += System.currentTimeMillis() - ta;
+                }
+                //t1 += System.currentTimeMillis() - tb;
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+	    }
+	    //System.out.println("t0 = " + t0);
+	    //System.out.println("t1 = " + t1);
+	    
+	    for(String field : (List<String>)colState.visibleFields.clone())
+            if(!dinamicFields.contains(field) && 
+               !field.equals(ResultTableModel.SCORE_COL) &&
+               !field.equals(ResultTableModel.BOOKMARK_COL))
+                updateGUICol(field, false);
+	    
+	    int firstCol = App.get().resultsTable.getColumnCount();
+	    
+	    for(String field : dinamicFields) {
+	        if(!colState.visibleFields.contains(field))
+	            updateGUICol(field, true);
+	    }
+	    
+	    int newPos = 4;
+	    for(int i = firstCol; i < App.get().resultsTable.getColumnCount(); i++) {
+	        TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+	        String colName = col.getHeaderValue().toString(); 
+	        if(colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX) || colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+	            App.get().resultsTable.moveColumn(i, newPos++);
+	        }
+	    }
 	}
 	
 	private void updateDinamicFields(){
@@ -381,29 +449,36 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        updateList();
 	    }else{
 	        JCheckBox source = (JCheckBox)e.getSource();
-	        int modelIdx = loadedFields.indexOf(source.getText());
-	        if(source.isSelected()){
-	            colState.visibleFields.add(source.getText());
-	            if(modelIdx == -1){
-	                loadedFields.add(source.getText());
-	                App.get().resultsModel.updateCols();
-	                modelIdx = ResultTableModel.fixedCols.length + loadedFields.size() - 1;
-	            }else
-	                modelIdx += ResultTableModel.fixedCols.length;
-	            
-	            TableColumn tc = new TableColumn(modelIdx);
-	            App.get().resultsTable.addColumn(tc);
-	            setColumnRenderer(tc);
-	        }else{
-	            colState.visibleFields.remove(source.getText());
-	            modelIdx += ResultTableModel.fixedCols.length;
-	            int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
-	            App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
-	        }
-	        
+	        updateGUICol(source.getText(), source.isSelected());
 	        saveColumnsState();
 	    }
+	    if(e.getSource().equals(autoManage))
+	        autoManageCols = autoManage.isSelected();
 		
+	}
+	
+	private void updateGUICol(String colName, boolean insert) {
+	    
+        int modelIdx = loadedFields.indexOf(colName);
+        if(insert){
+            colState.visibleFields.add(colName);
+            if(modelIdx == -1){
+                loadedFields.add(colName);
+                App.get().resultsModel.updateCols();
+                modelIdx = ResultTableModel.fixedCols.length + loadedFields.size() - 1;
+            }else
+                modelIdx += ResultTableModel.fixedCols.length;
+            
+            TableColumn tc = new TableColumn(modelIdx);
+            tc.setPreferredWidth(150);
+            App.get().resultsTable.addColumn(tc);
+            setColumnRenderer(tc);
+        }else{
+            colState.visibleFields.remove(colName);
+            modelIdx += ResultTableModel.fixedCols.length;
+            int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
+            App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
+        }
 	}
 	
 	public void setColumnRenderer(TableColumn tc){
