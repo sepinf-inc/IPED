@@ -489,10 +489,10 @@ public class IPEDReader extends DataSourceReader {
               if(multiValuedFields.contains(f.name()))
                   continue;
               Class<?> c = IndexItem.getMetadataTypes().get(f.name());
-              IndexableField[] fields = doc.getFields(f.name());
-              if(fields.length > 1) {
+              if(isExtraAttrMultiValued(f.name())) {
                   multiValuedFields.add(f.name());
                   List<Object> fieldList = new ArrayList<>();
+                  IndexableField[] fields = doc.getFields(f.name());
                   for(IndexableField field : fields)
                       fieldList.add(IndexItem.getCastedValue(c, field));
                   evidence.setExtraAttribute(f.name(), fieldList);
@@ -505,6 +505,17 @@ public class IPEDReader extends DataSourceReader {
       caseData.addEvidenceFile(evidence);
     }
 
+  }
+
+  private boolean isExtraAttrMultiValued(String field) throws IOException {
+      Object docValues = ipedCase.getAtomicReader().getSortedSetDocValues(field);
+      if(docValues != null)
+          return true;
+      docValues = ipedCase.getAtomicReader().getSortedNumericDocValues(field);
+      if(docValues != null)
+          return true;
+      
+      return false;
   }
 
 }
