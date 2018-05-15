@@ -143,7 +143,9 @@ public class KMLResult {
 			  }
 			  
 			  String metaPrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-			  String query = metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*"; //$NON-NLS-1$ //$NON-NLS-2$
+			  String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
+			  String query = "(" + metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			                  "(" + ufedPrefix + "Latitude:[-90 TO 90] AND " + ufedPrefix + "Longitude:[-180 TO 180])";  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			  IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
 			  MultiSearchResult multiResult = searcher.multiSearch();
 			  
@@ -167,8 +169,12 @@ public class KMLResult {
 				  int luceneId = app.get().appCase.getLuceneId(item);
 				  doc =  app.appCase.getSearcher().doc(luceneId);
 				  
-				  String lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + "GPS Latitude"); //$NON-NLS-1$
-				  String longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + "GPS Longitude"); //$NON-NLS-1$
+				  String lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + "geo:lat"); //$NON-NLS-1$
+				  if(lat == null)
+                      lat = doc.get(ExtraProperties.UFED_META_PREFIX + "Latitude"); //$NON-NLS-1$
+				  String longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + "geo:long"); //$NON-NLS-1$
+				  if(longit == null)
+                      longit = doc.get(ExtraProperties.UFED_META_PREFIX + "Longitude"); //$NON-NLS-1$
 				  
 				  if(lat != null && longit != null){
 					  
@@ -185,9 +191,6 @@ public class KMLResult {
 						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(doc.get(coluna))+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					  else
 						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(gid)+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					  
-					  lat = converteCoordFormat(lat);
-					  longit = converteCoordFormat(longit);
 					  
 					  kml.append("<Point><coordinates>"+longit+","+lat+",0</coordinates></Point>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					  
