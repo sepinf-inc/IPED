@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -28,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -57,11 +60,24 @@ public class ReportDialog implements ActionListener, TableModelListener{
     JButton outButton = new JButton("...");
     JButton infoButton = new JButton("...");
     JButton keywordsButton = new JButton("...");
+    JButton fillInfo = new JButton("Preencher informações");
     JButton generate = new JButton("Gerar");
     JCheckBox noAttachs = new JCheckBox("Não exportar anexos de emails automaticamente");
     JCheckBox append = new JCheckBox("Adicionar ao relatório já existente");
     
     HashSet<String> noContent = new HashSet<>();
+    
+    JDialog infoDialog = new JDialog(dialog);
+    JTextField rNumber = new JTextField();
+    JTextField rDate = new JTextField();
+    JTextField rTitle = new JTextField();
+    JTextField rExaminers = new JTextField();
+    JTextField rInvestigation = new JTextField();
+    JTextField rRequestDoc = new JTextField();
+    JTextField rRequester = new JTextField();
+    JTextField rRecord = new JTextField();
+    JTextField rRecordDate = new JTextField();
+    JTextArea rEvidences = new JTextArea();
     
     public ReportDialog() {
         
@@ -95,8 +111,8 @@ public class ReportDialog implements ActionListener, TableModelListener{
         footer.add(noAttachs);
         footer.add(footer1);
         footer.add(append);
-        footer.add(footer2);
         footer.add(footer3);
+        footer.add(footer2);
         footer.add(okPanel);
         
         for(Component c : footer.getComponents())
@@ -113,8 +129,83 @@ public class ReportDialog implements ActionListener, TableModelListener{
         infoButton.addActionListener(this);
         keywordsButton.addActionListener(this);
         generate.addActionListener(this);
+        fillInfo.addActionListener(this);
         
         dialog.getContentPane().add(panel);
+        
+        //createCaseInfoDialog();
+    }
+    
+    private void createCaseInfoDialog() {
+        
+        infoDialog.setTitle("Informações do Caso");
+        infoDialog.setBounds(0, 0, 500, 500);
+        infoDialog.setLocationRelativeTo(null);
+        
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        panel.add(infoButton, getGridBagConstraints(0,0,1,1));
+
+        JLabel num = new JLabel("Número do Laudo");
+        panel.add(num, getGridBagConstraints(0,1,1,1));
+        panel.add(rNumber, getGridBagConstraints(1,1,2,1));
+        
+        JLabel date = new JLabel("Data");
+        panel.add(date, getGridBagConstraints(0,2,1,1));
+        panel.add(rDate, getGridBagConstraints(1,2,2,1));
+        
+        JLabel title = new JLabel("Título");
+        panel.add(title, getGridBagConstraints(0,3,1,1));
+        panel.add(rTitle, getGridBagConstraints(1,3,2,1));
+        
+        JLabel examiner = new JLabel("Examinador");
+        panel.add(examiner, getGridBagConstraints(0,4,1,1));
+        panel.add(rExaminers, getGridBagConstraints(1,4,2,1));
+
+        JLabel ipl = new JLabel("Investigação");
+        panel.add(ipl, getGridBagConstraints(0,5,1,1));
+        panel.add(rInvestigation, getGridBagConstraints(1,5,2,1));
+        
+        JLabel request = new JLabel("Solicitação");
+        panel.add(request, getGridBagConstraints(0,6,1,1));
+        panel.add(rRequestDoc, getGridBagConstraints(1,6,2,1));
+        
+        JLabel requester = new JLabel("Solicitante");
+        panel.add(requester, getGridBagConstraints(0,7,1,1));
+        panel.add(rRequester, getGridBagConstraints(1,7,2,1));
+        
+        JLabel record = new JLabel("Registro/Protocolo");
+        panel.add(record, getGridBagConstraints(0,8,1,1));
+        panel.add(rRecord, getGridBagConstraints(1,8,2,1));
+        
+        JLabel recordDate = new JLabel("Data do Registro");
+        panel.add(recordDate, getGridBagConstraints(0,9,1,1));
+        panel.add(rRecordDate, getGridBagConstraints(1,9,2,1));
+        
+        JLabel evidences = new JLabel("Materiais");
+        panel.add(evidences, getGridBagConstraints(0,10,1,1));
+        panel.add(rEvidences, getGridBagConstraints(1,10,2,2));
+        rEvidences.setLineWrap(true);
+        rEvidences.setWrapStyleWord(true);
+        
+        infoDialog.getContentPane().add(panel);
+    }
+    
+    private GridBagConstraints getGridBagConstraints(int x, int y, int width, int height) {
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        if(width > 1)
+            c.weightx = 1.0;
+        if(height > 1) {
+            c.weighty = 1.0;
+            c.fill = GridBagConstraints.BOTH;
+        }
+        c.gridx = x;
+        c.gridy = y;
+        c.gridwidth = width;
+        c.gridheight = height;
+        return c;
     }
     
     public void setVisible() {
@@ -191,6 +282,9 @@ public class ReportDialog implements ActionListener, TableModelListener{
             if(isInputOK())
                 generateReport();
         }
+        
+        //if(e.getSource() == fillInfo)
+        //    infoDialog.setVisible(true);
         
     }
     
