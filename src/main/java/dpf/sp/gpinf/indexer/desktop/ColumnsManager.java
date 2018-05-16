@@ -445,15 +445,15 @@ public class ColumnsManager implements ActionListener, Serializable{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 	    
-	    if(e.getSource().equals(combo)){
+	    if(e.getSource().equals(autoManage))
+            autoManageCols = autoManage.isSelected();
+	    else if(e.getSource().equals(combo)){
 	        updateList();
 	    }else{
 	        JCheckBox source = (JCheckBox)e.getSource();
 	        updateGUICol(source.getText(), source.isSelected());
 	        saveColumnsState();
 	    }
-	    if(e.getSource().equals(autoManage))
-	        autoManageCols = autoManage.isSelected();
 		
 	}
 	
