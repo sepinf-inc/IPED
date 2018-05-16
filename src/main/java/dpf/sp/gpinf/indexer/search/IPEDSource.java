@@ -274,7 +274,7 @@ public class IPEDSource implements Closeable{
 	        }
 	        	
 			
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
