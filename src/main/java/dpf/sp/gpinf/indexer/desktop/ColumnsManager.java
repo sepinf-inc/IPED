@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
@@ -24,6 +26,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.util.Bits;
@@ -42,6 +45,8 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
+import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.EvidenceFile;
 
@@ -283,11 +288,32 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    if(!autoManageCols)
 	        return;
 	    
+	    final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
+	    progress.setNote("Checking used columns...");
+	    progress.setMaximum(indexFields.length);
+	    
+	    new Thread() {
+	        public void run() {
+	            final Set<String> usedCols = getUsedCols(progress);
+	            
+	            SwingUtilities.invokeLater(new Runnable() {
+	                public void run() {
+	                    updateDinamicCols(usedCols);
+	                    progress.close();
+	                }
+	            });
+	        }
+	    }.start();
+	}
+	    
+	private Set<String> getUsedCols(ProgressDialog progress) {
 	    Collator collator = Collator.getInstance();
 	    collator.setStrength(Collator.PRIMARY);
 	    TreeSet<String> dinamicFields = new TreeSet<>(collator);
-	    long t0 = 0, t1 = 0;
+	    int p = 0;
 	    for(String field : indexFields) {
+	        if(progress.isCanceled())
+	            return null;
 	        try {
                 Bits bits0 = App.get().appCase.getAtomicReader().getDocsWithField(field);
                 Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field);
@@ -309,9 +335,18 @@ public class ColumnsManager implements ActionListener, Serializable{
             } catch (IOException e) {
                 e.printStackTrace();
             }
+	        progress.setProgress(++p);
 	    }
 	    //System.out.println("t0 = " + t0);
 	    //System.out.println("t1 = " + t1);
+	    
+	    return dinamicFields;
+	}
+	
+	private void updateDinamicCols(Set<String> dinamicFields) {
+	    
+	    if(dinamicFields == null)
+	        return;
 	    
 	    for(String field : (List<String>)colState.visibleFields.clone())
             if(!dinamicFields.contains(field) && 
