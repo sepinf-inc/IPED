@@ -29,6 +29,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumn;
 
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.util.Bits;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
@@ -294,7 +295,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    
 	    new Thread() {
 	        public void run() {
-	            final Set<String> usedCols = getUsedCols(progress);
+	            final Set<String> usedCols = getUsedCols2(progress);
 	            
 	            SwingUtilities.invokeLater(new Runnable() {
 	                public void run() {
@@ -305,12 +306,74 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        }
 	    }.start();
 	}
+	
+	private Set<String> getUsedCols2(ProgressDialog progress) {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        TreeSet<String> dinamicFields = new TreeSet<>(collator);
+        
+        int[] docs = new int[App.get().ipedResult.getLength()];
+        int i = 0;
+        for(ItemId item : App.get().ipedResult.getIterator())
+            docs[i++] = App.get().appCase.getLuceneId(item);
+        Arrays.sort(docs);
+        
+        int[] docBases = new int[App.get().appCase.getReader().leaves().size() + 1];
+        for(i = 0; i < docBases.length - 1; i++)
+            docBases[i] = App.get().appCase.getReader().leaves().get(i).docBase;
+        docBases[docBases.length - 1] = Integer.MAX_VALUE;
+        
+        int p = 0;
+        for(String field : indexFields) {
+            if(progress.isCanceled())
+                return null;
+            try {
+                int baseOrd = 0;
+                AtomicReader reader = null;
+                Bits bits0 = null, bits1 = null, bits2 = null;
+                for(i = 0; i < docs.length; i++) {
+                    while(docs[i] >= docBases[baseOrd + 1]) {
+                        baseOrd++;
+                        reader = null;
+                    }
+                    if(reader == null) {
+                        reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
+                        bits0 = reader.getDocsWithField(field);
+                        bits1 = reader.getDocsWithField("_num_" + field);
+                        bits2 = reader.getDocsWithField("_" + field);
+                    }
+                    int doc = docs[i] - docBases[baseOrd];
+                    if((bits2 != null && bits2.get(doc)) ||
+                       (bits1 != null && bits1.get(doc)) ||
+                       (bits0 != null && bits0.get(doc))) {
+                        dinamicFields.add(field);
+                        break;
+                    }
+                }
+                //t1 += System.currentTimeMillis() - tb;
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            progress.setProgress(++p);
+        }
+        //System.out.println("t0 = " + t0);
+        //System.out.println("t1 = " + t1);
+        
+        return dinamicFields;
+    }
 	    
 	private Set<String> getUsedCols(ProgressDialog progress) {
 	    Collator collator = Collator.getInstance();
 	    collator.setStrength(Collator.PRIMARY);
 	    TreeSet<String> dinamicFields = new TreeSet<>(collator);
-	    int p = 0;
+	    
+	    int[] docs = new int[App.get().ipedResult.getLength()];
+        int i = 0;
+        for(ItemId item : App.get().ipedResult.getIterator())
+            docs[i++] = App.get().appCase.getLuceneId(item);
+	    
+        int p = 0;
 	    for(String field : indexFields) {
 	        if(progress.isCanceled())
 	            return null;
@@ -319,8 +382,8 @@ public class ColumnsManager implements ActionListener, Serializable{
                 Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field);
                 Bits bits2 = App.get().appCase.getAtomicReader().getDocsWithField("_" + field);
                 //long tb = System.currentTimeMillis();
-                for(ItemId item : App.get().ipedResult.getIterator()) {
-                    int doc = App.get().appCase.getLuceneId(item);
+                for(i = 0; i < docs.length; i++) {
+                    int doc = docs[i];
                     //long ta = System.currentTimeMillis();          
                     if((bits2 != null && bits2.get(doc)) ||
                        (bits1 != null && bits1.get(doc)) ||
