@@ -5,7 +5,7 @@
 	A ordem de execução das tarefas é muito sensível, pois algumas tarefas dependem de outras.
 -->
 <tasks>
-    <!--<task script="TestScriptTask.js"></task>-->
+    <!--<task script="ExampleScriptTask.js"></task>-->
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     
