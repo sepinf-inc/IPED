@@ -1,5 +1,5 @@
-﻿###############################
-# Filtros pré-configurados
+###############################
+# Default Filters
 ############################
 
 OST Mailboxes (not processed) = type:ost

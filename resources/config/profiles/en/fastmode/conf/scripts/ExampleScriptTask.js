@@ -1,28 +1,28 @@
 ﻿/*
- * Exemplo de tarefa de processamento javascript. Deve ser adicionada em TaskInstaller.xml para ser executada.
- * Devem ser implementados pelo menos os métodos getName() e process(item).
- * A tarefa pode acessar as propriedades, texto e conteúdo bruto dos items. Com base nessas informações,
- * pode ignorar o item, criar um atributo extra no item ou gerar bookmarks.
+ * Javascript processing task example. It must be installed in TaskInstaller.xml to be executed.
+ * Must be implemented at least methods getName() and process(item).
+ * Script tasks can access properties, extracted text and raw content of items. Based on that,
+ * it can ignore items, set extra attributes or create bookmarks.
  */
 
- /* Retorna o nome da tarefa. */
+ /* Returns the task name. */
 function getName(){
 	return "ExampleScriptTask";
 }
 
-/* Realiza alguma inicialização da tarefa, como acessar opções e arquivos de configuração.
- * É executado antes de iniciar o processamento dos itens do caso.
+/* Do some task initialization, like reading options and cofiguration files.
+ * This method is executed before starting the processing of items.
  * @Params
- * confProps: arquivo java Properties com opções gerais do processamento
- * configFolder: diretório de configurações extras, onde a tarefa pode criar um arquivo de configuração próprio
+ * confProps:    java properties file with general configuration options
+ * configFolder: extra configuration folder, where task can place and load its custom configuration file
  */
 function init(confProps, configFolder){
 	//init code here
 }
 
-/* Finaliza a tarefa, podendo limpar recursos. É executado após o término do processamento de todos os itens do caso.
- * São disponibilizados os objetos ipedCase e searcher, podendo ser realizadas consultas no caso e criados bookmarks, por exemplo.
- * TODO: documentar métodos desses objetos.
+/* Finish task, maybe cleaning resources. It is executed after processing all items in case.
+ * Objects "ipedCase" and "searcher" are shared, so case can be queried for items and bookmarks can be created, for example.
+ * TODO: document methods of those objects.
  */
 function finish(){
     //Bookmark creation example
@@ -50,23 +50,23 @@ function finish(){
 }
 
 /*
- * Realiza o processamento do objeto "item" da classe EvidenceFile. Esta função é executada sobre todos os itens do caso.
- * Pode utilizar qualquer método da classe EvidenceFile:
+ * Process object "item" of EvidenceFile class. This function is executed on all case items.
+ * It can access any method of EvidenceFile class:
  *
  *	Some Getters:
- *	String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categorias concatenadas com | )
+ *	String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
  *	Date:    getModDate(), getCreationDate(), getAccessDate() (podem ser nulos)
  *  Boolean: isDeleted(), isDuplicate(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
  *	Long:    getLength()
  *  Metadata getMetadata()
- *  Object:  getExtraAttribute(String key) (obtém um atributo extra)
- *  String:  getParsedTextCache() (obtém o texto extraído do item, caso esta tarefa seja posicionada após ParsingTask)
- *  File:    getTempFile() (obtém um arquivo temporário com o conteúdo do item)
- *  BufferedInputStream: getBufferedStream() (obtém o conteúdo do item)
+ *  Object:  getExtraAttribute(String key) (returns an extra attribute)
+ *  String:  getParsedTextCache() (returns item extracted text, if this task is placed after ParsingTask)
+ *  File:    getTempFile() (returns a temp file with item content)
+ *  BufferedInputStream: getBufferedStream() (returns an InputStream with item content)
  *
  *  Some Setters: 
- *           setToIgnore(boolean) (ignora o item do processamento e não inclui no caso)
- *           setAddToCase(boolean) (inclui ou não o item no caso, após ser processado)
+ *           setToIgnore(boolean) (ignores the item and excludes it from processing and case)
+ *           setAddToCase(boolean) (inserts or not item in case, after being processed: default true)
  *           addCategory(String), removeCategory(String), setMediaTypeStr(String)
  * 		 	 setExtraAttribute(key, value), setParsedTextCache(String)
  *
@@ -84,29 +84,3 @@ function process(item){
 	    item.setExtraAttribute("containsMaria", "true");
 	*/ 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

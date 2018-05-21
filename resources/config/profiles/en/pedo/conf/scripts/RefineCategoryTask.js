@@ -1,8 +1,10 @@
 ﻿/*
- * Script de refinamento de categorias com base nas propriedades dos arquivos
- * Utiliza linguagem javascript para permitir flexibilidade nas definições
+ * Script of Category Specialization based on item properties.
+ * Uses javascript language to allow flexibility in definitions.
  */
 
+/* Name of processing task
+*/
 function getName(){
 	return "RefineCategoryTask";
 }
@@ -12,17 +14,7 @@ function init(confProps, configFolder){}
 function finish(){}
 
 /*
- * Função que adiciona categoria ao objeto EvidenceFile "e", segundo regras baseadas nas propriedades.
- * Pode acessar qualquer método da classe EvidenceFile (inclusive categorias já atribuídas com base no tipo):
- *
- *	Retorno: Funções...
- *	String:  e.getName(), e.getExt(), e.getPath(), e.getCategories() (categorias concatenadas com | )
- *	Date:    e.getModDate(), e.getCreationDate(), e.getAccessDate() (podem ser nulos)
- *	Long:    e.getLength()
- *
- * Para adicionar uma categoria: e.addCategory(String)	
- * Para redefinir a categoria:   e.setCategory(String)
- * Para remover a categoria: 	 e.removeCategory(String)
+ * Changes category of items based on their properties
  *
  */
 function process(e){
@@ -107,7 +99,7 @@ function process(e){
 
 
 /*
- *  Função auxiliar
+ *  Auxiliar function
  */
 function isFromInternet(e){
 	
@@ -126,7 +118,7 @@ function isFromInternet(e){
 
 
 /*
- *  Função auxiliar
+ *  Auxiliar function
  */
 function inSystemFolder(e){
 
@@ -141,7 +133,7 @@ function inSystemFolder(e){
 }
 
 /*
- *  Função auxiliar
+ *  Auxiliar function
  */
 function inRecycle(e){
 	var path = e.getPath().toLowerCase();

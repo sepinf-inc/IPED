@@ -1,123 +1,122 @@
 ﻿########################################################################
-# Configurações Avançadas de Processamento
+# Advanced Processing Settings
 ########################################################################
 
-# OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
+# PARSERS CAN BE ENABLED/DISABLED IN conf/ParserConfig.xml
 
-# Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
-# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
-# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
+# If set to 'true', uses auxiliary processes to read the images. Consequently, if Sleuthkit crashes, only
+# the auxiliary process is killed and restarted. The auxiliary processes 
+# may double the memory usage. I/O and CPU demand will also increase.
 robustImageReading = false
 
-# Define se serão usados decodificadores internos ou externos (ex. ufed) para dados de celulares
-# com mais de um decodificador. Valores possíveis: internal, external, all
-phoneParsersToUse = external
+# Configure internal or external (eg ufed) parsers for phone data with more than one parser.
+# Possible values: internal, external, all
+phoneParsersToUse = internal
 
-# Força merge do índice para um único segmento, diminuindo o índice e otimizando a busca a partir de mídias ópticas.
-# É muito custoso, sendo desnecessário caso o índice seja acessado a partir de um HD.
+# Forces index merging into a single segment, reducing its size and optimizing the search from optical media.
+# This merging is costly and unnecessary if the index is accessed from a hard disk.
 forceMerge = false
 
-# Tempo de espera mínimo (segundos) por progresso no parsing dos arquivos. É adicionado o valor em timeOutPerMB.
-# Após este limite, são indexadas strings brutas do arquivo.
+# Minimum timeout (seconds) while parsing files. To this baseline will be added the result of timeOutPerMB * file size in MB (see next parameter).
+# After the timeout, the file's raw strings will be indexed.
 timeOut = 180
 
-# Tempo de espera (segundos) pelo parsing de cada item por Megabyte.
-# Assim para itens maiores são aguardados valores maiores de timeout.
+# Timeout (seconds) for each Megabyte of the file being parsed.
+# Total_Timeout = timeOut + timeOutPerMB * <file_size_in_MB>
 timeOutPerMB = 2
 
-# Copia LibreOffice.zip (100MB) para a pasta de saída, permitindo visualizar dezenas de formatos diferentes.
+# Copies LibreOffice.zip (100 MB) to the output folder, allowing the visualization of dozens of different formats.
 embutirLibreOffice = true
 
-# Habilita ordenação dos caracteres de PDFs por posição.
-# Necessário para indexar corretamente PDFs rotacionados, mas dobra o tempo de processamento de PDFs
+# If true, takes into account the characters' position on the page when reconstructing the extracted text.
+# Needed to properly index rotated PDFs but doubles the processing time of PDFs.
 sortPDFChars = false
 
-# Realiza teste de aleatoriedade antes de indexar trechos de itens binários e desconhecidos.
-# Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
-# Eventualmente pode ocasionar perda de hits cercados por conteúdo "aleatório".
+# Perform test for randomness before indexing binary items and unknown file types.
+# Makes indexing faster and reduces index size, specially when indexing unallocated space.
+# May cause loss of hits surrounded by "random" content.
 entropyTest = true
 
-# Tamanho mínimo de strings brutas extraídas de arquivos desconhecidos para indexação
+# Minimum size of raw strings extracted from unknown files for indexing.
 minRawStringSize = 4
 
-# Define caracteres adicionais a serem indexados além de letras e números, isto é, deixam de ser separadores
-# Utilize espaço para separar os caracteres
+# Define additional characters to be indexed in addition to letters and numbers, i.e. these characters will no longer be treated as separators.
+# Separate the characters with a blank space
 extraCharsToIndex =
 
-# Converte os caracteres para minúsculas antes da indexação, tornando a pesquisa independente da capitalização.
-# Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
+# Converts text to lowercase before indexing, making the search case-insensitive.
+# Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
 convertCharsToLowerCase = true
 
-# Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
-# porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
-# Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
+# Ignores HFS + hard links pointing to items already processed. The hard links are added to the case,
+# but their content is not processed (indexed, expanded, carved, etc).
+# Optimizes HFS + image processing containing thousands of hard links (such as Time Machine volumes).
 ignoreHardLinks = true
 
-# Configure caso queira ignorar arquivos orphans com base no seu tamanho.
-# Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
-# que podem tornar o processamento inviável.
+# Set this option to ignore orphaned files bigger than a certain size.
+# In rare cases, Sleuthkit can incorrectly recover thousands of giant orphaned files, 
+# which may render processing unfeasible.
 #minOrphanSizeToIgnore = 102400000
 
-# Tamanho em bytes de divisão do espaço não alocado. Em casos onde o carving de vídeos seja importante,
-# pode ser interessante aumentar esse valor para minimizar a perda de itens que atravessam as bordas.
+# Size in bytes of the unallocated space segments. In cases where the carving of videos is important,
+# it may be useful to increase this value to minimize the loss of items that cross segment boundaries.
 unallocatedFragSize = 10737418240
 
-# Tamanho mínimo (bytes) de itens para serem divididos antes de serem indexados via strings. Itens grandes sem parser 
-# específico são divididos em fragmentos de 10MB antes de serem indexados, facilitando o destaque de hits e a exportação 
-# de trechos com hits de itens grandes como pagefile, vss, etc
+# Files larger than this value (in bytes) will be split before having their strings indexed. Large items without a specific parser 
+# are broken into 10 MB segments before being indexed, making it easier to highlight hits and to export 
+# segments containing hits belonging to big files, such as pagefiles, vss, etc.
 minItemSizeToFragment = 104857600
 
-# Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
-# não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
+# Size (bytes) of the text segments extracted from items before indexing. Includes all items,
+# not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
 textSplitSize = 100000000
 
 ########################################################################
-# Configurações OCR
+# OCR Settings
 ########################################################################
 
-# Opcionalmente, utilize o parâmetro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado várias vezes)
-
-# Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng
+# Optionally, use the parameter -ocr "bookmark_name" to restrict the OCR to a particular bookmark (can be used multiple times)
+# Dictionary language to be used for OCR. Portuguese (por) and English (eng) are included. May be used in tandem: por+eng
 OCRLanguage = por
 
-# Modo de análise de layout do Tesseract, por ex: 1 - com OSD (orientation & script detection), 3 - sem OSD (padrão Tesseract)
+# Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
 pageSegMode = 1
 
-# Tamanho mínimo em bytes de arquivos para aplicar OCR
+# Minimum file size (bytes) to submit to OCR
 minFileSize2OCR = 10000
 
-# Tamanho máximo em bytes de arquivos para aplicar OCR
+# Maximum file size (bytes) to submit to OCR
 maxFileSize2OCR = 100000000
 
-# Resolução em dpi para conversão de PDF's para imagem. Aumente caso a fonte das digitalizações seja pequena
+# Resolution (dpi) for PDF to image conversion. Increase if the document's fonts are small
 pdfToImgResolution = 250
 
-# Máximo de caracteres de texto por página que um PDF pode conter para ser aplicado OCR
+# Maximum characters of text per page a PDF can contain to be submitted to OCR
 maxPDFTextSize2OCR = 100
 
-# Biblioteca para conversão de PDFs para imagem antes do OCR.
-# Valores possíveis: pdfbox ou icepdf (geralmente mais rápido)
+# Library for converting PDFs to image before OCR.
+# Possible Values: pdfbox or icepdf (usually faster)
 pdfToImgLib = icepdf
 
-# Realiza a conversão de PDFs para imagem em outro processo, isolando OutOfMemoryErrors
-# e uso de CPU por threads desconectadas. Mais estável, porém torna o OCR mais lento.
+# Performs the conversion of PDFs to image in another process, isolating OutOfMemoryErrors
+# and CPU usage by unfinished threads. More stable, but makes the OCR slower.
 externalPdfToImgConv = false
 
-# Memória heap máxima a utilizar POR WORKER durante conversão externa de PDFs p/ imagem.
+# Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
 externalConvMaxMem = 512M
 
-# Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
-# Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
-# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR.
-# Além disso, com essa opção o OCR de imagens jbig2 em PDFs não funciona, pois o tesseract não suporta esse formato. 
+# Processes images embedded in PDFs. Must be enabled to extract images from PDFs if they are expanded.
+# If enabled, the OCR is applied over embedded images instead of the images generated by the rendering of each page.
+# Sometimes the images are fragmented in PDFs, resulting in cut words or lines. In this case this option can be detrimental to the OCR.
+# Also, with this option the OCR of jbig2 images in PDFs doesn't work because Tesseract does not support this format. 
 processImagesInPDFs = true
 
 ########################################################################
-# Configurações da Pesquisa
+# Search Settings 
 ########################################################################
 
-# Número de threads utilizadas para pesquisar o índice. Pode agilizar pesquisas em índices grandes.
-# Valores altos podem degradar a pesquisa caso o índice esteja num disco lento.
+# Number of threads used to search the index. Can speed up searches on large indexes.
+# High values can degrade the search if the index is on a slow disk.
 searchThreads = 1
 
 # Número máximo de backups do estado da análise (marcadores, seleções, histórico de busca)

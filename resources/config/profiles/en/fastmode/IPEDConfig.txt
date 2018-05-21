@@ -1,6 +1,6 @@
-########################################################################
-# Configurações mínimas para rápida execução em locais de busca.
-# Não altere os parâmetros, sob pena de atrasar o processamento.
+﻿########################################################################
+# Minimal configuration to fastest processing in triage scenarios.
+# Do not change the options, or the processing will became slower.
 ########################################################################
 
 indexTemp = default

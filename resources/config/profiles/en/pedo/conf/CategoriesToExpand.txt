@@ -1,7 +1,7 @@
-﻿########################################################################
-# Descomente as Categorias que deverão ser expandidas durante a idexação
-# Os subitens serão extraídos para a pasta 'indexador/subitens'
-# A expansão é recursiva, logo pode consumir espaço considerável
+########################################################################
+# Uncomment the Categories that should be expanded during processing
+# The subitems will be extracted to the folder 'indexer / subitems'
+# The expansion is recursive, so it can consume considerable space
 ########################################################################
 
 Mailboxes
@@ -13,7 +13,7 @@ Contacts
 ISO disks
 Internet History
 
-# Gera relatórios de registro:
+# Generates registry reports:
 Windows Registry
 
 Text Documents
@@ -23,5 +23,5 @@ RTF Documents
 PDF Documents
 HTML Documents
 
-# Para expandir arquivos jar, comente a linha <mime>application/java-archive</mime> em ParserConfig.xml
+# To expand jar files, comment out the '<mime>application/java-archive</mime>' line in ParserConfig.xml
 #Programs and Libraries

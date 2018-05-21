@@ -1,14 +1,14 @@
-﻿##################################################################################################################
-# Arquivo de configuração da tarefa de busca por expressões regulares
+##################################################################################################################
+# Configuration for Regular Expression search task.
 #
-# Sintaxe:
-# name , prefix, sufix, ignoreCase = regex
+# Syntax:
+# name , prefix, suffix, ignoreCase = regex
 #
-# name: 	(obrigatório) nome da expressão regular
-# regex: 	(obrigatório) expressão regular, não aceita grupos e backreferences, ver sintaxe em http://www.brics.dk/automaton/doc/index.html
-# prefix: 	qtde de caracteres de prefixo que serão removidos dos hits (padrão 0)
-# sufix: 	qtde de caracteres de sufixo que serão removidos dos hits (padrão 0)
-# ignoreCase: indica se a capitalização das letras deve ser ignorada (padrão true)
+# name: 	(required) regex name
+# regex: 	(required) regular expression, do not accept groups nor backreferences, syntax on http://www.brics.dk/automaton/doc/index.html
+# prefix: 	number of prefix chars which will be removed from matches (default 0)
+# suffix: 	number of suffix chars which will be removed from matches (default 0)
+# ignoreCase: tells if capitalization should be ignored (default true)
 #
 ##################################################################################################################
 

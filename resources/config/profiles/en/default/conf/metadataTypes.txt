@@ -1,3 +1,6 @@
+# List of known Metadata types
+# For metadata not listed below, will be done a best effort to guess its type (used for sorting and range queries)
+
 ﻿AE Warning = java.lang.String
 AEB Bracket Value = java.lang.Integer
 AF Area Height = java.lang.Integer
