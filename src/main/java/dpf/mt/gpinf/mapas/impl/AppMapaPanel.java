@@ -57,7 +57,7 @@ public class AppMapaPanel extends JPanel {
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
 						ItemId item = app.getResults().getItem(i);
-						String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
+						String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 			        	selecoes.put(gid, selected);
 					}
 					browserCanvas.enviaSelecoes(selecoes);

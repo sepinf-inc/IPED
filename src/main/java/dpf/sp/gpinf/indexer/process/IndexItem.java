@@ -660,9 +660,9 @@ public class IndexItem extends BasicProps{
               if(doc.getBinaryValue(THUMB) != null) {
                   evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
                   
-              }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) {
-                  String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view";
-                  File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg");
+              }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
+                  String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
+                  File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
                   evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
               }
           }

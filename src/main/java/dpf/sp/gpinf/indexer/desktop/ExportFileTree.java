@@ -84,7 +84,7 @@ public class ExportFileTree extends CancelableWorker {
   private int[] getItemsToExport() {
 
     try {
-      String textQuery = "*:*";
+      String textQuery = "*:*"; //$NON-NLS-1$
       if(baseDocId != root.docId) {
           Document doc = App.get().appCase.getReader().document(baseDocId);
 
@@ -325,7 +325,7 @@ public class ExportFileTree extends CancelableWorker {
   protected void done() {
       if(hos != null) {
           String hash = hos.hash().toString().toUpperCase();
-          LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash);
+          LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
           HashDialog dialog = new HashDialog(hash);
           dialog.setVisible(true);
       }

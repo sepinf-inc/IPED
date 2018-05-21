@@ -17,7 +17,7 @@ public class HashDialog extends JDialog{
     public HashDialog(String hash) {
         super();
         this.setModal(true);
-        this.setTitle("Hash MD5 do ZIP exportado");
+        this.setTitle(Messages.getString("HashDialog.MD5Title")); //$NON-NLS-1$
         this.setBounds(0, 0, 600, 150);
         this.setLocationRelativeTo(null);
         JPanel panel = new JPanel(new BorderLayout());

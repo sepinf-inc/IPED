@@ -81,9 +81,9 @@ public class CategoryTreeModel implements TreeModel {
       if(this.equals(root))
           return name;
       if(numItems == null) {
-          return name + " (...)";
+          return name + " (...)"; //$NON-NLS-1$
       }else
-          return name + " (" + numItems + ")";
+          return name + " (" + numItems + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
     
     private synchronized Integer countNumItems() {
@@ -97,7 +97,7 @@ public class CategoryTreeModel implements TreeModel {
             numItems = num;
             
         }else {
-            String query = IndexItem.CATEGORY + ":\"" + name + "\"";
+            String query = IndexItem.CATEGORY + ":\"" + name + "\""; //$NON-NLS-1$ //$NON-NLS-2$
             IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
             try {
                 numItems = searcher.multiSearch().getLength();

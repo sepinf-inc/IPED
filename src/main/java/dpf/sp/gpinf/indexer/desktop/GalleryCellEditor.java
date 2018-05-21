@@ -70,7 +70,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int col) {
 
-    table.putClientProperty("terminateEditOnFocusLost", true);
+    table.putClientProperty("terminateEditOnFocusLost", true); //$NON-NLS-1$
     
     GalleryValue cellValue = (GalleryValue) value;
     if (cellValue.id == null) {

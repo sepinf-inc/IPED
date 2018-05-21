@@ -186,8 +186,8 @@ public class CmdLineArgs {
   
   public String getDataSourceName(File datasource) {
       for (int i = 0; i < allArgs.size(); i++) {
-          if ((allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) 
-                  && datasource.equals(new File(allArgs.get(i + 1))) //$NON-NLS-1$
+          if ((allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data"))  //$NON-NLS-1$ //$NON-NLS-2$
+                  && datasource.equals(new File(allArgs.get(i + 1)))
                   && i + 2 < allArgs.size() && allArgs.get(i + 2).equals("-dname")) { //$NON-NLS-1$
               return allArgs.get(i + 3);
           }
@@ -200,7 +200,7 @@ public class CmdLineArgs {
     public void validate(String name, String value) throws ParameterException {
       File f = new File(value);
       if (!f.exists()) {
-        throw new ParameterException("File not found: " + value);
+        throw new ParameterException("File not found: " + value); //$NON-NLS-1$
       }
     }
   }
@@ -210,7 +210,7 @@ public class CmdLineArgs {
       public void validate(String name, String value) throws ParameterException {
         File f = new File(value);
         if (!f.exists() && !Util.isPhysicalDrive(f)) {
-          throw new ParameterException("File not found: " + value);
+          throw new ParameterException("File not found: " + value); //$NON-NLS-1$
         }
       }
     }
@@ -219,10 +219,10 @@ public class CmdLineArgs {
       @Override
       public void validate(String name, String value) throws ParameterException {
         File reportDir = new File(value);
-        if (!(new File(reportDir, "files")).exists() &&
-            !(new File(reportDir, "Report_files/files")).exists() &&
-            !(new File(reportDir, "Export")).exists()) {
-            throw new ParameterException("Invalid FTK report folder!");
+        if (!(new File(reportDir, "files")).exists() && //$NON-NLS-1$
+            !(new File(reportDir, "Report_files/files")).exists() && //$NON-NLS-1$
+            !(new File(reportDir, "Export")).exists()) { //$NON-NLS-1$
+            throw new ParameterException("Invalid FTK report folder!"); //$NON-NLS-1$
         }
       }
     }
@@ -241,7 +241,7 @@ public class CmdLineArgs {
    */
   void takeArgs(String[] args){
     JCommander jc = new JCommander(this);
-    jc.setProgramName("java -jar iped.jar [--no_arg_option] -option");
+    jc.setProgramName("java -jar iped.jar [--no_arg_option] -option"); //$NON-NLS-1$
     try {
       jc.parse(args);
       if(help)
@@ -258,7 +258,7 @@ public class CmdLineArgs {
   private void printUsageAndExit(JCommander jc, Exception e) {
       System.out.println(Versao.APP_NAME);
       if(e != null)
-          System.out.println("Error: "+ e.getMessage() + "\n");
+          System.out.println("Error: "+ e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
       jc.usage();
       System.exit(1);
   }
@@ -279,7 +279,7 @@ public class CmdLineArgs {
     }
     
     if (reportDir == null && (datasources == null || datasources.isEmpty())) {
-        throw new ParameterException("parameter '-d' or '-r' required.");
+        throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
     }
     
     if (this.reportDir != null) {
@@ -307,28 +307,28 @@ public class CmdLineArgs {
     IndexFiles.getInstance().appendIndex = this.appendIndex;
 
     if (outputDir != null && reportDir != null) {
-      throw new ParameterException("Option -o can not be used with FTK reports!");
+      throw new ParameterException("Option -o can not be used with FTK reports!"); //$NON-NLS-1$
     }
 
-    if (new File(reportDir, "Report_files/files").exists()) {
+    if (new File(reportDir, "Report_files/files").exists()) { //$NON-NLS-1$
       IndexFiles.getInstance().dataSource.remove(reportDir);
-      IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files"));
-      IndexFiles.getInstance().output = new File(reportDir, "indexador");
+      IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
+      IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
     }
 
     if (outputDir != null) {
-      IndexFiles.getInstance().output = new File(outputDir, "indexador");
+      IndexFiles.getInstance().output = new File(outputDir, "indexador"); //$NON-NLS-1$
     } else if (reportDir != null) {
-      IndexFiles.getInstance().output = new File(reportDir, "indexador");
+      IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
     } else {
-      IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador");
+      IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador"); //$NON-NLS-1$
     }
 
     File file = outputDir;
     while (file != null) {
       for (File source : IndexFiles.getInstance().dataSource) {
     	  if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
-              throw new ParameterException("Output folder can not be equal or subdir of input!");
+              throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
             }
       }
       file = file.getParentFile();

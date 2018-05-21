@@ -21,7 +21,7 @@ public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
         MultiSearchResult results = App.get().getResults();
         for (int i = 0; i < results.getLength(); i++) {
             ItemId item = App.get().getResults().getItem(i);
-            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
+            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
             if(gid.equals(mid)){
                 pos = i;
                 break;

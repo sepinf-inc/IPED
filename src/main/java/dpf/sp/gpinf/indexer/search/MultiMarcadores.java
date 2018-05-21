@@ -286,7 +286,7 @@ public class MultiMarcadores implements Serializable {
 	      }else {
 	          Marcadores m = (Marcadores) obj;
 	          if(map.size() > 1)
-	              throw new IOException("Invalid state file!");
+	              throw new IOException("Invalid state file!"); //$NON-NLS-1$
 	          map.put(map.keySet().iterator().next(), m);
 	      }
 		  for(Marcadores marcador : this.map.values())

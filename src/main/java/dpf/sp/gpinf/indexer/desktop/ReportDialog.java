@@ -48,8 +48,8 @@ public class ReportDialog implements ActionListener, TableModelListener{
     private static Logger logger = LoggerFactory.getLogger(ReportDialog.class);
     
     JDialog dialog = new JDialog(App.get());
-    JLabel top = new JLabel("Escolha os marcadores para gerar o relatório:");
-    Object[] header = {"", "Marcador", "JustThumb"};
+    JLabel top = new JLabel(Messages.getString("ReportDialog.ChooseLabel")); //$NON-NLS-1$
+    Object[] header = {"", Messages.getString("ReportDialog.TableHeader1"), Messages.getString("ReportDialog.TableHeader2")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     List<JCheckBox> checkboxes = new ArrayList<>();
     JPanel panel = new JPanel(new BorderLayout());
     JTable table;
@@ -57,13 +57,13 @@ public class ReportDialog implements ActionListener, TableModelListener{
     JTextField output = new JTextField();
     JTextField caseinfo = new JTextField();
     JTextField keywords = new JTextField();
-    JButton outButton = new JButton("...");
-    JButton infoButton = new JButton("...");
-    JButton keywordsButton = new JButton("...");
-    JButton fillInfo = new JButton("Preencher informações");
-    JButton generate = new JButton("Gerar");
-    JCheckBox noAttachs = new JCheckBox("Não exportar anexos de emails automaticamente");
-    JCheckBox append = new JCheckBox("Adicionar ao relatório já existente");
+    JButton outButton = new JButton("..."); //$NON-NLS-1$
+    JButton infoButton = new JButton("..."); //$NON-NLS-1$
+    JButton keywordsButton = new JButton("..."); //$NON-NLS-1$
+    JButton fillInfo = new JButton(Messages.getString("ReportDialog.FillInfo")); //$NON-NLS-1$
+    JButton generate = new JButton(Messages.getString("ReportDialog.Create")); //$NON-NLS-1$
+    JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
+    JCheckBox append = new JCheckBox(Messages.getString("ReportDialog.AddToReport")); //$NON-NLS-1$
     
     HashSet<String> noContent = new HashSet<>();
     
@@ -81,25 +81,25 @@ public class ReportDialog implements ActionListener, TableModelListener{
     
     public ReportDialog() {
         
-        dialog.setTitle("Gerar Relatório");
+        dialog.setTitle(Messages.getString("ReportDialog.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
         dialog.setLocationRelativeTo(null);
         
         JPanel footer1 = new JPanel(new BorderLayout());
         footer1.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        footer1.add(new JLabel("Pasta do relatório:"), BorderLayout.NORTH);
+        footer1.add(new JLabel(Messages.getString("ReportDialog.Output")), BorderLayout.NORTH); //$NON-NLS-1$
         footer1.add(output, BorderLayout.CENTER);
         footer1.add(outButton, BorderLayout.EAST);
         
         JPanel footer2 = new JPanel(new BorderLayout());
         footer2.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        footer2.add(new JLabel("Arquivo de informações do caso (opcional):"), BorderLayout.NORTH);
+        footer2.add(new JLabel(Messages.getString("ReportDialog.CaseInfoFile")), BorderLayout.NORTH); //$NON-NLS-1$
         footer2.add(caseinfo, BorderLayout.CENTER);
         footer2.add(infoButton, BorderLayout.EAST);
         
         JPanel footer3 = new JPanel(new BorderLayout());
         footer3.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        footer3.add(new JLabel("Arquivo de palavras-chave (opcional):"), BorderLayout.NORTH);
+        footer3.add(new JLabel(Messages.getString("ReportDialog.KeywordsFile")), BorderLayout.NORTH); //$NON-NLS-1$
         footer3.add(keywords, BorderLayout.CENTER);
         footer3.add(keywordsButton, BorderLayout.EAST);
         
@@ -138,7 +138,7 @@ public class ReportDialog implements ActionListener, TableModelListener{
     
     private void createCaseInfoDialog() {
         
-        infoDialog.setTitle("Informações do Caso");
+        infoDialog.setTitle(Messages.getString("ReportDialog.CaseInfo")); //$NON-NLS-1$
         infoDialog.setBounds(0, 0, 500, 500);
         infoDialog.setLocationRelativeTo(null);
         
@@ -147,43 +147,43 @@ public class ReportDialog implements ActionListener, TableModelListener{
         
         panel.add(infoButton, getGridBagConstraints(0,0,1,1));
 
-        JLabel num = new JLabel("Número do Laudo");
+        JLabel num = new JLabel(Messages.getString("ReportDialog.ReportNum")); //$NON-NLS-1$
         panel.add(num, getGridBagConstraints(0,1,1,1));
         panel.add(rNumber, getGridBagConstraints(1,1,2,1));
         
-        JLabel date = new JLabel("Data");
+        JLabel date = new JLabel(Messages.getString("ReportDialog.ReportDate")); //$NON-NLS-1$
         panel.add(date, getGridBagConstraints(0,2,1,1));
         panel.add(rDate, getGridBagConstraints(1,2,2,1));
         
-        JLabel title = new JLabel("Título");
+        JLabel title = new JLabel(Messages.getString("ReportDialog.ReportTitle")); //$NON-NLS-1$
         panel.add(title, getGridBagConstraints(0,3,1,1));
         panel.add(rTitle, getGridBagConstraints(1,3,2,1));
         
-        JLabel examiner = new JLabel("Examinador");
+        JLabel examiner = new JLabel(Messages.getString("ReportDialog.Examiner")); //$NON-NLS-1$
         panel.add(examiner, getGridBagConstraints(0,4,1,1));
         panel.add(rExaminers, getGridBagConstraints(1,4,2,1));
 
-        JLabel ipl = new JLabel("Investigação");
+        JLabel ipl = new JLabel(Messages.getString("ReportDialog.Investigation")); //$NON-NLS-1$
         panel.add(ipl, getGridBagConstraints(0,5,1,1));
         panel.add(rInvestigation, getGridBagConstraints(1,5,2,1));
         
-        JLabel request = new JLabel("Solicitação");
+        JLabel request = new JLabel(Messages.getString("ReportDialog.Request")); //$NON-NLS-1$
         panel.add(request, getGridBagConstraints(0,6,1,1));
         panel.add(rRequestDoc, getGridBagConstraints(1,6,2,1));
         
-        JLabel requester = new JLabel("Solicitante");
+        JLabel requester = new JLabel(Messages.getString("ReportDialog.Requester")); //$NON-NLS-1$
         panel.add(requester, getGridBagConstraints(0,7,1,1));
         panel.add(rRequester, getGridBagConstraints(1,7,2,1));
         
-        JLabel record = new JLabel("Registro/Protocolo");
+        JLabel record = new JLabel(Messages.getString("ReportDialog.Record")); //$NON-NLS-1$
         panel.add(record, getGridBagConstraints(0,8,1,1));
         panel.add(rRecord, getGridBagConstraints(1,8,2,1));
         
-        JLabel recordDate = new JLabel("Data do Registro");
+        JLabel recordDate = new JLabel(Messages.getString("ReportDialog.RecordDate")); //$NON-NLS-1$
         panel.add(recordDate, getGridBagConstraints(0,9,1,1));
         panel.add(rRecordDate, getGridBagConstraints(1,9,2,1));
         
-        JLabel evidences = new JLabel("Materiais");
+        JLabel evidences = new JLabel(Messages.getString("ReportDialog.Evidences")); //$NON-NLS-1$
         panel.add(evidences, getGridBagConstraints(0,10,1,1));
         panel.add(rEvidences, getGridBagConstraints(1,10,2,2));
         rEvidences.setLineWrap(true);
@@ -290,7 +290,7 @@ public class ReportDialog implements ActionListener, TableModelListener{
     
     private boolean isInputOK() {
         if(this.output.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Necessário especificar pasta de saída!");
+            JOptionPane.showMessageDialog(null, Messages.getString("ReportDialog.OutputRequired")); //$NON-NLS-1$
             return false;
         }
         
@@ -302,16 +302,16 @@ public class ReportDialog implements ActionListener, TableModelListener{
         String caseInfo = this.caseinfo.getText().trim();        
         String keywords = this.keywords.getText().trim();   
         String output = this.output.getText().trim();
-        logger.info("Generating report to " + output);
+        logger.info("Generating report to " + output); //$NON-NLS-1$
         
         URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
         try {
             String classpath = new File(url.toURI()).getAbsolutePath();
-            if(!classpath.endsWith(".jar"))
+            if(!classpath.endsWith(".jar")) //$NON-NLS-1$
                 classpath = App.get().appCase.getAtomicSources().get(0).getModuleDir().getAbsolutePath() +
-                    File.separator + "lib" + File.separator + "iped-search-app.jar";
+                    File.separator + "lib" + File.separator + "iped-search-app.jar"; //$NON-NLS-1$ //$NON-NLS-2$
             
-            File input = File.createTempFile("report", ".iped");
+            File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
             App.get().appCase.getMultiMarcadores().saveState(input);
                     
             List<String> cmd = new ArrayList<>();
@@ -320,23 +320,23 @@ public class ReportDialog implements ActionListener, TableModelListener{
                     "-o", output)); //$NON-NLS-1$
             
             if(!caseInfo.isEmpty())
-                cmd.addAll(Arrays.asList("-asap", caseInfo));
+                cmd.addAll(Arrays.asList("-asap", caseInfo)); //$NON-NLS-1$
 
             if(!keywords.isEmpty())
-                cmd.addAll(Arrays.asList("-l", keywords));
+                cmd.addAll(Arrays.asList("-l", keywords)); //$NON-NLS-1$
             
             if(noAttachs.isSelected())
-                cmd.add("--nopstattachs");
+                cmd.add("--nopstattachs"); //$NON-NLS-1$
             
             if(append.isSelected())
-                cmd.add("--append");
+                cmd.add("--append"); //$NON-NLS-1$
             
             for(String label : noContent) {
-                cmd.add("-nocontent");
+                cmd.add("-nocontent"); //$NON-NLS-1$
                 cmd.add(label);
             }
             
-            logger.info("Report command: " + cmd.toString());
+            logger.info("Report command: " + cmd.toString()); //$NON-NLS-1$
             
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
@@ -363,9 +363,9 @@ public class ReportDialog implements ActionListener, TableModelListener{
               
               int result = process.waitFor();
               if(result == 0)
-                  JOptionPane.showMessageDialog(null, "Geração de Relatório finalizada!");
+                  JOptionPane.showMessageDialog(null, Messages.getString("ReportDialog.ReportFinished")); //$NON-NLS-1$
               else
-                  JOptionPane.showMessageDialog(null, "Erro ao gerar Relatório, verifique o log!", "Erro", JOptionPane.ERROR_MESSAGE);
+                  JOptionPane.showMessageDialog(null, Messages.getString("ReportDialog.ReportError"), Messages.getString("ReportDialog.ErrorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 
             } catch (Exception e) {
               e.printStackTrace();
@@ -377,11 +377,11 @@ public class ReportDialog implements ActionListener, TableModelListener{
     private class AsapFileFilter extends FileFilter {
         @Override
         public boolean accept(File f) {
-            return f.isDirectory() || f.getName().toLowerCase().endsWith(".asap");
+            return f.isDirectory() || f.getName().toLowerCase().endsWith(".asap"); //$NON-NLS-1$
         }
         @Override
         public String getDescription() {
-            return "*.asap";
+            return "*.asap"; //$NON-NLS-1$
         }
     }
 

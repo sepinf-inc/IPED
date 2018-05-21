@@ -133,7 +133,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
   protected void done() {
       if(hos != null) {
           String hash = hos.hash().toString().toUpperCase();
-          LOGGER.info("MD5 of " + file.getAbsolutePath() + ": " + hash);
+          LOGGER.info("MD5 of " + file.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
           HashDialog dialog = new HashDialog(hash);
           dialog.setVisible(true);
       }

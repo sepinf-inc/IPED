@@ -80,7 +80,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
   JTextArea comments = new JTextArea();
   JLabel texto = new JLabel(Messages.getString("BookmarksManager.Bookmarks")); //$NON-NLS-1$
   JButton novo = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
-  JButton updateComment = new JButton("Update");
+  JButton updateComment = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
   JButton delete = new JButton(Messages.getString("BookmarksManager.Delete")); //$NON-NLS-1$
   DefaultListModel<String> listModel = new DefaultListModel<String>();
   JList<String> list = new JList<String>(listModel);
@@ -114,8 +114,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     updateList();
 
     newLabel.setToolTipText(Messages.getString("BookmarksManager.NewLabel.Tip")); //$NON-NLS-1$
-    comments.setToolTipText("Bookmark comments");
-    updateComment.setToolTipText("Update Comments");
+    comments.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip")); //$NON-NLS-1$
+    updateComment.setToolTipText(Messages.getString("BookmarksManager.UpdateTooltip")); //$NON-NLS-1$
     novo.setToolTipText(Messages.getString("BookmarksManager.New.Tip")); //$NON-NLS-1$
     add.setToolTipText(Messages.getString("BookmarksManager.Add.Tip")); //$NON-NLS-1$
     remove.setToolTipText(Messages.getString("BookmarksManager.Remove.Tip")); //$NON-NLS-1$

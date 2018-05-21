@@ -130,7 +130,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 	  //configPath = System.getProperty("user.dir");
 	  rootPath = new File(url.toURI()).getParent();
 	  //test for report generation from case folder
-	  if(rootPath.endsWith("indexador" + File.separator + "lib"))
+	  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
 	      rootPath = new File(url.toURI()).getParentFile().getParent();
 	  
 	  configPath = rootPath;

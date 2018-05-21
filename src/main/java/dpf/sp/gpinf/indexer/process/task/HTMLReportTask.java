@@ -811,7 +811,7 @@ public class HTMLReportTask extends AbstractTask {
   private String getComments(String bookmark) {
       String comments = labelcomments.get(bookmark);
       if(comments == null || comments.trim().isEmpty())
-          comments = "-";
+          comments = "-"; //$NON-NLS-1$
       return comments;
   }
 

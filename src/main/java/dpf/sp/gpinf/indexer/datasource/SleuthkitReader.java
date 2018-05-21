@@ -309,7 +309,7 @@ public class SleuthkitReader extends DataSourceReader {
               }
               if(sectorSize > 0){
               	cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
-              	cmd[cmdLen - 2] = "" + sectorSize;
+              	cmd[cmdLen - 2] = "" + sectorSize; //$NON-NLS-1$
               }
               cmd[cmdLen - 1] = image.getAbsolutePath();
           }

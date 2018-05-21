@@ -143,7 +143,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private JDialog dialog = new JDialog();
 	private JPanel listPanel = new JPanel();
 	private JComboBox<Object> combo;
-	private JCheckBox autoManage = new JCheckBox("Gerenciar colunas automaticamente (mais lento)");
+	private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
 	
 	private boolean autoManageCols = false;
 	
@@ -290,7 +290,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        return;
 	    
 	    final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
-	    progress.setNote("Checking used columns...");
+	    progress.setNote(Messages.getString("ColumnsManager.LoadingCols")); //$NON-NLS-1$
 	    progress.setMaximum(indexFields.length);
 	    
 	    new Thread() {
@@ -339,8 +339,8 @@ public class ColumnsManager implements ActionListener, Serializable{
                     if(reader == null) {
                         reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
                         bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField("_num_" + field);
-                        bits2 = reader.getDocsWithField("_" + field);
+                        bits1 = reader.getDocsWithField("_num_" + field); //$NON-NLS-1$
+                        bits2 = reader.getDocsWithField("_" + field); //$NON-NLS-1$
                     }
                     int doc = docs[i] - docBases[baseOrd];
                     if((bits2 != null && bits2.get(doc)) ||
@@ -379,8 +379,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 	            return null;
 	        try {
                 Bits bits0 = App.get().appCase.getAtomicReader().getDocsWithField(field);
-                Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field);
-                Bits bits2 = App.get().appCase.getAtomicReader().getDocsWithField("_" + field);
+                Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field); //$NON-NLS-1$
+                Bits bits2 = App.get().appCase.getAtomicReader().getDocsWithField("_" + field); //$NON-NLS-1$
                 //long tb = System.currentTimeMillis();
                 for(i = 0; i < docs.length; i++) {
                     int doc = docs[i];

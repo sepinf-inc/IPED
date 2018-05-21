@@ -84,7 +84,7 @@ public class Configuration {
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
   public static boolean robustImageReading = false;
-  public static String phoneParsersToUse = "external";
+  public static String phoneParsersToUse = "external"; //$NON-NLS-1$
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;

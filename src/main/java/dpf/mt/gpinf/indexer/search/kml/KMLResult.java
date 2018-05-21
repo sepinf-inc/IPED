@@ -181,7 +181,7 @@ public class KMLResult {
 					  if(progress != null) progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
 					  
 					  //necessário para múltiplos casos carregados, pois ids se repetem
-					  String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
+					  String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 					  
 					  kml.append("<Placemark>"); //$NON-NLS-1$
 					  //kml+="<styleUrl>#basico</styleUrl>";

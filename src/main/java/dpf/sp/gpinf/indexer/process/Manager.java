@@ -603,7 +603,7 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
       IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-      File binDir = new File(Configuration.appRoot, "bin");
+      File binDir = new File(Configuration.appRoot, "bin"); //$NON-NLS-1$
       if(binDir.exists())
           IOUtil.copiaDiretorio(binDir, output.getParentFile()); //$NON-NLS-1$
       else {

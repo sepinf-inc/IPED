@@ -9,7 +9,7 @@ public class SaveStateThread extends Thread{
 	
 	private static SaveStateThread instance = getInstance();
 	
-	private static final String BKP_DIR = "bkp";
+	private static final String BKP_DIR = "bkp"; //$NON-NLS-1$
 	
 	public static int MAX_BACKUPS = 10;
 	public static long BKP_INTERVAL = 60; //seconds
@@ -75,7 +75,7 @@ public class SaveStateThread extends Thread{
 	    File bkpDir = new File(file.getParentFile(), BKP_DIR);
 	    bkpDir.mkdir();
 	    for(File subfile : bkpDir.listFiles())
-	        if(subfile.getName().endsWith(".bkp.iped")) {
+	        if(subfile.getName().endsWith(".bkp.iped")) { //$NON-NLS-1$
 	            numBkps++;
 	            if(newestBkp == null || newestBkp.lastModified() < subfile.lastModified())
 	                newestBkp = subfile;
@@ -84,7 +84,7 @@ public class SaveStateThread extends Thread{
 	        }
 	    if(numBkps < MAX_BACKUPS) {
 	        String baseName = file.getName().substring(0, file.getName().lastIndexOf('.'));
-	        oldestBkp = new File(bkpDir, baseName + "." + numBkps + ".bkp.iped");
+	        oldestBkp = new File(bkpDir, baseName + "." + numBkps + ".bkp.iped"); //$NON-NLS-1$ //$NON-NLS-2$
 	    }
 	    if(newestBkp == null || (System.currentTimeMillis() - newestBkp.lastModified()) / 1000 > BKP_INTERVAL) {
 	        oldestBkp.delete();

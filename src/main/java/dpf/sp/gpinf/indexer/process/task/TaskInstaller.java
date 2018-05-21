@@ -25,8 +25,8 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
  */
 public class TaskInstaller {
     
-  private static final String TASKS_CONFIG_XML = "conf/TaskInstaller.xml";
-  private static final String SCRIPT_BASE = "conf/scripts";
+  private static final String TASKS_CONFIG_XML = "conf/TaskInstaller.xml"; //$NON-NLS-1$
+  private static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
   
   private File scriptDir;
 
@@ -47,15 +47,15 @@ public class TaskInstaller {
       
       DocumentBuilder dombuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
       Document dom = dombuilder.parse(file);
-      NodeList list = dom.getElementsByTagName("task");
+      NodeList list = dom.getElementsByTagName("task"); //$NON-NLS-1$
       for(int i = 0; i < list.getLength(); i++) {
           Node node = list.item(i);
-          Node attr = node.getAttributes().getNamedItem("class");
+          Node attr = node.getAttributes().getNamedItem("class"); //$NON-NLS-1$
           if(attr != null) {
               String className = attr.getNodeValue();
               tasks.add((AbstractTask)Class.forName(className).newInstance());
           }
-          attr = node.getAttributes().getNamedItem("script");
+          attr = node.getAttributes().getNamedItem("script"); //$NON-NLS-1$
           if(attr != null) {
               String scriptName = attr.getNodeValue();
               tasks.add(getScriptTask(scriptName));
@@ -68,7 +68,7 @@ public class TaskInstaller {
   private ScriptTask getScriptTask(String name){
       File script = new File(scriptDir, name);
       if(!script.exists())
-          throw new IPEDException("Script File not found: " + script.getAbsolutePath());
+          throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
       
       return new ScriptTask(script);
   }
