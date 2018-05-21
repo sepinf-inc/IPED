@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.14-snapshot</version>
+    <version>3.14</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -152,17 +152,17 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>3.14-snapshot</version>
+            <version>3.14</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-viewer</artifactId>
-            <version>3.14-snapshot</version>
+            <version>3.14</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.14-snapshot</version>
+            <version>3.14</version>
         </dependency>
         <!--dependency>
   			<groupId>org.apache.pdfbox</groupId>
