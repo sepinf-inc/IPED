@@ -1,49 +1,49 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-        <title>Departamento de Polícia Federal</title>
+        <title>IPED Help</title>
     </head>
     <body>
-        <p style=\"color:black;font-size:24px;\"><b>Ajuda</b></p>
-        <b>Busca por Palavras-chave:</b><br />
+        <p style=\"color:black;font-size:24px;\"><b>IPED Short Help</b></p>
+        <b>Search Syntax:</b><br />
         <br />
-        Para realizar buscas por palavras-chave, <b>execute a aplicação "IPED-SearchApp" na raiz da mídia óptica</b> ou, em um terminal, execute o comando "java -Xms512M -jar indexador/lib/iped-search-app.jar". É necessário possuir instalado o Java JRE, preferencialmente de 64bits, disponível em <a href="http://www.java.com">www.java.com</a>. Ao realizar a busca diretamente a partir do disco óptico, as buscas podem ficar lentas. Para torná-las mais rápidas, copie todo o conteúdo do CD/DVD para uma pasta local do computador, a partir da qual o relatório deve ser acessado.<br>
+        To open the analysis application, it is required to install Java JRE 8 or newer, a 64bits JRE is highly recommended, download from <a href="http://www.java.com">www.java.com</a>. If your case or report is stored in an optical disk, analysis can become slow. If so, copy the whole case to a local hard disk, from where the analysis application should be opened.<br>
         <br>
-        A busca por palavras-chave pesquisa termos no nome e em todo o conteúdo de arquivos textuais, como Word, Excel, PDF, Emails, Páginas de Internet, Chats, etc. Caso habilitada na geração do relatório, é utilizada tecnologia OCR (<i>Optical Character Recognition</i>) para pesquisa de texto em imagens. Entretanto, alguns resultados podem não ser encontrados, dependendo da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.<br>
+        The keyword search looks for terms in file name and contents of textual files, like Word, Excel, PDF, Emails, Internet pages, chats, so on. If enabled, OCR (<i>Optical Character Recognition</i>) technology is used to search for text in image files. However, some results may not be found in low quality or low resolution images, or if fonts are small or uncommon.<br>
         <br>
-        A busca por palavras-chave não diferencia maiúsculas e minúsculas. <b>Recomenda-se pesquisar com os acentos, para que as ocorrências sejam destacadas corretamente na "Pré-visualização"</b>. Não é recomendado pesquisar por expressões comuns ou pequenas, como <b>PF</b>. Abaixo são apresentados alguns exemplos de busca:
+        The keyword search does not differentiate letter capitalization or accents. <b>But it is recommended to include accents in searches, so keywords will be properly highlighted in "Preview" tab</b>. It is not recommended to search for common or very short keywords, like <b>OF</b>. Below are some search examples:
         <br>
         <ul>
-            <li>1. <b>suspeito</b><br/>Busca arquivos que contenham exatamente a palavra <b>suspeito</b>. Não serão encontrados arquivos com a palavra <b>suspeitos</b>.
+            <li>1. <b>suspect</b><br/>Search for files containing the exact term <b>suspect</b>. Files containing <b>suspects</b> will not be found.
                 <br><br /></li>
-            <li>2. <b>suspeit?</b><br/>Busca arquivos com palavras que iniciem com <b>suspeit</b> e tenham uma última letra qualquer, como <b>suspeito</b> e <b>suspeita</b>.
+            <li>2. <b>suspect?</b><br/>Search for files containing words starting with <b>suspect</b> plus any letter at the end, like <b>suspects</b>.
                 <br><br /></li>
-            <li>3. <b>suspei*</b><br/>Busca arquivos com palavras que iniciem com <b>suspei</b>, como <b>suspeito</b>, <b>suspeitas</b> e <b>suspeição</b>.
+            <li>3. <b>suspect*</b><br/>Search for files containing words starting with <b>suspect</b> with ou without a suffix, like <b>suspect</b>, <b>suspects</b> and <b>suspecting</b>.
                 <br><br /></li>
-            <li>4. <b>Sicrano~</b><br>Busca arquivos que contenham palavras iguais ou parecidas com <b>sicrano</b>, como <b>siclano</b>, <b>cicrano</b>, <b>ciclano</b> e <b>sicrana</b>. Apesar de lenta, seu uso é recomendado para pesquisar palavras em digitalizações.
+            <li>4. <b>Sicrano~</b><br>Search for files containing words equal or similar to <b>sicrano</b>, like <b>siclano</b>, <b>cicrano</b> and <b>ciclano</b>. It is slower, but its use is recommended to search for text in images (if OCR was enabled).
                 <br /><br /></li>
-            <li>5. <b>"Fulano Tal"</b><br>Busca arquivos que contenham a expressão <b>Fulano Tal</b>. Não é possível usar * ? ~ dentro da expressão.<br>
+            <li>5. <b>"Thomas Edson"</b><br>Search for the exact expression <b>Thomas Edson</b>. It is not possible to use * ? ~ between double quotes.<br>
                 <br /></li>
-            <li>6. <b>Fulano Tal</b><br>Busca arquivos que contenham quaisquer das palavras <b>Fulano</b> OU <b>Tal</b>.
+            <li>6. <b>Thomas Edson</b><br>Search for files containing any of the words <b>Thomas</b> or <b>Edson</b>. It is equal to searching for <b>Thomas OR Edson</b>
                 <br/><br /></li>
-            <li>7. <b>agência AND conta</b><br>Busca arquivos que contenham ambas as palavras <b>agência</b> E <b>conta</b>.
+            <li>7. <b>Thomas AND Edson</b><br>Search for both <b>Thomas</b> and <b>Edson</b>
                 <br><br /></li>
-            <li>8. <b>propina -pagamento</b><br>Busca arquivos que contenham <b>propina</b>, mas não contenham <b>pagamento</b>.
+            <li>8. <b>bribery -payment</b><br>Search for files containing <b>bribery</b> but with no references to <b>payment</b>. It is equal to searching for <b>bribery AND NOT payment</b>
                 <br /><br /></li>
-            <li>9. <b>(Fulano Beltrano) && pagamento</b><br>Busca arquivos que contenham <b>pagamento</b> E quaisquer das palavras <b>Fulano</b> OU <b>Beltrano</b>.
+            <li>9. <b>(Thomas Edson) && payment</b><br>Search for files containing <b>payment</b> AND any of <b>Thomas</b> OR <b>Edson</b>.
                 <br /><br /></li>
-            <li>10. <b>"Fulano Tal"~5</b><br>Busca arquivos que contenham a palavra <b>Tal</b> até 5 palavras da palavra <b>Fulano</b>.
+            <li>10. <b>"Thomas Edson"~5</b><br>Search for files containing <b>Thomas</b> at most 5 words of distance of <b>Edson</b>.
                 <br><br /></li>
-            <li>11. <b>nome:comprovante</b><br>Lista arquivos com a palavra <b>comprovante</b> no atributo <b>nome</b>.
-                <br>Podem ser utilizados todos os atributos listados no gerenciador de colunas visíveis, com exceção dos atributos "marcador" e "score".
+            <li>11. <b>name:receipt</b><br>Search for files containing <b>receipt</b> in its name property.
+                <br>All properties shown in the columns manager can be used, except for "bookmark" e "score" currently.
                 <br><br /></li>
-            <li>12. <b>tamanho:[5000 TO *]</b><br>Lista arquivos com tamanho maior que 5000 bytes, inclusive.
+            <li>12. <b>size:[5000 TO *]</b><br>Search for files with size greater than 5000 bytes, inclusive.
                 <br><br /></li>
-            <li>13. <b>modificacao:[2015.01.31 TO 2015.03.31.12.59.59]</b><br>Lista arquivos com data de modificação compreendida entre 0h de 31/01/2015 e 12:59:59 de 31/03/2015.
+            <li>13. <b>modified:[2015.01.31 TO 2015.03.31.12.59.59]</b><br>Search for files with modification date between 12:00am of 01/31/2015 and 12:59:59pm of 03/31/2015.
                 <br><br /></li>
-            <li>14. <b>/<0-17>y(r|o)/</b><br>Expressão regular delimitada por 2 barras. Busca termos indicativos de pornografia infantil. Funciona apenas intra-termos, isto é, não ultrapassa as bordas das palavras.
+            <li>14. <b>/<0-17>y(r|o)/</b><br>Search for regex, delimited by 2 forward slashes. It only works for indexed letters (alphanumeric by default).
                 <br><br /></li>
         </ul>
-        Para mais informações sobre a sintaxe de pesquisa consulte http://lucene.apache.org/core/4_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html.
+        For more information about search syntax, see http://lucene.apache.org/core/4_9_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html.
     </body>
 </html>
