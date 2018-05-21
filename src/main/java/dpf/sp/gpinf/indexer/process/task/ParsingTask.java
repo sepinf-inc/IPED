@@ -395,7 +395,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public boolean shouldParseEmbedded(Metadata subitemMeta) {
       
     //do not extract images from html generated previews
-    if(evidence != null && MetadataUtil.isHtmlSubType(evidence.getMediaType())) {
+    if(evidence != null && !MetadataUtil.isHtmlMediaType(evidence.getMediaType()) && MetadataUtil.isHtmlSubType(evidence.getMediaType())) {
         String type = subitemMeta == null ? null : subitemMeta.get(Metadata.CONTENT_TYPE);
         if(type != null && type.startsWith("image")) //$NON-NLS-1$
             return false;
