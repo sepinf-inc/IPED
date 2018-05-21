@@ -100,7 +100,7 @@ pdfToImgLib = icepdf
 
 # Performs the conversion of PDFs to image in another process, isolating OutOfMemoryErrors
 # and CPU usage by unfinished threads. More stable, but makes the OCR slower.
-externalPdfToImgConv = false
+externalPdfToImgConv = true
 
 # Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
 externalConvMaxMem = 512M
