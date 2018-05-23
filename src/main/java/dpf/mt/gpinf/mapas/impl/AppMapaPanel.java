@@ -14,9 +14,10 @@ import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
 import dpf.sp.gpinf.indexer.search.ItemId;
-
+import gpinf.dev.data.EvidenceFile;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.MapaModelUpdateListener;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
@@ -56,9 +57,17 @@ public class AppMapaPanel extends JPanel {
 					HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>(); 
 					for(int i = e.getFirstIndex(); i <= e.getLastIndex(); i++){
 						boolean selected = lsm.isSelectedIndex(i);
-						ItemId item = app.getResults().getItem(i);
-						String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
-			        	selecoes.put(gid, selected);
+						int rowModel = app.getResultsTable().convertRowIndexToModel(i);
+						ItemId item = app.getResults().getItem(rowModel);
+						EvidenceFile f = App.get().appCase.getItemByItemId(item);
+						
+						//se o item for georeferenciado
+						String lat = f.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + "GPS Latitude");
+						if(lat==null) lat = f.getMetadata().get("geo:lat");
+						if(lat!=null){
+							String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$
+				        	selecoes.put(gid, selected);
+						}
 					}
 					browserCanvas.enviaSelecoes(selecoes);
 					
