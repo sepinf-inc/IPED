@@ -226,3 +226,17 @@ GeoXmlIped.prototype.marca = function(mid, marcado) {
 		}		
 	}
 }
+
+/* função para seleção programática de item no mapa */
+GeoXmlIped.prototype.centralizaSelecao = function() {
+	sumlat = 0;
+	sumlong = 0;
+	var m = this.overlayman.markers[0];
+	for (i = 0; i <this.overlayman.markers.length; i++) {
+		if(this.overlayman.markers[i].extendedData.selected == 'true'){
+			m = this.overlayman.markers[i];
+			break;
+		}
+	}
+	m.geoxml.map.panTo(m.getPosition());
+}

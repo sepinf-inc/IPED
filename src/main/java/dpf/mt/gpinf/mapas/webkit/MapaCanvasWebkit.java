@@ -152,13 +152,20 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
 			Platform.runLater(new Runnable() {
 				public void run() {
+					boolean marcadorselecionado = false; 
 					for(int i = 0; i<marks.length; i++){
 						Boolean b = selecoesAfazerCopy.get(marks[i]);
+						if(b){
+							marcadorselecionado=true;
+						}
 						try{
 							webEngine.executeScript("gxml.seleciona(\""+marks[i]+"\",'"+b+"');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						}catch(Exception e){
 							e.printStackTrace();
 						}
+					}
+					if(marcadorselecionado){
+						webEngine.executeScript("gxml.centralizaSelecao();");
 					}
 				}
 			});
