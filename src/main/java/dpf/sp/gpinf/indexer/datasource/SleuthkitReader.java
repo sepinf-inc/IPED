@@ -112,6 +112,8 @@ public class SleuthkitReader extends DataSourceReader {
 
   public boolean isSupported(File file) {
     isISO9660 = false;
+    if(file.isDirectory())
+        return false;
     String name = file.getName().toLowerCase();
     return name.endsWith(".000") //$NON-NLS-1$
         || name.endsWith(".001") //$NON-NLS-1$
