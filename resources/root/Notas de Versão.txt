@@ -1,4 +1,4 @@
-21/05/2018: IPED-3.14-beta
+25/05/2018: IPED-3.14-beta
 - Suporte inicial aos relatórios XML do UFED Physical Analyser (importação de itens, categorias e metadados)
 - Internacionalização e suporte inicial ao idioma inglês
 - Destaque de painéis da interface via DockingFrames (PCF Pfeifer)
@@ -9,6 +9,7 @@
 - Novo visualizador de propriedades e metadados
 - Geração de relatórios a partir da interface de análise
 - Opção para gerenciamento automático de colunas visíveis (útil p/ celulares)
+- Centralização no mapa de item georreferenciado selecionado na tabela (PCF Patrick)
 - Melhor configuração de parâmetros da linha de comando (PCF Átila)
 - Marcadores automáticos p/ itens enviados via chats interpretados pelo PA
 - Integra perfil triage para uso em locais de busca por documentos
@@ -39,6 +40,7 @@ Correções:
 - Classificação correta de vídeos MTS
 - Corrige abertura de HTMLs gigantes externamente
 - NullPointer ao desabilitar certas opções do processamento
+- Corrige erro ao processar pastas com nomes terminados com extensões de imagens (000, 001, dd, etc)
 
 02/02/2018: IPED-3.13.5
 - Detecção de itens 7zip cifrados que omitem nomes dos subitens
