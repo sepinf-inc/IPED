@@ -35,6 +35,7 @@ import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -145,7 +146,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private JComboBox<Object> combo;
 	private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
 	
-	private boolean autoManageCols = false;
+	private boolean autoManageCols = Configuration.autoManageCols;
 	
 	public static ColumnsManager getInstance(){
 		if(instance == null)
@@ -214,6 +215,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		combo = new JComboBox<Object>(groupNames);
 		combo.setAlignmentX(0);
 		
+		autoManage.setSelected(autoManageCols);
 		autoManage.setAlignmentX(0);
 		autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		autoManage.addActionListener(this);
@@ -287,6 +289,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	public void updateDinamicCols() {
 	    if(!autoManageCols)
+	        return;
+	    
+	    if(App.get().ipedResult.getLength() == App.get().appCase.getTotalItens())
 	        return;
 	    
 	    final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);

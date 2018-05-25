@@ -89,6 +89,7 @@ public class Configuration {
   public static File tskJarFile;
   public static String loaddbPathWin;
   public static Locale locale = Locale.getDefault();
+  public static boolean autoManageCols = true;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -454,6 +455,11 @@ public class Configuration {
     value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         phoneParsersToUse = value.trim();
+    }
+    
+    value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        autoManageCols = Boolean.valueOf(value.trim());
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$

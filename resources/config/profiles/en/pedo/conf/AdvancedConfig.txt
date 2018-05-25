@@ -125,3 +125,6 @@ maxBackups = 10
 
 # Intervalo (em segundos) entre a realização dos backups
 backupInterval = 60
+
+# Automatically manage visible columns
+autoManageCols = true
