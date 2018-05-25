@@ -631,6 +631,7 @@ public class UfedXmlReader extends DataSourceReader{
                     }
                 }else
                     try {
+                        caseData.incDiscoveredVolume(item.getLength());
                         caseData.addEvidenceFile(item);
                         
                     } catch (InterruptedException e) {
