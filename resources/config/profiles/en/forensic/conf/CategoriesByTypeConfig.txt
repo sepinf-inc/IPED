@@ -116,3 +116,7 @@ User Dictionaries = application/x-ufed-html-userdict; application/x-ufed-diction
 IP Connections = application/x-ufed-html-ips; application/x-ufed-ipconnection
 
 Recordings = application/x-ufed-html-recordings; application/x-ufed-recording
+
+Mobile Cards = application/x-ufed-mobilecard
+
+Application Usage = application/x-ufed-applicationusage

@@ -117,3 +117,7 @@ Dicionário do usuário = application/x-ufed-html-userdict; application/x-ufed-d
 Conexões IP = application/x-ufed-html-ips; application/x-ufed-ipconnection
 
 Gravações = application/x-ufed-html-recordings; application/x-ufed-recording
+
+Cartões Móveis = application/x-ufed-mobilecard
+
+Uso de Aplicativos = application/x-ufed-applicationusage
