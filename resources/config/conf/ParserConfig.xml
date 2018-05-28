@@ -20,7 +20,8 @@
 <properties>
 
     <parsers>
-
+		<!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
+		
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
@@ -108,14 +109,7 @@
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
-            <mime>image/jpeg</mime>
-            <mime>image/png</mime>
-            <mime>image/tiff</mime>
-            <mime>image/bmp</mime>
-            <mime>image/jp2</mime>
-            <mime>image/jpx</mime>
-            <mime>image/x-portable-pixmap</mime>
-            <!--<mime>image/gif</mime>-->	
+            <mime-exclude>image/gif</mime-exclude>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>

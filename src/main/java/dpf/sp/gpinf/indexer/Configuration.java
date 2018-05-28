@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
@@ -59,6 +60,7 @@ public class Configuration {
   public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
   public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
   public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
+  public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
   public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
 
   public static UTF8Properties properties = new UTF8Properties();
@@ -122,6 +124,7 @@ public class Configuration {
     appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
     System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
     properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$

@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -244,10 +245,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
     Parser parser = getLeafParser(autoParser, evidence);
     
-    AtomicLong time = times.get(parser.getClass().getSimpleName());
+    AtomicLong time = times.get(getParserName(parser));
     if(time == null){
     	time = new AtomicLong();
-    	times.put(parser.getClass().getSimpleName(), time);
+    	times.put(getParserName(parser), time);
     }
     long start = System.nanoTime()/1000;
     
@@ -263,6 +264,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       
     }
     
+  }
+  
+  private String getParserName(Parser parser) {
+      if(parser instanceof ExternalParser)
+          return ((ExternalParser)parser).getParserName();
+      else
+          return parser.getClass().getSimpleName();
   }
   
   private static Parser getLeafParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
