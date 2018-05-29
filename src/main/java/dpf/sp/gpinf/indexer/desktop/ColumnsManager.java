@@ -291,7 +291,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    if(!autoManageCols)
 	        return;
 	    
-	    if(App.get().ipedResult.getLength() == App.get().appCase.getTotalItens())
+	    if(App.get().ipedResult.getLength() == App.get().appCase.getTotalItens() || App.get().ipedResult.getLength() == 0)
 	        return;
 	    
 	    final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
