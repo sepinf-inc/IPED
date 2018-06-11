@@ -70,6 +70,7 @@ public class IPEDReader extends DataSourceReader {
   
   IPEDSource ipedCase;
   HashSet<Integer> selectedLabels;
+  boolean extractCheckedItems = false;
   Marcadores state;
   File indexDir;
   String basePath;
@@ -130,8 +131,10 @@ public class IPEDReader extends DataSourceReader {
 	    
 	    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
 	    LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
-	    if(result.getLength() == 0)
+	    if(result.getLength() == 0) {
 	        result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
+	        extractCheckedItems = true;
+	    }
 
 	    insertIntoProcessQueue(result, false);
 
@@ -302,12 +305,17 @@ public class IPEDReader extends DataSourceReader {
       evidence.setId(newId); 
 
       if (!treeNode) {
-        for (int labelId : state.getLabelIds(id)) {
-          selectedLabels.add(labelId);
-        }
+          if(extractCheckedItems) {
+              selectedLabels.addAll(state.getLabelIds(id));
+              evidence.setLabels(state.getLabelList(id));
+          }else
+              for (int labelId : state.getLabelIds(id)) {
+                  if(state.isInReport(labelId)) {
+                      selectedLabels.add(labelId);
+                      evidence.getLabels().add(state.getLabelName(labelId));
+                  }
+              }
       }
-
-      evidence.setLabels(state.getLabelList(id));
 
       value = doc.get(IndexItem.PARENTID);
       if (value != null) {
