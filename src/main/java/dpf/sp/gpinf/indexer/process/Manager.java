@@ -593,6 +593,7 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/pffexport"), new File(output, "tools/pffexport")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tesseract"), new File(output, "tools/tesseract")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tsk"), new File(output, "tools/tsk")); //$NON-NLS-1$ //$NON-NLS-2$
       if (Configuration.embutirLibreOffice) {
         IOUtil.copiaArquivo(new File(Configuration.appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip")); //$NON-NLS-1$ //$NON-NLS-2$
