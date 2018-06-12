@@ -620,8 +620,10 @@ public class UfedXmlReader extends DataSourceReader{
                         
                     }else if("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
-                        if(avatarPath != null)
+                        if(avatarPath != null) {
+                            avatarPath = normalizeSlash(avatarPath);
                             parentItem.getMetadata().add(AVATAR_PATH_META, new File(root, avatarPath).getAbsolutePath());
+                        }
                     }else if("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for(String meta : item.getMetadata().names()) {
                             String[] vals = item.getMetadata().getValues(meta);
