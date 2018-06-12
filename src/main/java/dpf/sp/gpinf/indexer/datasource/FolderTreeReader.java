@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.UserPrincipal;
 import java.util.Date;
 import java.util.LinkedList;
 
@@ -111,7 +112,9 @@ public class FolderTreeReader extends DataSourceReader {
       
       if (args.isAddowner())
 	      try {
-	    	evidenceFile.setExtraAttribute(FS_OWNER, Files.getOwner(path));
+	        UserPrincipal owner = Files.getOwner(path);
+	        if(owner != null)
+	            evidenceFile.setExtraAttribute(FS_OWNER, owner.toString());
 	    	
 		  } catch (IOException e) {
 			e.printStackTrace();
