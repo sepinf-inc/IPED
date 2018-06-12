@@ -580,7 +580,8 @@ public class ColumnsManager implements ActionListener, Serializable{
             colState.visibleFields.remove(colName);
             modelIdx += ResultTableModel.fixedCols.length;
             int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
-            App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
+            if(viewIdx > -1)
+                App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
         }
 	}
 	
