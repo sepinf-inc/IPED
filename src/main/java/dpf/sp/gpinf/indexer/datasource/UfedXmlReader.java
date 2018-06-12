@@ -443,7 +443,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setCategory(chars.toString());
                     
                 } else if("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    File file = new File(root, chars.toString());
+                    File file = new File(root, normalizeSlash(chars.toString()));
                     String relativePath = Util.getRelativePath(output, file);
                     item.setExportedFile(relativePath);
                     item.setFile(file);
@@ -658,7 +658,7 @@ public class UfedXmlReader extends DataSourceReader{
             item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {
-                File file = new File(root, extracted_path);
+                File file = new File(root, normalizeSlash(extracted_path));
                 if(file.exists()) {
                     String relativePath = Util.getRelativePath(output, file);
                     item.setExportedFile(relativePath);
@@ -674,6 +674,10 @@ public class UfedXmlReader extends DataSourceReader{
                 }catch(NumberFormatException e) {
                     //ignore
                 }
+        }
+        
+        private String normalizeSlash(String path) {
+            return path.replace('\\', '/');
         }
         
         private File createEmailPreview(EvidenceFile email) {
