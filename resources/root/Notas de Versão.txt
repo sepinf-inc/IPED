@@ -1,3 +1,15 @@
+12/06/2018: IPED-3.14.2
+Correções:
+- Remoção de DLL que provocava erro de linkagem no Windows 7
+- Eventual inserção de miniatura errada em chats do Skype (3.12)
+- Resultado vazio de um filtro provocava remoção de todas as colunas
+- Erro ao gerar relatório via interface em casos com OCR
+- Inserção de marcadores não selecionados no relatório de itens com vários marcadores
+- Erro ao processar relatórios XML do UFED no Linux devido a barras invertidas no XML
+- Erro ClassNotFound ao processar pastas com --addowner
+- Corrige ArrayIndexOutOfBounds no gerenciador automático de colunas
+- Comenta regex p/ IBAN e restringe regex p/ SWIFT
+
 28/05/2018: IPED-3.14.1-beta
 - Configuração de parsers externos em conf/ExternalParsers.xml (ex: ffmpeg, exiftool, etc)
 - Divisão do visualizador de metadados em abas
