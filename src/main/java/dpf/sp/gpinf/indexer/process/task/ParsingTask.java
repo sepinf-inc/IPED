@@ -64,6 +64,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
@@ -507,11 +508,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       }
 
       subItem.setParent(parent);
+      
+      //sometimes do not work, because parent may be already processed and 
+      //stored in database/index so setting it later has no effect
       parent.setHasChildren(true);
+      
+      //parsers should set this property to let created items be displayed in file tree
+      if (metadata.get(BasicProps.HASCHILD) != null) {
+          metadata.remove(BasicProps.HASCHILD);
+          subItem.setHasChildren(true);
+      }
+      
       if (metadata.get(OutlookPSTParser.HAS_ATTACHS) != null)
           subItem.setHasChildren(true);
       
-      //indica se o conteiner tem subitens
+      //indica se o conteiner tem subitens (mais específico que filhos genéricos)
       evidence.setExtraAttribute(HAS_SUBITEM, "true"); //$NON-NLS-1$
 
       if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
