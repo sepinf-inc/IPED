@@ -679,7 +679,7 @@ public class UfedXmlReader extends DataSourceReader{
         }
         
         private String normalizeSlash(String path) {
-            return path.replace('\\', '/');
+            return path.replace('\\', '/').trim();
         }
         
         private File createEmailPreview(EvidenceFile email) {
