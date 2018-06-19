@@ -443,7 +443,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setCategory(chars.toString());
                     
                 } else if("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    File file = new File(root, normalizeSlash(chars.toString()));
+                    File file = new File(root, normalizePaths(chars.toString()));
                     String relativePath = Util.getRelativePath(output, file);
                     item.setExportedFile(relativePath);
                     item.setFile(file);
@@ -621,7 +621,7 @@ public class UfedXmlReader extends DataSourceReader{
                     }else if("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
                         if(avatarPath != null) {
-                            avatarPath = normalizeSlash(avatarPath);
+                            avatarPath = normalizePaths(avatarPath);
                             parentItem.getMetadata().add(AVATAR_PATH_META, new File(root, avatarPath).getAbsolutePath());
                         }
                     }else if("StreetAddress".equals(type)) { //$NON-NLS-1$
@@ -660,7 +660,7 @@ public class UfedXmlReader extends DataSourceReader{
             item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
             if(extracted_path != null) {
-                File file = new File(root, normalizeSlash(extracted_path));
+                File file = new File(root, normalizePaths(extracted_path));
                 if(file.exists()) {
                     String relativePath = Util.getRelativePath(output, file);
                     item.setExportedFile(relativePath);
@@ -678,8 +678,18 @@ public class UfedXmlReader extends DataSourceReader{
                 }
         }
         
-        private String normalizeSlash(String path) {
-            return path.replace('\\', '/').trim();
+        private String normalizePaths(String path) {
+            path = path.replace('\\', '/');
+            //workaround for ufed paths with spaces as prefixes
+            String[] frags = path.split("/");
+            StringBuilder sb = new StringBuilder();
+            int i = 0;
+            for(String frag : frags) {
+                sb.append(frag.trim());
+                if(++i < frags.length)
+                    sb.append("/");
+            }
+            return sb.toString();
         }
         
         private File createEmailPreview(EvidenceFile email) {
