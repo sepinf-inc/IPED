@@ -74,7 +74,7 @@ function finish(){
 function process(item){
 	//Ignore item example
 	/*
-	if(item.getExt().equals("dll")
+	if(item.getExt().equals("dll"))
 	    item.setToIgnore(true);
 	*/
 	
