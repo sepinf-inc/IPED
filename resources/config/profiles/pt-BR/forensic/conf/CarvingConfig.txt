@@ -32,7 +32,7 @@ typesToNotProcess = application/vnd.apple.keynote; application/x-corelpresentati
 
 # Descarta arquivos recuperados corrompidos. Tais arquivos tb podem ser filtrados posteriormente,
 # pois recebem o metadado "ParserException: true"
-ignoreCorrupted = true
+ignoreCorrupted = false
 
 
 # Definições de assinatura para carving, uma por linha, com os atributos separados por vírgula, abaixo descritos:

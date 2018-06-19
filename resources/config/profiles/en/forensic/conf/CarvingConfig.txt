@@ -32,7 +32,7 @@ typesToNotProcess = application/vnd.apple.keynote; application/x-corelpresentati
 
 # Discards corrupted recovered files. Such files can also be filtered after processing
 # because they receive the metadata "ParserException: true" 
-ignoreCorrupted = true
+ignoreCorrupted = false
 
 
 # Signature definitions for carving, one per line, with comma-separated attributes described below:
