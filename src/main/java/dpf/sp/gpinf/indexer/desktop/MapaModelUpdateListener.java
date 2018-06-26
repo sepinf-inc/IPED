@@ -26,12 +26,11 @@ public class MapaModelUpdateListener implements TableModelListener {
 	public void tableChanged(TableModelEvent e) {
 		if(e.getColumn()==1){//se o evento foi disparado pelo check box que fica na coluna 1
 		    MapaModelUpdateListener.updatingSelection = true;
-			ItemId item = app.getResults().getItem(e.getFirstRow());
-			String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-			
-			Boolean b = (Boolean) app.resultsModel.getValueAt(e.getFirstRow(), e.getColumn());
-			
-			app.getBrowserPane().selecionaMarcador(gid, !b.booleanValue());			
+		    ItemId item = app.getResults().getItem(e.getFirstRow());
+            
+            Boolean b = (Boolean) app.resultsModel.getValueAt(e.getFirstRow(), e.getColumn());
+            
+            app.getBrowserPane().selecionaMarcador(item, !b.booleanValue());
 		}
 		
 		/* Se a alteração foi feita no próprio mapa, ela não precisa ser refeita. */

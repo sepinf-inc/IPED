@@ -169,8 +169,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   @Override
   public void setValueAt(Object value, int row, int col) {
 
-	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);	
-   	App.get().resultsModel.fireTableCellUpdated(row, col);
+    app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);   
+    App.get().resultsModel.fireTableCellUpdated(row, col);
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();
@@ -202,6 +202,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     
 	if (col == 0)
 		return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+	
+	if (col == 1)
+	    return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
 	      
 	String value = ""; //$NON-NLS-1$
 	
@@ -217,12 +220,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 		}
     }
     lastDocRead = docId;
-      
-    if (col == 1) {
-      return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
-      
-    } else {
-      try {
+    
+    try {
         int fCol = col - fixedCols.length;
         String field = fields[fCol];
 
@@ -287,10 +286,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
           }
         }
 
-      } catch (Exception e) {
+    } catch (Exception e) {
         e.printStackTrace();
         return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$
-      }
     }
 
     return value;

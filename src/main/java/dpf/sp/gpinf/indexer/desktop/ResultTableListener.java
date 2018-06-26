@@ -192,10 +192,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
       }
 
       MarcadoresController.get().setMultiSetting(true);
+      App.get().resultsTable.setUpdateSelectionOnSort(false);
       int[] selectedRows = App.get().resultsTable.getSelectedRows();
       for (int i = 0; i < selectedRows.length; i++) {
-    	  if(i == selectedRows.length - 1)
+    	  if(i == selectedRows.length - 1) {
     		  MarcadoresController.get().setMultiSetting(false);
+    		  App.get().resultsTable.setUpdateSelectionOnSort(true);
+    	  }
     	  App.get().resultsTable.setValueAt(value, selectedRows[i], col);
       }
 

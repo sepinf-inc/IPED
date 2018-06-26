@@ -30,8 +30,20 @@ import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
 public class KMLResult {
-	  static FileDialog fDialog;
-	  public static void saveKML(){
+	  
+      private static FileDialog fDialog;
+	  
+	  private HashSet<ItemId> gpsItems = new HashSet<ItemId>();
+	  private String kmlResult;
+	  
+	  public KMLResult() {
+	  }
+	  
+	  public HashSet<ItemId> getGPSItems() {
+	      return gpsItems;
+	  }
+	  
+	  public void saveKML(){
 		  if(fDialog==null)	 fDialog = new FileDialog(App.get(), Messages.getString("KMLResult.Save"), FileDialog.SAVE); //$NON-NLS-1$
 	      fDialog.setVisible(true);
 	      String path = fDialog.getDirectory() + fDialog.getFile();
@@ -42,7 +54,7 @@ public class KMLResult {
 	    	  w = new FileWriter(f);
 	    	  String[] cols = ColumnsManager.getInstance().getLoadedCols();
 	    	  cols = (String[]) ArrayUtils.subarray(cols, 2, cols.length);
-	    	  w.write(getResultsKML(App.get(), cols, false));
+	    	  w.write(getResultsKML(cols, false));
 		      w.close();
 		      f=null;
 	      } catch (IOException e) {
@@ -51,11 +63,16 @@ public class KMLResult {
 	      }
 	  }
 	
-	  public static String getResultsKML(App app) throws IOException{
-		  return getResultsKML(app, new String[]{IndexItem.ID}, true);
+	  public String getResultsKML() throws IOException{
+	      if(kmlResult == null)
+	          kmlResult = getResultsKML(new String[]{IndexItem.ID}, true);
+	      
+		  return kmlResult;
 	  }
 	  
-	  public static String getResultsKML(App app, String[] colunas, boolean showProgress) throws IOException{
+	  private String getResultsKML(String[] colunas, boolean showProgress) throws IOException{
+	      
+	      App app = App.get();
 		  
 		  ProgressDialog progress = null;
 		  if(showProgress)
@@ -80,7 +97,7 @@ public class KMLResult {
 		  
 	  }
 	  
-	  static class GetResultsKML extends dpf.sp.gpinf.indexer.util.CancelableWorker<String, Integer>{
+	  class GetResultsKML extends dpf.sp.gpinf.indexer.util.CancelableWorker<String, Integer>{
 		  
 		  App app;
 		  String[] colunas;
@@ -149,7 +166,7 @@ public class KMLResult {
 			  IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
 			  MultiSearchResult multiResult = searcher.multiSearch();
 			  
-			  HashSet<ItemId> gpsItems = new HashSet<ItemId>();
+			  gpsItems = new HashSet<ItemId>();
 			  for(ItemId item : multiResult.getIterator())
 				  gpsItems.add(item);
 

@@ -27,6 +27,7 @@ public class AppMapaPanel extends JPanel {
 	AbstractMapaCanvas browserCanvas;
 	final App app;
     boolean mapaDesatualizado = true; //variável para registrar se os dados a serem apresentados pelo mapa precisa renderização 
+    KMLResult kmlResult;
 	
 	public AppMapaPanel(App app){
 		this.app = app;
@@ -39,7 +40,8 @@ public class AppMapaPanel extends JPanel {
 	    browserCanvas = new MapaCanvasWebkit();
 	    browserCanvas.addSaveKmlFunction(new Runnable() {
 			public void run() {
-				KMLResult.saveKML();
+				KMLResult kml = new KMLResult();
+				kml.saveKML();
 			}
 		});
 	    browserCanvas.setMapSelectionListener(new AppMapaSelectionListener());
@@ -102,7 +104,8 @@ public class AppMapaPanel extends JPanel {
 
 			    String kml = ""; //$NON-NLS-1$
 			    try {
-			    	kml = KMLResult.getResultsKML(app);
+			        kmlResult = new KMLResult();
+			    	kml = kmlResult.getResultsKML();
 			    	browserCanvas.setKML(kml);
 				} catch (IOException e1) {
 					e1.printStackTrace();
@@ -127,8 +130,12 @@ public class AppMapaPanel extends JPanel {
 		this.mapaDesatualizado = mapaDesatualizado;
 	}
 	
-	public void selecionaMarcador(String mid, boolean b){
-		browserCanvas.selecionaMarcador(mid, b);
+	public void selecionaMarcador(ItemId item, boolean b){
+	    
+	    if(kmlResult != null && kmlResult.getGPSItems().contains(item)) {
+	        String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+	        browserCanvas.selecionaMarcador(gid, b);
+	    }
 	}
 
 }
