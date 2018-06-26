@@ -62,15 +62,10 @@ public class AppMapaPanel extends JPanel {
 
 						int rowModel = app.getResultsTable().convertRowIndexToModel(i);
 						ItemId item = app.getResults().getItem(rowModel);
-						EvidenceFile f = App.get().appCase.getItemByItemId(item);
 						
-						//se o item for georeferenciado
-						String lat = f.getMetadata().get(ExtraProperties.IMAGE_META_PREFIX + "geo:lat"); //$NON-NLS-1$
-						if(lat == null)
-		                      lat = f.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Latitude"); //$NON-NLS-1$
-						if(lat != null){
-							String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-				        	selecoes.put(gid, selected);
+						if(kmlResult != null && kmlResult.getGPSItems().contains(item)) {
+						    String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                            selecoes.put(gid, selected);
 						}
 					}
 					browserCanvas.enviaSelecoes(selecoes);
