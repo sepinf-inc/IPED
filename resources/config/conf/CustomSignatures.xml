@@ -665,6 +665,7 @@
     	<magic priority="65">
     		<match value="energyevents" type="string" offset="97"/>
     		<match value="powerevents" type="string" offset="97"/>
+    		<match value="poweringevents" type="string" offset="97"/>
             <match value="eventoscomenergia" type="string" offset="97"/>
         </magic>
     </mime-type>
