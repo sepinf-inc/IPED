@@ -253,7 +253,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     long start = System.nanoTime()/1000;
     
-    if (!evidence.isTimedOut() && ((evidence.getLength() == null || 
+    if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
     		isSpecificParser(parser) )) {
         try{
