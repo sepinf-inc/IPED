@@ -1,3 +1,10 @@
+xx/06/2018: IPED-3.14.3
+- Desliga descarte de itens carveados corrompidos nos profiles forensic e pedo
+Correções:
+- Grande lentidão no profile triage em itens com parser desabilitado
+- Travamento da interface ao selecionar ou marcar grande quantidade de itens na tabela
+- Workaround p/ bug eventual nos caminhos dos itens no XML do UFED
+
 12/06/2018: IPED-3.14.2
 Correções:
 - Remoção de DLL que provocava erro de linkagem no Windows 7
