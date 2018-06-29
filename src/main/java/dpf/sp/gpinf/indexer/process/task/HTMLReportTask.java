@@ -674,7 +674,7 @@ public class HTMLReportTask extends AbstractTask {
       (threads[i] = new Thread() {
         public void run() {
           DateFormat dateFormat = new SimpleDateFormat(Messages.getString("HTMLReportTask.Dateformat")); //$NON-NLS-1$
-          NumberFormat longFormat = new DecimalFormat("\\#,\\#\\#0"); //$NON-NLS-1$
+          NumberFormat longFormat = new DecimalFormat("#,##0"); //$NON-NLS-1$
           for (int page = 1; page <= numPages; page++) {
             if (page % numThreads != idx) continue;
             int start = (page - 1) * itemsPerPage;
