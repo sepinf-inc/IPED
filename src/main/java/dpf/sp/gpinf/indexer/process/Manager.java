@@ -588,6 +588,7 @@ public class Manager {
 
     if (!IndexFiles.getInstance().appendIndex) {
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/imagemagick"), new File(output, "tools/imagemagick")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport")); //$NON-NLS-1$ //$NON-NLS-2$

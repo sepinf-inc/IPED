@@ -213,6 +213,25 @@
                         </goals>
                     </execution>                                        
                     <execution>
+                        <id>unpack-jre</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>java</groupId>
+                                    <artifactId>jre</artifactId>
+                                    <version>1.8.0_152</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-esedbexport</id>
                         <phase>package</phase>
                         <goals>
