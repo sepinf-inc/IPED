@@ -334,10 +334,13 @@ public class ExportFileTree extends CancelableWorker {
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
     try {
       JFileChooser fileChooser = new JFileChooser();
+      File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+      fileChooser.setCurrentDirectory(moduleDir.getParentFile());
       fileChooser.setFileFilter(null);
-      if(toZip)
+      if(toZip) {
           fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-      else
+          fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
+      }else
           fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
       
       if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {

@@ -219,6 +219,7 @@ public class MenuListener implements ActionListener {
         
         fileChooser.setFileFilter(defaultFilter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
           File file = fileChooser.getSelectedFile();
           (new ExportFilesToZip(file, uniqueSelectedIds)).execute();
