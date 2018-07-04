@@ -49,8 +49,12 @@ import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
+import dpf.sp.gpinf.indexer.process.task.KFFTask;
+import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -95,8 +99,12 @@ public class IPEDReader extends DataSourceReader {
     caseData.setIpedReport(true);
 
     // Configuração para não expandir containers
-    ParsingTask.expandContainers = false;
-    CarveTask.enableCarving = false;
+    ParsingTask.setExpandContainers(false);
+    CarveTask.setEnabled(false);
+    KFFCarveTask.setEnabled(false);
+    KFFTask.setEnabled(false);
+    LedKFFTask.setEnabled(false);
+    DIETask.setEnabled(false);
     
     deviceName = getEvidenceName(file);
 

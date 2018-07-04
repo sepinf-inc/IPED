@@ -45,6 +45,10 @@ public class LedKFFTask extends AbstractTask {
   private static final int idxName = 6;
   private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
   private static boolean taskEnabled = false;
+  
+  public static void setEnabled(boolean enabled) {
+      taskEnabled = enabled;
+  }
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {

@@ -101,7 +101,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
   public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
 
-  public static boolean expandContainers = false;
+  private static boolean expandContainers = false;
   private static boolean enableFileParsing = true;
 
   // Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
@@ -134,6 +134,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   @Override
   public boolean isEnabled() {
     return enableFileParsing;
+  }
+  
+  public static void setExpandContainers(boolean enabled) {
+      expandContainers = enabled;
   }
 
   public ParsingTask() {

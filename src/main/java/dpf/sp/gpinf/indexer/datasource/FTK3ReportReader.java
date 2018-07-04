@@ -58,8 +58,8 @@ public class FTK3ReportReader extends DataSourceReader {
   public int read(File report) throws Exception {
 
 	// Configuração para não expandir containers
-	ParsingTask.expandContainers = false;
-	CarveTask.enableCarving = false;
+	ParsingTask.setExpandContainers(false);
+	CarveTask.setEnabled(false);
 	  
     caseData.setContainsReport(true);
     wasExecuted = true;

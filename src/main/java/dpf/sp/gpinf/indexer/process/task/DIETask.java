@@ -111,6 +111,10 @@ public class DIETask extends AbstractTask {
     return taskEnabled;
   }
   
+  public static void setEnabled(boolean enabled) {
+      taskEnabled = enabled;
+  }
+  
   /**
    * Inicializa a tarefa de detecção de nudez.
    */

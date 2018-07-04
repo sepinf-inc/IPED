@@ -59,10 +59,14 @@ public class KFFTask extends AbstractTask {
   private static Map<Integer, String[]> products;
   private static Set<String> alertProducts;
   private static DB db;
-
-  private boolean taskEnabled = false;
+  private static boolean taskEnabled = false;
+  
   private boolean excludeKffIgnorable = true;
   private boolean md5 = true;
+  
+  public static void setEnabled(boolean enabled) {
+      taskEnabled = enabled;
+  }
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {

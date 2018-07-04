@@ -65,7 +65,7 @@ public class CarveTask extends BaseCarveTask {
 
   public static String CARVE_CONFIG = "CarvingConfig.txt"; //$NON-NLS-1$
   public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
-  public static boolean enableCarving = false;
+  private static boolean enableCarving = false;
 
   public static boolean ignoreCorrupted = true;
   private static int CLUSTER_SIZE = 1;
@@ -90,6 +90,10 @@ public class CarveTask extends BaseCarveTask {
   @Override
   public boolean isEnabled() {
     return enableCarving;
+  }
+  
+  public static void setEnabled(boolean enabled) {
+      enableCarving = enabled;
   }
   
   public Set<MediaType> getSupportedTypes(ParseContext context) {

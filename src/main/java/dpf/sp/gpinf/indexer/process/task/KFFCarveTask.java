@@ -77,6 +77,10 @@ public class KFFCarveTask extends BaseCarveTask {
   public boolean isEnabled() {
     return taskEnabled;
   }
+  
+  public static void setEnabled(boolean enabled) {
+      taskEnabled = enabled;
+  }
 
   /**
    * Inicializa tarefa.
