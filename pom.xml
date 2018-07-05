@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.14.2</version>
+    <version>3.14.3</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

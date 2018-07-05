@@ -1,9 +1,13 @@
-xx/06/2018: IPED-3.14.3
-- Desliga descarte de itens carveados corrompidos nos profiles forensic e pedo
+05/07/2018: IPED-3.14.3
+- Inclusão da JRE 1.8.0_152 x64
+- Desliga descarte de itens carveados com erro de parsing nos profiles forensic e pedo
+- Prioriza MetadataViewer apenas para itens de celulares sem viewer específico
+- Extrai datas extendidas (criação e acesso) de subitens de ZIP
 Correções:
-- Grande lentidão no profile triage em itens com parser desabilitado
-- Travamento da interface ao selecionar ou marcar grande quantidade de itens na tabela
-- Workaround p/ bug eventual nos caminhos dos itens no XML do UFED
+- Travamento da interface ao selecionar ou marcar grande quantidade de itens na tabela (3.14)
+- Erros de parsing em Known.met, Ares e Skype ao usar idioma inglês (3.14)
+- Grande lentidão no profile triage em itens com parser desabilitado (lia primeiros bytes de todos)
+- Datas de criação e acesso não eram armazenadas nos ZIPs com itens exportados
 
 12/06/2018: IPED-3.14.2
 Correções:
