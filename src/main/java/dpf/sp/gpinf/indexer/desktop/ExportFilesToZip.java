@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingWorker;
 
+import org.apache.commons.compress.archivers.zip.X000A_NTFS;
+import org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.slf4j.Logger;
@@ -89,15 +91,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         
         ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/" + dstName); //$NON-NLS-1$
         
-        if(e.getModDate() != null) {
-            entry.setTime(e.getModDate().getTime());
-            entry.setLastModifiedTime(FileTime.fromMillis(e.getModDate().getTime()));
-        }
-        if(e.getAccessDate() != null)
-            entry.setLastAccessTime(FileTime.fromMillis(e.getAccessDate().getTime()));
-        
-        if(e.getCreationDate() != null)
-            entry.setCreationTime(FileTime.fromMillis(e.getCreationDate().getTime()));
+        fillZipDates(entry, e);
         
         if(e.getLength() != null)
         	entry.setSize(e.getLength());
@@ -127,6 +121,39 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     zaos.close();
 
     return null;
+  }
+  
+  public static void fillZipDates(ZipArchiveEntry entry, EvidenceFile item) {
+      
+      X5455_ExtendedTimestamp extendedDates = new X5455_ExtendedTimestamp();
+      X000A_NTFS ntfsDates = new X000A_NTFS();
+      
+      if(item.getAccessDate() != null) {
+          entry.setLastAccessTime(FileTime.fromMillis(item.getAccessDate().getTime()));
+          //above do not work until compress-1.17, so set manually:
+          extendedDates.setAccessJavaTime(item.getAccessDate());
+          extendedDates.setFlags(X5455_ExtendedTimestamp.ACCESS_TIME_BIT);
+          ntfsDates.setAccessJavaTime(item.getAccessDate());
+      }
+      
+      if(item.getCreationDate() != null) {
+          entry.setCreationTime(FileTime.fromMillis(item.getCreationDate().getTime()));
+          //above do not work until compress-1.17, so set manually:
+          extendedDates.setCreateJavaTime(item.getCreationDate());
+          extendedDates.setFlags(X5455_ExtendedTimestamp.CREATE_TIME_BIT);
+          ntfsDates.setCreateJavaTime(item.getCreationDate());
+      }
+      
+      if(item.getModDate() != null) {
+          entry.setTime(item.getModDate().getTime());
+          entry.setLastModifiedTime(FileTime.fromMillis(item.getModDate().getTime()));
+          extendedDates.setModifyJavaTime(item.getModDate());
+          extendedDates.setFlags(X5455_ExtendedTimestamp.MODIFY_TIME_BIT);
+          ntfsDates.setModifyJavaTime(item.getModDate());
+      }
+      
+      entry.addExtraField(extendedDates);
+      entry.addExtraField(ntfsDates);
   }
   
   @Override
