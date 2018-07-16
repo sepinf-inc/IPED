@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -85,6 +86,10 @@ public class ScriptTask extends AbstractTask {
           engine.put("searcher", searcher); //$NON-NLS-1$
           
           inv.invokeFunction("finish"); //$NON-NLS-1$
+          
+      }finally {
+          //remove references to heavy objects
+          engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
       }
   }
 
