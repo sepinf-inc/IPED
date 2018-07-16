@@ -142,6 +142,9 @@ public class IPEDSource implements Closeable{
 		try {
 			Configuration.getConfiguration(moduleDir.getAbsolutePath());
 			
+			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+            isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
+			
 			File sleuthFile = new File(casePath,  SLEUTH_DB);
 			if (sleuthFile.exists()){
 			    if(SleuthkitReader.sleuthCase != null)
@@ -150,7 +153,9 @@ public class IPEDSource implements Closeable{
 			    else
 			        sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 			    
-				updateImagePathsToAbsolute(casePath, sleuthFile);
+			    if(!isReport)
+			        updateImagePathsToAbsolute(casePath, sleuthFile);
+			    
 				tskCaseList.add(sleuthCase);
 			}
 				
@@ -169,10 +174,6 @@ public class IPEDSource implements Closeable{
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids"); //$NON-NLS-1$
 			if (viewToRawFile.exists())
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
-			
-			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
-			isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
-			
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
 			if(textSizesFile.exists()) {
