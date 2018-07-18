@@ -647,6 +647,10 @@ public class UfedXmlReader extends DataSourceReader{
         }
         
         private void updateName(EvidenceFile item, String newName) {
+            //prevents error DocValuesField is too large
+            int maxNameSize = 4096;
+            if(newName.length() > maxNameSize)
+                newName = newName.substring(0, maxNameSize);
             item.setName(newName);
             item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
