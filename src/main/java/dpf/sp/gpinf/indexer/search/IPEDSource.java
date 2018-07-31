@@ -408,11 +408,11 @@ public class IPEDSource implements Closeable{
 	        List<String> paths = imgPaths.get(id);
 	        ArrayList<String> newPaths = new ArrayList<String>();
 	        for(String path : paths){
-	        	if(new File(path).exists()) {
+	        	if(new File(path).exists() && path.contains(File.separator)) {
 	        	    newPaths = null;
 	        		break;
 	        	}else{
-	        		String newPath = letter + path.substring(1);
+	        		String newPath = letter + ":\\" + path.substring(3);
 	        		if(new File(newPath).exists())
 	        			newPaths.add(newPath);	        				
 	        		else{
