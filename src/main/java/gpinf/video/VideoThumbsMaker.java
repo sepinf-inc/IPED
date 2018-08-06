@@ -94,7 +94,7 @@ public class VideoThumbsMaker {
     boolean fixed = false;
     File lnk = null;
     String videoStream = null;
-    for (int step = 0; step <= 1; step++) {
+    for (int step = 0; step < 1; step++) {
       ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
       if (firstCall) {
         firstCall = false;
@@ -102,7 +102,6 @@ public class VideoThumbsMaker {
       }
 
       String info = res.output;
-      //System.out.println(info);
       if (step == 0 && info != null && info.indexOf("File not found") >= 0 && !fixed) { //$NON-NLS-1$
         fixed = true;
         String shortName = getShortName(inOrg);
@@ -134,13 +133,8 @@ public class VideoThumbsMaker {
               break;
           }
       }
-
-      cmds.remove(2);
-      cmds.remove(1);
     }
     if (outs == null) {
-      //result.setFile(in);
-      //result.setSubTemp(subTmp);
       return result;
     }
     
@@ -200,13 +194,6 @@ public class VideoThumbsMaker {
 
     cmds.addAll(Arrays.asList(new String[]{"-vo", "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape, "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", String.valueOf(maxThumbs + 1), in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
-    System.err.println(inOrg.getName()+"\nFREQ="+frequency+"\nDURAT="+result.getVideoDuration()+
-            "\nIG="+ignoreWaitKeyFrame+
-            "\nVID="+videoStream+
-            "\nSCALED="+scaled+
-            "\nCMD="+cmds+
-            "\n");
-    
     for (int step = frequency > 1 ? 0 : 1; step <= 2; step++) {
       if (step == 1) {
         int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
@@ -225,7 +212,6 @@ public class VideoThumbsMaker {
         }
         cmds.add("-vf"); //$NON-NLS-1$
         cmds.add("framestep=" + frameStep); //$NON-NLS-1$
-        System.err.println(inOrg.getName()+"\nFRAMESTEP="+frameStep+"\n");
       }
       if (step == 2) {
         int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
