@@ -403,12 +403,16 @@ public class IPEDSource implements Closeable{
 	
 	private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
 		  char letter = casePath.getAbsolutePath().charAt(0);
+		  boolean isWindowsNetworkShare = casePath.getAbsolutePath().startsWith("\\\\"); 
 	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 	      for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
 	        ArrayList<String> newPaths = new ArrayList<String>();
 	        for(String path : paths){
-	        	if(new File(path).exists() && path.contains(File.separator)) {
+	            if (isWindowsNetworkShare && !path.startsWith("\\") && !path.startsWith("/") && path.length() > 1 && path.charAt(1) != ':') {
+	                String newPath = new File(casePath.getAbsolutePath() + path).getCanonicalPath();
+	                newPaths.add(newPath);
+	            } else if(new File(path).exists() && path.contains(File.separator)) {
 	        	    newPaths = null;
 	        		break;
 	        	}else{
