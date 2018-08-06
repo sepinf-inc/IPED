@@ -6,6 +6,8 @@ import java.awt.Rectangle;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -26,7 +28,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.index.AtomicReader;
@@ -63,7 +68,9 @@ public class ColumnsManager implements ActionListener, Serializable{
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155, 250, 2000);
     
     public static final String[] groupNames = {Messages.getString("ColumnsManager.Basic"), Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"),  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-                                                Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+                                                Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other"), Messages.getString("ColumnsManager.All")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+    
+    private static final String emptyFilter = Messages.getString("ColumnsManager.Filter");
     
     private static final File getGlobalColsFile() {
     	String name = "visibleCols"; //$NON-NLS-1$
@@ -145,6 +152,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private JPanel listPanel = new JPanel();
 	private JComboBox<Object> combo;
 	private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
+    private JTextField textFieldNameFilter;
 	
 	private boolean autoManageCols = Configuration.autoManageCols;
 	
@@ -220,10 +228,47 @@ public class ColumnsManager implements ActionListener, Serializable{
 		autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		autoManage.addActionListener(this);
 		
+	    textFieldNameFilter = new JTextField(emptyFilter);
+	    textFieldNameFilter.setAlignmentX(0);
+	    textFieldNameFilter.setForeground(Color.gray);
+	    textFieldNameFilter.addFocusListener(new FocusListener() {
+            public void focusLost(FocusEvent e) {
+                String text = textFieldNameFilter.getText().trim();
+                if (text.isEmpty() || text.equals(emptyFilter)) {
+                    textFieldNameFilter.setText(emptyFilter);
+                    textFieldNameFilter.setForeground(Color.gray);
+                }
+            }
+            
+            public void focusGained(FocusEvent e) {
+                String text = textFieldNameFilter.getText().trim();
+                if (text.equals(emptyFilter)) {
+                    textFieldNameFilter.setText("");
+                }
+                textFieldNameFilter.setForeground(Color.black);
+            }
+        });
+	    textFieldNameFilter.getDocument().addDocumentListener(new DocumentListener() {
+            public void removeUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+            
+            public void insertUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+            
+            public void changedUpdate(DocumentEvent e) {
+                if (textFieldNameFilter.isFocusOwner()) {
+                    updateList();
+                }
+            }
+        });
+	    
 		Box topPanel = Box.createVerticalBox();
 		topPanel.add(autoManage);
 		topPanel.add(label);
 		topPanel.add(combo);
+		topPanel.add(textFieldNameFilter);
 		combo.addActionListener(this);
 		
 		JPanel panel = new JPanel(new BorderLayout());
@@ -519,10 +564,11 @@ public class ColumnsManager implements ActionListener, Serializable{
 		        otherFields.add(f);
 		}
 		
-		fieldGroups = new String[customGroups.length + 1][];
+		fieldGroups = new String[customGroups.length + 2][];
 		for(int i = 0; i < customGroups.length; i++)
 		    fieldGroups[i] = customGroups[i];
-		fieldGroups[fieldGroups.length - 1] = otherFields.toArray(new String[0]);
+		fieldGroups[fieldGroups.length - 2] = otherFields.toArray(new String[0]);
+		fieldGroups[fieldGroups.length - 1] = indexFields.clone();
 		
 		for(String[] fields : fieldGroups)
 			Arrays.sort(fields, Collator.getInstance());
@@ -532,14 +578,21 @@ public class ColumnsManager implements ActionListener, Serializable{
 	private void updateList(){
 	    listPanel.removeAll();
 	    String[] fields = fieldGroups[combo.getSelectedIndex()];
-	    
+	    String filter = textFieldNameFilter.getText();
+	    if (filter.equals(emptyFilter)) {
+	        filter = "";
+	    } else {
+	        filter = filter.trim().toLowerCase();
+	    }
         for(String f : fields){
-            JCheckBox check = new JCheckBox();
-            check.setText(f);
-            if(colState.visibleFields.contains(f))
-                check.setSelected(true);
-            check.addActionListener(this);
-            listPanel.add(check);
+            if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
+                JCheckBox check = new JCheckBox();
+                check.setText(f);
+                if(colState.visibleFields.contains(f))
+                    check.setSelected(true);
+                check.addActionListener(this);
+                listPanel.add(check);
+            }
         }
         dialog.revalidate();
         dialog.repaint();
