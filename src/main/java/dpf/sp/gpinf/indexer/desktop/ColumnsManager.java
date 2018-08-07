@@ -169,11 +169,18 @@ public class ColumnsManager implements ActionListener, Serializable{
 	}
 	
 	public void setVisible(){
+	    clearNameFilter();
 		updateDinamicFields();
 		updateList();
 		dialog.setVisible(true);
+		combo.requestFocus();
 	}
-	
+
+	private void clearNameFilter() {
+        textFieldNameFilter.setText(emptyFilter);
+        textFieldNameFilter.setForeground(Color.gray);
+	}
+
 	public String[] getLoadedCols(){
 		String[] cols = loadedFields.toArray(new String[0]);
 		return cols;
@@ -228,15 +235,14 @@ public class ColumnsManager implements ActionListener, Serializable{
 		autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
 		autoManage.addActionListener(this);
 		
-	    textFieldNameFilter = new JTextField(emptyFilter);
+	    textFieldNameFilter = new JTextField();
 	    textFieldNameFilter.setAlignmentX(0);
-	    textFieldNameFilter.setForeground(Color.gray);
+	    clearNameFilter();
 	    textFieldNameFilter.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
                 String text = textFieldNameFilter.getText().trim();
                 if (text.isEmpty() || text.equals(emptyFilter)) {
-                    textFieldNameFilter.setText(emptyFilter);
-                    textFieldNameFilter.setForeground(Color.gray);
+                    clearNameFilter();
                 }
             }
             
@@ -263,6 +269,7 @@ public class ColumnsManager implements ActionListener, Serializable{
                 }
             }
         });
+	    
 	    
 		Box topPanel = Box.createVerticalBox();
 		topPanel.add(autoManage);
