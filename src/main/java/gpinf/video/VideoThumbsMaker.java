@@ -33,9 +33,9 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 public class VideoThumbsMaker {
 
   private String mplayer = "mplayer.exe"; //$NON-NLS-1$
-  private int timeoutProcess = 15000;
-  private int timeoutInfo = 10000;
-  private int timeoutFirstCall = 180000;
+  private int timeoutProcess = 45000;
+  private int timeoutInfo = 15000;
+  private int timeoutFirstCall = 300000;
   private boolean verbose = false;
   private int quality = 50;
   private String escape = null;
@@ -43,7 +43,7 @@ public class VideoThumbsMaker {
   private boolean isWindows = false;
   private static final String prefix = "_vtm"; //$NON-NLS-1$
   private int ignoreWaitKeyFrame;
-  private int maxLines = 20000;
+  private static final int maxLines = 20000;
 
   public String getVersion() {
     List<String> cmds = new ArrayList<String>(Arrays.asList(new String[]{mplayer}));
@@ -94,11 +94,14 @@ public class VideoThumbsMaker {
     boolean fixed = false;
     File lnk = null;
     String videoStream = null;
-    for (int step = 0; step < 1; step++) {
+    for (int step = 0; step <= 1; step++) {
+      if (step == 1) {
+        cmds.add("-demuxer"); //$NON-NLS-1$
+        cmds.add("lavf"); //$NON-NLS-1$
+      }        
       ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
       if (firstCall) {
         firstCall = false;
-        maxLines = 2000;
       }
 
       String info = res.output;
@@ -194,7 +197,7 @@ public class VideoThumbsMaker {
 
     cmds.addAll(Arrays.asList(new String[]{"-vo", "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape, "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", String.valueOf(maxThumbs + 1), in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
-    for (int step = frequency > 1 ? 0 : 1; step <= 2; step++) {
+    for (int step = frequency > 1 ? 0 : 1; step <= 3; step++) {
       if (step == 1) {
         int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
         cmds.remove(pos + 1);
@@ -207,19 +210,28 @@ public class VideoThumbsMaker {
         int frameStep = (int)(fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
         if (frameStep < 1) {
             frameStep = 1;
-        } else if (frameStep > 1000) {
-            frameStep = 1000;
+        } else if (frameStep > 600) {
+            frameStep = 600;
         }
         cmds.add("-vf"); //$NON-NLS-1$
         cmds.add("framestep=" + frameStep); //$NON-NLS-1$
-      }
-      if (step == 2) {
+      } else if (step == 2) {
         int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
         if (pos < 0) {
-          break;
+          continue;
         } else {
           cmds.remove(pos + 1);
           cmds.remove(pos);
+        }
+      } else if (step == 3) {
+        cmds.add("-demuxer"); //$NON-NLS-1$
+        cmds.add("lavf"); //$NON-NLS-1$
+        for (int i = cmds.size() - 1; i > 0; i--) {
+            if (cmds.get(i).startsWith("framestep=")) { //$NON-NLS-1$
+                cmds.remove(i);
+                cmds.remove(i - 1);
+                break;
+            }
         }
       }
       ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
@@ -275,7 +287,7 @@ public class VideoThumbsMaker {
             continue;
           }
         }
-        if (files.length >= maxThumbs - 2 && ret.indexOf("Error while decoding frame") < 0 && ret.indexOf("first frame is no keyframe") < 0) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (files.length >= maxThumbs - 2 && ((ret.indexOf("Error while decoding frame") < 0 && ret.indexOf("first frame is no keyframe") < 0) || (step > 0))) { //$NON-NLS-1$ //$NON-NLS-2$
           break;
         }
       }
@@ -472,13 +484,12 @@ public class VideoThumbsMaker {
 
     InputStream is;
     StringBuilder sb;
-    AtomicInteger counter;
+    int counter;
     Process process;
 
     StreamGobbler(InputStream is, StringBuilder sb, AtomicInteger counter, Process process) {
       this.is = is;
       this.sb = sb;
-      this.counter = counter;
       this.process = process;
       setDaemon(true);
     }
@@ -489,12 +500,12 @@ public class VideoThumbsMaker {
         br = new BufferedReader(new InputStreamReader(is), 4096);
         String line = null;
         while ((line = br.readLine()) != null) {
-          counter.incrementAndGet();
+          counter++;
           sb.append(line).append('\n');
           if (verbose) {
             System.err.println(line);
           }
-          if (line.indexOf("Error while decoding frame!") >= 0 || counter.intValue() > maxLines) { //$NON-NLS-1$
+          if (counter > maxLines) {
             process.destroy();
             break;
           }
