@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +46,7 @@ import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
 
 public class ExportFileTree extends CancelableWorker {
 	
@@ -180,7 +179,7 @@ public class ExportFileTree extends CancelableWorker {
         return exportItemToZip(docId, subdir, isParent);
     
     File dst = null;
-    EvidenceFile item = null;
+    Item item = null;
     try {
       item = App.get().appCase.getItemByLuceneID(docId);
 
@@ -223,7 +222,7 @@ public class ExportFileTree extends CancelableWorker {
   private String exportItemToZip(int docId, Object subdir, boolean isParent) {
 
       String dst = null;
-      EvidenceFile item = null;
+      Item item = null;
       try {
         if(zaos == null) {
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(baseDir));

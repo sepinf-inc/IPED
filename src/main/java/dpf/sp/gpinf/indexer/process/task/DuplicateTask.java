@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
@@ -12,7 +10,9 @@ import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValueImpl;
+import iped3.Item;
+import iped3.HashValue;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso configurado.
@@ -26,7 +26,7 @@ public class DuplicateTask extends AbstractTask {
 
   public static boolean ignoreDuplicates = false;
 
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
 
     // Verificação de duplicados
     HashValue hashValue = evidence.getHashValue();
@@ -70,7 +70,7 @@ public class DuplicateTask extends AbstractTask {
           Document doc = reader.document(i);
           String hash = doc.get(IndexItem.HASH);
           if (hash != null && !hash.isEmpty()) {
-            HashValue hValue = new HashValue(hash);
+            HashValue hValue = new HashValueImpl(hash);
             hashMap.put(hValue, hValue);
           }
 

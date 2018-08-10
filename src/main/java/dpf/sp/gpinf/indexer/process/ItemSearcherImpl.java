@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
 
-import dpf.sp.gpinf.indexer.parsers.util.Item;
-import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import iped3.io.ItemBase;
+import iped3.search.ItemSearcher;
 
 public class ItemSearcherImpl implements ItemSearcher{
 	
@@ -24,9 +24,9 @@ public class ItemSearcherImpl implements ItemSearcher{
 	}
 
 	@Override
-	public List<Item> search(String luceneQuery) {
+	public List<ItemBase> search(String luceneQuery) {
 		
-		List<Item> items = new ArrayList<Item>();
+		List<ItemBase> items = new ArrayList<ItemBase>();
 		try {
 			if(iSource == null)
 				iSource = new IPEDSource(caseFolder, iw);

@@ -18,10 +18,11 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.ItemImpl;
+import gpinf.dev.data.FileGroupImpl;
+import iped3.CaseData;
+import iped3.Item;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,12 +67,12 @@ public class FolderTreeReader extends DataSourceReader {
     if (evidenceName == null) {
       evidenceName = file.getName();
     }
-    dataSource = new DataSource(file);
+    dataSource = new DataSourceImpl(file);
     dataSource.setName(evidenceName);
 
     if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
       category = file.getName();
-      caseData.addBookmark(new FileGroup(category, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
+      caseData.addBookmark(new FileGroupImpl(category, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     new FolderVisitor().walk(file);
@@ -80,7 +81,7 @@ public class FolderTreeReader extends DataSourceReader {
 
   }
 
-  private EvidenceFile getEvidence(Path path, BasicFileAttributes attr) {
+  private Item getEvidence(Path path, BasicFileAttributes attr) {
 	if (listOnly) {
       caseData.incDiscoveredEvidences(1);
       caseData.incDiscoveredVolume(attr.size());
@@ -88,39 +89,39 @@ public class FolderTreeReader extends DataSourceReader {
 
     } else {
       File file = path.toFile();
-      EvidenceFile evidenceFile = new EvidenceFile();
-      evidenceFile.setName(file.getName());
+      Item item = new ItemImpl();
+      item.setName(file.getName());
       if (file.equals(rootFile)) {
-        evidenceFile.setName(evidenceName);
+        item.setName(evidenceName);
       }
-      evidenceFile.setDataSource(dataSource);
+      item.setDataSource(dataSource);
       try {
         String relativePath = Util.getRelativePath(output, file);
-        evidenceFile.setExportedFile(relativePath);
-        evidenceFile.setFile(file);
+        item.setExportedFile(relativePath);
+        item.setFile(file);
       } catch (InvalidPathException e) {
     	LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
       }
 
       String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-      evidenceFile.setPath(path1);
+      item.setPath(path1);
 
       // evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
       if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
-        evidenceFile.addCategory(category);
+        item.addCategory(category);
       }
       
       if (args.isAddowner())
 	      try {
 	        UserPrincipal owner = Files.getOwner(path);
 	        if(owner != null)
-	            evidenceFile.setExtraAttribute(FS_OWNER, owner.toString());
+	            item.setExtraAttribute(FS_OWNER, owner.toString());
 	    	
 		  } catch (IOException e) {
 			e.printStackTrace();
 		  }
 
-      return evidenceFile;
+      return item;
     }
   }
 
@@ -142,27 +143,27 @@ public class FolderTreeReader extends DataSourceReader {
         return FileVisitResult.TERMINATE;
       }
 
-      EvidenceFile evidenceFile = getEvidence(path, attr);
-      if (evidenceFile != null) {
+      Item item = getEvidence(path, attr);
+      if (item != null) {
         if (!parentIds.isEmpty()) {
-          evidenceFile.setParentId(parentIds.getLast());
-          evidenceFile.addParentIds(parentIds);
+          item.setParentId(parentIds.getLast());
+          item.addParentIds(parentIds);
         } else {
-          evidenceFile.setRoot(true);
+          item.setRoot(true);
         }
 
         if (attr.isDirectory()) {
-          evidenceFile.setIsDir(true);
-          parentIds.addLast(evidenceFile.getId());
+          item.setIsDir(true);
+          parentIds.addLast(item.getId());
         }
 
-        evidenceFile.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
-        evidenceFile.setCreationDate(new Date(attr.creationTime().toMillis()));
-        evidenceFile.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
-        evidenceFile.setLength(attr.size());
+        item.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
+        item.setCreationDate(new Date(attr.creationTime().toMillis()));
+        item.setModificationDate(new Date(attr.lastModifiedTime().toMillis()));
+        item.setLength(attr.size());
 
         try {
-          caseData.addEvidenceFile(evidenceFile);
+          caseData.addItem(item);
 
         } catch (InterruptedException e) {
           return FileVisitResult.TERMINATE;

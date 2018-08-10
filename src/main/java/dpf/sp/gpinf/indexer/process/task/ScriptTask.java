@@ -33,7 +33,7 @@ import javax.script.ScriptException;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 
 public class ScriptTask extends AbstractTask {
@@ -94,7 +94,7 @@ public class ScriptTask extends AbstractTask {
   }
 
   @Override
-  public void process(EvidenceFile e) throws Exception {
+  public void process(Item e) throws Exception {
       inv.invokeFunction("process", e); //$NON-NLS-1$
   }
   

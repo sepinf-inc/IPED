@@ -1,18 +1,18 @@
 package gpinf.dev.data;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.Messages;
+import iped3.CaseInfo;
+import iped3.Property;
 
 /**
  * Informações de um caso.
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public class CaseInfo implements Serializable {
+public class CaseInfoImpl implements CaseInfo {
 
   /**
    * Identificador utilizado para serialização da classe.

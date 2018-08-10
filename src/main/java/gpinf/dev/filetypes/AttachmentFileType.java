@@ -1,13 +1,12 @@
 package gpinf.dev.filetypes;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.Messages;
+import iped3.Item;
 
-public class AttachmentFileType extends EvidenceFileType {
+public class AttachmentFileType extends EvidenceFileTypeImpl {
 
   /**
    * Implementação da classe base utilizada para anexos de email.
@@ -22,7 +21,7 @@ public class AttachmentFileType extends EvidenceFileType {
   }
 
   @Override
-  public void processFiles(File baseDir, List<EvidenceFile> evidenceFiles) {
+  public void processFiles(File baseDir, List<Item> items) {
     // TODO Auto-generated method stub
 
   }

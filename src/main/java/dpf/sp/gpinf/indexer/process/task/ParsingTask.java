@@ -69,16 +69,17 @@ import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
-import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.StreamSource;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+import iped3.io.ItemBase;
+import iped3.io.StreamSource;
+import iped3.search.ItemSearcher;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO, CASO PEQUENO, PARA
@@ -112,7 +113,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static AtomicLong totalText = new AtomicLong();
   public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
-  private EvidenceFile evidence;
+  private Item evidence;
   private ParseContext context;
   private boolean extractEmbedded;
   private ParsingEmbeddedDocumentExtractor embeddedParser;
@@ -126,7 +127,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     setContext(context);
   }
   
-  public ParsingTask(ParseContext context, EvidenceFile evidence) {
+  public ParsingTask(ParseContext context, Item evidence) {
       setContext(context);
       this.evidence = evidence;
     }
@@ -158,7 +159,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     extractEmbedded = isToBeExpanded(appContext.getBookmarks());
   }
 
-  private void configureTikaContext(EvidenceFile evidence) {
+  private void configureTikaContext(Item evidence) {
     // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
     context = new ParseContext();
     context.set(Parser.class, this.autoParser);
@@ -179,17 +180,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
     context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    context.set(Item.class, evidence);
-    context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+    context.set(ItemBase.class, evidence);
+    context.set(ItemSearcher.class, (ItemSearcher) new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
     setContext(context);
   }
 
-  private void fillMetadata(EvidenceFile evidence) {
+  private void fillMetadata(Item evidence) {
 	  fillMetadata(evidence, evidence.getMetadata());
   }
   
-  public static void fillMetadata(EvidenceFile evidence, Metadata metadata){
+  public static void fillMetadata(Item evidence, Metadata metadata){
 	Long len = evidence.getLength();
 	if (len != null)
 	    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
@@ -240,7 +241,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     return subitensDiscovered;
   }
   
-  public void process(EvidenceFile evidence) throws IOException {
+  public void process(Item evidence) throws IOException {
 
     if (!enableFileParsing) {
       return;
@@ -278,7 +279,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           return parser.getClass().getSimpleName();
   }
   
-  private static Parser getLeafParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
+  private static Parser getLeafParser(IndexerDefaultParser autoParser, Item evidence) {
 	  Parser parser = autoParser.getBestParser(evidence.getMetadata());
 	    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
 	    	if(parser instanceof CompositeParser)
@@ -290,7 +291,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   }
   
-  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
+  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Item evidence) {
 	  Parser p = getLeafParser(autoParser, evidence);
 	  return isSpecificParser(p);
   }
@@ -316,7 +317,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       return comp.getFallback();
   }
 
-  private void safeProcess(EvidenceFile evidence) throws IOException {
+  private void safeProcess(Item evidence) throws IOException {
 
     this.evidence = evidence;
 
@@ -384,7 +385,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
   }
   
-  private static final void metadataToExtraAttribute(EvidenceFile evidence){
+  private static final void metadataToExtraAttribute(Item evidence){
       //Ajusta metadados:
       Metadata metadata = evidence.getMetadata();
       if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -468,16 +469,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         firstParentPath = parentPath;
       }
 
-      EvidenceFile parent = evidence;
+      Item parent = evidence;
       if (context.get(EmbeddedParent.class) != null) {
-        parent = (EvidenceFile) context.get(EmbeddedParent.class).getObj();
+        parent = (Item) context.get(EmbeddedParent.class).getObj();
         parentPath = parent.getPath();
         subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
         subitemPath = parentPath + ">>" + name; //$NON-NLS-1$
       }
 
-      EvidenceFile subItem = new EvidenceFile();
+      Item subItem = new ItemImpl();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 

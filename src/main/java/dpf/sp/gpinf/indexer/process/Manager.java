@@ -67,8 +67,9 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.CaseDataImpl;
+import gpinf.dev.data.ItemImpl;
+import iped3.CaseData;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e
@@ -130,9 +131,9 @@ public class Manager {
     this.output = output;
     this.palavrasChave = palavras;
 
-    this.caseData = new CaseData(QUEUE_SIZE);
+    this.caseData = new CaseDataImpl(QUEUE_SIZE);
 
-    EvidenceFile.setStartID(0);
+    ItemImpl.setStartID(0);
 
     indexDir = new File(output, "index"); //$NON-NLS-1$
     if (indexTemp == null || IndexFiles.getInstance().appendIndex) {

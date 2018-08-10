@@ -31,8 +31,8 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.Manager;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.CaseData;
 
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do caso que adiciona os
@@ -111,7 +111,7 @@ public class ItemProducer extends Thread {
         caseData.incAlternativeFiles(alternativeFiles);
       }
       if (!listOnly) {
-        EvidenceFile evidence = new EvidenceFile();
+        ItemImpl evidence = new ItemImpl();
         evidence.setQueueEnd(true);
         //caseData.addEvidenceFile(evidence);
 

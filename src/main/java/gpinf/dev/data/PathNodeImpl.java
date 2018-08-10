@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import iped3.PathNode;
+
 /**
  * Define um nó de uma estrutura de árvore que armazena caminhos (pastas) de arquivos. A idéia de
  * utilizar uma árvore é de reaproveitar partes das String que se repetem quando há vários arquivos
@@ -13,9 +15,9 @@ import java.util.TreeMap;
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public class PathNode implements Serializable, Comparable<PathNode> {
+public class PathNodeImpl implements PathNode {
 
-  /**
+/**
    * Identificador utilizado para serialização da classe.
    */
   private static final long serialVersionUID = -222554843457545L;
@@ -61,7 +63,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
    *
    * @param name nome do nó raiz
    */
-  public PathNode(String name) {
+  public PathNodeImpl(String name) {
     this.name = name;
     childsMap = new TreeMap<String, PathNode>();
   }
@@ -72,13 +74,10 @@ public class PathNode implements Serializable, Comparable<PathNode> {
    * @param name nome do novo nó
    * @param parent nó pai
    */
-  private PathNode(String name, PathNode parent) {
+  private PathNodeImpl(String name, PathNode parent) {
     this.name = name;
     this.parent = parent;
-    if (parent.childsMap == null) {
-      parent.childsMap = new TreeMap<String, PathNode>();
-    }
-    parent.childsMap.put(name, this);
+    parent.getChildsMap().put(name, this);
   }
 
   /**
@@ -95,7 +94,8 @@ public class PathNode implements Serializable, Comparable<PathNode> {
    * @return novo nó criado
    */
   public PathNode addNewPath(String path) {
-    PathNode curr = this;
+	  return null; //TODO
+/*    PathNode curr = this;
     int p1 = 0;
     int psep = 0;
     int di = -1;
@@ -113,9 +113,9 @@ public class PathNode implements Serializable, Comparable<PathNode> {
       }
       String name = path.substring(p1, p2);
 
-      PathNode next = (curr.childsMap != null) ? curr.childsMap.get(name) : null;
+      PathNode next = (curr.getChildsMap() != null) ? curr.getChildsMap().get(name) : null;
       if (next == null) {
-        next = new PathNode(name, curr);
+        next = new PathNodeImpl(name, curr);
       }
 
       curr = next;
@@ -124,7 +124,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
       di = ni;
     }
     return curr;
-  }
+*/  }
 
   /**
    * @return String com nome do nó formatado
@@ -140,17 +140,18 @@ public class PathNode implements Serializable, Comparable<PathNode> {
    * @return String com o caminho completo correspondente
    */
   public String getFullPath() {
-    StringBuilder sb = new StringBuilder();
+	  return null; //TODO
+/*    StringBuilder sb = new StringBuilder();
     PathNode curr = this;
-    while (curr.parent != null) {
-      sb.insert(0, curr.name);
+    while (curr.getParent() != null) {
+      sb.insert(0, curr.getName());
       if (curr.delimiterIndex >= 0) {
         sb.insert(0, delimiters[curr.delimiterIndex]);
       }
-      curr = curr.parent;
+      curr = curr.getParent();
     }
     return sb.toString();
-  }
+*/  }
 
   /**
    * Compara com outro objeto. Nome e pai igual determinam que os objetos desta classe são iguais.
@@ -166,7 +167,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
     if (pn == this) {
       return true;
     }
-    return name.equals(pn.name) && ((parent == null && pn.parent == null) || (parent != null && parent.equals(pn.parent)));
+    return name.equals(pn.getName()) && ((parent == null && pn.getParent() == null) || (parent != null && parent.equals(pn.getParent())));
   }
 
   /**
@@ -220,7 +221,7 @@ public class PathNode implements Serializable, Comparable<PathNode> {
       if (curr.equals(node)) {
         return true;
       }
-      curr = curr.parent;
+      curr = curr.getParent();
     }
     return false;
   }
@@ -233,16 +234,16 @@ public class PathNode implements Serializable, Comparable<PathNode> {
    */
   @Override
   public int compareTo(PathNode pn) {
-    if ((parent == null && pn.parent == null) || (parent != null && parent.equals(pn.parent))) {
-      return name.compareToIgnoreCase(pn.name);
+    if ((parent == null && pn.getParent() == null) || (parent != null && parent.equals(pn.getParent()))) {
+      return name.compareToIgnoreCase(pn.getName());
     }
     if (parent == null) {
       return -1;
     }
-    if (pn.parent == null) {
+    if (pn.getParent() == null) {
       return 1;
     }
-    return parent.compareTo(pn.parent);
+    return parent.compareTo(pn.getParent());
   }
 
   /**
@@ -267,21 +268,33 @@ public class PathNode implements Serializable, Comparable<PathNode> {
     }
     int nonEmptyChildsCount = 0;
     for (PathNode pn : childsMap.values()) {
-      if (pn.childsMap != null && pn.childsMap.size() > 0) {
+      if (pn.getChildsMap() != null && pn.getChildsMap().size() > 0) {
         nonEmptyChildsCount++;
       }
     }
     childs = new PathNode[nonEmptyChildsCount];
     int i = 0;
     for (PathNode pn : childsMap.values()) {
-      if (pn.childsMap != null && pn.childsMap.size() > 0) {
+      if (pn.getChildsMap() != null && pn.getChildsMap().size() > 0) {
         childs[i++] = pn;
         pn.buildChildArray();
-        descendantsCount += pn.descendantsCount;
+        descendantsCount += pn.getDescendantsCount();
       } else {
         descendantsCount++;
       }
     }
     Arrays.sort(childs);
   }
+
+
+  	@Override
+	public SortedMap<String, PathNode> getChildsMap() {
+		return this.childsMap;
+	}
+
+  	@Override
+	public String getName() {
+		return name;
+	}
+  
 }

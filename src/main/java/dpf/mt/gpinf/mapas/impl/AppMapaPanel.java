@@ -14,10 +14,8 @@ import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import gpinf.dev.data.EvidenceFile;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.MapaModelUpdateListener;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas

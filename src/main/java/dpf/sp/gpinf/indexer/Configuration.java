@@ -121,6 +121,10 @@ public class Configuration {
     if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr); //$NON-NLS-1$
 
     configPath = configPathStr;
+    if("true".equals(System.getProperty("Debugging"))){
+    	configPath = System.getProperty("user.dir");
+	} 
+
     appRoot = getAppRoot(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$

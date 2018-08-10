@@ -50,7 +50,8 @@ import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
 
 public class ColumnsManager implements ActionListener, Serializable{
     
@@ -448,7 +449,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 		
 		TreeSet<String> extraAttrs = new TreeSet<String>();
 		extraAttrs.addAll(Arrays.asList(extraFields));
-		extraAttrs.addAll(EvidenceFile.getAllExtraAttributes());
+		extraAttrs.addAll(ItemImpl.getAllExtraAttributes());
 		String[] allExtraAttrs = extraAttrs.toArray(new String[0]); 
         extraAttrs.clear();
 		

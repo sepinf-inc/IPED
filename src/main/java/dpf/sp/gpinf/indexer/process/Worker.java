@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
-import org.apache.tika.config.TikaConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +33,8 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import iped3.CaseData;
+import iped3.Item;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de processamento instalada:
@@ -71,7 +70,7 @@ public class Worker extends Thread {
   public File output;
   public CaseData caseData;
   public volatile Exception exception;
-  public volatile EvidenceFile evidence;
+  public volatile Item evidence;
 
   public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
     super(new ThreadGroup("ProcessingThreadGroup-" + k), workerNamePrefix + k); //$NON-NLS-1$
@@ -131,7 +130,7 @@ public class Worker extends Thread {
    *
    * @param evidence
    */
-  private void checkFile(EvidenceFile evidence) {
+  private void checkFile(Item evidence) {
     String filePath = evidence.getFileToIndex();
     if (evidence.getFile() == null && !filePath.isEmpty()) {
       File file = Util.getRelativeFile(baseFilePath, filePath);
@@ -146,9 +145,9 @@ public class Worker extends Thread {
    *
    * @param evidence Item a ser processado
    */
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
 
-    EvidenceFile prevEvidence = this.evidence;
+    Item prevEvidence = this.evidence;
     if (!evidence.isQueueEnd()) {
       this.evidence = evidence;
     }
@@ -189,7 +188,7 @@ public class Worker extends Thread {
    *
    * @param evidence novo item a ser processado.
    */
-  public void processNewItem(EvidenceFile evidence) {
+  public void processNewItem(Item evidence) {
     caseData.incDiscoveredEvidences(1);
     // Se a fila está pequena, enfileira
     if (caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
@@ -218,7 +217,7 @@ public class Worker extends Thread {
           process(evidence);
           
         } else {
-          EvidenceFile queueEnd = evidence;
+          Item queueEnd = evidence;
           evidence = null;
           if (manager.numItensBeingProcessed() == 0) {
         	  caseData.getItemQueue().addLast(queueEnd);

@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,21 +31,23 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
-import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.filetypes.EvidenceFileType;
+import iped3.Item;
+import iped3.EvidenceFileType;
+import iped3.HashValue;
+import iped3.datasource.DataSource;
+import iped3.io.SeekableInputStream;
+import iped3.sleuthkit.SleuthKitItem;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso, acompanhado de todas sua
@@ -58,9 +59,9 @@ import gpinf.dev.filetypes.EvidenceFileType;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class EvidenceFile implements Serializable, StreamSource, Item {
+public class ItemImpl implements SleuthKitItem {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
+  private static Logger LOGGER = LoggerFactory.getLogger(ItemImpl.class);
 
   private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
 
@@ -409,7 +410,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       return null;
     }
     if (hashValue == null) {
-      hashValue = new HashValue(hash);
+      hashValue = new HashValueImpl(hash);
     }
     return hashValue;
   }
@@ -947,15 +948,6 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   }
 
   /**
-   * Define os marcadores do item
-   *
-   * @param labels lista de marcadores
-   */
-  public void setLabels(List<String> labels) {
-    this.labels = labels;
-  }
-
-  /**
    * @param length tamanho do arquivo
    */
   public void setLength(Long length) {
@@ -998,7 +990,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     this.parentId = parentId;
   }
   
-  public void setParent(EvidenceFile parent){
+  public void setParent(iped3.Item parent){
 	  int parentId = parent.getId();
 	  this.setParentId(parentId);
 	  this.addParentIds(parent.getParentIds());
@@ -1193,4 +1185,22 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
         this.inputStreamFactory = inputStreamFactory;
     }
 
+    /**
+     * Define os marcadores do item
+     *
+     * @param labels lista de marcadores
+     */
+    public void setLabels(List<String> labels) {
+      this.labels = labels;
+    }
+
+	@Override
+	public Item createChildItem() {
+		Item child = new ItemImpl();
+		child.setPath(this.getPath() + ">>" + name); //$NON-NLS-1$
+        child.setParent(this);
+        child.setDeleted(this.isDeleted());
+		
+		return child;
+	}
 }

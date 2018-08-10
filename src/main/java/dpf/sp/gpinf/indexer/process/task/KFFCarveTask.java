@@ -17,10 +17,11 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.HashValue;
 
 public class KFFCarveTask extends BaseCarveTask {
   /**
@@ -120,7 +121,7 @@ public class KFFCarveTask extends BaseCarveTask {
     }
   }
 
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
     if (!taskEnabled || caseData.isIpedReport() || !isAcceptedType(evidence.getMediaType()) || !isToProcess(evidence)) return;
 
@@ -151,7 +152,7 @@ public class KFFCarveTask extends BaseCarveTask {
         if (!empty) {
           digest.update(buf512, 0, read512);
           cntBytesHashed += read512;
-          HashValue hash512 = new HashValue(digest.digest());
+          HashValue hash512 = new HashValueImpl(digest.digest());
           if (Arrays.binarySearch(md5_512, hash512) >= 0) {
             cnt512hit++;
             is.mark(65536);
@@ -161,13 +162,13 @@ public class KFFCarveTask extends BaseCarveTask {
               cntBytesHashed += read512 + read64K;
               digest.update(buf512, 0, read512);
               digest.update(buf64K, 0, read64K);
-              HashValue hash64K = new HashValue(digest.digest());
+              HashValue hash64K = new HashValueImpl(digest.digest());
               KffItem kffItem = KffItem.kffSearch(LedKFFTask.kffItems, hash64K);
               if (kffItem != null) {
                 String name = "CarvedKff-" + offset; //$NON-NLS-1$
                 String ext = kffItem.getExt();
                 if (ext != null) name += '.' + ext.toLowerCase();
-                EvidenceFile carvedItem = createCarvedFile(evidence, offset, kffItem.getLength(), name, null);
+                Item carvedItem = createCarvedFile(evidence, offset, kffItem.getLength(), name, null);
                 if (carvedItem != null) {
                   carvedItem.setExtraAttribute("kffCarvedMD5", kffItem.getMD5().toString()); //$NON-NLS-1$
                   cntCarvedItems++;

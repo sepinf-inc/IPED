@@ -18,6 +18,11 @@ import java.util.zip.GZIPOutputStream;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
+import iped3.CaseData;
+import iped3.CaseInfo;
+import iped3.Item;
+import iped3.FileGroup;
+import iped3.PathNode;
 
 /**
  * Classe que define todos os dados do caso.
@@ -25,7 +30,7 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class CaseData implements Serializable {
+public class CaseDataImpl implements CaseData {
 
   /**
    * Identificador utilizado para serialização da classe.
@@ -35,7 +40,7 @@ public class CaseData implements Serializable {
   /**
    * Informações do caso.
    */
-  private final CaseInfo caseInformation = new CaseInfo();
+  private final CaseInfo caseInformation = new CaseInfoImpl();
 
   /**
    * Grupos de arquivos por categoria.
@@ -50,7 +55,7 @@ public class CaseData implements Serializable {
   /**
    * Filas de processamento dos itens do caso
    */
-  private TreeMap<Integer,LinkedBlockingDeque<EvidenceFile>> queues;
+  private TreeMap<Integer,LinkedBlockingDeque<Item>> queues;
   
   private volatile Integer currentQueuePriority = 0;
 
@@ -85,7 +90,7 @@ public class CaseData implements Serializable {
   /**
    * Árvore de arquivos de evidência.
    */
-  private final PathNode root = new PathNode(Messages.getString("CaseData.Case")); //$NON-NLS-1$
+  private final PathNode root = new PathNodeImpl(Messages.getString("CaseData.Case")); //$NON-NLS-1$
 
   /**
    * indica que o caso se trata de um relatório
@@ -123,16 +128,16 @@ public class CaseData implements Serializable {
    *
    * @param queueSize tamanho da fila de processamento dos itens
    */
-  public CaseData(int queueSize) {
+  public CaseDataImpl(int queueSize) {
     this.maxQueueSize = queueSize;
     initQueues();
   }
   
   private void initQueues(){
-	  queues = new TreeMap<Integer,LinkedBlockingDeque<EvidenceFile>>();
-	  queues.put(0, new LinkedBlockingDeque<EvidenceFile>());
+	  queues = new TreeMap<Integer,LinkedBlockingDeque<Item>>();
+	  queues.put(0, new LinkedBlockingDeque<Item>());
 	  for(Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
-		  queues.put(priority, new LinkedBlockingDeque<EvidenceFile>());
+		  queues.put(priority, new LinkedBlockingDeque<Item>());
   }
 
   /**
@@ -193,21 +198,21 @@ public class CaseData implements Serializable {
   /**
    * Adiciona um arquivo de evidência.
    *
-   * @param evidenceFile arquivo a ser adicionado
+   * @param item arquivo a ser adicionado
    * @throws InterruptedException
    */
-  public void addEvidenceFile(EvidenceFile evidenceFile) throws InterruptedException {
-	  addItemToQueue(evidenceFile, 0);
+  public void addItem(Item item) throws InterruptedException {
+	  addItemToQueue(item, 0);
 
   }
   
-  public void addItemToQueue(EvidenceFile evidenceFile, int queuePriority) throws InterruptedException{
-	  LinkedBlockingDeque<EvidenceFile> queue = queues.get(queuePriority);
+  public void addItemToQueue(Item item, int queuePriority) throws InterruptedException{
+	  LinkedBlockingDeque<Item> queue = queues.get(queuePriority);
 	  while (queue.size() >= maxQueueSize) {
 	      Thread.sleep(1000);
 	  }
 
-	  queue.put(evidenceFile);
+	  queue.put(item);
   }
 
   public Integer changeToNextQueue(){
@@ -224,7 +229,7 @@ public class CaseData implements Serializable {
    *
    * @return fila de arquivos.
    */
-  public LinkedBlockingDeque<EvidenceFile> getItemQueue() {
+  public LinkedBlockingDeque<Item> getItemQueue() {
     return queues.get(currentQueuePriority);
   }
 

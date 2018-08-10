@@ -53,7 +53,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 /**
  * Dialog de progresso do processamento, fornecendo previsão de término, velocidade e lista dos
@@ -230,7 +230,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append("  -  "); //$NON-NLS-1$
       }
       msg.append("</td><td>"); //$NON-NLS-1$
-      EvidenceFile evidence = workers[i].evidence;
+      Item evidence = workers[i].evidence;
       if (evidence != null) {
         String len = ""; //$NON-NLS-1$
         if (evidence.getLength() != null) {

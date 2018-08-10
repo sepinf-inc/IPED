@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -55,7 +53,8 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.CancelableWorker;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ProgressDialog;
-import dpf.sp.gpinf.indexer.util.StreamSource;
+import iped3.Item;
+import iped3.io.StreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 	
@@ -64,7 +63,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
   private static TextParser parsingTask;
   private StreamSource content;
   volatile int id;
-  private EvidenceFile item;
+  private Item item;
   private ProgressDialog progressMonitor;
 
   private static Object lock = new Object();
@@ -88,8 +87,8 @@ public class TextParser extends CancelableWorker implements ITextParser {
       this.appSearchParams = params;
       this.content = content;
       this.tmp = tmp;
-      if (content instanceof EvidenceFile) {
-        item = (EvidenceFile) content;
+      if (content instanceof Item) {
+        item = (Item) content;
       }
 
       if (parsingTask != null) {
@@ -201,7 +200,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     return null;
   }
 
-  private ParseContext getTikaContext(EvidenceFile item) throws Exception {
+  private ParseContext getTikaContext(Item item) throws Exception {
     ParseContext context = new ParseContext();
     context.set(Parser.class, (Parser) App.get().getAutoParser());
     context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));

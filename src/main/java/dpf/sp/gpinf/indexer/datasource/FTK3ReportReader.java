@@ -38,7 +38,7 @@ import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.CaseData;
+import iped3.CaseData;
 
 public class FTK3ReportReader extends DataSourceReader {
 

@@ -8,8 +8,7 @@ import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
-import dpf.sp.gpinf.indexer.util.StreamSource;
-
+import iped3.io.StreamSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;

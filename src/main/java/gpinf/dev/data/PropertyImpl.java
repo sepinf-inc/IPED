@@ -1,13 +1,13 @@
 package gpinf.dev.data;
 
-import java.io.Serializable;
+import iped3.Property;
 
 /**
  * Classe que define uma propriedade, composta pelo par (nome para valor).
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public class Property implements Serializable {
+public class PropertyImpl implements Property {
 
   /**
    * Identificador utilizado para serialização da classe
@@ -30,7 +30,7 @@ public class Property implements Serializable {
    * @param name nome da propriedade
    * @param value valor correspondente
    */
-  public Property(final String name, final String value) {
+  public PropertyImpl(final String name, final String value) {
     this.name = name;
     this.value = value;
   }

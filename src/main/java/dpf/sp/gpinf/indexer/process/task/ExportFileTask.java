@@ -40,10 +40,12 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.HashValue;
+import iped3.sleuthkit.SleuthKitItem;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos em casos de extração
@@ -116,7 +118,7 @@ public class ExportFileTask extends AbstractTask {
     return categoriesToExtract.size() > 0;
   }
 
-  public static boolean isToBeExtracted(EvidenceFile evidence) {
+  public static boolean isToBeExtracted(Item evidence) {
 
     boolean result = false;
     for (String category : evidence.getCategorySet()) {
@@ -129,7 +131,7 @@ public class ExportFileTask extends AbstractTask {
     return result;
   }
 
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
 
     // Exporta arquivo no caso de extração automatica ou no caso de relatório do iped
     if ((caseData.isIpedReport() && evidence.isToAddToCase())
@@ -137,7 +139,9 @@ public class ExportFileTask extends AbstractTask {
 
       evidence.setToExtract(true);
       if (doNotExport(evidence)) {
-        evidence.setSleuthId(null);
+    	if(evidence instanceof SleuthKitItem) {
+    		((SleuthKitItem) evidence).setSleuthId(null);
+    	}
         evidence.setExportedFile(null);
       } else {
         extract(evidence);
@@ -168,7 +172,7 @@ public class ExportFileTask extends AbstractTask {
 
   }
   
-  private boolean doNotExport(EvidenceFile evidence) {
+  private boolean doNotExport(Item evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
       noContentLabels = args.getNocontent(); //$NON-NLS-1$
@@ -195,7 +199,7 @@ public class ExportFileTask extends AbstractTask {
     return false;
   }
 
-  public void extract(EvidenceFile evidence) {
+  public void extract(Item evidence) {
     InputStream is = null;
     try {
       is = evidence.getBufferedStream();
@@ -210,7 +214,7 @@ public class ExportFileTask extends AbstractTask {
     }
   }
 
-  private void copyViewFile(EvidenceFile evidence) {
+  private void copyViewFile(Item evidence) {
     File viewFile = evidence.getViewFile();
     if (viewFile != null) {
       String viewName = viewFile.getName();
@@ -242,7 +246,7 @@ public class ExportFileTask extends AbstractTask {
     return result;
   }
 
-  public void renameToHash(EvidenceFile evidence) {
+  public void renameToHash(Item evidence) {
 
     String hash = evidence.getHash();
     if (hash != null && !hash.isEmpty()) {
@@ -255,7 +259,7 @@ public class ExportFileTask extends AbstractTask {
       
       File hashFile = getHashFile(hash, ext);
 
-      HashValue hashVal = new HashValue(hash);
+      HashValue hashVal = new HashValueImpl(hash);
       HashValue hashLock;
       synchronized (hashMap) {
         hashLock = hashMap.get(hashVal);
@@ -293,13 +297,13 @@ public class ExportFileTask extends AbstractTask {
 
   }
 
-  private void changeTargetFile(EvidenceFile evidence, File file) {
+  private void changeTargetFile(Item evidence, File file) {
     String relativePath = Util.getRelativePath(output, file);
     evidence.setExportedFile(relativePath);
     evidence.setFile(file);
   }
 
-  public void extractFile(InputStream inputStream, EvidenceFile evidence, Long parentSize) throws IOException {
+  public void extractFile(InputStream inputStream, Item evidence, Long parentSize) throws IOException {
 
     String hash;
     File outputFile = null;
@@ -323,7 +327,7 @@ public class ExportFileTask extends AbstractTask {
       outputFile = new File(getSubDir(extractDir), Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
     } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
       outputFile = getHashFile(hash, ext);
-      HashValue hashVal = new HashValue(hash);
+      HashValue hashVal = new HashValueImpl(hash);
       synchronized (hashMap) {
         hashLock = hashMap.get(hashVal);
       }

@@ -18,10 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
 import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
+import iped3.Item;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -312,7 +312,7 @@ public class VideoThumbTask extends AbstractTask {
    * destino.
    */
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
     if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;

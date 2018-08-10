@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer;
 
-import gpinf.dev.data.CaseData;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +15,7 @@ import com.beust.jcommander.ParameterException;
 
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.CaseData;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando. Parâmetros iniciados com 01

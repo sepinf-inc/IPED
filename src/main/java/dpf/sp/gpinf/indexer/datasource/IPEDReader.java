@@ -18,10 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.ItemImpl;
 import gpinf.dev.filetypes.GenericFileType;
+import iped3.CaseData;
+import iped3.Item;
+import iped3.datasource.DataSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -291,7 +293,7 @@ public class IPEDReader extends DataSourceReader {
         continue;
       }
 
-      EvidenceFile evidence = new EvidenceFile();
+      ItemImpl evidence = new ItemImpl();
       evidence.setName(doc.get(IndexItem.NAME));
 
       evidence.setLength(len);
@@ -300,14 +302,14 @@ public class IPEDReader extends DataSourceReader {
       }
       
       //TODO obter source corretamente
-      DataSource dataSource = new DataSource(null);
+      DataSource dataSource = new DataSourceImpl(null);
       dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
       evidence.setDataSource(dataSource);
 
       int id = Integer.valueOf(doc.get(IndexItem.ID));
       int newId = oldToNewIdMap[id];
       if(newId == -1){
-    	  newId = EvidenceFile.getNextId();
+    	  newId = ItemImpl.getNextId();
     	  oldToNewIdMap[id] = newId;
       }
       evidence.setId(newId); 
@@ -330,7 +332,7 @@ public class IPEDReader extends DataSourceReader {
     	  id = Integer.valueOf(value);
     	  newId = oldToNewIdMap[id];
           if(newId == -1){
-        	  newId = EvidenceFile.getNextId();
+        	  newId = ItemImpl.getNextId();
         	  oldToNewIdMap[id] = newId;
           }
           evidence.setParentId(newId);
@@ -343,7 +345,7 @@ public class IPEDReader extends DataSourceReader {
         	id = Integer.valueOf(parent);
       	    newId = oldToNewIdMap[id];
             if(newId == -1){
-          	  newId = EvidenceFile.getNextId();
+          	  newId = ItemImpl.getNextId();
           	  oldToNewIdMap[id] = newId;
             }
           parents.add(newId);
@@ -501,7 +503,7 @@ public class IPEDReader extends DataSourceReader {
       for(IndexableField f : doc.getFields()) {
           if(BasicProps.SET.contains(f.name()))
               continue;
-          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+          if(ItemImpl.getAllExtraAttributes().contains(f.name())) {
               if(multiValuedFields.contains(f.name()))
                   continue;
               Class<?> c = IndexItem.getMetadataTypes().get(f.name());
@@ -518,7 +520,7 @@ public class IPEDReader extends DataSourceReader {
               evidence.getMetadata().add(f.name(), f.stringValue());
       }
 
-      caseData.addEvidenceFile(evidence);
+      caseData.addItem(evidence);
     }
 
   }

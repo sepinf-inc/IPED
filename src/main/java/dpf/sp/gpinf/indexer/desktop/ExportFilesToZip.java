@@ -41,7 +41,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.search.ItemId;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 	
@@ -85,7 +85,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     	  zaos.closeArchiveEntry();
     	}
     	
-    	EvidenceFile e = App.get().appCase.getItemByItemId(item);
+    	Item e = App.get().appCase.getItemByItemId(item);
         String dstName = e.getName();
         //dstName += "." + doc.get(IndexItem.TYPE);
         
@@ -123,7 +123,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     return null;
   }
   
-  public static void fillZipDates(ZipArchiveEntry entry, EvidenceFile item) {
+  public static void fillZipDates(ZipArchiveEntry entry, Item item) {
       
       X5455_ExtendedTimestamp extendedDates = new X5455_ExtendedTimestamp();
       X000A_NTFS ntfsDates = new X000A_NTFS();

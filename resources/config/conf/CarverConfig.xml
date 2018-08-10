@@ -1,0 +1,103 @@
+<carverconfig>
+    <typesToProcess>application/x-unallocated;</typesToProcess>
+    <typesToProcess> application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
+    
+    <typesToNotProcess>video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
+    <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
+    <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
+    <typesToNotProcess>application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;</typesToNotProcess>
+    <typesToNotProcess>application/rtf; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;</typesToNotProcess>
+	<typesToNotProcess>application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc;</typesToNotProcess>
+	<typesToNotProcess>application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;</typesToNotProcess>
+    
+    <carverTypes>
+        <carverType>
+            <name>SQLITE</name>
+            <mediaType>application/pkix-cert</mediaType>
+            <carverClass>dpf.mt.gpinf.carving.carvers.SQLiteCarver</carverClass>
+        </carverType>
+
+        <!-- CarverTypes para arquivos de email EML -->
+        <carverType>
+            <name>EML</name>
+            <signatures>
+    	        <headerSignature>Received: by</headerSignature>
+            	<headerSignature>Received: from</headerSignature>
+            	<headerSignature>Message-ID:\20</headerSignature>
+            	<headerSignature>Return-Path:\20</headerSignature>
+
+            	<footerSignature>--\0d\0a</footerSignature>
+            </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>10000000</maxLength>
+            <mediaType>message/rfc822</mediaType>
+            <carverClass>dpf.mt.gpinf.carving.carvers.EMLCarver</carverClass>
+        </carverType>
+
+        <carverType>
+            <name>BMP</name>
+            <signatures>
+                <!-- headers inferred from https://www.fileformat.info/format/bmp/egff.htm -->
+    	        <headerSignature>BM????\00\00\00\00????\0E\00</headerSignature><!-- BMP version 2 -->
+                <headerSignature>BM????\00\00\00\00????\28\00</headerSignature><!-- BMP version 3 -->
+                <headerSignature>BM????\00\00\00\00????\6C\00</headerSignature><!-- BMP version 4 -->
+            </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>50000000</maxLength>
+            <lengthOffset>2</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>image/bmp</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>JPG</name>
+            <signatures>
+    	        <headerSignature>\ff\d8\ff\DB</headerSignature>
+    	        <headerSignature>\ff\d8\ff\E0</headerSignature>
+    	        <headerSignature>\ff\d8\ff\EE</headerSignature>
+    	    	<headerSignature>\ff\d8\ff\E1</headerSignature>
+    	    	<headerSignature>\ff\d8\ff\FE</headerSignature>
+            	<footerSignature>\ff\d9</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>20000000</maxLength>
+            <mediaType>image/jpeg</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>PNG</name>
+            <signatures>
+    	        <headerSignature>\89PNG\0d\0a\1a\0a</headerSignature>
+            	<footerSignature>\49END\AE\42\60\82</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>20000000</maxLength>
+            <mediaType>image/png</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>FH-ZIP</name>
+            <signatures>
+    	        <headerSignature>PK\03\04</headerSignature>
+            	<footerSignature>PK\05\06??????????????????</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>100000000</maxLength>
+            <carverClass>dpf.mt.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+        </carverType>
+
+<!--         <carverType>
+            <name>ZIP-MS</name>
+            <signatures>
+    	        <headerSignature>PK\03\04??????????????????????????[Content_Types].xml\20</headerSignature>
+            	<footerSignature>PK\05\06??????????????????</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>100000000</maxLength>
+            <carverClass>dpf.mt.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+        </carverType>
+ -->        
+     </carverTypes>
+
+</carverconfig>

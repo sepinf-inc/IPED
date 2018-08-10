@@ -20,7 +20,7 @@ import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class LanguageDetectTask extends AbstractTask {
 	
@@ -64,7 +64,7 @@ public class LanguageDetectTask extends AbstractTask {
     }
 
     @Override
-    protected void process(EvidenceFile evidence) throws Exception {
+    protected void process(Item evidence) throws Exception {
         
         if(evidence.getMediaType().equals(MediaType.OCTET_STREAM))
             return;

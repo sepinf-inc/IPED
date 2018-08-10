@@ -1,0 +1,258 @@
+package dpf.sp.gpinf.carver;
+
+import dpf.sp.gpinf.carver.api.CarvedItemListener;
+import dpf.sp.gpinf.carver.api.Carver;
+import dpf.sp.gpinf.carver.api.CarverConfiguration;
+import dpf.sp.gpinf.carver.api.CarverType;
+import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carver.api.Signature;
+import dpf.sp.gpinf.carving.CarverConfigurationFactory;
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MediaTypeRegistry;
+import org.arabidopsis.ahocorasick.AhoCorasick;
+import org.arabidopsis.ahocorasick.SearchResult;
+import org.arabidopsis.ahocorasick.Searcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.TreeMap;
+
+/**
+ * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o
+ * qual gera uma máquina de estados a partir dos padrões a serem pesquisados.
+ * Assim, o algoritmo é independente do número de assinaturas pesquisadas, sendo
+ * proporcional ao volume de dados de entrada e ao número de padrões
+ * descobertos.
+ */
+public class CarverTask extends BaseCarverTask {
+
+    private static final long serialVersionUID = 1L;
+    public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
+    public static boolean enableCarving = false;
+    static CarverType[] carverTypes;
+    static CarverConfiguration carverConfig = null;
+    private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
+    private static int largestPatternLen = 100;
+
+    // keeps only one instance per carvertype
+    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
+
+    Item evidence;
+    MediaTypeRegistry registry;
+
+    long prevLen = 0;
+    int len = 0, k = 0;
+    byte[] buf = new byte[1024 * 1024];
+    byte[] cBuf;
+
+    public CarverTask() {
+        this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enableCarving;
+    }
+
+    public void process(Item evidence) {
+        if (!enableCarving) {
+            return;
+        }
+
+        // Nova instancia pois o mesmo objeto é reusado e nao é imutável
+        CarverTask carver = new CarverTask();
+        carver.setWorker(worker);
+        carver.registeredCarvers = this.registeredCarvers;
+        carver.safeProcess(evidence);
+
+        // Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de
+        // itens
+        // carveados através do KFF, esta pode ser removida.
+        synchronized (kffCarved) {
+            kffCarved.remove(evidence);
+        }
+    }
+
+    private void safeProcess(Item evidence) {
+
+        this.evidence = evidence;
+
+        if (!isToProcess(evidence)) {
+            return;
+        }
+
+        InputStream tis = null;
+        try {
+            MediaType type = evidence.getMediaType();
+
+            tis = evidence.getBufferedStream();
+
+            // faz um loop na hierarquia de tipos mime
+            while (!MediaType.OCTET_STREAM.equals(type)) {
+                if (carverConfig.isToNotProcess(type)) {
+                    tis.close();
+                    return;
+                }
+                // avança 1 byte para não recuperar o próprio arquivo analisado
+                if (carverConfig.isToCarve(type)) {
+                    prevLen = (int) tis.skip(1);
+                    // break;
+                }
+
+                type = registry.getSupertype(type);
+            }
+
+            findSig(tis);
+
+        } catch (Exception t) {
+            LOGGER.warn("{} Error carving on {} {}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
+                    t.toString());
+            t.printStackTrace();
+
+        } finally {
+            IOUtil.closeQuietly(tis);
+        }
+
+    }
+
+    private void fillBuf(InputStream in) throws IOException {
+        prevLen += len;
+        len = 0;
+        k = 0;
+        while (k != -1 && (len += k) < buf.length) {
+            k = in.read(buf, len, buf.length - len);
+        }
+
+        cBuf = new byte[len];
+        System.arraycopy(buf, 0, cBuf, 0, len);
+
+    }
+
+    private Hit findSig(InputStream in) throws Exception {
+        HashMap<CarverType, TreeMap<Long, Integer>> map;
+        map = new HashMap<CarverType, TreeMap<Long, Integer>>();
+        for (int i = 0; i < carverTypes.length; i++) {
+            map.put(carverTypes[i], new TreeMap<Long, Integer>());
+        }
+
+        AhoCorasick tree = carverConfig.getPopulatedTree();
+        SearchResult lastResult = new SearchResult(tree.root, null, 0);
+        do {
+            fillBuf(in);
+            lastResult = new SearchResult(lastResult.lastMatchedState, cBuf, 0);
+            Iterator<SearchResult> searcher = new Searcher(tree, tree.continueSearch(lastResult));
+
+            while (searcher.hasNext()) {
+                lastResult = searcher.next();
+
+                for (Object out : lastResult.getOutputs()) {
+                    Object[] oarray = (Object[]) out;
+                    Signature sig = (Signature) oarray[0];
+                    int seq = (int) oarray[1];
+                    int i = lastResult.getLastIndex() - sig.seqEndPos[seq];
+
+                    // tratamento para assinaturas com ? (divididas)
+                    if (sig.seqs.length > 1) {
+                        Integer hits = (Integer) map.get(sig.getCarverType()).get(prevLen + i);
+                        if (hits == null) {
+                            hits = 0;
+                        }
+                        if (hits != seq) {
+                            continue;
+                        }
+                        map.get(sig.getCarverType()).put(prevLen + i, ++hits);
+                        if (map.get(sig.getCarverType()).size() > largestPatternLen) {
+                            map.get(sig.getCarverType()).remove(map.get(sig.getCarverType()).firstKey());
+                        }
+
+                        if (hits < sig.seqs.length) {
+                            continue;
+                        }
+                    }
+
+                    Hit hit = null;
+                    hit = new Hit(sig, prevLen + i);
+
+                    Carver carver = getCarver(sig.getCarverType());
+
+                    carver.notifyHit(this.evidence, hit);
+                }
+            }
+
+            // varre lista de itens carveados
+            for (int i = 0; i < carverTypes.length; i += 2) {
+                Carver carver = getCarver(carverTypes[i]);
+                if (carver != null) {
+                    carver.notifyEnd(this.evidence);
+                }
+            }
+
+        } while (k != -1);
+
+        return null;
+    }
+
+//private int eml;
+
+    @Override
+    public void init(Properties confProps, File confDir) throws Exception {
+        String value = confProps.getProperty("enableCarving"); //$NON-NLS-1$
+        if (value != null) {
+            value = value.trim();
+        }
+        if (value != null && !value.isEmpty()) {
+            enableCarving = Boolean.valueOf(value);
+        }
+
+        if (carverTypes == null && enableCarving && !Configuration.addUnallocated)
+            LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
+
+        if (carverConfig == null) {
+            carverConfig = CarverConfigurationFactory.getCarverConfiguration(confDir);
+        }
+
+        CarvedItemListener cil = new CarvedItemListener() {
+            public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
+                addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);
+                System.out.println(parentEvidence.getName() + "---" + carvedEvidence.getName() + "---" + off);
+            }
+        };
+
+        carverConfig.configTask(confDir, cil);
+        carverTypes = carverConfig.getCarverTypes();
+
+    }
+
+    @Override
+    public void finish() throws Exception {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    protected boolean isToProcess(Item evidence) {
+        // TODO Auto-generated method stub
+        return super.isToProcess(evidence) && carverConfig.isToProcess(evidence.getMediaType());
+    }
+
+    public Item getEvidence() {
+        return evidence;
+    }
+
+    public Carver getCarver(CarverType ct) {
+        Carver carver = registeredCarvers.get(ct);
+        return carver;
+    }
+}

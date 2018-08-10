@@ -49,8 +49,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.io.SeekableInputStream;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o qual gera uma máquina
@@ -75,7 +75,7 @@ public class CarveTask extends BaseCarveTask {
 
   private static int largestPatternLen = 100;
 
-  EvidenceFile evidence;
+  Item evidence;
   MediaTypeRegistry registry;
 
   long prevLen = 0;
@@ -153,7 +153,7 @@ public class CarveTask extends BaseCarveTask {
     tree.prepare();
   }
 
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
     if (!enableCarving) {
       return;
     }
@@ -169,7 +169,7 @@ public class CarveTask extends BaseCarveTask {
     }
   }
 
-  private void safeProcess(EvidenceFile evidence) {
+  private void safeProcess(Item evidence) {
 
     this.evidence = evidence;
 

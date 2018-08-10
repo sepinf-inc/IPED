@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -73,6 +72,7 @@ import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado quando a entrada do
@@ -412,7 +412,7 @@ public class HTMLReportTask extends AbstractTask {
    * listas adequadas.
    */
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     if (!taskEnabled || !caseData.containsReport() || !evidence.isToAddToCase()) {
       return;
     }
@@ -845,7 +845,7 @@ public class HTMLReportTask extends AbstractTask {
     return pathBase.relativize(pathAbsolute).toString().replace('\\', '/');
   }
 
-  private void createImageThumb(EvidenceFile evidence, File thumbFile) {
+  private void createImageThumb(Item evidence, File thumbFile) {
     if (!thumbFile.getParentFile().exists()) {
       thumbFile.getParentFile().mkdirs();
     }

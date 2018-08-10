@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +9,9 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
+
+import iped3.Item;
+import iped3.sleuthkit.SleuthKitItem;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
@@ -47,13 +48,18 @@ public class IgnoreHardLinkTask extends AbstractTask {
   }
   
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
 
     if (!taskEnabled || evidence.getLength() == null || evidence.getLength() == 0 || evidence.isCarved()) {
       return;
     }
+    
+    if(!(evidence instanceof SleuthKitItem)) {
+    	return;    	
+    }
 
-    Content content = evidence.getSleuthFile();
+    SleuthKitItem sevidence =  ((SleuthKitItem)evidence);
+    Content content = sevidence.getSleuthFile();
     if (content != null && content instanceof FsContent) {
       FsContent fsContent = (FsContent) content;
       TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType(); 
@@ -86,15 +92,15 @@ public class IgnoreHardLinkTask extends AbstractTask {
         Object id = hardLinkMap.get(hardLink);
         //test if it is not the same item from other processing queue
         if (id != null) {
-        	if(!id.equals(evidence.getSleuthId()))
+        	if(!id.equals(sevidence.getSleuthId()))
                 ignore = true;
         } else {
-            hardLinkMap.put(hardLink, evidence.getSleuthId());
+            hardLinkMap.put(hardLink, sevidence.getSleuthId());
         }
       }
 
       if (ignore) {
-        evidence.setSleuthFile(null);
+    	sevidence.setSleuthFile(null);
         evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true"); //$NON-NLS-1$
       }
 

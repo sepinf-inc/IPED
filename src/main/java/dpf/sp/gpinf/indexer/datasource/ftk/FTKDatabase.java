@@ -18,10 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource.ftk;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.FileGroup;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,6 +32,10 @@ import java.util.Set;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.FileGroupImpl;
+import iped3.CaseData;
+import iped3.datasource.DataSource;
 
 /*
  * Classe abstrata que representa uma conexão ao banco  de dados do FTK3+.
@@ -183,14 +183,14 @@ public abstract class FTKDatabase {
 
   public void getCaseData(CaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
 
-	ipedDataSource = new DataSource(file);
+	ipedDataSource = new DataSourceImpl(file);
 	
     conn = ods.getConnection();
 
     loadTableSpace();
     bookmarksMap = getBookmarksMap(report);
     for (String bookmark : bookmarksMap.values()) {
-      caseData.addBookmark(new FileGroup(bookmark, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
+      caseData.addBookmark(new FileGroupImpl(bookmark, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     HashMap<Integer, ArrayList<String>> fileList = new HashMap<Integer, ArrayList<String>>();

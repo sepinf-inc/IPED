@@ -29,7 +29,9 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+import iped3.sleuthkit.SleuthKitItem;
 
 /**
  * Classe base de tarefas de carving. 
@@ -54,9 +56,9 @@ public abstract class BaseCarveTask extends AbstractTask {
   private static int itensCarved;
   
   private Set<Long> kffCarvedOffsets;
-  private EvidenceFile prevEvidence;
+  private Item prevEvidence;
 
-  protected static final Map<EvidenceFile, Set<Long>> kffCarved = new HashMap<EvidenceFile, Set<Long>>();   
+  protected static final Map<Item, Set<Long>> kffCarved = new HashMap<Item, Set<Long>>();   
 
   private final synchronized static void incItensCarved() {
     itensCarved++;
@@ -66,9 +68,9 @@ public abstract class BaseCarveTask extends AbstractTask {
     return itensCarved;
   }
   
-  protected void addFragmentFile(EvidenceFile parentEvidence, long off, long len, int fragNum){
+  protected void addFragmentFile(Item parentEvidence, long off, long len, int fragNum){
       String name = parentEvidence.getName() + "_" + fragNum; //$NON-NLS-1$
-	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
+	  Item fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
 	  fragFile.setExtension(parentEvidence.getExt());
 	  fragFile.setAccessDate(parentEvidence.getAccessDate());
 	  if(parentEvidence.getExtraAttribute(SleuthkitReader.IN_FAT_FS) != null)
@@ -80,13 +82,13 @@ public abstract class BaseCarveTask extends AbstractTask {
 	  addOffsetFile(fragFile, parentEvidence);
   }
   
-  protected EvidenceFile addCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
-    EvidenceFile carvedEvidence = createCarvedFile(parentEvidence, off, len, name, mediaType);
+  protected Item addCarvedFile(Item parentEvidence, long off, long len, String name, MediaType mediaType){
+    Item carvedEvidence = createCarvedFile(parentEvidence, off, len, name, mediaType);
 	  if (carvedEvidence != null) addOffsetFile(carvedEvidence, parentEvidence);
 	  return carvedEvidence;
   }
 
-  protected EvidenceFile createCarvedFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
+  protected Item createCarvedFile(Item parentEvidence, long off, long len, String name, MediaType mediaType){
     if (!parentEvidence.equals(prevEvidence)) {
       synchronized (kffCarved) {
         kffCarvedOffsets = kffCarved.get(parentEvidence);
@@ -97,14 +99,14 @@ public abstract class BaseCarveTask extends AbstractTask {
       return null;
     }
 
-    EvidenceFile carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
+    Item carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
     carvedEvidence.setCarved(true);
     incItensCarved();
     return carvedEvidence;
   }
 
-  protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
-	EvidenceFile offsetFile = new EvidenceFile();
+  protected Item getOffsetFile(Item parentEvidence, long off, long len, String name, MediaType mediaType){
+	ItemImpl offsetFile = new ItemImpl();
     offsetFile.setName(name);
     offsetFile.setPath(parentEvidence.getPath() + ">>" + name); //$NON-NLS-1$
     len = Math.min(len, parentEvidence.getLength() - off);
@@ -119,27 +121,30 @@ public abstract class BaseCarveTask extends AbstractTask {
     long prevOff = parentEvidence.getFileOffset();
     offsetFile.setFileOffset(prevOff == -1 ? off : prevOff + off);
 
-    if (parentEvidence.getSleuthFile() != null) {
-      offsetFile.setSleuthFile(parentEvidence.getSleuthFile());
-      offsetFile.setSleuthId(parentEvidence.getSleuthId());
-      if (parentEvidence.hasTmpFile()) {
-        try {
-			offsetFile.setFile(parentEvidence.getTempFile());
-			offsetFile.setTempStartOffset(off);
-		} catch (IOException e) {
-			//ignore
-		}
-      }
-    } else {
-      offsetFile.setFile(parentEvidence.getFile());
-      offsetFile.setExportedFile(parentEvidence.getExportedFile());
+    if(parentEvidence instanceof SleuthKitItem) {
+    	SleuthKitItem sparentEvidence = (SleuthKitItem) parentEvidence;
+        if (sparentEvidence.getSleuthFile() != null) {
+            offsetFile.setSleuthFile(sparentEvidence.getSleuthFile());
+            offsetFile.setSleuthId(sparentEvidence.getSleuthId());
+            if (parentEvidence.hasTmpFile()) {
+              try {
+      			offsetFile.setFile(parentEvidence.getTempFile());
+      			offsetFile.setTempStartOffset(off);
+      		} catch (IOException e) {
+      			//ignore
+      		}
+            }
+          } else {
+            offsetFile.setFile(parentEvidence.getFile());
+            offsetFile.setExportedFile(parentEvidence.getExportedFile());
+          }
     }
     parentEvidence.setHasChildren(true);
     
     return offsetFile;
   }
   
-  protected void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
+  protected void addOffsetFile(Item offsetFile, Item parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
 	    if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
 	      caseData.incDiscoveredEvidences(1);
@@ -149,7 +154,7 @@ public abstract class BaseCarveTask extends AbstractTask {
 	    }
   }
   
-  protected boolean isToProcess(EvidenceFile evidence) {
+  protected boolean isToProcess(Item evidence) {
     if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null
         || (TYPES_TO_PROCESS != null && !TYPES_TO_PROCESS.contains(evidence.getMediaType()))) {
       return false;

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import iped3.Item;
+import iped3.FileGroup;
+
 /**
  * Classe que define dados pertencentes a uma grupo de arquivos de evidência, que pode ser uma
  * categoria (bookmark) sob a qual os arquivos extraídos são organizados, ou alguma outra forma de
@@ -11,7 +14,7 @@ import java.util.List;
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public class FileGroup implements Serializable {
+public class FileGroupImpl implements FileGroup {
 
   /**
    * Identificador utilizado para serialização da classe.
@@ -36,14 +39,14 @@ public class FileGroup implements Serializable {
   /**
    * Arquivos de evidência associados a este grupo.
    */
-  private final List<EvidenceFile> evidenceFiles = new ArrayList<EvidenceFile>();
+  private final List<Item> items = new ArrayList<Item>();
 
   /**
    * @param name nome do bookmark
    * @param descr descrição do bookmark
    * @param fileName nome do arquivo no qual os arquivos de book mark estão listados
    */
-  public FileGroup(String name, String descr, String fileName) {
+  public FileGroupImpl(String name, String descr, String fileName) {
     this.name = name;
     this.descr = descr;
     this.fileName = fileName;
@@ -97,6 +100,6 @@ public class FileGroup implements Serializable {
    */
   @Override
   public String toString() {
-    return "<html><b>" + name + " </b>(" + evidenceFiles.size() + ")</html>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    return "<html><b>" + name + " </b>(" + items.size() + ")</html>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
   }
 }

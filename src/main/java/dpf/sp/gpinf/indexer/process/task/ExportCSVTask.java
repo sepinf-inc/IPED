@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,6 +30,7 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
@@ -63,7 +62,7 @@ public class ExportCSVTask extends AbstractTask {
   }
   
   @Override
-  protected void process(EvidenceFile evidence) throws IOException {
+  protected void process(Item evidence) throws IOException {
 
     if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
       return;

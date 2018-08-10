@@ -1,10 +1,9 @@
 package gpinf.dev.filetypes;
 
 import gpinf.dev.DEVConstants;
-import gpinf.dev.data.EvidenceFile;
+import iped3.EvidenceFileType;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -12,7 +11,7 @@ import java.util.List;
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public abstract class EvidenceFileType implements Serializable {
+public abstract class EvidenceFileTypeImpl implements EvidenceFileType {
 
   /**
    * Identificador utilizado para serialização.
@@ -41,9 +40,9 @@ public abstract class EvidenceFileType implements Serializable {
    * da linguagem em benefício da performance.
    *
    * @param baseDir diretório base onde arquivo de evidência exportados estão armazenados
-   * @param evidenceFiles lista de arquivos a ser processada
+   * @param items lista de arquivos a ser processada
    */
-  public abstract void processFiles(File baseDir, List<EvidenceFile> evidenceFiles);
+  public abstract void processFiles(File baseDir, List<iped3.Item> items);
 
   /**
    * Retorna a descrição do tipo de arquivo de evidência. Por exemplo: "Documento do Word".

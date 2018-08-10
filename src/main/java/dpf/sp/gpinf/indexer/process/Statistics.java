@@ -22,7 +22,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import gpinf.dev.data.CaseData;
+import iped3.CaseData;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados, volume processado,

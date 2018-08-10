@@ -18,8 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
+import iped3.CaseData;
+import iped3.datasource.DataSource;
 
 import java.io.File;
 

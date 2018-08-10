@@ -127,12 +127,16 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    */
   private void setConfigPath() throws Exception {
 	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
-	  //configPath = System.getProperty("user.dir");
-	  rootPath = new File(url.toURI()).getParent();
-	  //test for report generation from case folder
-	  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
-	      rootPath = new File(url.toURI()).getParentFile().getParent();
 	  
+	  if("true".equals(System.getProperty("Debugging"))){
+		  rootPath = System.getProperty("user.dir");
+	  }else {
+		  rootPath = new File(url.toURI()).getParent();
+		  //test for report generation from case folder
+		  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
+		      rootPath = new File(url.toURI()).getParentFile().getParent();
+	  }
+
 	  configPath = rootPath;
 	  String locale = getProfileLocale();
 	  
@@ -142,7 +146,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		  profile = cmdLineParams.getProfile();
 	  }else if(!locale.equals("pt-BR")) //$NON-NLS-1$
 		  profile = "default"; //$NON-NLS-1$
-	  
+
 	  if(profile != null)
 		  configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 	  

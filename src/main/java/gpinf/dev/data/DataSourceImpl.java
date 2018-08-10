@@ -3,22 +3,24 @@ package gpinf.dev.data;
 import java.io.File;
 import java.util.UUID;
 
+import iped3.datasource.DataSource;
+
 /**
  * Representa uma fonte de dados, como imagem de dispositivo, disco físico, pasta ou relatório de outra ferramenta. 
  * 
  * @author Nassif
  *
  */
-public class DataSource {
+public class DataSourceImpl implements DataSource {
 	
 	private File sourceFile;
 	private String name;
 	private UUID uuid;
 	
-	public DataSource() {
+	public DataSourceImpl() {
 	}
 	
-	public DataSource(File source){
+	public DataSourceImpl(File source){
 		this.sourceFile = source;
 		this.uuid = UUID.randomUUID();
 	}

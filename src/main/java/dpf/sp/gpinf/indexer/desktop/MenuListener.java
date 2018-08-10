@@ -45,7 +45,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class MenuListener implements ActionListener {
     
@@ -333,7 +333,7 @@ public class MenuListener implements ActionListener {
     }else if(e.getSource() == menu.openViewfile) {
         int selIdx = App.get().resultsTable.getSelectedRow();
         ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
-        EvidenceFile item = App.get().appCase.getItemByItemId(itemId);
+        Item item = App.get().appCase.getItemByItemId(itemId);
         LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
         ExternalFileOpen.open(item.getViewFile());
     

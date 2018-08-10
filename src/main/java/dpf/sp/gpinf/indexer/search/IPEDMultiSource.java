@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class IPEDMultiSource extends IPEDSource{
 	
@@ -205,16 +205,16 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	@Override
-	final public EvidenceFile getItemByID(int id){
+	final public Item getItemByID(int id){
 		throw new RuntimeException("Use getItemByItemId() from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
-	final public EvidenceFile getItemByItemId(ItemId item){
+	final public Item getItemByItemId(ItemId item){
 		return getAtomicSourceBySourceId(item.getSourceId()).getItemByID(item.getId());
 	}
 	
 	@Override
-	final public EvidenceFile getItemByLuceneID(int luceneId){
+	final public Item getItemByLuceneID(int luceneId){
 		IPEDSource atomicCase = getAtomicSource(luceneId);
 		luceneId -= getBaseLuceneId(atomicCase);
 		return atomicCase.getItemByLuceneID(luceneId);

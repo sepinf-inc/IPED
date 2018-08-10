@@ -68,7 +68,8 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
 
 public class IPEDSource implements Closeable{
 	
@@ -198,7 +199,7 @@ public class IPEDSource implements Closeable{
 			File extraAttrFile = new File(moduleDir, "data/" + IndexTask.extraAttrFilename); //$NON-NLS-1$
 			if(extraAttrFile.exists()){
 				extraAttributes = (Set<String>)Util.readObject(extraAttrFile.getAbsolutePath());
-				EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
+				ItemImpl.getAllExtraAttributes().addAll(extraAttributes);
 			}
 			
 			marcadores = new Marcadores(this, moduleDir);
@@ -335,10 +336,10 @@ public class IPEDSource implements Closeable{
 		}
 	}
 	
-	public EvidenceFile getItemByLuceneID(int docID){
+	public Item getItemByLuceneID(int docID){
 		try {
 			Document doc = searcher.doc(docID);
-			EvidenceFile item = IndexItem.getItem(doc, moduleDir, sleuthCase, false);
+			Item item = IndexItem.getItem(doc, moduleDir, sleuthCase, false);
 			return item;
 			
 		} catch (IOException e) {
@@ -347,7 +348,7 @@ public class IPEDSource implements Closeable{
 		}
 	}
 	
-	public EvidenceFile getItemByID(int id){
+	public Item getItemByID(int id){
 		return getItemByLuceneID(docs[id]);
 	}
 	

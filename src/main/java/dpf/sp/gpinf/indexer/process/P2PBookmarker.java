@@ -20,7 +20,7 @@ import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SearchResult;
-import gpinf.dev.data.CaseData;
+import iped3.CaseData;
 
 public class P2PBookmarker {
 	

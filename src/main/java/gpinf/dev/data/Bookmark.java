@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import iped3.Item;
+
 /**
  * Classe que define dados pertencentes a um Bookmark, que é uma categoria sob a qual os arquivos
  * extraídos são organizados.
@@ -36,7 +38,7 @@ public class Bookmark implements Serializable {
   /**
    * Arquivos de evidência associados a este bookmark.
    */
-  private final List<EvidenceFile> evidenceFiles = new ArrayList<EvidenceFile>();
+  private final List<Item> items = new ArrayList<Item>();
 
   /**
    * @param name nome do bookmark
@@ -52,10 +54,10 @@ public class Bookmark implements Serializable {
   /**
    * Adiciona um arquivo de evidência.
    *
-   * @param evidenceFile arquivo a ser adicionado
+   * @param item arquivo a ser adicionado
    */
-  public void addEvidenceFile(EvidenceFile evidenceFile) {
-    evidenceFiles.add(evidenceFile);
+  public void addItem(Item item) {
+    items.add(item);
   }
 
   /**
@@ -63,8 +65,8 @@ public class Bookmark implements Serializable {
    *
    * @return lista não modificável de arquivos.
    */
-  public List<EvidenceFile> getEvidenceFiles() {
-    return Collections.unmodifiableList(evidenceFiles);
+  public List<Item> getItems() {
+    return Collections.unmodifiableList(items);
   }
 
   /**
@@ -99,6 +101,6 @@ public class Bookmark implements Serializable {
    */
   @Override
   public String toString() {
-    return name + " (" + evidenceFiles.size() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+    return name + " (" + items.size() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
   }
 }

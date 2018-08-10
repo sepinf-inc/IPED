@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,8 +22,6 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.Item;
-import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
@@ -34,6 +30,9 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
+import iped3.io.ItemBase;
+import iped3.search.ItemSearcher;
 
 public class MakePreviewTask extends AbstractTask {
 
@@ -91,7 +90,7 @@ public class MakePreviewTask extends AbstractTask {
   }
   
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
 
     if (!enableFileParsing) {
       return;
@@ -127,7 +126,7 @@ public class MakePreviewTask extends AbstractTask {
 
   }
 
-  private void makeHtmlPreview(EvidenceFile evidence, File outFile, String mediaType) throws Throwable {
+  private void makeHtmlPreview(Item evidence, File outFile, String mediaType) throws Throwable {
     BufferedOutputStream outStream = null;
     try {
       final Metadata metadata = new Metadata();
@@ -137,8 +136,8 @@ public class MakePreviewTask extends AbstractTask {
       final TikaInputStream tis = evidence.getTikaStream();
       
       final ParseContext context = new ParseContext();
-      context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
-      context.set(Item.class, evidence);
+      context.set(ItemSearcher.class, (ItemSearcher) new ItemSearcherImpl(output.getParentFile(), worker.writer));
+      context.set(ItemBase.class, evidence);
       context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
       
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos

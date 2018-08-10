@@ -21,7 +21,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class RegexTask extends AbstractTask{
     
@@ -177,7 +177,7 @@ public class RegexTask extends AbstractTask{
 	}
 
 	@Override
-	protected void process(EvidenceFile evidence) throws Exception {
+	protected void process(Item evidence) throws Exception {
 		
 		if(!enabled || evidence.getParsedTextCache() == null)
 			return;

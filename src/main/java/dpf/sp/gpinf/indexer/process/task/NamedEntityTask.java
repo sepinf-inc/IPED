@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class NamedEntityTask extends AbstractTask {
     
@@ -128,7 +128,7 @@ public class NamedEntityTask extends AbstractTask {
     }
 
     @Override
-    protected void process(EvidenceFile evidence) throws Exception {
+    protected void process(Item evidence) throws Exception {
         
         if(!isEnabled)
             return;

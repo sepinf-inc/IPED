@@ -75,15 +75,15 @@ enableOCR = false
 addFileSlacks = false
 
 # Adiciona e processa áreas não alocadas de imagens via sleuthkit
-addUnallocated = false
+addUnallocated = true
 
 # Indexa o espaço não alocado adicionado. Necessário habilitar "addUnallocated" e "indexUnknownFiles".
-indexUnallocated = false
+indexUnallocated = true
 
 # Habilita o carving. Necessário habilitar "addUnallocated" para vasculhar áreas não alocadas.
 # Por padrão o carving é executado sobre quase todos os itens do caso. Os tipos de arquivo a vasculhar
 # e a recuperar, podem ser configurados em conf/CarvingConfig.txt
-enableCarving = false
+enableCarving = true
 
 # Habilita carving que recupera arquivos conhecidos da base do LED baseado no início (64K) do arquivo.
 # Necessário habilitar "addUnallocated" e configurar "ledWkffPath". 
