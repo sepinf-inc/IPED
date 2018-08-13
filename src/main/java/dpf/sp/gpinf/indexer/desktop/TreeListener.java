@@ -180,7 +180,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
     App.get().appletListener.updateFileListing();
     
-    if(selection.size() == 1 && !rootSelected){
+    if(selection.size() == 1 && selection.iterator().next().getPathCount() > 2){
         int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
         FileProcessor parsingTask = new FileProcessor(luceneId, false);
         parsingTask.execute();
