@@ -550,13 +550,13 @@ public class App extends JFrame implements WindowListener {
 
     progressBar = new JProgressBar(0, 1);
     progressBar.setValue(0);
-    setInitStatus(null);
+    progressBar.setString(Messages.getString("App.Wait")); //$NON-NLS-1$
     progressBar.setForeground(Color.WHITE);
     progressBar.setStringPainted(true);
     progressBar.setIndeterminate(true);
 
     dialogBar = new JDialog(SwingUtilities.windowForComponent(resultsTable), Dialog.ModalityType.MODELESS);
-    dialogBar.setBounds(0, 0, 200, 30);
+    dialogBar.setBounds(0, 0, 150, 30);
     dialogBar.setUndecorated(true);
     dialogBar.getContentPane().add(progressBar);
     appSearchParams.dialogBar = dialogBar;
@@ -619,10 +619,6 @@ public class App extends JFrame implements WindowListener {
     });
     
     new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());    
-  }
-
-  public synchronized void setInitStatus(String status) {
-      progressBar.setString(status == null ? Messages.getString("App.Wait") : status); //$NON-NLS-1$
   }
   
   private void createAllDockables() {

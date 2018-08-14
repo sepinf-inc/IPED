@@ -68,7 +68,6 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -231,7 +230,6 @@ public class IPEDSource implements Closeable{
             final Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
             final List<Content> contents = new ArrayList<Content>(sleuthCase.getRootObjects());
 
-            App.get().setInitStatus(Messages.getString("IPEDSource.OpeningEvidences") + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             if (cacheWarmUpEnabled) {
                 final LinkedList<String> paths = new LinkedList<String>();
                 final Set<String> pending = new HashSet<String>();
@@ -316,7 +314,6 @@ public class IPEDSource implements Closeable{
                     }
                     (threads[0] = new Thread() {
                         public void run() {
-                            int totContent = contents.size();
                             try {
                                 while (!contents.isEmpty()) {
                                     for (int i = 0; i < contents.size(); i++) {
@@ -340,7 +337,6 @@ public class IPEDSource implements Closeable{
                                             preOpenedEvidenceIDs.add(id);
                                             contents.remove(i--);
                                         }
-                                        App.get().setInitStatus(Messages.getString("IPEDSource.OpeningEvidences") + " (" + (totContent - contents.size()) + "/" + totContent + ")..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                                         byte[] b = new byte[1];
                                         long tSleuthInit = System.currentTimeMillis();
                                         c.read(b, 0, 1);
@@ -364,14 +360,11 @@ public class IPEDSource implements Closeable{
                 }
             } else {
                 long tTotalOpenOnSleuth = System.currentTimeMillis();
-                int currContent = 0;
                 for (Content c : contents) {
-                    currContent++;
                     long id = c.getDataSource().getId();
                     synchronized (preOpenedEvidenceIDs) {
                         if (preOpenedEvidenceIDs.contains(id)) continue;
                     }
-                    App.get().setInitStatus(Messages.getString("IPEDSource.OpeningEvidences") + " (" + currContent + "/" + contents.size() + ")..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     byte[] b = new byte[1];
                     long tSleuthInit = System.currentTimeMillis();
                     try {
@@ -391,7 +384,6 @@ public class IPEDSource implements Closeable{
         } catch (Exception e) {
             e.printStackTrace();
         }
-        App.get().setInitStatus(null);
     }
     
 	public void populateLuceneIdToIdMap() throws IOException{
