@@ -53,7 +53,7 @@ public class TouchSleuthkitImages {
                 if (!paths.isEmpty()) {
                     int totSegments = paths.size();
                     long tTotalOpenOnSleuth = System.currentTimeMillis();
-                    Thread[] threads = new Thread[Math.min(256, paths.size() + 1)];
+                    Thread[] threads = new Thread[Math.min(maxThreads + 1, paths.size() + 1)];
                     final AtomicLong totSections = new AtomicLong();
                     for (int i = 1; i < threads.length; i++) {
                         (threads[i] = new Thread() {
