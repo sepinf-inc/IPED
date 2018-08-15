@@ -153,7 +153,7 @@ public class IPEDSource implements Closeable{
 			    else
 			        sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 			    
-			    if(!isReport)
+			    if(!isReport && iw == null)
 			        updateImagePathsToAbsolute(casePath, sleuthFile);
 			    
 				tskCaseList.add(sleuthCase);
@@ -454,7 +454,8 @@ public class IPEDSource implements Closeable{
 	    if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
 	        tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
 	        tmpCaseFile.deleteOnExit();
-            sleuthCase.close();
+	        //causes "case is closed" error in some cases
+	        //sleuthCase.close();
             IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
