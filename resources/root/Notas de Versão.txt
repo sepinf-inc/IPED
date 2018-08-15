@@ -1,3 +1,16 @@
+15/08/2018: IPED-3.14.4
+- Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
+- Filtro textual no gerenciador de colunas visíveis (PCF Wladimir)
+- Opção openImagesCacheWarmUpEnabled para otimizar leitura de imagens E01 segmentadas (PCF Wladimir)
+Correções:
+- OutOfMemory ao finalizar ScriptTask em casos muito grandes (3.14)
+- Falso alerta de evidência não encontrada em extrações automáticas (3.14)
+- Erro "getting case database connection" durante --append com --portable (3.14)
+- Travamentos raros durante geração de miniaturas de imagens (png corrompido, jpg2k)
+- Erro ao localizar evidências de casos processados no Linux e abertos no Windows
+- Erro causado por nomes corrompidos muito longos nos XML do UFED
+- Remove limitadores de heap do iped.exe
+
 06/07/2018: IPED-3.14.3
 - Inclusão da JRE 1.8.0_152 x64
 - Desliga descarte de itens carveados com erro de parsing nos profiles forensic e pedo
