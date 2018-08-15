@@ -92,6 +92,9 @@ public class Configuration {
   public static String loaddbPathWin;
   public static Locale locale = Locale.getDefault();
   public static boolean autoManageCols = true;
+  public static boolean preOpenImagesOnSleuth = false;
+  public static boolean openImagesCacheWarmUpEnabled = false;
+  public static int openImagesCacheWarmUpThreads = 256;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -463,6 +466,21 @@ public class Configuration {
     value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         autoManageCols = Boolean.valueOf(value.trim());
+    }
+
+    value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        preOpenImagesOnSleuth = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("openImagesCacheWarmUpEnabled"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpEnabled = Boolean.valueOf(value.trim());
+    }
+
+    value = properties.getProperty("openImagesCacheWarmUpThreads"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
