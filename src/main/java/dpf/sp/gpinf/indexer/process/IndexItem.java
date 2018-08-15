@@ -61,16 +61,11 @@ import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSourceImpl;
@@ -80,6 +75,8 @@ import iped3.Item;
 import iped3.EvidenceFileType;
 import iped3.datasource.DataSource;
 import iped3.sleuthkit.SleuthKitItem;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens que será

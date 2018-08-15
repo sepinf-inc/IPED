@@ -27,7 +27,8 @@ import java.awt.event.MouseListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.ItemId;
+
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -114,6 +115,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
       }
 
       MarcadoresController.get().setMultiSetting(true);
+
       int[] selectedRows = App.get().resultsTable.getSelectedRows();
       for (int i = 0; i < selectedRows.length; i++) {
     	  if(i == selectedRows.length - 1)

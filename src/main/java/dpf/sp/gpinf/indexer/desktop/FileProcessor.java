@@ -36,9 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import iped3.Item;
+import iped3.desktop.CancelableWorker;
 import iped3.sleuthkit.SleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
@@ -123,7 +123,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
 
     //TODO usar nova API e contornar exibição da Ajuda
-    IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
+    IPEDSourceImpl iCase = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
 	Item item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 	
 	long textSize = iCase.getTextSize(item.getId());

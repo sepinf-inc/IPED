@@ -37,8 +37,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
+import iped3.ItemId;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
     

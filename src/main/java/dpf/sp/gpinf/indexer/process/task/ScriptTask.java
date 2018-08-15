@@ -31,8 +31,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import iped3.Item;
 
 
@@ -79,8 +79,8 @@ public class ScriptTask extends AbstractTask {
   @Override
   public void finish() throws Exception {
       
-      try(IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)){
-          IPEDSearcher searcher = new IPEDSearcher(ipedCase); 
+      try(IPEDSourceImpl ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer)){
+          IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase); 
           
           engine.put("ipedCase", ipedCase); //$NON-NLS-1$
           engine.put("searcher", searcher); //$NON-NLS-1$

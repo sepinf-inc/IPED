@@ -41,11 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import iped3.Item;
+import iped3.ItemId;
 
 public class MenuListener implements ActionListener {
     
@@ -193,10 +194,10 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.exportarMarcados) {
     	ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
-        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        for(IPEDSourceImpl source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
                 if (source.getMarcadores().isSelected(id)) {
-                  uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                  uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
                 }
               }
         }
@@ -208,11 +209,11 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportCheckedToZip) {
-        ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
-        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        ArrayList<ItemIdImpl> uniqueSelectedIds = new ArrayList<ItemIdImpl>();
+        for(IPEDSourceImpl source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
         		if (source.getMarcadores().isSelected(id)) {
-                    uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                    uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
                 }
               }
         }
@@ -302,7 +303,7 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.gerenciarColunas) {
 
-      ColumnsManager.getInstance().setVisible();
+      ColumnsManagerImpl.getInstance().setVisible();
 
     } else if (e.getSource() == menu.gerenciarFiltros) {
 

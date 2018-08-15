@@ -33,7 +33,6 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -43,6 +42,7 @@ import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
 import iped3.Item;
 import iped3.datasource.DataSource;
+import iped3.util.ExtraProperties;
 
 public class UfedXmlReader extends DataSourceReader{
     

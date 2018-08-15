@@ -57,19 +57,19 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
+import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
 import gpinf.dev.data.CaseDataImpl;
 import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
+import iped3.search.LuceneSearchResult;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e
@@ -408,7 +408,7 @@ public class Manager {
   private void updateImagePaths(){
 	  CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 	  if(args.isPortable()){ //$NON-NLS-1$
-		  IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+		  IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
 		  ipedCase.updateImagePathsToRelative();
 		  ipedCase.close();
 	  }
@@ -432,7 +432,7 @@ public class Manager {
       ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name()); //$NON-NLS-1$
 
       if (palavras.size() != 0) {
-    	IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+    	IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
         ArrayList<String> palavrasFinais = new ArrayList<String>();
         for (String palavra : palavras) {
           if (Thread.interrupted()) {
@@ -440,7 +440,7 @@ public class Manager {
             throw new InterruptedException("Processing canceled!"); //$NON-NLS-1$
           }
 
-          IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
+          IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, palavra);
           if (pesquisa.searchAll().getLength() > 0) {
             palavrasFinais.add(palavra);
           }
@@ -462,15 +462,15 @@ public class Manager {
 
   private void saveViewToOriginalFileMap() throws Exception {
 
-    VersionsMap viewToRaw = new VersionsMap(0);
+    VersionsMapImpl viewToRaw = new VersionsMapImpl(0);
 
     if (FTK3ReportReader.wasExecuted) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
 
-      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+      IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
       String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))"; //$NON-NLS-1$
-      IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
+      IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, query);
       LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
 
       HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
@@ -489,7 +489,7 @@ public class Manager {
 
       IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
       Bits liveDocs = MultiFields.getLiveDocs(reader);
-      viewToRaw = new VersionsMap(stats.getLastId() + 1);
+      viewToRaw = new VersionsMapImpl(stats.getLastId() + 1);
 
       for (int i = 0; i < reader.maxDoc(); i++) {
         if (liveDocs != null && !liveDocs.get(i)) {
@@ -529,8 +529,8 @@ public class Manager {
 	    LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
 	    try {
-	      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
-	      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	      IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
+	      IPEDSearcherImpl searchAll = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
 	      LuceneSearchResult result = searchAll.searchAll();
 
 	      boolean[] doNotDelete = new boolean[stats.getLastId() + 1];

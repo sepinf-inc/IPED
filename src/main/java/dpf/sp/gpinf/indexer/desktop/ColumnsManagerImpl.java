@@ -39,25 +39,24 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ItemImpl;
-import iped3.Item;
+import iped3.ItemId;
+import iped3.desktop.ColumnsManager;
+import iped3.desktop.ProgressDialog;
+import iped3.util.ExtraProperties;
 
-public class ColumnsManager implements ActionListener, Serializable{
+public class ColumnsManagerImpl implements ActionListener, Serializable, ColumnsManager{
     
     private static final long serialVersionUID = 1057562688829969313L;
     
-    private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManager.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ColumnsManagerImpl.class);
 
     private static final File globalCols = getGlobalColsFile();
     
@@ -128,9 +127,9 @@ public class ColumnsManager implements ActionListener, Serializable{
 			OutlookPSTParser.HAS_ATTACHS
 		};
 	
-	private static ColumnsManager instance;
+	private static ColumnsManagerImpl instance;
 	
-	private IPEDSource lastCase;
+	private IPEDSourceImpl lastCase;
 	
 	private File caseCols;
 	
@@ -149,14 +148,14 @@ public class ColumnsManager implements ActionListener, Serializable{
 	
 	private boolean autoManageCols = Configuration.autoManageCols;
 	
-	public static ColumnsManager getInstance(){
+	public static ColumnsManagerImpl getInstance(){
 		if(instance == null)
-			instance = new ColumnsManager();
+			instance = new ColumnsManagerImpl();
 		return instance;
 	}
 	
 	public void dispose(){
-	    ColumnsManager.getInstance().saveColumnsState();
+	    ColumnsManagerImpl.getInstance().saveColumnsState();
 		dialog.setVisible(false);
 		instance = null;
 	}
@@ -200,7 +199,7 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    }
 	}
 	
-	private ColumnsManager(){
+	private ColumnsManagerImpl(){
 		
 		dialog.setBounds(new Rectangle(400, 400));
 		dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$

@@ -121,9 +121,6 @@ public class Configuration {
     if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr); //$NON-NLS-1$
 
     configPath = configPathStr;
-    if("true".equals(System.getProperty("Debugging"))){
-    	configPath = System.getProperty("user.dir");
-	} 
 
     appRoot = getAppRoot(configPath);
 

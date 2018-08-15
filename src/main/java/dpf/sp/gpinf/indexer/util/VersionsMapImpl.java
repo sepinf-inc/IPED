@@ -20,6 +20,8 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.io.Serializable;
 
+import iped3.VersionsMap;
+
 /*
  * Classe que mantém mapa bidirecional de versões de visualização <-> original.
  * Array interno que faz o mapeamento tem tamanho igual ao total de itens, 
@@ -31,7 +33,7 @@ import java.io.Serializable;
  * Mapa de original -> visualização usa valores negativos internamente.
  * 
  */
-public class VersionsMap implements Serializable {
+public class VersionsMapImpl implements Serializable, VersionsMap {
 
   /**
    *
@@ -40,7 +42,7 @@ public class VersionsMap implements Serializable {
   private int[] viewToRaw;
   private int mappings = 0;
 
-  public VersionsMap(int size) {
+  public VersionsMapImpl(int size) {
     viewToRaw = new int[size];
   }
 

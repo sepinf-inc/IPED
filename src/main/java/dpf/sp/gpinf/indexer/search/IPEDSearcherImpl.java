@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.InterruptedIOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.lucene.index.Term;
@@ -34,14 +33,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.ItemId;
+import iped3.search.IPEDSearcher;
+import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
 
-public class IPEDSearcher {
+public class IPEDSearcherImpl implements IPEDSearcher {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSearcher.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSearcherImpl.class);
 	
 	public static final int MAX_SIZE_TO_SCORE = 1000000;
 		
-	IPEDSource ipedCase;
+	IPEDSourceImpl ipedCase;
 	Query query;
 	String queryText;
 	boolean treeQuery, noScore;
@@ -49,16 +52,16 @@ public class IPEDSearcher {
 	
 	private volatile boolean canceled;
 	
-	public IPEDSearcher(IPEDSource ipedCase) {
+	public IPEDSearcherImpl(IPEDSourceImpl ipedCase) {
         this.ipedCase = ipedCase;
     }
 
-	public IPEDSearcher(IPEDSource ipedCase, Query query) {
+	public IPEDSearcherImpl(IPEDSourceImpl ipedCase, Query query) {
 		this.ipedCase = ipedCase;
 		this.query = query;
 	}
 	
-	public IPEDSearcher(IPEDSource ipedCase, String query) {
+	public IPEDSearcherImpl(IPEDSourceImpl ipedCase, String query) {
 		this.ipedCase = ipedCase;
 		this.queryText = query;
 	}
@@ -96,11 +99,11 @@ public class IPEDSearcher {
 		return SearchResult.get(ipedCase, luceneSearch());
 	}
 	
-	public MultiSearchResult multiSearch() throws Exception {
+	public MultiSearchResultImpl multiSearch() throws Exception {
 		if(!(ipedCase instanceof IPEDMultiSource))
 			throw new Exception("Use search() method for only one IPEDSource!"); //$NON-NLS-1$
 		
-		return MultiSearchResult.get((IPEDMultiSource)ipedCase, luceneSearch());
+		return MultiSearchResultImpl.get((IPEDMultiSource)ipedCase, luceneSearch());
 	}
 
 	public LuceneSearchResult luceneSearch() throws Exception {
@@ -112,14 +115,14 @@ public class IPEDSearcher {
 		//System.out.println("searching");
 		
 		if(query == null)
-			query = new QueryBuilder(ipedCase).getQuery(queryText);
+			query = new QueryBuilderImpl(ipedCase).getQuery(queryText);
 		
 		if(!treeQuery)
 			query = getNonTreeQuery();
 		
-		collector = new NoScoringCollector(ipedCase.reader.maxDoc());
+		collector = new NoScoringCollector(ipedCase.getReader().maxDoc());
 		try{
-			ipedCase.searcher.search(query, collector);
+			ipedCase.getSearcher().search(query, collector);
 			
 		}catch(InterruptedIOException e){
 			//e.printStackTrace();
@@ -137,7 +140,7 @@ public class IPEDSearcher {
 			if (scoreDocs != null)
 				lastScoreDoc = scoreDocs[scoreDocs.length - 1];
 			
-			scoreDocs = ipedCase.searcher.searchAfter(lastScoreDoc, query, maxResults).scoreDocs;
+			scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults).scoreDocs;
 			
 			searchResult = searchResult.addResults(scoreDocs);
 			
@@ -161,13 +164,14 @@ public class IPEDSearcher {
 			return filtrarFragmentosMulti((IPEDMultiSource)ipedCase, prevResult);
 		
 		HashSet<Integer> duplicates = new HashSet<Integer>();
-		for (int i = 0; i < prevResult.length; i++) {
-			int id = ipedCase.getId(prevResult.docs[i]);
+		int[] docs = prevResult.getLuceneIds();
+		for (int i = 0; i < prevResult.getLength(); i++) {
+			int id = ipedCase.getId(docs[i]);
 			if (ipedCase.isSplited(id)) {
 				if (!duplicates.contains(id)) {
 					duplicates.add(id);
 				} else {
-					prevResult.docs[i] = -1;
+					docs[i] = -1;
 				}
 			}
 		}
@@ -179,10 +183,12 @@ public class IPEDSearcher {
 	
 	private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) throws Exception {
 		HashMap<Integer,HashSet<Integer>> duplicates = new HashMap<Integer,HashSet<Integer>>();
+		int[] docs = prevResult.getLuceneIds(); 
 		if(prevResult.getLength() <= MAX_SIZE_TO_SCORE){
-			for (int i = 0; i < prevResult.length; i++) {
-				ItemId item = ipedCase.getItemId(prevResult.docs[i]);
-				IPEDSource atomicSource = ipedCase.getAtomicSourceBySourceId(item.getSourceId());
+			
+			for (int i = 0; i < prevResult.getLength(); i++) {
+				ItemId item = ipedCase.getItemId(docs[i]);
+				IPEDSourceImpl atomicSource = (IPEDSourceImpl) ipedCase.getAtomicSourceBySourceId(item.getSourceId());
 				int id = item.getId();
 				if (atomicSource.isSplited(id)) {
 					HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
@@ -193,23 +199,23 @@ public class IPEDSearcher {
 					if (!dups.contains(id)) {
 						dups.add(id);
 					} else {
-						prevResult.docs[i] = -1;
+						docs[i] = -1;
 					}
 				}
 			}
 			
 		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
 		}else{
-			IPEDSource atomicSource = null;
+			IPEDSourceImpl atomicSource = null;
 			int baseDoc = 0;
 			int maxdoc = 0;
-			for(int i = 0; i < prevResult.docs.length; i++){
-				if(atomicSource == null || prevResult.docs[i] >= baseDoc + maxdoc){
-					atomicSource = ipedCase.getAtomicSource(prevResult.docs[i]);
+			for(int i = 0; i < docs.length; i++){
+				if(atomicSource == null || docs[i] >= baseDoc + maxdoc){
+					atomicSource = (IPEDSourceImpl)ipedCase.getAtomicSource(docs[i]);
 					baseDoc = ipedCase.getBaseLuceneId(atomicSource);
-					maxdoc = atomicSource.reader.maxDoc();
+					maxdoc = atomicSource.getReader().maxDoc();
 				}
-				int id = atomicSource.getId(prevResult.docs[i] - baseDoc);
+				int id = atomicSource.getId(docs[i] - baseDoc);
 				if (atomicSource.isSplited(id)) {
 					HashSet<Integer> dups = duplicates.get(atomicSource.getSourceId());
 					if(dups == null){
@@ -219,7 +225,7 @@ public class IPEDSearcher {
 					if (!dups.contains(id)) {
 						dups.add(id);
 					} else {
-						prevResult.docs[i] = -1;
+						docs[i] = -1;
 					}
 				}
 			}
@@ -234,9 +240,11 @@ public class IPEDSearcher {
 		if (ipedCase.viewToRawMap.getMappings() == 0)
 			return prevResult;
 
+		int docs[] = prevResult.getLuceneIds();
+		float scores[] = prevResult.getScores();
 		TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
-		for (int i = 0; i < prevResult.length; i++) {
-		    int id = ipedCase.getId(prevResult.docs[i]);
+		for (int i = 0; i < prevResult.getLength(); i++) {
+		    int id = ipedCase.getId(docs[i]);
 			Integer original = ipedCase.viewToRawMap.getRaw(id);
 			if (original == null) {
 				if (ipedCase.viewToRawMap.isRaw(id)) {
@@ -244,15 +252,15 @@ public class IPEDSearcher {
 						addedMap.put(id, i);
 					} else {
 						addedMap.remove(id);
-						prevResult.docs[i] = -1;
+						docs[i] = -1;
 					}
 				}
 			} else {
 				Integer pos = addedMap.get(original);
 				if (pos != null) {
-					prevResult.docs[pos] = prevResult.docs[i];
-					prevResult.scores[pos] = prevResult.scores[i];
-					prevResult.docs[i] = -1;
+					docs[pos] = docs[i];
+					scores[pos] = scores[i];
+					docs[i] = -1;
 					addedMap.remove(original);
 				} else
 					addedMap.put(original, null);

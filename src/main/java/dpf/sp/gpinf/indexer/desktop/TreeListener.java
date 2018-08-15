@@ -37,8 +37,6 @@ import javax.swing.tree.TreePath;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -46,11 +44,13 @@ import org.apache.lucene.search.TermQuery;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.QueryBuilderImpl;
 import dpf.sp.gpinf.indexer.util.SwingUtil;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import iped3.exception.ParseException;
+import iped3.exception.QueryNodeException;
+import iped3.search.LuceneSearchResult;
 
 public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener {
 
@@ -108,7 +108,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
       }
 
       try {
-        treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
+        treeQuery = new QueryBuilderImpl(App.get().appCase).getQuery(treeQueryStr);
       } catch (ParseException | QueryNodeException e) {
         e.printStackTrace();
       }
@@ -130,7 +130,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
         if (parentId != null){
             String ftkId = doc.get(IndexItem.FTKID);
             if (ftkId == null){
-                IPEDSource src = App.get().appCase.getAtomicSource(docId);
+                IPEDSourceImpl src = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
                 docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
                 path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
             }else{
@@ -139,7 +139,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
                   String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
                   textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;  //$NON-NLS-1$ //$NON-NLS-2$
                     
-                  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                  IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, textQuery);
                   task.setTreeQuery(true);
                   result = task.luceneSearch();
 

@@ -6,18 +6,23 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.IPEDSource;
+import iped3.ItemId;
+import iped3.search.Marcadores;
+import iped3.search.MultiMarcadores;
+import iped3.search.MultiSearchResult;
 
-public class MultiMarcadores implements Serializable {
+public class MultiMarcadoresImpl implements Serializable, MultiMarcadores {
 	
 	/**
 	 * 
@@ -26,8 +31,8 @@ public class MultiMarcadores implements Serializable {
 	
 	Map<Integer, Marcadores> map = new HashMap<Integer, Marcadores>();
 	
-	public MultiMarcadores(List<IPEDSource> sources){
-		for(IPEDSource s : sources)
+	public MultiMarcadoresImpl(List<IPEDSourceImpl> cases){
+		for(IPEDSource s : cases)
 			map.put(s.getSourceId(), s.getMarcadores());
 	}
 	
@@ -82,13 +87,13 @@ public class MultiMarcadores implements Serializable {
 	  	return labelIds;
 	}
 	
-	public final boolean hasLabel(ItemId item, Set<String> labelNames){
+	public boolean hasLabel(ItemId item, Set<String> labelNames){
 		Marcadores m = map.get(item.getSourceId());
 		int[] labelIds = getLabelIds(m, labelNames);
 	  	return m.hasLabel(item.getId(), m.getLabelBits(labelIds));
 	}
 	
-	public final boolean hasLabel(ItemId item, String labelName) {
+	public final boolean hasLabel(ItemIdImpl item, String labelName) {
 		Marcadores m = map.get(item.getSourceId());
 		int labelId = m.getLabelId(labelName);
 		if(labelId == -1)
@@ -205,7 +210,7 @@ public class MultiMarcadores implements Serializable {
 	  		}
 	  		i++;
 	  	}
-	  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+	  	MultiSearchResultImpl r = new MultiSearchResultImpl(selectedItems.toArray(new ItemIdImpl[0]),
 	  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 	  	
 		return r;
@@ -231,7 +236,7 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResultImpl r = new MultiSearchResultImpl(selectedItems.toArray(new ItemIdImpl[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;
@@ -249,7 +254,7 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResultImpl r = new MultiSearchResultImpl(selectedItems.toArray(new ItemIdImpl[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;
@@ -267,7 +272,7 @@ public class MultiMarcadores implements Serializable {
 		  		}
 		  		i++;
 		  	}
-		  	MultiSearchResult r = new MultiSearchResult(selectedItems.toArray(new ItemId[0]),
+		  	MultiSearchResultImpl r = new MultiSearchResultImpl(selectedItems.toArray(new ItemIdImpl[0]),
 		  			ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 		  	
 			return r;
@@ -281,7 +286,7 @@ public class MultiMarcadores implements Serializable {
 	  public void loadState(File file) throws ClassNotFoundException, IOException{
 	      Object obj = Util.readObject(file.getAbsolutePath());
 	      if(obj instanceof MultiMarcadores) {
-	          MultiMarcadores state = (MultiMarcadores) obj;
+	          MultiMarcadoresImpl state = (MultiMarcadoresImpl) obj;
 	          map = state.map;
 	      }else {
 	          Marcadores m = (Marcadores) obj;
@@ -320,5 +325,12 @@ public class MultiMarcadores implements Serializable {
 		  for(Marcadores m : map.values())
 			  m.addToTypedWords(texto);
 	   }
+
+	@Override
+	public boolean hasLabel(ItemId item, String labelName) {
+		HashSet<String> labelNames = new HashSet<String>();
+		labelNames.add(labelName);
+		return hasLabel(item, labelNames);
+	}
 
 }

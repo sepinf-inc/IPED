@@ -22,6 +22,7 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.Item;
+import iped3.util.ExtraProperties;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -37,7 +38,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;

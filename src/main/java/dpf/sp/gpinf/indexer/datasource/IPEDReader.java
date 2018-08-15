@@ -22,8 +22,16 @@ import gpinf.dev.data.DataSourceImpl;
 import gpinf.dev.data.ItemImpl;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.CaseData;
+import iped3.IPEDSource;
 import iped3.Item;
 import iped3.datasource.DataSource;
+import iped3.search.IPEDSearcher;
+import iped3.search.LuceneSearchResult;
+import iped3.search.Marcadores;
+import iped3.search.MultiMarcadores;
+import iped3.search.SearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +52,9 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
+import dpf.sp.gpinf.indexer.desktop.ColumnsManagerImpl;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
-import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
@@ -58,12 +64,9 @@ import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.search.MultiMarcadores;
-import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.MarcadoresImpl;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -74,7 +77,7 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class IPEDReader extends DataSourceReader {
   
-  IPEDSource ipedCase;
+  IPEDSourceImpl ipedCase;
   HashSet<Integer> selectedLabels;
   boolean extractCheckedItems = false;
   Marcadores state;
@@ -90,7 +93,7 @@ public class IPEDReader extends DataSourceReader {
 
   public boolean isSupported(File report) {
     String name = report.getName().toLowerCase();
-    return name.endsWith(Marcadores.EXT);
+    return name.endsWith(MarcadoresImpl.EXT);
   }
 
   public int read(File file) throws Exception {
@@ -127,7 +130,7 @@ public class IPEDReader extends DataSourceReader {
 	  	selectedLabels = new HashSet<Integer>();
 	  	indexDir = state.getIndexDir().getCanonicalFile();
 	    basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-	    ipedCase = new IPEDSource(new File(basePath));
+	    ipedCase = new IPEDSourceImpl(new File(basePath));
 	    ipedCase.checkImagePaths();
 	    /*
 	     * Necessário guardar referência aos SleuthkitCase para não serem coletados e finalizados,
@@ -139,7 +142,7 @@ public class IPEDReader extends DataSourceReader {
 	    for(int i = 0; i < oldToNewIdMap.length; i++)
 	    	oldToNewIdMap[i] = -1;
 	    
-	    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	    IPEDSearcher pesquisa = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
 	    LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
 	    if(result.getLength() == 0) {
 	        result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
@@ -162,13 +165,13 @@ public class IPEDReader extends DataSourceReader {
 	  	return;
 	  int lastId = ipedCase.getLastId();
 	  int totalItens = ipedCase.getTotalItens();
-	  File stateFile = new File(output, Marcadores.STATEFILENAME);
+	  File stateFile = new File(output, MarcadoresImpl.STATEFILENAME);
 	  if(stateFile.exists()){
-		  Marcadores reportState = Marcadores.load(stateFile);
+		  Marcadores reportState = MarcadoresImpl.load(stateFile);
 		  lastId += reportState.getLastId() + 1;
 		  totalItens += reportState.getTotalItens();
 	  }
-	  Marcadores reportState = new Marcadores(totalItens, lastId, output);
+	  Marcadores reportState = new MarcadoresImpl(totalItens, lastId, output);
 	  reportState.loadState();
   	
       for(int oldLabelId : selectedLabels){
@@ -206,7 +209,7 @@ public class IPEDReader extends DataSourceReader {
         num++;
       }
       if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-    	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
+    	IPEDSearcher searchParents = new IPEDSearcherImpl(ipedCase, query);
   		searchParents.setTreeQuery(true);
         result = searchParents.luceneSearch();
         insertIntoProcessQueue(result, true);
@@ -241,7 +244,7 @@ public class IPEDReader extends DataSourceReader {
               num++;
           }
           if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-            IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+            IPEDSearcher searchAttachs = new IPEDSearcherImpl(ipedCase, query);
             SearchResult attachs = searchAttachs.search();
       	    for(int j = 0; j < attachs.getLength(); j++)
       	    	isAttachToAdd[attachs.getId(j)] = true;
@@ -264,7 +267,7 @@ public class IPEDReader extends DataSourceReader {
           num++;
         }
         if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-          IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+          IPEDSearcher searchAttachs = new IPEDSearcherImpl(ipedCase, query);
     	  LuceneSearchResult attachs = searchAttachs.luceneSearch();
           insertIntoProcessQueue(attachs, false);
           query = new BooleanQuery();
@@ -463,7 +466,7 @@ public class IPEDReader extends DataSourceReader {
 
       //armazena metadados de emails, necessário para emails de PST
       if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))	
-        for (String key : ColumnsManager.email) {
+        for (String key : ColumnsManagerImpl.email) {
           for(String val : doc.getValues(key))
               evidence.getMetadata().add(key, val);
         }

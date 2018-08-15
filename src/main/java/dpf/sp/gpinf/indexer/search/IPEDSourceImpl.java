@@ -67,13 +67,18 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
+import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
 import gpinf.dev.data.ItemImpl;
+import iped3.IPEDSource;
 import iped3.Item;
+import iped3.ItemId;
+import iped3.VersionsMap;
+import iped3.search.Marcadores;
+import iped3.search.MultiMarcadores;
 
-public class IPEDSource implements Closeable{
+public class IPEDSourceImpl implements Closeable, IPEDSource{
 	
-	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(IPEDSourceImpl.class);
 	
 	public static final String INDEX_DIR = "index"; //$NON-NLS-1$
 	public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
@@ -110,7 +115,7 @@ public class IPEDSource implements Closeable{
 	private int lastId = 0;
 	
 	BitSet splitedIds = new BitSet();
-	VersionsMap viewToRawMap = new VersionsMap(0);
+	VersionsMapImpl viewToRawMap = new VersionsMapImpl(0);
 	
 	LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 	
@@ -118,11 +123,11 @@ public class IPEDSource implements Closeable{
 	
 	boolean isFTKReport = false, isReport = false;
 	
-	public IPEDSource(File casePath) {
+	public IPEDSourceImpl(File casePath) {
 		this(casePath, null);
 	}
 	
-	public IPEDSource(File casePath, IndexWriter iw) {
+	public IPEDSourceImpl(File casePath, IndexWriter iw) {
 		
 		this.casePath = casePath;
 		moduleDir = new File(casePath, MODULE_DIR);
@@ -174,7 +179,7 @@ public class IPEDSource implements Closeable{
             /**FTK specific, will be removed*/
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids"); //$NON-NLS-1$
 			if (viewToRawFile.exists())
-				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
+				viewToRawMap = (VersionsMapImpl) Util.readObject(viewToRawFile.getAbsolutePath());
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
 			if(textSizesFile.exists()) {
@@ -202,9 +207,9 @@ public class IPEDSource implements Closeable{
 				ItemImpl.getAllExtraAttributes().addAll(extraAttributes);
 			}
 			
-			marcadores = new Marcadores(this, moduleDir);
+			marcadores = new MarcadoresImpl(this, moduleDir);
 			marcadores.loadState();
-			globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
+			globalMarcadores = new MultiMarcadoresImpl(Collections.singletonList(this));
 
 		} catch (Exception e) {
 			throw new RuntimeException(e.getMessage(), e);
@@ -255,7 +260,7 @@ public class IPEDSource implements Closeable{
 		*/
 		
 		// ignora tree nodes
-		IPEDSearcher pesquisa = new IPEDSearcher(this, ""); //$NON-NLS-1$
+		IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(this, ""); //$NON-NLS-1$
 		pesquisa.setNoScoring(true);
 	    try {
 			totalItens = pesquisa.search().getLength();
@@ -543,6 +548,10 @@ public class IPEDSource implements Closeable{
 	
 	public int getId(int luceneId){
 		return ids[luceneId];
+	}
+	
+	public int getLuceneId(ItemId itemId){
+		return docs[itemId.getId()];
 	}
 	
 	public int getLuceneId(int id){

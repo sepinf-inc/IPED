@@ -81,6 +81,10 @@ public class AppMain {
 	}
 	
 	private File detectCasePath() {
+	    if("true".equals(System.getProperty("Debugging"))){
+	    	return new File(System.getProperty("user.dir"));
+	    }
+		
 		URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
 		File jarFile = null;
 		try {

@@ -27,8 +27,8 @@ import java.util.Map;
 import javax.swing.RowSorter;
 import javax.swing.table.TableRowSorter;
 
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
+import iped3.desktop.CancelableWorker;
+import iped3.desktop.ProgressDialog;
 
 public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
 

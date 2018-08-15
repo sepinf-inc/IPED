@@ -40,19 +40,19 @@ import org.slf4j.LoggerFactory;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import iped3.Item;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 	
   private static Logger LOGGER = LoggerFactory.getLogger(ExportFilesToZip.class);
 
-  ArrayList<ItemId> uniqueIds;
+  ArrayList<ItemIdImpl> uniqueIds;
   File file, subdir;
   ProgressMonitor progressMonitor;
   HashingOutputStream hos;
 
-  public ExportFilesToZip(File file, ArrayList<ItemId> uniqueIds) {
+  public ExportFilesToZip(File file, ArrayList<ItemIdImpl> uniqueIds) {
     this.file = file;
     this.uniqueIds = uniqueIds;
 
@@ -76,7 +76,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     int subdir = 0;
     int progress = 0;
     
-    for (ItemId item : uniqueIds) {
+    for (ItemIdImpl item : uniqueIds) {
       try {
     	if (progress % 1000 == 0){
     	  subdir++;

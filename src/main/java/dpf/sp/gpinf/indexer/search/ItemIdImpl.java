@@ -1,25 +1,27 @@
 package dpf.sp.gpinf.indexer.search;
 
-public class ItemId implements Comparable<ItemId>{
+import iped3.ItemId;
+
+public class ItemIdImpl implements ItemId{
 	
 	private int sourceId, id;
 	
-	public ItemId(int sourceId, int id){
+	public ItemIdImpl(int sourceId, int id){
 		this.sourceId = sourceId;
 		this.id = id;
 	}
 
 	@Override
 	public int compareTo(ItemId o) {
-		if(sourceId == o.sourceId)
-			return id - o.id;
+		if(sourceId == o.getSourceId())
+			return id - o.getId();
 		else
-			return sourceId - o.sourceId;
+			return sourceId - o.getSourceId();
 	}
 	
 	@Override
 	public boolean equals(Object o){
-		return compareTo((ItemId)o) == 0;
+		return compareTo((ItemIdImpl)o) == 0;
 	}
 	
 	@Override

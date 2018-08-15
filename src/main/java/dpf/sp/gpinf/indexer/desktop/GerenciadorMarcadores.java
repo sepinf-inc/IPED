@@ -57,11 +57,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
+import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
+import iped3.ItemId;
+import iped3.desktop.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener, ListSelectionListener {
 
@@ -218,7 +219,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
       progress.setTask(task);
       progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
       progress.setIndeterminate(true);
-      MultiSearchResult duplicates = MultiSearchResult.get(app.appCase, task.pesquisar());
+      MultiSearchResultImpl duplicates = MultiSearchResultImpl.get(app.appCase, task.pesquisar());
 
       System.out.println(Messages.getString("BookmarksManager.DuplicatesAdded") + duplicates.getLength()); //$NON-NLS-1$
 
@@ -267,10 +268,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
       final ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
 
       if (checked.isSelected()) {
-    	  for(IPEDSource source : App.get().appCase.getAtomicSources()){
+    	  for(IPEDSourceImpl source : App.get().appCase.getAtomicSources()){
           	for (int id = 0; id <= source.getLastId(); id++) {
                   if (source.getMarcadores().isSelected(id)) {
-                    uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                    uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
                   }
                 }
           }
@@ -281,12 +282,12 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
           ItemId id = app.ipedResult.getItem(rowModel);
           uniqueSelectedIds.add(id);
 
-          VersionsMap viewMap = app.appCase.getAtomicSourceBySourceId(id.getSourceId()).getViewToRawMap(); 
+          VersionsMapImpl viewMap = (VersionsMapImpl) app.appCase.getAtomicSourceBySourceId(id.getSourceId()).getViewToRawMap(); 
           Integer id2 = viewMap.getRaw(id.getId());
           if (id2 == null) 
             id2 = viewMap.getView(id.getId());
           if (id2 != null)
-            uniqueSelectedIds.add(new ItemId(id.getSourceId(), id2));
+            uniqueSelectedIds.add(new ItemIdImpl(id.getSourceId(), id2));
         }
       }
 

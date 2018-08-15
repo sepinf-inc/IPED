@@ -64,10 +64,8 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
-import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -80,6 +78,8 @@ import iped3.Item;
 import iped3.io.ItemBase;
 import iped3.io.StreamSource;
 import iped3.search.ItemSearcher;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO, CASO PEQUENO, PARA

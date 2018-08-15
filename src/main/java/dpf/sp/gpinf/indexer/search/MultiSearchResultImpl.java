@@ -2,17 +2,22 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.util.Iterator;
 
-public class MultiSearchResult {
+import iped3.IPEDSource;
+import iped3.ItemId;
+import iped3.search.LuceneSearchResult;
+import iped3.search.MultiSearchResult;
+
+public class MultiSearchResultImpl implements MultiSearchResult {
 	
 	private ItemId[] ids;
 	private float[] scores;
 	
-	public MultiSearchResult(){
-		this.ids = new ItemId[0];
+	public MultiSearchResultImpl(){
+		this.ids = new ItemIdImpl[0];
 		this.scores = new float[0];
 	}
 	
-	public MultiSearchResult(ItemId[] ids, float[] scores){
+	public MultiSearchResultImpl(ItemIdImpl[] ids, float[] scores){
 		this.ids = ids;
 		this.scores = scores;
 	}
@@ -29,7 +34,7 @@ public class MultiSearchResult {
 		return scores[i];
 	}
 	
-	public ItemIdIterator getIterator(){
+	public Iterable<ItemId> getIterator(){
 		return new ItemIdIterator();
 	}
 	
@@ -58,17 +63,18 @@ public class MultiSearchResult {
 		}
 	}	
 	
-	public static MultiSearchResult get(IPEDMultiSource iSource, LuceneSearchResult luceneResult){
+	public static MultiSearchResultImpl get(IPEDMultiSource iSource, LuceneSearchResult luceneResult){
 		
 		//System.out.println("multi Result");
 		
-		MultiSearchResult result = new MultiSearchResult();
-		result.scores = luceneResult.scores;
-		result.ids = new ItemId[luceneResult.getLength()];
+		MultiSearchResultImpl result = new MultiSearchResultImpl();
+		result.scores = luceneResult.getScores();
+		result.ids = new ItemIdImpl[luceneResult.getLength()];
 		
-		if(luceneResult.length <= IPEDSearcher.MAX_SIZE_TO_SCORE){
-			for(int i = 0; i < luceneResult.docs.length; i++){
-				result.ids[i] = iSource.getItemId(luceneResult.docs[i]);
+		if(luceneResult.getLength() <= IPEDSearcherImpl.MAX_SIZE_TO_SCORE){
+			int[] docs = luceneResult.getLuceneIds();
+			for(int i = 0; i < docs.length; i++){
+				result.ids[i] = iSource.getItemId(docs[i]);
 			}
 			
 		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
@@ -77,33 +83,32 @@ public class MultiSearchResult {
 			int baseDoc = 0;
 			int sourceId = 0;
 			int maxdoc = 0;
-			for(int i = 0; i < luceneResult.docs.length; i++){
-				if(atomicSource == null || luceneResult.docs[i] >= baseDoc + maxdoc){
-					atomicSource = iSource.getAtomicSource(luceneResult.docs[i]);
+			int[] docs = luceneResult.getLuceneIds();
+			for(int i = 0; i < docs.length; i++){
+				if(atomicSource == null || docs[i] >= baseDoc + maxdoc){
+					atomicSource = iSource.getAtomicSource(docs[i]);
 					sourceId = atomicSource.getSourceId();
 					baseDoc = iSource.getBaseLuceneId(atomicSource);
-					maxdoc = atomicSource.reader.maxDoc();
+					maxdoc = atomicSource.getReader().maxDoc();
 				}
-				result.ids[i] = new ItemId(sourceId, atomicSource.getId(luceneResult.docs[i] - baseDoc));
+				result.ids[i] = new ItemIdImpl(sourceId, atomicSource.getId(docs[i] - baseDoc));
 			}
 		}
 		
 		return result;
 	}
 	
-	public static LuceneSearchResult get(MultiSearchResult ipedResult, IPEDMultiSource iSource){
-		
-		//System.out.println("lucene Result");
-		
-		LuceneSearchResult lResult = new LuceneSearchResult(0);
-		lResult.length = ipedResult.getLength();
-		lResult.scores = ipedResult.scores;
-		lResult.docs = new int[lResult.length];
+	public static LuceneSearchResult get(MultiSearchResultImpl ipedResult, IPEDMultiSource iSource){
+		LuceneSearchResult lResult = new LuceneSearchResult(ipedResult.getLength());
+		float[] scores = lResult.getScores();
+		int[] docs = lResult.getLuceneIds(); 
 		
 		int i = 0;
-		if(ipedResult.getLength() <= IPEDSearcher.MAX_SIZE_TO_SCORE){
+		if(ipedResult.getLength() <= IPEDSearcherImpl.MAX_SIZE_TO_SCORE){
 			for(ItemId item : ipedResult.ids){ 
-				lResult.docs[i++] = iSource.getLuceneId(item);
+				scores[i] = ipedResult.getScore(i);
+				docs[i] = iSource.getLuceneId(item);
+				i++;
 			}
 		
 		//Otimização: considera que itens estão em ordem crescente do LuceneId (qdo não usa scores)
@@ -117,7 +122,9 @@ public class MultiSearchResult {
 					atomicSource = iSource.getAtomicSourceBySourceId(sourceId);
 					baseDoc = iSource.getBaseLuceneId(atomicSource);
 				}
-				lResult.docs[i++] = atomicSource.getLuceneId(item.getId()) + baseDoc;
+				docs[i] = atomicSource.getLuceneId(item.getId()) + baseDoc;
+				scores[i] = ipedResult.getScore(i);
+				i++;
 			}
 		}
 		
@@ -125,8 +132,8 @@ public class MultiSearchResult {
 	}
 	
 	@Override
-	public MultiSearchResult clone(){
-		MultiSearchResult result = new MultiSearchResult();
+	public MultiSearchResultImpl clone(){
+		MultiSearchResultImpl result = new MultiSearchResultImpl();
 		result.ids = this.ids.clone();
 		result.scores = this.scores.clone();
 		return result;

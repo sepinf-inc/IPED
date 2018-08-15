@@ -46,12 +46,12 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.ItemId;
 
 public class GalleryModel extends AbstractTableModel {
 	

@@ -64,7 +64,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -378,7 +378,7 @@ public class HTMLReportTask extends AbstractTask {
 
       long t = System.currentTimeMillis();
       
-      try(IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)){
+      try(IPEDSourceImpl ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer)){
           for(int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
               String labelName = ipedCase.getMarcadores().getLabelName(labelId);
               String comments = ipedCase.getMarcadores().getLabelComment(labelId);

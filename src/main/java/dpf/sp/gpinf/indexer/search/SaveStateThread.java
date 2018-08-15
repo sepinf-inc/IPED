@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.search.Marcadores;
 
 public class SaveStateThread extends Thread{
 	

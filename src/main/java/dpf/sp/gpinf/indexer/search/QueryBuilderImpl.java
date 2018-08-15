@@ -12,8 +12,6 @@ import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
 import org.apache.lucene.search.BooleanClause;
@@ -28,8 +26,12 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.IPEDSource;
+import iped3.exception.ParseException;
+import iped3.exception.QueryNodeException;
+import iped3.search.QueryBuilder;
 
-public class QueryBuilder {
+public class QueryBuilderImpl implements QueryBuilder {
 	
 	private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
 	
@@ -37,7 +39,7 @@ public class QueryBuilder {
 	
 	private IPEDSource ipedCase;
 	
-	public QueryBuilder(IPEDSource ipedCase){
+	public QueryBuilderImpl(IPEDSource ipedCase){
 		this.ipedCase = ipedCase;
 	}
 	
@@ -81,7 +83,7 @@ public class QueryBuilder {
 		Query query = null;
 		if (queryText != null)
 			try {
-				query = getQuery(queryText, spaceAnalyzer).rewrite(ipedCase.reader);
+				query = getQuery(queryText, spaceAnalyzer).rewrite(ipedCase.getReader());
 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -91,7 +93,7 @@ public class QueryBuilder {
 
 		if (queryText != null)
 			try {
-				query = getQuery(queryText, ipedCase.analyzer).rewrite(ipedCase.reader);
+				query = getQuery(queryText, ipedCase.getAnalyzer()).rewrite(ipedCase.getReader());
 				
 				result.addAll(getQueryStrings(query));
 
@@ -103,7 +105,7 @@ public class QueryBuilder {
 	}
 
 	public Query getQuery(String texto) throws ParseException, QueryNodeException {
-		return getQuery(texto, ipedCase.analyzer);
+		return getQuery(texto, ipedCase.getAnalyzer());
 	}
 
 	public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
@@ -131,8 +133,11 @@ public class QueryBuilder {
 				  texto = (new String(output)).trim();
 			  }
 			  
-			  
-			  return parser.parse(texto, null);
+			  try {
+				  return parser.parse(texto, null);
+			  }catch(org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
+				  throw new QueryNodeException(e);
+			  }
 		}
 
 	}

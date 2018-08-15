@@ -9,6 +9,8 @@ import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.search.Collector;
 import org.apache.lucene.search.Scorer;
 
+import iped3.search.LuceneSearchResult;
+
 /**
  * Fast collector that do not compute scores, for cases with dozens of millions of items
  * 
@@ -60,22 +62,24 @@ public class NoScoringCollector extends Collector{
 	
 	public LuceneSearchResult getSearchResults1(){
 		LuceneSearchResult results = new LuceneSearchResult(totalHits);
+		int[] docs = results.getLuceneIds();
 		int idx = 0;
 		for(int i = 0; i < bits.length(); i++)
 			if(bits.get(i))
-				results.docs[idx++] = i;
+				docs[idx++] = i;
 		
 		return results;
 	}
 	
 	public LuceneSearchResult getSearchResults(){
 		LuceneSearchResult results = new LuceneSearchResult(totalHits);
+		int[] docs = results.getLuceneIds();
 		int idx = 0;
 		long[] array = bits.toLongArray();
 		for(int i = 0; i < array.length; i++)
 			for(int j = 0; j < Long.SIZE; j++)
 			if((array[i] & (1L << j)) != 0)
-				results.docs[idx++] = (i << 6) | j;
+				docs[idx++] = (i << 6) | j;
 		
 		return results;
 	}

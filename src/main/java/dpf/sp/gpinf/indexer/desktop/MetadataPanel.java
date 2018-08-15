@@ -37,8 +37,6 @@ import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -51,10 +49,11 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.QueryBuilderImpl;
+import iped3.ItemId;
+import iped3.exception.ParseException;
+import iped3.exception.QueryNodeException;
+import iped3.search.MultiSearchResult;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener{
     
@@ -98,7 +97,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public MetadataPanel(){
         super(new BorderLayout());
         
-        groups = new JComboBox<String>(ColumnsManager.groupNames);
+        groups = new JComboBox<String>(ColumnsManagerImpl.groupNames);
         groups.setSelectedItem(null);
         groups.setMaximumRowCount(15);
         groups.addActionListener(this);
@@ -258,7 +257,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private void updateProps(){
         updatingProps = true;
         props.removeAllItems();
-        String[] fields = ColumnsManager.getInstance().fieldGroups[groups.getSelectedIndex()];
+        String[] fields = ColumnsManagerImpl.getInstance().fieldGroups[groups.getSelectedIndex()];
         for(String f : fields)
             props.addItem(f);
         updatingProps = false;
@@ -749,7 +748,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
         str.append(")"); //$NON-NLS-1$
         
-        return new QueryBuilder(App.get().appCase).getQuery(str.toString());
+        return new QueryBuilderImpl(App.get().appCase).getQuery(str.toString());
         
     }
     

@@ -31,9 +31,9 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import iped3.search.LuceneSearchResult;
 
 public class SubitemTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
@@ -162,7 +162,7 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
     textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 
     try {
-      IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+      IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, textQuery);
       results = task.luceneSearch();
       
       final int sumSubitens = results.getLength();
@@ -186,8 +186,8 @@ public class SubitemTableModel extends AbstractTableModel implements MouseListen
   }
 
 	@Override
-	public MultiSearchResult getSearchResult() {
-		return MultiSearchResult.get(App.get().appCase, results);
+	public MultiSearchResultImpl getSearchResult() {
+		return MultiSearchResultImpl.get(App.get().appCase, results);
 	}
 
 }
