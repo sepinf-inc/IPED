@@ -18,7 +18,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+/**
+ * 
+ * @author Wladimir Leite
+ *
+ */
 public class TouchSleuthkitImages {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(TouchSleuthkitImages.class);
