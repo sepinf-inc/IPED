@@ -23,7 +23,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
-import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
@@ -69,7 +68,6 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -162,7 +160,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
-
+  
   Color defaultColor;
   Color defaultFocusedColor;
   Color defaultSelectedColor;
@@ -1050,7 +1048,6 @@ private void removeAllDockables() {
 	
 	@Override
 	public ColumnsManager getColumnsManager() {
-		// TODO Auto-generated method stub
-		return null;
+		return ColumnsManagerImpl.getInstance();
 	}
 }
