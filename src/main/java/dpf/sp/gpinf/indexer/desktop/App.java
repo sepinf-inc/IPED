@@ -69,6 +69,7 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -177,7 +178,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
-
+  
   Color alertColor = Color.RED;
   Color alertFocusedColor = Color.RED;
   Color alertSelectedColor = Color.RED;

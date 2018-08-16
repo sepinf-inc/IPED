@@ -319,4 +319,10 @@ public class GalleryModel extends AbstractTableModel {
     return image;
   }
 
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+	 super.setValueAt(value, row, col);
+	 fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
+  }
+  
 }
