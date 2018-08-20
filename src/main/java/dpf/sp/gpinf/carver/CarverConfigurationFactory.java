@@ -14,7 +14,7 @@ public class CarverConfigurationFactory {
     static public CarverConfiguration getCarverConfiguration(File confDir) throws CarverConfigurationException {
         try {
             if (carverConfig == null) {
-                Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass("dpf.sp.gpinf.carving.XMLCarverConfiguration");
+                Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass("dpf.sp.gpinf.carver.XMLCarverConfiguration");
                 carverConfig = (CarverConfiguration) classe.newInstance();
                 File confFile = new File(confDir, CARVE_CONFIG_XML);
                 Properties props = new Properties();
