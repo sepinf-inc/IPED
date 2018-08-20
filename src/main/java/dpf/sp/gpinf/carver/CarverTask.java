@@ -6,7 +6,6 @@ import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.Signature;
-import dpf.sp.gpinf.carving.CarverConfigurationFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.ItemImpl;

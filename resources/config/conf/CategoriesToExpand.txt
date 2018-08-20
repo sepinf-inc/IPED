@@ -12,6 +12,7 @@ Chats
 Contatos
 Discos ISO
 Histórico de Internet
+Arquivos de Georeferenciamento
 
 # Gera relatórios de registro:
 Registro do Windows

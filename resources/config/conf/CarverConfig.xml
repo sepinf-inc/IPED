@@ -14,7 +14,7 @@
         <carverType>
             <name>SQLITE</name>
             <mediaType>application/pkix-cert</mediaType>
-            <carverClass>dpf.mt.gpinf.carving.carvers.SQLiteCarver</carverClass>
+            <carverClass>dpf.sp.gpinf.carving.carvers.SQLiteCarver</carverClass>
         </carverType>
 
         <!-- CarverTypes para arquivos de email EML -->
@@ -31,7 +31,7 @@
             <minLength>1000</minLength>            
             <maxLength>10000000</maxLength>
             <mediaType>message/rfc822</mediaType>
-            <carverClass>dpf.mt.gpinf.carving.carvers.EMLCarver</carverClass>
+            <carverClass>dpf.sp.gpinf.carving.carvers.EMLCarver</carverClass>
         </carverType>
 
         <carverType>
@@ -84,7 +84,7 @@
     	    </signatures>
             <minLength>1000</minLength>            
             <maxLength>100000000</maxLength>
-            <carverClass>dpf.mt.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+            <carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
         </carverType>
 
 <!--         <carverType>
@@ -95,7 +95,7 @@
     	    </signatures>
             <minLength>1000</minLength>            
             <maxLength>100000000</maxLength>
-            <carverClass>dpf.mt.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+            <carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
         </carverType>
  -->        
      </carverTypes>
