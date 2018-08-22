@@ -124,6 +124,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         NodeList headerSignatureEls = sigsEl.getElementsByTagName("headerSignature");
                         NodeList footerSignatureEls = sigsEl.getElementsByTagName("footerSignature");
                         NodeList escapeFooterSignatureEls = sigsEl.getElementsByTagName("escapeFooterSignature");
+                        NodeList lengthRefSignatureEls = sigsEl.getElementsByTagName("lengthRefSignature");
 
                         CarverType ct = createCarverType(carverTypeEl, CARVE_DIR_INDIVIDUAIS);
 
@@ -143,6 +144,12 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                             Element escapeFooterSignatureEl = (Element) escapeFooterSignatureEls.item(l);
                             if (escapeFooterSignatureEl != null) {
                                 ct.addSignature(escapeFooterSignatureEl.getTextContent().trim(), SignatureType.ESCAPEFOOTER);
+                            }
+                        }
+                        for (int l = 0; l < lengthRefSignatureEls.getLength(); l++) {
+                            Element lengthRefSignatureEl = (Element) lengthRefSignatureEls.item(l);
+                            if (lengthRefSignatureEl != null) {
+                                ct.addSignature(lengthRefSignatureEl.getTextContent().trim(), SignatureType.LENGTHREF);
                             }
                         }
                         TYPES_TO_CARVE.add(ct.getMimeType());
