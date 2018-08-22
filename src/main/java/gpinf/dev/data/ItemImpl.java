@@ -1197,7 +1197,6 @@ public class ItemImpl implements SleuthKitItem {
 	@Override
 	public Item createChildItem() {
 		Item child = new ItemImpl();
-		child.setPath(this.getPath() + ">>" + name); //$NON-NLS-1$
         child.setParent(this);
         child.setDeleted(this.isDeleted());
 		

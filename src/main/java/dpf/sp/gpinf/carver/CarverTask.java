@@ -47,7 +47,7 @@ public class CarverTask extends BaseCarverTask {
 
     // keeps only one instance per carvertype
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
-
+    
     Item evidence;
     MediaTypeRegistry registry;
 
@@ -73,7 +73,7 @@ public class CarverTask extends BaseCarverTask {
         // Nova instancia pois o mesmo objeto é reusado e nao é imutável
         CarverTask carver = new CarverTask();
         carver.setWorker(worker);
-        carver.registeredCarvers = this.registeredCarvers;
+        carver.registeredCarvers = carverConfig.getRegisteredCarvers();
         carver.safeProcess(evidence);
 
         // Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de
@@ -112,7 +112,7 @@ public class CarverTask extends BaseCarverTask {
 
                 type = registry.getSupertype(type);
             }
-
+            
             findSig(tis);
 
         } catch (Exception t) {
@@ -199,7 +199,7 @@ public class CarverTask extends BaseCarverTask {
             }
 
         } while (k != -1);
-
+        
         return null;
     }
 
@@ -224,8 +224,7 @@ public class CarverTask extends BaseCarverTask {
 
         CarvedItemListener cil = new CarvedItemListener() {
             public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
-                addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);
-                System.out.println(parentEvidence.getName() + "---" + carvedEvidence.getName() + "---" + off);
+                addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
             }
         };
 

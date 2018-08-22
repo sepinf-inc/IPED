@@ -26,6 +26,7 @@ import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -122,6 +123,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                     if (sigsEl != null) {
                         NodeList headerSignatureEls = sigsEl.getElementsByTagName("headerSignature");
                         NodeList footerSignatureEls = sigsEl.getElementsByTagName("footerSignature");
+                        NodeList escapeFooterSignatureEls = sigsEl.getElementsByTagName("escapeFooterSignature");
 
                         CarverType ct = createCarverType(carverTypeEl, CARVE_DIR_INDIVIDUAIS);
 
@@ -137,8 +139,21 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                                 ct.addSignature(new Signature(ct, SignatureType.FOOTER));// em branco
                             }
                         }
+                        for (int l = 0; l < escapeFooterSignatureEls.getLength(); l++) {
+                            Element escapeFooterSignatureEl = (Element) escapeFooterSignatureEls.item(l);
+                            if (escapeFooterSignatureEl != null) {
+                                ct.addSignature(escapeFooterSignatureEl.getTextContent().trim(), SignatureType.ESCAPEFOOTER);
+                            }
+                        }
                         TYPES_TO_CARVE.add(ct.getMimeType());
                         carverTypesArray.add(ct);
+                    }else {
+                        Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(carverClass.getTextContent());
+                        Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();                        
+                        CarverType[] cts = cv.getCarverTypes();
+                        for (int k = 0; k < cts.length; k++) {
+                            carverTypesArray.add(cts[k]);
+						}
                     }
 
                 }
@@ -227,7 +242,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                 registeredCarvers.put(ct, carver);
             } else {
                 Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(ct.getCarverClass());
-                carver = (Carver) classe.newInstance();
+                carver = (Carver) classe.getDeclaredConstructor().newInstance();
                 registeredCarvers.put(ct, carver);
                 carver.registerCarvedItemListener(carvedItemListener);
             }
@@ -285,11 +300,13 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                     ArrayList<Signature> sigs = ct.getSignatures();
                     for (int j = 0; j < sigs.size(); j++) {
                         Signature sig = sigs.get(j);
-                        for (int k = 0; k < sig.seqs.length; k++) {
-                            Object[] out = new Object[2];
-                            out[0] = sig;
-                            out[1] = k;
-                            tree.add(sig.seqs[k], out);
+                        if(sig.seqs!=null) {
+                            for (int k = 0; k < sig.seqs.length; k++) {
+                                Object[] out = new Object[2];
+                                out[0] = sig;
+                                out[1] = k;
+                                tree.add(sig.seqs[k], out);
+                            }
                         }
                     }
                 }
