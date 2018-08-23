@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop.api;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,11 +16,11 @@ public class FixedResultSetViewerConfiguration implements ResultSetViewerConfigu
 		try {
 			if(viewers.size()==0) {
 	            Class<?> mapaClass = Class.forName("dpf.mt.gpinf.mapas.impl.MapaViewer");
-				ResultSetViewer mapa = (ResultSetViewer) mapaClass.newInstance();
+				ResultSetViewer mapa = (ResultSetViewer) mapaClass.getDeclaredConstructor().newInstance();
 				viewers.add(mapa);
 			}
 			return viewers;
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			e.printStackTrace();
 			/*retorna lista vazia*/
 			return new ArrayList<ResultSetViewer>();

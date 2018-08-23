@@ -19,6 +19,8 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,6 +52,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.LocalConfiguration;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -93,6 +96,8 @@ public class Configuration {
   public static Locale locale = Locale.getDefault();
   public static boolean autoManageCols = true;
   
+  public static LocalConfigurationImpl localConfig = null;
+  
   private static AtomicBoolean loaded = new AtomicBoolean();
   
   private static String getAppRoot(String configPath){
@@ -102,6 +107,13 @@ public class Configuration {
 	  return appRoot;
   }
 
+  public static LocalConfiguration getLocalConfiguration(Path configPath){
+	  if(localConfig==null) {
+		  localConfig = new LocalConfigurationImpl(configPath);		  
+	  }
+	  return localConfig;
+  }
+  
   /**
    * Configurações a partir do caminho informado.
    */
@@ -121,6 +133,8 @@ public class Configuration {
     if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr); //$NON-NLS-1$
 
     configPath = configPathStr;
+    
+    getLocalConfiguration(Paths.get(configPath));
 
     appRoot = getAppRoot(configPath);
 
@@ -419,6 +433,7 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       outputOnSSD = Boolean.valueOf(value);
     }
+
     if(outputOnSSD)
     	indexTemp = null;
 
@@ -426,6 +441,7 @@ public class Configuration {
     if (value != null) {
       value = value.trim();
     }
+
     if (value != null && !value.isEmpty()) {
       addFatOrphans = Boolean.valueOf(value);
     }
@@ -434,6 +450,7 @@ public class Configuration {
     if (value != null) {
       value = value.trim();
     }
+
     if (value != null && !value.isEmpty()) {
       minOrphanSizeToIgnore = Long.valueOf(value);
     }
@@ -445,22 +462,22 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
     }
-    
+
     value = properties.getProperty("maxBackups"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         SaveStateThread.MAX_BACKUPS = Integer.valueOf(value.trim());
     }
-    
+
     value = properties.getProperty("backupInterval"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         SaveStateThread.BKP_INTERVAL = Long.valueOf(value.trim());
     }
-    
+
     value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         phoneParsersToUse = value.trim();
     }
-    
+
     value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         autoManageCols = Boolean.valueOf(value.trim());
@@ -471,12 +488,12 @@ public class Configuration {
       String arch = "x86"; //$NON-NLS-1$
       if(System.getProperty("os.arch").contains("64")) //$NON-NLS-1$ //$NON-NLS-2$
     	  arch = "x64"; //$NON-NLS-1$
-      
+
       loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb"; //$NON-NLS-1$ //$NON-NLS-2$
 
       File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
       nativelibs = new File(nativelibs, arch);
-      
+
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
       Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
 
@@ -484,32 +501,34 @@ public class Configuration {
       EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/"; //$NON-NLS-1$
       LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/"; //$NON-NLS-1$
       IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/"; //$NON-NLS-1$
-      
+
       String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
       if(mplayerPath != null)
           VideoThumbTask.mplayerWin = mplayerPath.trim();
-    
+
     }else{
     	String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
     	if (tskJarPath != null && !tskJarPath.isEmpty())
         	tskJarPath = tskJarPath.trim();
     	else
     		throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
-    	
+
     	tskJarFile = new File(tskJarPath);
     	if(!tskJarFile.exists())
     		throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
     }
-    
+
     String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
     if(optional_jars != null)
         optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-    
+
     File[] jars = optionalJarDir.listFiles();
-    if(jars != null)
-    	for(File jar : jars)
+    if(jars != null) {
+    	for(File jar : jars) {
     		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
     			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
+    	}
+    }
 
     String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)

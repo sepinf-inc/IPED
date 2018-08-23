@@ -21,9 +21,11 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputFilter.Config;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.LocalConfigurationImpl;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
@@ -117,10 +120,10 @@ public class Manager {
 
   public Statistics stats;
   public Exception exception;
-  
+
   private boolean isSearchAppOpen = false;
   private boolean isProcessingFinished = false;
-  
+
   public static Manager getInstance(){
       return instance;
   }
@@ -141,9 +144,27 @@ public class Manager {
     }
 
     stats = Statistics.get(caseData, indexDir);
+
+    LocalConfigurationImpl localConfig = (LocalConfigurationImpl) Configuration.getLocalConfiguration(Paths.get(Configuration.configPath+"\\conf"));
+
+    File[] jars = Configuration.optionalJarDir.listFiles();
+    if(jars != null) {
+    	for(File jar : jars) {
+    	    if(jar.getName().endsWith(".jar")) {
+    			try {
+					localConfig.addZip(jar.toPath());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+    		}
+
+    		if(jar.isDirectory()) {
+    			localConfig.addPath(jar.toPath());
+    		}
+    	}
+    }
     
     instance = this;
-
   }
   
   public File getIndexTemp(){

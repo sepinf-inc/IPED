@@ -1,7 +1,7 @@
 <carverconfig>
     <typesToProcess>application/x-unallocated;</typesToProcess>
     <typesToProcess> application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
-    
+
     <typesToNotProcess>video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
     <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
@@ -9,7 +9,7 @@
     <typesToNotProcess>application/rtf; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;</typesToNotProcess>
 	<typesToNotProcess>application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc;</typesToNotProcess>
 	<typesToNotProcess>application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;</typesToNotProcess>
-    
+
     <carverTypes>
 <!--         <carverType>
             <name>SQLITE</name>
@@ -241,14 +241,25 @@
         <carverType>
             <name>ASF</name>
             <signatures>
-    	        <headerSignature>\30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02</headerSignature>
-    	        <lengthRefSignature>\A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65</lengthRefSignature>
+    	        <headerSignature>\30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02</headerSignature>    	        
+    	        <lengthRefSignature>\A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65</lengthRefSignature><!-- Assinatura a partir de onde será bucado o tamanho -->
     	    </signatures>
-            <minLength>1000</minLength>    
+            <minLength>1000</minLength>
             <maxLength>500000000</maxLength>
             <lengthOffset>40</lengthOffset>
             <lengthSizeBytes>8</lengthSizeBytes>
             <lengthBigEndian>false</lengthBigEndian>
+        </carverType>
+
+        <carverType>
+            <name>KNOWNMET</name>
+            <signatures>
+    	        <headerSignature>\00\03\01\00\02????\02\01\00\27</headerSignature><!-- FT_FILESIZE tag followed by FT_AICH_HASH tag of the first KnownFile record -->
+    	        <headerSignature>\00\03\01\00\02????\03\01\00\34</headerSignature><!-- FT_FILESIZE tag followed by FT_LASTSHARED tag of the first KnownFile record  -->
+    	    </signatures>
+            <minLength>1000</minLength>
+            <maxLength>500000000</maxLength>
+            <carverClass>dpf.sp.gpinf.carving.carvers.KnownMetCarver</carverClass>
         </carverType>
          
      </carverTypes>

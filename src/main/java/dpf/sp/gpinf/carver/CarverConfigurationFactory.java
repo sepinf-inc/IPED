@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.carver.api.CarverConfigurationException;
+import dpf.sp.gpinf.indexer.Configuration;
 
 
 public class CarverConfigurationFactory {
@@ -20,7 +21,7 @@ public class CarverConfigurationFactory {
                 Properties props = new Properties();
                 props.setProperty("XML_CONFIG_FILE", confFile.getAbsolutePath());
                 props.setProperty("XML_CONFIG_DIR", confDir.getAbsolutePath());
-                carverConfig.init(props);
+                carverConfig.init(Configuration.getLocalConfiguration(confDir.toPath()), props);
             }
             return carverConfig;
 

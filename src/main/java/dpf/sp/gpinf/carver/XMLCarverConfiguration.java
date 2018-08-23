@@ -21,17 +21,22 @@ import dpf.sp.gpinf.carver.api.Signature;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import dpf.sp.gpinf.carving.DefaultCarver;
 import dpf.sp.gpinf.carving.JSCarver;
+import dpf.sp.gpinf.indexer.util.XMLUtil;
+import iped3.configuration.LocalConfiguration;
 
 import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
-import java.lang.reflect.Method;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+import java.util.function.Predicate;
 
 public class XMLCarverConfiguration implements CarverConfiguration {
     public static boolean ignoreCorrupted = true;
@@ -42,6 +47,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
     private int CLUSTER_SIZE = 1;
+    private LocalConfiguration localConfig;
     
     // keeps only one instance per carvertype
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
@@ -50,25 +56,37 @@ public class XMLCarverConfiguration implements CarverConfiguration {
 		return registeredCarvers;
 	}
 
+    /* initializes with the parameters */
+    @Override
+	public void init(LocalConfiguration localConfig, Properties props) throws CarverConfigurationException {
+		this.localConfig = localConfig;
+
+		File confFile = new File(props.getProperty("XML_CONFIG_FILE"));
+		Path confDir = Paths.get(props.getProperty("XML_CONFIG_DIR"));
+		try {
+	        loadXMLConfigFile(confFile);
+	        loadXMLConfigDir(confDir);
+		}catch(Exception e) {
+			throw new CarverConfigurationException(e);
+		}
+	}
+
 	/* carrega as configurações a partir de arquivos XML em um diretório */
-    public void loadXMLConfigDir(File baseDir) throws Exception {
-        File confDir = new File(baseDir, CARVE_DIR_INDIVIDUAIS);
+    public void loadXMLConfigDir(Path baseDir) throws Exception {
+    	List<Path> xmlpaths = localConfig.lookUpResource(new Predicate<Path>() {
+			public boolean test(Path path) {
+				if(path.getFileName()!=null) {
+					return path.getFileName().toString().endsWith(".xml") && path.getFileName().toString().startsWith("carver-");
+				}
+				return false;
+			}
+		});
 
-        // procura por configurações adicionais de carvers em arquivos xml do
-        // subdiretório
-        File carversDir = confDir;
-        File[] xmlfiles = carversDir.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".xml");
-            }
-        });
+    	for (Iterator iterator = xmlpaths.iterator(); iterator.hasNext();) {
+			Path path = (Path) iterator.next();
+            loadXMLConfigFile(path.toFile());
+		}
 
-        if(xmlfiles!=null) {
-            for (int i = 0; i < xmlfiles.length; i++) {
-                // adiciona os carvers das configurações individuais
-                loadXMLConfigFile(xmlfiles[i]);
-            }
-        }
     }
 
     public void loadXMLConfigFile(File confFile) throws Exception {
@@ -117,9 +135,9 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                 for (int j = 0; j < carverTypeEls.getLength(); j++) {
                     Element carverTypeEl = (Element) carverTypeEls.item(j);
 
-                    Element carverClass = getFirstElement(carverTypeEl, "carverClass");
+                    Element carverClass = XMLUtil.getFirstElement(carverTypeEl, "carverClass");
 
-                    Element sigsEl = getFirstElement(carverTypeEl, "signatures");
+                    Element sigsEl = XMLUtil.getFirstElement(carverTypeEl, "signatures");
                     if (sigsEl != null) {
                         NodeList headerSignatureEls = sigsEl.getElementsByTagName("headerSignature");
                         NodeList footerSignatureEls = sigsEl.getElementsByTagName("footerSignature");
@@ -173,15 +191,15 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     public CarverType createCarverType(Element carverTypeEl, String scriptDir)
             throws DOMException, DecoderException, UnsupportedEncodingException, FileNotFoundException, IOException,
             ScriptException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-        Element name = getFirstElement(carverTypeEl, "name");
-        Element mediaType = getFirstElement(carverTypeEl, "mediaType");
-        Element carverClass = getFirstElement(carverTypeEl, "carverClass");
-        Element lengthOffset = getFirstElement(carverTypeEl, "lengthOffset");
-        Element lengthSizeBytes = getFirstElement(carverTypeEl, "lengthSizeBytes");
-        Element lengthBigEndian = getFirstElement(carverTypeEl, "lengthBigEndian");
-        Element minLength = getFirstElement(carverTypeEl, "minLength");
-        Element maxLength = getFirstElement(carverTypeEl, "maxLength");
-        Element carverScriptFile = getFirstElement(carverTypeEl, "carverScriptFile");
+        Element name = XMLUtil.getFirstElement(carverTypeEl, "name");
+        Element mediaType = XMLUtil.getFirstElement(carverTypeEl, "mediaType");
+        Element carverClass = XMLUtil.getFirstElement(carverTypeEl, "carverClass");
+        Element lengthOffset = XMLUtil.getFirstElement(carverTypeEl, "lengthOffset");
+        Element lengthSizeBytes = XMLUtil.getFirstElement(carverTypeEl, "lengthSizeBytes");
+        Element lengthBigEndian = XMLUtil.getFirstElement(carverTypeEl, "lengthBigEndian");
+        Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
+        Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
+        Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
 
         CarverType ct = new CarverType();
 
@@ -227,15 +245,6 @@ public class XMLCarverConfiguration implements CarverConfiguration {
         TYPES_TO_CARVE.add(ct.getMimeType());
 
         return ct;
-    }
-
-    public Element getFirstElement(Element el, String tagName) {
-        NodeList snl = el.getElementsByTagName(tagName);
-        if (snl != null) {
-            return (Element) snl.item(0);
-        } else {
-            return null;
-        }
     }
 
     public Carver registerCarver(CarverType ct, File confDir,
@@ -328,17 +337,5 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     public AhoCorasick getPopulatedTree() {
         return tree;
     }
-
-	@Override
-	public void init(Properties props) throws CarverConfigurationException {
-		File confFile = new File(props.getProperty("XML_CONFIG_FILE"));
-		File confDir = new File(props.getProperty("XML_CONFIG_DIR"));
-		try {
-	        loadXMLConfigFile(confFile);
-	        loadXMLConfigDir(confDir);
-		}catch(Exception e) {
-			throw new CarverConfigurationException(e);
-		}
-	}
 
 }
