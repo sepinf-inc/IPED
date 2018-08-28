@@ -416,7 +416,7 @@ public class IPEDSource implements Closeable{
 	        ArrayList<String> newPaths = new ArrayList<String>();
 	        for(String path : paths){
 	            if (isWindowsNetworkShare && !path.startsWith("\\") && !path.startsWith("/") && path.length() > 1 && path.charAt(1) != ':') {
-	                String newPath = new File(casePath.getAbsolutePath() + path).getCanonicalPath();
+                    String newPath = new File(casePath.getAbsolutePath() + File.separator + path).getCanonicalPath();
 	                newPaths.add(newPath);
 	            } else if(new File(path).exists() && path.contains(File.separator)) {
 	        	    newPaths = null;
