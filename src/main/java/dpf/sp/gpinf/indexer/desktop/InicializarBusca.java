@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -107,8 +109,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
     	  
           IndexerDefaultParser autoParser = new IndexerDefaultParser();
-          autoParser.setFallback(new RawStringParser(Configuration.entropyTest));
-          autoParser.setErrorParser(new RawStringParser(Configuration.entropyTest));
+          
+          AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+          autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
+          autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
+          
           App.get().setAutoParser(autoParser);
     	  
     	  FileProcessor exibirAjuda = new FileProcessor(-1, false);

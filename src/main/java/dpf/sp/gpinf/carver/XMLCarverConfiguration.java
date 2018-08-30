@@ -22,7 +22,7 @@ import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import dpf.sp.gpinf.carving.DefaultCarver;
 import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.util.XMLUtil;
-import iped3.configuration.LocalConfiguration;
+import iped3.configuration.ConfigurationDirectory;
 
 import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
@@ -46,8 +46,8 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
-    private int CLUSTER_SIZE = 1;
-    private LocalConfiguration localConfig;
+    //private int CLUSTER_SIZE = 1;
+    private ConfigurationDirectory localConfig;
     
     // keeps only one instance per carvertype
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
@@ -58,7 +58,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
 
     /* initializes with the parameters */
     @Override
-	public void init(LocalConfiguration localConfig, Properties props) throws CarverConfigurationException {
+	public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
 		this.localConfig = localConfig;
 
 		File confFile = new File(props.getProperty("XML_CONFIG_FILE"));
@@ -89,7 +89,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
 
     }
 
-    public void loadXMLConfigFile(File confFile) throws Exception {
+    public void loadXMLConfigFile(File confFile) throws IOException {
         Document doc = null;
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

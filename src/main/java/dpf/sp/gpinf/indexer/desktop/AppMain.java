@@ -19,15 +19,15 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 
+
 public class AppMain {
-	
 	private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 	private static final int MIN_JAVA_VER = 8;
 	private static final int MAX_JAVA_VER = 9;
-	
+
 	File casePath;
     File testPath;// = new File("E:\\1-Laudo-66-sameItem12");
-	
+
 	boolean isMultiCase = false;
 	boolean nolog = false;
 	File casesPathFile = null;
@@ -37,7 +37,7 @@ public class AppMain {
 	    checkJavaVersion();
 		new AppMain().start(args);
 	}
-	
+
 	private static void checkJavaVersion(){
 	    try {
             SwingUtilities.invokeAndWait(new Runnable(){
@@ -151,19 +151,20 @@ public class AppMain {
 			    	  LOGGER.info(Versao.APP_NAME);
 			      
 			      Configuration.getConfiguration(libDir.getParentFile().getAbsolutePath());
+	        	  Configuration.getInstance().loadConfigurables();
 		      }
-		      
+
 		      if(!finalLoader && processingManager == null) {
 		            List<File> jars = new ArrayList<File>();
 		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
 		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
 		            jars.add(Configuration.tskJarFile);
-		            
+
 		            String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
-		            
+
 		            CustomLoader.run(customArgs, jars);
 		            return;
-		            
+
 		        }else{
 		        	App.get().getSearchParams().codePath = libDir.getAbsolutePath();
 					App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);

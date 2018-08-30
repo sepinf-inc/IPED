@@ -34,7 +34,7 @@
 
             	<footerSignature>- -\0d\0a</footerSignature>
             </signatures>
-            <minLength>1000</minLength>            
+            <minLength>1000</minLength>
             <maxLength>10000000</maxLength>
             <mediaType>message/rfc822</mediaType>
             <carverClass>dpf.sp.gpinf.carving.carvers.EMLCarver</carverClass>

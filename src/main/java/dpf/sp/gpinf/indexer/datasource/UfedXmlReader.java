@@ -32,6 +32,9 @@ import org.xml.sax.XMLReader;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -119,10 +122,13 @@ public class UfedXmlReader extends DataSourceReader{
     }
     
     private void configureParsers() {
-        if(Configuration.phoneParsersToUse.equals("internal")) { //$NON-NLS-1$
+    	
+    	UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance().findObjects(UFEDReaderConfig.class).iterator().next();
+    	
+        if(ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             
-        }else if(Configuration.phoneParsersToUse.equals("external")) //$NON-NLS-1$
+        }else if(ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
     }
     

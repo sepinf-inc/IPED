@@ -61,6 +61,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
@@ -315,9 +317,9 @@ public class IPEDSourceImpl implements Closeable, IPEDSource{
 	}
 	
 	protected void openSearcher(){
-		
-		if(Configuration.searchThreads > 1){
-			searchExecutorService = Executors.newFixedThreadPool(Configuration.searchThreads);
+		AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+		if(advancedConfig.getSearchThreads() > 1){
+			searchExecutorService = Executors.newFixedThreadPool(advancedConfig.getSearchThreads());
 			searcher = new IndexSearcher(reader, searchExecutorService);
 		}else
 			searcher = new IndexSearcher(reader);

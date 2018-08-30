@@ -52,10 +52,14 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
-import dpf.sp.gpinf.indexer.LocalConfigurationImpl;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
@@ -72,6 +76,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
 import gpinf.dev.data.CaseDataImpl;
 import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
+import iped3.configuration.ConfigurationDirectory;
 import iped3.search.LuceneSearchResult;
 
 /**
@@ -129,7 +134,9 @@ public class Manager {
   }
 
   public Manager(List<File> sources, File output, File palavras) {
-    this.indexTemp = Configuration.indexTemp;
+	LocalConfig ipedConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+	
+    this.indexTemp = ipedConfig.getIndexTemp();
     this.sources = sources;
     this.output = output;
     this.palavrasChave = palavras;
@@ -145,25 +152,6 @@ public class Manager {
 
     stats = Statistics.get(caseData, indexDir);
 
-    LocalConfigurationImpl localConfig = (LocalConfigurationImpl) Configuration.getLocalConfiguration(Paths.get(Configuration.configPath+"\\conf"));
-
-    File[] jars = Configuration.optionalJarDir.listFiles();
-    if(jars != null) {
-    	for(File jar : jars) {
-    	    if(jar.getName().endsWith(".jar")) {
-    			try {
-					localConfig.addZip(jar.toPath());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-    		}
-
-    		if(jar.isDirectory()) {
-    			localConfig.addPath(jar.toPath());
-    		}
-    	}
-    }
-    
     instance = this;
   }
   
@@ -285,10 +273,12 @@ public class Manager {
   private IndexWriterConfig getIndexWriterConfig(){
 	    IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
 	    conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-	    conf.setMaxThreadStates(Configuration.numThreads);
+	    
+	    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+	    conf.setMaxThreadStates(localConfig.getNumThreads());
 	    conf.setSimilarity(new IndexerSimilarity());
 	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-	    if ((Configuration.indexTempOnSSD && Configuration.indexTemp != null) || Configuration.outputOnSSD) {
+	    if ((localConfig.isIndexTempOnSSD() && localConfig.getIndexTemp() != null) || localConfig.isOutputOnSSD()) {
 	      mergeScheduler.setMaxMergesAndThreads(8, 4);
 	    }
 	    conf.setMergeScheduler(mergeScheduler);
@@ -312,7 +302,8 @@ public class Manager {
 
     writer = new IndexWriter(FSDirectory.open(indexTemp), getIndexWriterConfig());
 
-    workers = new Worker[Configuration.numThreads];
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    workers = new Worker[localConfig.getNumThreads()];
     for (int k = 0; k < workers.length; k++) {
       workers[k] = new Worker(k, caseData, writer, output, this);
     }
@@ -389,7 +380,8 @@ public class Manager {
       workers[k].finish();
     }
 
-    if (Configuration.forceMerge) {
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    if (advancedConfig.isForceMerge()) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
       try {
@@ -436,12 +428,13 @@ public class Manager {
   }
   
   public void deleteTempDir(){
-	  	try {
-	  	  LOGGER.info("Deleting temp folder {}", Configuration.indexerTemp); //$NON-NLS-1$
-	      IOUtil.deletarDiretorio(Configuration.indexerTemp);
-	      
+	  LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+  	  try {
+	  	  LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
+	      IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
+  		      
 	    } catch (IOException e) {
-	      LOGGER.warn("Fail to delete {}", Configuration.indexerTemp.getPath()); //$NON-NLS-1$
+	      LOGGER.warn("Fail to delete {}", localConfig.getIndexerTemp().getPath()); //$NON-NLS-1$
 	    }
   }
 
@@ -618,7 +611,9 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tesseract"), new File(output, "tools/tesseract")); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tsk"), new File(output, "tools/tsk")); //$NON-NLS-1$ //$NON-NLS-2$
-      if (Configuration.embutirLibreOffice) {
+      
+      AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+      if (advancedConfig.isEmbutirLibreOffice()) {
         IOUtil.copiaArquivo(new File(Configuration.appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip")); //$NON-NLS-1$ //$NON-NLS-2$
       }
 

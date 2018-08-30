@@ -63,6 +63,11 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -221,10 +226,11 @@ public class HTMLReportTask extends AbstractTask {
    * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
    */
   private StringBuilder modeloPerito;
-
   
   private static Collator getCollator() {
-    Collator c = Collator.getInstance(Configuration.locale);
+	LocaleConfig localeConfig = (LocaleConfig) ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+
+    Collator c = Collator.getInstance(localeConfig.getLocale());
     c.setStrength(Collator.TERTIARY);
     return c;
   }
@@ -641,7 +647,10 @@ public class HTMLReportTask extends AbstractTask {
       }
     });
     final CustomComparator comparator = new CustomComparator();
-    final int numThreads = Configuration.numThreads;
+
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    final int numThreads = localConfig.getNumThreads();
+
     Thread[] threads = new Thread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       final int idx = i;
@@ -667,7 +676,10 @@ public class HTMLReportTask extends AbstractTask {
   private void processaBookmark(final String name, final String id, final StringBuilder model, final StringBuilder item, final boolean isLabel, final List<ReportEntry> regs) throws Exception {
     final int tot = regs.size();
     final int numPages = (tot + itemsPerPage - 1) / itemsPerPage;
-    final int numThreads = Configuration.numThreads;
+    
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    final int numThreads = localConfig.getNumThreads();
+    
     Thread[] threads = new Thread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       final int idx = i;

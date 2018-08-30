@@ -20,12 +20,13 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
@@ -68,13 +69,12 @@ public class IndexTask extends BaseCarveTask {
 
   public IndexTask() {
     this.autoParser = new IndexerDefaultParser();
-    this.autoParser.setFallback(Configuration.fallBackParser);
-    this.autoParser.setErrorParser(Configuration.errorParser);
-        
+	IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+    this.autoParser.setFallback(ipedConfig.getFallBackParser());
+    this.autoParser.setErrorParser(ipedConfig.getErrorParser());        
   }
 
   public static class IdLenPair {
-
     int id;
     long length;
 
@@ -82,11 +82,9 @@ public class IndexTask extends BaseCarveTask {
       this.id = id;
       this.length = len;
     }
-
   }
 
   public void process(Item evidence) throws IOException {
-
     if (evidence.isQueueEnd()) {
       return;
     }
@@ -108,9 +106,10 @@ public class IndexTask extends BaseCarveTask {
     }
 
     stats.updateLastId(evidence.getId());
-    
+
     //Fragmenta itens grandes indexados via strings
-    if (evidence.getLength() != null && evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment() && !caseData.isIpedReport()
             && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
     		&& ( ((evidence instanceof SleuthKitItem) && ((SleuthKitItem)evidence).getSleuthFile() != null) || evidence.getFile() != null)){
     	
@@ -337,7 +336,6 @@ public class IndexTask extends BaseCarveTask {
   }
 
   private void salvarTamanhoTextosExtraidos() throws Exception {
-
     IndexFiles.getInstance().firePropertyChange("mensagem", "", "Saving extracted text sizes..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     LOGGER.info("Saving extracted text sizes..."); //$NON-NLS-1$
 

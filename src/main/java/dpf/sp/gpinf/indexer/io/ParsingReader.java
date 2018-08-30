@@ -46,6 +46,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 
@@ -151,7 +153,8 @@ public class ParsingReader extends Reader {
         length = Long.parseLong(lengthStr);
       }
     }
-    timeOutBySize = (int) (length / 1000000) * Configuration.timeOutPerMB;
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    timeOutBySize = (int) (length / 1000000) * advancedConfig.getTimeOutPerMB();
 
     pipedReader = new FastPipedReader(128 * 1024, timeOutBySize);
     this.reader = new BufferedReader(pipedReader);

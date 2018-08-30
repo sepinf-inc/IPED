@@ -46,8 +46,8 @@ import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.Item;
 import iped3.io.SeekableInputStream;
@@ -652,11 +652,13 @@ public class CarveTask extends BaseCarveTask {
     if (value != null) {
       value = value.trim();
     }
+
     if (value != null && !value.isEmpty()) {
       enableCarving = Boolean.valueOf(value);
     }
-    
-    if(signatures == null && enableCarving && !Configuration.addUnallocated)
+
+    IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+    if(signatures == null && enableCarving && !ipedConfig.isToAddUnallocated())
         LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
     loadConfigFile(new File(confDir, CARVE_CONFIG));

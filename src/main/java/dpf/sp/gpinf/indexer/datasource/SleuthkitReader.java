@@ -59,6 +59,10 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -273,7 +277,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
       }
       
-      if(Configuration.robustImageReading)
+      SleuthKitConfig sleuthKitConfig = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class).iterator().next();
+      if(sleuthKitConfig.isRobustImageReading())
           Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
 
       if (image.getName().equals(DB_NAME)) {
@@ -595,9 +600,11 @@ public class SleuthkitReader extends DataSourceReader {
       addEvidenceFile(content);
     }
 
+    IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
     if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS ||
     		absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
-      if (!Configuration.addUnallocated) {
+      
+      if (!ipedConfig.isToAddUnallocated()) {
         return;
       }
 
@@ -605,7 +612,8 @@ public class SleuthkitReader extends DataSourceReader {
       //processamento caso haja lock de escrita no sqlite ao adicionar outra evidênca
       absFile.getRanges();
 
-      long fragSize = Configuration.unallocatedFragSize;
+      AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class);
+      long fragSize = advancedConfig.getUnallocatedFragSize();
       int fragNum = 0;
       for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {
         long len = offset + fragSize < absFile.getSize() ? fragSize : absFile.getSize() - offset;
@@ -617,7 +625,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
         frag.setName(absFile.getName() + sufix);
         frag.setLength(len);
-        if(len >= Configuration.minItemSizeToFragment)
+        if(len >= advancedConfig.getMinItemSizeToFragment())
         	frag.setHash(""); //$NON-NLS-1$
 
         setPath(frag, absFile.getUniquePath() + sufix);
@@ -634,7 +642,7 @@ public class SleuthkitReader extends DataSourceReader {
       return;
     }
 
-    if(!Configuration.addFileSlacks && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK &&
+    if(!ipedConfig.isToAddFileSlacks() && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK &&
             !isVolumeShadowCopy(absFile))
     	return;
     
@@ -673,7 +681,9 @@ public class SleuthkitReader extends DataSourceReader {
             if(fs.getParent() != null && fs.getParent().getSize() < absFile.getSize())
                 return;
         }
-        if(Configuration.minOrphanSizeToIgnore != -1 && absFile.getSize() >= Configuration.minOrphanSizeToIgnore)
+        
+        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+        if(advancedConfig.getMinOrphanSizeToIgnore() != -1 && absFile.getSize() >= advancedConfig.getMinOrphanSizeToIgnore())
             return;
     }
 

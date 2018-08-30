@@ -19,6 +19,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
@@ -175,8 +177,9 @@ public class MakePreviewTask extends AbstractTask {
 	  while(t.isAlive()){
 		  if(pch.getProgress())
 			  start = System.currentTimeMillis();
-		  
-		  if((System.currentTimeMillis() - start)/1000 >= Configuration.timeOut){
+
+		  AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+		  if((System.currentTimeMillis() - start)/1000 >= advancedConfig.getTimeOut()){
 			  t.interrupt();
 			  stats.incTimeouts();
 			  throw new TimeoutException();

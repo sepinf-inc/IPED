@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
@@ -30,7 +32,8 @@ public class EntropyTask extends AbstractTask {
     
     @Override
     public boolean isEnabled(){
-        return Configuration.entropyTest;
+    	AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+        return advancedConfig.isEntropyTest();
     }
 
     @Override

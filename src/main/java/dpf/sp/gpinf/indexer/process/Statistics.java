@@ -16,6 +16,9 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
@@ -163,9 +166,10 @@ public class Statistics {
         totalTime += worker.tasks.get(i).getTaskTime();
       }
     }
-    totalTime = totalTime / (1000000 * Configuration.numThreads);
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    totalTime = totalTime / (1000000 * localConfig.getNumThreads());
     for (int i = 0; i < taskTimes.length; i++) {
-      long sec = taskTimes[i] / (1000000 * Configuration.numThreads);
+      long sec = taskTimes[i] / (1000000 * localConfig.getNumThreads());
       LOGGER.info(workers[0].tasks.get(i).getName() + ":\tProcessing Time:\t" + sec + "s (" + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
@@ -218,12 +222,13 @@ public class Statistics {
   }
 
   public void printSystemInfo() throws Exception {
+	LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
     LOGGER.info("Operating System: {}", System.getProperty("os.name")); //$NON-NLS-1$ //$NON-NLS-2$
     LOGGER.info("Java Version: {}", System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
     LOGGER.info("Architecture: {}", System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$
     LOGGER.info("Current Directory: {}", System.getProperty("user.dir")); //$NON-NLS-1$ //$NON-NLS-2$
     LOGGER.info("CPU Cores: {}", Runtime.getRuntime().availableProcessors()); //$NON-NLS-1$
-    LOGGER.info("numThreads: {}", Configuration.numThreads); //$NON-NLS-1$
+    LOGGER.info("numThreads: {}", localConfig.getNumThreads()); //$NON-NLS-1$
 
     long maxMemory = Runtime.getRuntime().maxMemory() / 1000000;
     LOGGER.info("Memory (Heap) Available: {} MB", maxMemory); //$NON-NLS-1$
@@ -243,7 +248,7 @@ public class Statistics {
     LOGGER.info(options.toString());
 
     int minMemPerThread = 200;
-    if (maxMemory / Configuration.numThreads < minMemPerThread) {
+    if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {
       String memoryAlert = Messages.getString("Statistics.LowMemory.1") + minMemPerThread + Messages.getString("Statistics.LowMemory.2") + Messages.getString("Statistics.LowMemory.3") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           + Messages.getString("Statistics.LowMemory.4") + Messages.getString("Statistics.LowMemory.5") + Messages.getString("Statistics.LowMemory.6"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       JOptionPane.showMessageDialog(App.get(), memoryAlert, Messages.getString("Statistics.LowMemory.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$

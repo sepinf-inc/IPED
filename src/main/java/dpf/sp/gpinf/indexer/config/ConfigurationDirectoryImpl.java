@@ -1,8 +1,9 @@
-package dpf.sp.gpinf.indexer;
+package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -15,14 +16,15 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import iped3.configuration.LocalConfiguration;
+import iped3.configuration.ConfigurationDirectory;
+import macee.core.Configurable;
 
-public class LocalConfigurationImpl implements LocalConfiguration {
+public class ConfigurationDirectoryImpl implements ConfigurationDirectory{
 	
 	List<Path> configDirs = new ArrayList<Path>();
 	Map<URI, FileSystem> zipFileSystems = new HashMap<URI, FileSystem>();
 	
-	public LocalConfigurationImpl(Path configDir) {
+	public ConfigurationDirectoryImpl(Path configDir) {
 		configDirs.add(configDir);
 	}
 
@@ -74,6 +76,23 @@ public class LocalConfigurationImpl implements LocalConfiguration {
 			fs = FileSystems.newFileSystem(uri, env);
 			configDirs.add(fs.getRootDirectories().iterator().next());
 		}
+	}
+
+	@Override
+	public List<Path> lookUpResource(Configurable configurable) throws IOException {
+		final DirectoryStream.Filter<Path> filter = configurable.getResourceLookupFilter();
+
+		return lookUpResource(new Predicate<Path>() {
+			@Override
+			public boolean test(Path path) {
+				try {
+					return filter.accept(path);
+				} catch (IOException e) {
+					return false;
+				}
+			}
+		});
+		
 	}
 
 }

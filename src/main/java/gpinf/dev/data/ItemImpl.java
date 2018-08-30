@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -566,7 +569,8 @@ public class ItemImpl implements SleuthKitItem {
 
     if (stream == null && sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-        if (sleuthcase == null || !Configuration.robustImageReading) {
+        SleuthKitConfig sleuthKitConfig = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class).iterator().next();
+        if (sleuthcase == null || !sleuthKitConfig.isRobustImageReading()) {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());

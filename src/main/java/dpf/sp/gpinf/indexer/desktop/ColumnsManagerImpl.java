@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -146,7 +148,7 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
 	private JComboBox<Object> combo;
 	private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
 	
-	private boolean autoManageCols = Configuration.autoManageCols;
+	private boolean autoManageCols;
 	
 	public static ColumnsManagerImpl getInstance(){
 		if(instance == null)
@@ -200,6 +202,8 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
 	}
 	
 	private ColumnsManagerImpl(){
+		AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+		autoManageCols = advancedConfig.isAutoManageCols();
 		
 		dialog.setBounds(new Rectangle(400, 400));
 		dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$

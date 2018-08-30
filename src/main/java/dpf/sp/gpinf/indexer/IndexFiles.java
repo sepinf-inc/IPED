@@ -32,6 +32,7 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
@@ -260,7 +261,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    * Entrada principal da aplicação para processamento de evidências
    */
   public static void main(String[] args) {
-      
+
     boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
     String logPath = null;
     if(fromCustomLoader) {
@@ -270,33 +271,36 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     IndexFiles indexador = new IndexFiles(args);
     PrintStream SystemOut = System.out;
+
     boolean success = false;
-    
+
     try {
         indexador.setConfigPath();
         indexador.logConfiguration = new LogConfiguration(indexador, logPath);
         indexador.logConfiguration.configureLogParameters(indexador.nologfile, fromCustomLoader);
-        
+
         LOGGER = LoggerFactory.getLogger(IndexFiles.class);
         if(!fromCustomLoader)
             LOGGER.info(Versao.APP_NAME);
-        
-        Configuration.getConfiguration(indexador.configPath);
-        
+
+        Configuration.setConfigPath(indexador.configPath);
+        Configuration.getInstance().loadExtensionConfigurables();
+
         if(!fromCustomLoader) {
             List<File> jars = new ArrayList<File>();
-            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
-            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
+            jars.addAll(Arrays.asList(Configuration.getInstance().getPluginConfig().getOptionalJars(indexador.configPath)));
             jars.add(Configuration.tskJarFile);
-            
+
             String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
             return;
-            
+
         }else{
+            Configuration.getConfiguration(indexador.configPath);
+        	Configuration.getInstance().loadConfigurables();
             success = indexador.executar();
         }
-        
+
     } catch (Exception e) {
         e.printStackTrace();
     }

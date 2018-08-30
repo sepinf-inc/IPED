@@ -58,6 +58,9 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -143,8 +146,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   public ParsingTask() {
     this.autoParser = new IndexerDefaultParser();
-    this.autoParser.setFallback(Configuration.fallBackParser);
-    this.autoParser.setErrorParser(Configuration.errorParser);
+    IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+    this.autoParser.setFallback(ipedConfig.getFallBackParser());
+    this.autoParser.setErrorParser(ipedConfig.getErrorParser());
   }
   
   public ParsingTask(Worker worker, IndexerDefaultParser parser) {
@@ -258,8 +262,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     long start = System.nanoTime()/1000;
     
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
     if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
-    		evidence.getLength() < Configuration.minItemSizeToFragment) ||
+    		evidence.getLength() < advancedConfig.getMinItemSizeToFragment()) ||
     		isSpecificParser(parser) )) {
         try{
             new ParsingTask(worker, autoParser).safeProcess(evidence);

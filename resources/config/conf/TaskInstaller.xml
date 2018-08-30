@@ -33,8 +33,8 @@
     
     <!--Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
     e antes da indexação (pois pode setar propriedade hasChildren nos itens)-->
-    <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
     <task class="dpf.sp.gpinf.carver.CarverTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.CarveTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     
