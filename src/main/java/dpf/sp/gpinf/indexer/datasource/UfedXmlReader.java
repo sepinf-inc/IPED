@@ -624,7 +624,10 @@ public class UfedXmlReader extends DataSourceReader{
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
                         if(avatarPath != null) {
                             avatarPath = normalizePaths(avatarPath);
-                            parentItem.getMetadata().add(AVATAR_PATH_META, new File(root, avatarPath).getAbsolutePath());
+                            File avatarFile = new File(avatarPath);
+                            if(!avatarFile.isAbsolute())
+                                avatarFile = new File(root, avatarPath);
+                            parentItem.getMetadata().add(AVATAR_PATH_META, avatarFile.getAbsolutePath());
                         }
                     }else if("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for(String meta : item.getMetadata().names()) {
@@ -787,9 +790,12 @@ public class UfedXmlReader extends DataSourceReader{
                 String avatarPath = contact.getMetadata().get(AVATAR_PATH_META);
                 if(avatarPath != null) {
                     contact.getMetadata().remove(AVATAR_PATH_META);
-                    byte[] bytes = Files.readAllBytes(new File(avatarPath).toPath());
-                    bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
-                    contact.setThumb(bytes);
+                    File avatarFile = new File(avatarPath);
+                    if(avatarFile.exists()) {
+                        byte[] bytes = Files.readAllBytes(avatarFile.toPath());
+                        bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
+                        contact.setThumb(bytes);
+                    }
                 }
                 String[] metas = contact.getMetadata().names();
                 Arrays.sort(metas);
