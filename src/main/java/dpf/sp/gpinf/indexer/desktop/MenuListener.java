@@ -60,6 +60,13 @@ public class MenuListener implements ActionListener {
     this.menu = menu;
     File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
     fileChooser.setCurrentDirectory(moduleDir.getParentFile());
+    
+	  /*[Triage] Se existe o diretório padrão de dados exportados, como o /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório */
+	  File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));    	  
+	  if (dirDadosExportados.exists()) {
+		 fileChooser.setCurrentDirectory(dirDadosExportados);
+	  }
+    
   }
 
   private class Filtro extends FileFilter {

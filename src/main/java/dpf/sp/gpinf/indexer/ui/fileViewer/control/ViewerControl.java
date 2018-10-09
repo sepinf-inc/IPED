@@ -141,7 +141,7 @@ public class ViewerControl implements IViewerControl {
 
         if (systemLO != null || (System.getProperty("os.name").startsWith("Windows") && (new File(pathLO).exists() || new File(compressedLO).exists()))) { //$NON-NLS-1$ //$NON-NLS-2$
 
-          try {
+         /* try {
             SwingUtilities.invokeAndWait(new Runnable() {
               @Override
               public void run() {
@@ -155,8 +155,8 @@ public class ViewerControl implements IViewerControl {
           } catch (Exception e) {
             e.printStackTrace();
           }
-
-          if (result == JOptionPane.YES_OPTION) {
+*/
+  /*        if (result == JOptionPane.YES_OPTION)*/ {
             if (systemLO == null) {
               LOExtractor extractor = new LOExtractor(compressedLO, pathLO);
               useLO = extractor.decompressLO();

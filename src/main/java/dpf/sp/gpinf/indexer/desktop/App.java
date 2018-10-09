@@ -154,7 +154,7 @@ public class App extends JFrame implements WindowListener {
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
-  boolean disposicaoVertical = false;
+  boolean disposicaoVertical = true;
 
   public ResultTableModel resultsModel;
   List resultSortKeys;
@@ -392,7 +392,7 @@ public class App extends JFrame implements WindowListener {
     	topPanel.add(atualizar);
     topPanel.add(ajuda);
     topPanel.add(checkBox);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
     resultsModel = new ResultTableModel();
     resultsTable = new JTable(resultsModel);
@@ -587,6 +587,8 @@ public class App extends JFrame implements WindowListener {
     // filtro.getComponent(0).addMouseListener(appletListener);
     termo.getEditor().getEditorComponent().addMouseListener(appletListener);
     termo.getComponent(0).addMouseListener(appletListener);
+    
+    zoomFont(App.this, -1);
 
     //Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
     gallery.repaint();
@@ -809,7 +811,7 @@ public class App extends JFrame implements WindowListener {
 		removeAllDockables();
 	  createAllDockables();
 
-	  tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.23));
       tableTabDock.setVisible(true);
 	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 	  
@@ -822,7 +824,7 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 	        
-	  hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.5));
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.77).west(0.18));
 	  hitsDock.setVisible(true);
 	  nextLocation = hitsDock.getBaseLocation().aside();
 	  
@@ -833,10 +835,10 @@ public class App extends JFrame implements WindowListener {
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
 
-	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.5));
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.77).east(0.65));
 	  compositeViewerDock.setVisible(true);
 	  
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
 	  categoriesTabDock.setVisible(true);
 	        
 	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
@@ -884,10 +886,10 @@ public class App extends JFrame implements WindowListener {
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
 	       
-	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.3));
+	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.50));
 	  compositeViewerDock.setVisible(true);
 	       
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
       categoriesTabDock.setVisible(true);
       
       metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
