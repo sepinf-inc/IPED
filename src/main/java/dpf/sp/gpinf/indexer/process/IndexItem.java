@@ -111,7 +111,7 @@ public class IndexItem extends BasicProps{
   static {
     contentField.setIndexed(true);
     contentField.setOmitNorms(true);
-    contentField.setStoreTermVectors(true);
+    contentField.setStoreTermVectors(false);//Triage
     
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);
@@ -356,6 +356,7 @@ public class IndexItem extends BasicProps{
       }
     }
 
+// TRIAGE comentar
     Metadata metadata = evidence.getMetadata();
     if (metadata != null) {
       if (guessMetaTypes) {
