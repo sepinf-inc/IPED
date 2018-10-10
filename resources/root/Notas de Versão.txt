@@ -1,9 +1,15 @@
-15/08/2018: IPED-3.14.5
+09/10/2018: IPED-3.14.5
+- Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
+- Correção para perda de marcadores em multicasos (3.14)
 - Falso alerta de evidência não encontrada ao processar discos físicos (3.14)
 - Altera opção -nocontent para exportar conteúdo de itens presentes em outro marcador
 - Corrige abertura de casos via compartilhamento do Windows
-- Não copia arquivos desnecessários referentes a treeNodes para relatórios
-- Workaround para relatórios XML do UFED fora da especificação
+- Não copia para relatórios arquivos desnecessários referentes a nós da árvore
+- Arquivos zip não comprimidos contendo outros zips não eram expandidos corretamente
+- Exportação de árvore de diretórios renomeava itens ativos no caso de conflito de nomes
+- Foca aba de categorias caso não haja marcadores em relatórios
+- Desabilita por padrão gerenciamento automático de colunas
+- Corrige estatística de tempo de parsers de conteineres
 
 15/08/2018: IPED-3.14.4
 - Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
