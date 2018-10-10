@@ -164,20 +164,20 @@
             <artifactId>iped-utils</artifactId>
             <version>3.14</version>
         </dependency>
-        <!--dependency>
+        <dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox</artifactId>
-  			<version>2.0.11</version>
+  			<version>2.0.12</version>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.11</version>
-		</dependency-->
+  			<version>2.0.12</version>
+		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.1</version>
+  			<version>3.0.2</version>
 		</dependency>
         <dependency>
             <groupId>org.eclipse</groupId>
