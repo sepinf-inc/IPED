@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -119,6 +120,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private volatile ParsingReader reader;
   private boolean hasTitle = false;
   private String firstParentPath = null;
+  private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
+  private volatile int depth = 0;
   
   private IndexerDefaultParser autoParser;
 
@@ -245,6 +248,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     if (!enableFileParsing) {
       return;
     }
+    
+    long start = System.nanoTime()/1000;
 
     fillMetadata(evidence);
     
@@ -255,16 +260,23 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     	time = new AtomicLong();
     	times.put(getParserName(parser), time);
     }
-    long start = System.nanoTime()/1000;
     
     if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
     		isSpecificParser(parser) )) {
         try{
-            new ParsingTask(worker, autoParser).safeProcess(evidence);
+            depth++;
+            ParsingTask task = new ParsingTask(worker, autoParser);
+            task.depth = depth;
+            task.timeInDepth = timeInDepth;
+            task.safeProcess(evidence);
             
         }finally{
-            time.addAndGet(System.nanoTime()/1000 - start);
+            depth--;
+            long diff = System.nanoTime()/1000 - start;
+            Long subitemsTime = timeInDepth.remove(depth + 1);
+            if(subitemsTime == null) subitemsTime = 0L;
+            time.addAndGet(diff - subitemsTime);
         }
       
     }
@@ -560,8 +572,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {
         try {
+          long start =  System.nanoTime()/1000;
           worker.processNewItem(subItem);
           incSubitensDiscovered();
+          
+          long diff = (System.nanoTime()/1000) - start;
+          Long prevTime = timeInDepth.get(depth);
+          if(prevTime == null) prevTime = 0L;
+          timeInDepth.put(depth, prevTime + diff);
 
         } finally {
           //despausa contador de timeout do pai somente após processar subitem
