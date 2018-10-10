@@ -25,9 +25,11 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
@@ -113,6 +115,7 @@ public class UfedXmlReader extends DataSourceReader{
         SAXParser saxParser = spf.newSAXParser();
         XMLReader xmlReader = saxParser.getXMLReader();
         xmlReader.setContentHandler(new XMLContentHandler());
+        xmlReader.setErrorHandler(new XMLErrorHandler());
         xmlReader.parse(new InputSource(new UFEDXMLWrapper(xml)));
         
         return 0;
@@ -169,6 +172,22 @@ public class UfedXmlReader extends DataSourceReader{
         
         caseData.incDiscoveredEvidences(1);
         caseData.addEvidenceFile(decodedFolder);
+    }
+    
+    private class XMLErrorHandler implements ErrorHandler{
+
+        @Override
+        public void warning(SAXParseException exception) throws SAXException {
+        }
+
+        @Override
+        public void error(SAXParseException exception) throws SAXException {
+        }
+
+        @Override
+        public void fatalError(SAXParseException exception) throws SAXException {
+            exception.printStackTrace();
+        }
     }
     
     private class XMLContentHandler implements ContentHandler{
