@@ -17,11 +17,17 @@
 package dpf.sp.gpinf.indexer.io;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,12 +38,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.fork.ForkParser;
+import org.apache.tika.fork.ParserFactoryFactory;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.ParserFactory;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.slf4j.Logger;
@@ -79,7 +87,7 @@ public class ParsingReader extends Reader {
   /**
    * Parser instance used for parsing the given binary stream.
    */
-  private final Parser parser;
+  private Parser parser;
 
   /**
    * Buffered read end of the pipe.
@@ -165,12 +173,49 @@ public class ParsingReader extends Reader {
 
     // Teste para executar parsing em outra JVM, isolando problemas, mas
     // impacta desempenho
-		/*
-     * if(forkParser == null){ forkParser = new
-     * ForkParser(ClassLoader.getSystemClassLoader(), this.parser);
-     * forkParser.setJavaCommand("java -Xms512m");
-     * forkParser.setPoolSize(8); } this.parser = forkParser;
-     */
+    this.parser = getForkParser();
+    
+  }
+  
+  private Parser getForkParser() {
+      if(forkParser == null) {
+          synchronized(this.getClass()) {
+              if(forkParser == null) {
+                  forkParser = new ForkParser(new File(Configuration.appRoot, "lib").toPath(), 
+                          new ParserFactoryFactory(MyParserFactory.class.getName(), Collections.EMPTY_MAP));
+                  //forkParser = new ForkParser(this.getClass().getClassLoader(), parser);
+                  //"-Diped-locale=" + Configuration.locale);
+                  forkParser.setJavaCommand(getCommand());
+                  forkParser.setPoolSize(12);
+                  forkParser.setServerPulseMillis(5000);
+              }
+          }
+      }
+      return forkParser;
+  }
+  
+  private List<String> getCommand(){
+      List<String> cmd = new ArrayList<>();
+      cmd.add("java");
+      cmd.add("-Xmx512m");
+      for(Object key : System.getProperties().keySet()) {
+          cmd.add("-D" + key + "=" + System.getProperty(key.toString()));
+          System.out.println(cmd.get(cmd.size() - 1));
+      }
+      return cmd;
+  }
+  
+  public static class MyParserFactory extends ParserFactory{
+
+    public MyParserFactory(Map<String, String> args) {
+        super(args);
+    }
+
+    @Override
+    public Parser build() throws IOException, SAXException, TikaException {
+        return new IndexerDefaultParser();
+    }
+      
   }
 
   public void startBackgroundParsing() {
@@ -265,10 +310,11 @@ public class ParsingReader extends Reader {
     public void run() {
       ContentHandler handler = new ToTextContentHandler(writer);
       try {
-        parser.parse(stream, handler, metadata, context);
+        parser.parse(stream, handler, metadata, new ParseContext());
 
       } catch (TikaException e) {
-        throwable = e;
+        //throwable = e;
+        e.printStackTrace();
 
       } catch (OutOfMemoryError t) {
         ItemInfo itemInfo = context.get(ItemInfo.class);
