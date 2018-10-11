@@ -578,7 +578,7 @@ public class UfedXmlReader extends DataSourceReader{
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
-                if(mergeInParentNode.contains(type)) {
+                if(mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
                     if("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
