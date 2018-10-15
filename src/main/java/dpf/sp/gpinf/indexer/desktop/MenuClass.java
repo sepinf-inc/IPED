@@ -25,6 +25,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import dpf.sp.gpinf.indexer.Configuration;
+
 public class MenuClass extends JPopupMenu {
 
   private static final long serialVersionUID = 1L;
@@ -155,6 +157,7 @@ public class MenuClass extends JPopupMenu {
     
     similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
     similarDocs.addActionListener(menuListener);
+    similarDocs.setEnabled(Configuration.storeTermVectors);
     this.add(similarDocs); 
     
     openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
