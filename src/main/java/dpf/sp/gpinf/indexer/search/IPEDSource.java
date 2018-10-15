@@ -34,9 +34,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileFilter;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
@@ -66,6 +66,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.EvidenceFile;
@@ -116,7 +117,7 @@ public class IPEDSource implements Closeable{
 	Set<String> extraAttributes = new HashSet<String>();
 	
 	boolean isFTKReport = false, isReport = false;
-	
+    
 	public IPEDSource(File casePath) {
 		this(casePath, null);
 	}
@@ -142,6 +143,9 @@ public class IPEDSource implements Closeable{
 		try {
 			Configuration.getConfiguration(moduleDir.getAbsolutePath());
 			
+			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+            isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
+			
 			File sleuthFile = new File(casePath,  SLEUTH_DB);
 			if (sleuthFile.exists()){
 			    if(SleuthkitReader.sleuthCase != null)
@@ -150,10 +154,17 @@ public class IPEDSource implements Closeable{
 			    else
 			        sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 			    
-				updateImagePathsToAbsolute(casePath, sleuthFile);
+			    if(!isReport && iw == null)
+			        updateImagePathsToAbsolute(casePath, sleuthFile);
+			    
 				tskCaseList.add(sleuthCase);
 			}
 				
+			if (Configuration.preOpenImagesOnSleuth && iw == null) {
+			    TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, Configuration.openImagesCacheWarmUpEnabled,
+			            Configuration.openImagesCacheWarmUpThreads);
+            }
+			
 			openIndex(index, iw);
 			
 			BooleanQuery.setMaxClauseCount(Integer.MAX_VALUE);
@@ -169,10 +180,6 @@ public class IPEDSource implements Closeable{
 			File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids"); //$NON-NLS-1$
 			if (viewToRawFile.exists())
 				viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
-			
-			isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
-			isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
-			
 			
 			File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
 			if(textSizesFile.exists()) {
@@ -291,7 +298,7 @@ public class IPEDSource implements Closeable{
 	}
 	
 	private void openIndex(File index, IndexWriter iw) throws IOException{
-		LOGGER.info("Openning index " + index.getAbsolutePath()); //$NON-NLS-1$
+		LOGGER.info("Opening index " + index.getAbsolutePath()); //$NON-NLS-1$
 		
 		if(iw == null){
 			Directory directory = FSDirectory.open(index);
@@ -402,16 +409,21 @@ public class IPEDSource implements Closeable{
 	
 	private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
 		  char letter = casePath.getAbsolutePath().charAt(0);
+		  boolean isWindowsNetworkShare = casePath.getAbsolutePath().startsWith("\\\\"); 
 	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
 	      for (Long id : imgPaths.keySet()) {
 	        List<String> paths = imgPaths.get(id);
 	        ArrayList<String> newPaths = new ArrayList<String>();
 	        for(String path : paths){
-	        	if(new File(path).exists()) {
+	            if (isWindowsNetworkShare && !path.startsWith("\\") && !path.startsWith("/") && path.length() > 1 && path.charAt(1) != ':') {
+                    String newPath = new File(casePath.getAbsolutePath() + File.separator + path).getCanonicalPath();
+	                newPaths.add(newPath);
+	            } else if((new File(path).exists() && path.contains(File.separator)) || 
+	                    (System.getProperty("os.name").startsWith("Windows") && path.toLowerCase().contains("physicaldrive"))) {
 	        	    newPaths = null;
 	        		break;
 	        	}else{
-	        		String newPath = letter + path.substring(1);
+	        		String newPath = letter + ":\\" + path.substring(3);
 	        		if(new File(newPath).exists())
 	        			newPaths.add(newPath);	        				
 	        		else{
@@ -449,7 +461,8 @@ public class IPEDSource implements Closeable{
 	    if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
 	        tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
 	        tmpCaseFile.deleteOnExit();
-            sleuthCase.close();
+	        //causes "case is closed" error in some cases
+	        //sleuthCase.close();
             IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);

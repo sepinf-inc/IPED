@@ -766,7 +766,7 @@ public class App extends JFrame implements WindowListener {
 	selectDockableTab(evidenceTabDock);
   }
   
-  private void selectDockableTab(DefaultSingleCDockable dock) {
+  public void selectDockableTab(DefaultSingleCDockable dock) {
 	  Container cont = dock.getContentPane();
 	  if (cont != null) {
 		  Container parent;

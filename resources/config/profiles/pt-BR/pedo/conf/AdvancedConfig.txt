@@ -128,4 +128,14 @@ maxBackups = 10
 backupInterval = 60
 
 # Habilita por padrão gerenciamento automático de colunas
-autoManageCols = true
+autoManageCols = false
+
+# Força abertura da imagens na inicialização do IPED. Desabilitado por padrão. 
+preOpenImagesOnSleuth = false
+
+# Caso a abertura das imagens esteja habilitada, é possível habilitar um aquecimento do cache de disco.
+# Desabilitado por padrão. Pode agilizar bastante a abertura de imagens E01 via rede.
+openImagesCacheWarmUpEnabled = false
+
+# Número de threads utilizado, caso o aquecimento do cache esteja habilitado.
+openImagesCacheWarmUpThreads = 256

@@ -7,6 +7,10 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
@@ -14,7 +18,6 @@ import javax.imageio.ImageIO;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
@@ -37,6 +40,8 @@ public class ImageThumbTask extends AbstractTask {
   private static final int samplingRatio = 3;
   
   public static boolean extractThumb = true;
+  
+  private static ExecutorService executor = Executors.newCachedThreadPool();
 
   public int thumbSize = 160;
 
@@ -104,12 +109,12 @@ public class ImageThumbTask extends AbstractTask {
   
   @Override
   public void finish() throws Exception {
-    // TODO Auto-generated method stub
-
+      if(!executor.isShutdown())
+          executor.shutdownNow();
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(EvidenceFile evidence) throws Exception{
 
     if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;
@@ -130,7 +135,17 @@ public class ImageThumbTask extends AbstractTask {
       return;
     }
 
-    createImageThumb(evidence, thumbFile);
+    Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
+    try {
+        future.get(GraphicsMagicConverter.TIMEOUT + 10, TimeUnit.SECONDS);
+        
+    } catch (TimeoutException e) {
+        future.cancel(true);
+        stats.incTimeouts();
+        evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
+        Log.warning(getClass().getSimpleName(), "Timeout creating thumb: " //$NON-NLS-1$
+            + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$   
+    }
 
   }
 
@@ -139,6 +154,23 @@ public class ImageThumbTask extends AbstractTask {
    */
   public static boolean isImageType(MediaType mediaType) {
     return mediaType.getType().equals("image"); //$NON-NLS-1$
+  }
+  
+  private class ThumbCreator implements Runnable{
+      
+      EvidenceFile evidence;
+      File thumbFile;
+      
+      public ThumbCreator(EvidenceFile evidence, File thumbFile) {
+          this.evidence = evidence;
+          this.thumbFile = thumbFile;
+      }
+
+      @Override
+      public void run() {
+          createImageThumb(evidence, thumbFile);
+      }
+      
   }
 
   private void createImageThumb(EvidenceFile evidence, File thumbFile) {

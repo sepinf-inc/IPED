@@ -26,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -42,6 +44,7 @@ import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -80,7 +83,7 @@ public class ExportFileTree extends CancelableWorker {
     this.toZip = toZip;
   }
 
-  private int[] getItemsToExport() {
+  private int[] getItemsToExport(boolean allocated) {
 
     try {
       String textQuery = "*:*"; //$NON-NLS-1$
@@ -95,6 +98,12 @@ public class ExportFileTree extends CancelableWorker {
           String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
           textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
+      
+      String activeStr = IndexItem.SUBITEM + ":false && " + IndexItem.CARVED + ":false && " + IndexItem.DELETED + ":false -" + BaseCarveTask.FILE_FRAGMENT + ":true"; 
+      if(allocated)
+          textQuery =  "(" + textQuery + ") && (" + activeStr + ")";
+      else
+          textQuery =  "(" + textQuery + ") AND NOT (" + activeStr + ")";
 
       IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
@@ -291,8 +300,13 @@ public class ExportFileTree extends CancelableWorker {
 
     progressDialog = new ProgressDialog(null, this);
 
-    int[] docIds = getItemsToExport();
-    total = docIds.length;
+    ArrayList<Integer> docIds = new ArrayList<Integer>();
+    for (int docId : getItemsToExport(true))
+        docIds.add(docId);
+    for (int docId : getItemsToExport(false))
+        docIds.add(docId);
+    
+    total = docIds.size();
     progressDialog.setMaximum(total);
 
     try {

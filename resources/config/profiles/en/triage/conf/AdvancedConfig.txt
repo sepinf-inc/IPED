@@ -127,4 +127,14 @@ maxBackups = 1
 backupInterval = 60
 
 # Automatically manage visible columns
-autoManageCols = true
+autoManageCols = false
+
+# Open all disk images on program start up. By default, open each image only when it is accessed. 
+preOpenImagesOnSleuth = false
+
+# If preOpenImages is enabled, this enables a disk image cache warm up.
+# It should improve opening of segmented E01 images stored on local area networks.
+openImagesCacheWarmUpEnabled = false
+
+# Maximum number of threads used for image cache warm up.
+openImagesCacheWarmUpThreads = 256
