@@ -5,6 +5,7 @@ import ag.ion.bion.officelayer.application.ILazyApplicationInfo;
 import ag.ion.bion.officelayer.application.OfficeApplicationException;
 import ag.ion.bion.officelayer.internal.application.ApplicationAssistant;
 import dpf.sp.gpinf.indexer.IFileProcessor;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
@@ -29,15 +30,9 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.LOExtractor;
 
 import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Set;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -140,23 +135,20 @@ public class ViewerControl implements IViewerControl {
         }
 
         if (systemLO != null || (System.getProperty("os.name").startsWith("Windows") && (new File(pathLO).exists() || new File(compressedLO).exists()))) { //$NON-NLS-1$ //$NON-NLS-2$
-
-         /* try {
+   
+         try {
             SwingUtilities.invokeAndWait(new Runnable() {
               @Override
               public void run() {
-                result
-                    = JOptionPane.showConfirmDialog(
-                        params.mainFrame, useLOMsg,
-                        "", //$NON-NLS-1$
-                        JOptionPane.YES_NO_OPTION);
+                result = App.triageGui ? JOptionPane.YES_OPTION :
+                    JOptionPane.showConfirmDialog(params.mainFrame, useLOMsg, "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
               }
             });
           } catch (Exception e) {
             e.printStackTrace();
           }
-*/
-  /*        if (result == JOptionPane.YES_OPTION)*/ {
+         
+        if (result == JOptionPane.YES_OPTION) {
             if (systemLO == null) {
               LOExtractor extractor = new LOExtractor(compressedLO, pathLO);
               useLO = extractor.decompressLO();
