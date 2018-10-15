@@ -58,9 +58,15 @@ public class StandardASCIIAnalyzer extends Analyzer {
   /**
    * Default maximum allowed token length
    */
-  public static final int DEFAULT_MAX_TOKEN_LENGTH = 20; // [Triage] The maximum token length was reduced from 255 to 20
+  public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
 
   private int maxTokenLength = DEFAULT_MAX_TOKEN_LENGTH;
+  
+  private boolean filterNonLatinChars = false;
+  
+  public void setFilterNonLatinChars(boolean filterNonLatinChars) {
+      this.filterNonLatinChars = filterNonLatinChars;
+  }
 
   /**
    * Set maximum allowed token length. If a token is seen that exceeds this length then it is
@@ -93,11 +99,12 @@ public class StandardASCIIAnalyzer extends Analyzer {
 
     // tok = new StopFilter(matchVersion, tok, stopwords);
     
-  /* [Triage] The following code removes tokens that exceed the maximum size or that contain non-latin characters (after being converted by the FastASCIIFoldingFilter).
+  /* The following code removes tokens that exceed the maximum size or that contain non-latin characters (after being converted by the FastASCIIFoldingFilter).
      Nonetheless, the filters are not applied to the Category's description, which is checked by the following "if" */
     if (!(pipeTokenizer)) {
     	tok = new LengthFilter(matchVersion,tok, 1, maxTokenLength);
-    	tok = new InvalidCharacterFilter(matchVersion,tok);
+    	if(filterNonLatinChars)
+    	    tok = new AsciiCharacterFilter(matchVersion,tok);
     }        
     
         
@@ -112,11 +119,11 @@ public class StandardASCIIAnalyzer extends Analyzer {
 	
   
   /* [Triage] Filters that identifies tokens that contain non-latin Unicode characters */
-  public class InvalidCharacterFilter extends FilteringTokenFilter { 
+  public class AsciiCharacterFilter extends FilteringTokenFilter { 
 	  
 	    private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
-	    public InvalidCharacterFilter(Version matchVersion, TokenStream tokenStream) {
+	    public AsciiCharacterFilter(Version matchVersion, TokenStream tokenStream) {
 	        super(matchVersion, tokenStream);
 	    }
 

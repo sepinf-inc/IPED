@@ -93,6 +93,8 @@ public class Configuration {
   public static Locale locale = Locale.getDefault();
   public static boolean autoManageCols = true;
   public static boolean storeTermVectors = true;
+  public static int maxTokenLength = 255;
+  public static boolean filterNonLatinChars = false;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -469,6 +471,16 @@ public class Configuration {
     value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         storeTermVectors = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("maxTokenLength"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        maxTokenLength = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        filterNonLatinChars = Boolean.valueOf(value.trim());
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$

@@ -25,6 +25,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
@@ -43,7 +44,10 @@ public class AppAnalyzer {
     analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
     analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
     analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
-    return new PerFieldAnalyzerWrapper(new StandardASCIIAnalyzer(Versao.current, false), analyzerPerField);
+    StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+    defaultAnalyzer.setMaxTokenLength(Configuration.maxTokenLength);
+    defaultAnalyzer.setFilterNonLatinChars(Configuration.filterNonLatinChars);
+    return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
   }
 
 }

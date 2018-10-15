@@ -52,6 +52,13 @@ storeTermVectors = false
 # Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
 convertCharsToLowerCase = true
 
+# Do not index words with characters not in Latin-1 charset, like chinese, cyrillic, arabic...
+# Default is false.
+filterNonLatinChars = true;
+
+# Maximum word length to be indexed. Default is 255.
+maxTokenLength = 20
+
 # Ignores HFS + hard links pointing to items already processed. The hard links are added to the case,
 # but their content is not processed (indexed, expanded, carved, etc).
 # Optimizes HFS + image processing containing thousands of hard links (such as Time Machine volumes).
