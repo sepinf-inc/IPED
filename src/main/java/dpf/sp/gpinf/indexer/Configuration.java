@@ -92,6 +92,7 @@ public class Configuration {
   public static String loaddbPathWin;
   public static Locale locale = Locale.getDefault();
   public static boolean autoManageCols = true;
+  public static boolean storeTermVectors = true;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -463,6 +464,11 @@ public class Configuration {
     value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         autoManageCols = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        storeTermVectors = Boolean.valueOf(value.trim());
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$

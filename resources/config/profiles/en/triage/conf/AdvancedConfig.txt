@@ -44,6 +44,10 @@ minRawStringSize = 4
 # Separate the characters with a blank space
 extraCharsToIndex =
 
+# Store term vectors into index, needed to search for similar documents.
+# Increases index size up to 30%.
+storeTermVectors = false
+
 # Converts text to lowercase before indexing, making the search case-insensitive.
 # Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
 convertCharsToLowerCase = true

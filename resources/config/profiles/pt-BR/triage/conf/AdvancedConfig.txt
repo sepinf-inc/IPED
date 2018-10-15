@@ -44,6 +44,10 @@ minRawStringSize = 4
 # Utilize espaço para separar os caracteres
 extraCharsToIndex =
 
+# Armazena vetores de frequência das palavras no índice, necessário para procurar documentos similares.
+# Aumenta o tamanho do índice em até 30%.
+storeTermVectors = false
+
 # Converte os caracteres para minúsculas antes da indexação, tornando a pesquisa independente da capitalização.
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
