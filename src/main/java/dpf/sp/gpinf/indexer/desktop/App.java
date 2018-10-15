@@ -542,11 +542,14 @@ public class App extends JFrame implements WindowListener {
     
     if(triageGui) {
         disposicaoVertical = true;
-        zoomFont(this, -1);
         exportToZip.setVisible(true);
     }
     
     refazLayout(false);
+    
+    if(triageGui) {
+        zoomFont(this, -1);
+    }
     
     if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
         selectDockableTab(bookmarksTabDock);
