@@ -25,8 +25,11 @@ public class AppMain {
 	private static final int MIN_JAVA_VER = 8;
 	private static final int MAX_JAVA_VER = 9;
 	
+	//These java versions have a WebView bug that crashes the JVM: JDK-8196011
+	private static final String[] buggedVersions = {"1.8.0_161", "1.8.0_162", "1.8.0_171"};
+	
 	File casePath;
-    File testPath;// = new File("E:\\1-Laudo-66-sameItem12");
+    File testPath;// = new File("E:\\teste-castro2");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -52,16 +55,23 @@ public class AppMain {
                       int version = Integer.valueOf(versionStr);
                       
                       if(version < MIN_JAVA_VER){
-                          JOptionPane.showMessageDialog(App.get(), 
+                          JOptionPane.showMessageDialog(null, 
                               Messages.getString("AppMain.javaVerError.1") + MIN_JAVA_VER + Messages.getString("AppMain.javaVerError.2"),  //$NON-NLS-1$ //$NON-NLS-2$
                               Messages.getString("AppMain.error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
                           System.exit(1);
                       }
                       if(version > MAX_JAVA_VER){
-                          JOptionPane.showMessageDialog(App.get(), 
+                          JOptionPane.showMessageDialog(null, 
                               Messages.getString("AppMain.javaVerWarn.1") + version + Messages.getString("AppMain.javaVerWarn.2"),  //$NON-NLS-1$ //$NON-NLS-2$
                               Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                       }
+                      for(String ver : buggedVersions) {
+                          if(System.getProperty("java.version").equals(ver))
+                              JOptionPane.showMessageDialog(null, Messages.getString("AppMain.javaVerBug.1") + ver +  //$NON-NLS-1$
+                                      Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
+                                      Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                      }
+                      Messages.resetLocale();
                   }
               });
         } catch (Exception e) {
