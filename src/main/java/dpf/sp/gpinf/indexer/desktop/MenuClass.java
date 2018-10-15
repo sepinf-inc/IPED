@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.event.ActionListener;
-
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -32,20 +29,22 @@ public class MenuClass extends JPopupMenu {
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
       gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport;
+  
+  MenuListener menuListener;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
     super();
 
-    ActionListener menuListener = new MenuListener(this);
+    menuListener = new MenuListener(this);
 
     marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
     marcarSelecionados.addActionListener(menuListener);
-    //this.add(marcarSelecionados);
+    this.add(marcarSelecionados);
 
     desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
     desmarcarSelecionados.addActionListener(menuListener);
-    //this.add(desmarcarSelecionados);
+    this.add(desmarcarSelecionados);
 
     /*lerSelecionados = new JMenuItem("Marcar selecionados como lido");
      lerSelecionados.addActionListener(menuListener);
@@ -58,69 +57,64 @@ public class MenuClass extends JPopupMenu {
     //this.addSeparator();
     carregarMarcadores = new JMenuItem(Messages.getString("MenuClass.LoadBookmarks")); //$NON-NLS-1$
     carregarMarcadores.addActionListener(menuListener);
-    //this.add(carregarMarcadores);
+    this.add(carregarMarcadores);
 
     salvarMarcadores = new JMenuItem(Messages.getString("MenuClass.SaveBookmarks")); //$NON-NLS-1$
     salvarMarcadores.addActionListener(menuListener);
-    //this.add(salvarMarcadores);
+    this.add(salvarMarcadores);
 
     gerenciarMarcadores = new JMenuItem(Messages.getString("MenuClass.ManageBookmarks")); //$NON-NLS-1$
     gerenciarMarcadores.addActionListener(menuListener);
-    //this.add(gerenciarMarcadores);
+    this.add(gerenciarMarcadores);
 
     gerenciarFiltros = new JMenuItem(Messages.getString("MenuClass.ManageFilters")); //$NON-NLS-1$
     gerenciarFiltros.addActionListener(menuListener);
-    //this.add(gerenciarFiltros);
+    this.add(gerenciarFiltros);
 
     gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
     gerenciarColunas.addActionListener(menuListener);
-    //this.add(gerenciarColunas);
+    this.add(gerenciarColunas);
     
-    //this.addSeparator();
+    this.addSeparator();
     
     JMenu submenu = new JMenu(Messages.getString("MenuClass.ExportItens")); //$NON-NLS-1$
-    //this.add(submenu);
+    this.add(submenu);
     
     exportarSelecionados = new JMenuItem(Messages.getString("MenuClass.ExportHighlighted")); //$NON-NLS-1$
     exportarSelecionados.addActionListener(menuListener);
-    //submenu.add(exportarSelecionados);
+    submenu.add(exportarSelecionados);
 
     exportarMarcados = new JMenuItem(Messages.getString("MenuClass.ExportChecked")); //$NON-NLS-1$
     exportarMarcados.addActionListener(menuListener);
-    //submenu.add(exportarMarcados);
+    submenu.add(exportarMarcados);
 
     exportTree = new JMenuItem(Messages.getString("MenuClass.ExportTree")); //$NON-NLS-1$
     exportTree.addActionListener(menuListener);
-    //submenu.add(exportTree);
+    submenu.add(exportTree);
 
     exportTreeChecked = new JMenuItem(Messages.getString("MenuClass.ExportTree.Checked")); //$NON-NLS-1$
     exportTreeChecked.addActionListener(menuListener);
-    //submenu.add(exportTreeChecked);
+    submenu.add(exportTreeChecked);
     
     exportCheckedToZip = new JMenuItem(Messages.getString("MenuClass.ExportCheckedToZip")); //$NON-NLS-1$
     exportCheckedToZip.addActionListener(menuListener);
-    //submenu.add(exportCheckedToZip);
+    submenu.add(exportCheckedToZip);
     
-    exportCheckedTreeToZip = new JMenuItem("<html><font size=+1>"+Messages.getString("MenuClass.ExportTreeToZip.Checked")+"</font></html>"); //$NON-NLS-1$
+    exportCheckedTreeToZip = new JMenuItem(Messages.getString("MenuClass.ExportTreeToZip.Checked")); //$NON-NLS-1$
     exportCheckedTreeToZip.addActionListener(menuListener);
-    //submenu.add(exportCheckedTreeToZip);
-    this.add(exportCheckedTreeToZip);
-    this.add(exportarMarcados);
-    
+    submenu.add(exportCheckedTreeToZip);
 
-    //this.addSeparator();
+    this.addSeparator();
 
     copiarSelecionados = new JMenuItem(Messages.getString("MenuClass.ExportProps.Highlighed")); //$NON-NLS-1$
     copiarSelecionados.addActionListener(menuListener);
-    //this.add(copiarSelecionados);
+    this.add(copiarSelecionados);
 
     copiarMarcados = new JMenuItem(Messages.getString("MenuClass.ExportProps.Checked")); //$NON-NLS-1$
     copiarMarcados.addActionListener(menuListener);
-    //this.add(copiarMarcados);
+    this.add(copiarMarcados);
 
-    //this.addSeparator();
-    
-    //this.add(gerenciarMarcadores);
+    this.addSeparator();
 
     importarPalavras = new JMenuItem(Messages.getString("MenuClass.ImportKeywords")); //$NON-NLS-1$
     importarPalavras.addActionListener(menuListener);
@@ -128,80 +122,49 @@ public class MenuClass extends JPopupMenu {
 
     limparBuscas = new JMenuItem(Messages.getString("MenuClass.ClearSearches")); //$NON-NLS-1$
     limparBuscas.addActionListener(menuListener);
-    //this.add(limparBuscas);
+    this.add(limparBuscas);
 
     exportTerms = new JMenuItem(Messages.getString("MenuClass.ExportIndexedWords")); //$NON-NLS-1$
     exportTerms.addActionListener(menuListener);
-    //this.add(exportTerms);
+    this.add(exportTerms);
 
-    //this.addSeparator();
+    this.addSeparator();
 
     layoutPadrao = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
     layoutPadrao.addActionListener(menuListener);
-    //this.add(layoutPadrao);
+    this.add(layoutPadrao);
     
     disposicao = new JMenuItem(Messages.getString("MenuClass.ChangeLayout")); //$NON-NLS-1$
     disposicao.addActionListener(menuListener);
-    //this.add(disposicao);
+    this.add(disposicao);
 
     copiarPreview = new JMenuItem(Messages.getString("MenuClass.CopyViewerImage")); //$NON-NLS-1$
     copiarPreview.addActionListener(menuListener);
-    //this.add(copiarPreview);
+    this.add(copiarPreview);
 
     aumentarGaleria = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
     aumentarGaleria.addActionListener(menuListener);
-    //this.add(aumentarGaleria);
+    this.add(aumentarGaleria);
 
-   /* if (!App.get().appCase.isFTKReport()) {
+    if (!App.get().appCase.isFTKReport()) {
       navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
       navigateToParent.addActionListener(menuListener);
       this.add(navigateToParent);
-    }*/
+    }
     
     similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
     similarDocs.addActionListener(menuListener);
-    //this.add(similarDocs); 
+    this.add(similarDocs); 
     
     openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
     openViewfile.addActionListener(menuListener);
-    //this.add(openViewfile); 
+    this.add(openViewfile); 
     
-    //this.addSeparator();
+    this.addSeparator();
     
     createReport = new JMenuItem("Gerar Relatório Indexado"); //$NON-NLS-1$
     createReport.addActionListener(menuListener);
-    //this.add(createReport);
-    
-    
-    //[Triage] Menu com opções avançadas
-    this.addSeparator();
-    JMenu submenuAvancado = new JMenu("Avançado"); //$NON-NLS-1$
-    this.add(submenuAvancado);
-
-    submenuAvancado.add(gerenciarMarcadores);
-    submenuAvancado.add(carregarMarcadores);
-    submenuAvancado.add(salvarMarcadores);
-    submenuAvancado.add(gerenciarFiltros);    
-    submenuAvancado.addSeparator();
-    submenuAvancado.add(exportarSelecionados);
-    submenuAvancado.add(exportTree);
-    submenuAvancado.add(exportTreeChecked);
-    submenuAvancado.add(exportCheckedToZip);
-    submenuAvancado.addSeparator();
-    submenuAvancado.add(copiarSelecionados);
-    submenuAvancado.add(copiarMarcados);
-    submenuAvancado.add(copiarPreview);
-    submenuAvancado.addSeparator();
-    submenuAvancado.add(disposicao);
-    submenuAvancado.add(layoutPadrao);
-    submenuAvancado.add(gerenciarColunas);
-    
-    if (!App.get().appCase.isFTKReport()) {
-        navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
-        navigateToParent.addActionListener(menuListener);
-        submenuAvancado.addSeparator();
-        submenuAvancado.add(navigateToParent);
-    }
+    this.add(createReport);
 
   }
 
