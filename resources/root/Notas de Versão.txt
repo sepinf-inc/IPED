@@ -1,8 +1,35 @@
-05/07/2018: IPED-3.14.3
+09/10/2018: IPED-3.14.5
+- Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
+- Correção para perda de marcadores em multicasos (3.14)
+- Falso alerta de evidência não encontrada ao processar discos físicos (3.14)
+- Altera opção -nocontent para exportar conteúdo de itens presentes em outro marcador
+- Corrige abertura de casos via compartilhamento do Windows
+- Não copia para relatórios arquivos desnecessários referentes a nós da árvore
+- Arquivos zip não comprimidos contendo outros zips não eram expandidos corretamente
+- Exportação de árvore de diretórios renomeava itens ativos no caso de conflito de nomes
+- Foca aba de categorias caso não haja marcadores em relatórios
+- Desabilita por padrão gerenciamento automático de colunas
+- Corrige estatística de tempo de parsers de conteineres
+
+15/08/2018: IPED-3.14.4
+- Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
+- Filtro textual no gerenciador de colunas visíveis (PCF Wladimir)
+- Opção openImagesCacheWarmUpEnabled para otimizar leitura de imagens E01 segmentadas (PCF Wladimir)
+Correções:
+- OutOfMemory ao finalizar ScriptTask em casos muito grandes (3.14)
+- Falso alerta de evidência não encontrada em extrações automáticas (3.14)
+- Erro "getting case database connection" durante --append com --portable (3.14)
+- Travamentos raros durante geração de miniaturas de imagens (png corrompido, jpg2k)
+- Erro ao localizar evidências de casos processados no Linux e abertos no Windows
+- Erro causado por nomes corrompidos muito longos nos XML do UFED
+- Remove limitadores de heap do iped.exe
+
+06/07/2018: IPED-3.14.3
 - Inclusão da JRE 1.8.0_152 x64
 - Desliga descarte de itens carveados com erro de parsing nos profiles forensic e pedo
 - Prioriza MetadataViewer apenas para itens de celulares sem viewer específico
-- Extrai datas extendidas (criação e acesso) de subitens de ZIP
+- Extrai datas estendidas (criação e acesso) de subitens de ZIP
+- Configuração de novas categorias Tor, Cloud, backup iphone, RFB, CEF, etc (contribuição PCF Sícoli)
 Correções:
 - Travamento da interface ao selecionar ou marcar grande quantidade de itens na tabela (3.14)
 - Erros de parsing em Known.met, Ares e Skype ao usar idioma inglês (3.14)

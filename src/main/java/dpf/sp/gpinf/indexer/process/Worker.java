@@ -190,9 +190,13 @@ public class Worker extends Thread {
    * @param evidence novo item a ser processado.
    */
   public void processNewItem(EvidenceFile evidence) {
+      processNewItem(evidence, false);
+  }
+  
+  public void processNewItem(EvidenceFile evidence, boolean mustProcessNow) {
     caseData.incDiscoveredEvidences(1);
     // Se a fila está pequena, enfileira
-    if (caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
+    if (!mustProcessNow && caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
     	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {

@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
@@ -32,9 +33,9 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 public class VideoThumbsMaker {
 
   private String mplayer = "mplayer.exe"; //$NON-NLS-1$
-  private int timeoutProcess = 15000;
-  private int timeoutInfo = 10000;
-  private int timeoutFirstCall = 180000;
+  private int timeoutProcess = 45000;
+  private int timeoutInfo = 15000;
+  private int timeoutFirstCall = 300000;
   private boolean verbose = false;
   private int quality = 50;
   private String escape = null;
@@ -42,7 +43,7 @@ public class VideoThumbsMaker {
   private boolean isWindows = false;
   private static final String prefix = "_vtm"; //$NON-NLS-1$
   private int ignoreWaitKeyFrame;
-  private int maxLines = 20000;
+  private static final int maxLines = 20000;
 
   public String getVersion() {
     List<String> cmds = new ArrayList<String>(Arrays.asList(new String[]{mplayer}));
@@ -84,7 +85,7 @@ public class VideoThumbsMaker {
     VideoProcessResult result = new VideoProcessResult();
 
     File in = inOrg;
-    List<String> cmds = new ArrayList<String>(Arrays.asList(new String[]{mplayer, "-nosound", "-noautosub", "-noconsolecontrols", "-vo", "null", "-ao", "null", "-frames", "0", "-identify", in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+    List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer,"-nosound","-noautosub","-noconsolecontrols","-vo","null","-ao","null","-frames","0","-identify",in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
 
     File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
     subTmp.mkdir();
@@ -94,14 +95,16 @@ public class VideoThumbsMaker {
     File lnk = null;
     String videoStream = null;
     for (int step = 0; step <= 1; step++) {
+      if (step == 1) {
+        cmds.add("-demuxer"); //$NON-NLS-1$
+        cmds.add("lavf"); //$NON-NLS-1$
+      }        
       ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
       if (firstCall) {
         firstCall = false;
-        maxLines = 2000;
       }
 
       String info = res.output;
-      //System.out.println(info);
       if (step == 0 && info != null && info.indexOf("File not found") >= 0 && !fixed) { //$NON-NLS-1$
         fixed = true;
         String shortName = getShortName(inOrg);
@@ -133,13 +136,8 @@ public class VideoThumbsMaker {
               break;
           }
       }
-
-      cmds.add(1, "-demuxer"); //$NON-NLS-1$
-      cmds.add(2, "lavf"); //$NON-NLS-1$
     }
     if (outs == null) {
-      //result.setFile(in);
-      //result.setSubTemp(subTmp);
       return result;
     }
     
@@ -163,7 +161,7 @@ public class VideoThumbsMaker {
         maxWidth = config.getThumbWidth();
       }
     }
-    int frequency = (int) ((result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+    int frequency = (int) ((result.getVideoDuration() - 1000) * 0.00095 / (maxThumbs + 2));
     if (frequency < 1) {
       frequency = 1;
     }
@@ -178,8 +176,9 @@ public class VideoThumbsMaker {
     boolean scaled = result.getDimension().width > maxWidth;
     cmds = new ArrayList<String>();
     cmds.add(mplayer);
-    cmds.add("-demuxer"); //$NON-NLS-1$
-    cmds.add("lavf"); //$NON-NLS-1$
+    cmds.add("-speed"); //$NON-NLS-1$
+    cmds.add("100"); //$NON-NLS-1$
+    cmds.add("-dr"); //$NON-NLS-1$
     cmds.add("-nosound"); //$NON-NLS-1$
     cmds.add("-noconsolecontrols"); //$NON-NLS-1$
     cmds.add("-noautosub"); //$NON-NLS-1$
@@ -196,13 +195,50 @@ public class VideoThumbsMaker {
       cmds.add(videoStream);
     }
 
-    String ssVal = String.valueOf(result.getVideoDuration() < 5000 ? 0 : Math.max(frequency / 2, 1));
-    cmds.addAll(Arrays.asList(new String[]{"-vo", "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape, "-ao", "null", "-ss", ssVal, "-sstep", String.valueOf(frequency), "-frames", String.valueOf(maxThumbs + 1), in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+    cmds.addAll(Arrays.asList(new String[]{"-vo", "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape, "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", String.valueOf(maxThumbs + 1), in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
-    for (int step = 0; step <= 2; step++) {
+    for (int step = frequency > 1 ? 0 : 1; step <= 3; step++) {
+      if (step == 1) {
+        int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
+        cmds.remove(pos + 1);
+        cmds.remove(pos);
+        pos = cmds.indexOf("-ss"); //$NON-NLS-1$
+        cmds.remove(pos + 1);
+        cmds.remove(pos);
+        float fps = result.getFPS();
+        if (fps > 240) fps = 1;
+        int frameStep = (int)(fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+        if (frameStep < 1) {
+            frameStep = 1;
+        } else if (frameStep > 600) {
+            frameStep = 600;
+        }
+        cmds.add("-vf"); //$NON-NLS-1$
+        cmds.add("framestep=" + frameStep); //$NON-NLS-1$
+      } else if (step == 2) {
+        int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
+        if (pos < 0) {
+          continue;
+        } else {
+          cmds.remove(pos + 1);
+          cmds.remove(pos);
+        }
+      } else if (step == 3) {
+        cmds.add("-demuxer"); //$NON-NLS-1$
+        cmds.add("lavf"); //$NON-NLS-1$
+        for (int i = cmds.size() - 1; i > 0; i--) {
+            if (cmds.get(i).startsWith("framestep=")) { //$NON-NLS-1$
+                cmds.remove(i);
+                cmds.remove(i - 1);
+                break;
+            }
+        }
+      }
       ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
       if (res.timeout) {
         result.setTimeout(true);
+      } else if (result.isTimeout()) {
+        result.setTimeout(false);
       }
       files = subTmp.listFiles(new FileFilter() {
         public boolean accept(File pathname) {
@@ -251,27 +287,9 @@ public class VideoThumbsMaker {
             continue;
           }
         }
-        if (files.length > (maxThumbs - 1) / 3 && ret.indexOf("Error while decoding frame") < 0) { //$NON-NLS-1$
+        if (files.length >= maxThumbs - 2 && ((ret.indexOf("Error while decoding frame") < 0 && ret.indexOf("first frame is no keyframe") < 0) || (step > 0))) { //$NON-NLS-1$ //$NON-NLS-2$
           break;
         }
-      }
-      if (step == 0) {
-        int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
-        if (pos < 0) {
-          step++;
-        } else {
-          cmds.remove(pos + 1);
-          cmds.remove(pos);
-          continue;
-        }
-      }
-      if (step == 1) {
-        int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
-        cmds.remove(pos + 1);
-        cmds.remove(pos);
-        pos = cmds.indexOf("-ss"); //$NON-NLS-1$
-        cmds.remove(pos + 1);
-        cmds.remove(pos);
       }
     }
     if (ignoreWaitKeyFrame == 0) {
@@ -346,6 +364,12 @@ public class VideoThumbsMaker {
 
   private void generateGridImage(VideoThumbsOutputConfig config, List<File> images, Dimension dimension) throws IOException {
     int w = config.getThumbWidth();
+    if (images.size() > config.getRows() * config.getColumns()) {
+      images.remove(0);
+    }
+    if (images.size() > config.getRows() * config.getColumns()) {
+      images.remove(images.size() - 1);
+    }
     double rate = images.size() * 0.999 / (config.getRows() * config.getColumns());
     int h = dimension.height * w / dimension.width;
     int border = config.getBorder();
@@ -372,7 +396,6 @@ public class VideoThumbsMaker {
       }
     }
     g2.dispose();
-    //ImageIO.write(img, "jpeg", config.getOutFile());
     ImageUtil.saveJpegWithMetadata(img, config.getOutFile(), "Frames=" + config.getRows() + "x" + config.getColumns()); //$NON-NLS-1$ //$NON-NLS-2$
   }
 
@@ -400,31 +423,21 @@ public class VideoThumbsMaker {
     int exitCode = -1000;
     boolean isTimeout = false;
     try {
-      final Process process = Runtime.getRuntime().exec(cmds);
-
-      StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), sb, counter, process);
+      final ProcessBuilder pb = new ProcessBuilder(cmds);
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
       StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), sb, counter, process);
-
-      errorGobbler.start();
       outputGobbler.start();
 
-      long t = System.currentTimeMillis() + timeout;
-      while (true) {
-        Thread.sleep(10);
-        try {
-          exitCode = process.exitValue();
-          break;
-        } catch (IllegalThreadStateException threadStateException) {
-          if (System.currentTimeMillis() > t) {
-            if (verbose) {
-              System.err.println("TIMEOUT"); //$NON-NLS-1$
-            }
-            isTimeout = true;
-            process.destroy();
-            break;
-          }
-        }
+      boolean finished = process.waitFor(timeout, TimeUnit.MILLISECONDS);
+      if (!finished) {
+          if (verbose) System.err.println("TIMEOUT!");
+          isTimeout = true;
+          process.destroy();
       }
+      outputGobbler.join();
+      exitCode = process.exitValue();
+      
       return new ExecResult(exitCode, sb.toString(), isTimeout);
     } catch (Exception e) {
       if (verbose) {
@@ -471,13 +484,12 @@ public class VideoThumbsMaker {
 
     InputStream is;
     StringBuilder sb;
-    AtomicInteger counter;
+    int counter;
     Process process;
 
     StreamGobbler(InputStream is, StringBuilder sb, AtomicInteger counter, Process process) {
       this.is = is;
       this.sb = sb;
-      this.counter = counter;
       this.process = process;
       setDaemon(true);
     }
@@ -485,19 +497,17 @@ public class VideoThumbsMaker {
     public void run() {
       BufferedReader br = null;
       try {
-        br = new BufferedReader(new InputStreamReader(is), 256);
+        br = new BufferedReader(new InputStreamReader(is), 4096);
         String line = null;
         while ((line = br.readLine()) != null) {
-          synchronized (sb) {
-            counter.incrementAndGet();
-            sb.append(line).append('\n');
-            if (verbose) {
-              System.err.println(line);
-            }
-            if (line.indexOf("Error while decoding frame!") >= 0 || counter.intValue() > maxLines) { //$NON-NLS-1$
-              process.destroy();
-              break;
-            }
+          counter++;
+          sb.append(line).append('\n');
+          if (verbose) {
+            System.err.println(line);
+          }
+          if (counter > maxLines) {
+            process.destroy();
+            break;
           }
         }
       } catch (IOException ioe) {

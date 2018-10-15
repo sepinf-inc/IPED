@@ -95,6 +95,9 @@ public class Configuration {
   public static boolean storeTermVectors = true;
   public static int maxTokenLength = 255;
   public static boolean filterNonLatinChars = false;
+  public static boolean preOpenImagesOnSleuth = false;
+  public static boolean openImagesCacheWarmUpEnabled = false;
+  public static int openImagesCacheWarmUpThreads = 256;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
@@ -481,6 +484,21 @@ public class Configuration {
     value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         filterNonLatinChars = Boolean.valueOf(value.trim());
+    }
+
+    value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        preOpenImagesOnSleuth = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("openImagesCacheWarmUpEnabled"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpEnabled = Boolean.valueOf(value.trim());
+    }
+
+    value = properties.getProperty("openImagesCacheWarmUpThreads"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$

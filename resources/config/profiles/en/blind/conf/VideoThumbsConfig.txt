@@ -16,7 +16,7 @@ Layout = 240,4,5
 #    - First execution timeout (must be higher because MPlayer can update its font cache).
 #    - Metadata extraction
 #    - Thumbnail extraction
-Timeouts = 240,10,30
+Timeouts = 300,15,45
 
 # Enable or disable logging of mplayer messages, only for debugging problems
 Verbose = false

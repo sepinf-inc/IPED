@@ -141,12 +141,8 @@ public abstract class BaseCarveTask extends AbstractTask {
   
   protected void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-	    if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
-	      caseData.incDiscoveredEvidences(1);
-	      worker.process(offsetFile);
-	    } else {
-	      worker.processNewItem(offsetFile);
-	    }
+    boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
+	worker.processNewItem(offsetFile, processNow);
   }
   
   protected boolean isToProcess(EvidenceFile evidence) {
