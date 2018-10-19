@@ -29,7 +29,7 @@ public class AppMain {
 	private static final String[] buggedVersions = {"1.8.0_161", "1.8.0_162", "1.8.0_171"};
 	
 	File casePath;
-    File testPath = new File("E:\\teste\\noteAcer-nofork-default");
+    File testPath;// = new File("E:\\teste\\noteAcer-nofork-default");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
