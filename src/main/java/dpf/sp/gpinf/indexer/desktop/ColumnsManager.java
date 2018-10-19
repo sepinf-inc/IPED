@@ -163,7 +163,6 @@ public class ColumnsManager implements ActionListener, Serializable{
 	}
 	
 	public void dispose(){
-	    ColumnsManager.getInstance().saveColumnsState();
 		dialog.setVisible(false);
 		instance = null;
 	}
@@ -296,13 +295,18 @@ public class ColumnsManager implements ActionListener, Serializable{
 		updateList();
 	}
 	
+	private File getColStateFile() {
+	    File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
+        caseCols = new File(moduleDir, "visibleCols.dat"); //$NON-NLS-1$
+        File cols = caseCols;
+        if(!cols.exists())
+            cols = globalCols;
+        return cols;
+	}
+	
 	private void loadSavedCols(){
+		File cols = getColStateFile();
 		boolean lastColsOk = false;
-		File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
-		caseCols = new File(moduleDir, "visibleCols.dat"); //$NON-NLS-1$
-		File cols = caseCols;
-		if(!cols.exists())
-			cols = globalCols;
 		if(cols.exists()){
 		    try {
 		        colState = (ColumnState)Util.readObject(cols.getAbsolutePath());
@@ -491,6 +495,54 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    }
 	}
 	
+	public void resetToLastLayout() {
+	    File cols = this.getColStateFile();
+	    try {
+	        ColumnState lastState = (ColumnState)Util.readObject(cols.getAbsolutePath());
+	        resetColumns(lastState.visibleFields, lastState.initialWidths);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+	}
+	
+	public void resetToDefaultLayout() {
+	    resetColumns(Arrays.asList(defaultFields), defaultWidths);
+	}
+	
+	public void resetColumns(List<String> newCols, List<Integer> widths) {
+        for(String field : (List<String>)colState.visibleFields.clone())
+            if(!newCols.contains(field) && 
+               !field.equals(ResultTableModel.SCORE_COL) &&
+               !field.equals(ResultTableModel.BOOKMARK_COL))
+                updateGUICol(field, false);
+        
+        for(String field : newCols) {
+            if(!colState.visibleFields.contains(field))
+                updateGUICol(field, true);
+        }
+        
+        int newPos = 2;
+        for(String col : newCols) {
+            for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
+                TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+                if(tc.getHeaderValue() instanceof String &&
+                   ((String)tc.getHeaderValue()).startsWith(col.substring(0, 1).toUpperCase() + col.substring(1))) {
+                    App.get().resultsTable.moveColumn(i, newPos++);
+                }
+            }
+        }
+        
+        int j = 0;
+        for(int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++){
+            TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
+            if(tc.getModelIndex() >= ResultTableModel.fixedCols.length){
+                tc.setPreferredWidth(widths.get(j++));
+            }
+        }
+    }
+	
 	private void updateDinamicFields(){
 		
 		if(lastCase != App.get().appCase){
@@ -615,7 +667,6 @@ public class ColumnsManager implements ActionListener, Serializable{
 	    }else{
 	        JCheckBox source = (JCheckBox)e.getSource();
 	        updateGUICol(source.getText(), source.isSelected());
-	        saveColumnsState();
 	    }
 		
 	}

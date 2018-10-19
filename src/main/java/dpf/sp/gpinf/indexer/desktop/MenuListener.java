@@ -339,6 +339,15 @@ public class MenuListener implements ActionListener {
     
     }else if(e.getSource() == menu.createReport) {
         new ReportDialog().setVisible();
+    
+    }else if(e.getSource() == menu.lastColLayout) {
+        ColumnsManager.getInstance().resetToLastLayout();
+    
+    }else if(e.getSource() == menu.saveColLayout) {
+        ColumnsManager.getInstance().saveColumnsState();
+    
+    }else if(e.getSource() == menu.resetColLayout) {
+        ColumnsManager.getInstance().resetToDefaultLayout();
     }
 
   }
