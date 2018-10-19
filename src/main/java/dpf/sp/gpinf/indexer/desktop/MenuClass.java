@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.event.ActionListener;
-
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -34,11 +31,13 @@ public class MenuClass extends JPopupMenu {
       gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout,
       saveColLayout;
 
+  MenuListener menuListener;
+
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
     super();
 
-    ActionListener menuListener = new MenuListener(this);
+    menuListener = new MenuListener(this);
 
     marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
     marcarSelecionados.addActionListener(menuListener);

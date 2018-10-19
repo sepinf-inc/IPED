@@ -103,6 +103,8 @@ public class App extends JFrame implements WindowListener {
    *
    */
   private static final long serialVersionUID = 1L;
+  
+  public static final boolean triageGui = System.getProperty("enableTriageGui") != null; //$NON-NLS-1$
 
   private static Logger LOGGER;
   
@@ -120,7 +122,7 @@ public class App extends JFrame implements WindowListener {
   public JDialog dialogBar;
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
-  JButton pesquisar, opcoes, atualizar, ajuda;
+  JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
   JCheckBox checkBox, recursiveTreeList;
   JTable resultsTable;
   GalleryTable gallery;
@@ -361,6 +363,7 @@ public class App extends JFrame implements WindowListener {
     opcoes = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
     atualizar = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
     ajuda = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
+    exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
     checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
     filtro = new JComboBox<String>();
@@ -391,8 +394,10 @@ public class App extends JFrame implements WindowListener {
     if(processingManager != null)
     	topPanel.add(atualizar);
     topPanel.add(ajuda);
+    topPanel.add(exportToZip);
+    exportToZip.setVisible(false);
     topPanel.add(checkBox);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
     resultsModel = new ResultTableModel();
     resultsTable = new JTable(resultsModel);
@@ -535,7 +540,16 @@ public class App extends JFrame implements WindowListener {
     defaultFocusedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED);
     defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
     
+    if(triageGui) {
+        disposicaoVertical = true;
+        exportToZip.setVisible(true);
+    }
+    
     refazLayout(false);
+    
+    if(triageGui) {
+        zoomFont(this, -1);
+    }
     
     if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
         selectDockableTab(bookmarksTabDock);
@@ -569,6 +583,7 @@ public class App extends JFrame implements WindowListener {
     filtro.addActionListener(appletListener);
     pesquisar.addActionListener(appletListener);
     opcoes.addActionListener(appletListener);
+    exportToZip.addActionListener(appletListener);
     atualizar.addActionListener(appletListener);
     ajuda.addActionListener(appletListener);
     checkBox.addActionListener(appletListener);
@@ -587,7 +602,7 @@ public class App extends JFrame implements WindowListener {
     // filtro.getComponent(0).addMouseListener(appletListener);
     termo.getEditor().getEditorComponent().addMouseListener(appletListener);
     termo.getComponent(0).addMouseListener(appletListener);
-
+    
     //Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
     gallery.repaint();
     KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -809,7 +824,7 @@ public class App extends JFrame implements WindowListener {
 		removeAllDockables();
 	  createAllDockables();
 
-	  tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.4));
       tableTabDock.setVisible(true);
 	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 	  
@@ -822,7 +837,7 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 	        
-	  hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.5));
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
 	  hitsDock.setVisible(true);
 	  nextLocation = hitsDock.getBaseLocation().aside();
 	  
@@ -833,10 +848,10 @@ public class App extends JFrame implements WindowListener {
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
 
-	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.5));
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.6).east(0.65));
 	  compositeViewerDock.setVisible(true);
 	  
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
 	  categoriesTabDock.setVisible(true);
 	        
 	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
@@ -884,10 +899,10 @@ public class App extends JFrame implements WindowListener {
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
 	       
-	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.3));
+	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.40));
 	  compositeViewerDock.setVisible(true);
 	       
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.25));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
       categoriesTabDock.setVisible(true);
       
       metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());

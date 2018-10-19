@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -330,19 +331,52 @@ public class ExportFileTree extends CancelableWorker {
       if(hos != null) {
           String hash = hos.hash().toString().toUpperCase();
           LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
-          HashDialog dialog = new HashDialog(hash);
+          HashDialog dialog = new HashDialog(hash,baseDir.getAbsolutePath());
           dialog.setVisible(true);
       }
   }
 
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
     try {
-      JFileChooser fileChooser = new JFileChooser();
+      //JFileChooser fileChooser = new JFileChooser();
+    	//[Triage] Patch para o caso de o arquivo selecionado já existir. Na versão original, ele era sobrescrito silenciosamente.
+    	JFileChooser fileChooser = new JFileChooser(){
+    	    @Override
+    	    public void approveSelection(){
+    	        File f = getSelectedFile();
+    	        if(f.exists() && getDialogType() == SAVE_DIALOG){
+    	            int result = JOptionPane.showConfirmDialog(this,Messages.getString("ExportToZIP.FileAlreadyExistsMessageText"),Messages.getString("ExportToZIP.FileAlreadyExistsMessageTitle"),JOptionPane.YES_NO_CANCEL_OPTION);
+    	            switch(result){
+    	                case JOptionPane.YES_OPTION:
+    	                    super.approveSelection();
+    	                    return;
+    	                case JOptionPane.NO_OPTION:
+    	                    return;
+    	                case JOptionPane.CLOSED_OPTION:
+    	                    return;
+    	                case JOptionPane.CANCEL_OPTION:
+    	                    cancelSelection();
+    	                    return;
+    	            }
+    	        }
+    	        super.approveSelection();
+    	    }        
+    	};   	
+    	
       File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
       fileChooser.setCurrentDirectory(moduleDir.getParentFile());
+      
+      /*[Triage] Se existe o diretório padrão de dados exportados, como o /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório */
+	  File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));    	  
+	  if (dirDadosExportados.exists()) {
+		 fileChooser.setCurrentDirectory(dirDadosExportados);
+	  }
+      
       fileChooser.setFileFilter(null);
       if(toZip) {
           fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+          //int randInt = (int)(Math.random() * ((1000 - 0) + 1));
+          //fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName").substring(0, Messages.getString("ExportToZIP.DefaultName").length() - 4)+"_"+ randInt + ".zip"));
           fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
       }else
           fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
