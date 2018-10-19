@@ -2,7 +2,7 @@
 - Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
 - Funções para salvar, carregar e resetar layout das colunas
 - Desabilita por padrão gerenciamento automático de colunas
-- Usa java instalado no lugar do embutido no IPED-SearchApp devido a lentidão em mídias óticas
+- Usa java instalado no lugar do embutido no IPED-SearchApp devido a lentidão em mídias ópticas
 - Alerta para versões bugadas do java (1.8.0_161 a 1.8.0_171)
 Correções:
 - Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
@@ -15,6 +15,7 @@ Correções:
 - Exportação de árvore de diretórios renomeava itens ativos no caso de conflito de nomes
 - Corrige estatística de tempo de parsers de conteineres
 - Diferença de 1 dia em datas entre '01/03/2015' e '29/02/2016' em chats WhatsApp do Iphone (PCF Pfeifer)
+- Janela de erro ao exportar arquivos no caso de erros de escrita
 
 15/08/2018: IPED-3.14.4
 - Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
