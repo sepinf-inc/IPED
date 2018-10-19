@@ -1,5 +1,9 @@
 09/10/2018: IPED-3.14.5
-- Novas opções avançadas: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
+- Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
+- Funções para salvar, carregar e resetar layout das colunas
+- Desabilita por padrão gerenciamento automático de colunas
+- Usa java instalado no lugar do embutido no IPED-SearchApp devido a lentidão em mídias óticas
+- Alerta para versões bugadas do java (1.8.0_161 a 1.8.0_171)
 Correções:
 - Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
 - Correção para perda de marcadores em multicasos (3.14)
@@ -9,10 +13,8 @@ Correções:
 - Não copia para relatórios arquivos desnecessários referentes a nós da árvore
 - Arquivos zip não comprimidos contendo outros zips não eram expandidos corretamente
 - Exportação de árvore de diretórios renomeava itens ativos no caso de conflito de nomes
-- Foca aba de categorias caso não haja marcadores em relatórios
-- Desabilita por padrão gerenciamento automático de colunas
 - Corrige estatística de tempo de parsers de conteineres
-- Usa java instalado no lugar do embutido devido a lentidão em mídias óticas
+- Diferença de 1 dia em datas entre '01/03/2015' e '29/02/2016' em chats WhatsApp do Iphone (PCF Pfeifer)
 
 15/08/2018: IPED-3.14.4
 - Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
