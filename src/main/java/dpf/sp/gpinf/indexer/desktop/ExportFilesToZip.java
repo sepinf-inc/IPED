@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
   File file, subdir;
   ProgressMonitor progressMonitor;
   HashingOutputStream hos;
+  volatile boolean error;
 
   public ExportFilesToZip(File file, ArrayList<ItemId> uniqueIds) {
     this.file = file;
@@ -61,13 +63,14 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
   }
 
   @Override
-  protected Boolean doInBackground() throws Exception {
+  protected Boolean doInBackground() {
     
     if(!file.getName().toLowerCase().endsWith(".zip")) //$NON-NLS-1$
     	file = new File(file.getAbsolutePath() + ".zip"); //$NON-NLS-1$
     
     LOGGER.info("Exporting files to " + file.getAbsolutePath()); //$NON-NLS-1$
     
+    try {
     BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(file));
     hos = new HashingOutputStream(Hashing.md5(), bos);
     ZipArchiveOutputStream zaos = new ZipArchiveOutputStream(hos);
@@ -76,8 +79,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
     int subdir = 0;
     int progress = 0;
     
-    for (ItemId item : uniqueIds) {
-      try {
+      for (ItemId item : uniqueIds) {
     	if (progress % 1000 == 0){
     	  subdir++;
     	  ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/"); //$NON-NLS-1$
@@ -103,22 +105,33 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         try (InputStream in = e.getBufferedStream()){
             int len = 0;
             while((len = in.read(buf)) != -1 && !this.isCancelled())
-                zaos.write(buf, 0, len);
-        }finally{
-            zaos.closeArchiveEntry();
+                try {
+                    zaos.write(buf, 0, len);
+                }catch(IOException e0) {
+                    e0.printStackTrace();
+                    ExportFileTree.showErrorMessage(e0);
+                    error = true;
+                    return null;
+                }
+        }catch(IOException e0) {
+            e0.printStackTrace();
         }
+        
+        zaos.closeArchiveEntry();
 
-      } catch (Exception e1) {
-        e1.printStackTrace();
+        this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
+
+        if (this.isCancelled()) {
+          break;
+        }
       }
-
-      this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
-
-      if (this.isCancelled()) {
-        break;
-      }
+      zaos.close();
+    
+    } catch (IOException e) {
+        e.printStackTrace();
+        error = true;
+        ExportFileTree.showErrorMessage(e);
     }
-    zaos.close();
 
     return null;
   }
@@ -158,7 +171,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
   
   @Override
   protected void done() {
-      if(hos != null) {
+      if(hos != null && !error) {
           String hash = hos.hash().toString().toUpperCase();
           LOGGER.info("MD5 of " + file.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
           HashDialog dialog = new HashDialog(hash);

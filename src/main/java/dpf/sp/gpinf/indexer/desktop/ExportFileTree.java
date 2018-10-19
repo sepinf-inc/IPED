@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -60,6 +62,7 @@ public class ExportFileTree extends CancelableWorker {
   int baseDocId;
   boolean onlyChecked, toZip;
   File baseDir;
+  private volatile boolean error = false;
 
   int total, progress = 0;
   ProgressDialog progressDialog;
@@ -180,7 +183,7 @@ public class ExportFileTree extends CancelableWorker {
 
   private Object exportItem(int docId, Object subdir, boolean isParent) {
 
-    if(docId == root.docId)
+    if(docId == root.docId || error)
       return null;
         
     if (subdir == null)
@@ -267,7 +270,15 @@ public class ExportFileTree extends CancelableWorker {
           try (InputStream in = item.getBufferedStream()) {
               int len = 0;
               while((len = in.read(buf)) != -1 && !this.isCancelled())
-                  zaos.write(buf, 0, len);
+                  try {
+                      zaos.write(buf, 0, len);
+                  } catch (IOException e) {
+                      showErrorMessage(e);
+                      e.printStackTrace();
+                      error = true;
+                      return null;
+                  }
+                  
           } catch (IOException e) {
               e.printStackTrace();
           }
@@ -275,10 +286,12 @@ public class ExportFileTree extends CancelableWorker {
         zaos.closeArchiveEntry();
 
       } catch (IOException e1) {
+        showErrorMessage(e1);
+        error = true;
         e1.printStackTrace();
         
       } finally {
-        item.dispose();
+        if(item != null) item.dispose();
       }
 
       if (!isParent) {
@@ -290,6 +303,20 @@ public class ExportFileTree extends CancelableWorker {
 
     }
   
+  public static void showErrorMessage(final Exception e) {
+      try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                  JOptionPane.showMessageDialog(App.get(), Messages.getString("ExportFileTree.ExportError") + 
+                          e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+              }
+          });
+      } catch (InvocationTargetException | InterruptedException e2) {
+          e2.printStackTrace();
+      }
+  }
+  
   @Override
   public boolean doCancel(boolean mayInterrupt) {
       return cancel(false);
@@ -298,7 +325,7 @@ public class ExportFileTree extends CancelableWorker {
   @Override
   protected Boolean doInBackground() throws Exception {
 
-    progressDialog = new ProgressDialog(null, this);
+    progressDialog = new ProgressDialog(App.get(), this);
 
     ArrayList<Integer> docIds = new ArrayList<Integer>();
     for (int docId : getItemsToExport(true))
@@ -312,7 +339,7 @@ public class ExportFileTree extends CancelableWorker {
     try {
       for (int docId : docIds) {
         exportItem(docId);
-        if (progressDialog.isCanceled()) {
+        if (progressDialog.isCanceled() || error) {
           break;
         }
       }
@@ -328,7 +355,7 @@ public class ExportFileTree extends CancelableWorker {
   
   @Override
   protected void done() {
-      if(hos != null) {
+      if(hos != null && !error) {
           String hash = hos.hash().toString().toUpperCase();
           LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
           HashDialog dialog = new HashDialog(hash,baseDir.getAbsolutePath());
