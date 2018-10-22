@@ -5,6 +5,7 @@
 - Usa java instalado no lugar do embutido no IPED-SearchApp devido a lentidão em mídias ópticas
 - Alerta para versões bugadas do java (1.8.0_161 a 1.8.0_171)
 - Habilita por padrão -XX:+HeapDumpOnOutOfMemoryError no iped.exe
+- Atualiza PDFbox para v2.0.12
 Correções:
 - Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
 - Marcadores em multicasos estavam sendo perdidos (3.14)
