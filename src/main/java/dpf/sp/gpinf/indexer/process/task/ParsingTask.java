@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -50,7 +51,6 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +77,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import gpinf.dev.data.EvidenceFile;
@@ -122,6 +123,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private String firstParentPath = null;
   private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
   private volatile int depth = 0;
+  private Map<Object, EvidenceFile> idToItemMap = new HashMap<>();
   
   private IndexerDefaultParser autoParser;
 
@@ -174,9 +176,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     // Tratamento p/ acentos de subitens de ZIP
-    ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
-    context.set(ArchiveStreamFactory.class, factory);
+    context.set(ArchiveStreamFactory.class,  new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
     
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
@@ -253,7 +253,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     fillMetadata(evidence);
     
-    Parser parser = getLeafParser(autoParser, evidence);
+    Parser parser = getLeafParser(autoParser, evidence.getMetadata());
     
     AtomicLong time = times.get(getParserName(parser));
     if(time == null){
@@ -290,11 +290,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           return parser.getClass().getSimpleName();
   }
   
-  private static Parser getLeafParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
-	  Parser parser = autoParser.getBestParser(evidence.getMetadata());
+  private static Parser getLeafParser(IndexerDefaultParser autoParser, Metadata metadata) {
+	  Parser parser = autoParser.getBestParser(metadata);
 	    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
 	    	if(parser instanceof CompositeParser)
-	    		parser = getParser((CompositeParser)parser, evidence.getMetadata());
+	    		parser = getParser((CompositeParser)parser, metadata);
 	    	else
 	    		parser = ((ParserDecorator)parser).getWrappedParser();
 	    }
@@ -303,8 +303,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   }
   
   public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
-	  Parser p = getLeafParser(autoParser, evidence);
-	  return isSpecificParser(p);
+	  return hasSpecificParser(autoParser, evidence.getMetadata());
+  }
+  
+  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Metadata metadata) {
+      Parser p = getLeafParser(autoParser, metadata);
+      return isSpecificParser(p);
   }
   
   private static boolean isSpecificParser(Parser parser) {
@@ -480,9 +484,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         firstParentPath = parentPath;
       }
 
-      EvidenceFile parent = evidence;
-      if (context.get(EmbeddedParent.class) != null) {
-        parent = (EvidenceFile) context.get(EmbeddedParent.class).getObj();
+      EvidenceFile parent = null;
+      String parentId = metadata.get(ExtraProperties.PARENT_VIRTUAL_ID);
+      if (parentId != null) parent = idToItemMap.get(parentId);
+      if (parent == null && context.get(EmbeddedParent.class) != null)
+          parent = (EvidenceFile) context.get(EmbeddedParent.class).getObj();
+      if (parent == null) parent = evidence;
+      
+      if (parent != evidence) {
         parentPath = parent.getPath();
         subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
@@ -492,6 +501,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       EvidenceFile subItem = new EvidenceFile();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
+      
+      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
+      if(embeddedId != null) idToItemMap.put(embeddedId, subItem);
 
       String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
       char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -573,7 +585,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if (reader.setTimeoutPaused(true)) {
         try {
           long start =  System.nanoTime()/1000;
-          worker.processNewItem(subItem);
+          worker.processNewItem(subItem, ProcessTime.LATER);
           incSubitensDiscovered();
           
           long diff = (System.nanoTime()/1000) - start;
@@ -594,12 +606,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         Thread.currentThread().interrupt();
       }
 
-      //e.printStackTrace();
       LOGGER.warn("{} SAX error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
+      LOGGER.error("SAX error extracting subitem " + subitemPath, e);
 
     } catch (Exception e) {
       LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      //e.printStackTrace();
+      LOGGER.error("Error extracting subitem " + subitemPath, e);
 
     } finally {
       tmp.close();
