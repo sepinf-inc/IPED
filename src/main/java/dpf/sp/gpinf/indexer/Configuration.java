@@ -253,109 +253,76 @@ public class Configuration {
     }
     
     value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      RawStringParser.MIN_SIZE = Integer.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
     }
 
     value = properties.getProperty("enableOCR"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.ENABLED = Boolean.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(OCRParser.ENABLE_PROP, value.trim());
     }
 
     value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.LANGUAGE = value;
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.LANGUAGE_PROP, value.trim());
     }
 
     value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.MIN_SIZE = Long.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.MIN_SIZE_PROP, value.trim());
     }
 
     value = properties.getProperty("maxFileSize2OCR"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.MAX_SIZE = Long.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.MAX_SIZE_PROP, value.trim());
     }
 
     value = properties.getProperty("pageSegMode"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.PAGESEGMODE = value;
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.PAGE_SEGMODE_PROP, value.trim());
     }
 
     value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, value.trim());
     }
-    if (value != null && !value.isEmpty()) {
-      PDFOCRTextParser.MAXCHARS2OCR = Integer.valueOf(value);
+    
+    value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, value.trim());
+    }
+    
+    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, value.trim());
     }
 
     value = properties.getProperty("pdfToImgResolution"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFToImage.RESOLUTION = Integer.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.RESOLUTION_PROP, value.trim());
     }
 
     value = properties.getProperty("pdfToImgLib"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFToImage.PDFLIB = value;
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.PDFLIB_PROP, value.trim());
     }
     
     value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
-      PDFToImage.externalConversion = Boolean.valueOf(value.trim());
+      System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
     }
     
     value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
-      PDFToImage.externalConvMaxMem = value.trim();
+      System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, value.trim()); 
     }
     
-    value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFOCRTextParser.processEmbeddedImages = Boolean.valueOf(value);
-    }
-
     value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
       embutirLibreOffice = Boolean.valueOf(value);
-    }
-
-    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFOCRTextParser.sortPDFChars = Boolean.valueOf(value);
     }
 
     value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
@@ -496,11 +463,11 @@ public class Configuration {
       
       IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
       Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
-
-      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract"; //$NON-NLS-1$
-      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/"; //$NON-NLS-1$
-      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/"; //$NON-NLS-1$
-      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/"; //$NON-NLS-1$
+      
+      System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
+      System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
+      System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
+      System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
       
       String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
       if(mplayerPath != null)
@@ -521,16 +488,10 @@ public class Configuration {
     String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
     if(optional_jars != null)
         optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-    
-    File[] jars = optionalJarDir.listFiles();
-    if(jars != null)
-    	for(File jar : jars)
-    		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
-    			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
 
     String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)
-        RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim(); //$NON-NLS-1$
+        System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
 
   }
 
