@@ -414,13 +414,8 @@ public class Manager {
   }
   
   public void deleteTempDir(){
-	  	try {
-	  	  LOGGER.info("Deleting temp folder {}", Configuration.indexerTemp); //$NON-NLS-1$
-	      IOUtil.deletarDiretorio(Configuration.indexerTemp);
-	      
-	    } catch (IOException e) {
-	      LOGGER.warn("Fail to delete {}", Configuration.indexerTemp.getPath()); //$NON-NLS-1$
-	    }
+      LOGGER.info("Deleting temp folder {}", Configuration.indexerTemp); //$NON-NLS-1$
+      IOUtil.deletarDiretorio(Configuration.indexerTemp);
   }
 
   private void filtrarPalavrasChave() {
