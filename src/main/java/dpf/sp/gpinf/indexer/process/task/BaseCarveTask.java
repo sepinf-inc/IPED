@@ -27,8 +27,7 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -142,7 +141,8 @@ public abstract class BaseCarveTask extends AbstractTask {
   protected void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
     boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
-	worker.processNewItem(offsetFile, processNow);
+    ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+	worker.processNewItem(offsetFile, time);
   }
   
   protected boolean isToProcess(EvidenceFile evidence) {
