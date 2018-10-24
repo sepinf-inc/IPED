@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -99,7 +98,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  RowComparator.setLoadDocValues(false);
       
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
-      OCRParser.EXECTESS = false;
       
       if(!updateItems){
     	  LOGGER.info("Loading Columns"); //$NON-NLS-1$
