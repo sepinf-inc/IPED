@@ -66,9 +66,6 @@ public class IndexTask extends BaseCarveTask {
 
   public IndexTask() {
     this.autoParser = new IndexerDefaultParser();
-    this.autoParser.setFallback(Configuration.fallBackParser);
-    this.autoParser.setErrorParser(Configuration.errorParser);
-        
   }
 
   public static class IdLenPair {

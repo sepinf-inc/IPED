@@ -147,8 +147,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
   public ParsingTask() {
     this.autoParser = new IndexerDefaultParser();
-    this.autoParser.setFallback(Configuration.fallBackParser);
-    this.autoParser.setErrorParser(Configuration.errorParser);
   }
   
   public ParsingTask(Worker worker, IndexerDefaultParser parser) {

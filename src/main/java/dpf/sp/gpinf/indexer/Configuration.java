@@ -26,8 +26,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.mime.MimeTypesFactory;
-import org.apache.tika.parser.EmptyParser;
-import org.apache.tika.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +34,7 @@ import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
@@ -72,8 +71,6 @@ public class Configuration {
   public static int timeOutPerMB = 1;
   public static boolean forceMerge = true;
   public static String configPath, appRoot;
-  public static Parser errorParser = new RawStringParser(true);
-  public static Parser fallBackParser = new RawStringParser(true);
   public static boolean embutirLibreOffice = true;
   public static boolean addUnallocated = false;
   public static boolean addFileSlacks = false;
@@ -231,25 +228,19 @@ public class Configuration {
     FastPipedReader.setTimeout(timeOut);
 
     value = properties.getProperty("entropyTest"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      entropyTest = Boolean.valueOf(value);
+    if (value != null && !value.trim().isEmpty()) {
+      entropyTest = Boolean.valueOf(value.trim());
+      System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, value.trim());
     }
 
     value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
-    if (value != null && !Boolean.valueOf(value.trim())) {
-      fallBackParser = new EmptyParser();
-    } else {
-      fallBackParser = new RawStringParser(entropyTest);
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, value.trim());
     }
     
     value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
-    if (value != null && !Boolean.valueOf(value.trim())) {
-        errorParser = null;
-    } else {
-        errorParser = new RawStringParser(entropyTest);
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, value.trim());
     }
     
     value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
