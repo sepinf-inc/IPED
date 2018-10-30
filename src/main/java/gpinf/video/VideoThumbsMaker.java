@@ -197,7 +197,8 @@ public class VideoThumbsMaker {
 
     cmds.addAll(Arrays.asList(new String[]{"-vo", "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape + subTmp.getPath().replace('\\', '/') + escape, "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", String.valueOf(maxThumbs + 1), in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
-    for (int step = frequency > 1 ? 0 : 1; step <= 3; step++) {
+    int initialStep = frequency > 1 ? 0 : 1;
+    for (int step = initialStep; step <= 3; step++) {
       if (step == 1) {
         int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
         cmds.remove(pos + 1);
@@ -275,10 +276,10 @@ public class VideoThumbsMaker {
             }
           }
         }
-        if (ignoreWaitKeyFrame == 0 && step == 0) {
+        if (ignoreWaitKeyFrame == 0 && step == initialStep) {
           String rlc = ret.toLowerCase();
           if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) && (rlc.indexOf("lavdopts") >= 0 || rlc.indexOf("wait_keyframe") >= 0)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-            step = -1;
+            step = initialStep - 1;
             ignoreWaitKeyFrame = 1;
             int pos = cmds.indexOf("-lavdopts"); //$NON-NLS-1$
             cmds.remove(pos + 1);
