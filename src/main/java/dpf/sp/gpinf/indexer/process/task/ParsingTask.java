@@ -37,33 +37,28 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.fork.EmbeddedDocumentParser;
+import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
@@ -106,9 +101,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private static boolean expandContainers = false;
   private static boolean enableFileParsing = true;
 
-  // Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
-  private static int NAME_MAX_LEN = 256;
-
   public static int subitensDiscovered = 0;
   private static HashSet<String> categoriesToExpand = new HashSet<String>();
   public static AtomicLong totalText = new AtomicLong();
@@ -117,9 +109,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private EvidenceFile evidence;
   private ParseContext context;
   private boolean extractEmbedded;
-  private ParsingEmbeddedDocumentExtractor embeddedParser;
   private volatile ParsingReader reader;
-  private boolean hasTitle = false;
   private String firstParentPath = null;
   private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
   private volatile int depth = 0;
@@ -127,14 +117,19 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   
   private IndexerDefaultParser autoParser;
 
-  public ParsingTask(ParseContext context) {
-    setContext(context);
+  public ParsingTask() {
+      this.autoParser = new IndexerDefaultParser();
   }
   
-  public ParsingTask(ParseContext context, EvidenceFile evidence) {
-      setContext(context);
+  public ParsingTask(EvidenceFile evidence, IndexerDefaultParser parser) {
       this.evidence = evidence;
-    }
+      this.autoParser = parser;
+  }
+  
+  public ParsingTask(Worker worker, IndexerDefaultParser parser) {
+      this.setWorker(worker);
+	  this.autoParser = parser;
+  }
   
   @Override
   public boolean isEnabled() {
@@ -145,45 +140,43 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       expandContainers = enabled;
   }
 
-  public ParsingTask() {
-    this.autoParser = new IndexerDefaultParser();
-  }
-  
-  public ParsingTask(Worker worker, IndexerDefaultParser parser) {
-      this.setWorker(worker);
-	  this.autoParser = parser;
-  }
-
-  private void setContext(ParseContext context) {
-    this.context = context;
-    this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
-    ItemInfo appContext = context.get(ItemInfo.class);
-    extractEmbedded = isToBeExpanded(appContext.getBookmarks());
-  }
-
-  private void configureTikaContext(EvidenceFile evidence) {
+  public ParseContext getTikaContext() {
     // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
     context = new ParseContext();
     context.set(Parser.class, this.autoParser);
+    
     ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
     context.set(ItemInfo.class, itemInfo);
-    context.set(EmbeddedDocumentExtractor.class, this);
-    context.set(StreamSource.class, evidence);
-    if (CarveTask.ignoreCorrupted && !caseData.isIpedReport()) {
+    if(output != null)
+        context.set(OCROutputFolder.class, new OCROutputFolder(output));
+    else
+        context.set(OCROutputFolder.class, new OCROutputFolder());
+    
+    if (CarveTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
       context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
     }
 
     // Tratamento p/ acentos de subitens de ZIP
     context.set(ArchiveStreamFactory.class,  new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
-    
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
-    context.set(OCROutputFolder.class, new OCROutputFolder(output));
+    context.set(StreamSource.class, evidence);
     context.set(Item.class, evidence);
-    context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+    if(output != null && worker != null)
+        context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
-    setContext(context);
+    extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
+    if(extractEmbedded) {
+        context.set(EmbeddedDocumentExtractor.class, this);
+    }else
+        context.set(EmbeddedDocumentExtractor.class, new EmbeddedDocumentParser(context));
+    
+    return context;
+  }
+  
+  public void setExtractEmbedded(boolean extractEmbedded) {
+      this.extractEmbedded = extractEmbedded;
   }
 
   private void fillMetadata(EvidenceFile evidence) {
@@ -251,7 +244,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     fillMetadata(evidence);
     
-    Parser parser = getLeafParser(autoParser, evidence.getMetadata());
+    Parser parser = autoParser.getLeafParser(evidence.getMetadata());
     
     AtomicLong time = times.get(getParserName(parser));
     if(time == null){
@@ -261,7 +254,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
     if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
-    		isSpecificParser(parser) )) {
+    		IndexerDefaultParser.isSpecificParser(parser) )) {
         try{
             depth++;
             ParsingTask task = new ParsingTask(worker, autoParser);
@@ -287,49 +280,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       else
           return parser.getClass().getSimpleName();
   }
-  
-  private static Parser getLeafParser(IndexerDefaultParser autoParser, Metadata metadata) {
-	  Parser parser = autoParser.getBestParser(metadata);
-	    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
-	    	if(parser instanceof CompositeParser)
-	    		parser = getParser((CompositeParser)parser, metadata);
-	    	else
-	    		parser = ((ParserDecorator)parser).getWrappedParser();
-	    }
-	    return parser;
-
-  }
-  
+      
   public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
-	  return hasSpecificParser(autoParser, evidence.getMetadata());
+	  return autoParser.hasSpecificParser(evidence.getMetadata());
   }
   
-  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Metadata metadata) {
-      Parser p = getLeafParser(autoParser, metadata);
-      return isSpecificParser(p);
-  }
-  
-  private static boolean isSpecificParser(Parser parser) {
-    if (parser instanceof RawStringParser || parser instanceof TXTParser)
-      return false;
-    else
-      return true;
-  }
-  
-  private static Parser getParser(CompositeParser comp, Metadata metadata) {
-      Map<MediaType, Parser> map = comp.getParsers();
-      MediaType type = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
-      if (type != null)
-         type = comp.getMediaTypeRegistry().normalize(type);
-      while (type != null) {
-          Parser parser = map.get(type);
-          if (parser != null)
-              return parser;
-          type = comp.getMediaTypeRegistry().getSupertype(type);
-      }
-      return comp.getFallback();
-  }
-
   private void safeProcess(EvidenceFile evidence) throws IOException {
 
     this.evidence = evidence;
@@ -343,7 +298,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       return;
     }
 
-    configureTikaContext(evidence);
+    context = getTikaContext();
     Metadata metadata = evidence.getMetadata();
     
     reader = new ParsingReader(this.autoParser, tis, metadata, context);
@@ -383,9 +338,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         totalText.addAndGet(evidence.getParsedTextCache().length());
       }
 
-      if (extractEmbedded) {
-        evidence.setParsed(true);
-      }
+      evidence.setParsed(true);
 
     } finally {
       //IOUtil.closeQuietly(tis);
@@ -429,40 +382,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     return true;
   }
-
-  private String getName(Metadata metadata, int child) {
-    hasTitle = false;
-    String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
-    if (name == null || name.isEmpty()) {
-      name = metadata.get(ExtraProperties.MESSAGE_SUBJECT);
-      if (name == null || name.isEmpty()) {
-        name = metadata.get(TikaCoreProperties.TITLE);
+  
+  private String removePathPrefix(String name, boolean hasTitle) {
+      if (!hasTitle) {
+          int i = name.lastIndexOf('/');
+          if (i != -1) {
+            name = name.substring(i + 1);
+          }
       }
-      if (name != null) {
-        hasTitle = true;
-      }
-    }
-    if (name == null || name.isEmpty()) {
-      name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
-    }
-
-    if (name == null || name.isEmpty()) {
-      name = Messages.getString("ParsingTask.UnNamed") + child; //$NON-NLS-1$
-    }
-
-    if (name.length() > NAME_MAX_LEN) {
-      name = name.substring(0, NAME_MAX_LEN);
-    }
-
-    if (!hasTitle) {
-      int i = name.lastIndexOf('/');
-      if (i != -1) {
-        name = name.substring(i + 1);
-      }
-    }
-    return name;
+      return name;
   }
-
+  
   @Override
   public void parseEmbedded(InputStream inputStream, ContentHandler handler, Metadata metadata, boolean outputHtml) throws SAXException, IOException {
 
@@ -475,8 +405,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     try {
       ItemInfo itemInfo = context.get(ItemInfo.class);
       itemInfo.incChild();
-
-      String name = getName(metadata, itemInfo.getChild());
+      
+      NameTitle nameTitle = EmbeddedDocumentParser.getNameTitle(metadata, itemInfo.getChild());
+      boolean hasTitle = nameTitle.hasTitle;
+      String name = removePathPrefix(nameTitle.name, hasTitle);
+      
       String parentPath = itemInfo.getPath();
       if (firstParentPath == null) {
         firstParentPath = parentPath;
@@ -502,22 +435,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       
       String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
       if(embeddedId != null) idToItemMap.put(embeddedId, subItem);
-
+      
       String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
       char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
       handler.characters(nameChars, 0, nameChars.length);
 
-      if (extractEmbedded && output == null) {
-        return;
-      }
-
       if (!extractEmbedded) {
-        itemInfo.setPath(subitemPath);
-        try {
-          embeddedParser.parseEmbedded(inputStream, handler, metadata, false);
-        } finally {
-          itemInfo.setPath(parentPath);
-        }
         return;
       }
 
@@ -563,6 +486,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.CREATED);
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.MODIFIED);
       removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
+      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
+      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
       
       subItem.setDeleted(parent.isDeleted());
       if (metadata.get(ExtraProperties.DELETED) != null) {
