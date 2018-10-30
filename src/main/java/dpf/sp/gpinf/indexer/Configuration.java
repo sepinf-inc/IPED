@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -188,6 +189,22 @@ public class Configuration {
       numThreads = Runtime.getRuntime().availableProcessors();
     }
     
+    value = properties.getProperty("enableExternalParsing"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      ForkParser2.enabled = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
+    if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
+      ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
+    }else
+      ForkParser2.SERVER_POOL_SIZE = numThreads;
+    
+    value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      ForkParser2.SERVER_MAX_HEAP = value.trim();
+    }
+    
     value = properties.getProperty("locale"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty())
       locale = Locale.forLanguageTag(value.trim());
@@ -301,6 +318,10 @@ public class Configuration {
     value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
       System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
+    }
+    //do not open extra processes for OCR if forkParser is enabled
+    if(ForkParser2.enabled) {
+        System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
     }
     
     value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
