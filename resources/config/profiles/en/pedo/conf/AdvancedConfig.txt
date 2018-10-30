@@ -9,6 +9,18 @@
 # may double the memory usage. I/O and CPU demand will also increase.
 robustImageReading = false
 
+# Use external processes to parse files, isolating infinite loops and OutOfMemoryErrors while parsing.
+# Uses more memory and it is a bit slower because more processes are started and communicated with.
+enableExternalParsing = false
+
+# Maximum number of external parsing processes. 'auto' uses the number of logical CPU cores.
+# You may decrease this, because rarely all Workers are parsing files at the same time,
+# EXCEPT if OCR is enabled, when file parsing becomes the processing bottleneck.
+numExternalParsers = auto
+
+# Max heap memory for EACH external parser. Low values can cause parsing errors because of insufficient memory.
+externalParsingMaxMem = 512M
+
 # Configure internal or external (eg ufed) parsers for phone data with more than one parser.
 # Possible values: internal, external, all
 phoneParsersToUse = internal

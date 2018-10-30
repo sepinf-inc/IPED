@@ -9,6 +9,18 @@
 # pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
 robustImageReading = false
 
+# Usa processos auxiliares para interpretar os arquivos, isolando travamentos e OutOfMemoryErrors no parsing.
+# Consome mais memória e é um pouco mais lento devido aos processos auxiliares e comunicação com eles.
+enableExternalParsing = false
+
+# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza o número de processadores lógicos.
+# Pode-se diminuir esse valor pois raramente todos os Workers estão realizando parsing ao mesmo tempo,
+# exceto em casos com OCR habilitado, pois o tempo de parsing é significativo.
+numExternalParsers = auto
+
+# Memória heap máxima a usar POR EXTERNAL PARSER. Valores baixos podem provocar erros de parsing por falta de memória.
+externalParsingMaxMem = 512M
+
 # Define se serão usados decodificadores internos ou externos (ex. ufed) para dados de celulares
 # com mais de um decodificador. Valores possíveis: internal, external, all
 phoneParsersToUse = internal
