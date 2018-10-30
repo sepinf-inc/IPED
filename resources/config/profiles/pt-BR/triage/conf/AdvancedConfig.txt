@@ -56,9 +56,20 @@ minRawStringSize = 4
 # Utilize espaço para separar os caracteres
 extraCharsToIndex =
 
+# Armazena vetores de frequência das palavras no índice, necessário para procurar documentos similares.
+# Aumenta o tamanho do índice em até 30%.
+storeTermVectors = false
+
 # Converte os caracteres para minúsculas antes da indexação, tornando a pesquisa independente da capitalização.
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
+
+# Não indexa palavras formadas por caracteres fora do conjunto Latin-1, como chinês, cirílico, árabe, etc.
+# Padrão é false.
+filterNonLatinChars = true;
+
+# Tamanho máximo de palavras a serem indexadas. Padrão é 255.
+maxTokenLength = 20
 
 # Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
 # porém seu conteúdo não é processado (indexado, expandido, carveado, etc).

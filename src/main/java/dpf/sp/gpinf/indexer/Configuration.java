@@ -90,6 +90,9 @@ public class Configuration {
   public static String loaddbPathWin;
   public static Locale locale = Locale.getDefault();
   public static boolean autoManageCols = true;
+  public static boolean storeTermVectors = true;
+  public static int maxTokenLength = 255;
+  public static boolean filterNonLatinChars = false;
   public static boolean preOpenImagesOnSleuth = false;
   public static boolean openImagesCacheWarmUpEnabled = false;
   public static int openImagesCacheWarmUpThreads = 256;
@@ -445,6 +448,21 @@ public class Configuration {
     value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         autoManageCols = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        storeTermVectors = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("maxTokenLength"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        maxTokenLength = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        filterNonLatinChars = Boolean.valueOf(value.trim());
     }
 
     value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$

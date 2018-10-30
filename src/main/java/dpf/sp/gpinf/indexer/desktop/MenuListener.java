@@ -60,6 +60,13 @@ public class MenuListener implements ActionListener {
     this.menu = menu;
     File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
     fileChooser.setCurrentDirectory(moduleDir.getParentFile());
+    
+	  /*[Triage] Se existe o diretório padrão de dados exportados, como o /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório */
+	  File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));    	  
+	  if (dirDadosExportados.exists()) {
+		 fileChooser.setCurrentDirectory(dirDadosExportados);
+	  }
+    
   }
 
   private class Filtro extends FileFilter {
@@ -225,7 +232,7 @@ public class MenuListener implements ActionListener {
           (new ExportFilesToZip(file, uniqueSelectedIds)).execute();
         }
 
-      } else if (e.getSource() == menu.importarPalavras) {
+    } else if (e.getSource() == menu.importarPalavras) {
       fileChooser.setFileFilter(defaultFilter);
       fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
       if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -237,19 +244,9 @@ public class MenuListener implements ActionListener {
             e.getSource() == menu.exportTreeChecked ||
             e.getSource() == menu.exportCheckedTreeToZip) {
         
-        TreePath[] paths = App.get().tree.getSelectionPaths();
-        if (paths != null && paths.length > 1) {
-          JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
-        } else {
-          int baseDocId = -1;
-          if(paths != null) {
-              Node treeNode = (Node) paths[0].getLastPathComponent();
-              baseDocId = treeNode.docId;
-          }
-          boolean onlyChecked = e.getSource() != menu.exportTree;
-          boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
-          ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
-        }
+        boolean onlyChecked = e.getSource() != menu.exportTree;
+        boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
+        exportFileTree(onlyChecked, toZip);
 
     } else if (e.getSource() == menu.limparBuscas) {
       App.get().appCase.getMultiMarcadores().clearTypedWords();
@@ -339,8 +336,31 @@ public class MenuListener implements ActionListener {
     
     }else if(e.getSource() == menu.createReport) {
         new ReportDialog().setVisible();
+    
+    }else if(e.getSource() == menu.lastColLayout) {
+        ColumnsManager.getInstance().resetToLastLayout();
+    
+    }else if(e.getSource() == menu.saveColLayout) {
+        ColumnsManager.getInstance().saveColumnsState();
+    
+    }else if(e.getSource() == menu.resetColLayout) {
+        ColumnsManager.getInstance().resetToDefaultLayout();
     }
 
+  }
+  
+  public void exportFileTree(boolean onlyChecked, boolean toZip) {
+      TreePath[] paths = App.get().tree.getSelectionPaths();
+      if (paths != null && paths.length > 1) {
+        JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
+      } else {
+        int baseDocId = -1;
+        if(paths != null) {
+            Node treeNode = (Node) paths[0].getLastPathComponent();
+            baseDocId = treeNode.docId;
+        }
+        ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
+      }
   }
 
   static class SpinnerListener implements ChangeListener, ActionListener {
