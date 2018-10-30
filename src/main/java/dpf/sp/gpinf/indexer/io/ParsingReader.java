@@ -17,35 +17,23 @@
 package dpf.sp.gpinf.indexer.io;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.fork.ForkParser;
-import org.apache.tika.fork.ParserFactoryFactory;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.ParserFactory;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.slf4j.Logger;
@@ -55,7 +43,9 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 
 /**
  * Reader for the text content from a given binary stream. This class uses a background parsing task
@@ -123,8 +113,6 @@ public class ParsingReader extends Reader {
 
   private FastPipedReader pipedReader;
 
-  private static ForkParser forkParser;
-
   /**
    * Creates a reader for the text content of the given binary stream with the given document
    * metadata. The given parser is used for the parsing task that is run with the given executor.
@@ -170,59 +158,22 @@ public class ParsingReader extends Reader {
     if (timeout != null || MediaType.OCTET_STREAM.toString().equals(mediaType)) {
       pipedReader.setTimeoutPaused(true);
     }
-
-    // Teste para executar parsing em outra JVM, isolando problemas, mas
-    // impacta desempenho
-    this.parser = getForkParser();
     
+    // Executa parsing em outra JVM, isolando problemas, mas impacta desempenho
+    // until proxies for item and itemSearcher are implemented,
+    // we do not run parsers that use them in forkParser
+    if(MimeTypesProcessingOrder.getProcessingPriority(MediaType.parse(mediaType)) == 0) {
+        ((IndexerDefaultParser)parser).setCanUseForkParser(true);
+    }else
+        ((IndexerDefaultParser)parser).setCanUseForkParser(false);
   }
   
-  private Parser getForkParser() {
-      if(forkParser == null) {
-          synchronized(this.getClass()) {
-              if(forkParser == null) {
-                  forkParser = new ForkParser(new File(Configuration.appRoot, "lib").toPath(), 
-                          new ParserFactoryFactory(MyParserFactory.class.getName(), Collections.EMPTY_MAP));
-                  //forkParser = new ForkParser(this.getClass().getClassLoader(), parser);
-                  //"-Diped-locale=" + Configuration.locale);
-                  forkParser.setJavaCommand(getCommand());
-                  forkParser.setPoolSize(12);
-                  forkParser.setServerPulseMillis(5000);
-              }
-          }
-      }
-      return forkParser;
-  }
-  
-  private List<String> getCommand(){
-      List<String> cmd = new ArrayList<>();
-      cmd.add("java");
-      cmd.add("-Xmx512m");
-      for(Object key : System.getProperties().keySet()) {
-          cmd.add("-D" + key + "=" + System.getProperty(key.toString()));
-          System.out.println(cmd.get(cmd.size() - 1));
-      }
-      return cmd;
-  }
-  
-  public static class MyParserFactory extends ParserFactory{
-
-    public MyParserFactory(Map<String, String> args) {
-        super(args);
-    }
-
-    @Override
-    public Parser build() throws IOException, SAXException, TikaException {
-        return new IndexerDefaultParser();
-    }
-      
-  }
-
   public void startBackgroundParsing() {
-    future = getThreadPool().submit(new ParsingTask());
+    future = getThreadPool().submit(new BackgroundParsing());
   }
 
   //public static ExecutorService threadPool = Executors.newCachedThreadPool(new ParsingThreadFactory());
+  //must create 1 threadPool per thread group because robustImageReading reuses the same server per thread group
   public static ConcurrentHashMap<String, ExecutorService> threadPools = new ConcurrentHashMap<String, ExecutorService>();
 
   private ExecutorService getThreadPool() {
@@ -236,7 +187,7 @@ public class ParsingReader extends Reader {
     return tp;
   }
 
-  private Future future;
+  private Future<?> future;
   
   private volatile boolean parseDone = false;
   
@@ -244,11 +195,12 @@ public class ParsingReader extends Reader {
 
   private static class ParsingThreadFactory implements ThreadFactory {
 
-    AtomicInteger i = new AtomicInteger();
+    private int i;
 
     @Override
     public Thread newThread(Runnable r) {
-      Thread t = new Thread(Thread.currentThread().getThreadGroup(), r, "ParsingThread-" + i.getAndIncrement()); //$NON-NLS-1$
+      ThreadGroup group = Thread.currentThread().getThreadGroup();
+      Thread t = new Thread(group, r, group.getName() + "-ParsingThread-" + i++); //$NON-NLS-1$
       t.setDaemon(true);
       return t;
     }
@@ -299,7 +251,7 @@ public class ParsingReader extends Reader {
   /**
    * The background parsing task.
    */
-  private class ParsingTask implements Runnable {
+  private class BackgroundParsing implements Runnable {
 
     /**
      * Parses the given binary stream and writes the text content to the write end of the pipe.
@@ -310,11 +262,14 @@ public class ParsingReader extends Reader {
     public void run() {
       ContentHandler handler = new ToTextContentHandler(writer);
       try {
-        parser.parse(stream, handler, metadata, new ParseContext());
+        parser.parse(stream, handler, metadata, context);
 
-      } catch (TikaException e) {
-        //throwable = e;
-        e.printStackTrace();
+      } catch (CorruptedCarvedException e) {
+        ItemInfo itemInfo = context.get(ItemInfo.class);
+        String filePath = itemInfo.getPath();
+        LOGGER.warn("{} Ignoring corrupted carved file '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, e.toString()); //$NON-NLS-1$
+        throwable = e;
+        //e.printStackTrace();
 
       } catch (OutOfMemoryError t) {
         ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -322,7 +277,7 @@ public class ParsingReader extends Reader {
         LOGGER.error("{} OutOfMemory processing '{}' ({} bytes )\t{}", Thread.currentThread().getName(), filePath, length, t.toString()); //$NON-NLS-1$
 
       } catch (Throwable t) {
-
+        //t.printStackTrace();
         // Loga outros erros que não sejam de parsing, como OutMemory
         // para não interromper indexação
         // Não loga SAXException pois provavelmente foi devido a
