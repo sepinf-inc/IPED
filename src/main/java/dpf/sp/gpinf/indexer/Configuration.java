@@ -516,8 +516,10 @@ public class Configuration {
     }
     
     String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
-    if(optional_jars != null)
+    if(optional_jars != null) {
         optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
+        ForkParser2.plugin_dir = optionalJarDir.getCanonicalPath();
+    }
 
     String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)
