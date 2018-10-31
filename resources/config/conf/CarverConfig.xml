@@ -1,8 +1,9 @@
 <carverconfig>
     <typesToProcess>application/x-unallocated;</typesToProcess>
+    <typesToProcess>application/pdf;</typesToProcess>
     <typesToProcess> application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
 
-    <typesToNotProcess>video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
+    <typesToNotProcess>video; text/html; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
     <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;</typesToNotProcess>
@@ -17,14 +18,19 @@
             <carverClass>dpf.sp.gpinf.carving.carvers.SQLiteCarver</carverClass>
         </carverType>
  -->
+
          <carverType>
             <name>MOV</name>
-            <mediaType>application/pkix-cert</mediaType>
             <carverClass>dpf.sp.gpinf.carving.carvers.MOVCarver</carverClass>
         </carverType>
 
-        
-         <carverType>
+        <carverType>
+            <name>DER</name>
+            <mediaType>application/pkix-cert</mediaType>
+            <carverClass>dpf.sp.gpinf.carving.carvers.DERCarver</carverClass>
+        </carverType>
+
+        <carverType>
             <name>EML</name>
             <signatures>
     	        <headerSignature>Received: by</headerSignature>
@@ -183,7 +189,7 @@
             <carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
         </carverType>
  -->
- 
+
         <carverType>
             <name>RIFF</name>
             <signatures>
@@ -196,7 +202,7 @@
             <lengthBigEndian>false</lengthBigEndian>
             <mediaType>image/webp</mediaType>
         </carverType>
- 
+
         <carverType>
             <name>AUDIO</name>
             <signatures>
@@ -209,7 +215,7 @@
             <lengthBigEndian>false</lengthBigEndian>
             <mediaType>audio/x-wav</mediaType>
         </carverType>
- 
+
         <carverType>
             <name>MIDI</name>
             <signatures>
@@ -251,17 +257,66 @@
             <lengthBigEndian>false</lengthBigEndian>
         </carverType>
 
-        <carverType>
+        <!-- <carverType>
             <name>KNOWNMET</name>
             <signatures>
-    	        <headerSignature>\00\03\01\00\02????\02\01\00\27</headerSignature><!-- FT_FILESIZE tag followed by FT_AICH_HASH tag of the first KnownFile record -->
-    	        <headerSignature>\00\03\01\00\02????\03\01\00\34</headerSignature><!-- FT_FILESIZE tag followed by FT_LASTSHARED tag of the first KnownFile record  -->
+    	        <headerSignature>\00\03\01\00\02????\02\01\00\27</headerSignature>
+    	        FT_FILESIZE tag followed by FT_AICH_HASH tag of the first KnownFile record
+    	        <headerSignature>\00\03\01\00\02????\03\01\00\34</headerSignature>
+    	        FT_FILESIZE tag followed by FT_LASTSHARED tag of the first KnownFile record
     	    </signatures>
             <minLength>1000</minLength>
             <maxLength>500000000</maxLength>
             <carverClass>dpf.sp.gpinf.carving.carvers.KnownMetCarver</carverClass>
+        </carverType> -->
+
+        <carverType>
+            <name>FLV</name>
+            <signatures>
+    	        <headerSignature>FLV\01\01\00\00\00</headerSignature>    	        
+    	        <headerSignature>FLV\01\04\00\00\00</headerSignature>    	        
+    	        <headerSignature>FLV\01\05\00\00\00</headerSignature>    	        
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>50000000</maxLength>
+            <mediaType>video/x-flv</mediaType>
         </carverType>
-         
+
+        <carverType>
+            <name>FH-MPG</name>
+            <signatures>
+    	        <headerSignature>\00\00\01\ba\21\00</headerSignature>    	        
+    	        <headerSignature>\00\00\01\ba\44\00</headerSignature>    	        
+    	        <headerSignature>\00\00\01\ba\2f\ff</headerSignature>    	        
+    	        <footerSignature>\00\00\01\b9</footerSignature>    	        
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>TIF</name>
+            <signatures>
+    	        <headerSignature>MM\00\2a</headerSignature>
+    	        <headerSignature>II\2a\00</headerSignature>
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>1000000</maxLength>
+            <mediaType>image/tiff</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>FH-MPG2</name>
+            <signatures>
+    	        <headerSignature>\00\00\01\b3</headerSignature>
+    	        <footerSignature>\00\00\01\b7</footerSignature>
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>300000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+        </carverType>
+
      </carverTypes>
 
 </carverconfig>

@@ -612,7 +612,7 @@ public class SleuthkitReader extends DataSourceReader {
       //processamento caso haja lock de escrita no sqlite ao adicionar outra evidênca
       absFile.getRanges();
 
-      AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class);
+      AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
       long fragSize = advancedConfig.getUnallocatedFragSize();
       int fragNum = 0;
       for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {

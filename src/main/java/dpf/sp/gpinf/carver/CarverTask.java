@@ -73,6 +73,7 @@ public class CarverTask extends BaseCarverTask {
 
         // Nova instancia pois o mesmo objeto é reusado e nao é imutável
         CarverTask carver = new CarverTask();
+        carver.enableCarving = this.enableCarving;
         carver.setWorker(worker);
         carver.registeredCarvers = carverConfig.getRegisteredCarvers();
         carver.safeProcess(evidence);
@@ -215,9 +216,11 @@ public class CarverTask extends BaseCarverTask {
     		ConfigurationManager.getInstance().loadConfigs();
 		}
 
+    	enableCarving = ctConfig.getCarvingEnabled();
+    	
     	IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
 
-        if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
+        if (carverTypes == null && enableCarving && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
         
         carverConfig = ctConfig.getCarverConfiguration();
@@ -243,12 +246,14 @@ public class CarverTask extends BaseCarverTask {
     		ConfigurationManager.getInstance().loadConfigs();
 		}
 
+    	enableCarving = ctConfig.getCarvingEnabled();
+
         IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
         if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
         if (carverConfig == null) {
-            carverConfig = CarverConfigurationFactory.getCarverConfiguration(confDir);
+            carverConfig = ctConfig.getCarverConfiguration();
         }
 
         CarvedItemListener cil = new CarvedItemListener() {

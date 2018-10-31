@@ -99,7 +99,6 @@ public class Configuration {
    * Configurações a partir do caminho informado.
    */
   public static void getConfiguration(String configPathStr) throws Exception {
-	  
 	  if(loaded.getAndSet(true))
 		  return;
 
@@ -110,6 +109,8 @@ public class Configuration {
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
     System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
+    
+    System.setProperty("iped.configPath", configPath );
 
     properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
     properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$

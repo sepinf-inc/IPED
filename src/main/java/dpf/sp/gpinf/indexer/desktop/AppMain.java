@@ -33,13 +33,16 @@ public class AppMain {
 	File casesPathFile = null;
 
 	public static void main(String[] args) {
-	    
+		AppMain appMain = new AppMain();
+	    Configuration.setConfigPath(new File(appMain.detectCasePath(), "indexador").getAbsolutePath());
 	    checkJavaVersion();
 		new AppMain().start(args);
 	}
 
 	private static void checkJavaVersion(){
 	    try {
+	    	Configuration.getInstance().loadLocaleConfigurable();
+	    	
             SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
