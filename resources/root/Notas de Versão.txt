@@ -1,3 +1,9 @@
+xx/11/2018
+- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos (habilitar enableExternalParsing)
+- Atualização para Tika-1.19.1
+Correções:
+- Geração de quadros de vídeos no Linux qdo Mplayer não suporta "-lavdopts wait_keyframe" (PCF Wladimir)
+
 22/10/2018: IPED-3.14.5
 - Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
 - Funções para salvar, carregar e resetar layout das colunas
