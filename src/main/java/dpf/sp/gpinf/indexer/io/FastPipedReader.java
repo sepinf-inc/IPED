@@ -37,6 +37,10 @@ public class FastPipedReader extends Reader {
   public static void setTimeout(int timeout) {
     TIMEOUT = timeout;
   }
+  
+  public int getTotalTimeout() {
+      return TIMEOUT + timeOutBySize;
+  }
 
   boolean closedByWriter = false;
   boolean closedByReader = false;
@@ -287,7 +291,7 @@ public class FastPipedReader extends Reader {
       } catch (InterruptedException ex) {
         throw new java.io.InterruptedIOException();
       }
-      if (!timeoutPaused && timer++ == TIMEOUT + timeOutBySize) {
+      if (!timeoutPaused && timer++ == getTotalTimeout()) {
         timedOut = true;
         throw new TimeoutException();
       }

@@ -28,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -158,6 +159,9 @@ public class ParsingReader extends Reader {
     if (timeout != null || MediaType.OCTET_STREAM.toString().equals(mediaType)) {
       pipedReader.setTimeoutPaused(true);
     }
+    
+    //ForkServer timeout
+    context.set(ParsingTimeout.class, new ParsingTimeout(pipedReader.getTotalTimeout() * 1000));
     
     // Executa parsing em outra JVM, isolando problemas, mas impacta desempenho
     // until proxies for item and itemSearcher are implemented,

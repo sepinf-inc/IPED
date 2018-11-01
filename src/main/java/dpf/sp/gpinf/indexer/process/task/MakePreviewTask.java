@@ -14,6 +14,7 @@ import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -141,6 +142,13 @@ public class MakePreviewTask extends AbstractTask {
       context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
       context.set(Item.class, evidence);
       context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
+      
+      //ForkServer timeout
+      if(evidence.getLength() != null) {
+          int timeOutBySize = (int) (evidence.getLength() / 1000000) * Configuration.timeOutPerMB;
+          int totalTimeout = (Configuration.timeOut + timeOutBySize) * 1000;
+          context.set(ParsingTimeout.class, new ParsingTimeout(totalTimeout));
+      }
       
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
