@@ -88,7 +88,7 @@ public class Configuration {
   public static File optionalJarDir;
   public static File tskJarFile;
   public static String loaddbPathWin;
-  public static Locale locale = Locale.getDefault();
+  public static Locale locale;
   public static boolean autoManageCols = true;
   public static boolean storeTermVectors = true;
   public static int maxTokenLength = 255;
@@ -98,6 +98,11 @@ public class Configuration {
   public static int openImagesCacheWarmUpThreads = 256;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
+  
+  static {
+      Locale.setDefault(Locale.forLanguageTag("en")); //$NON-NLS-1$
+      locale = Locale.getDefault();
+  }
   
   private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
