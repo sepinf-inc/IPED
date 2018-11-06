@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +39,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -175,28 +175,24 @@ public class ExportFileTask extends AbstractTask {
   private boolean doNotExport(Item evidence) {
     if (noContentLabels == null) {
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-      noContentLabels = args.getNocontent(); //$NON-NLS-1$
+      noContentLabels = args.getNocontent();
       if (noContentLabels == null) {
         noContentLabels = Collections.emptyList();
       }
     }
-    for (String noContentLabel : noContentLabels) {
-      if (!evidence.getLabels().isEmpty()) {
-        for (String label : evidence.getLabels()) { //$NON-NLS-1$
-          if (label.equalsIgnoreCase(noContentLabel)) {
-            return true;
-          }
-        }
-
-      } else {
-        for (String category : evidence.getCategorySet()) {
-          if (category.equalsIgnoreCase(noContentLabel)) {
-            return true;
-          }
+    if (noContentLabels.isEmpty()) return false;
+    Collection<String> evidenceLabels = evidence.getLabels().isEmpty() ? evidence.getCategorySet() : evidence.getLabels();
+    for (String label : evidenceLabels) {
+      boolean isNoContent = false;
+      for (String noContentLabel : noContentLabels) {
+        if (label.equalsIgnoreCase(noContentLabel)) {
+          isNoContent = true;
+          break;
         }
       }
+      if (!isNoContent) return false;
     }
-    return false;
+    return true;
   }
 
   public void extract(Item evidence) {

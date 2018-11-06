@@ -23,6 +23,11 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.util.Version;
 
+/* [Triage] The following libraries are used to process tokens in a non-standard way */
+import org.apache.lucene.analysis.miscellaneous.LengthFilter;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.FilteringTokenFilter;
+
 /*
  * Analisador de texto que utiliza o tokenizador LowerCaseLetterDigitTokenizer e
  * o filtro ASCIIFoldingFilter, o qual converte caracteres para seus equivalentes ascii,
@@ -56,6 +61,12 @@ public class StandardASCIIAnalyzer extends Analyzer {
   public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
 
   private int maxTokenLength = DEFAULT_MAX_TOKEN_LENGTH;
+  
+  private boolean filterNonLatinChars = false;
+  
+  public void setFilterNonLatinChars(boolean filterNonLatinChars) {
+      this.filterNonLatinChars = filterNonLatinChars;
+  }
 
   /**
    * Set maximum allowed token length. If a token is seen that exceeds this length then it is
@@ -87,6 +98,16 @@ public class StandardASCIIAnalyzer extends Analyzer {
     TokenStream tok = new FastASCIIFoldingFilter(tokenizer);
 
     // tok = new StopFilter(matchVersion, tok, stopwords);
+    
+  /* The following code removes tokens that exceed the maximum size or that contain non-latin characters (after being converted by the FastASCIIFoldingFilter).
+     Nonetheless, the filters are not applied to the Category's description, which is checked by the following "if" */
+    if (!(pipeTokenizer)) {
+    	tok = new LengthFilter(matchVersion,tok, 1, maxTokenLength);
+    	if(filterNonLatinChars)
+    	    tok = new AsciiCharacterFilter(matchVersion,tok);
+    }        
+    
+        
     return new TokenStreamComponents(tokenizer, tok) {
       @Override
       protected void setReader(final Reader reader) throws IOException {
@@ -95,4 +116,33 @@ public class StandardASCIIAnalyzer extends Analyzer {
       }
     };
   }
+	
+  
+  /* [Triage] Filters that identifies tokens that contain non-latin Unicode characters */
+  public class AsciiCharacterFilter extends FilteringTokenFilter { 
+	  
+	    private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
+
+	    public AsciiCharacterFilter(Version matchVersion, TokenStream tokenStream) {
+	        super(matchVersion, tokenStream);
+	    }
+
+	    @Override
+	    public boolean accept() {
+	        	    	  	
+	    	final char[] buffer = termAtt.buffer();
+	        final int length = termAtt.length();
+
+	        // Runs through each character of the token, checking for invalid ones
+	        // If the token is clear, it returns true
+	        for (int i = 0; i < length; i++) 
+	        {
+	          final char c = buffer[i];
+	          if (c >= '\u0080') {	            
+	            return false;
+	          }
+	        }
+	        return true;
+	    }
+	}  
 }

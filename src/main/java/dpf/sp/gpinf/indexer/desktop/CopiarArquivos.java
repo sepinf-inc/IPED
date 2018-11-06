@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
@@ -106,8 +107,10 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
         if(e.getModDate() != null)
             dst.setLastModified(e.getModDate().getTime());
 
-      } catch (Exception e1) {
+      } catch (IOException e1) {
         e1.printStackTrace();
+        ExportFileTree.showErrorMessage(e1);
+        break;
       }
 
       this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$

@@ -147,6 +147,10 @@ public class AppListener implements ActionListener, MouseListener {
     	InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), App.get().getProcessingManager(), true);
 		init.execute();
     }
+    
+    if (evt.getSource() == App.get().exportToZip) {
+        App.get().menu.menuListener.exportFileTree(true, true);
+    }
 
     clearSearchBox = false;
 

@@ -60,7 +60,10 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -105,14 +108,10 @@ public class IndexItem extends BasicProps{
   private static Map<String, Class> typesMap = Collections.synchronizedMap(new TreeMap<String, Class>(new StringComparator()));
   private static Map<String, Class> newtypesMap = new ConcurrentHashMap<String, Class>();
 
-  private static FieldType contentField = new FieldType();
+  private static FieldType contentField;
   private static FieldType storedTokenizedNoNormsField = new FieldType();
 
   static {
-    contentField.setIndexed(true);
-    contentField.setOmitNorms(true);
-    contentField.setStoreTermVectors(true);
-    
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);
     storedTokenizedNoNormsField.setStored(true);
@@ -130,6 +129,18 @@ public class IndexItem extends BasicProps{
     
     BasicProps.SET.add(FTKID);
     BasicProps.SET.add(SLEUTHID);
+  }
+  
+  private static final FieldType getContentField() {
+      if(contentField == null) {
+          FieldType field = new FieldType();
+          field.setIndexed(true);
+          field.setOmitNorms(true);
+          AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+          field.setStoreTermVectors(advancedConfig.isStoreTermVectors());
+          contentField = field;
+      }
+      return contentField;
   }
 
   public static Map<String, Class> getMetadataTypes() {
@@ -338,7 +349,7 @@ public class IndexItem extends BasicProps{
     }
 
     if (reader != null) {
-      doc.add(new Field(CONTENT, reader, contentField));
+      doc.add(new Field(CONTENT, reader, getContentField()));
     }
 
     if (typesMap.size() == 0) {
@@ -359,6 +370,7 @@ public class IndexItem extends BasicProps{
       }
     }
 
+// TRIAGE comentar
     Metadata metadata = evidence.getMetadata();
     if (metadata != null) {
       if (guessMetaTypes) {

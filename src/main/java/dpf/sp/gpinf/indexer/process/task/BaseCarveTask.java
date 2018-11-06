@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 import iped3.sleuthkit.SleuthKitItem;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 
 /**
  * Classe base de tarefas de carving. 
@@ -146,12 +147,9 @@ public abstract class BaseCarveTask extends AbstractTask {
   
   protected void addOffsetFile(Item offsetFile, Item parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-	    if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
-	      caseData.incDiscoveredEvidences(1);
-	      worker.process(offsetFile);
-	    } else {
-	      worker.processNewItem(offsetFile);
-	    }
+    boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
+    ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+	worker.processNewItem(offsetFile, time);
   }
   
   protected boolean isToProcess(Item evidence) {

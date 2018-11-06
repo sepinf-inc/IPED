@@ -34,7 +34,6 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -101,7 +100,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  RowComparator.setLoadDocValues(false);
       
       ParsingReader.setTextSplitSize(Long.MAX_VALUE);
-      OCRParser.EXECTESS = false;
       
       if(!updateItems){
     	  LOGGER.info("Loading Columns"); //$NON-NLS-1$
@@ -166,6 +164,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
     }
+    if(App.get().appCase.getMultiMarcadores().getLabelMap().size() == 0)
+        App.get().selectDockableTab(App.get().categoriesTabDock);
+    
     if(updateItems){
     	App.get().appletListener.updateFileListing();
     	ColumnsManagerImpl.getInstance().dispose();

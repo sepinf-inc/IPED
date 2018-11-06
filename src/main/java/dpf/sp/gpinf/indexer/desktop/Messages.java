@@ -15,7 +15,8 @@ public class Messages {
 
 	public static String getString(String key) {
 		if(RESOURCE_BUNDLE == null) {
-			Locale locale = Locale.forLanguageTag(System.getProperty("iped-locale")); //$NON-NLS-1$
+		    String localeStr = System.getProperty("iped-locale"); //$NON-NLS-1$
+			Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
 			RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME, locale);
 		}
 		try {
@@ -25,5 +26,9 @@ public class Messages {
 			e.printStackTrace();
 			throw e;
 		}
+	}
+	
+	public static void resetLocale() {
+	    RESOURCE_BUNDLE = null;
 	}
 }

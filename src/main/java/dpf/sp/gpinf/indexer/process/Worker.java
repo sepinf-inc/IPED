@@ -73,7 +73,7 @@ public class Worker extends Thread {
   public volatile Item evidence;
 
   public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
-    super(new ThreadGroup("ProcessingThreadGroup-" + k), workerNamePrefix + k); //$NON-NLS-1$
+    super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); //$NON-NLS-1$
     this.caseData = caseData;
     this.writer = writer;
     this.output = output;
@@ -189,9 +189,19 @@ public class Worker extends Thread {
    * @param evidence novo item a ser processado.
    */
   public void processNewItem(Item evidence) {
+      processNewItem(evidence, ProcessTime.AUTO);
+  }
+  
+  public enum ProcessTime{
+      AUTO,
+      NOW,
+      LATER
+  }
+  
+  public void processNewItem(Item evidence, ProcessTime time) {
     caseData.incDiscoveredEvidences(1);
     // Se a fila está pequena, enfileira
-    if (caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
+    if (time == ProcessTime.LATER || (time == ProcessTime.AUTO && caseData.getItemQueue().size() < 10 * manager.getWorkers().length)) {
     	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {

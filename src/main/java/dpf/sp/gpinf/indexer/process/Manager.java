@@ -428,13 +428,8 @@ public class Manager {
   
   public void deleteTempDir(){
 	  LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
-  	  try {
-	  	  LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
-	      IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
-  		      
-	    } catch (IOException e) {
-	      LOGGER.warn("Fail to delete {}", localConfig.getIndexerTemp().getPath()); //$NON-NLS-1$
-	    }
+	  LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
+	  IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
   }
 
   private void filtrarPalavrasChave() {

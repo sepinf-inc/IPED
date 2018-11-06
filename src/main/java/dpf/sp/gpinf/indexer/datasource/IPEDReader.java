@@ -425,7 +425,7 @@ public class IPEDReader extends DataSourceReader {
       evidence.setTimeOut(Boolean.parseBoolean(doc.get(IndexItem.TIMEOUT)));
 
       value = doc.get(IndexItem.HASH);
-      if (value != null) {
+      if (value != null && !treeNode) {
         value = value.toUpperCase();
         evidence.setHash(value);
 

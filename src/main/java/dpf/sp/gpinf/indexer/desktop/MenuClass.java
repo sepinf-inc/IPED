@@ -18,12 +18,13 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.event.ActionListener;
-
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class MenuClass extends JPopupMenu {
 
@@ -31,13 +32,16 @@ public class MenuClass extends JPopupMenu {
 
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
-      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport;
+      gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout,
+      saveColLayout;
+
+  MenuListener menuListener;
 
   // JCheckBoxMenuItem changeViewerTab;
   public MenuClass() {
     super();
 
-    ActionListener menuListener = new MenuListener(this);
+    menuListener = new MenuListener(this);
 
     marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
     marcarSelecionados.addActionListener(menuListener);
@@ -71,14 +75,29 @@ public class MenuClass extends JPopupMenu {
     gerenciarFiltros = new JMenuItem(Messages.getString("MenuClass.ManageFilters")); //$NON-NLS-1$
     gerenciarFiltros.addActionListener(menuListener);
     this.add(gerenciarFiltros);
+    
+    JMenu submenu = new JMenu(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
+    this.add(submenu);
 
-    gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageColumns")); //$NON-NLS-1$
+    gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
     gerenciarColunas.addActionListener(menuListener);
-    this.add(gerenciarColunas);
+    submenu.add(gerenciarColunas);
+    
+    lastColLayout = new JMenuItem(Messages.getString("MenuClass.LoadLastColLayout")); //$NON-NLS-1$
+    lastColLayout.addActionListener(menuListener);
+    submenu.add(lastColLayout);
+    
+    saveColLayout = new JMenuItem(Messages.getString("MenuClass.SaveColLayout")); //$NON-NLS-1$
+    saveColLayout.addActionListener(menuListener);
+    submenu.add(saveColLayout);
+    
+    resetColLayout = new JMenuItem(Messages.getString("MenuClass.ResetColLayout")); //$NON-NLS-1$
+    resetColLayout.addActionListener(menuListener);
+    submenu.add(resetColLayout);
     
     this.addSeparator();
     
-    JMenu submenu = new JMenu(Messages.getString("MenuClass.ExportItens")); //$NON-NLS-1$
+    submenu = new JMenu(Messages.getString("MenuClass.ExportItens")); //$NON-NLS-1$
     this.add(submenu);
     
     exportarSelecionados = new JMenuItem(Messages.getString("MenuClass.ExportHighlighted")); //$NON-NLS-1$
@@ -155,6 +174,8 @@ public class MenuClass extends JPopupMenu {
     
     similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
     similarDocs.addActionListener(menuListener);
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
     this.add(similarDocs); 
     
     openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$

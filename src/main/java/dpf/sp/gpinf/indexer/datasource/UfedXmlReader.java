@@ -25,8 +25,11 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
@@ -39,6 +42,7 @@ import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSourceImpl;
 import gpinf.dev.data.ItemImpl;
@@ -116,7 +120,8 @@ public class UfedXmlReader extends DataSourceReader{
         SAXParser saxParser = spf.newSAXParser();
         XMLReader xmlReader = saxParser.getXMLReader();
         xmlReader.setContentHandler(new XMLContentHandler());
-        xmlReader.parse(xml.toURI().toString());
+        xmlReader.setErrorHandler(new XMLErrorHandler());
+        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xml)));
         
         return 0;
     }
@@ -175,6 +180,22 @@ public class UfedXmlReader extends DataSourceReader{
         
         caseData.incDiscoveredEvidences(1);
         caseData.addItem(decodedFolder);
+    }
+    
+    private class XMLErrorHandler implements ErrorHandler{
+
+        @Override
+        public void warning(SAXParseException exception) throws SAXException {
+        }
+
+        @Override
+        public void error(SAXParseException exception) throws SAXException {
+        }
+
+        @Override
+        public void fatalError(SAXParseException exception) throws SAXException {
+            exception.printStackTrace();
+        }
     }
     
     private class XMLContentHandler implements ContentHandler{
@@ -565,7 +586,7 @@ public class UfedXmlReader extends DataSourceReader{
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
-                if(mergeInParentNode.contains(type)) {
+                if(mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     Item parentItem = itemSeq.get(itemSeq.size() - 1);
                     if("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
@@ -630,7 +651,10 @@ public class UfedXmlReader extends DataSourceReader{
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
                         if(avatarPath != null) {
                             avatarPath = normalizePaths(avatarPath);
-                            parentItem.getMetadata().add(AVATAR_PATH_META, new File(root, avatarPath).getAbsolutePath());
+                            File avatarFile = new File(avatarPath);
+                            if(!avatarFile.isAbsolute())
+                                avatarFile = new File(root, avatarPath);
+                            parentItem.getMetadata().add(AVATAR_PATH_META, avatarFile.getAbsolutePath());
                         }
                     }else if("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for(String meta : item.getMetadata().names()) {
@@ -793,9 +817,12 @@ public class UfedXmlReader extends DataSourceReader{
                 String avatarPath = contact.getMetadata().get(AVATAR_PATH_META);
                 if(avatarPath != null) {
                     contact.getMetadata().remove(AVATAR_PATH_META);
-                    byte[] bytes = Files.readAllBytes(new File(avatarPath).toPath());
-                    bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
-                    contact.setThumb(bytes);
+                    File avatarFile = new File(avatarPath);
+                    if(avatarFile.exists()) {
+                        byte[] bytes = Files.readAllBytes(avatarFile.toPath());
+                        bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
+                        contact.setThumb(bytes);
+                    }
                 }
                 String[] metas = contact.getMetadata().names();
                 Arrays.sort(metas);

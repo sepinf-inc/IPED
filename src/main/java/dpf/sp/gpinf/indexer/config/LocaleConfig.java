@@ -15,6 +15,10 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
 			return entry.endsWith(CONFIG_FILE);
 		}
 	};
+	
+	static {
+	    Locale.setDefault(Locale.forLanguageTag("en")); //$NON-NLS-1$
+	}
 
 	Locale locale = Locale.getDefault();
 

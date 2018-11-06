@@ -201,26 +201,10 @@ public class TextParser extends CancelableWorker implements ITextParser {
   }
 
   private ParseContext getTikaContext(Item item) throws Exception {
-    ParseContext context = new ParseContext();
-    context.set(Parser.class, (Parser) App.get().getAutoParser());
-    context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
-
-    ParsingTask expander = new ParsingTask(context, item);
+    ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
     expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
-    context.set(EmbeddedDocumentExtractor.class, expander);
-
-    // Tratamento p/ acentos de subitens de ZIP
-    ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
-    context.set(ArchiveStreamFactory.class, factory);
-    
-    // Indexa conteudo de todos os elementos de HTMLs, como script, etc
-    context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
-
-    context.set(StreamSource.class, content);
-    
-    context.set(OCROutputFolder.class, new OCROutputFolder());
-
+    ParseContext context = expander.getTikaContext(); 
+    expander.setExtractEmbedded(false);
     return context;
   }
   
@@ -248,7 +232,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       InputStream is = item.getTikaStream();
       
       CountInputStream cis = null;
-      if(item.getLength() != null && !ParsingTask.hasSpecificParser((IndexerDefaultParser) App.get().getAutoParser(), item)){
+      if(item.getLength() != null && !((IndexerDefaultParser)App.get().getAutoParser()).hasSpecificParser(metadata)){
     	  progressMonitor.setMaximum(item.getLength());
     	  cis = new CountInputStream(is);
     	  is = cis;

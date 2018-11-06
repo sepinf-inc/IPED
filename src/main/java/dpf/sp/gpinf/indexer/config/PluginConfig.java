@@ -81,12 +81,6 @@ public class PluginConfig implements Configurable<UTF8Properties,UTF8Properties>
 		}
 
 	    File[] jars = optionalJarDir.listFiles();
-	    if(jars != null) {
-	    	for(File jar : jars) {
-	    		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
-	    			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
-	    	}
-	    }
 	    return jars;
 	}
 

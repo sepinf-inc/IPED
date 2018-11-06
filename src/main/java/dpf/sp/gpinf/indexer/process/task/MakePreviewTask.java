@@ -4,13 +4,13 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -18,17 +18,16 @@ import org.apache.tika.sax.ContentHandlerDecorator;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
+import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -142,6 +141,14 @@ public class MakePreviewTask extends AbstractTask {
       context.set(ItemBase.class, evidence);
       context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
       
+      //ForkServer timeout
+      if(evidence.getLength() != null) {
+          AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+          int timeOutBySize = (int) (evidence.getLength() / 1000000) * advancedConfig.getTimeOutPerMB();
+          int totalTimeout = (advancedConfig.getTimeOut() + timeOutBySize) * 1000;
+          context.set(ParsingTimeout.class, new ParsingTimeout(totalTimeout));
+      }
+      
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
       //context.set(Parser.class, parser);
@@ -159,8 +166,13 @@ public class MakePreviewTask extends AbstractTask {
       }
       final ProgressContentHandler pch = new ProgressContentHandler(handler);
       
+      if(MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType()) == 0) {
+          parser.setCanUseForkParser(true);
+      }else
+          parser.setCanUseForkParser(false);
+      
       exception = null;
-	  Thread t = new Thread(){
+	  Thread t = new Thread(Thread.currentThread().getName() + "-MakePreviewThread"){ //$NON-NLS-1$
 		  @Override
 		  public void run(){
 			  try {
@@ -192,21 +204,6 @@ public class MakePreviewTask extends AbstractTask {
     } finally {
       IOUtil.closeQuietly(outStream);
     }
-  }
-  
-  private class EmptyEmbeddedDocumentExtractor implements EmbeddedDocumentExtractor{
-
-    @Override
-    public void parseEmbedded(InputStream arg0, ContentHandler arg1, Metadata arg2, boolean arg3)
-            throws SAXException, IOException {
-        // ignore
-    }
-
-    @Override
-    public boolean shouldParseEmbedded(Metadata arg0) {
-        return false;
-    }
-      
   }
   
   private class ToXMLContentHandlerWithComment extends ToXMLContentHandler{

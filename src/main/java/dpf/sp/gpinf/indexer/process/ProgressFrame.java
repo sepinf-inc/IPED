@@ -293,7 +293,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 	      for (AbstractTask task : worker.tasks)
 	          if(task.getClass().equals(ParsingTask.class))
 	              totalTime += task.getTaskTime();
-	  totalTime = totalTime / (1000000 * workers.length) + 1;
+	  totalTime = totalTime / (1000000 * workers.length);
+	  if (totalTime == 0) totalTime = 1;
 	  for(Entry<String , AtomicLong> e : ParsingTask.times.entrySet()){
 	    	msg.append("<tr><td>"); //$NON-NLS-1$
 	        msg.append(e.getKey());

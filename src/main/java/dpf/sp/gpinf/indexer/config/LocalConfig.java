@@ -10,6 +10,7 @@ import java.util.Locale;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
+import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +105,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 	    } else {
 	      numThreads = Runtime.getRuntime().availableProcessors();
 	    }
-
+	    
 	    value = properties.getProperty("indexTempOnSSD"); //$NON-NLS-1$
 	    if (value != null) {
 	      value = value.trim();

@@ -69,9 +69,6 @@ public class IndexTask extends BaseCarveTask {
 
   public IndexTask() {
     this.autoParser = new IndexerDefaultParser();
-	IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-    this.autoParser.setFallback(ipedConfig.getFallBackParser());
-    this.autoParser.setErrorParser(ipedConfig.getErrorParser());        
   }
 
   public static class IdLenPair {
@@ -148,7 +145,7 @@ public class IndexTask extends BaseCarveTask {
 
     } else{
       Metadata metadata = getMetadata(evidence);
-      ParseContext context = getTikaContext(evidence, evidence.isParsed());
+      ParseContext context = getTikaContext(evidence);
 
       ParsingReader reader = null;
       if (indexFileContents && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
@@ -211,35 +208,12 @@ public class IndexTask extends BaseCarveTask {
     return metadata;
   }
 
-  private ParseContext getTikaContext(Item evidence, final boolean parsed) {
-    // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
-    ParseContext context = new ParseContext();
-    context.set(Parser.class, this.autoParser);
-    ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
-    context.set(ItemInfo.class, itemInfo);
-    context.set(StreamSource.class, evidence);
-    if (CarveTask.ignoreCorrupted) {
-      context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
-    }
-    context.set(EmbeddedDocumentExtractor.class, new ParsingTask(context) {
-      @Override
-      public boolean shouldParseEmbedded(Metadata arg0) {
-        return !parsed;
-      }
-    });
-
-    // Tratamento p/ acentos de subitens de ZIP
-    ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
-    context.set(ArchiveStreamFactory.class, factory);
-    
-    //Indexa conteudo de todos os elementos de HTMLs, como script, etc
-    context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
-    
-    context.set(OCROutputFolder.class, new OCROutputFolder(output));
-    context.set(ItemBase.class, evidence);
-    context.set(ItemSearcher.class, (ItemSearcher) new ItemSearcherImpl(output.getParentFile(), worker.writer));
-
+  private ParseContext getTikaContext(Item evidence) {
+    ParsingTask pt = new ParsingTask(evidence, this.autoParser);
+    pt.setWorker(worker);
+    ParseContext context = pt.getTikaContext();
+    //this is to not create new items while indexing
+    pt.setExtractEmbedded(false);
     return context;
   }
 

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.mime.MimeTypesFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -42,7 +43,6 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
-import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -117,23 +117,16 @@ public class Configuration {
     properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
 
     String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
-    if(optional_jars != null)
+    if(optional_jars != null) {
         optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-
-    File[] jars = optionalJarDir.listFiles();
-    if(jars != null) {
-    	for(File jar : jars) {
-    		if(jar.getName().contains("jbig2")) //$NON-NLS-1$
-    			PDFToImage.jbig2LibPath = jar.getAbsolutePath();
-    	}
+        ForkParser2.plugin_dir = optionalJarDir.getCanonicalPath();
     }
 
     String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
     if(regripperFolder != null)
-        RegistryParser.TOOL_PATH = appRoot + "/" + regripperFolder.trim(); //$NON-NLS-1$
+        System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
     
-    properties.put(IPEDConfig.CONFDIR, appRoot+"\\conf");
-
+    properties.put(IPEDConfig.CONFDIR, appRoot+"/conf");
     getInstance().props=properties;
   }
 
@@ -152,10 +145,10 @@ public class Configuration {
 	      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
 	      Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
 
-	      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract"; //$NON-NLS-1$
-	      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/"; //$NON-NLS-1$
-	      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/"; //$NON-NLS-1$
-	      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/"; //$NON-NLS-1$
+	      System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
+	      System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
+	      System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
+	      System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
 
 	      String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
 	      if(mplayerPath != null)

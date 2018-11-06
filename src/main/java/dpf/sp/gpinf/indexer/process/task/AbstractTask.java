@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -212,7 +213,7 @@ public abstract class AbstractTask {
 
     } catch (Throwable t) {
       //Ignora arquivos recuperados e corrompidos
-      if (t.getCause() instanceof TikaException && evidence.isCarved()) {
+      if (t.getCause() instanceof CorruptedCarvedException) {
         stats.incCorruptCarveIgnored();
         //System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
         evidence.setToIgnore(true, false);

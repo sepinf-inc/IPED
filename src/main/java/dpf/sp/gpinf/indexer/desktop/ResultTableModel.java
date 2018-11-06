@@ -58,7 +58,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
   public static String[] fields;
 
-  private static int fixedColdWidths[] = {55, 20};
+  private static int fixedColdWidths[] = {55, 18};
   public static String[] fixedCols = {"", ""}; //$NON-NLS-1$ //$NON-NLS-2$
 
   private static String[] columnNames = {};

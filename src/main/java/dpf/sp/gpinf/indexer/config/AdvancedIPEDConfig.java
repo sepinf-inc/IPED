@@ -5,9 +5,12 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
 
+import org.apache.tika.fork.ForkParser2;
+
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 
@@ -24,8 +27,14 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	int searchThreads;
 	boolean autoManageCols;
 	boolean entropyTest = true;
+	boolean storeTermVectors = true;
+	boolean filterNonLatinChars = false;
+	int maxTokenLength = 255;
+	boolean preOpenImagesOnSleuth = false;
+	boolean openImagesCacheWarmUpEnabled = false;
+	int openImagesCacheWarmUpThreads = 255;
 
-	private static int textSplitSize = 100000000;
+    private static int textSplitSize = 100000000;
     private static int textOverlapSize = 10000;
 
 	public static final String CONFIG_FILE = "conf\\AdvancedConfig.txt"; //$NON-NLS-1$
@@ -46,6 +55,22 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 		super.processConfig(resource);
 
 		String value = null;
+		
+		value = properties.getProperty("enableExternalParsing"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+          ForkParser2.enabled = Boolean.valueOf(value.trim());
+        }
+        
+        value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
+        if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
+          ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
+        }else
+          ForkParser2.SERVER_POOL_SIZE = Runtime.getRuntime().availableProcessors();
+        
+        value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+          ForkParser2.SERVER_MAX_HEAP = value.trim();
+        }
 
 	    value = properties.getProperty("unallocatedFragSize"); //$NON-NLS-1$
 	    if (value != null) {
@@ -111,6 +136,21 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	    if (value != null && !value.isEmpty()) {
 	      LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
 	    }
+	    
+	    value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        storeTermVectors = Boolean.valueOf(value.trim());
+	    }
+	    
+	    value = properties.getProperty("maxTokenLength"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        maxTokenLength = Integer.valueOf(value.trim());
+	    }
+	    
+	    value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        filterNonLatinChars = Boolean.valueOf(value.trim());
+	    }
 
 	    value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
 	    if (value != null) {
@@ -152,19 +192,14 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	    }
 
 	    value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      RawStringParser.MIN_SIZE = Integer.valueOf(value);
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
 	    }
 
 	    value = properties.getProperty("entropyTest"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      entropyTest = Boolean.valueOf(value);
+	    if (value != null && !value.trim().isEmpty()) {
+	      entropyTest = Boolean.valueOf(value.trim());
+	      System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, value.trim());
 	    }
 
 	    value = properties.getProperty("textSplitSize"); //$NON-NLS-1$
@@ -174,6 +209,21 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 
 	    ParsingReader.setTextSplitSize(textSplitSize);
 	    ParsingReader.setTextOverlapSize(textOverlapSize);
+	    
+	    value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        preOpenImagesOnSleuth = Boolean.valueOf(value.trim());
+	    }
+	    
+	    value = properties.getProperty("openImagesCacheWarmUpEnabled"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        openImagesCacheWarmUpEnabled = Boolean.valueOf(value.trim());
+	    }
+
+	    value = properties.getProperty("openImagesCacheWarmUpThreads"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
+	    }
 	}
 
 	public long getUnallocatedFragSize() {
@@ -227,4 +277,28 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	public static int getTextOverlapSize() {
 		return textOverlapSize;
 	}
+	
+	public boolean isStoreTermVectors() {
+        return storeTermVectors;
+    }
+
+    public boolean isFilterNonLatinChars() {
+        return filterNonLatinChars;
+    }
+
+    public int getMaxTokenLength() {
+        return maxTokenLength;
+    }
+
+    public boolean isPreOpenImagesOnSleuth() {
+        return preOpenImagesOnSleuth;
+    }
+
+    public boolean isOpenImagesCacheWarmUpEnabled() {
+        return openImagesCacheWarmUpEnabled;
+    }
+
+    public int getOpenImagesCacheWarmUpThreads() {
+        return openImagesCacheWarmUpThreads;
+    }
 }

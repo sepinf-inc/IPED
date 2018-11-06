@@ -23,10 +23,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -41,6 +46,7 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
 import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IPEDSource;
 import iped3.Item;
@@ -57,6 +63,7 @@ public class ExportFileTree extends CancelableWorker {
   int baseDocId;
   boolean onlyChecked, toZip;
   File baseDir;
+  private volatile boolean error = false;
 
   int total, progress = 0;
   ProgressDialog progressDialog;
@@ -80,7 +87,7 @@ public class ExportFileTree extends CancelableWorker {
     this.toZip = toZip;
   }
 
-  private int[] getItemsToExport() {
+  private int[] getItemsToExport(boolean allocated) {
 
     try {
       String textQuery = "*:*"; //$NON-NLS-1$
@@ -95,6 +102,12 @@ public class ExportFileTree extends CancelableWorker {
           String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
           textQuery = IndexItem.EVIDENCE_UUID + ":" + sourceUUID + " && (" + textQuery + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
+      
+      String activeStr = IndexItem.SUBITEM + ":false && " + IndexItem.CARVED + ":false && " + IndexItem.DELETED + ":false -" + BaseCarveTask.FILE_FRAGMENT + ":true"; 
+      if(allocated)
+          textQuery =  "(" + textQuery + ") && (" + activeStr + ")";
+      else
+          textQuery =  "(" + textQuery + ") AND NOT (" + activeStr + ")";
 
       IPEDSearcher task = new IPEDSearcherImpl(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
@@ -171,7 +184,7 @@ public class ExportFileTree extends CancelableWorker {
 
   private Object exportItem(int docId, Object subdir, boolean isParent) {
 
-    if(docId == root.docId)
+    if(docId == root.docId || error)
       return null;
         
     if (subdir == null)
@@ -258,7 +271,15 @@ public class ExportFileTree extends CancelableWorker {
           try (InputStream in = item.getBufferedStream()) {
               int len = 0;
               while((len = in.read(buf)) != -1 && !this.isCancelled())
-                  zaos.write(buf, 0, len);
+                  try {
+                      zaos.write(buf, 0, len);
+                  } catch (IOException e) {
+                      showErrorMessage(e);
+                      e.printStackTrace();
+                      error = true;
+                      return null;
+                  }
+                  
           } catch (IOException e) {
               e.printStackTrace();
           }
@@ -266,10 +287,12 @@ public class ExportFileTree extends CancelableWorker {
         zaos.closeArchiveEntry();
 
       } catch (IOException e1) {
+        showErrorMessage(e1);
+        error = true;
         e1.printStackTrace();
         
       } finally {
-        item.dispose();
+        if(item != null) item.dispose();
       }
 
       if (!isParent) {
@@ -281,6 +304,20 @@ public class ExportFileTree extends CancelableWorker {
 
     }
   
+  public static void showErrorMessage(final Exception e) {
+      try {
+          SwingUtilities.invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                  JOptionPane.showMessageDialog(App.get(), Messages.getString("ExportFileTree.ExportError") + 
+                          e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+              }
+          });
+      } catch (InvocationTargetException | InterruptedException e2) {
+          e2.printStackTrace();
+      }
+  }
+  
   @Override
   public boolean doCancel(boolean mayInterrupt) {
       return cancel(false);
@@ -289,16 +326,21 @@ public class ExportFileTree extends CancelableWorker {
   @Override
   protected Boolean doInBackground() throws Exception {
 
-    progressDialog = new ProgressDialog(null, this);
+    progressDialog = new ProgressDialog(App.get(), this);
 
-    int[] docIds = getItemsToExport();
-    total = docIds.length;
+    ArrayList<Integer> docIds = new ArrayList<Integer>();
+    for (int docId : getItemsToExport(true))
+        docIds.add(docId);
+    for (int docId : getItemsToExport(false))
+        docIds.add(docId);
+    
+    total = docIds.size();
     progressDialog.setMaximum(total);
 
     try {
       for (int docId : docIds) {
         exportItem(docId);
-        if (progressDialog.isCanceled()) {
+        if (progressDialog.isCanceled() || error) {
           break;
         }
       }
@@ -314,22 +356,55 @@ public class ExportFileTree extends CancelableWorker {
   
   @Override
   protected void done() {
-      if(hos != null) {
+      if(hos != null && !error) {
           String hash = hos.hash().toString().toUpperCase();
           LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
-          HashDialog dialog = new HashDialog(hash);
+          HashDialog dialog = new HashDialog(hash,baseDir.getAbsolutePath());
           dialog.setVisible(true);
       }
   }
 
   public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {
     try {
-      JFileChooser fileChooser = new JFileChooser();
+      //JFileChooser fileChooser = new JFileChooser();
+    	//[Triage] Patch para o caso de o arquivo selecionado já existir. Na versão original, ele era sobrescrito silenciosamente.
+    	JFileChooser fileChooser = new JFileChooser(){
+    	    @Override
+    	    public void approveSelection(){
+    	        File f = getSelectedFile();
+    	        if(f.exists() && getDialogType() == SAVE_DIALOG){
+    	            int result = JOptionPane.showConfirmDialog(this,Messages.getString("ExportToZIP.FileAlreadyExistsMessageText"),Messages.getString("ExportToZIP.FileAlreadyExistsMessageTitle"),JOptionPane.YES_NO_CANCEL_OPTION);
+    	            switch(result){
+    	                case JOptionPane.YES_OPTION:
+    	                    super.approveSelection();
+    	                    return;
+    	                case JOptionPane.NO_OPTION:
+    	                    return;
+    	                case JOptionPane.CLOSED_OPTION:
+    	                    return;
+    	                case JOptionPane.CANCEL_OPTION:
+    	                    cancelSelection();
+    	                    return;
+    	            }
+    	        }
+    	        super.approveSelection();
+    	    }        
+    	};   	
+    	
       File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
       fileChooser.setCurrentDirectory(moduleDir.getParentFile());
+      
+      /*[Triage] Se existe o diretório padrão de dados exportados, como o /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório */
+	  File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));    	  
+	  if (dirDadosExportados.exists()) {
+		 fileChooser.setCurrentDirectory(dirDadosExportados);
+	  }
+      
       fileChooser.setFileFilter(null);
       if(toZip) {
           fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+          //int randInt = (int)(Math.random() * ((1000 - 0) + 1));
+          //fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName").substring(0, Messages.getString("ExportToZIP.DefaultName").length() - 4)+"_"+ randInt + ".zip"));
           fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
       }else
           fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

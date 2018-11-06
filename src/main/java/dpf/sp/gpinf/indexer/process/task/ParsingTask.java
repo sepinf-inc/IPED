@@ -27,30 +27,28 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.fork.EmbeddedDocumentParser;
+import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.CompositeParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.ParserDecorator;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.microsoft.OfficeParserConfig;
-import org.apache.tika.parser.txt.TXTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -65,7 +63,6 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -75,6 +72,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
@@ -108,9 +106,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private static boolean expandContainers = false;
   private static boolean enableFileParsing = true;
 
-  // Utilizado para restringir tamanho mÃ¡ximo do nome de subitens de zips corrompidos
-  private static int NAME_MAX_LEN = 256;
-
   public static int subitensDiscovered = 0;
   private static HashSet<String> categoriesToExpand = new HashSet<String>();
   public static AtomicLong totalText = new AtomicLong();
@@ -119,21 +114,27 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private Item evidence;
   private ParseContext context;
   private boolean extractEmbedded;
-  private ParsingEmbeddedDocumentExtractor embeddedParser;
   private volatile ParsingReader reader;
-  private boolean hasTitle = false;
   private String firstParentPath = null;
+  private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
+  private volatile int depth = 0;
+  private Map<Object, Item> idToItemMap = new HashMap<>();
   
   private IndexerDefaultParser autoParser;
 
-  public ParsingTask(ParseContext context) {
-    setContext(context);
+  public ParsingTask() {
+      this.autoParser = new IndexerDefaultParser();
   }
   
-  public ParsingTask(ParseContext context, Item evidence) {
-      setContext(context);
+  public ParsingTask(Item evidence, IndexerDefaultParser parser) {
       this.evidence = evidence;
-    }
+      this.autoParser = parser;
+  }
+  
+  public ParsingTask(Worker worker, IndexerDefaultParser parser) {
+      this.setWorker(worker);
+	  this.autoParser = parser;
+  }
   
   @Override
   public boolean isEnabled() {
@@ -143,51 +144,44 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static void setExpandContainers(boolean enabled) {
       expandContainers = enabled;
   }
-
-  public ParsingTask() {
-    this.autoParser = new IndexerDefaultParser();
-    IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-    this.autoParser.setFallback(ipedConfig.getFallBackParser());
-    this.autoParser.setErrorParser(ipedConfig.getErrorParser());
-  }
   
-  public ParsingTask(Worker worker, IndexerDefaultParser parser) {
-      this.setWorker(worker);
-	  this.autoParser = parser;
-  }
-
-  private void setContext(ParseContext context) {
-    this.context = context;
-    this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
-    ItemInfo appContext = context.get(ItemInfo.class);
-    extractEmbedded = isToBeExpanded(appContext.getBookmarks());
-  }
-
-  private void configureTikaContext(Item evidence) {
+  public ParseContext getTikaContext() {
     // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
     context = new ParseContext();
     context.set(Parser.class, this.autoParser);
+    
     ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
     context.set(ItemInfo.class, itemInfo);
-    context.set(EmbeddedDocumentExtractor.class, this);
-    context.set(StreamSource.class, evidence);
-    if (CarveTask.ignoreCorrupted && !caseData.isIpedReport()) {
+    if(output != null)
+        context.set(OCROutputFolder.class, new OCROutputFolder(output));
+    else
+        context.set(OCROutputFolder.class, new OCROutputFolder());
+    
+    if (CarveTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
       context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
     }
 
     // Tratamento p/ acentos de subitens de ZIP
-    ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850"); //$NON-NLS-1$
-    context.set(ArchiveStreamFactory.class, factory);
-    
+    context.set(ArchiveStreamFactory.class,  new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
     
-    context.set(OCROutputFolder.class, new OCROutputFolder(output));
+    context.set(StreamSource.class, evidence);
     context.set(ItemBase.class, evidence);
-    context.set(ItemSearcher.class, (ItemSearcher) new ItemSearcherImpl(output.getParentFile(), worker.writer));
+    if(output != null && worker != null)
+        context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
-    setContext(context);
+    extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
+    if(extractEmbedded) {
+        context.set(EmbeddedDocumentExtractor.class, this);
+    }else
+        context.set(EmbeddedDocumentExtractor.class, new EmbeddedDocumentParser(context));
+    
+    return context;
+  }
+  
+  public void setExtractEmbedded(boolean extractEmbedded) {
+      this.extractEmbedded = extractEmbedded;
   }
 
   private void fillMetadata(Item evidence) {
@@ -250,27 +244,36 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     if (!enableFileParsing) {
       return;
     }
+    
+    long start = System.nanoTime()/1000;
 
     fillMetadata(evidence);
     
-    Parser parser = getLeafParser(autoParser, evidence);
+    Parser parser = autoParser.getLeafParser(evidence.getMetadata());
     
     AtomicLong time = times.get(getParserName(parser));
     if(time == null){
     	time = new AtomicLong();
     	times.put(getParserName(parser), time);
     }
-    long start = System.nanoTime()/1000;
     
     AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
     if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
     		evidence.getLength() < advancedConfig.getMinItemSizeToFragment()) ||
-    		isSpecificParser(parser) )) {
+            IndexerDefaultParser.isSpecificParser(parser) )) {
         try{
-            new ParsingTask(worker, autoParser).safeProcess(evidence);
+            depth++;
+            ParsingTask task = new ParsingTask(worker, autoParser);
+            task.depth = depth;
+            task.timeInDepth = timeInDepth;
+            task.safeProcess(evidence);
             
         }finally{
-            time.addAndGet(System.nanoTime()/1000 - start);
+            depth--;
+            long diff = System.nanoTime()/1000 - start;
+            Long subitemsTime = timeInDepth.remove(depth + 1);
+            if(subitemsTime == null) subitemsTime = 0L;
+            time.addAndGet(diff - subitemsTime);
         }
       
     }
@@ -283,45 +286,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       else
           return parser.getClass().getSimpleName();
   }
-  
-  private static Parser getLeafParser(IndexerDefaultParser autoParser, Item evidence) {
-	  Parser parser = autoParser.getBestParser(evidence.getMetadata());
-	    while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
-	    	if(parser instanceof CompositeParser)
-	    		parser = getParser((CompositeParser)parser, evidence.getMetadata());
-	    	else
-	    		parser = ((ParserDecorator)parser).getWrappedParser();
-	    }
-	    return parser;
-
-  }
-  
+      
   public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Item evidence) {
-	  Parser p = getLeafParser(autoParser, evidence);
-	  return isSpecificParser(p);
+	  return autoParser.hasSpecificParser(evidence.getMetadata());
   }
   
-  private static boolean isSpecificParser(Parser parser) {
-    if (parser instanceof RawStringParser || parser instanceof TXTParser)
-      return false;
-    else
-      return true;
-  }
-  
-  private static Parser getParser(CompositeParser comp, Metadata metadata) {
-      Map<MediaType, Parser> map = comp.getParsers();
-      MediaType type = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
-      if (type != null)
-         type = comp.getMediaTypeRegistry().normalize(type);
-      while (type != null) {
-          Parser parser = map.get(type);
-          if (parser != null)
-              return parser;
-          type = comp.getMediaTypeRegistry().getSupertype(type);
-      }
-      return comp.getFallback();
-  }
-
   private void safeProcess(Item evidence) throws IOException {
 
     this.evidence = evidence;
@@ -335,7 +304,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       return;
     }
 
-    configureTikaContext(evidence);
+    context = getTikaContext();
     Metadata metadata = evidence.getMetadata();
     
     reader = new ParsingReader(this.autoParser, tis, metadata, context);
@@ -375,9 +344,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         totalText.addAndGet(evidence.getParsedTextCache().length());
       }
 
-      if (extractEmbedded) {
-        evidence.setParsed(true);
-      }
+      evidence.setParsed(true);
 
     } finally {
       //IOUtil.closeQuietly(tis);
@@ -421,40 +388,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     return true;
   }
-
-  private String getName(Metadata metadata, int child) {
-    hasTitle = false;
-    String name = metadata.get(TikaMetadataKeys.RESOURCE_NAME_KEY);
-    if (name == null || name.isEmpty()) {
-      name = metadata.get(ExtraProperties.MESSAGE_SUBJECT);
-      if (name == null || name.isEmpty()) {
-        name = metadata.get(TikaCoreProperties.TITLE);
+  
+  private String removePathPrefix(String name, boolean hasTitle) {
+      if (!hasTitle) {
+          int i = name.lastIndexOf('/');
+          if (i != -1) {
+            name = name.substring(i + 1);
+          }
       }
-      if (name != null) {
-        hasTitle = true;
-      }
-    }
-    if (name == null || name.isEmpty()) {
-      name = metadata.get(TikaMetadataKeys.EMBEDDED_RELATIONSHIP_ID);
-    }
-
-    if (name == null || name.isEmpty()) {
-      name = Messages.getString("ParsingTask.UnNamed") + child; //$NON-NLS-1$
-    }
-
-    if (name.length() > NAME_MAX_LEN) {
-      name = name.substring(0, NAME_MAX_LEN);
-    }
-
-    if (!hasTitle) {
-      int i = name.lastIndexOf('/');
-      if (i != -1) {
-        name = name.substring(i + 1);
-      }
-    }
-    return name;
+      return name;
   }
-
+  
   @Override
   public void parseEmbedded(InputStream inputStream, ContentHandler handler, Metadata metadata, boolean outputHtml) throws SAXException, IOException {
 
@@ -467,16 +411,24 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     try {
       ItemInfo itemInfo = context.get(ItemInfo.class);
       itemInfo.incChild();
-
-      String name = getName(metadata, itemInfo.getChild());
+      
+      NameTitle nameTitle = EmbeddedDocumentParser.getNameTitle(metadata, itemInfo.getChild());
+      boolean hasTitle = nameTitle.hasTitle;
+      String name = removePathPrefix(nameTitle.name, hasTitle);
+      
       String parentPath = itemInfo.getPath();
       if (firstParentPath == null) {
         firstParentPath = parentPath;
       }
 
-      Item parent = evidence;
-      if (context.get(EmbeddedParent.class) != null) {
-        parent = (Item) context.get(EmbeddedParent.class).getObj();
+      Item parent = null;
+      String parentId = metadata.get(ExtraProperties.PARENT_VIRTUAL_ID);
+      if (parentId != null) parent = idToItemMap.get(parentId);
+      if (parent == null && context.get(EmbeddedParent.class) != null)
+          parent = (Item) context.get(EmbeddedParent.class).getObj();
+      if (parent == null) parent = evidence;
+      
+      if (parent != evidence) {
         parentPath = parent.getPath();
         subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
@@ -486,22 +438,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       Item subItem = new ItemImpl();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-
+      
+      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
+      if(embeddedId != null) idToItemMap.put(embeddedId, subItem);
+      
       String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
       char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
       handler.characters(nameChars, 0, nameChars.length);
 
-      if (extractEmbedded && output == null) {
-        return;
-      }
-
       if (!extractEmbedded) {
-        itemInfo.setPath(subitemPath);
-        try {
-          embeddedParser.parseEmbedded(inputStream, handler, metadata, false);
-        } finally {
-          itemInfo.setPath(parentPath);
-        }
         return;
       }
 
@@ -547,6 +492,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.CREATED);
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.MODIFIED);
       removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
+      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
+      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
       
       subItem.setDeleted(parent.isDeleted());
       if (metadata.get(ExtraProperties.DELETED) != null) {
@@ -566,8 +513,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {
         try {
-          worker.processNewItem(subItem);
+          long start =  System.nanoTime()/1000;
+          worker.processNewItem(subItem, ProcessTime.LATER);
           incSubitensDiscovered();
+          
+          long diff = (System.nanoTime()/1000) - start;
+          Long prevTime = timeInDepth.get(depth);
+          if(prevTime == null) prevTime = 0L;
+          timeInDepth.put(depth, prevTime + diff);
 
         } finally {
           //despausa contador de timeout do pai somente após processar subitem
@@ -582,12 +535,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         Thread.currentThread().interrupt();
       }
 
-      //e.printStackTrace();
       LOGGER.warn("{} SAX error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
+      LOGGER.error("SAX error extracting subitem " + subitemPath, e);
 
     } catch (Exception e) {
       LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      //e.printStackTrace();
+      LOGGER.error("Error extracting subitem " + subitemPath, e);
 
     } finally {
       tmp.close();

@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 
-import org.apache.tika.parser.EmptyParser;
-import org.apache.tika.parser.Parser;
-
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 
 import java.nio.file.Path;
 
@@ -16,9 +13,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 	boolean toAddFileSlacks = false;
 
 	String confDir;
-
-	Parser fallBackParser = new RawStringParser(true);
-	RawStringParser errorParser = new RawStringParser(true);
 
 	public static final String CONFDIR = "confdir";
 	public static final String TOADDUNALLOCATED = "addUnallocated";
@@ -66,9 +60,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 	public void processConfig(Path resource) throws IOException {
 		super.processConfig(resource);
 
-	    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-	    boolean entropyTest = advancedConfig.isEntropyTest();
-
 		String value = null;
 
 		value = properties.getProperty(TOADDUNALLOCATED); //$NON-NLS-1$
@@ -79,13 +70,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 	      toAddUnallocated = Boolean.valueOf(value);
 	    }
 
-	    value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
-	    if (value != null && !Boolean.valueOf(value.trim())) {
-	        errorParser = null;
-	    } else {
-	        errorParser = new RawStringParser(entropyTest);
-	    }
-
 		value = properties.getProperty(TOADDFILESLACKS); //$NON-NLS-1$
 	    if (value != null) {
 	      value = value.trim();
@@ -93,22 +77,18 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 	    if (value != null && !value.isEmpty()) {
 	    	toAddFileSlacks = Boolean.valueOf(value);
 	    }
-
+	    
 	    value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
-	    if (value != null && !Boolean.valueOf(value.trim())) {
-	      fallBackParser = new EmptyParser();
-	    } else {
-	      fallBackParser = new RawStringParser(entropyTest);
+	    if (value != null && !value.trim().isEmpty()) {
+	        System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, value.trim());
 	    }
+	    
+	    value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, value.trim());
+	    }
+	    
 	
 	}	
-
-	public Parser getFallBackParser() {
-		return fallBackParser;
-	}
-
-	public RawStringParser getErrorParser() {
-		return errorParser;
-	}
 
 }

@@ -5,6 +5,9 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.tika.fork.ForkParser2;
+
 import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
@@ -43,55 +46,45 @@ public class PDFToImageConfig extends AbstractPropertiesConfigurable {
 		super.processConfig(resource);
 
 		String value = null;
-
-		value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      PDFOCRTextParser.MAXCHARS2OCR = Integer.valueOf(value);
-	    }
-
+	    
 	    value = properties.getProperty("pdfToImgResolution"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      PDFToImage.RESOLUTION = Integer.valueOf(value);
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(PDFToImage.RESOLUTION_PROP, value.trim());
 	    }
 
 	    value = properties.getProperty("pdfToImgLib"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(PDFToImage.PDFLIB_PROP, value.trim());
 	    }
-	    if (value != null && !value.isEmpty()) {
-	      PDFToImage.PDFLIB = value;
-	    }
-
+	    
 	    value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
 	    if (value != null && !value.trim().isEmpty()) {
-	      PDFToImage.externalConversion = Boolean.valueOf(value.trim());
+	      System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
 	    }
-
+	    //do not open extra processes for OCR if forkParser is enabled
+	    if(ForkParser2.enabled) {
+	        System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
+	    }
+	    
 	    value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
 	    if (value != null && !value.trim().isEmpty()) {
-	      PDFToImage.externalConvMaxMem = value.trim();
+	      System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, value.trim()); 
 	    }
-
+	    
+	    value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, value.trim());
+	    }
+	    
 	    value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, value.trim());
 	    }
-	    if (value != null && !value.isEmpty()) {
-	      PDFOCRTextParser.processEmbeddedImages = Boolean.valueOf(value);
+	    
+	    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, value.trim());
 	    }
 
-	    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      PDFOCRTextParser.sortPDFChars = Boolean.valueOf(value);
-	    }
 	}
 }

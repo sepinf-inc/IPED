@@ -32,46 +32,30 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 		super.processConfig(resource);
 
 		String value = null;
-
-	    value = properties.getProperty("enableOCR"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-
-	    if (value != null && !value.isEmpty()) {
-	      OCRParser.ENABLED = Boolean.valueOf(value);
-	    }
 		
-		value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
+		value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        System.setProperty(OCRParser.ENABLE_PROP, value.trim());
 	    }
-	    if (value != null && !value.isEmpty()) {
-	      OCRParser.LANGUAGE = value;
+
+	    value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(OCRParser.LANGUAGE_PROP, value.trim());
 	    }
 
 	    value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      OCRParser.MIN_SIZE = Long.valueOf(value);
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(OCRParser.MIN_SIZE_PROP, value.trim());
 	    }
 
 	    value = properties.getProperty("maxFileSize2OCR"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      OCRParser.MAX_SIZE = Long.valueOf(value);
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(OCRParser.MAX_SIZE_PROP, value.trim());
 	    }
 
 	    value = properties.getProperty("pageSegMode"); //$NON-NLS-1$
-	    if (value != null) {
-	      value = value.trim();
-	    }
-	    if (value != null && !value.isEmpty()) {
-	      OCRParser.PAGESEGMODE = value;
+	    if (value != null && !value.trim().isEmpty()) {
+	      System.setProperty(OCRParser.PAGE_SEGMODE_PROP, value.trim());
 	    }
 
 	}
