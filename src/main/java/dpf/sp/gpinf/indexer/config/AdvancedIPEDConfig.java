@@ -37,7 +37,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
     private static int textSplitSize = 100000000;
     private static int textOverlapSize = 10000;
 
-	public static final String CONFIG_FILE = "conf\\AdvancedConfig.txt"; //$NON-NLS-1$
+	public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
 	public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
 		@Override

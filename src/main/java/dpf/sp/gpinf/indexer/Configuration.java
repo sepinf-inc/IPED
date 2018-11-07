@@ -63,7 +63,7 @@ public class Configuration {
 
 	private Configuration() {
 		props=new UTF8Properties();
-		props.put(IPEDConfig.CONFDIR, appRoot+"\\conf");
+		props.put(IPEDConfig.CONFDIR, appRoot+"/conf");
 	}
 
 	ConfigurationDirectoryImpl configDirectory;
@@ -169,7 +169,7 @@ public class Configuration {
 
   public void loadExtensionConfigurables() throws IOException {
 	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot+"\\"+PluginConfig.LOCAL_CONFIG));
+	    configDirectory.addPath(Paths.get(appRoot+"/"+PluginConfig.LOCAL_CONFIG));
 
 	    ConfigurationManager pluginConfigManager = new ConfigurationManager(configDirectory);
 
@@ -181,7 +181,7 @@ public class Configuration {
 
   public LocaleConfig loadLocaleConfigurable() throws IOException {
 	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot+"\\"+PluginConfig.LOCAL_CONFIG));
+	    configDirectory.addPath(Paths.get(appRoot+"/"+PluginConfig.LOCAL_CONFIG));
 
 	    ConfigurationManager localeConfigManager = new ConfigurationManager(configDirectory);
 
@@ -199,8 +199,8 @@ public class Configuration {
 
   public void loadConfigurables() throws IOException {
 	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot+"\\"+IPEDConfig.CONFIG_FILE));
-	    configDirectory.addPath(Paths.get(appRoot+"\\"+PluginConfig.LOCAL_CONFIG));
+	    configDirectory.addPath(Paths.get(appRoot + "/" + IPEDConfig.CONFIG_FILE));
+	    configDirectory.addPath(Paths.get(appRoot + "/"+ PluginConfig.LOCAL_CONFIG));
 
 	    ConfigurationManager configManager = new ConfigurationManager(configDirectory);
 
