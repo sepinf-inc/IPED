@@ -84,10 +84,6 @@ public class PluginConfig implements Configurable<UTF8Properties,UTF8Properties>
 	    return jars;
 	}
 
-	public String getOptionalJarsPath() {
-		return optional_jars;
-	}
-
 	@Override
 	public void processConfigs(List<Path> resources) throws IOException {
 		for (Iterator iterator = resources.iterator(); iterator.hasNext();) {

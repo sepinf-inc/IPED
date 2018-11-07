@@ -103,7 +103,7 @@ public class GalleryModel extends AbstractTableModel {
     if (imgThumbTask == null) {
       try {
         imgThumbTask = new ImageThumbTask();
-        imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf")); //$NON-NLS-1$
+        imgThumbTask.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath + "/conf")); //$NON-NLS-1$
         thumbSize = imgThumbTask.thumbSize;
         galleryThreads = imgThumbTask.galleryThreads;
         logRendering = imgThumbTask.logGalleryRendering;

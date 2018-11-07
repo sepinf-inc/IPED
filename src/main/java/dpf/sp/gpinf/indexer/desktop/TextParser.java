@@ -202,7 +202,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
   private ParseContext getTikaContext(Item item) throws Exception {
     ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
-    expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
+    expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
     ParseContext context = expander.getTikaContext(); 
     expander.setExtractEmbedded(false);
     return context;

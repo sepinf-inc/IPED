@@ -72,7 +72,7 @@ public abstract class FTKDatabase {
   public static FTKDatabase get(String caseName, File report) throws Exception {
 
     Properties properties = new Properties();
-    properties.load(new FileInputStream(Configuration.appRoot + FTKDatabaseConfig));
+    properties.load(new FileInputStream(Configuration.getInstance().appRoot + FTKDatabaseConfig));
     schemaVersion = properties.getProperty("VersaoFTK"); //$NON-NLS-1$
 
     if (schemaVersion.equalsIgnoreCase("auto")) { //$NON-NLS-1$

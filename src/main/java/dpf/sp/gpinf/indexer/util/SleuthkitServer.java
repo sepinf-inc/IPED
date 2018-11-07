@@ -73,7 +73,7 @@ public class SleuthkitServer {
       InputStream in = clientSocket.getInputStream();
       os = clientSocket.getOutputStream();
 
-      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
+      Configuration.getInstance().getConfiguration(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
       sleuthCase = SleuthkitCase.openCase(dbPath);
 
       java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

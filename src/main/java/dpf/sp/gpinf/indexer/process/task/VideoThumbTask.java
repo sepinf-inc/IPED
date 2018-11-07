@@ -242,7 +242,7 @@ public class VideoThumbTask extends AbstractTask {
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-        	mplayer = Configuration.appRoot + "/" + mplayerWin; //$NON-NLS-1$
+        	mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
         }
         videoThumbsMaker.setMPlayer(mplayer);
 

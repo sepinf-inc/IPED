@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +23,6 @@ import macee.core.Configurable;
 public class ConfigurationDirectoryImpl implements ConfigurationDirectory{
 	
 	List<Path> configDirs = new ArrayList<Path>();
-	Map<URI, FileSystem> zipFileSystems = new HashMap<URI, FileSystem>();
 	
 	public ConfigurationDirectoryImpl(Path configDir) {
 		configDirs.add(configDir);
@@ -65,17 +65,19 @@ public class ConfigurationDirectoryImpl implements ConfigurationDirectory{
 			throw new IOException(e);
 		}
 		
-		FileSystem fs = zipFileSystems.get(uri);
-		if(fs==null) {
-			Map<String, String> env = new HashMap<String,String>();
-	        env.put("create", "false");
-
-	        if(zip.endsWith(".jar")) {
-	        	env.put("multi-release", "true");
-	        }
-			fs = FileSystems.newFileSystem(uri, env);
-			configDirs.add(fs.getRootDirectories().iterator().next());
+		FileSystem fs;
+		try {
+		    fs = FileSystems.getFileSystem(uri);
+		    
+		}catch(FileSystemNotFoundException e) {
+		    Map<String, String> env = new HashMap<String,String>();
+            env.put("create", "false");
+            if(zip.endsWith(".jar")) {
+                env.put("multi-release", "true");
+            }            
+            fs = FileSystems.newFileSystem(uri, env);
 		}
+		configDirs.add(fs.getRootDirectories().iterator().next());
 	}
 
 	@Override

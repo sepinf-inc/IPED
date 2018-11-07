@@ -112,8 +112,8 @@ public class SleuthkitReader extends DataSourceReader {
   public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
     
-    if (Configuration.loaddbPathWin != null)
-        TSK_CMD[0] = Configuration.loaddbPathWin;
+    if (Configuration.getInstance().loaddbPathWin != null)
+        TSK_CMD[0] = Configuration.getInstance().loaddbPathWin;
   }
 
   public boolean isSupported(File file) {

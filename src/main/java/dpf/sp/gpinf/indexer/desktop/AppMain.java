@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,16 +38,19 @@ public class AppMain {
 
 	public static void main(String[] args) {
 		AppMain appMain = new AppMain();
-	    Configuration.setConfigPath(new File(appMain.detectCasePath(), "indexador").getAbsolutePath());
+		appMain.casePath = appMain.detectCasePath();
+	    try {
+            Configuration.getInstance().loadConfigurables(new File(appMain.casePath, "indexador").getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	    checkJavaVersion();
-		new AppMain().start(args);
+	    appMain.start(args);
 	}
 
 	private static void checkJavaVersion(){
 	    try {
-	    	Configuration.getInstance().loadLocaleConfigurable();
-	    	
-            SwingUtilities.invokeAndWait(new Runnable(){
+	        SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
                       String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
@@ -74,7 +78,7 @@ public class AppMain {
                                       Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
                                       Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                       }
-                      Messages.resetLocale();
+                      //Messages.resetLocale();
                   }
               });
         } catch (Exception e) {
@@ -83,17 +87,13 @@ public class AppMain {
 	}
 	
 	private void start(String[] args) {	
-		
-	    if(testPath != null)
-	        casePath = testPath;
-	    
-		if(casePath == null)
-			casePath = detectCasePath();
-		
 		start(casePath, null, args);
 	}
 	
 	private File detectCasePath() {
+	    if(testPath != null)
+	        return testPath;
+	    
 	    if("true".equals(System.getProperty("Debugging"))){
 	    	return new File(System.getProperty("user.dir"));
 	    }
@@ -162,16 +162,13 @@ public class AppMain {
 		    	  Logger LOGGER = LoggerFactory.getLogger(IndexFiles.class);
 			      if(!fromCustomLoader)
 			    	  LOGGER.info(Versao.APP_NAME);
-			      
-			      Configuration.getConfiguration(libDir.getParentFile().getAbsolutePath());
-	        	  Configuration.getInstance().loadConfigurables();
 		      }
 
 		      if(!finalLoader && processingManager == null) {
 		            List<File> jars = new ArrayList<File>();
-		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
-		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
-		            jars.add(Configuration.tskJarFile);
+		            if(Configuration.getInstance().optionalJarDir != null && Configuration.getInstance().optionalJarDir.listFiles() != null)
+		            	jars.addAll(Arrays.asList(Configuration.getInstance().optionalJarDir.listFiles()));
+		            jars.add(Configuration.getInstance().tskJarFile);
 
 		            String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
 

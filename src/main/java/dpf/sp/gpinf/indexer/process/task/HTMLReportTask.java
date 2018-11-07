@@ -373,7 +373,7 @@ public class HTMLReportTask extends AbstractTask {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("HTMLReportTask.MakingHtmlReport")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       // Pasta com arquivos HTML formatado que são utilizados como entrada.
-      String codePath = Configuration.appRoot;
+      String codePath = Configuration.getInstance().appRoot;
       File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
 
       Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$

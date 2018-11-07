@@ -53,8 +53,23 @@ import dpf.sp.gpinf.indexer.util.Util;
  * Classe principal de carregamento e acesso às configurações da aplicação.
  */
 public class Configuration {
+    
+    public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
+    public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
+    public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
+    public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
+    public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
+    public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
 
 	private static Configuration singleton;
+	private static AtomicBoolean loaded = new AtomicBoolean();
+	
+	ConfigurationDirectoryImpl configDirectory;
+    public UTF8Properties properties = new UTF8Properties();
+    public String configPath, appRoot;
+    public File optionalJarDir;
+    public File tskJarFile;
+    public String loaddbPathWin;
 
 	public static Configuration getInstance() {
 		if(singleton == null) {
@@ -67,31 +82,7 @@ public class Configuration {
 	}
 
 	private Configuration() {
-		props=new UTF8Properties();
-		props.put(IPEDConfig.CONFDIR, appRoot+"/conf");
 	}
-
-	ConfigurationDirectoryImpl configDirectory;
-	UTF8Properties props;
-	PluginConfig pluginConfig;
-	IPEDConfig ipedConfig;
-  
-	
-  public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
-  public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-  public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
-  public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
-  public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
-  public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
-  
-  public static UTF8Properties properties = new UTF8Properties();
-  //private static File indexerTemp;
-  public static String configPath, appRoot;
-  public static File optionalJarDir;
-  public static File tskJarFile;
-  public static String loaddbPathWin;
-  
-  private static AtomicBoolean loaded = new AtomicBoolean();
   
   private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
@@ -103,9 +94,7 @@ public class Configuration {
   /**
    * Configurações a partir do caminho informado.
    */
-  public static void getConfiguration(String configPathStr) throws Exception {
-	  if(loaded.getAndSet(true))
-		  return;
+  public void getConfiguration(String configPathStr) throws IOException {
 
     configPath = configPathStr;
 
@@ -131,11 +120,10 @@ public class Configuration {
     if(regripperFolder != null)
         System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
     
-    properties.put(IPEDConfig.CONFDIR, appRoot+"/conf");
-    getInstance().props=properties;
+    properties.put(IPEDConfig.CONFDIR, configPath);
   }
 
-  void loadLibs(File indexerTemp) throws IOException {
+    void loadLibs(File indexerTemp) throws IOException {
 	    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
 	      String arch = "x86"; //$NON-NLS-1$
@@ -170,59 +158,34 @@ public class Configuration {
 	    	if(!tskJarFile.exists())
 	    		throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
 	    }
-  }
+    }
 
-  public void loadExtensionConfigurables() throws IOException {
-	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot+"/"+PluginConfig.LOCAL_CONFIG));
-
-	    ConfigurationManager pluginConfigManager = new ConfigurationManager(configDirectory);
-
-	    pluginConfig = new PluginConfig();
-	    pluginConfigManager.addObject(pluginConfig);
-
-	    pluginConfigManager.loadConfigs();
-  }
-
-  public LocaleConfig loadLocaleConfigurable() throws IOException {
-	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot+"/"+PluginConfig.LOCAL_CONFIG));
-
-	    ConfigurationManager localeConfigManager = new ConfigurationManager(configDirectory);
-
-	    LocaleConfig localeConfig = new LocaleConfig();
-	    localeConfigManager.addObject(localeConfig);
-
-	    localeConfigManager.loadConfigs();
-
-	    return localeConfig;
-  }
-  
-  public PluginConfig getPluginConfig() {
-	  return pluginConfig;
-  }
-
-  public void loadConfigurables() throws IOException {
-	    configDirectory = new ConfigurationDirectoryImpl(Paths.get(props.getProperty(IPEDConfig.CONFDIR)));
-	    configDirectory.addPath(Paths.get(appRoot + "/" + IPEDConfig.CONFIG_FILE));
-	    configDirectory.addPath(Paths.get(appRoot + "/"+ PluginConfig.LOCAL_CONFIG));
+    public void loadConfigurables(String configPathStr) throws IOException {
+        
+        if(loaded.getAndSet(true))
+            return;
+      
+        getConfiguration(configPathStr);
+      
+        configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath));
+        configDirectory.addPath(Paths.get(appRoot + "/"+ PluginConfig.LOCAL_CONFIG));
 
 	    ConfigurationManager configManager = new ConfigurationManager(configDirectory);
+	    
+	    LocaleConfig localeConfig = new LocaleConfig();
+	    configManager.addObject(localeConfig);
+	    
+	    LocalConfig localConfig = new LocalConfig();
+        configManager.addObject(localConfig);
+	    
+	    PluginConfig pluginConfig = new PluginConfig();
+	    configManager.addObject(pluginConfig);
+	    
+	    IPEDConfig ipedConfig = new IPEDConfig();
+        configManager.addObject(ipedConfig);
 
 	    AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
 	    configManager.addObject(advancedConfig);
-
-	    IPEDConfig ipedConfig = new IPEDConfig();
-	    configManager.addObject(ipedConfig);
-
-	    PluginConfig pluginConfig = new PluginConfig();
-	    configManager.addObject(ipedConfig);
-
-	    LocalConfig localConfig = new LocalConfig();
-	    configManager.addObject(localConfig);
-
-	    LocaleConfig localeConfig = new LocaleConfig();
-	    configManager.addObject(localeConfig);
 
 	    OCRConfig ocrConfig = new OCRConfig();
 	    configManager.addObject(ocrConfig);
@@ -237,8 +200,8 @@ public class Configuration {
 	    configManager.addObject(urConfig);
 
 	    //adiciona os jars dos plugins como fonte para busca de arquivos de configuração
-	    if(pluginConfig!=null) {
-		    File[] jars = pluginConfig.getOptionalJars(appRoot);
+	    if(optionalJarDir!=null) {
+		    File[] jars = optionalJarDir.listFiles();
 		    if(jars != null) {
 		    	for(File jar : jars) {
 		    	    if(jar.getName().endsWith(".jar")) {
@@ -259,10 +222,6 @@ public class Configuration {
 	    configManager.loadConfigs();
 	    
 	    loadLibs(localConfig.getIndexerTemp());
-  }
+    }
 
-  public static void setConfigPath(String configPath2) {
-	  Configuration.configPath = configPath2; 
-	  Configuration.appRoot = getAppRoot(configPath);
-  }
 }

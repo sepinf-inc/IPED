@@ -32,7 +32,8 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
@@ -170,9 +171,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   void importKFF(File kffPath) {
     try {
       setConfigPath();
-      Configuration.getConfiguration(configPath);
+      Configuration.getInstance().getConfiguration(configPath);
       KFFTask kff = new KFFTask();
-      kff.init(Configuration.properties, null);
+      kff.init(Configuration.getInstance().properties, null);
       kff.importKFF(kffPath);
     } catch (Exception e) {
       e.printStackTrace();
@@ -283,21 +284,19 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         if(!fromCustomLoader)
             LOGGER.info(Versao.APP_NAME);
 
-        Configuration.setConfigPath(indexador.configPath);
-        Configuration.getInstance().loadExtensionConfigurables();
+        Configuration.getInstance().loadConfigurables(indexador.configPath);
 
         if(!fromCustomLoader) {
             List<File> jars = new ArrayList<File>();
-            jars.addAll(Arrays.asList(Configuration.getInstance().getPluginConfig().getOptionalJars(indexador.configPath)));
-            jars.add(Configuration.tskJarFile);
+            PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance().findObjects(PluginConfig.class).iterator().next();
+            jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
+            jars.add(Configuration.getInstance().tskJarFile);
 
             String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
             return;
 
         }else{
-            Configuration.getConfiguration(indexador.configPath);
-        	Configuration.getInstance().loadConfigurables();
             success = indexador.executar();
         }
 

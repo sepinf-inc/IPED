@@ -596,35 +596,36 @@ public class Manager {
     }
 
     if (!IndexFiles.getInstance().appendIndex) {
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/imagemagick"), new File(output, "tools/imagemagick")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/pffexport"), new File(output, "tools/pffexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tesseract"), new File(output, "tools/tesseract")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools/tsk"), new File(output, "tools/tsk")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/imagemagick"), new File(output, "tools/imagemagick")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/pffexport"), new File(output, "tools/pffexport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/tesseract"), new File(output, "tools/tesseract")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/tsk"), new File(output, "tools/tsk")); //$NON-NLS-1$ //$NON-NLS-2$
       
       AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
       if (advancedConfig.isEmbutirLibreOffice()) {
-        IOUtil.copiaArquivo(new File(Configuration.appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip")); //$NON-NLS-1$ //$NON-NLS-2$
+        IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip")); //$NON-NLS-1$ //$NON-NLS-2$
       }
 
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htmlreport"), new File(output, "htmlreport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
-      IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-      File binDir = new File(Configuration.appRoot, "bin"); //$NON-NLS-1$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), new File(output, "htmlreport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+      File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
       if(binDir.exists())
           IOUtil.copiaDiretorio(binDir, output.getParentFile()); //$NON-NLS-1$
       else {
-          for(File f : new File(Configuration.appRoot).getParentFile().listFiles(new ExeFileFilter()))
+          for(File f : new File(Configuration.getInstance().appRoot).getParentFile().listFiles(new ExeFileFilter()))
               IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
       }
       //copia arquivo de assinaturas customizadas
-      IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     if (palavrasChave != null) {

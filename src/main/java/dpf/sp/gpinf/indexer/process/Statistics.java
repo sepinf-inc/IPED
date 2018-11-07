@@ -242,7 +242,7 @@ public class Statistics {
 
     StringBuilder options = new StringBuilder();
     options.append("Config Options: "); //$NON-NLS-1$
-    for (Entry<Object, Object> entry : Configuration.properties.entrySet()) {
+    for (Entry<Object, Object> entry : Configuration.getInstance().properties.entrySet()) {
       options.append(entry.getKey() + "=" + entry.getValue() + " | "); //$NON-NLS-1$ //$NON-NLS-2$
     }
     LOGGER.info(options.toString());

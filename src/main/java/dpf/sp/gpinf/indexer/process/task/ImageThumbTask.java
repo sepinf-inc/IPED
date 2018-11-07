@@ -70,7 +70,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-      GraphicsMagicConverter.setWinToolPathPrefix(Configuration.appRoot);
+      GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
     }
 
     value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
