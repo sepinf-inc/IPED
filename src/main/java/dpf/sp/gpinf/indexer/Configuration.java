@@ -54,10 +54,15 @@ import dpf.sp.gpinf.indexer.util.Util;
  */
 public class Configuration {
 
-	static Configuration singleton;
+	private static Configuration singleton;
 
 	public static Configuration getInstance() {
-		if(singleton==null)  singleton = new Configuration();
+		if(singleton == null) {
+		    synchronized(Configuration.class) {
+		        if(singleton == null)
+		            singleton = new Configuration();
+		    }
+		}
 		return singleton;
 	}
 
