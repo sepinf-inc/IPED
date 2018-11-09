@@ -38,24 +38,10 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 		return filter;
 	}
 
-	Logger getLogger(Path resource) {
-	    // DataSource.testConnection(configPathStr);
-	    LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
-
-	    Logger LOGGER = null;
-	    if(Configuration.class.getClassLoader().getClass().getName()
-	            .equals(CustomURLClassLoader.class.getName()))
-	        LOGGER = LoggerFactory.getLogger(Configuration.class);
-
-	    if(LOGGER != null) LOGGER.info("Loading configuration from " + resource.toAbsolutePath()); //$NON-NLS-1$
-
-	    return LOGGER;
-	}
-
 	public void processConfig(Path resource) throws IOException {
 		super.processConfig(resource);
 
-		Logger LOGGER = getLogger(resource);
+		Logger logger = Configuration.getInstance().logger;
 
 	    if (System.getProperty("java.io.basetmpdir") == null) { //$NON-NLS-1$
 	        System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -73,7 +59,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 	      if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
 	        newTmp = new File(value);
 	        if (!newTmp.exists() && !newTmp.mkdirs()) {
-	            if(LOGGER != null) LOGGER.info("Fail to create temp directory" + newTmp.getAbsolutePath()); //$NON-NLS-1$
+	            if(logger != null) logger.info("Fail to create temp directory" + newTmp.getAbsolutePath()); //$NON-NLS-1$
 	        } else {
 	          tmp = newTmp;
 	        }

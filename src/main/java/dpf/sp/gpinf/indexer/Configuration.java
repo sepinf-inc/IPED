@@ -20,11 +20,16 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.mime.MimeTypesFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
@@ -48,6 +53,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -65,6 +71,7 @@ public class Configuration {
 	private static AtomicBoolean loaded = new AtomicBoolean();
 	
 	ConfigurationDirectoryImpl configDirectory;
+	public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
     public File optionalJarDir;
@@ -91,6 +98,19 @@ public class Configuration {
 	  return appRoot;
   }
   
+  private void configureLogger(String configPath) {
+      // DataSource.testConnection(configPathStr);
+      LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
+
+      logger = null;
+      if(Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
+          logger = LoggerFactory.getLogger(Configuration.class);
+      }
+      if(logger != null) {
+          logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
+      }
+  }
+  
   /**
    * Configurações a partir do caminho informado.
    */
@@ -99,6 +119,8 @@ public class Configuration {
     configPath = configPathStr;
 
     appRoot = getAppRoot(configPath);
+    
+    configureLogger(configPath);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
@@ -167,8 +189,13 @@ public class Configuration {
       
         getConfiguration(configPathStr);
       
-        configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath));
-        configDirectory.addPath(Paths.get(appRoot + "/"+ PluginConfig.LOCAL_CONFIG));
+        if(configPath != appRoot) {
+            configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath));
+        }else {
+            configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath + "/conf"));
+            configDirectory.addPath(Paths.get(appRoot + "/"+ CONFIG_FILE));
+        }
+        configDirectory.addPath(Paths.get(appRoot + "/"+ LOCAL_CONFIG));
 
 	    ConfigurationManager configManager = new ConfigurationManager(configDirectory);
 	    
