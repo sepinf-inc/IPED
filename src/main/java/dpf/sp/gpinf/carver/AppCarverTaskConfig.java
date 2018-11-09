@@ -23,7 +23,9 @@ public class AppCarverTaskConfig implements Configurable<UTF8Properties, UTF8Pro
 	public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
 		@Override
 		public boolean accept(Path entry) throws IOException {
-			return entry.endsWith(IPEDCONFIG) ||entry.endsWith(GLOBAL_CARVER_CONFIG) || (entry.getFileName().startsWith(CARVER_CONFIG_PREFIX)&&entry.getFileName().startsWith(CARVER_CONFIG_SUFFIX));
+			return entry.endsWith(IPEDCONFIG) || entry.endsWith(GLOBAL_CARVER_CONFIG) || 
+			       (entry.getFileName() != null && entry.getFileName().startsWith(CARVER_CONFIG_PREFIX) &&
+			        entry.getFileName().startsWith(CARVER_CONFIG_SUFFIX));
 		}
 	};
 	
