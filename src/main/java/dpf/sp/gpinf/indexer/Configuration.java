@@ -105,8 +105,6 @@ public class Configuration {
       logger = null;
       if(Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
           logger = LoggerFactory.getLogger(Configuration.class);
-      }
-      if(logger != null) {
           logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
       }
   }
@@ -142,7 +140,7 @@ public class Configuration {
     if(regripperFolder != null)
         System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
     
-    properties.put(IPEDConfig.CONFDIR, configPath);
+    properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
   }
 
     void loadLibs(File indexerTemp) throws IOException {
@@ -189,12 +187,8 @@ public class Configuration {
       
         getConfiguration(configPathStr);
       
-        if(configPath != appRoot) {
-            configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath));
-        }else {
-            configDirectory = new ConfigurationDirectoryImpl(Paths.get(configPath + "/conf"));
-            configDirectory.addPath(Paths.get(appRoot + "/"+ CONFIG_FILE));
-        }
+        configDirectory = new ConfigurationDirectoryImpl(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
+        configDirectory.addPath(Paths.get(configPath + "/"+ CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/"+ LOCAL_CONFIG));
 
 	    ConfigurationManager configManager = new ConfigurationManager(configDirectory);
@@ -202,11 +196,17 @@ public class Configuration {
 	    LocaleConfig localeConfig = new LocaleConfig();
 	    configManager.addObject(localeConfig);
 	    
+	    PluginConfig pluginConfig = new PluginConfig();
+        configManager.addObject(pluginConfig);
+	    
+	    if(!Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
+	        //we still are in the application first classLoader, no need to load other configurables
+	        configManager.loadConfigs();
+	        return;
+	    }
+	    
 	    LocalConfig localConfig = new LocalConfig();
         configManager.addObject(localConfig);
-	    
-	    PluginConfig pluginConfig = new PluginConfig();
-	    configManager.addObject(pluginConfig);
 	    
 	    IPEDConfig ipedConfig = new IPEDConfig();
         configManager.addObject(ipedConfig);
