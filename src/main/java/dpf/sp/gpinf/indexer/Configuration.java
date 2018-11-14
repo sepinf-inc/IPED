@@ -143,7 +143,7 @@ public class Configuration {
     properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
   }
 
-    void loadLibs(File indexerTemp) throws IOException {
+    public void loadLibs(File indexerTemp) throws IOException {
 	    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
 	      String arch = "x86"; //$NON-NLS-1$
