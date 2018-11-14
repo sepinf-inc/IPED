@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.tika.utils.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,10 +86,7 @@ public class SleuthkitClient {
     
     String classpath = Configuration.appRoot + "/iped.jar"; //$NON-NLS-1$
     if(Configuration.tskJarFile != null) {
-        if(System.getProperty("os.name").toLowerCase().startsWith("windows")) //$NON-NLS-1$ //$NON-NLS-2$
-            classpath += ";";
-        else
-            classpath += ":";
+        classpath += SystemUtils.IS_OS_WINDOWS ? ";" : ":";
         classpath += Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
     }
 
