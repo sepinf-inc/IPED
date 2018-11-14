@@ -84,8 +84,13 @@ public class SleuthkitClient {
     String pipePath = Configuration.indexerTemp + "/pipe-" + port; //$NON-NLS-1$
     
     String classpath = Configuration.appRoot + "/iped.jar"; //$NON-NLS-1$
-    if(Configuration.tskJarFile != null)
-    	classpath += ";" + Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
+    if(Configuration.tskJarFile != null) {
+        if(System.getProperty("os.name").toLowerCase().startsWith("windows")) //$NON-NLS-1$ //$NON-NLS-2$
+            classpath += ";";
+        else
+            classpath += ":";
+        classpath += Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
+    }
 
     String[] cmd = {"java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     SleuthkitServer.class.getCanonicalName(), dbDirPath + "/" + SleuthkitReader.DB_NAME, String.valueOf(port), pipePath}; //$NON-NLS-1$
