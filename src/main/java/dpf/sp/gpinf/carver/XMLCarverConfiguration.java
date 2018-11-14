@@ -144,7 +144,8 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         NodeList escapeFooterSignatureEls = sigsEl.getElementsByTagName("escapeFooterSignature");
                         NodeList lengthRefSignatureEls = sigsEl.getElementsByTagName("lengthRefSignature");
 
-                        CarverType ct = createCarverType(carverTypeEl, CARVE_DIR_INDIVIDUAIS);
+                        CarverType ct = new CarverType();
+                        configCarverType(ct, carverTypeEl, CARVE_DIR_INDIVIDUAIS);
 
                         for (int k = 0; k < headerSignatureEls.getLength(); k++) {
                             Element headerSignatureEl = (Element) headerSignatureEls.item(k);
@@ -177,6 +178,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();                        
                         CarverType[] cts = cv.getCarverTypes();
                         for (int k = 0; k < cts.length; k++) {
+                        	configCarverType(cts[k], carverTypeEl, CARVE_DIR_INDIVIDUAIS);
                             carverTypesArray.add(cts[k]);
 						}
                     }
@@ -188,9 +190,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
         }
     }
 
-    public CarverType createCarverType(Element carverTypeEl, String scriptDir)
-            throws DOMException, DecoderException, UnsupportedEncodingException, FileNotFoundException, IOException,
-            ScriptException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    private void configCarverType(CarverType ct, Element carverTypeEl, String scriptDir) {
         Element name = XMLUtil.getFirstElement(carverTypeEl, "name");
         Element mediaType = XMLUtil.getFirstElement(carverTypeEl, "mediaType");
         Element carverClass = XMLUtil.getFirstElement(carverTypeEl, "carverClass");
@@ -200,8 +200,6 @@ public class XMLCarverConfiguration implements CarverConfiguration {
         Element minLength = XMLUtil.getFirstElement(carverTypeEl, "minLength");
         Element maxLength = XMLUtil.getFirstElement(carverTypeEl, "maxLength");
         Element carverScriptFile = XMLUtil.getFirstElement(carverTypeEl, "carverScriptFile");
-
-        CarverType ct = new CarverType();
 
         if (name != null) {
             ct.setName(name.getTextContent());
@@ -243,9 +241,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
             }
         }
         TYPES_TO_CARVE.add(ct.getMimeType());
-
-        return ct;
-    }
+	}
 
     public Carver registerCarver(CarverType ct, File confDir,
                                  CarvedItemListener carvedItemListener) throws Exception {
