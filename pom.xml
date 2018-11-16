@@ -318,7 +318,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.0.5-4</version>
+                                    <version>7.0.8-14</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
