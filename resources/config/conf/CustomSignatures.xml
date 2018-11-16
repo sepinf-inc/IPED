@@ -19,6 +19,24 @@
 -->
 <mime-info>
 
+	<mime-type type="image/heic">
+    	<magic priority="60">
+      		<match value="ftypheic" type="string" offset="4"/>
+      		<match value="ftypheix" type="string" offset="4"/>
+      		<match value="ftyphevc" type="string" offset="4"/>
+      		<match value="ftyphevx" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+  	<mime-type type="image/heif">
+    	<magic priority="60">
+      		<match value="ftypmif1" type="string" offset="4"/>
+      		<match value="ftypmsf1" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
 	<mime-type type="application/x-dbf">
     	<magic priority="100">
       		<match value="(?s)^[\\x02\\x03\\x30\\x31\\x32\\x43\\x63\\x83\\x8B\\xCB\\xF5\\xE5\\xFB].[\\x01-\\x0C][\\x01-\\x1F].{4}(?:.[^\\x00]|[\\x41-\\xFF].)(?:[^\\x00\\x01].|.[^\\x00]).{31}(?&lt;=[\\x00][^\\x00]{0,10})[A-Z@+]" type="regex" offset="0"/>
