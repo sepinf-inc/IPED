@@ -356,7 +356,7 @@
                                 <artifactItem>
                                     <groupId>mplayer</groupId>
                                     <artifactId>mplayer-zip</artifactId>
-                                    <version>4.9.2</version>
+                                    <version>6.2.0-r38109</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/../</outputDirectory>

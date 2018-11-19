@@ -1,6 +1,9 @@
 xx/11/2018
-- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos (habilitar enableExternalParsing)
+- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
+- Suporte a imagens heic geradas pelo IOS 11+
 - Atualização para Tika-1.19.1
+- Atualização p/ ImageMagick 7.0.8-14
+- Atualização p/ Mplayer-6.2.0-r38109
 Correções:
 - Geração de quadros de vídeos no Linux qdo Mplayer não suporta "-lavdopts wait_keyframe" (PCF Wladimir)
 - Erro ao setar localização para 'en' em sistemas cujo padrão era 'pt_BR'
