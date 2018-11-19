@@ -6,11 +6,11 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -39,11 +39,21 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class MakePreviewTask extends AbstractTask {
 
-  public static String viewFolder = "view"; //$NON-NLS-1$
+  public static final String viewFolder = "view"; //$NON-NLS-1$
+  
+  private static final String CONFIG_FILE_NAME = "MakePreviewConfig.txt";
+  
+  private static final String SUPPORTED_KEY = "supportedMimes";
+  
+  private static final String SUPPORTED_LINKS_KEY = "supportedMimesWithLinks";
+  
+  private static boolean enableFileParsing = true;
+  
+  private Set<String> supportedMimes = new HashSet<>();
+  
+  private Set<String> supportedMimesWithLinks = new HashSet<>();
   
   private IndexerDefaultParser parser = new IndexerDefaultParser();
-
-  private static boolean enableFileParsing = true;
   
   private volatile Throwable exception;
 
@@ -58,6 +68,19 @@ public class MakePreviewTask extends AbstractTask {
     if (value != null & !value.trim().isEmpty()) {
       enableFileParsing = Boolean.valueOf(value.trim());
     }
+    
+    File config = new File(confDir, CONFIG_FILE_NAME);
+    String content = Util.readUTF8Content(config);
+    for (String line : content.split("\n")) { //$NON-NLS-1$
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
+        continue;
+      }
+      if(line.startsWith(SUPPORTED_KEY) || line.startsWith(SUPPORTED_LINKS_KEY))
+          for(String mime : line.substring(line.indexOf('=') + 1).split(";")) {
+              if (line.startsWith(SUPPORTED_LINKS_KEY)) supportedMimesWithLinks.add(mime.trim());
+              else if (line.startsWith(SUPPORTED_KEY)) supportedMimes.add(mime.trim());
+          }
+    }
   }
 
   @Override
@@ -65,22 +88,13 @@ public class MakePreviewTask extends AbstractTask {
   }
 
   public boolean isSupportedType(String contentType) {
-    return contentType.equals("application/x-msaccess") //$NON-NLS-1$
-        || contentType.equals("application/x-sqlite3") //$NON-NLS-1$
-        || contentType.equals("application/sqlite-skype") //$NON-NLS-1$
-        || contentType.equals("application/x-lnk") //$NON-NLS-1$
-        || contentType.equals("application/x-whatsapp-db") //$NON-NLS-1$
-        || contentType.equals("application/x-whatsapp-chatstorage") //$NON-NLS-1$
-        || contentType.equals("application/x-shareaza-searches-dat") //$NON-NLS-1$
-        || contentType.equals("application/x-msie-cache") //$NON-NLS-1$
+    return supportedMimes.contains(contentType)
         || mayContainLinks(contentType)
         || isSupportedTypeCSV(contentType);
   }
   
   private boolean mayContainLinks(String contentType){
-	  return contentType.equals("application/x-emule") //$NON-NLS-1$
-			  || contentType.equals("application/x-ares-galaxy") //$NON-NLS-1$
-			  || contentType.equals("application/x-shareaza-library-dat"); //$NON-NLS-1$
+      return supportedMimesWithLinks.contains(contentType);
   }
 
   private boolean isSupportedTypeCSV(String contentType) {
