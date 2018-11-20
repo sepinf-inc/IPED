@@ -20,7 +20,7 @@
   as parsers.
 -->
 <external-parsers>
-  <!-- This example uses ffmpeg for video metadata extraction -->
+  <!-- This example uses ffmpeg for video metadata extraction:
   <parser>
 	 <name>FFMpegParser</name>
      <check>
@@ -46,6 +46,8 @@
        <match key="videoResolution">\s*Stream.*:\s+Video:.*,\s+([0-9x]+),.*</match>
      </metadata>
   </parser>
+  -->
+  <!-- ExifToolParser example:
   <parser>
 	 <name>ExifToolParser</name>
      <check>
@@ -62,5 +64,20 @@
      <metadata>
        <match>\s*([A-Za-z0-9/ \(\)]+\S{1})\s+:\s+([A-Za-z0-9\(\)\[\] \:\-\.]+)\s*</match>
      </metadata>
+  </parser>
+  -->
+  
+  <parser>
+	 <name>PrefetchParser</name>
+	 <win-tool-path>tools/sccainfo/</win-tool-path>
+     <check>
+       <command>sccainfo -V</command>
+       <error-codes>1</error-codes>
+     </check>
+     <command>sccainfo ${INPUT}</command>
+     <mime-types>
+       <mime-type>application/x-prefetch</mime-type>
+     </mime-types>
+     <output-charset>ISO-8859-1</output-charset>
   </parser>
 </external-parsers>

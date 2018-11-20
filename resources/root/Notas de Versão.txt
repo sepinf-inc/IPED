@@ -1,6 +1,9 @@
 xx/11/2018
 - Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
 - Suporte a imagens heic geradas pelo IOS 11+
+- Externalização da configuração da MakePreviewTask
+- Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml
+- Classificação e configuração de parser externo para Prefetch
 - Atualização para Tika-1.19.1
 - Atualização p/ ImageMagick 7.0.8-14
 - Atualização p/ Mplayer-6.2.0-r38109

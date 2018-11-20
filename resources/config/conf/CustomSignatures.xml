@@ -19,6 +19,13 @@
 -->
 <mime-info>
 
+	<mime-type type="application/x-prefetch">
+    	<magic priority="60">
+      		<match value="SCCA" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.pf"/>
+  	</mime-type>
+
 	<mime-type type="image/heic">
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>

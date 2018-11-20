@@ -20,7 +20,7 @@
 <properties>
 
     <parsers>
-		<!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
+		<parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser>
 		
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>

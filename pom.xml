@@ -289,6 +289,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-sccainfo</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>sccainfo</artifactId>
+                                    <version>20170205</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-regripper</id>
                         <phase>package</phase>
                         <goals>
