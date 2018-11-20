@@ -80,4 +80,20 @@
      </mime-types>
      <output-charset>ISO-8859-1</output-charset>
   </parser>
+  
+  <parser>
+	 <name>RecycleBinParser</name>
+	 <win-tool-path>tools/rifiuti/</win-tool-path>
+     <check>
+       <command>rifiuti-vista -v</command>
+       <error-codes>1</error-codes>
+     </check>
+     <command>rifiuti-vista -8 ${INPUT}</command>
+     <mime-types>
+       <mime-type>application/x-recyclebin</mime-type>
+     </mime-types>
+     <output-charset>UTF-8</output-charset>
+     <firstLinesToIgnore>3</firstLinesToIgnore>
+  </parser>
+  
 </external-parsers>

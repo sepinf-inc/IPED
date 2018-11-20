@@ -308,6 +308,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-rifiuti</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>abelcheung</groupId>
+                                    <artifactId>rifiuti2</artifactId>
+                                    <version>0.6.1</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-regripper</id>
                         <phase>package</phase>
                         <goals>
