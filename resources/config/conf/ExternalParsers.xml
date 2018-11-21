@@ -96,4 +96,19 @@
      <firstLinesToIgnore>3</firstLinesToIgnore>
   </parser>
   
+  <parser>
+	 <name>RecycleInfo2Parser</name>
+	 <win-tool-path>tools/rifiuti/</win-tool-path>
+     <check>
+       <command>rifiuti -v</command>
+       <error-codes>1</error-codes>
+     </check>
+     <command>rifiuti -8 ${INPUT}</command>
+     <mime-types>
+       <mime-type>application/x-info2</mime-type>
+     </mime-types>
+     <output-charset>UTF-8</output-charset>
+     <firstLinesToIgnore>3</firstLinesToIgnore>
+  </parser>
+  
 </external-parsers>
