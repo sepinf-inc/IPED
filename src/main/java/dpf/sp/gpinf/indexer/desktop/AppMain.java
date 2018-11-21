@@ -23,7 +23,7 @@ public class AppMain {
 	
 	private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 	private static final int MIN_JAVA_VER = 8;
-	private static final int MAX_JAVA_VER = 9;
+	private static final int MAX_JAVA_VER = 8;
 	
 	//These java versions have a WebView bug that crashes the JVM: JDK-8196011
 	private static final String[] buggedVersions = {"1.8.0_161", "1.8.0_162", "1.8.0_171"};
