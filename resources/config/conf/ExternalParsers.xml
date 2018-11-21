@@ -111,4 +111,18 @@
      <firstLinesToIgnore>3</firstLinesToIgnore>
   </parser>
   
+  <parser>
+	 <name>EvtxLogParser</name>
+	 <win-tool-path>tools/evtxexport/</win-tool-path>
+     <check>
+       <command>evtxexport -V</command>
+       <error-codes>1</error-codes>
+     </check>
+     <command>evtxexport ${INPUT}</command>
+     <mime-types>
+       <mime-type>application/x-elf-file</mime-type>
+     </mime-types>
+     <output-charset>ISO-8859-1</output-charset>
+  </parser>
+  
 </external-parsers>
