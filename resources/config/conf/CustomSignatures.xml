@@ -19,6 +19,18 @@
 -->
 <mime-info>
 
+	<mime-type type="application/x-superfetch">
+		<_comment>Windows EVT Log</_comment>
+    	<magic priority="40">
+    		<match value="MEMO" type="string" offset="0"/>
+      		<match value="MEM0" type="string" offset="0"/>
+      		<match value="MAM" type="string" offset="0">
+      			<match value="0x84" type="string" offset="3"/>
+      		</match>
+    	</magic>
+    	<glob pattern="Ag*.db"/>
+  	</mime-type>
+
 	<mime-type type="application/x-elf-log">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="50">
