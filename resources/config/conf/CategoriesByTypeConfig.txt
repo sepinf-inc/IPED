@@ -40,7 +40,7 @@ Chats = application/messenger-plus; application/messenger-chat; application/sqli
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
-Programas e Bibliotecas = application/x-elf-file; application/x-prefetch; application/java-archive; application/x-dosexec; application/x-msdownload; application/x-bat; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
+Programas e Bibliotecas = application/x-elf-log; application/x-elf-file; application/x-prefetch; application/java-archive; application/x-dosexec; application/x-msdownload; application/x-bat; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
 
 Não Alocado = application/x-unallocated;
 

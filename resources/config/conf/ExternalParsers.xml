@@ -125,4 +125,18 @@
      <output-charset>ISO-8859-1</output-charset>
   </parser>
   
+  <parser>
+	 <name>EvtLogParser</name>
+	 <win-tool-path>tools/evtexport/</win-tool-path>
+     <check>
+       <command>evtexport -V</command>
+       <error-codes>1</error-codes>
+     </check>
+     <command>evtexport ${INPUT}</command>
+     <mime-types>
+       <mime-type>application/x-elf-log</mime-type>
+     </mime-types>
+     <output-charset>ISO-8859-1</output-charset>
+  </parser>
+  
 </external-parsers>

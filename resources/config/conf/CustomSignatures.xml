@@ -19,6 +19,14 @@
 -->
 <mime-info>
 
+	<mime-type type="application/x-elf-log">
+		<_comment>Windows EVT Log</_comment>
+    	<magic priority="50">
+      		<match value="LfLe" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.evt"/>
+  	</mime-type>
+
 	<mime-type type="application/x-elf-file">
 		<_comment>Windows EVTX Log</_comment>
     	<magic priority="50">

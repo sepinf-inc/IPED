@@ -289,6 +289,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-evtexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>evtexport</artifactId>
+                                    <version>20180317</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-evtxexport</id>
                         <phase>package</phase>
                         <goals>
