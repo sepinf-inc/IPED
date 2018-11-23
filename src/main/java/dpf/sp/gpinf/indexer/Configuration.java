@@ -93,6 +93,7 @@ public class Configuration {
   public static boolean storeTermVectors = true;
   public static int maxTokenLength = 255;
   public static boolean filterNonLatinChars = false;
+  public static boolean convertCharsToAscii = true;
   public static boolean preOpenImagesOnSleuth = false;
   public static boolean openImagesCacheWarmUpEnabled = false;
   public static int openImagesCacheWarmUpThreads = 256;
@@ -468,6 +469,11 @@ public class Configuration {
     value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
     if (value != null && !value.trim().isEmpty()) {
         filterNonLatinChars = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("convertCharsToAscii"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        convertCharsToAscii = Boolean.valueOf(value.trim());
     }
 
     value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$

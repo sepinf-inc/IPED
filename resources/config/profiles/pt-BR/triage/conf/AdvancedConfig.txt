@@ -68,6 +68,9 @@ convertCharsToLowerCase = true
 # Padrão é false.
 filterNonLatinChars = true
 
+# Remove acentuação e converte os caracteres para seu equivalente ascii.
+convertCharsToAscii = true
+
 # Tamanho máximo de palavras a serem indexadas. Padrão é 255.
 maxTokenLength = 20
 

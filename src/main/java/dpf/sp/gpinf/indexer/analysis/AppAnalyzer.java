@@ -47,6 +47,7 @@ public class AppAnalyzer {
     StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
     defaultAnalyzer.setMaxTokenLength(Configuration.maxTokenLength);
     defaultAnalyzer.setFilterNonLatinChars(Configuration.filterNonLatinChars);
+    defaultAnalyzer.setConvertCharsToAscii(Configuration.convertCharsToAscii);
     return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
   }
 

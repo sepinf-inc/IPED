@@ -68,6 +68,9 @@ convertCharsToLowerCase = true
 # Default is false.
 filterNonLatinChars = true
 
+# Removes accents and converts characters to their equivalent ascii char.
+convertCharsToAscii = true
+
 # Maximum word length to be indexed. Default is 255.
 maxTokenLength = 20
 

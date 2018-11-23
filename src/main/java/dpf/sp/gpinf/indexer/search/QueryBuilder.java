@@ -24,6 +24,7 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.NumericUtils;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.desktop.App;
@@ -124,7 +125,7 @@ public class QueryBuilder {
 			  parser.setNumericConfigMap(getNumericConfigMap());
 			  
 			  //remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
-			  if(analyzer != spaceAnalyzer){
+			  if(analyzer != spaceAnalyzer && Configuration.convertCharsToAscii){
 				  char[] input = texto.toCharArray();
 				  char[] output = new char[input.length*4];
 				  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
