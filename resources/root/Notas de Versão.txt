@@ -1,17 +1,27 @@
-xx/11/2018
+xx/11/2018: IPED-3.15
 - Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
 - Suporte a imagens heic geradas pelo IOS 11+
 - Externalização da configuração da MakePreviewTask
 - Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml, firstLinesToIgnore
-- Configuração de parser externo para Prefetch (sccainfo)
-- Configuração de parser externo para metadados da Lixeira (rifiuti e rifiuti-vista)
+- Configuração de parser externo para Prefetch (libscca)
+- Configuração de parser externo para Superfetch (libagdb)
+- Configuração de parser externo para Lixeira: INFO2 e $I* (rifiuti e rifiuti-vista)
+- Configuração de parser externo para Event logs evt e evtx (libevt e libevtx)
+- Possibilidade de desligar convertCharsToAscii para gerar melhor dicionário p/ quebra de senhas
+- Alerta para eventuais problemas com java 9+
 - Atualização para Tika-1.19.1
 - Atualização p/ ImageMagick 7.0.8-14
 - Atualização p/ Mplayer-6.2.0-r38109
+- Atualização p/ Libpff-20180714
+- Atualização p/ Regripper-2.8_20180406
 Correções:
 - Geração de quadros de vídeos no Linux qdo Mplayer não suporta "-lavdopts wait_keyframe" (PCF Wladimir)
 - Erro ao setar localização para 'en' em sistemas cujo padrão era 'pt_BR'
 - Opção robustImageReading não funcionava no Linux
+- Configuração errada da opção filterNonLatinChars no perfil triage
+- Eventual construção incorreta da árvore de diretórios ao processar pastas com links simbólicos
+- Datas de WhatsApp do iphone eram decodificadas usando timezone incorreto
+- Ocorria scrollToNextHit automático nos chats ao clicar em anexo
 
 22/10/2018: IPED-3.14.5
 - Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
