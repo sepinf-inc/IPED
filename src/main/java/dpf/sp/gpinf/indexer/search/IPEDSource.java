@@ -417,13 +417,14 @@ public class IPEDSource implements Closeable{
 	        for(String path : paths){
 	            if (isWindowsNetworkShare && !path.startsWith("\\") && !path.startsWith("/") && path.length() > 1 && path.charAt(1) != ':') {
                     String newPath = new File(casePath.getAbsolutePath() + File.separator + path).getCanonicalPath();
-	                newPaths.add(newPath);
+                    if(new File(newPath).exists()) newPaths.add(newPath);
 	            } else if((new File(path).exists() && path.contains(File.separator)) || 
 	                    (System.getProperty("os.name").startsWith("Windows") && path.toLowerCase().contains("physicaldrive"))) {
 	        	    newPaths = null;
 	        		break;
 	        	}else{
-	        		String newPath = letter + ":\\" + path.substring(3);
+	        	    path = path.replace("/", File.separator).replace("\\", File.separator);
+	        		String newPath = letter + path.substring(1);
 	        		if(new File(newPath).exists())
 	        			newPaths.add(newPath);	        				
 	        		else{
