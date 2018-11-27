@@ -530,11 +530,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       }
 
       LOGGER.warn("{} SAX error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      LOGGER.error("SAX error extracting subitem " + subitemPath, e);
+      LOGGER.debug("SAX error extracting subitem " + subitemPath, (Throwable) e);
 
     } catch (Exception e) {
       LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      LOGGER.error("Error extracting subitem " + subitemPath, e);
+      LOGGER.debug("Error extracting subitem " + subitemPath, (Throwable) e);
 
     } finally {
       tmp.close();
