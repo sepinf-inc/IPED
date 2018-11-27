@@ -106,6 +106,7 @@
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
+		<!--parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser-->
         <!--<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
         	<mime-exclude>image/gif</mime-exclude>
         </parser>-->
