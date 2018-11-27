@@ -102,10 +102,13 @@ function process(e){
 		}
 	}
 
-	if(inRecycle(e))
+	if(inRecycle(e)){
 		e.addCategory("Lixeira do Windows");
-	
-	
+		if(e.getName().indexOf("$I") == 0)
+			e.setMediaTypeStr("application/x-recyclebin");
+		else if(e.getName().equals("INFO2"))
+			e.setMediaTypeStr("application/x-info2");
+	}
 	
    /*
     *  Contribuições PCF Sícoli
@@ -404,5 +407,5 @@ function inSystemFolder(e){
  */
 function inRecycle(e){
 	var path = e.getPath().toLowerCase();
-	return 	path.indexOf("/$recycle.bin/") > -1 || path.indexOf("/recycler/") > -1;
+	return 	path.indexOf("$recycle.bin") > -1 || path.indexOf("/recycler/") > -1 || path.indexOf("\\recycler\\") > -1;
 }
