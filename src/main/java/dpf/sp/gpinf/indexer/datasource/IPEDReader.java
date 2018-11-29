@@ -25,11 +25,15 @@ import gpinf.dev.filetypes.GenericFileType;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -65,12 +69,15 @@ import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
 public class IPEDReader extends DataSourceReader {
+    
+  private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
   
   IPEDSource ipedCase;
   HashSet<Integer> selectedLabels;
@@ -399,20 +406,34 @@ public class IPEDReader extends DataSourceReader {
         evidence.setMediaType(MediaType.parse(mimetype));
       }
       
-      value = doc.get(IndexItem.EXPORT);
-      if (value != null && !value.isEmpty() && !treeNode) {
-        evidence.setFile(Util.getRelativeFile(basePath, value));
+      if(!treeNode) {
+          value = doc.get(IndexItem.EXPORT);
+          if (value != null && !value.isEmpty()) {
+            evidence.setFile(Util.getRelativeFile(basePath, value));
+          } else {
+            value = doc.get(IndexItem.SLEUTHID);
+            if (value != null && !value.isEmpty()) {
+              evidence.setSleuthId(Integer.valueOf(value));
+              evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
+           
+            }else if((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                evidence.setIdInDataSource(value.trim());
+                String relPath = doc.get(IndexItem.SOURCE_PATH);
+                Path absPath = Util.getRelativeFile(basePath, relPath).toPath();
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath); 
+                if(sisf == null) {
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    Class<?> clazz = Class.forName(className);
+                    Constructor<SeekableInputStreamFactory> c = (Constructor)clazz.getConstructor(Path.class);
+                    sisf = c.newInstance(absPath);
+                    inputStreamFactories.put(absPath, sisf);
+                }
+                evidence.setInputStreamFactory(sisf);
+              
+            }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+                evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+          }
       } else {
-        value = doc.get(IndexItem.SLEUTHID);
-        if (value != null && !value.isEmpty() && !treeNode) {
-          evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-          
-        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
-            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
-      }
-
-      if (treeNode) {
         evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.setAddToCase(false);
       }

@@ -123,9 +123,9 @@ public class IndexTask extends BaseCarveTask {
     if (textCache != null) {
       Document doc;
       if (indexFileContents) {
-        doc = IndexItem.Document(evidence, new StringReader(textCache));
+        doc = IndexItem.Document(evidence, new StringReader(textCache), output);
       } else {
-        doc = IndexItem.Document(evidence, null);
+        doc = IndexItem.Document(evidence, null, output);
       }
 
       try{
@@ -158,7 +158,7 @@ public class IndexTask extends BaseCarveTask {
         }
       }
 
-      Document doc = IndexItem.Document(evidence, reader);
+      Document doc = IndexItem.Document(evidence, reader, output);
       int fragments = 0;
       try {
         /* Indexa os arquivos dividindo-os em fragmentos, pois a lib de

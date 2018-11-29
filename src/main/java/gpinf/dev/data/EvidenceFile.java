@@ -207,6 +207,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private long startOffset = -1, tempStartOffset = -1;
 
   private Integer sleuthId;
+  
+  private String idInDataSource;
 
   private TikaInputStream tis;
   
@@ -574,7 +576,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     }
     
     if(stream == null && inputStreamFactory != null)
-        stream = inputStreamFactory.getSeekableInputStream();
+        stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
     
     if (stream != null && startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);
@@ -1191,6 +1193,14 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
     public void setInputStreamFactory(SeekableInputStreamFactory inputStreamFactory) {
         this.inputStreamFactory = inputStreamFactory;
+    }
+
+    public String getIdInDataSource() {
+        return idInDataSource;
+    }
+
+    public void setIdInDataSource(String idInDataSource) {
+        this.idInDataSource = idInDataSource;
     }
 
 }
