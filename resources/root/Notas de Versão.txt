@@ -1,5 +1,7 @@
 xx/11/2018: IPED-3.15
 - Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
+- Suporte a relatórios UFDR do Physical Analyzer
+- Suporte a imagens forenses AD1
 - Suporte a imagens heic geradas pelo IOS 11+
 - Externalização da configuração da MakePreviewTask
 - Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml, firstLinesToIgnore
