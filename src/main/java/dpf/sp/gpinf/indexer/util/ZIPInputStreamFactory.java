@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -32,25 +33,20 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
         Path tmp = null;
         byte[] bytes = null;
-        int tries = 0;
-        //if interrupted, read can throw IOException forever, so try to close and open zip again
-        while(tries < 2) {
-            if(zip == null) init();
-            ZipArchiveEntry zae = zip.getEntry(path);
-            try(InputStream is = zip.getInputStream(zae)){
-                if(zae.getSize() <= MAX_MEM_BYTES) {
-                    bytes = IOUtils.toByteArray(is);
-                }else {
-                    tmp = Files.createTempFile("zip-stream", null);
-                    Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
-                }
-                break;
-            }catch(IOException e) {
-                if(zip != null) zip.close();
-                zip = null;
-                if(tmp != null) Files.delete(tmp);
-                tries++;
+        if(zip == null) init();
+        ZipArchiveEntry zae = zip.getEntry(path);
+        try(InputStream is = zip.getInputStream(zae)){
+            if(zae.getSize() <= MAX_MEM_BYTES) {
+                bytes = IOUtils.toByteArray(is);
+            }else {
+                tmp = Files.createTempFile("zip-stream", null);
+                Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
             }
+        }catch(ClosedChannelException e) {
+            if(zip != null) zip.close();
+            zip = null;
+            if(tmp != null) Files.delete(tmp);
+            throw e;
         }
         if(bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
