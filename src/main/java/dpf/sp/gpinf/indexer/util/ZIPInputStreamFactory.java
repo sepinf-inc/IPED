@@ -21,6 +21,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     public ZIPInputStreamFactory(Path dataSource) {
         super(dataSource);
     }
+    
+    private synchronized void init() throws IOException {
+        if(zip == null) {
+            zip = new ZipFile(this.dataSource.toFile());
+        }
+    }
 
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
@@ -29,8 +35,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         int tries = 0;
         //if interrupted, read can throw IOException forever, so try to close and open zip again
         while(tries < 2) {
-            if(zip == null)
-                zip = new ZipFile(this.dataSource.toFile());
+            if(zip == null) init();
             ZipArchiveEntry zae = zip.getEntry(path);
             try(InputStream is = zip.getInputStream(zae)){
                 if(zae.getSize() <= MAX_MEM_BYTES) {
