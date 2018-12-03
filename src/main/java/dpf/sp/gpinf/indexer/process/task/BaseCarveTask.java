@@ -117,21 +117,27 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     long prevOff = parentEvidence.getFileOffset();
     offsetFile.setFileOffset(prevOff == -1 ? off : prevOff + off);
-
-    if (parentEvidence.getSleuthFile() != null) {
+    
+    if(parentEvidence.getIdInDataSource() != null) {
+      offsetFile.setIdInDataSource(parentEvidence.getIdInDataSource());
+      offsetFile.setInputStreamFactory(parentEvidence.getInputStreamFactory());
+    
+    }else if (parentEvidence.getSleuthFile() != null) {
       offsetFile.setSleuthFile(parentEvidence.getSleuthFile());
       offsetFile.setSleuthId(parentEvidence.getSleuthId());
-      if (parentEvidence.hasTmpFile()) {
-        try {
-			offsetFile.setFile(parentEvidence.getTempFile());
-			offsetFile.setTempStartOffset(off);
-		} catch (IOException e) {
-			//ignore
-		}
-      }
+      
     } else {
       offsetFile.setFile(parentEvidence.getFile());
       offsetFile.setExportedFile(parentEvidence.getExportedFile());
+    }
+    //optimization to not create more temp files
+    if (parentEvidence.hasTmpFile()) {
+        try {
+            offsetFile.setFile(parentEvidence.getTempFile());
+            offsetFile.setTempStartOffset(off);
+        } catch (IOException e) {
+            //ignore
+        }
     }
     parentEvidence.setHasChildren(true);
     
