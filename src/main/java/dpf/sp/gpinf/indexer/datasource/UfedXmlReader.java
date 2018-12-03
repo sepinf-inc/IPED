@@ -187,10 +187,13 @@ public class UfedXmlReader extends DataSourceReader{
         rootItem = new EvidenceFile();
         rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
-        rootItem.setPath(root.getName());
-        rootItem.setName(root.getName());
+        rootItem.setPath(evidenceName);
+        rootItem.setName(evidenceName);
         rootItem.setHasChildren(true);
-        //rootItem.setLength(0L);
+        if(root.getName().endsWith(".ufdr")) {
+            rootItem.setLength(root.length());
+            rootItem.setSumVolume(false);
+        }
         rootItem.setHash(""); //$NON-NLS-1$
         
         pathToParent.put(rootItem.getPath(), rootItem);
