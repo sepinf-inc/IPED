@@ -126,7 +126,7 @@ public class AD1Extractor implements Closeable{
         fileHeaderList = new ArrayList<>();
         
         if (PC != 0L){
-            lerObjeto(PC,root_name);
+            lerObjeto(PC, null);
         }
     
     }
@@ -146,8 +146,6 @@ public class AD1Extractor implements Closeable{
         //Ler Objeto
         
         FileHeader header = new FileHeader();       
-        
-        header.caminho = raiz;
                 
         lerBytesArquivoRelativo(vetor_48, PC, info_objetos_tam);
         PC += info_objetos_tam; 
@@ -182,62 +180,61 @@ public class AD1Extractor implements Closeable{
         header.setObjetoTamanhoBytes(lerTamanhoInteiroDeHexReverso(vetor_48,40,8));         
 
         //Aqui ficam os mapeamentos para os bytes stream do arquivo
-        if (header.objeto_tipo==0){
+        if (header.getFileSize() != 0){
             
+            lerBytesArquivoRelativo(vetor_16, PC, 16);
+            PC += 16;                   
             
-            if (header.objetoTamanhoBytes !=0){
+            header.objeto_pedacos_tam = lerTamanhoInteiroDeHexReverso(vetor_16,16,8);
             
-                lerBytesArquivoRelativo(vetor_16, PC, 16);
-                PC += 16;                   
-                
-                header.objeto_pedacos_tam = lerTamanhoInteiroDeHexReverso(vetor_16,16,8);
-                
-                pedacos_tam_adicionais =  8 + 7; //mais 15              
-                vetor_variavel = new byte [(int)((header.objeto_pedacos_tam*8)+pedacos_tam_adicionais)];
-                
-                lerBytesArquivoRelativo(vetor_variavel,  PC, (header.objeto_pedacos_tam*8)+pedacos_tam_adicionais);
-                PC += (header.objeto_pedacos_tam*8)+pedacos_tam_adicionais;
-                
-                header.objeto_PC_ini_parcial = lerTamanhoInteiroDeHexReverso(vetor_variavel,8,8);
-            }
-            else{
+            pedacos_tam_adicionais =  8 + 7; //mais 15              
+            vetor_variavel = new byte [(int)((header.objeto_pedacos_tam*8)+pedacos_tam_adicionais)];
             
-                header.objeto_PC_ini_parcial = 0;
-                header.objeto_pedacos_tam = 0;
+            lerBytesArquivoRelativo(vetor_variavel,  PC, (header.objeto_pedacos_tam*8)+pedacos_tam_adicionais);
+            PC += (header.objeto_pedacos_tam*8)+pedacos_tam_adicionais;
             
-            }
-                        
-            if (header.objeto_pedacos_tam==1){
-                            
-                header.adicionaPedaco(header.objeto_PC_ini_parcial,header.objeto_PC_fim_parcial);
-                
-            }else if(header.objeto_pedacos_tam > 1){
-            
-                
-                for (int i=0; i < header.objeto_pedacos_tam; i++){
-
-                    
-                    if (i!=header.objeto_pedacos_tam-1){
-                        
-                        header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+1)*8),8),lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+2)*8),8));                     
-    
-                    }
-                    else{
-
-                        header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+1)*8),8),header.objeto_PC_fim_parcial);                                              
-                    
-                    }
-                
-                }               
-            
-            }
-            
-            vetor_variavel = null;
+            header.objeto_PC_ini_parcial = lerTamanhoInteiroDeHexReverso(vetor_variavel,8,8);
+        }
+        else{
         
-        }else if (header.objeto_tipo==5) { //diretorio
-                
-            header.caminho += "/"+header.objeto_nome;
+            header.objeto_PC_ini_parcial = 0;
+            header.objeto_pedacos_tam = 0;
         
+        }
+                    
+        if (header.objeto_pedacos_tam==1){
+                        
+            header.adicionaPedaco(header.objeto_PC_ini_parcial,header.objeto_PC_fim_parcial);
+            
+        }else if(header.objeto_pedacos_tam > 1){
+        
+            
+            for (int i=0; i < header.objeto_pedacos_tam; i++){
+
+                
+                if (i!=header.objeto_pedacos_tam-1){
+                    
+                    header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+1)*8),8),lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+2)*8),8));                     
+
+                }
+                else{
+
+                    header.adicionaPedaco(lerTamanhoInteiroDeHexReverso(vetor_variavel,((i+1)*8),8),header.objeto_PC_fim_parcial);                                              
+                
+                }
+            
+            }               
+        
+        }
+        
+        vetor_variavel = null;
+        
+        if(raiz != null) {
+            header.caminho = raiz;
+        }
+        
+        if (header.objeto_tipo==5) { //diretorio
+            header.caminho += "/"+ header.objeto_nome;
         }
         
         PC = header.objeto_PC_fim_parcial;
@@ -280,6 +277,8 @@ public class AD1Extractor implements Closeable{
         PC += tamanho_propriedade;
         
         endereco_prox_propriedade = lerTamanhoInteiroDeHexReverso(vetor_propriedade,8,8);       
+        
+        int propCode = (int)lerTamanhoInteiroDeHexReverso(vetor_propriedade,16,4);
 
         propriedade_tam = lerTamanhoInteiroDeHexReverso(vetor_propriedade,20,4);        
 
@@ -290,7 +289,7 @@ public class AD1Extractor implements Closeable{
         
         propriedade_extenso = new String(vetor_variavel, charset);          
         
-        header.propriedadesList.add(new Propriedade(propriedade_extenso));      
+        header.propriedadesMap.put(propCode, new Propriedade(propriedade_extenso));      
         
         if (endereco_prox_propriedade != 0){
             lerPropriedade(endereco_prox_propriedade,header);
@@ -441,7 +440,7 @@ public class AD1Extractor implements Closeable{
 
         @Override
         public long size() throws IOException {
-            return header.objetoTamanhoBytes;
+            return header.getFileSize();
         }
 
         @Override
@@ -522,10 +521,6 @@ class Propriedade {
     public String getValor(){
         return this.valor;
     }
-    
-    public void setValor(String v){
-        this.valor = v;
-    }   
 
 }
 

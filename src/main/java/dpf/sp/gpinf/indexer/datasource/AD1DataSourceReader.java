@@ -120,7 +120,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         
         if(listOnly) {
             caseData.incDiscoveredEvidences(1);
-            caseData.incDiscoveredVolume(header.objetoTamanhoBytes);
+            caseData.incDiscoveredVolume(header.getFileSize());
             return null;
         }
         
@@ -130,11 +130,12 @@ public class AD1DataSourceReader extends DataSourceReader {
         else item.setParent(rootItem);
         item.setIsDir(header.isDirectory());
         item.setName(header.getFileName());
-        item.setPath(rootItem.getName() + "/" + header.getFilePath());
-        item.setLength(header.objetoTamanhoBytes);
+        item.setPath(rootItem.getName() + header.getFilePath());
+        item.setLength(header.getFileSize());
         item.setModificationDate(header.getMTime());
         item.setAccessDate(header.getATime());
         item.setCreationDate(header.getCTime());
+        item.setRecordDate(header.getRTime());
         
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(header.getFilePath());
