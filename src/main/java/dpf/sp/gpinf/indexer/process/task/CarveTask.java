@@ -76,7 +76,7 @@ public class CarveTask extends BaseCarveTask {
   private static int largestPatternLen = 100;
 
   EvidenceFile evidence;
-  MediaTypeRegistry registry;
+  private static MediaTypeRegistry registry;
 
   long prevLen = 0;
   int len = 0, k = 0;
@@ -84,7 +84,8 @@ public class CarveTask extends BaseCarveTask {
   byte[] cBuf;
 
   public CarveTask() {
-    this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+      if(registry == null)
+          registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
   @Override
