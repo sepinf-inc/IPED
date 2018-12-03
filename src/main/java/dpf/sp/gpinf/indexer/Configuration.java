@@ -41,6 +41,7 @@ import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
@@ -55,7 +56,7 @@ import dpf.sp.gpinf.indexer.util.Util;
  * Classe principal de carregamento e acesso às configurações da aplicação.
  */
 public class Configuration {
-
+    
   public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
   public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
   public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
@@ -132,6 +133,7 @@ public class Configuration {
 
     configPath = configPathStr;
     appRoot = getAppRoot(configPath);
+    System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
 
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
