@@ -2,19 +2,10 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 import java.util.TreeMap;
 
-import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
-import org.apache.commons.io.IOUtils;
-
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import gpinf.dev.data.CaseData;
@@ -48,41 +39,16 @@ public class AD1DataSourceReader extends DataSourceReader {
             
             inputStreamFactory = new AD1InputStreamFactory(datasource.toPath());
             
-            //items may be out of tree order? So store them in a sorted path structure
-            TreeMap<String, FileHeader> folderMap = new TreeMap<String, FileHeader>();
-            
-            for (FileHeader header : ad1.getHeaderList()) {
-                if (header != null  && !Thread.currentThread().isInterrupted()){
-                    if(header.isEncrypted())
-                        throw new IPEDException("Encrypted AD1 file!");
-
-                    if(header.isDirectory()){
-                        folderMap.put(header.getFilePath().replace("\\", "/"), header);
-                    }
-                }
-            }
-            
-            //iterates over items in tree order
-            HashMap<String, EvidenceFile> parentMap = new HashMap<>();
-            for(FileHeader dirheader : folderMap.values()){
-                String itemPath = dirheader.getFilePath().replace("\\", "/");
-                EvidenceFile parent = parentMap.get(Util.getParentPath(itemPath));
-                EvidenceFile item = createAndAddItem(ad1, dirheader, parent);
-                parentMap.put(itemPath, item);
+            for (FileHeader header : ad1.getRootHeaders()) {
+                if(header.isEncrypted())
+                    throw new IPEDException("Encrypted AD1 file!");
+                
                 if(Thread.currentThread().isInterrupted())
                     throw new InterruptedException();
+                
+                createAndAddItem(ad1, header, rootItem);
             }
-            folderMap.clear();
-
-            //processa os arquivos          
-            for (FileHeader header : ad1.getHeaderList()) {
-                if (header != null && !header.isDirectory()  && !Thread.currentThread().isInterrupted()){
-                    String itemPath = header.getFilePath().replace("\\", "/");
-                    EvidenceFile parent = parentMap.get(Util.getParentPath(itemPath));
-                    createAndAddItem(ad1, header, parent);
-                }
-            }
-
+            
         }
         
         return 0;
@@ -116,33 +82,33 @@ public class AD1DataSourceReader extends DataSourceReader {
         return rootItem;
     }
     
-    private EvidenceFile createAndAddItem(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws InterruptedException{
-        
-        if(listOnly) {
-            caseData.incDiscoveredEvidences(1);
-            caseData.incDiscoveredVolume(header.getFileSize());
-            return null;
-        }
+    private void createAndAddItem(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws InterruptedException{
         
         EvidenceFile item = new EvidenceFile();
         item.setDataSource(dataSource);
         if(parent != null) item.setParent(parent);
-        else item.setParent(rootItem);
         item.setIsDir(header.isDirectory());
         item.setName(header.getFileName());
-        item.setPath(rootItem.getName() + header.getFilePath());
+        if(rootItem != null) item.setPath(rootItem.getName() + header.getFilePath());
         item.setLength(header.getFileSize());
         item.setModificationDate(header.getMTime());
         item.setAccessDate(header.getATime());
         item.setCreationDate(header.getCTime());
         item.setRecordDate(header.getRTime());
+        item.setDeleted(header.isDeleted());
         
         item.setInputStreamFactory(inputStreamFactory);
-        item.setIdInDataSource(header.getFilePath());
+        item.setIdInDataSource(Long.toString(header.object_address));
         
-        caseData.addEvidenceFile(item);
+        if(listOnly) {
+            caseData.incDiscoveredEvidences(1);
+            caseData.incDiscoveredVolume(header.getFileSize());
+        }else
+            caseData.addEvidenceFile(item);
         
-        return item;
+        for(FileHeader child : header.children)
+            createAndAddItem(ad1, child, item);
+        
     }
     
     public static class AD1InputStreamFactory extends SeekableInputStreamFactory{
@@ -159,7 +125,7 @@ public class AD1DataSourceReader extends DataSourceReader {
                 try {
                     ad1 = new AD1Extractor(dataSource.toFile());
                     for(FileHeader fh : ad1.getHeaderList())
-                        headerMap.put(fh.getFilePath(), fh);
+                        headerMap.put(Long.toString(fh.object_address), fh);
                         
                 } catch (Exception e) {
                     throw new IOException(e);

@@ -20,13 +20,15 @@ public class FileHeader{
     private static final int CREATED_DATE_CODE = 8;
     private static final int MODIFIED_DATE_CODE = 9;
     private static final int RECORD_DATE_CODE = 40962;
-
+    
+    public List<FileHeader> children = new ArrayList<>();
+    public long object_address = 0L;
     public long endereco_prox_objeto = 0L;
     public long endereco_filho_objeto = 0L;
     public long objeto_PC_fim_parcial = 0L;
     public long objeto_PC_ini_parcial = 0L;
     private long objetoTamanhoBytes = 0L ;
-    public long objeto_tipo = 0L ;
+    public int objeto_tipo = 0 ;
     public long nome_objeto_tam = 0L ;  
     public String objeto_nome = "";
     public long objeto_pedacos_tam = 0L;
@@ -34,9 +36,7 @@ public class FileHeader{
     public List<Pedaco> pedacosList = null;
     public Map<Integer, Propriedade> propriedadesMap = new HashMap<>();
     
-    private 
-    
-    SimpleDateFormat simpleDateFormat = null; 
+    private SimpleDateFormat simpleDateFormat = null; 
     
     public void setObjetoTamanhoBytes(long tam){    
         this.objetoTamanhoBytes = tam;
@@ -113,21 +113,15 @@ public class FileHeader{
     }
 
      public boolean isDirectory(){
+        return (objeto_tipo & 0x01) == 1;
+     }
      
-        boolean retorno = false;
-     
-        if (this.objeto_tipo == 5 )
-            retorno = true;
-     
-        return retorno;
-     
+     public boolean isDeleted() {
+         return (objeto_tipo & 0x02) == 2;
      }
      
      public String getFilePath(){
-        if (this.isDirectory()) 
-            return caminho;     
-        else
-            return caminho + "/" + objeto_nome;     
+         return caminho;
      }
      
      public String getFileName(){

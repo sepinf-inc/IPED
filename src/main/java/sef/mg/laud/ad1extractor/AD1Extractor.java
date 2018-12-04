@@ -30,6 +30,7 @@ public class AD1Extractor implements Closeable{
     static String charset = "ISO-8859-1";   
 
     private List<FileHeader> fileHeaderList = null;
+    private List<FileHeader> rootHeaders = null;
     
     byte vetor_15 [] = new byte [15];
     byte vetor_14 [] = new byte [14];
@@ -124,6 +125,7 @@ public class AD1Extractor implements Closeable{
         PC = PC_primeiro_arquivo;
         
         fileHeaderList = new ArrayList<>();
+        rootHeaders = new ArrayList<>();
         
         if (PC != 0L){
             lerObjeto(PC, null);
@@ -131,7 +133,7 @@ public class AD1Extractor implements Closeable{
     
     }
     
-    public void lerObjeto(long PC, String raiz) throws IOException{ 
+    public void lerObjeto(long PC, FileHeader parent) throws IOException{ 
     
         byte vetor_48 [] = new byte [48];
 
@@ -145,7 +147,8 @@ public class AD1Extractor implements Closeable{
                 
         //Ler Objeto
         
-        FileHeader header = new FileHeader();       
+        FileHeader header = new FileHeader();      
+        header.object_address = PC;
                 
         lerBytesArquivoRelativo(vetor_48, PC, info_objetos_tam);
         PC += info_objetos_tam; 
@@ -160,8 +163,8 @@ public class AD1Extractor implements Closeable{
         //Os proximos 8 bytes tamanho do arquivo
         header.objeto_PC_fim_parcial = lerTamanhoInteiroDeHexReverso(vetor_48,24,8); 
         
-        //Tipo 0 arquivo, tipo 5 diretorio
-        header.objeto_tipo = lerTamanhoInteiroDeHexReverso(vetor_48,44,4); 
+        //Tipo 0/2 arquivo, tipo 5/7 diretorio
+        header.objeto_tipo = (int) lerTamanhoInteiroDeHexReverso(vetor_48,44,4); 
         
         //Ler nome do arquivo
         header.nome_objeto_tam = lerTamanhoInteiroDeHexReverso(vetor_48,48,4);
@@ -229,13 +232,10 @@ public class AD1Extractor implements Closeable{
         
         vetor_variavel = null;
         
-        if(raiz != null) {
-            header.caminho = raiz;
+        if(parent != null) {
+            header.caminho = parent.caminho;
         }
-        
-        if (header.objeto_tipo==5) { //diretorio
-            header.caminho += "/"+ header.objeto_nome;
-        }
+        header.caminho += "/"+ header.objeto_nome;
         
         PC = header.objeto_PC_fim_parcial;
         
@@ -243,12 +243,18 @@ public class AD1Extractor implements Closeable{
         
         fileHeaderList.add(header);
         
+        if(parent == null) {
+            rootHeaders.add(header);
+        }else {
+            parent.children.add(header);
+        }
+        
         if (header.endereco_filho_objeto != 0){
-            lerObjeto(header.endereco_filho_objeto,header.caminho);         
+            lerObjeto(header.endereco_filho_objeto, header);         
         }               
 
         if (header.endereco_prox_objeto != 0){              
-            lerObjeto(header.endereco_prox_objeto,raiz);
+            lerObjeto(header.endereco_prox_objeto, parent);
         }
         
         vetor_48 = null;
@@ -393,6 +399,10 @@ public class AD1Extractor implements Closeable{
     public List<FileHeader> getHeaderList() {
         return fileHeaderList;
     }   
+
+    public List<FileHeader> getRootHeaders(){
+        return rootHeaders;
+    }
     
     public boolean isEncrypted(){
         return false;
