@@ -204,7 +204,7 @@ public class Manager {
     updateImagePaths();
     
     deleteTempDir();
-
+    
     stats.logarEstatisticas(this);
 
   }
@@ -385,15 +385,16 @@ public class Manager {
 
     if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      LOGGER.info("Copying Index..."); //$NON-NLS-1$
+      LOGGER.info("Moving Index..."); //$NON-NLS-1$
       try {
         Files.move(indexTemp.toPath(), indexDir.toPath());
 
       } catch (IOException e) {
+        LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
         IOUtil.copiaDiretorio(indexTemp, indexDir);
       }
     }
-
+    
     if (caseData.containsReport()) {
       new File(output, "data/containsReport.flag").createNewFile(); //$NON-NLS-1$
     }
@@ -522,8 +523,7 @@ public class Manager {
 	    IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	    LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
-	    try {
-	      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+	    try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())){
 	      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
 	      LuceneSearchResult result = searchAll.searchAll();
 
