@@ -429,7 +429,10 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setPath(path);
                     item.setParent(getParent(path));
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
-                    item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+                    if(caseData.containsReport()) {
+                        //export metadata as content only if generating blind report
+                        item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+                    }
                     item.setHash(""); //$NON-NLS-1$
                                         
                     boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -869,9 +872,10 @@ public class UfedXmlReader extends DataSourceReader{
                     byte[] bytes = null;
                     if(ufdr != null) {
                         ZipArchiveEntry zae = ufdr.getEntry(avatarPath);
-                        try(InputStream is = ufdr.getInputStream(zae)){
-                            bytes = IOUtils.toByteArray(is); 
-                        }
+                        if(zae != null)
+                            try(InputStream is = ufdr.getInputStream(zae)){
+                                bytes = IOUtils.toByteArray(is); 
+                            }
                     }else {
                         File avatarFile = new File(avatarPath);
                         if(!avatarFile.isAbsolute())
