@@ -111,9 +111,13 @@ public class FileHeader{
     
         return null;
     }
+    
+    public boolean hasChildren() {
+        return !children.isEmpty();
+    }
 
      public boolean isDirectory(){
-        return (objeto_tipo & 0x01) == 1;
+        return (objeto_tipo & 0x04) == 4;
      }
      
      public boolean isDeleted() {

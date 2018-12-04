@@ -96,6 +96,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         item.setCreationDate(header.getCTime());
         item.setRecordDate(header.getRTime());
         item.setDeleted(header.isDeleted());
+        item.setHasChildren(header.hasChildren());
         
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(Long.toString(header.object_address));
