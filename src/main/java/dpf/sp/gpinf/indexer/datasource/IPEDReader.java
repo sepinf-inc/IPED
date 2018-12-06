@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -44,11 +45,14 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -76,6 +80,8 @@ import dpf.sp.gpinf.indexer.util.Util;
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
 public class IPEDReader extends DataSourceReader {
+    
+  private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
     
   private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
   
@@ -155,6 +161,9 @@ public class IPEDReader extends DataSourceReader {
 
 	    //Inclui anexos de emails de PST
 	    insertEmailAttachs(result);
+	    
+	    //insert items referenced by bookmarked items
+	    insertLinkedItems(result);
 
 	    //Inclui pais para visualização em árvore
 	    insertParentTreeNodes(result);
@@ -277,6 +286,46 @@ public class IPEDReader extends DataSourceReader {
         }
       }
     }
+  }
+  
+  private void insertLinkedItems(LuceneSearchResult result) {
+      int[] luceneIds = result.getLuceneIds();
+      Arrays.sort(luceneIds);
+      String queryText = ExtraProperties.LINKED_HASHES + ":*"; //$NON-NLS-1$
+      IPEDSearcher searcher = new IPEDSearcher(ipedCase, queryText);
+      try {
+          SearchResult itemsWithLinks = searcher.search();
+          for (int i = 0; i < itemsWithLinks.getLength(); i++){
+              int luceneId = ipedCase.getLuceneId(itemsWithLinks.getId(i));
+              if(Arrays.binarySearch(luceneIds, luceneId) < 0)
+                  continue;
+              
+              Document doc = ipedCase.getReader().document(luceneId);
+              String[] linkedHashes = doc.getValues(ExtraProperties.LINKED_HASHES);
+              StringBuilder hashes = new StringBuilder();
+              for(String hash : linkedHashes)
+                  hashes.append(hash).append(" "); //$NON-NLS-1$
+              
+              for(HashTask.HASH hash : HashTask.HASH.values()) {    
+                  StringBuilder queryBuilder = new StringBuilder();
+                  queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND "); //$NON-NLS-1$
+                  queryBuilder.append(hash + ":("); //$NON-NLS-1$
+                  queryBuilder.append(hashes.toString());
+                  queryBuilder.append(")"); //$NON-NLS-1$
+                  searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
+                  
+                  LuceneSearchResult linkedItems = searcher.luceneSearch();
+                  if(linkedItems.getLength() > 0) {
+                      LOGGER.info("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + linkedItems.getLength()); //$NON-NLS-1$
+                      insertIntoProcessQueue(linkedItems, false);
+                      break;
+                  }
+              }
+          }
+      } catch (Exception e1) {
+          e1.printStackTrace();
+          
+      }
   }
 
   private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
