@@ -1,5 +1,6 @@
 package sef.mg.laud.ad1extractor;
 
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,7 +22,10 @@ public class FileHeader{
     private static final int MODIFIED_DATE_CODE = 9;
     private static final int RECORD_DATE_CODE = 40962;
     
-    public List<FileHeader> children = new ArrayList<>();
+    private AD1Extractor extractor;
+    
+    public FileHeader parent;
+    
     public long object_address = 0L;
     public long endereco_prox_objeto = 0L;
     public long endereco_filho_objeto = 0L;
@@ -46,10 +50,26 @@ public class FileHeader{
         return objetoTamanhoBytes;
     }
     
-    public FileHeader (){
+    public FileHeader (AD1Extractor extractor, FileHeader parent){
+        this.extractor = extractor;
+        this.parent = parent;
         pedacosList = new ArrayList<>();
         simpleDateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss"); 
         simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+    
+    public FileHeader getNextHeader() throws IOException {
+        if(endereco_prox_objeto == 0)
+            return null;
+        
+        return extractor.lerObjeto(endereco_prox_objeto, parent);
+    }
+    
+    public FileHeader getChildHeader() throws IOException {
+        if(endereco_filho_objeto == 0)
+            return null;
+        
+        return extractor.lerObjeto(endereco_filho_objeto, this);
     }
 
     public Date getATime(){
@@ -113,7 +133,7 @@ public class FileHeader{
     }
     
     public boolean hasChildren() {
-        return !children.isEmpty();
+        return endereco_filho_objeto != 0;
     }
 
      public boolean isDirectory(){

@@ -1,17 +1,15 @@
 package sef.mg.laud.ad1extractor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
-import java.util.zip.*;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
-
-import java.util.Enumeration;
-import java.util.Vector;
 
 /**
  *
@@ -29,8 +27,7 @@ public class AD1Extractor implements Closeable{
     long total_arquivos = 0L;
     static String charset = "ISO-8859-1";   
 
-    private List<FileHeader> fileHeaderList = null;
-    private List<FileHeader> rootHeaders = null;
+    private FileHeader rootHeader = null;
     
     byte vetor_15 [] = new byte [15];
     byte vetor_14 [] = new byte [14];
@@ -51,14 +48,13 @@ public class AD1Extractor implements Closeable{
     long root_info_tam = 20L ; //0x14
     long root_nome_tam = 0L;    
     
-    
-
     public AD1Extractor(File arquivo) throws IOException{
         if(!arquivo.exists()) { 
             throw new FileNotFoundException("Arquivo AD1 nao encontrado");
         }
         file = arquivo;
         sfis = new SeekableFileInputStream(arquivo);
+        
         headerInit();
     }
 
@@ -124,17 +120,14 @@ public class AD1Extractor implements Closeable{
                 
         PC = PC_primeiro_arquivo;
         
-        fileHeaderList = new ArrayList<>();
-        rootHeaders = new ArrayList<>();
-        
         if (PC != 0L){
-            lerObjeto(PC, null);
+            rootHeader = lerObjeto(PC, null);
         }
     
     }
     
-    public void lerObjeto(long PC, FileHeader parent) throws IOException{ 
-    
+    public FileHeader lerObjeto(long PC, FileHeader parent) throws IOException{ 
+        
         byte vetor_48 [] = new byte [48];
 
         byte vetor_16 [] = new byte [16];
@@ -147,7 +140,7 @@ public class AD1Extractor implements Closeable{
                 
         //Ler Objeto
         
-        FileHeader header = new FileHeader();      
+        FileHeader header = new FileHeader(this, parent);      
         header.object_address = PC;
                 
         lerBytesArquivoRelativo(vetor_48, PC, info_objetos_tam);
@@ -241,27 +234,11 @@ public class AD1Extractor implements Closeable{
         
         lerPropriedade(PC,header);  
         
-        fileHeaderList.add(header);
-        
-        if(parent == null) {
-            rootHeaders.add(header);
-        }else {
-            parent.children.add(header);
-        }
-        
-        if (header.endereco_filho_objeto != 0){
-            lerObjeto(header.endereco_filho_objeto, header);         
-        }               
-
-        if (header.endereco_prox_objeto != 0){              
-            lerObjeto(header.endereco_prox_objeto, parent);
-        }
-        
         vetor_48 = null;
 
         vetor_16 = null;        
         
-        return;
+        return header;
         
     }   
     
@@ -395,13 +372,9 @@ public class AD1Extractor implements Closeable{
         return new AD1SeekableInputstream(header);
     
     }
-    
-    public List<FileHeader> getHeaderList() {
-        return fileHeaderList;
-    }   
 
-    public List<FileHeader> getRootHeaders(){
-        return rootHeaders;
+    public FileHeader getRootHeader(){
+        return rootHeader;
     }
     
     public boolean isEncrypted(){

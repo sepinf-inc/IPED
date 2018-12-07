@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.datasource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.TreeMap;
 
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
@@ -39,15 +38,12 @@ public class AD1DataSourceReader extends DataSourceReader {
             
             inputStreamFactory = new AD1InputStreamFactory(datasource.toPath());
             
-            for (FileHeader header : ad1.getRootHeaders()) {
-                if(header.isEncrypted())
-                    throw new IPEDException("Encrypted AD1 file!");
-                
-                if(Thread.currentThread().isInterrupted())
-                    throw new InterruptedException();
-                
-                createAndAddItem(ad1, header, rootItem);
-            }
+            FileHeader rootHeader = ad1.getRootHeader();
+            
+            if(rootHeader.isEncrypted())
+                throw new IPEDException("Encrypted AD1 file!");
+            
+            createAndAddItemRecursive(ad1, rootHeader, rootItem);
             
         }
         
@@ -82,40 +78,52 @@ public class AD1DataSourceReader extends DataSourceReader {
         return rootItem;
     }
     
-    private void createAndAddItem(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws InterruptedException{
+    private void createAndAddItem(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws IOException, InterruptedException{
         
         EvidenceFile item = new EvidenceFile();
-        item.setDataSource(dataSource);
-        if(parent != null) item.setParent(parent);
-        item.setIsDir(header.isDirectory());
-        item.setName(header.getFileName());
-        if(rootItem != null) item.setPath(rootItem.getName() + header.getFilePath());
-        item.setLength(header.getFileSize());
-        item.setModificationDate(header.getMTime());
-        item.setAccessDate(header.getATime());
-        item.setCreationDate(header.getCTime());
-        item.setRecordDate(header.getRTime());
-        item.setDeleted(header.isDeleted());
-        item.setHasChildren(header.hasChildren());
         
-        item.setInputStreamFactory(inputStreamFactory);
-        item.setIdInDataSource(Long.toString(header.object_address));
-        
-        if(listOnly) {
+        if(!listOnly) {
+            item.setDataSource(dataSource);
+            item.setParent(parent);
+            item.setIsDir(header.isDirectory());
+            item.setName(header.getFileName());
+            item.setPath(rootItem.getName() + header.getFilePath());
+            item.setLength(header.getFileSize());
+            item.setModificationDate(header.getMTime());
+            item.setAccessDate(header.getATime());
+            item.setCreationDate(header.getCTime());
+            item.setRecordDate(header.getRTime());
+            item.setDeleted(header.isDeleted());
+            item.setHasChildren(header.hasChildren());
+            
+            item.setInputStreamFactory(inputStreamFactory);
+            item.setIdInDataSource(Long.toString(header.object_address));
+            
+            caseData.addEvidenceFile(item);
+            
+        }else {
             caseData.incDiscoveredEvidences(1);
             caseData.incDiscoveredVolume(header.getFileSize());
-        }else
-            caseData.addEvidenceFile(item);
+        }            
         
-        for(FileHeader child : header.children)
-            createAndAddItem(ad1, child, item);
+        FileHeader child = header.getChildHeader();
+        if(child != null)
+            createAndAddItemRecursive(ad1, child, item);
         
+        
+    }
+    
+    private void createAndAddItemRecursive(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws IOException, InterruptedException{
+        
+        createAndAddItem(ad1, header, parent);
+        
+        while((header = header.getNextHeader()) != null)
+            createAndAddItem(ad1, header, parent);
     }
     
     public static class AD1InputStreamFactory extends SeekableInputStreamFactory{
         
         AD1Extractor ad1;
-        TreeMap<String, FileHeader> headerMap = new TreeMap<String, FileHeader>();
 
         public AD1InputStreamFactory(Path dataSource) {
             super(dataSource);
@@ -123,14 +131,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         
         private synchronized void init() throws IOException {
             if(ad1 == null)
-                try {
-                    ad1 = new AD1Extractor(dataSource.toFile());
-                    for(FileHeader fh : ad1.getHeaderList())
-                        headerMap.put(Long.toString(fh.object_address), fh);
-                        
-                } catch (Exception e) {
-                    throw new IOException(e);
-                }
+                ad1 = new AD1Extractor(dataSource.toFile());
         }
 
         @Override
@@ -138,7 +139,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             if(ad1 == null)
                 init();
             
-            FileHeader fh = headerMap.get(identifier);
+            FileHeader fh = ad1.lerObjeto(Long.parseLong(identifier), null);
             return ad1.getSeekableInputStream(fh);
         }
         
