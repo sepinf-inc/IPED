@@ -40,7 +40,9 @@ import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 public class ReportDialog implements ActionListener, TableModelListener{
@@ -63,6 +65,7 @@ public class ReportDialog implements ActionListener, TableModelListener{
     JButton fillInfo = new JButton(Messages.getString("ReportDialog.FillInfo")); //$NON-NLS-1$
     JButton generate = new JButton(Messages.getString("ReportDialog.Create")); //$NON-NLS-1$
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
+    JCheckBox noLinkedItems = new JCheckBox(Messages.getString("ReportDialog.noLinkedItems")); //$NON-NLS-1$
     JCheckBox append = new JCheckBox(Messages.getString("ReportDialog.AddToReport")); //$NON-NLS-1$
     
     HashSet<String> noContent = new HashSet<>();
@@ -109,6 +112,7 @@ public class ReportDialog implements ActionListener, TableModelListener{
         
         Box footer = Box.createVerticalBox();
         footer.add(noAttachs);
+        footer.add(noLinkedItems);
         footer.add(footer1);
         footer.add(append);
         footer.add(footer3);
@@ -327,6 +331,9 @@ public class ReportDialog implements ActionListener, TableModelListener{
             
             if(noAttachs.isSelected())
                 cmd.add("--nopstattachs"); //$NON-NLS-1$
+            
+            if(noLinkedItems.isSelected())
+                cmd.add(CmdLineArgs.noLinkedItemsOption); //$NON-NLS-1$
             
             if(append.isSelected())
                 cmd.add("--append"); //$NON-NLS-1$

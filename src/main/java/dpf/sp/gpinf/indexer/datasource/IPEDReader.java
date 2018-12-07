@@ -47,6 +47,8 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.Parameter;
+
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
@@ -94,7 +96,7 @@ public class IPEDReader extends DataSourceReader {
   private int[] oldToNewIdMap;
   private List<IPEDSource> srcList = new ArrayList<IPEDSource>();
   private String deviceName;
-
+  
   public IPEDReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
   }
@@ -163,7 +165,8 @@ public class IPEDReader extends DataSourceReader {
 	    insertEmailAttachs(result);
 	    
 	    //insert items referenced by bookmarked items
-	    insertLinkedItems(result);
+	    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+	    if (!args.isNoLinkedItems()) insertLinkedItems(result);
 
 	    //Inclui pais para visualização em árvore
 	    insertParentTreeNodes(result);

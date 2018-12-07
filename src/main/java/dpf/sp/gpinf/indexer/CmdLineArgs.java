@@ -88,6 +88,10 @@ public class CmdLineArgs {
 
   @Parameter(names="--nopstattachs", description="do not export automatically to report PST/OST email attachments")
   private boolean nopstattachs;
+  
+  public static final String noLinkedItemsOption = "--nolinkeditems";
+  @Parameter(names=noLinkedItemsOption, description="do not export automatically to report items linked to chats")
+  private boolean noLinkedItems = false;
 
   @Parameter(names="--portable", description="use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
   private boolean portable;
@@ -170,6 +174,10 @@ public class CmdLineArgs {
 
   public boolean isNopstattachs() {
       return nopstattachs;
+  }
+  
+  public boolean isNoLinkedItems() {
+      return noLinkedItems;
   }
 
   public boolean isPortable() {
