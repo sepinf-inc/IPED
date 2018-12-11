@@ -3,14 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.14.5</version>
+    <version>3.15</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
-        <release.dir>${project.build.directory}/release2/iped-${project.version}</release.dir>  
+        <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
         <tools.dir>${release.dir}/tools</tools.dir>
         <conf.dir>${release.dir}/conf</conf.dir>
@@ -152,17 +152,17 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>3.14</version>
+            <version>3.15</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-viewer</artifactId>
-            <version>3.14</version>
+            <version>3.15</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.14</version>
+            <version>3.15</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
