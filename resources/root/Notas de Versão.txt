@@ -30,6 +30,7 @@ Correções:
 - Ocorria scrollToNextHit automático nos chats ao clicar em anexo
 - Corrige caminho de imagens processadas no Linux e abertas no Windows
 - Opção -dname não funcionava p/ relatórios do UFED
+- Raro ConcurrentModificationException abortava processamento
 
 22/10/2018: IPED-3.14.5
 - Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)

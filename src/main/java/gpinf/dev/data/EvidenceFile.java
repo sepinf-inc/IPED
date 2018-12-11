@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -127,7 +128,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private List<Integer> parentIds = new ArrayList<Integer>();
 
-  private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
+  private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
 
   /**
    * Data de criação do arquivo.
