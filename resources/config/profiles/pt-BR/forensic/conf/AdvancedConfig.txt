@@ -88,7 +88,7 @@ minItemSizeToFragment = 104857600
 
 # Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
 # não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
-textSplitSize = 100000000
+textSplitSize = 10000000
 
 ########################################################################
 # Configurações OCR

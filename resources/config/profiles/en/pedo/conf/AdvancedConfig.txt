@@ -88,7 +88,7 @@ minItemSizeToFragment = 104857600
 
 # Size (bytes) of the text segments extracted from items before indexing. Includes all items,
 # not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
-textSplitSize = 100000000
+textSplitSize = 10000000
 
 ########################################################################
 # OCR Settings
