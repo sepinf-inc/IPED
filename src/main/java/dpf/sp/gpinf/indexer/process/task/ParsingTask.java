@@ -25,7 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,6 +74,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -252,7 +252,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     	times.put(getParserName(parser), time);
     }
     
-    if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
+    if (evidence.getTextCache() == null && ((evidence.getLength() == null || 
     		evidence.getLength() < Configuration.minItemSizeToFragment) ||
     		IndexerDefaultParser.isSpecificParser(parser) )) {
         try{
@@ -305,46 +305,22 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     reader.startBackgroundParsing();
 
     try {
-      StringWriter writer;
+      TextCache textCache = new TextCache();
       char[] cbuf = new char[128 * 1024];
       int len = 0;
-      int numFrags = 0;
-      
-      /*ContentHandler handler = new ToTextContentHandler(writer);
-      try {
-        numFrags++;
-		this.autoParser.parse(tis, handler, metadata, context);
-	  } catch (Throwable e) {
-		//e.printStackTrace();
-	  }
-      /*/
-      do {
-        numFrags++;
-        writer = new StringWriter();
-        if(numFrags > 1 && metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
-        	break;
-        while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
-          writer.write(cbuf, 0, len);
-        }
-
-      } while (reader.nextFragment());
-	
-      /**
-       * Armazena o texto extraído em cache até o limite de 1 fragmento, 
-       * o que totaliza ~100MB com o tamanho padrão de fragmento
-       */
-      if (numFrags == 1) {
-        evidence.setParsedTextCache(writer.toString());
-        totalText.addAndGet(evidence.getParsedTextCache().length());
+      while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
+          textCache.write(cbuf, 0, len);
+          //if(metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
+          //  break;
       }
-
+	
+      evidence.setParsedTextCache(textCache);
       evidence.setParsed(true);
+      totalText.addAndGet(textCache.getSize());
 
     } finally {
       //IOUtil.closeQuietly(tis);
-      //do nothing
       reader.close();
-      reader.reallyClose();
       
       metadataToExtraAttribute(evidence);
     }

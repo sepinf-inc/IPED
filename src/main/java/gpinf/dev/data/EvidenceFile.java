@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -45,6 +46,7 @@ import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
 
@@ -192,7 +194,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private boolean isQueueEnd = false, parsed = false;
 
-  private String parsedTextCache;
+  private TextCache textCache;
 
   private String hash;
 
@@ -255,6 +257,12 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       tmpResources.close();
     } catch (Exception e) {
       //LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+    }
+    try {
+        if(textCache != null)
+            textCache.close();
+    } catch (IOException e) {
+        e.printStackTrace();
     }
     if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
       if (!file.delete()) {
@@ -499,9 +507,33 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return o texto extraído do item armazenado pela tarefa de expansão para alguns containers com
    * texto (eml, ppt, etc)
    */
+  @Deprecated
   public String getParsedTextCache() {
-    return parsedTextCache;
+    if(textCache == null)
+        return null;
+    StringBuilder sb = new StringBuilder();
+    try(Reader reader = textCache.getTextReader()){
+        int tot = 0, i = 0;
+        char[] cbuf = new char[64 * 1024];
+        while((tot += i) < 10000000 && (i = reader.read(cbuf)) != -1) {
+            sb.append(cbuf, 0, i);
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return sb.toString();
   }
+  
+  public TextCache getTextCache() {
+      return textCache;
+  }
+  
+  public Reader getTextReader() throws IOException {
+      if(textCache == null)
+          return null;
+      else
+          return textCache.getTextReader();
+    }
 
   /**
    * @return String com o caminho completo do item
@@ -1018,8 +1050,18 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   /**
    * @param parsedTextCache texto extraído após o parsing
    */
-  public void setParsedTextCache(String parsedTextCache) {
-    this.parsedTextCache = parsedTextCache;
+  @Deprecated
+  public void setParsedTextCache(String parsedText) {
+    this.textCache = new TextCache();
+    try {
+        this.textCache.write(parsedText);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+  }
+  
+  public void setParsedTextCache(TextCache textCache) {
+      this.textCache = textCache;
   }
 
   /**

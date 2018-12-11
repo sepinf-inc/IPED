@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -133,11 +134,10 @@ public class NamedEntityTask extends AbstractTask {
         if(!isEnabled)
             return;
         
-        String text = evidence.getParsedTextCache();
         String mime = evidence.getMediaType().toString();
         String categories = evidence.getCategories(); 
         
-        if(text == null)
+        if(evidence.getTextCache() == null)
             return;
         
         for(String ignore : mimeTypesToIgnore)
@@ -147,10 +147,6 @@ public class NamedEntityTask extends AbstractTask {
         for(String ignore : categoriesToIgnore)
             if(categories.contains(ignore))
                 return;
-        
-        int i = text.lastIndexOf(IndexerDefaultParser.METADATA_HEADER);
-        if(i != -1)
-            text = text.substring(0, i);
         
         NamedEntityParser nerParser = null;
         Float langScore = (Float)evidence.getExtraAttribute("language:detected_score_1"); //$NON-NLS-1$
@@ -169,21 +165,33 @@ public class NamedEntityTask extends AbstractTask {
         Metadata metadata = evidence.getMetadata();
         String originalContentType = metadata.get(Metadata.CONTENT_TYPE);
         
-        for(int off = 0; off < text.length(); off += MAX_TEXT_LEN){
-            int end = off + MAX_TEXT_LEN;
-            end = end <= text.length() ? end : text.length();
-            metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
-            String textFrag = text.substring(off, end);
-            try(InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))){
+        
+        char[] cbuf = new char[MAX_TEXT_LEN];
+        int i = 0;
+        try(Reader textReader = evidence.getTextReader()){
+            while(i != -1) {
+                int off = 0; i = 0;
+                while(i != -1 && (off += i) < cbuf.length)
+                    i = textReader.read(cbuf, off, cbuf.length - off);
                 
-                nerParser.parse(is, new IgnoreContentHandler(), metadata, new ParseContext());
+                String textFrag = new String(cbuf, 0, off);
+                //filter out metadata from last frag
+                if(i == -1) {
+                    int k = textFrag.lastIndexOf(IndexerDefaultParser.METADATA_HEADER);
+                    if(k != -1)
+                        textFrag = textFrag.substring(0, k);
+                }
                 
-            }finally{
-                metadata.set(Metadata.CONTENT_TYPE, originalContentType);
+                metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
+                try(InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))){
+                    
+                    nerParser.parse(is, new IgnoreContentHandler(), metadata, new ParseContext());
+                    
+                }finally{
+                    metadata.set(Metadata.CONTENT_TYPE, originalContentType);
+                }
             }
         }
-        
-        
         
     }
 

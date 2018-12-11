@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
 import java.io.File;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -179,10 +180,8 @@ public class RegexTask extends AbstractTask{
 	@Override
 	protected void process(EvidenceFile evidence) throws Exception {
 		
-		if(!enabled || evidence.getParsedTextCache() == null)
+	    if(!enabled || evidence.getTextCache() == null)
 			return;
-		
-		String text = evidence.getParsedTextCache();
 		
 		List<List<Object>> hitList = new ArrayList<List<Object>>();
 		List<List<String>> fragList = new ArrayList<List<String>>();
@@ -191,36 +190,48 @@ public class RegexTask extends AbstractTask{
 			fragList.add(new ArrayList<String>());
 		}
 		
-		AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
-		while(fullMatcher.find()){
-			int start = fullMatcher.start();
-			int end = fullMatcher.end();
-			String hit = text.substring(start, end);
-			int i = 0;
-			for(Regex regex : regexList){
-				if(regex.pattern.run(hit)){
-				    hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
-				    if(!RegexValidation.checkVerificationCode(regex, hit))
-				        continue;
-				    List<Object> hits = hitList.get(i);
-				    hits.add(hit);
-				    /*List<String> frags = fragList.get(i);
-					String frag = text.substring(Math.max(0, start - 50), Math.min(text.length(), end + 50));
-					if(frags.size() > 0) frag = "(...) " + frag;
-					frags.add(frag);
-					*/
-				}
-				i++;
-			}
-		}
-		for(int i = 0; i < regexList.size(); i++){
-			if(hitList.get(i).size() > 0){
-				evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name, hitList.get(i));
-				//evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name + "_Frag", fragList.get(i));
-				if(regexList.get(i).name.equals(KEYWORDS_NAME))
-				    evidence.setToExtract(true);
-			}
-		}
+		char[] cbuf= new char[1000000];
+        int k = 0;
+        try(Reader reader = evidence.getTextReader()){
+            while(k != -1) {
+                int off = 0; k = 0;
+                while(k != -1 && (off += k) < cbuf.length)
+                    k = reader.read(cbuf, off, cbuf.length - off);
+                
+                String text = new String(cbuf, 0, off);
+                
+                AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
+                while(fullMatcher.find()){
+                    int start = fullMatcher.start();
+                    int end = fullMatcher.end();
+                    String hit = text.substring(start, end);
+                    int i = 0;
+                    for(Regex regex : regexList){
+                        if(regex.pattern.run(hit)){
+                            hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+                            if(!RegexValidation.checkVerificationCode(regex, hit))
+                                continue;
+                            List<Object> hits = hitList.get(i);
+                            hits.add(hit);
+                            /*List<String> frags = fragList.get(i);
+                            String frag = text.substring(Math.max(0, start - 50), Math.min(text.length(), end + 50));
+                            if(frags.size() > 0) frag = "(...) " + frag;
+                            frags.add(frag);
+                            */
+                        }
+                        i++;
+                    }
+                }
+                for(int i = 0; i < regexList.size(); i++){
+                    if(hitList.get(i).size() > 0){
+                        evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name, hitList.get(i));
+                        //evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name + "_Frag", fragList.get(i));
+                        if(regexList.get(i).name.equals(KEYWORDS_NAME))
+                            evidence.setToExtract(true);
+                    }
+                }
+            }
+        }
 	}
 
 }

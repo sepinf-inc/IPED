@@ -32,12 +32,11 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
@@ -47,6 +46,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
+import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -251,8 +251,8 @@ public class Configuration {
     	textSplitSize = Integer.valueOf(value.trim());
     }
     
-    ParsingReader.setTextSplitSize(textSplitSize);
-    ParsingReader.setTextOverlapSize(textOverlapSize);
+    FragmentingReader.setTextSplitSize(textSplitSize);
+    FragmentingReader.setTextOverlapSize(textOverlapSize);
     FastPipedReader.setTimeout(timeOut);
 
     value = properties.getProperty("entropyTest"); //$NON-NLS-1$

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.Reader;
 
 import com.optimaize.langdetect.DetectedLanguage;
 import com.optimaize.langdetect.LanguageDetector;
@@ -69,18 +70,26 @@ public class LanguageDetectTask extends AbstractTask {
         if(evidence.getMediaType().equals(MediaType.OCTET_STREAM))
             return;
         
-        String text = evidence.getParsedTextCache();
-        if(text == null || text.isEmpty())
+        if(evidence.getTextCache() == null)
             return;
+        
+        char[] cbuf= new char[MAX_CHARS];
+        int i = 0, off = 0;
+        try(Reader reader = evidence.getTextReader()){
+            while(i != -1 && (off += i) < MAX_CHARS)
+                i = reader.read(cbuf, off, MAX_CHARS - off);
+        }
+        
+        if(off == 0)
+            return;
+        
+        String text = new String(cbuf, 0, off);
         
         int start = text.lastIndexOf(IndexerDefaultParser.METADATA_HEADER);
         if(start != -1)
             text = text.substring(0, start);
         
-        if(text.length() > MAX_CHARS)
-            text = text.substring(0, MAX_CHARS);
-        
-        int i = 0;
+        i = 0;
         List<DetectedLanguage> langs = null;
         try {
         	langs = detector.getProbabilities(text);

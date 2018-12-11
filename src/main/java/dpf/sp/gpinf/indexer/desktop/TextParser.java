@@ -381,7 +381,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
       }
 
-      textReader.reallyClose();
+      textReader.close();
 
     } catch (InterruptedIOException | ClosedByInterruptException e1) {
       //e1.printStackTrace();
