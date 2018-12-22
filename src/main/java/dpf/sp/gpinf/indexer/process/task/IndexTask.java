@@ -143,10 +143,10 @@ public class IndexTask extends BaseCarveTask {
       if(textReader == null)
           textReader = new StringReader(""); //$NON-NLS-1$
     
-      CloseFilterReader noCloseReader = new CloseFilterReader(textReader);
-      FragmentingReader fragReader = new FragmentingReader(noCloseReader);
+      FragmentingReader fragReader = new FragmentingReader(textReader);
+      CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
     
-      Document doc = IndexItem.Document(evidence, fragReader, output);
+      Document doc = IndexItem.Document(evidence, noCloseReader, output);
       int fragments = 0;
       try {
         /* Indexa os arquivos dividindo-os em fragmentos, pois a lib de
