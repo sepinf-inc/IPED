@@ -136,7 +136,7 @@ public class SleuthkitClient {
     } catch (Exception e) {
       //e.printStackTrace();
       if (process != null) {
-        process.destroy();
+        process.destroyForcibly();
       }
       process = null;
     }
@@ -165,7 +165,7 @@ public class SleuthkitClient {
 
     if (serverError || (openedStreams > max_streams && currentStreams.size() == 0)) {
       if (process != null) {
-        process.destroy();
+        process.destroyForcibly();
       }
       process = null;
       if (!serverError) 
@@ -195,7 +195,7 @@ public class SleuthkitClient {
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
       public void run() {
-        p.destroy();
+        p.destroyForcibly();
       }
     });
   }

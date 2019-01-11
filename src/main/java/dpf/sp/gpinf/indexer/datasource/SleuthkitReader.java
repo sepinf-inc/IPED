@@ -365,7 +365,7 @@ public class SleuthkitReader extends DataSourceReader {
       }
 
     } catch (InterruptedException ie) {
-      process.destroy();
+      process.destroyForcibly();
     }
 
     LOGGER.info("Image decoded: {}", image.getAbsolutePath()); //$NON-NLS-1$
