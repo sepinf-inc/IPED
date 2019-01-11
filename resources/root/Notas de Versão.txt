@@ -1,7 +1,17 @@
+11/01/2019: IPED-3.15.1
+- Atualização para Tika-1.20 (tratamento de chars rotacionados em PDFs, correções)
+- Substituidas todas as chamadas process.destroy() por destroyForcibly() (melhoria pro Linux)
+Correções:
+- "IOException: Stream closed" durante indexação que abortava processamento (3.15)
+- Timezone incorreto em datas de chats extraídos pelo UFED (PCF Pfeifer) (3.14)
+- Inclui DLLs faltantes no Imagemagick-7.0.8-14 (3.15)
+- Loga erro ao invés de abortar caso externalParsers não estejam instalados no Linux
+- Ignora UnsupportedEncodingException no GenericOLEParser
+
 11/12/2018: IPED-3.15
 - Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
 - Suporte a relatórios UFDR do Physical Analyzer
-- Suporte a imagens lógicas AD1 (contribuição Guilherme Dutra SEF/MG)
+- Suporte a imagens lógicas AD1 v3 (contribuição Guilherme Dutra SEF/MG)
 - Suporte a imagens heic geradas pelo IOS 11+
 - Externalização da configuração da MakePreviewTask
 - Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml, firstLinesToIgnore
