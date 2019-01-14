@@ -1,12 +1,13 @@
 11/01/2019: IPED-3.15.1
 - Atualização para Tika-1.20 (tratamento de chars rotacionados em PDFs, correções)
-- Substituidas todas as chamadas process.destroy() por destroyForcibly() (melhoria pro Linux)
-Correções:
-- "IOException: Stream closed" durante indexação que abortava processamento (3.15)
-- Timezone incorreto em datas de chats extraídos pelo UFED (PCF Pfeifer) (3.14)
-- Inclui DLLs faltantes no Imagemagick-7.0.8-14 (3.15)
 - Loga erro ao invés de abortar caso externalParsers não estejam instalados no Linux
+Correções:
+- Substituídas todas as chamadas process.destroy() por destroyForcibly() (mata 'convert' travados e outros no Linux)
+- "IOException: Stream closed" durante indexação que abortava processamento (3.15)
+- Timezone incorreto em datas de chats decodificados pelo UFED (PCF Pfeifer) (3.14)
+- Inclui DLLs faltantes no Imagemagick-7.0.8-14 (3.15)
 - Ignora UnsupportedEncodingException no GenericOLEParser
+- Mata parsers externos listados em conf/ExternalParsers.xml após timeout
 
 11/12/2018: IPED-3.15
 - Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
