@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.util;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
@@ -12,7 +11,6 @@ import java.nio.file.StandardCopyOption;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
-import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -20,7 +18,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     
     private static int MAX_MEM_BYTES = 1 << 24;
 
-    private ZipFile zip;
+    private ZipFile4j zip;
     
     public ZIPInputStreamFactory(Path dataSource) {
         super(dataSource);
@@ -28,7 +26,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     
     private synchronized void init() throws ZipException {
         if(zip == null) {
-            zip = new ZipFile(this.dataSource.toFile());
+            zip = new ZipFile4j(this.dataSource.toFile());
             /*File file = dataSource.toFile();
             File part1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf('.')) + ".z01");
             SequenceSeekableByteChannel ssbc = new SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()), Files.newByteChannel(dataSource));

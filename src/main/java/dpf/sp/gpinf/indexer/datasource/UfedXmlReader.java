@@ -1,19 +1,14 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.SequenceInputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -47,18 +42,14 @@ import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.SequenceSeekableByteChannel;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
-import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -74,7 +65,7 @@ public class UfedXmlReader extends DataSourceReader{
     public static final String UFED_EMAIL_MIME = "message/x-ufed-email"; //$NON-NLS-1$
     
     File root, ufdrFile;
-    ZipFile ufdr;
+    ZipFile4j ufdr;
     ZIPInputStreamFactory zisf;
     EvidenceFile rootItem;
     EvidenceFile decodedFolder;
@@ -119,7 +110,7 @@ public class UfedXmlReader extends DataSourceReader{
                 ufdrFile = file;
                 //File part1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf('.')) + ".z01");
                 //SequenceSeekableByteChannel ssbc = new SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()), Files.newByteChannel(ufdrFile.toPath()));
-                ufdr = new ZipFile(file);
+                ufdr = new ZipFile4j(file);
                 FileHeader xml = ufdr.getFileHeader("report.xml");
                 if(xml == null) xml = ufdr.getFileHeader("Report.xml");
                 return ufdr.getInputStream(xml);
