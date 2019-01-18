@@ -51,6 +51,8 @@ public class ImageThumbTask extends AbstractTask {
 
   private boolean taskEnabled = false;
 
+  private GraphicsMagicConverter graphicsMagicConverter;
+
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 
@@ -99,7 +101,7 @@ public class ImageThumbTask extends AbstractTask {
     if (value != null && !value.trim().isEmpty()) {
     	logGalleryRendering = Boolean.valueOf(value.trim());
     }
-    
+    graphicsMagicConverter = new GraphicsMagicConverter(executor);
   }
 
   @Override
@@ -111,6 +113,8 @@ public class ImageThumbTask extends AbstractTask {
   public void finish() throws Exception {
       if(!executor.isShutdown())
           executor.shutdownNow();
+
+      graphicsMagicConverter.close();
   }
 
   @Override
@@ -197,7 +201,7 @@ public class ImageThumbTask extends AbstractTask {
       }
       if (img == null) {
         try (BufferedInputStream stream = evidence.getBufferedStream()){
-          img = new GraphicsMagicConverter().getImage(stream, thumbSize * samplingRatio, true);
+          img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, true);
           if(img != null)
         	  evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
           dimension = null;
