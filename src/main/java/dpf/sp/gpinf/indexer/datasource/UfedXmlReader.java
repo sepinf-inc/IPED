@@ -1,18 +1,14 @@
 package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.BufferedWriter;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -29,7 +25,6 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
-import org.apache.tika.io.ProxyInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
@@ -49,9 +44,6 @@ import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -143,14 +135,20 @@ public class UfedXmlReader extends DataSourceReader{
 
     @Override
     public int read(File root) throws Exception {
+        read(root, null);
+        return 0;
+    }
+
+    @Override
+    public void read(File root, EvidenceFile parent) throws Exception {
         
         this.root = root;
-        addRootItem();
+        addRootItem(parent);
         addVirtualDecodedFolder();
         InputStream xmlStream = lookUpXmlReportInputStream(root);
-        
+
         configureParsers();
-        
+
         SAXParserFactory spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
         SAXParser saxParser = spf.newSAXParser();
@@ -162,7 +160,6 @@ public class UfedXmlReader extends DataSourceReader{
         IOUtil.closeQuietly(xmlStream);
         IOUtil.closeQuietly(ufdr);
         
-        return 0;
     }
     
     private void configureParsers() {
@@ -170,37 +167,46 @@ public class UfedXmlReader extends DataSourceReader{
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             
         }else if(Configuration.phoneParsersToUse.equals("external")) //$NON-NLS-1$
-            WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
+            WhatsAppParser.setSupportedTypes(Collections.emptySet());
     }
     
-    private void addRootItem() throws InterruptedException {
-        
-        if(listOnly)
-            return;
-        
-        String evidenceName = getEvidenceName(root);
-        if (evidenceName == null)
-            evidenceName = root.getName();
-        DataSource evidenceSource = new DataSource(root);
-        evidenceSource.setName(evidenceName);
-        
-        rootItem = new EvidenceFile();
-        rootItem.setRoot(true);
-        rootItem.setDataSource(evidenceSource);
-        rootItem.setPath(evidenceName);
-        rootItem.setName(evidenceName);
-        rootItem.setHasChildren(true);
-        if(root.getName().endsWith(".ufdr")) {
-            rootItem.setLength(root.length());
-            rootItem.setSumVolume(false);
-        }
-        rootItem.setHash(""); //$NON-NLS-1$
-        
-        pathToParent.put(rootItem.getPath(), rootItem);
-        
-        caseData.incDiscoveredEvidences(1);
-        caseData.addEvidenceFile(rootItem);
+    private void addRootItem(EvidenceFile parent) throws InterruptedException {
+      
+      if(listOnly)
+          return;
+      
+      String evidenceName = getEvidenceName(root);
+      if (evidenceName == null)
+          evidenceName = root.getName();
+      DataSource evidenceSource = new DataSource(root);
+      evidenceSource.setName(evidenceName);
+      
+      rootItem = new EvidenceFile();
+      rootItem.setDataSource(evidenceSource);
+      rootItem.setHasChildren(true);
+      if(root.getName().endsWith(".ufdr")) {
+        rootItem.setLength(root.length());
+        rootItem.setSumVolume(false);
     }
+      //rootItem.setLength(0L);
+      rootItem.setHash(""); //$NON-NLS-1$
+      
+      if (parent != null) {
+        rootItem.setName(root.getName());
+        rootItem.setParent(parent);
+        rootItem.setPath(parent.getPath() + File.separator + root.getName());
+      } else {
+        rootItem.setPath(evidenceName);
+        rootItem.setRoot(true);
+        rootItem.setName(evidenceName);
+      }
+      rootItem.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+
+      pathToParent.put(rootItem.getPath(), rootItem);
+      
+      caseData.incDiscoveredEvidences(1);
+      caseData.addEvidenceFile(rootItem);
+  }
     
     private void addVirtualDecodedFolder() throws InterruptedException {
         
@@ -253,9 +259,7 @@ public class UfedXmlReader extends DataSourceReader{
         ArrayList<EvidenceFile> itemSeq = new ArrayList<>();
         
         HashSet<String> elements = new HashSet<>();
-        HashSet<String> types = new HashSet<>();
         
-        HashMap<String, EvidenceFile> ids = new HashMap<>();
         
         private class XmlNode{
             String element;

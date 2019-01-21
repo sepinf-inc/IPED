@@ -70,6 +70,7 @@ public class ItemProducer extends Thread {
       IPEDReader.class,
       UfedXmlReader.class,
       AD1DataSourceReader.class,
+      IpedCaseReader.class,
       FolderTreeReader.class //deve ser o último
     };
 

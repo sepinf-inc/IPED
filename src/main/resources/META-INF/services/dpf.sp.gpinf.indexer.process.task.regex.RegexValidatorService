@@ -1,0 +1,12 @@
+br.gov.pf.labld.iped.regex.CPFRegexValidatorService
+br.gov.pf.labld.iped.regex.CNPJRegexValidatorService
+br.gov.pf.labld.iped.swift.SwiftCodeRegexValidatorService
+br.gov.pf.labld.iped.regex.CNHValidatorService
+br.gov.pf.labld.iped.regex.PisPasepRegexValidatorService
+br.gov.pf.labld.iped.regex.BoletoRegexValidatorService
+br.gov.pf.labld.iped.regex.TituloEleitorRegexValidatorService
+br.gov.pf.labld.iped.regex.CreditCardRegexValidatorService
+br.gov.pf.labld.iped.regex.TelefoneRegexValidatorService
+br.gov.pf.labld.iped.regex.PlacaRegexValidatorService
+br.gov.pf.labld.iped.regex.IPLRegexValidatorService
+br.gov.pf.labld.iped.regex.FacebookContactValidatorService

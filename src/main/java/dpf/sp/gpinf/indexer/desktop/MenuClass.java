@@ -31,7 +31,7 @@ public class MenuClass extends JPopupMenu {
   JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores,
       carregarMarcadores, aumentarGaleria, diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras, navigateToParent, exportTerms,
       gerenciarFiltros, gerenciarColunas, exportCheckedToZip, exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport, resetColLayout, lastColLayout,
-      saveColLayout;
+      saveColLayout, addToGraph;
 
   MenuListener menuListener;
 
@@ -184,6 +184,10 @@ public class MenuClass extends JPopupMenu {
     createReport = new JMenuItem("Gerar Relatório Indexado"); //$NON-NLS-1$
     createReport.addActionListener(menuListener);
     this.add(createReport);
+
+    addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+    addToGraph.addActionListener(menuListener);
+    this.add(addToGraph);
 
   }
 

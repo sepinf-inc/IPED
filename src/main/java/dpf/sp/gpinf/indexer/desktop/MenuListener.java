@@ -23,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -345,6 +346,14 @@ public class MenuListener implements ActionListener {
     
     }else if(e.getSource() == menu.resetColLayout) {
         ColumnsManager.getInstance().resetToDefaultLayout();
+    } else if (e.getSource() == menu.addToGraph) {
+      int[] rows = App.get().resultsTable.getSelectedRows();
+      List<ItemId> items = new ArrayList<>(rows.length);
+      for (int selIdx : rows) {
+        ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+        items.add(itemId);
+      }
+      App.get().appGraphAnalytics.addEvidenceFilesToGraph(items);
     }
 
   }

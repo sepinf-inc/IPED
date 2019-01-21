@@ -47,6 +47,10 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.gov.pf.labld.graph.GraphImportRunner;
+import br.gov.pf.labld.graph.GraphService;
+import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
+import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
@@ -401,6 +405,30 @@ public class Manager {
 
     if (FTK3ReportReader.wasExecuted) {
       new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
+    }
+    
+    if (GraphTask.isGraphGenerationEnabled(Configuration.properties)) {
+      File graphDbOutput = new File(output, GraphTask.DB_PATH);
+      File graphDbGenerated = new File(Configuration.indexerTemp, GraphTask.GENERATED_PATH);
+
+      GraphImportRunner runner = new GraphImportRunner(graphDbGenerated);
+      runner.run(graphDbOutput, GraphTask.DB_NAME, Configuration.outputOnSSD);
+      File graphGeneratedOutput = new File(output, GraphTask.GENERATED_PATH);
+      try {
+        Files.move(graphDbGenerated.toPath(), graphGeneratedOutput.toPath());
+      } catch (IOException e) {
+        IOUtil.copiaDiretorio(graphDbGenerated, graphGeneratedOutput);
+      }
+      GraphService graphService = null;
+      try {
+        graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+        graphService.start(graphDbOutput, GraphTask.loadConfiguration(new File(Configuration.configPath, "conf")));
+        graphService.runPostGenerationStatements();
+      } finally {
+        if (graphService != null) {
+          graphService.stop();
+        }
+      }
     }
 
   }

@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -92,6 +93,9 @@ public class SleuthkitReader extends DataSourceReader {
   private ArrayList<Integer> parentIds = new ArrayList<Integer>();
   
   private ArrayList<Long> tskParentIds = new ArrayList<Long>();
+  
+  private List<Integer> inheritedParents;
+  private String inheritedPath;
 
   private AddImageProcess addImage;
   private static volatile Thread waitLoadDbThread;
@@ -225,22 +229,23 @@ public class SleuthkitReader extends DataSourceReader {
     tskChecked = true;
   }
 
-  public int read(File image) throws Exception {
+  @Override
+  public void read(File image, EvidenceFile parent) throws Exception {
 
     checkTSKVersion();
 
     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
     if (args.getProfile() != null) {
-    	if(args.getProfile().equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
-    		fastmode = true;
+        if(args.getProfile().equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
+            fastmode = true;
     }
     
     int offset = TimeZone.getDefault().getRawOffset() / 3600000;
     String timezone = "GMT" + (-offset); //$NON-NLS-1$
     if (args.getTimezone() != null) { //$NON-NLS-1$
-    	timezone = args.getTimezone();
-    	if(timezone.contains("+")) timezone = timezone.replace('+', '-'); //$NON-NLS-1$
-    	else timezone = timezone.replace('-', '+');
+        timezone = args.getTimezone();
+        if(timezone.contains("+")) timezone = timezone.replace('+', '-'); //$NON-NLS-1$
+        else timezone = timezone.replace('-', '+');
     }
     
     int sectorSize = args.getBlocksize();
@@ -252,8 +257,16 @@ public class SleuthkitReader extends DataSourceReader {
     tskParentIds.clear();
     
     deviceName = getEvidenceName(image);
-    dataSource = new DataSource(image);
-    dataSource.setName(deviceName);
+    if (parent == null) {
+      dataSource = new DataSource(image);
+      dataSource.setName(deviceName);
+      inheritedParents = Collections.emptyList();
+      inheritedPath = "";
+    } else {
+      inheritedParents = new ArrayList<>(parent.getParentIds());
+      inheritedParents.add(parent.getId());
+      inheritedPath = parent.getPath();
+    }
 
     String dbPath = output.getParent() + File.separator + DB_NAME;
 
@@ -305,13 +318,13 @@ public class SleuthkitReader extends DataSourceReader {
           if (cmd[i].equals(DB_NAME))
             cmd[i] = dbPath;
           if (cmd[i].equals(IMG_NAME)){
-        	  if(isTskPatched){
-              	cmd[TSK_CMD.length - 1] = "-z"; //$NON-NLS-1$
-              	cmd[TSK_CMD.length] = timezone;
+              if(isTskPatched){
+                cmd[TSK_CMD.length - 1] = "-z"; //$NON-NLS-1$
+                cmd[TSK_CMD.length] = timezone;
               }
               if(sectorSize > 0){
-              	cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
-              	cmd[cmdLen - 2] = "" + sectorSize; //$NON-NLS-1$
+                cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
+                cmd[cmdLen - 2] = "" + sectorSize; //$NON-NLS-1$
               }
               cmd[cmdLen - 1] = image.getAbsolutePath();
           }
@@ -348,11 +361,15 @@ public class SleuthkitReader extends DataSourceReader {
     java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$
     
     if(!(listOnly && fastmode))
-    	readItensAdded(image);
+        readItensAdded(image);
     
     else if(waitLoadDbThread != null)
         waitLoadDbThread.join();
 
+  }
+
+  public int read(File image) throws Exception {
+    read(image, null);
     return 0;
   }
 

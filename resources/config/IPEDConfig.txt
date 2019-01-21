@@ -55,6 +55,11 @@ enableLanguageDetect = true
 # Configurações avançadas podem ser alteradas em conf/NamedEntityRecognitionConfig.txt
 enableNamedEntityRecogniton = false
 
+# Função EXPERIMENTAL para geração de mapa de vínculos.
+# Utiliza o banco de dados neo4j.
+# Depende da geracao de expressoes regulares.
+enableGraphGeneration = true
+
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 

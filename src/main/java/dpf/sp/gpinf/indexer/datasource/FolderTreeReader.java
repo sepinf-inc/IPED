@@ -18,11 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
-import gpinf.dev.data.FileGroup;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -32,15 +27,23 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.text.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.FileGroup;
 
 public class FolderTreeReader extends DataSourceReader {
 	
@@ -58,26 +61,49 @@ public class FolderTreeReader extends DataSourceReader {
   }
 
   public int read(File file) throws Exception {
-	  
-	args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-
-    rootFile = file;
     evidenceName = getEvidenceName(file);
     if (evidenceName == null) {
       evidenceName = file.getName();
     }
     dataSource = new DataSource(file);
     dataSource.setName(evidenceName);
+    read(file, null);
+    return 0;
+
+  }
+
+  @Override
+  public void read(File file, EvidenceFile parent) throws Exception {
+    args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+    evidenceName = getEvidenceName(file);
+    if (evidenceName == null) {
+      evidenceName = file.getName();
+    }
+
+    rootFile = file;
 
     if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
       category = file.getName();
       caseData.addBookmark(new FileGroup(category, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    new FolderVisitor().walk(file);
+    List<Integer> parents;
+    List<String> paths;
+    if (parent != null) {
+      parents = parent.getParentIds();
+      parents.add(parent.getId());
 
-    return 0;
+      StringTokenizer stringTokenizer = new StringTokenizer(parent.getPath(), File.separator);
+      paths = stringTokenizer.getTokenList();
+    } else {
+      parents = Collections.emptyList();
+      paths = Collections.emptyList();
+    }
+    transverse(file, parents, paths);
+  }
 
+  private void transverse(File file, List<Integer> parents, List<String> paths) throws IOException {
+    new FolderVisitor(parents, paths).walk(file);
   }
 
   private EvidenceFile getEvidence(Path path, BasicFileAttributes attr) {
@@ -126,7 +152,20 @@ public class FolderTreeReader extends DataSourceReader {
 
   class FolderVisitor implements FileVisitor<Path> {
 
-    private LinkedList<Integer> parentIds = new LinkedList<Integer>();
+    private LinkedList<Integer> parentIds;
+    private LinkedList<String> paths;
+
+    /**
+     * Proteção caso postVisitDirectory seja chamado após SKIP_SUBTREE em
+     * preVisitDirectory?
+     */
+    private boolean removedInPreVisit = false;
+
+    public FolderVisitor(List<Integer> parentIds, List<String> paths) {
+      super();
+      this.parentIds = new LinkedList<>(parentIds);
+      this.paths = new LinkedList<>(paths);
+    }
 
     public void walk(File file) throws IOException {
       Path startingDir = file.toPath();
@@ -144,13 +183,22 @@ public class FolderTreeReader extends DataSourceReader {
         if (!parentIds.isEmpty()) {
           evidenceFile.setParentId(parentIds.getLast());
           evidenceFile.addParentIds(parentIds);
+          
+          if (parentIds.size() == 2) {
+            evidenceFile.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+          }
         } else {
           evidenceFile.setRoot(true);
         }
 
+        String fileName = path.getFileName().toString();
+        String evidencePath = paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
+        evidenceFile.setPath(evidencePath);
+
         if (attr.isDirectory()) {
           evidenceFile.setIsDir(true);
           parentIds.addLast(evidenceFile.getId());
+          paths.addLast(fileName);
         }
 
         evidenceFile.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
@@ -172,12 +220,16 @@ public class FolderTreeReader extends DataSourceReader {
     @Override
     public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
+      removedInPreVisit = false;
+
       if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
         return FileVisitResult.TERMINATE;
       }
 
       if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
         parentIds.pollLast();
+        paths.pollLast();
+        removedInPreVisit = true;
         return FileVisitResult.SKIP_SUBTREE;
 
       }
@@ -188,10 +240,16 @@ public class FolderTreeReader extends DataSourceReader {
     @Override
     public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-      parentIds.pollLast();
+      if (!removedInPreVisit) {
+        parentIds.pollLast();
+        paths.pollLast();
+      }
+
+      removedInPreVisit = false;
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[WARN]\t" + "Directory ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            + exception.toString());
       }
 
       return FileVisitResult.CONTINUE;
@@ -201,7 +259,8 @@ public class FolderTreeReader extends DataSourceReader {
     public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[WARN]\t" + "File ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            + exception.toString());
       }
 
       return FileVisitResult.CONTINUE;

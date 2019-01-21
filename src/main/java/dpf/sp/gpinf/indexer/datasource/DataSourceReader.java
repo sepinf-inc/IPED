@@ -18,12 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-
 import java.io.File;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.EvidenceFile;
 
 /**
  * Classe abstrata base para leitura dos itens de uma fonte de dados (pasta, imagem forense,
@@ -87,6 +87,18 @@ public abstract class DataSourceReader {
    * @throws Exception Caso algum erro inesperado ocorra durante a leitura dos dados
    */
   public abstract int read(File datasource) throws Exception;
+
+  /**
+   * Lê a fonte de dados informada considerando a evidencia passada como parent.
+   * @param datasource Fonte de dados que será processada/lida.
+   * @param parent Evidencia parent.
+   * @throws Exception
+   * @see DataSourceReader#read(File)
+   */
+  public void read(File datasource, EvidenceFile parent) throws Exception {
+    throw new IllegalAccessException("Method read(File datasource, EvidenceFile parent) not implemented in class "
+        + this.getClass().getName() + ".");
+  }
 
   /**
    *

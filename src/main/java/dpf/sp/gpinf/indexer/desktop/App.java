@@ -69,7 +69,6 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.StackDockStation;
@@ -84,6 +83,8 @@ import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
+import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -128,6 +129,7 @@ public class App extends JFrame implements WindowListener {
   GalleryTable gallery;
   public HitsTable hitsTable;
   AppMapaPanel browserPane;
+  AppGraphAnalytics appGraphAnalytics;
   
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
@@ -139,7 +141,7 @@ public class App extends JFrame implements WindowListener {
   BookmarksTreeListener bookmarksListener;
   HitsTable parentItemTable;
   CControl dockingControl;
-  DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+  DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock, graphDock;
   DefaultSingleCDockable tableTabDock, galleryTabDock;
   public DefaultSingleCDockable mapTabDock, hitsDock, subitemDock, parentDock;
   DefaultSingleCDockable compositeViewerDock;
@@ -453,6 +455,8 @@ public class App extends JFrame implements WindowListener {
         mapsScroll = new JScrollPane(browserPane);
     }
 
+    appGraphAnalytics = new AppGraphAnalytics();
+
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
     hitsScroll = new JScrollPane(hitsTable);
@@ -657,7 +661,8 @@ public class App extends JFrame implements WindowListener {
 			}
 		});
 	}
-	
+	graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+
 	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	parentDock = createDockable("parentitemtab",  Messages.getString("ParentTableModel.ParentCount"), parentItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
@@ -685,6 +690,7 @@ public class App extends JFrame implements WindowListener {
 	dockingControl.addDockable(tableTabDock);
 	dockingControl.addDockable(galleryTabDock);
 	dockingControl.addDockable(mapTabDock);
+  dockingControl.addDockable(graphDock);
 	dockingControl.addDockable(hitsDock);
 	dockingControl.addDockable(subitemDock);
 	dockingControl.addDockable(parentDock);
@@ -696,7 +702,7 @@ public class App extends JFrame implements WindowListener {
   private void removeAllDockables() {
 	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
 	  compositeViewerDock, hitsDock, subitemDock, parentDock, tableTabDock, galleryTabDock,
-	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
+	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock };
 	
 	for (DefaultSingleCDockable dockable : dockables) {
 	  if (dockable != null) {
@@ -836,7 +842,10 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setLocation(nextLocation);
 	    mapTabDock.setVisible(true);
 	  }
-	        
+
+    graphDock.setLocation(nextLocation);
+    graphDock.setVisible(true);
+
 	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
 	  hitsDock.setVisible(true);
 	  nextLocation = hitsDock.getBaseLocation().aside();
@@ -887,6 +896,9 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setLocation(nextLocation);
 	    mapTabDock.setVisible(true);
 	  }
+	  
+    graphDock.setLocation(nextLocation);
+    graphDock.setVisible(true);
 	        
 	  hitsDock.setLocation(CLocation.base().normalSouth(0.3));
 	  hitsDock.setVisible(true);

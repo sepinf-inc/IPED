@@ -36,7 +36,7 @@ numThreads = default
 # Caminho absoluto obrigatório para o Tsk_DataModel.jar compilado em sistemas Linux ou MacOS.
 # É distribuída versão com patch para Windows com diversas correções de bugs e otimizações. 
 # No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
-#tskJarPath = /home/user/tsk-4.3-src-folder/bindings/java/dist/Tsk_DataModel.jar
+tskJarPath = /home/positivo/sleuthkit-4.6.0/bindings/java/dist/sleuthkit-4.6.0.jar
 
 # Caminho para mplayer em sistemas Windows.
 # Em sistemas Linux deve estar no PATH, não precisando comentar a variável abaixo.

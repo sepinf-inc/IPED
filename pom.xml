@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.15.1</version>
+    <version>3.15.1-av</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -35,8 +35,29 @@
             <url>http://repo1.maven.org/maven2</url>
         </repository>
     </repositories>
-    
+
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>8.9.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>3.4.10-shaded</version>
+        </dependency>
+        <dependency>
+            <groupId>org.kharon</groupId>
+            <artifactId>kharon</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
       <dependency>
           <groupId>com.beust</groupId>
           <artifactId>jcommander</artifactId>
@@ -226,7 +247,7 @@
                                     <version>1.8.0_152</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/jre</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -655,6 +676,28 @@
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
                                     <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-gui-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>*.netbeans_automatic_build*</exclude>
+                            </excludes>
+                            <finalName>iped-gui</finalName>
+                            <outputDirectory>${release.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                    <mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
