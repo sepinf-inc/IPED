@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,7 +49,11 @@ public class ItemSearcherImpl implements ItemSearcher{
 		
 		return items;
 	}
-	
-	
 
+  @Override
+  public void close() throws IOException {
+    if(iSource != null)
+      iSource.close();
+  }
+	
 }

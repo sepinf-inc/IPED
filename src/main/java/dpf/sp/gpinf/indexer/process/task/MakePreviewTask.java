@@ -145,7 +145,7 @@ public class MakePreviewTask extends AbstractTask {
 
   private void makeHtmlPreview(EvidenceFile evidence, File outFile, String mediaType) throws Throwable {
     BufferedOutputStream outStream = null;
-    try {
+    try (ItemSearcherImpl itemSearcher = new ItemSearcherImpl(output.getParentFile(), worker.writer)){
       final Metadata metadata = new Metadata();
       ParsingTask.fillMetadata(evidence, metadata);
       
@@ -153,7 +153,7 @@ public class MakePreviewTask extends AbstractTask {
       final TikaInputStream tis = evidence.getTikaStream();
       
       final ParseContext context = new ParseContext();
-      context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+      context.set(ItemSearcher.class, itemSearcher);
       context.set(Item.class, evidence);
       context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
       

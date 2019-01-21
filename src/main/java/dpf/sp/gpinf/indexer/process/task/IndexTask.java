@@ -129,8 +129,14 @@ public class IndexTask extends BaseCarveTask {
             try {
                 TikaInputStream tis = evidence.getTikaStream();
                 Metadata metadata = getMetadata(evidence);
-                ParseContext context = getTikaContext(evidence);
-                textReader = new ParsingReader(this.autoParser, tis, metadata, context);
+                final ParseContext context = getTikaContext(evidence);
+                textReader = new ParsingReader(this.autoParser, tis, metadata, context) {
+                  @Override
+                  public void close() throws IOException {
+                    IOUtil.closeQuietly(context.get(ItemSearcher.class));
+                    super.close();
+                  }
+                };
                 ((ParsingReader)textReader).startBackgroundParsing();
                 
             } catch (IOException e) {
