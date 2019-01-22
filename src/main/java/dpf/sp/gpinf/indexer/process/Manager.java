@@ -408,29 +408,33 @@ public class Manager {
     }
     
     if (GraphTask.isGraphGenerationEnabled(Configuration.properties)) {
-      File graphDbOutput = new File(output, GraphTask.DB_PATH);
-      File graphDbGenerated = new File(Configuration.indexerTemp, GraphTask.GENERATED_PATH);
-
-      GraphImportRunner runner = new GraphImportRunner(graphDbGenerated);
-      runner.run(graphDbOutput, GraphTask.DB_NAME, Configuration.outputOnSSD);
-      File graphGeneratedOutput = new File(output, GraphTask.GENERATED_PATH);
-      try {
-        Files.move(graphDbGenerated.toPath(), graphGeneratedOutput.toPath());
-      } catch (IOException e) {
-        IOUtil.copiaDiretorio(graphDbGenerated, graphGeneratedOutput);
-      }
-      GraphService graphService = null;
-      try {
-        graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-        graphService.start(graphDbOutput, GraphTask.loadConfiguration(new File(Configuration.configPath, "conf")));
-        graphService.runPostGenerationStatements();
-      } finally {
-        if (graphService != null) {
-          graphService.stop();
-        }
-      }
+      finishGraphGeneration();
     }
 
+  }
+
+  private void finishGraphGeneration() throws IOException {
+    File graphDbOutput = new File(output, GraphTask.DB_PATH);
+    File graphDbGenerated = new File(Configuration.indexerTemp, GraphTask.GENERATED_PATH);
+
+    GraphImportRunner runner = new GraphImportRunner(graphDbGenerated);
+    runner.run(graphDbOutput, GraphTask.DB_NAME, Configuration.outputOnSSD);
+    File graphGeneratedOutput = new File(output, GraphTask.GENERATED_PATH);
+    try {
+      Files.move(graphDbGenerated.toPath(), graphGeneratedOutput.toPath());
+    } catch (IOException e) {
+      IOUtil.copiaDiretorio(graphDbGenerated, graphGeneratedOutput);
+    }
+    GraphService graphService = null;
+    try {
+      graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+      graphService.start(graphDbOutput, GraphTask.loadConfiguration(new File(Configuration.configPath, "conf")));
+      graphService.runPostGenerationStatements();
+    } finally {
+      if (graphService != null) {
+        graphService.stop();
+      }
+    }
   }
   
   private void updateImagePaths(){

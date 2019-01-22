@@ -16,7 +16,7 @@
         <conf.dir>${release.dir}/conf</conf.dir>
         <optional.dir>${release.dir}/../optional_jars</optional.dir>
     </properties>
-    
+
     <repositories>
         <repository>
             <id>internal</id>

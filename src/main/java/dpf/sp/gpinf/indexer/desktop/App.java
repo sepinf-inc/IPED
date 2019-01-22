@@ -83,6 +83,7 @@ import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import br.gov.pf.labld.graph.GraphTask;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import dpf.sp.gpinf.indexer.LogConfiguration;
@@ -455,7 +456,9 @@ public class App extends JFrame implements WindowListener {
         mapsScroll = new JScrollPane(browserPane);
     }
 
-    appGraphAnalytics = new AppGraphAnalytics();
+    if (AppGraphAnalytics.isAppDbPresent()) {
+      appGraphAnalytics = new AppGraphAnalytics();
+    }
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
@@ -661,7 +664,10 @@ public class App extends JFrame implements WindowListener {
 			}
 		});
 	}
-	graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+	
+    if (appGraphAnalytics != null) {
+      graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+    }
 
 	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
@@ -690,7 +696,9 @@ public class App extends JFrame implements WindowListener {
 	dockingControl.addDockable(tableTabDock);
 	dockingControl.addDockable(galleryTabDock);
 	dockingControl.addDockable(mapTabDock);
-  dockingControl.addDockable(graphDock);
+    if (graphDock != null) {
+      dockingControl.addDockable(graphDock);
+    }
 	dockingControl.addDockable(hitsDock);
 	dockingControl.addDockable(subitemDock);
 	dockingControl.addDockable(parentDock);
@@ -843,8 +851,10 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 
-    graphDock.setLocation(nextLocation);
-    graphDock.setVisible(true);
+      if (graphDock != null) {
+        graphDock.setLocation(nextLocation);
+        graphDock.setVisible(true);
+      }
 
 	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
 	  hitsDock.setVisible(true);
@@ -897,8 +907,10 @@ public class App extends JFrame implements WindowListener {
 	    mapTabDock.setVisible(true);
 	  }
 	  
-    graphDock.setLocation(nextLocation);
-    graphDock.setVisible(true);
+      if (graphDock != null) {
+        graphDock.setLocation(nextLocation);
+        graphDock.setVisible(true);
+      }
 	        
 	  hitsDock.setLocation(CLocation.base().normalSouth(0.3));
 	  hitsDock.setVisible(true);

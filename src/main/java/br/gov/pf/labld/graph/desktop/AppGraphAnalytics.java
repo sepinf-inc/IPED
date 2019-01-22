@@ -146,6 +146,14 @@ public class AppGraphAnalytics extends JPanel {
     new LoadGraphDatabaseWorker().execute();
   }
 
+  public static File getAppDBPath() {
+    return new File(Configuration.appRoot, GraphTask.DB_PATH);
+  }
+  
+  public static boolean isAppDbPresent() {
+    return getAppDBPath().exists();
+  }
+
   public void addEvidenceFilesToGraph(Collection<ItemId> items) {
     if (!items.isEmpty()) {
       String[] ids = items.stream().map(s -> Integer.toString(s.getId())).collect(Collectors.toList())
@@ -723,7 +731,7 @@ public class AppGraphAnalytics extends JPanel {
       Thread.currentThread().setContextClassLoader(classLoader);
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
       try {
-        graphService.start(new File(Configuration.appRoot, GraphTask.DB_PATH));
+        graphService.start(getAppDBPath());
       } catch (Throwable e) {
         LOGGER.error(e.getMessage(), e);
         throw new RuntimeException(e);

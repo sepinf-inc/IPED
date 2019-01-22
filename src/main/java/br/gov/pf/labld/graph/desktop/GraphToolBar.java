@@ -87,7 +87,7 @@ public class GraphToolBar extends JToolBar implements GraphHistoryListener {
     this.addSeparator();
 
     URL layoutHLUrl = this.getClass().getResource("diagram-2x.png");
-    JButton layoutHLBtn = createButton(new ApplyGraphLayoutAction(app, new HierarquicalLayout()),
+    JButton layoutHLBtn = createButton(new ApplyGraphLayoutAction(app, new HierarquicalLayout(.1d, 5d)),
         Messages.getString("GraphAnalysis.HierarquicalLayout"), layoutHLUrl);
     this.addBtn(layoutHLBtn);
   }

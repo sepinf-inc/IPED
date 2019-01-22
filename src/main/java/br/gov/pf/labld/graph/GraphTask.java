@@ -88,6 +88,9 @@ public class GraphTask extends AbstractTask {
   }
 
   private void processEvidence(EvidenceFile evidence) throws IOException {
+    if (!isEnabled()) {
+      return;
+    }
 
     IpedCase ipedCase = (IpedCase) caseData.getCaseObject(IpedCase.class.getName());
     List<Integer> parentIds = evidence.getParentIds();
@@ -241,6 +244,11 @@ public class GraphTask extends AbstractTask {
         }
       }
     }
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return enabled;
   }
 
 }

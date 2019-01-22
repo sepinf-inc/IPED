@@ -22,6 +22,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import br.gov.pf.labld.graph.GraphTask;
+import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 
 public class MenuClass extends JPopupMenu {
@@ -185,9 +187,13 @@ public class MenuClass extends JPopupMenu {
     createReport.addActionListener(menuListener);
     this.add(createReport);
 
-    addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-    addToGraph.addActionListener(menuListener);
-    this.add(addToGraph);
+    this.addSeparator();
+
+    if (AppGraphAnalytics.isAppDbPresent()) {
+      addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+      addToGraph.addActionListener(menuListener);
+      this.add(addToGraph);
+    }
 
   }
 
