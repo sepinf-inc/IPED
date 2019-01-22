@@ -504,8 +504,8 @@ public class Configuration {
       File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
       nativelibs = new File(nativelibs, arch);
       
-      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
-      Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
+      if(LOGGER == null)
+        Util.loadNatLibs(nativelibs); //$NON-NLS-1$
       
       System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
       System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
