@@ -123,7 +123,7 @@ public class SleuthkitClient {
       logStdErr(process.getInputStream(), port);
       logStdErr(process.getErrorStream(), port);
 
-      Thread.sleep(2000);
+      Thread.sleep(3000);
       
       //is = process.getInputStream();
       //os = process.getOutputStream();

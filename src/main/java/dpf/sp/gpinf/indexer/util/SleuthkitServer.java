@@ -68,7 +68,7 @@ public class SleuthkitServer {
       ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
       serverSocket.setPerformancePreferences(0, 1, 2);
       serverSocket.setReceiveBufferSize(1);
-      serverSocket.setSoTimeout(60000);
+      serverSocket.setSoTimeout(10000);
       Socket clientSocket = serverSocket.accept();
       clientSocket.setTcpNoDelay(true);
       clientSocket.setSendBufferSize(1);
