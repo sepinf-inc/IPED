@@ -9,7 +9,6 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,14 +54,12 @@ import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.desktop.FileProcessor;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
 public class AppGraphAnalytics extends JPanel {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(AppGraphAnalytics.class);
+  static Logger LOGGER = LoggerFactory.getLogger(AppGraphAnalytics.class);
 
   private static final long serialVersionUID = 1882865120277226931L;
 
@@ -143,13 +140,13 @@ public class AppGraphAnalytics extends JPanel {
   }
 
   private void initGraphService() {
-    new LoadGraphDatabaseWorker().execute();
+    new LoadGraphDatabaseWorker(this).execute();
   }
 
   public static File getAppDBPath() {
     return new File(Configuration.appRoot, GraphTask.DB_PATH);
   }
-  
+
   public static boolean isAppDbPresent() {
     return getAppDBPath().exists();
   }
@@ -186,20 +183,13 @@ public class AppGraphAnalytics extends JPanel {
     Node hoveredNode = getHoveredNode();
     if (hoveredNode != null) {
       long id = Long.parseLong(hoveredNode.getId());
-      new OpenEvidenceNodeWorker(id).execute();
+      new OpenEvidenceNodeWorker(this, id).execute();
     }
   }
 
   public void openEvidence(Node node) {
     long id = Long.parseLong(node.getId());
-    new OpenEvidenceNodeWorker(id).execute();
-  }
-
-  public void showEvidence(int evidenceId) {
-    ItemId itemId = new ItemId(0, evidenceId);
-    int luceneId = App.get().appCase.getLuceneId(itemId);
-    FileProcessor parsingTask = new FileProcessor(luceneId, false);
-    parsingTask.execute();
+    new OpenEvidenceNodeWorker(this, id).execute();
   }
 
   public void expandSelected() {
@@ -341,40 +331,6 @@ public class AppGraphAnalytics extends JPanel {
 
   public boolean isDatabaseLoaded() {
     return databaseLoaded;
-  }
-
-  private class OpenEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQueryListener {
-
-    private Long id;
-    private String evidenceId;
-
-    public OpenEvidenceNodeWorker(Long id) {
-      super();
-      this.id = id;
-    }
-
-    @Override
-    public boolean nodeFound(org.neo4j.graphdb.Node node) {
-      evidenceId = (String) node.getProperty("evidenceId");
-      return true;
-    }
-
-    @Override
-    protected Void doInBackground() throws Exception {
-      AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
-      AppGraphAnalytics.this.graphStatusBar.setProgress(0);
-      GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      graphService.getNodes(Arrays.asList(id), this);
-      return null;
-    }
-
-    @Override
-    protected void done() {
-      AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Done"));
-      AppGraphAnalytics.this.graphStatusBar.setProgress(100);
-      showEvidence(Integer.parseInt(evidenceId));
-    }
-
   }
 
   private class AddEvidenceFileWorker extends SwingWorker<Void, Node> implements NodeQueryListener {
@@ -712,44 +668,6 @@ public class AppGraphAnalytics extends JPanel {
 
   }
 
-  private class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
-
-    @Override
-    protected Void doInBackground() throws Exception {
-      initGraphService();
-      return null;
-    }
-
-    private void initGraphService() {
-      AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Preparing"));
-      AppGraphAnalytics.this.graphStatusBar.setProgress(50);
-
-      AppGraphAnalytics.this.graphPane.setEnabled(false);
-      AppGraphAnalytics.this.toolBar.setEnabled(false);
-
-      final ClassLoader classLoader = this.getClass().getClassLoader();
-      Thread.currentThread().setContextClassLoader(classLoader);
-      GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      try {
-        graphService.start(getAppDBPath());
-      } catch (Throwable e) {
-        LOGGER.error(e.getMessage(), e);
-        throw new RuntimeException(e);
-      }
-    }
-
-    @Override
-    protected void done() {
-      AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Ready"));
-      AppGraphAnalytics.this.graphStatusBar.setProgress(100);
-
-      AppGraphAnalytics.this.graphPane.setEnabled(true);
-      AppGraphAnalytics.this.toolBar.setEnabled(true);
-
-      AppGraphAnalytics.this.setDatabaseLoaded(true);
-    }
-  }
-
   public void exportImage(File selectedFile) {
     AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.ExportingImage"));
     BufferedImage image = this.graphPane.toImage();
@@ -851,6 +769,13 @@ public class AppGraphAnalytics extends JPanel {
 
   public void increaseProgress(int p) {
     this.graphStatusBar.increaseProgress(p);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    this.graphPane.setEnabled(false);
+    this.toolBar.setEnabled(false);
   }
 
   public void addPath(Path path) {
