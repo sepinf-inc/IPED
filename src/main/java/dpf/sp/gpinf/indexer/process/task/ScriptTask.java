@@ -37,6 +37,9 @@ import gpinf.dev.data.EvidenceFile;
 
 
 public class ScriptTask extends AbstractTask {
+  
+  private static IPEDSource ipedCase;
+  private static int numInstances = 0;
 
   private File scriptFile;
   private ScriptEngine engine;
@@ -74,12 +77,17 @@ public class ScriptTask extends AbstractTask {
       engine.put("stats", this.stats); //$NON-NLS-1$
       
       inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
+      
+      numInstances++;
   }
 
   @Override
   public void finish() throws Exception {
+    
+      if(ipedCase == null)
+          ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
       
-      try(IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)){
+      try{
           IPEDSearcher searcher = new IPEDSearcher(ipedCase); 
           
           engine.put("ipedCase", ipedCase); //$NON-NLS-1$
@@ -90,6 +98,8 @@ public class ScriptTask extends AbstractTask {
       }finally {
           //remove references to heavy objects
           engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+          if(--numInstances == 0)
+            ipedCase.close();
       }
   }
 

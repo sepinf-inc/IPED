@@ -12,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -67,6 +68,7 @@ public class SleuthkitServer {
       ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
       serverSocket.setPerformancePreferences(0, 1, 2);
       serverSocket.setReceiveBufferSize(1);
+      serverSocket.setSoTimeout(10000);
       Socket clientSocket = serverSocket.accept();
       clientSocket.setTcpNoDelay(true);
       clientSocket.setSendBufferSize(1);
@@ -134,6 +136,8 @@ public class SleuthkitServer {
       }
     }
   }
+  
+  private static HashSet<Long> warmedDataSources = new HashSet<>();
 
   private static SleuthkitInputStream getSis(MappedByteBuffer out) throws Exception {
     long streamId = out.getLong(5);
@@ -146,6 +150,14 @@ public class SleuthkitServer {
       }
       sis = new SleuthkitInputStream(content);
       sisMap.put(streamId, sis);
+      
+      //first read can take a long time, so do it here to prevent timeouts on client side
+      Long sourceId = content.getDataSource().getId();
+      if(!warmedDataSources.contains(sourceId)) {
+        sis.read();
+        sis.seek(0);
+        warmedDataSources.add(sourceId);
+      }
     }
     return sis;
   }

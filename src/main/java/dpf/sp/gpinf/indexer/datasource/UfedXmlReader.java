@@ -22,8 +22,6 @@ import java.util.TimeZone;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
@@ -48,9 +46,12 @@ import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.EvidenceFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 
 public class UfedXmlReader extends DataSourceReader{
     
@@ -64,7 +65,7 @@ public class UfedXmlReader extends DataSourceReader{
     public static final String UFED_EMAIL_MIME = "message/x-ufed-email"; //$NON-NLS-1$
     
     File root, ufdrFile;
-    ZipFile ufdr;
+    ZipFile4j ufdr;
     ZIPInputStreamFactory zisf;
     EvidenceFile rootItem;
     EvidenceFile decodedFolder;
@@ -79,7 +80,7 @@ public class UfedXmlReader extends DataSourceReader{
         
         InputStream xmlReport = lookUpXmlReportInputStream(datasource);
         IOUtil.closeQuietly(xmlReport);
-        IOUtil.closeQuietly(ufdr);
+        //IOUtil.closeQuietly(ufdr);
         
         if(xmlReport != null)
             return true;
@@ -107,12 +108,14 @@ public class UfedXmlReader extends DataSourceReader{
         }else if(file.getName().toLowerCase().endsWith(".ufdr")){
             try {
                 ufdrFile = file;
-                ufdr = new ZipFile(ufdrFile);
-                ZipArchiveEntry xml = ufdr.getEntry("report.xml");
-                if(xml == null) xml = ufdr.getEntry("Report.xml");
+                //File part1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf('.')) + ".z01");
+                //SequenceSeekableByteChannel ssbc = new SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()), Files.newByteChannel(ufdrFile.toPath()));
+                ufdr = new ZipFile4j(file);
+                FileHeader xml = ufdr.getFileHeader("report.xml");
+                if(xml == null) xml = ufdr.getFileHeader("Report.xml");
                 return ufdr.getInputStream(xml);
                 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
@@ -158,7 +161,7 @@ public class UfedXmlReader extends DataSourceReader{
         xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
         
         IOUtil.closeQuietly(xmlStream);
-        IOUtil.closeQuietly(ufdr);
+        //IOUtil.closeQuietly(ufdr);
         
     }
     
@@ -736,9 +739,14 @@ public class UfedXmlReader extends DataSourceReader{
                 if(zisf == null) {
                     zisf = new ZIPInputStreamFactory(ufdrFile.toPath());
                 }
-                ZipArchiveEntry zae = ufdr.getEntry(path);
+                FileHeader zae = null;
+                try {
+                    zae = ufdr.getFileHeader(path);
+                } catch (ZipException e) {
+                    e.printStackTrace();
+                }
                 if(zae != null) {
-                    item.setLength(zae.getSize());
+                    item.setLength(zae.getUncompressedSize());
                     item.setInputStreamFactory(zisf);
                     item.setIdInDataSource(path);
                 }
@@ -875,10 +883,17 @@ public class UfedXmlReader extends DataSourceReader{
                     contact.getMetadata().remove(AVATAR_PATH_META);
                     byte[] bytes = null;
                     if(ufdr != null) {
-                        ZipArchiveEntry zae = ufdr.getEntry(avatarPath);
+                        FileHeader zae = null;
+                        try {
+                            zae = ufdr.getFileHeader(avatarPath);
+                        } catch (ZipException e) {
+                            e.printStackTrace();
+                        }
                         if(zae != null)
                             try(InputStream is = ufdr.getInputStream(zae)){
                                 bytes = IOUtils.toByteArray(is); 
+                            } catch (ZipException e) {
+                                e.printStackTrace();
                             }
                     }else {
                         File avatarFile = new File(avatarPath);

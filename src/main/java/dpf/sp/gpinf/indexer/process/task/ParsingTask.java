@@ -72,6 +72,7 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.TextCache;
@@ -323,6 +324,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       reader.close();
       
       metadataToExtraAttribute(evidence);
+      IOUtil.closeQuietly(context.get(ItemSearcher.class));
     }
     
   }
@@ -553,7 +555,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if(totalText != null)
           LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
       totalText = null;
-
   }
 
 }

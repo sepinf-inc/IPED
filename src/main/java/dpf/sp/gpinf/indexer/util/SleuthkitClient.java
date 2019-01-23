@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,7 +10,9 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,7 +27,7 @@ import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 
 public class SleuthkitClient {
 
-  static Logger logger = LoggerFactory.getLogger(SleuthkitServer.class);
+  private static Logger logger = LoggerFactory.getLogger(SleuthkitClient.class);
   
   private static final int START_PORT = 2000;
   private static final int MAX_PORT = 65535;
@@ -35,8 +38,8 @@ public class SleuthkitClient {
   Process process;
   Socket socket;
   InputStream is;
-  //MappedBusReader reader;
   FileChannel fc;
+  File pipe;
   MappedByteBuffer out;
   OutputStream os;
 
@@ -68,6 +71,26 @@ public class SleuthkitClient {
     }
     return sc;
   }
+  
+  public static void initSleuthkitServers(List<ThreadGroup> threadGroups, final String dbPath) throws InterruptedException {
+    ArrayList<Thread> initThreads = new ArrayList<Thread>(); 
+    for(final ThreadGroup group : threadGroups){
+        Thread t = new Thread(){
+            public void run(){
+                SleuthkitClient.get(group, dbPath);
+            }
+        };
+        t.start();
+        initThreads.add(t);
+    }
+    for(Thread t : initThreads)
+      t.join();
+  }
+  
+  public static void shutDownServers() {
+    for(SleuthkitClient sc : clients.values())
+      sc.finishProcessAndClearMmap();
+  }
 
   private SleuthkitClient() {
       start();
@@ -96,12 +119,11 @@ public class SleuthkitClient {
     try {
       ProcessBuilder pb = new ProcessBuilder(cmd);
       process = pb.start();
-      finishProcessOnJVMShutdown(process);
       
       logStdErr(process.getInputStream(), port);
       logStdErr(process.getErrorStream(), port);
 
-      Thread.sleep(2000);
+      Thread.sleep(3000);
       
       //is = process.getInputStream();
       //os = process.getOutputStream();
@@ -117,11 +139,13 @@ public class SleuthkitClient {
       os = socket.getOutputStream();
 
       int size = 10 * 1024 * 1024;
-      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
-      raf.setLength(size);
-      fc = raf.getChannel();
-      out = fc.map(MapMode.READ_WRITE, 0, size);
-      out.load();
+      pipe = new File(pipePath);
+      try(RandomAccessFile raf = new RandomAccessFile(pipePath, "rw")){  //$NON-NLS-1$
+        raf.setLength(size);
+        fc = raf.getChannel();
+        out = fc.map(MapMode.READ_WRITE, 0, size);
+        out.load();
+      }
 
       is.read();
       boolean ok = false;
@@ -134,7 +158,7 @@ public class SleuthkitClient {
       }
 
     } catch (Exception e) {
-      //e.printStackTrace();
+      e.printStackTrace();
       if (process != null) {
         process.destroyForcibly();
       }
@@ -190,14 +214,21 @@ public class SleuthkitClient {
   synchronized void removeStream(long streamID) {
     currentStreams.remove(streamID);
   }
-
-  private void finishProcessOnJVMShutdown(final Process p) {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        p.destroyForcibly();
-      }
-    });
+  
+  private void finishProcessAndClearMmap() {
+    process.destroyForcibly();
+    try {
+      fc.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    fc = null;
+    out = null;
+    int tries = 100;
+    do {
+      System.gc();
+      logger.info("Trying to delete " + pipe.getAbsolutePath());
+    }while(!pipe.delete() && tries-- > 0);
   }
 
   private boolean isAlive(Process p) {

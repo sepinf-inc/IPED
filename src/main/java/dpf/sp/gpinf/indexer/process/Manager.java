@@ -207,6 +207,8 @@ public class Manager {
     
     updateImagePaths();
     
+    shutDownSleuthkitServers();
+    
     deleteTempDir();
     
     stats.logarEstatisticas(this);
@@ -238,18 +240,15 @@ public class Manager {
   }
   
   public void initSleuthkitServers(final String dbPath) throws InterruptedException{
-      ArrayList<Thread> threads = new ArrayList<Thread>(); 
-      for(final Worker worker : workers){
-          Thread t = new Thread(){
-              public void run(){
-                  SleuthkitClient.get(worker.getThreadGroup(), dbPath);
-              }
-          };
-          t.start();
-          threads.add(t);
-      }
-      for(Thread t : threads)
-          t.join();
+    ArrayList<ThreadGroup> threadGroups = new ArrayList<>();
+    for(Thread thread : workers)
+      threadGroups.add(thread.getThreadGroup());
+    SleuthkitClient.initSleuthkitServers(threadGroups, dbPath);
+  }
+  
+  private void shutDownSleuthkitServers() {
+    LOGGER.info("Closing Sleuthkit Servers."); //$NON-NLS-1$
+    SleuthkitClient.shutDownServers();
   }
 
   private void loadExistingData() throws Exception {
