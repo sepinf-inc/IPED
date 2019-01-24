@@ -32,7 +32,7 @@ public class AD1Extractor implements Closeable{
     private FileHeader rootHeader = null;
     
     byte vetor_15 [] = new byte [15];
-    byte vetor_14 [] = new byte [14];
+    byte vetor_17 [] = new byte [17];
     byte vetor_20 [] = new byte [20];
     byte vetor_512 [] = new byte [512];
     byte vetor_48 [] = new byte [48];   
@@ -67,7 +67,7 @@ public class AD1Extractor implements Closeable{
         assinatura = new String(vetor_15, charset);     
         
         if (!assinatura.equals("ADSEGMENTEDFILE")){ 
-            throw new AD1ExtractorException("Não tem cabeçalho AD1:"+assinatura);
+            throw new AD1ExtractorException("Expected header not found in AD1: "+assinatura);
         }
         
         lerBytesArquivoAbsoluto(vetor_48, PC, 48);
@@ -82,12 +82,15 @@ public class AD1Extractor implements Closeable{
         total_arquivos = lerTamanhoInteiroDeHexReverso(vetor_48, 32, 4);        
 
         //Procurar Logical AD1
-        lerBytesArquivoRelativo(vetor_14, PC, 14);
-        nome_ad1 = new String(vetor_14, charset);       
+        lerBytesArquivoRelativo(vetor_17, PC, 17);
+        nome_ad1 = new String(vetor_17, 0, 14, charset);       
         if (!nome_ad1.equals("ADLOGICALIMAGE")) { 
-            throw new AD1ExtractorException("Não tem cabeçalho imagem logica:"+nome_ad1);           
-        }               
-        
+            throw new AD1ExtractorException("Expected signature not found in AD1: " + nome_ad1);           
+        }
+        if(vetor_17[16] != 0x03) {
+            throw new AD1ExtractorException("AD1 version not supported: " + vetor_17[16]);
+        }
+            
         lerBytesArquivoRelativo(vetor_48, PC, local_ad1_tam);           
         PC_primeiro_arquivo = lerTamanhoInteiroDeHexReverso(vetor_48,44,8);
         PC_root  = lerTamanhoInteiroDeHexReverso(vetor_48,36,8);
