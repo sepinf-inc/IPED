@@ -9,6 +9,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ import org.kharon.Node;
 import org.kharon.NodeAdapter;
 import org.kharon.StageAdapter;
 import org.kharon.StageMode;
-import org.kharon.layout.Layout;
+import org.kharon.layout.HistoryEnabledLayout;
 import org.kharon.renderers.Renderers;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PropertyContainer;
@@ -699,16 +700,68 @@ public class AppGraphAnalytics extends JPanel {
     this.graph.addNodes(nodes);
   }
 
+  private Node prepareDBNode(org.neo4j.graphdb.Node neo4jNode) {
+    Node node = this.graphModel.convert(neo4jNode);
+    node.setX((int) (100 + Math.random() * 400));
+    node.setY((int) (100 + Math.random() * 400));
+    return node;
+  }
+
   public Node addNode(org.neo4j.graphdb.Node neo4jNode) {
     String nodeId = Long.toString(neo4jNode.getId());
     if (!this.graph.containsNode(nodeId)) {
-      Node node = this.graphModel.convert(neo4jNode);
-      node.setX((int) (100 + Math.random() * 400));
-      node.setY((int) (100 + Math.random() * 400));
+      Node node = prepareDBNode(neo4jNode);
       this.graph.addNode(node);
       return node;
     }
     return null;
+  }
+
+  public void addGraphElements(GraphElements graphElements) {
+    this.graph.addElements(graphElements.getNodes(), graphElements.getEdges());
+  }
+
+  public GraphElements addPaths(Collection<Path> paths, GraphElements graphElements) {
+    for (Path path : paths) {
+      for (org.neo4j.graphdb.Node neo4jNode : path.nodes()) {
+        String nodeId = Long.toString(neo4jNode.getId());
+        if (!this.graph.containsNode(nodeId)) {
+          Node node = prepareDBNode(neo4jNode);
+          graphElements.add(node);
+        }
+
+      }
+      for (org.neo4j.graphdb.Relationship relationship : path.relationships()) {
+        String edgeId = Long.toString(relationship.getId());
+        boolean relationshipInGraph = this.containsEdge(edgeId);
+        boolean relationshipInNewEdges = graphElements.containsEdge(edgeId);
+        if (!relationshipInGraph && !relationshipInNewEdges) {
+          String startNodeId = Long.toString(relationship.getStartNodeId());
+          String endNodeId = Long.toString(relationship.getEndNodeId());
+          boolean inGraph = this.containsNode(startNodeId) && this.containsNode(endNodeId);
+          boolean inNewNodes = graphElements.containsNode(startNodeId) && graphElements.containsNode(endNodeId);
+          if (inGraph || inNewNodes) {
+            Edge edge = new Edge(edgeId, startNodeId, endNodeId);
+            edge.setLabel(relationship.getType().name());
+            graphElements.add(edge);
+          }
+        }
+      }
+    }
+
+    return graphElements;
+  }
+
+  public GraphElements addPaths(Collection<Path> paths) {
+    return addPaths(paths, new GraphElements());
+  }
+
+  public void addPath(Path path) {
+    addPaths(Arrays.asList(path));
+  }
+
+  public void addPath(Path path, GraphElements graphElements) {
+    addPaths(Arrays.asList(path), graphElements);
   }
 
   public Edge addRelationship(Relationship relationship) {
@@ -749,7 +802,7 @@ public class AppGraphAnalytics extends JPanel {
     return graphModel;
   }
 
-  public void applyLayout(Layout layout) {
+  public void applyLayout(HistoryEnabledLayout layout) {
     this.graphPane.applyLayout(layout);
     this.graphPane.repaint();
     this.sidePanel.getGraphPreviewPane().repaint();
@@ -774,17 +827,8 @@ public class AppGraphAnalytics extends JPanel {
   @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    this.graphPane.setEnabled(false);
-    this.toolBar.setEnabled(false);
-  }
-
-  public void addPath(Path path) {
-    for (org.neo4j.graphdb.Node node : path.nodes()) {
-      addNode(node);
-    }
-    for (org.neo4j.graphdb.Relationship rel : path.relationships()) {
-      addRelationship(rel);
-    }
+    this.graphPane.setEnabled(enabled);
+    this.toolBar.setEnabled(enabled);
   }
 
 }
