@@ -437,7 +437,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>3.02</version>
+                                    <version>4.0.0</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
