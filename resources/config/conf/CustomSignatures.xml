@@ -24,9 +24,10 @@
     	<magic priority="40">
     		<match value="MEMO" type="string" offset="0"/>
       		<match value="MEM0" type="string" offset="0"/>
-      		<match value="MAM" type="string" offset="0">
+      		<!--agdbinfo v20181111 leaks memory on files with sig below-->
+      		<!--match value="MAM" type="string" offset="0">
       			<match value="0x84" type="string" offset="3"/>
-      		</match>
+      		</match-->
     	</magic>
     	<glob pattern="Ag*.db"/>
   	</mime-type>
