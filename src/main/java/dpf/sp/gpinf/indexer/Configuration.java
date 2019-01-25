@@ -411,7 +411,7 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       outputOnSSD = Boolean.valueOf(value);
     }
-    if(outputOnSSD)
+    if(outputOnSSD || !indexTempOnSSD || IndexFiles.getInstance().appendIndex)
     	indexTemp = null;
 
     value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
