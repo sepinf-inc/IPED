@@ -47,7 +47,6 @@ import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
