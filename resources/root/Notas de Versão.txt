@@ -1,6 +1,7 @@
 28/01/2019: IPED-3.15.3
 - Corrige NullPointer que impedia abertura da interface de análise (3.15.2)
 - Remove metadados de imagens obtidos do sistema de arquivos local (3.13)
+- Eventual ConcurrentModificationException no MetadataViewer com pesquisa ativa (3.14)
 
 25/01/2019: IPED-3.15.2
 - Suporte a UFDR segmentados
