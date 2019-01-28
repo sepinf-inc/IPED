@@ -1,11 +1,11 @@
 package dpf.sp.gpinf.indexer.search;
 
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -24,6 +24,7 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.NumericUtils;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.desktop.App;
@@ -49,9 +50,9 @@ public class QueryBuilder {
 					if (clause.getQuery() instanceof PhraseQuery && ((PhraseQuery) clause.getQuery()).getSlop() == 0) {
 						String queryStr = clause.getQuery().toString();
 						// System.out.println("phrase: " + queryStr);
-						String field = IndexItem.CONTENT + ":\"";
+						String field = IndexItem.CONTENT + ":\""; //$NON-NLS-1$
 						if (queryStr.startsWith(field)) {
-							String term = queryStr.substring(queryStr.indexOf(field) + field.length(), queryStr.lastIndexOf("\""));
+							String term = queryStr.substring(queryStr.indexOf(field) + field.length(), queryStr.lastIndexOf("\"")); //$NON-NLS-1$
 							result.add(term.toLowerCase());
 							// System.out.println(term);
 						}
@@ -124,7 +125,7 @@ public class QueryBuilder {
 			  parser.setNumericConfigMap(getNumericConfigMap());
 			  
 			  //remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
-			  if(analyzer != spaceAnalyzer){
+			  if(analyzer != spaceAnalyzer && Configuration.convertCharsToAscii){
 				  char[] input = texto.toCharArray();
 				  char[] output = new char[input.length*4];
 				  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
@@ -156,15 +157,25 @@ public class QueryBuilder {
 		  numericConfigMap.put(IndexItem.PARENTID, configInt);
 		  numericConfigMap.put(IndexItem.FTKID, configInt);
 		  
-		  for(Entry<String, Class> e : IndexItem.getMetadataTypes().entrySet())
-			  if(e.getValue().equals(Integer.class) || e.getValue().equals(Byte.class))
-				  numericConfigMap.put(e.getKey(), configInt);
-			  else if(e.getValue().equals(Long.class))
-				  numericConfigMap.put(e.getKey(), configLong);
-			  else if(e.getValue().equals(Float.class))
-				  numericConfigMap.put(e.getKey(), configFloat);
-			  else if(e.getValue().equals(Double.class))
-				  numericConfigMap.put(e.getKey(), configDouble);
+		  try {
+            for(String field : ipedCase.getAtomicReader().fields()){
+                Class<?> type = IndexItem.getMetadataTypes().get(field);
+                if(type == null)
+                    continue;
+                if(type.equals(Integer.class) || type.equals(Byte.class))
+                    numericConfigMap.put(field, configInt);
+                else if(type.equals(Long.class))
+                    numericConfigMap.put(field, configLong);
+                else if(type.equals(Float.class))
+                    numericConfigMap.put(field, configFloat);
+                else if(type.equals(Double.class))
+                    numericConfigMap.put(field, configDouble);
+            }
+            	  
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 		  
 		  return numericConfigMap;
 	}

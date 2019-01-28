@@ -23,7 +23,7 @@ public class UTF8Properties extends Properties {
   private static final long serialVersionUID = -8198271272010610933L;
 
   public synchronized void load(File file) throws IOException {
-    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
     String str = null;
     while ((str = in.readLine()) != null) {
       if (str.isEmpty() || str.charAt(0) == '#') {
@@ -34,8 +34,8 @@ public class UTF8Properties extends Properties {
         pos = str.indexOf('=', pos + 1);
       }
       if (pos > 0) {
-    	String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim();
-    	String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim();
+    	String key = str.substring(0, pos).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    	String val = str.substring(pos + 1).replace("\\=", "=").replace("\\:", ":").trim(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         super.put(key, val);
       }
     }
@@ -43,12 +43,12 @@ public class UTF8Properties extends Properties {
   }
 
   public synchronized void store(File file) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8"); //$NON-NLS-1$
     Object[] keys = this.keySet().toArray();
     Arrays.sort(keys);
     for (Object key : keys) {
-      writer.write(key.toString().replace("=", "\\=") + " = " + this.get(key).toString().replace("=", "\\="));
-      writer.write("\r\n");
+      writer.write(key.toString().replace("=", "\\=") + " = " + this.get(key).toString().replace("=", "\\=")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+      writer.write("\r\n"); //$NON-NLS-1$
     }
     writer.close();
   }

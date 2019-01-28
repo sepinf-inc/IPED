@@ -21,12 +21,21 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.document.Document;
@@ -45,6 +54,7 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
@@ -52,11 +62,16 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
+import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -68,57 +83,39 @@ import gpinf.dev.filetypes.GenericFileType;
  * Cria um org.apache.lucene.document.Document a partir das propriedades do itens que será
  * adicionado ao índice.
  */
-public class IndexItem {
+public class IndexItem extends BasicProps{
+	
+  public static final String FTKID = "ftkId"; //$NON-NLS-1$
+  public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
+  
+  public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
+  public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
+  public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
 
-  public static final String ID = "id";
-  public static final String FTKID = "ftkId";
-  public static final String PARENTID = "parentId";
-  public static final String PARENTIDs = "parentIds";
-  public static final String SLEUTHID = "sleuthId";
-  public static final String EVIDENCE_UUID = "evidenceUUID";
-  public static final String NAME = "nome";
-  public static final String TYPE = "tipo";
-  public static final String LENGTH = "tamanho";
-  public static final String CREATED = "criacao";
-  public static final String ACCESSED = "acesso";
-  public static final String MODIFIED = "modificacao";
-  public static final String RECORDDATE = "alteracao do registro";
-  public static final String PATH = "caminho";
-  public static final String EXPORT = "export";
-  public static final String CATEGORY = "categoria";
-  public static final String HASH = "hash";
-  public static final String ISDIR = "isDir";
-  public static final String ISROOT = "isRoot";
-  public static final String DELETED = "deletado";
-  public static final String HASCHILD = "hasChildren";
-  public static final String CARVED = "carved";
-  public static final String SUBITEM = "subitem";
-  public static final String OFFSET = "offset";
-  public static final String DUPLICATE = "duplicate";
-  public static final String TIMEOUT = "timeout";
-  public static final String CONTENTTYPE = "contentType";
-  public static final String CONTENT = "conteudo";
-  public static final String TREENODE = "treeNode";
-
-  public static final String attrTypesFilename = "metadataTypes.txt";
+  public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
   private static final int MAX_DOCVALUE_SIZE = 4096;
 
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
   private static volatile boolean guessMetaTypes = false;
+  
+  private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+  
+  private static class StringComparator implements Comparator<String>{
+    @Override
+    public int compare(String o1, String o2) {
+        return o1.compareToIgnoreCase(o2);
+    }
+  }
 
-  private static Map<String, Class> typesMap = new ConcurrentHashMap<String, Class>();
+  private static Map<String, Class> typesMap = Collections.synchronizedMap(new TreeMap<String, Class>(new StringComparator()));
   private static Map<String, Class> newtypesMap = new ConcurrentHashMap<String, Class>();
 
-  private static FieldType contentField = new FieldType();
+  private static FieldType contentField;
   private static FieldType storedTokenizedNoNormsField = new FieldType();
 
   static {
-    contentField.setIndexed(true);
-    contentField.setOmitNorms(true);
-    contentField.setStoreTermVectors(true);
-    
     storedTokenizedNoNormsField.setIndexed(true);
     storedTokenizedNoNormsField.setOmitNorms(true);
     storedTokenizedNoNormsField.setStored(true);
@@ -129,8 +126,24 @@ public class IndexItem {
     ignoredMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
     ignoredMetadata.add(IndexerDefaultParser.INDEXER_TIMEOUT);
     ignoredMetadata.add(TikaCoreProperties.CONTENT_TYPE_HINT.getName());
-    ignoredMetadata.add("File Name");
-    ignoredMetadata.add("File Size");
+    ignoredMetadata.add("File Name"); //$NON-NLS-1$
+    ignoredMetadata.add("File Size"); //$NON-NLS-1$
+    //ocrCharCount is already copied to an extra attribute
+    ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
+    
+    BasicProps.SET.add(FTKID);
+    BasicProps.SET.add(SLEUTHID);
+  }
+  
+  private static final FieldType getContentField() {
+      if(contentField == null) {
+          FieldType field = new FieldType();
+          field.setIndexed(true);
+          field.setOmitNorms(true);
+          field.setStoreTermVectors(Configuration.storeTermVectors);
+          contentField = field;
+      }
+      return contentField;
   }
 
   public static Map<String, Class> getMetadataTypes() {
@@ -138,11 +151,6 @@ public class IndexItem {
   }
 
   public static void saveMetadataTypes(File confDir) throws IOException {
-    for (String key : newtypesMap.keySet()) {
-      if (!typesMap.containsKey(key)) {
-        typesMap.put(key, newtypesMap.get(key));
-      }
-    }
     File metadataTypesFile = new File(confDir, attrTypesFilename);
     UTF8Properties props = new UTF8Properties();
     for (Entry<String, Class> e : typesMap.entrySet()) {
@@ -175,7 +183,7 @@ public class IndexItem {
       return new String(output).trim();
   }
 
-  public static Document Document(EvidenceFile evidence, Reader reader) {
+  public static Document Document(EvidenceFile evidence, Reader reader, File output) {
     Document doc = new Document();
 
     doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
@@ -195,6 +203,21 @@ public class IndexItem {
       doc.add(new IntField(SLEUTHID, intVal, Field.Store.YES));
       doc.add(new NumericDocValuesField(SLEUTHID, intVal));
     }
+    
+    String value = evidence.getIdInDataSource();
+    if(value != null) {
+        doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
+        
+        Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
+        value = Util.getRelativePath(output, srcPath.toFile());
+        doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
+        
+        value = evidence.getInputStreamFactory().getClass().getName();
+        doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+    }
 
     intVal = evidence.getParentId();
     if (intVal != null) {
@@ -205,9 +228,9 @@ public class IndexItem {
     doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 
-    String value = evidence.getName();
+    value = evidence.getName();
     if (value == null) {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     Field nameField = new TextField(NAME, value, Field.Store.YES);
     nameField.setBoost(1000.0f);
@@ -218,7 +241,7 @@ public class IndexItem {
     if (fileType != null) {
       value = fileType.getLongDescr();
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(TYPE, new BytesRef(normalize(value))));
@@ -233,7 +256,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(CREATED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(CREATED, new BytesRef(value)));
@@ -242,7 +265,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(ACCESSED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(ACCESSED, new BytesRef(value)));
@@ -251,7 +274,7 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(MODIFIED, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
@@ -260,14 +283,14 @@ public class IndexItem {
     if (date != null) {
       value = DateUtil.dateToString(date);
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new StringField(RECORDDATE, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
 
     value = evidence.getPath();
     if (value == null) {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(PATH, value, storedTokenizedNoNormsField));
     if (value.length() > MAX_DOCVALUE_SIZE) {
@@ -287,7 +310,7 @@ public class IndexItem {
     if (type != null) {
       value = type.toString();
     } else {
-      value = "";
+      value = ""; //$NON-NLS-1$
     }
     doc.add(new Field(CONTENTTYPE, value, storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(CONTENTTYPE, new BytesRef(value)));
@@ -331,6 +354,9 @@ public class IndexItem {
     value = Boolean.toString(evidence.isSubItem());
     doc.add(new StringField(SUBITEM, value, Field.Store.YES));
     doc.add(new SortedDocValuesField(SUBITEM, new BytesRef(value)));
+    
+    if(evidence.getThumb() != null)
+        doc.add(new StoredField(THUMB, evidence.getThumb()));
 
     long off = evidence.getFileOffset();
     if (off != -1) {
@@ -338,7 +364,7 @@ public class IndexItem {
     }
 
     if (reader != null) {
-      doc.add(new Field(CONTENT, reader, contentField));
+      doc.add(new Field(CONTENT, reader, getContentField()));
     }
 
     if (typesMap.size() == 0) {
@@ -350,7 +376,7 @@ public class IndexItem {
     	  for(Object val : (List)entry.getValue()){
     		  if (!typesMap.containsKey(entry.getKey()))
     		        typesMap.put(entry.getKey(), val.getClass());
-    		      addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
+    		  addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
     	  }
       }else{
     	  if (!typesMap.containsKey(entry.getKey()))
@@ -359,6 +385,7 @@ public class IndexItem {
       }
     }
 
+// TRIAGE comentar
     Metadata metadata = evidence.getMetadata();
     if (metadata != null) {
       if (guessMetaTypes) {
@@ -377,9 +404,9 @@ public class IndexItem {
     /* utilizar docvalue de outro tipo com mesmo nome provoca erro,
      * entao usamos um prefixo no nome para diferenciar
      */
-    String keyPrefix = "";
+    String keyPrefix = ""; //$NON-NLS-1$
     if (isMetadataKey) {
-      keyPrefix = "_num_";
+      keyPrefix = "_num_"; //$NON-NLS-1$
     }
     if (oValue instanceof Date) {
       String value = DateUtil.dateToString((Date) oValue);
@@ -415,14 +442,16 @@ public class IndexItem {
       isString = true;
     }
 
+    if (isString)
+        doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
+    
     if (isMetadataKey || isString) {
-      doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
       String value = oValue.toString();
       if (value.length() > MAX_DOCVALUE_SIZE) {
         value = value.substring(0, MAX_DOCVALUE_SIZE);
       }
       if (isMetadataKey) {
-        keyPrefix = "_";
+        keyPrefix = "_"; //$NON-NLS-1$
       }
       if(!isMultiValued) doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
       else doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
@@ -434,9 +463,9 @@ public class IndexItem {
     MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
     if(mimetype != null)
     	mimetype = mimetype.getBaseType();
-    boolean isHtml = MediaType.TEXT_HTML.equals(mimetype) || MediaType.application("xhtml+xml").equals(mimetype);
-
-    //previne mto raro ConcurrentModificationException
+    
+    //previne mto raro ConcurrentModificationException no caso de 
+    //thread desconectada por timeout que altere os metadados
     String[] names = null;
     while (names == null) {
       try {
@@ -446,24 +475,24 @@ public class IndexItem {
     }
 
     for (String key : names) {
-      if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
+      if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
         continue;
       }
-      boolean isMultiValued = metadata.getValues(key).length > 1;
+      boolean isMultiValued = true;//metadata.getValues(key).length > 1;
       for (String val : metadata.getValues(key)) {
           if (val != null && !(val = val.trim()).isEmpty())
-              addMetadataKeyToDoc(doc, key, val, isHtml, true);
+              addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype);
       }
 
     }
   }
   
-  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isHtml, boolean isMultiValued){
+  private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued, MediaType mimetype){
       Object oValue = value;
       Class type = typesMap.get(key);
-
-      if (type == null && isHtml)
-        return;
+      
+      if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
+          return;
 
       if (type == null || !type.equals(String.class)) {
 
@@ -472,6 +501,7 @@ public class IndexItem {
             oValue = Double.valueOf(value);
             if (type == null) {
               newtypesMap.put(key, Double.class);
+              typesMap.put(key, Double.class);
             }
           } else if (type.equals(Integer.class)) {
             oValue = Integer.valueOf(value);
@@ -482,7 +512,7 @@ public class IndexItem {
           }
 
         } catch (NumberFormatException e) {
-          if (type == null) {
+          if (newtypesMap.containsKey(key)) {
             typesMap.put(key, String.class);
           }
         }
@@ -494,13 +524,11 @@ public class IndexItem {
   private static void guessMetadataTypes(Metadata metadata) {
 
     for (String key : metadata.names()) {
-      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) {
+      if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
         continue;
-
       }
       if (metadata.getValues(key).length > 1) {
-        typesMap.put(key, String.class
-        );
+        typesMap.put(key, String.class);
 
         continue;
       }
@@ -589,7 +617,7 @@ public class IndexItem {
       value = doc.get(IndexItem.EVIDENCE_UUID);
       if(value != null){
     	//TODO obter source corretamente
-          DataSource dataSource = new DataSource(null);
+          DataSource dataSource = new DataSource();
           dataSource.setUUID(value);
           evidence.setDataSource(dataSource);
       }
@@ -599,11 +627,8 @@ public class IndexItem {
         evidence.setType(new GenericFileType(value));
       }
 
-      value = doc.get(IndexItem.CATEGORY);
-      if (value != null) {
-        for (String category : value.split(CategoryTokenizer.SEPARATOR + "")) {
+      for (String category : doc.getValues(IndexItem.CATEGORY)) {
           evidence.addCategory(category);
-        }
       }
 
       value = doc.get(IndexItem.ACCESSED);
@@ -627,6 +652,11 @@ public class IndexItem {
       }
 
       evidence.setPath(doc.get(IndexItem.PATH));
+      
+      value = doc.get(IndexItem.CONTENTTYPE);
+      if (value != null) {
+        evidence.setMediaType(MediaType.parse(value));
+      }
 
       boolean hasFile = false;
       value = doc.get(IndexItem.EXPORT);
@@ -638,42 +668,66 @@ public class IndexItem {
         value = doc.get(IndexItem.SLEUTHID);
         if (value != null && !value.isEmpty()) {
           evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+          evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value))); 
         }
-      }
-
-      value = doc.get(IndexItem.CONTENTTYPE);
-      if (value != null) {
-        evidence.setMediaType(MediaType.parse(value));
+        
+        value = doc.get(IndexItem.ID_IN_SOURCE);
+        if (value != null && !value.isEmpty()) {
+            evidence.setIdInDataSource(value.trim());
+            String relPath = doc.get(IndexItem.SOURCE_PATH);
+            Path absPath = Util.getRelativeFile(outputBase.getParent(), relPath).toPath();
+            SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath); 
+            if(sisf == null) {
+                String className = doc.get(IndexItem.SOURCE_DECODER);
+                Class<?> clazz = Class.forName(className);
+                Constructor<SeekableInputStreamFactory> c = (Constructor)clazz.getConstructor(Path.class);
+                sisf = c.newInstance(absPath);
+                inputStreamFactories.put(absPath, sisf);
+            }
+            evidence.setInputStreamFactory(sisf);
+        }
       }
 
       value = doc.get(IndexItem.TIMEOUT);
       if (value != null) {
         evidence.setTimeOut(Boolean.parseBoolean(value));
       }
-
+      
       value = doc.get(IndexItem.HASH);
       if (value != null) {
         value = value.toUpperCase();
         evidence.setHash(value);
-
-        if (!value.isEmpty()) {
-          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), value);
-          if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+      }
+      
+      if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+          
+          if(Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
+              String mimePrefix = evidence.getMediaType().getType();
+              if(doc.getBinaryValue(THUMB) != null) {
+                  evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
+                  
+              }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
+                  String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
+                  File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
+                  evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+              }
           }
+          
+          File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
+          /*if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
+            viewFile = Util.findFileFromHash(new File(outputBase, ImageThumbTask.thumbsFolder), value);
+          }*/
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
+            
+            if (viewItem || (!hasFile && evidence.getSleuthId() == null && evidence.getIdInDataSource() == null)) {
+                evidence.setFile(viewFile);
+                evidence.setTempFile(viewFile);
+                evidence.setMediaType(null);
+            }
           }
-          if (viewItem || (!hasFile && evidence.getSleuthId() == null)) {
-            evidence.setFile(viewFile);
-            evidence.setTempFile(viewFile);
-            evidence.setMediaType(null);
-          }
-
-        }
       }
-
+      
       value = doc.get(IndexItem.DELETED);
       if (value != null) {
         evidence.setDeleted(Boolean.parseBoolean(value));
@@ -699,16 +753,32 @@ public class IndexItem {
         evidence.setHasChildren(Boolean.parseBoolean(value));
       }
 
-      value = doc.get(IndexItem.TIMEOUT);
-      if (value != null) {
-        evidence.setTimeOut(Boolean.parseBoolean(value));
-      }
-
       value = doc.get(IndexItem.OFFSET);
       if (value != null) {
         evidence.setFileOffset(Long.parseLong(value));
       }
-
+      
+      Set<String> multiValuedFields = new HashSet<>();
+      for(IndexableField f : doc.getFields()) {
+          if(BasicProps.SET.contains(f.name()))
+              continue;
+          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+              if(multiValuedFields.contains(f.name()))
+                  continue;
+              Class<?> c = typesMap.get(f.name());
+              IndexableField[] fields = doc.getFields(f.name());
+              if(fields.length > 1) {
+                  multiValuedFields.add(f.name());
+                  List<Object> fieldList = new ArrayList<>();
+                  for(IndexableField field : fields)
+                      fieldList.add(getCastedValue(c, field));
+                  evidence.setExtraAttribute(f.name(), fieldList);
+              }else
+                  evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
+          }else
+              evidence.getMetadata().add(f.name(), f.stringValue());
+      }
+      
       return evidence;
 
     } catch (Exception e) {
@@ -717,6 +787,15 @@ public class IndexItem {
 
     return null;
 
+  }
+  
+  public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
+      if(Date.class.equals(c))
+          return DateUtil.stringToDate(f.stringValue());
+      else if(Number.class.isAssignableFrom(c))
+          return f.numericValue();
+      else
+          return f.stringValue();
   }
 
 }

@@ -1,0 +1,29 @@
+########################################################################
+# Configurações mínimas para rápida execução em locais de busca.
+# Não altere os parâmetros, sob pena de atrasar o processamento.
+########################################################################
+
+indexTemp = default
+indexTempOnSSD = false
+enableKff = false
+enableLedWkff = false
+enableLedDie = false
+excludeKffIgnorable = false
+ignoreDuplicates = false
+exportFileProps = false
+processFileSignatures = false
+enableFileParsing = false
+expandContainers = false
+enableRegexSearch = false
+enableLanguageDetect = false
+enableNamedEntityRecogniton = false
+indexFileContents = false
+indexUnknownFiles = false
+indexCorruptedFiles = false
+enableOCR = false
+addUnallocated = false
+indexUnallocated = false
+enableCarving = false
+enableImageThumbs = false
+enableVideoThumbs = false
+enableHTMLReport = false

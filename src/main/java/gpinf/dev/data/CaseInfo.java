@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import dpf.sp.gpinf.indexer.Messages;
+
 /**
  * Informações de um caso.
  *
@@ -58,11 +60,11 @@ public class CaseInfo implements Serializable {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("CABEÇALHO:");
-    sb.append("\n\t").append(headerImage).append(" : ").append(headerText);
-    sb.append("\n").append("PROPRIEDADES(").append(properties.size()).append("):");
+    sb.append("Header:"); //$NON-NLS-1$
+    sb.append("\n\t").append(headerImage).append(" : ").append(headerText); //$NON-NLS-1$ //$NON-NLS-2$
+    sb.append("\n").append("Properties(").append(properties.size()).append("):"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     for (int i = 0; i < properties.size(); i++) {
-      sb.append("\n\t").append(properties.get(i));
+      sb.append("\n\t").append(properties.get(i)); //$NON-NLS-1$
     }
     return sb.toString();
   }

@@ -37,6 +37,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -50,7 +51,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
     this.uniqueIds = uniqueIds;
     this.total = uniqueIds.size();
 
-    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total);
+    progressMonitor = new ProgressMonitor(App.get(), "", "", 0, total); //$NON-NLS-1$ //$NON-NLS-2$
     this.addPropertyChangeListener(this);
   }
 
@@ -58,7 +59,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
   protected Boolean doInBackground() throws Exception {
 
 	FileOutputStream fos = new FileOutputStream(file);
-    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8");
+    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8"); //$NON-NLS-1$
     byte[] utf8bom = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
     fos.write(utf8bom);
 
@@ -68,39 +69,47 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
     }
 
     for (int col = 0; col < fields.size(); col++) {
-      writer.write("\"" + fields.get(col).toUpperCase() + "\"" + ";");
+      writer.write("\"" + fields.get(col).toUpperCase() + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
-    writer.write("\r\n");
+    writer.write("\r\n"); //$NON-NLS-1$
 
     int progress = 0;
     App app = App.get();
-    SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
-    df.setTimeZone(TimeZone.getTimeZone("GMT"));
+    SimpleDateFormat df = new SimpleDateFormat(Messages.getString("CopyProperties.CSVDateFormat")); //$NON-NLS-1$
+    df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     for (Integer docId : uniqueIds) {
-      this.firePropertyChange("progress", progress, ++progress);
+      this.firePropertyChange("progress", progress, ++progress); //$NON-NLS-1$
       try {
         Document doc = App.get().appCase.getSearcher().doc(docId);
         for (int col = 0; col < fields.size(); col++) {
-          String value, field = fields.get(col);
+          String[] values = new String[1];
+          String field = fields.get(col);
           if (!field.equals(ResultTableModel.BOOKMARK_COL)) {
-            value = doc.get(fields.get(col));
+            values = doc.getValues(fields.get(col));
           } else {
             ItemId item = App.get().appCase.getItemId(docId);
-            value = App.get().appCase.getMultiMarcadores().getLabels(item);
+            values[0] = Util.concatStrings(App.get().appCase.getMultiMarcadores().getLabelList(item));
           }
-          if (value == null) {
-            value = "";
-          }
-          if (field.equals(IndexItem.CATEGORY)) {
-            value = value.replace("" + CategoryTokenizer.SEPARATOR, " | ");
-          }
+          if (values.length > 0 && values[0] == null)
+            values[0] = ""; //$NON-NLS-1$
+          
+          if (field.equals(IndexItem.CATEGORY))
+              for(String val : values)
+                  val = val.replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
 
-          if (!value.isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED) || field.equals(IndexItem.MODIFIED))) {
-            value = df.format(DateUtil.stringToDate(value));
+          if (values.length > 0 && !values[0].isEmpty() && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
+                  || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.RECORDDATE))) {
+            values[0] = df.format(DateUtil.stringToDate(values[0]));
           }
-          writer.write("\"" + value.replace("\"", "\"\"") + "\";");
+          String value = ""; //$NON-NLS-1$
+          for(int i = 0; i < values.length; i++){
+              if(i != 0) value += " | "; //$NON-NLS-1$
+              value += values[i];
+          }
+          
+          writer.write("\"" + value.replace("\"", "\"\"") + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         }
-        writer.write("\r\n");
+        writer.write("\r\n"); //$NON-NLS-1$
 
       } catch (Exception e1) {
         e1.printStackTrace();
@@ -119,10 +128,10 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 
     if (progressMonitor.isCanceled()) {
       this.cancel(true);
-    } else if ("progress" == evt.getPropertyName()) {
+    } else if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
       int progress = (Integer) evt.getNewValue();
       progressMonitor.setProgress(progress);
-      progressMonitor.setNote("Copiando " + progress + " de " + total);
+      progressMonitor.setNote(Messages.getString("CopyProperties.Copying") + progress + Messages.getString("CopyProperties.from") + total); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
   }

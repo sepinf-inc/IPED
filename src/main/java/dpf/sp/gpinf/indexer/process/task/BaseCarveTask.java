@@ -27,7 +27,7 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -36,15 +36,15 @@ import gpinf.dev.data.EvidenceFile;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 	
-  protected static MediaType mtPageFile = MediaType.application("x-pagefile");
-  protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow");
-  protected static MediaType mtDiskImage = MediaType.application("x-disk-image");
-  protected static MediaType mtVmdk = MediaType.application("x-vmdk");
-  protected static MediaType mtVhd = MediaType.application("x-vhd");
-  protected static MediaType mtVdi = MediaType.application("x-vdi");
-  protected static MediaType mtUnknown = MediaType.application("octet-stream");
+  protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
+  protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
+  protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
+  protected static MediaType mtVmdk = MediaType.application("x-vmdk"); //$NON-NLS-1$
+  protected static MediaType mtVhd = MediaType.application("x-vhd"); //$NON-NLS-1$
+  protected static MediaType mtVdi = MediaType.application("x-vdi"); //$NON-NLS-1$
+  protected static MediaType mtUnknown = MediaType.application("octet-stream"); //$NON-NLS-1$
 
-  public static final String FILE_FRAGMENT = "fileFragment";
+  public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
 
   protected static HashSet<MediaType> TYPES_TO_PROCESS;
   protected static HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
@@ -57,10 +57,6 @@ public abstract class BaseCarveTask extends AbstractTask {
 
   protected static final Map<EvidenceFile, Set<Long>> kffCarved = new HashMap<EvidenceFile, Set<Long>>();   
 
-  public BaseCarveTask(Worker worker) {
-    super(worker);
-  }
-
   private final synchronized static void incItensCarved() {
     itensCarved++;
   }
@@ -70,7 +66,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
   
   protected void addFragmentFile(EvidenceFile parentEvidence, long off, long len, int fragNum){
-      String name = parentEvidence.getName() + "_" + fragNum;
+      String name = parentEvidence.getName() + "_" + fragNum; //$NON-NLS-1$
 	  EvidenceFile fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());
 	  fragFile.setExtension(parentEvidence.getExt());
 	  fragFile.setAccessDate(parentEvidence.getAccessDate());
@@ -109,7 +105,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   protected EvidenceFile getOffsetFile(EvidenceFile parentEvidence, long off, long len, String name, MediaType mediaType){
 	EvidenceFile offsetFile = new EvidenceFile();
     offsetFile.setName(name);
-    offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
+    offsetFile.setPath(parentEvidence.getPath() + ">>" + name); //$NON-NLS-1$
     len = Math.min(len, parentEvidence.getLength() - off);
     offsetFile.setLength(len);
     offsetFile.setSumVolume(false);
@@ -121,21 +117,27 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     long prevOff = parentEvidence.getFileOffset();
     offsetFile.setFileOffset(prevOff == -1 ? off : prevOff + off);
-
-    if (parentEvidence.getSleuthFile() != null) {
+    
+    if(parentEvidence.getIdInDataSource() != null) {
+      offsetFile.setIdInDataSource(parentEvidence.getIdInDataSource());
+      offsetFile.setInputStreamFactory(parentEvidence.getInputStreamFactory());
+    
+    }else if (parentEvidence.getSleuthFile() != null) {
       offsetFile.setSleuthFile(parentEvidence.getSleuthFile());
       offsetFile.setSleuthId(parentEvidence.getSleuthId());
-      if (parentEvidence.hasTmpFile()) {
-        try {
-			offsetFile.setFile(parentEvidence.getTempFile());
-			offsetFile.setTempStartOffset(off);
-		} catch (IOException e) {
-			//ignore
-		}
-      }
+      
     } else {
       offsetFile.setFile(parentEvidence.getFile());
       offsetFile.setExportedFile(parentEvidence.getExportedFile());
+    }
+    //optimization to not create more temp files
+    if (parentEvidence.hasTmpFile()) {
+        try {
+            offsetFile.setFile(parentEvidence.getTempFile());
+            offsetFile.setTempStartOffset(off);
+        } catch (IOException e) {
+            //ignore
+        }
     }
     parentEvidence.setHasChildren(true);
     
@@ -144,12 +146,9 @@ public abstract class BaseCarveTask extends AbstractTask {
   
   protected void addOffsetFile(EvidenceFile offsetFile, EvidenceFile parentEvidence){
 	// Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
-	    if (ExportFileTask.hasCategoryToExtract() && parentEvidence.isSubItem() && !parentEvidence.isToExtract()) {
-	      caseData.incDiscoveredEvidences(1);
-	      worker.process(offsetFile);
-	    } else {
-	      worker.processNewItem(offsetFile);
-	    }
+    boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
+    ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+	worker.processNewItem(offsetFile, time);
   }
   
   protected boolean isToProcess(EvidenceFile evidence) {

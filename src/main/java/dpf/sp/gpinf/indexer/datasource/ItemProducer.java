@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.Manager;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.EvidenceFile;
@@ -67,6 +68,8 @@ public class ItemProducer extends Thread {
       FTK3ReportReader.class,
       SleuthkitReader.class,
       IPEDReader.class,
+      UfedXmlReader.class,
+      AD1DataSourceReader.class,
       FolderTreeReader.class //deve ser o último
     };
 
@@ -89,12 +92,12 @@ public class ItemProducer extends Thread {
     try {
       for (File source : datasources) {
         if (Thread.interrupted()) {
-          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+          throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
         }
 
         if (listOnly) {
-          IndexFiles.getInstance().firePropertyChange("mensagem", 0, "Adicionando '" + source.getAbsolutePath() + "'");
-          LOGGER.info("Adicionando '{}'", source.getAbsolutePath());
+          IndexFiles.getInstance().firePropertyChange("mensagem", 0, Messages.getString("ItemProducer.Adding") + source.getAbsolutePath() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+          LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
         }
 
         int alternativeFiles = 0;
@@ -114,8 +117,8 @@ public class ItemProducer extends Thread {
         //caseData.addEvidenceFile(evidence);
 
       } else {
-        IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int) (caseData.getDiscoveredVolume() / 1000000));
-        LOGGER.info("Localizados {} itens", caseData.getDiscoveredEvidences());
+        IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int) (caseData.getDiscoveredVolume() / 1000000)); //$NON-NLS-1$
+        LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
       }
 
     } catch (Throwable e) {

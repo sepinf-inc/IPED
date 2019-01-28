@@ -25,7 +25,6 @@ import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ComponentAdapter;
@@ -35,13 +34,10 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -57,7 +53,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
@@ -68,32 +63,48 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
+import bibliothek.gui.dock.StackDockStation;
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.CLocation;
+import bibliothek.gui.dock.common.ColorMap;
+import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.event.CDockableLocationEvent;
+import bibliothek.gui.dock.common.event.CDockableLocationListener;
+import bibliothek.gui.dock.common.event.CDockableStateListener;
+import bibliothek.gui.dock.common.intern.CDockable;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.common.theme.ThemeMap;
+import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
-import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.util.JarLoader;
 
 public class App extends JFrame implements WindowListener {
   /**
    *
    */
   private static final long serialVersionUID = 1L;
+  
+  public static final boolean triageGui = System.getProperty("enableTriageGui") != null; //$NON-NLS-1$
 
   private static Logger LOGGER;
   
@@ -111,7 +122,7 @@ public class App extends JFrame implements WindowListener {
   public JDialog dialogBar;
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
-  JButton pesquisar, opcoes, atualizar, ajuda;
+  JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
   JCheckBox checkBox, recursiveTreeList;
   JTable resultsTable;
   GalleryTable gallery;
@@ -121,31 +132,41 @@ public class App extends JFrame implements WindowListener {
   HitsTable subItemTable;
   JTree tree, bookmarksTree, categoryTree;
   MetadataPanel metadataPanel;
+  JScrollPane categoriesPanel, bookmarksPanel;
+  JPanel evidencePanel;
   TreeListener treeListener;
   CategoryTreeListener categoryListener;
   BookmarksTreeListener bookmarksListener;
   HitsTable parentItemTable;
-  public JSplitPane verticalSplitPane, horizontalSplitPane, treeSplitPane;
+  CControl dockingControl;
+  DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+  DefaultSingleCDockable tableTabDock, galleryTabDock;
+  public DefaultSingleCDockable mapTabDock, hitsDock, subitemDock, parentDock;
+  DefaultSingleCDockable compositeViewerDock;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
 
-  public JTabbedPane tabbedHits, resultTab, treeTab;
-  Color defaultTabColor;
-  private JScrollPane subItemScroll, parentItemScroll;
+  Color defaultColor;
+  Color defaultFocusedColor;
+  Color defaultSelectedColor;
+  private JScrollPane hitsScroll, subItemScroll, parentItemScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
+  JScrollPane mapsScroll;
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
   boolean disposicaoVertical = false;
 
-  ResultTableModel resultsModel;
+  public ResultTableModel resultsModel;
   List resultSortKeys;
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
   GalleryModel galleryModel = new GalleryModel();
 
-  Color alertColor = Color.RED;//new Color(0xFFFF5050);
+  Color alertColor = Color.RED;
+  Color alertFocusedColor = Color.RED;
+  Color alertSelectedColor = Color.RED;
 
   private int zoomLevel;
 
@@ -157,9 +178,9 @@ public class App extends JFrame implements WindowListener {
   // "NÃ£o foi possÃ­vel visualizar o texto. Clique duas vezes sobre o arquivo para acessar o original!";
   // final String MSG_NO_HITS =
   // "NÃ£o foi possÃ­vel destacar as ocorrÃªncias. Clique duas vezes sobre o arquivo para acessar o original!";
-  final static String FILTRO_TODOS = "[Sem Filtro]";
-  final static String FILTRO_SELECTED = "[Selecionados]";
-  public final static String SEARCH_TOOL_TIP = "[Digite ou escolha a expressão a ser pesquisada]";
+  final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
+  final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
+  public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
 
   public static int MAX_LINE_SIZE = 100; // tamanho de quebra do texto para highlight
 
@@ -177,8 +198,8 @@ public class App extends JFrame implements WindowListener {
     this.appSearchParams = new AppSearchParams();
     this.appSearchParams.mainFrame = (JFrame) this;
     this.appSearchParams.viewerControl = ViewerControl.getInstance();    
-    this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">";
-    this.appSearchParams.HIGHLIGHT_END_TAG = "</font>";
+    this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
+    this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
     this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
     this.appSearchParams.FRAG_SIZE = FRAG_SIZE;
     this.appSearchParams.MAX_LINES = MAX_LINES;
@@ -212,12 +233,12 @@ public class App extends JFrame implements WindowListener {
     	  processingManager.setSearchAppOpen(true);
       
       LOGGER = LoggerFactory.getLogger(App.class);
-      LOGGER.info("Starting...");
+      LOGGER.info("Starting..."); //$NON-NLS-1$
       
      
 		if(SwingUtilities.isEventDispatchThread()){
 			createGUI();
-			LOGGER.info("GUI created");
+			LOGGER.info("GUI created"); //$NON-NLS-1$
 		}else{
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -225,7 +246,7 @@ public class App extends JFrame implements WindowListener {
 				    public void run() {
 				    	try{
 				    		createGUI();
-				    		LOGGER.info("GUI created");
+				    		LOGGER.info("GUI created"); //$NON-NLS-1$
 				    		
 				    	}catch(Throwable t){
 				    		t.printStackTrace();
@@ -272,7 +293,6 @@ public class App extends JFrame implements WindowListener {
     try {
     	
       if (this.resultsTable != null) {
-        ColumnsManager.getInstance().saveColumnsState();
         ColumnsManager.getInstance().dispose();
       }
       if (compositeViewer != null) {
@@ -300,40 +320,27 @@ public class App extends JFrame implements WindowListener {
 
   public void createGUI() {
 
-    String tab = "     ";
-    this.setTitle(Versao.APP_NAME + tab + "[Caso: " + casesPathFile + "]");
+    String tab = "     "; //$NON-NLS-1$
+    this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") +": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     this.setSize(new Dimension(800, 600));
     this.setExtendedState(Frame.MAXIMIZED_BOTH);
     this.addWindowListener(this);
-    URL image = getClass().getResource("search.png");
+    URL image = getClass().getResource("search.png"); //$NON-NLS-1$
     this.setIconImage(new ImageIcon(image).getImage());
     this.setVisible(true);
     ToolTipManager.sharedInstance().setInitialDelay(10);
 
-    treeTab = new JTabbedPane();
-    treeTab.setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
-    //Possibilita pintar aba selecionada
-    treeTab.setUI(new MetalTabbedPaneUI() {
-      protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
-          int x, int y, int w, int h, boolean isSelected) {
-        if (tabPane.getBackgroundAt(tabIndex) == alertColor) {
-          isSelected = false;
-        }
-        super.paintTabBackground(g, tabPlacement, tabIndex, x, y, w, h, isSelected);
-      }
-    });
-
     try {
       boolean nimbusFound = false;
       for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-        if ("Nimbus".equals(info.getName())) {
-          UIManager.put("nimbusOrange", new Color(47, 92, 180));
-          UIManager.put("nimbusRed", Color.BLUE);
+        if ("Nimbus".equals(info.getName())) { //$NON-NLS-1$
+          UIManager.put("nimbusOrange", new Color(47, 92, 180)); //$NON-NLS-1$
+          UIManager.put("nimbusRed", Color.BLUE); //$NON-NLS-1$
           UIManager.setLookAndFeel(info.getClassName());
           UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-          defaults.put("ScrollBar.thumbHeight", 12);
+          defaults.put("ScrollBar.thumbHeight", 12); //$NON-NLS-1$
           //Workaround JDK-8134828
-          defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+          defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30)); //$NON-NLS-1$
           nimbusFound = true;
           break;
         }
@@ -352,42 +359,45 @@ public class App extends JFrame implements WindowListener {
     termo.setSelectedItem(SEARCH_TOOL_TIP);
     termo.setMaximumRowCount(30);
 
-    pesquisar = new JButton("Pesquisar");
-    opcoes = new JButton("Opções");
-    atualizar = new JButton("Atualizar");
-    ajuda = new JButton("Ajuda");
-    checkBox = new JCheckBox("0");
+    pesquisar = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
+    opcoes = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
+    atualizar = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
+    ajuda = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
+    exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
+    checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
     filtro = new JComboBox<String>();
     filtro.setMaximumSize(new Dimension(100, 50));
     filtro.setMaximumRowCount(30);
     filtro.addItem(App.FILTRO_TODOS);
-    filtro.setToolTipText("Filtro");
+    filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
     filterManager = new FilterManager(filtro);
 
     topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
     topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
+    JLabel alertLabel = new JLabel(Messages.getString("App.FilterWarn")); //$NON-NLS-1$
+    alertLabel.setForeground(Color.WHITE);
     multiFilterAlert = new JPanel();
-    JLabel alertLabel = new JLabel("Múltiplos Filtros Ativos");
     multiFilterAlert.add(alertLabel);
-    alertLabel.setBackground(alertColor);
-    alertLabel.setOpaque(true);
-    multiFilterAlert.setMaximumSize(new Dimension(100, 50));
-    alertLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
+    multiFilterAlert.setBackground(alertColor);
+    multiFilterAlert.setMaximumSize(new Dimension(100, 100));
+    //multiFilterAlert.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, true));
     multiFilterAlert.setVisible(false);
 
     topPanel.add(filtro);
     topPanel.add(multiFilterAlert);
-    topPanel.add(new JLabel("    Pesquisar:"));
+    topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
     topPanel.add(termo);
     topPanel.add(opcoes);
     if(processingManager != null)
     	topPanel.add(atualizar);
     topPanel.add(ajuda);
+    topPanel.add(exportToZip);
+    exportToZip.setVisible(false);
     topPanel.add(checkBox);
-    topPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    topPanel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
     resultsModel = new ResultTableModel();
     resultsTable = new JTable(resultsModel);
@@ -398,8 +408,8 @@ public class App extends JFrame implements WindowListener {
     resultsTable.setShowGrid(false);
     resultsTable.setAutoscrolls(false);
     InputMap inputMap = resultsTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
-    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
+    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
     
     gallery = new GalleryTable(galleryModel);
     galleryScroll = new JScrollPane(gallery);
@@ -421,8 +431,8 @@ public class App extends JFrame implements WindowListener {
     gallery.addKeyListener(keyListener);
 
     inputMap = gallery.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none");
-    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none");
+    inputMap.put(KeyStroke.getKeyStroke("SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
+    inputMap.put(KeyStroke.getKeyStroke("ctrl SPACE"), "none"); //$NON-NLS-1$ //$NON-NLS-2$
 
     gallery.addComponentListener(new ComponentAdapter() {
       @Override
@@ -438,16 +448,14 @@ public class App extends JFrame implements WindowListener {
       }
     });
     
-    resultTab = new JTabbedPane();
-    browserPane = new AppMapaPanel(this);
-    JScrollPane mapsScroll = new JScrollPane(browserPane);
-    resultTab.addTab("Tabela", resultsScroll);
-    resultTab.addTab("Galeria", galleryScroll);
-    resultTab.addTab("Mapa", mapsScroll);
+    if(new JarLoader().loadJavaFX()) {
+        browserPane = new AppMapaPanel(this);
+        mapsScroll = new JScrollPane(browserPane);
+    }
 
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
-    JScrollPane hitsScroll = new JScrollPane(hitsTable);
+    hitsScroll = new JScrollPane(hitsTable);
     hitsTable.setFillsViewportHeight(true);
     hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
@@ -482,30 +490,8 @@ public class App extends JFrame implements WindowListener {
     parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
     parentItemTable.setShowGrid(false);
 
-    tabbedHits = new JTabbedPane();
-    tabbedHits.addTab("Ocorrências", hitsScroll);
-    appSearchParams.tabbedHits = tabbedHits;
-
     compositeViewer = new CompositeViewer();
     appSearchParams.compositeViewer = compositeViewer;
-
-    horizontalSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, tabbedHits, compositeViewer);
-    horizontalSplitPane.setDividerSize(5);
-    horizontalSplitPane.setOneTouchExpandable(true);
-    horizontalSplitPane.setContinuousLayout(true);
-    horizontalSplitPane.setResizeWeight(0.4);
-
-    verticalSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, resultTab, horizontalSplitPane);
-    verticalSplitPane.setDividerSize(5);
-    verticalSplitPane.setOneTouchExpandable(true);
-    verticalSplitPane.setContinuousLayout(true);
-    verticalSplitPane.setResizeWeight(0.5);
-
-    treeSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, treeTab, verticalSplitPane);
-    treeSplitPane.setOneTouchExpandable(true);
-    treeSplitPane.setDividerSize(5);
-    treeSplitPane.setContinuousLayout(true);
-    treeSplitPane.setResizeWeight(0.1);
     
     categoryTree = new JTree(new Object[0]);
 	categoryTree.setRootVisible(true);
@@ -515,22 +501,21 @@ public class App extends JFrame implements WindowListener {
 	categoryTree.addTreeExpansionListener(categoryListener);
 
     bookmarksTree = new JTree(new BookmarksTreeModel());
+    bookmarksTree.setCellRenderer(new BookmarkTreeCellRenderer());
+    ToolTipManager.sharedInstance().registerComponent(bookmarksTree);
     bookmarksListener = new BookmarksTreeListener();
     bookmarksTree.addTreeSelectionListener(bookmarksListener);
     bookmarksTree.addTreeExpansionListener(bookmarksListener);
     bookmarksTree.setExpandsSelectedPaths(false);
     
     metadataPanel = new MetadataPanel();
-
-    treeTab.add("Categorias", new JScrollPane(categoryTree));
-    treeTab.add("Metadados", metadataPanel);
-    treeTab.add("Marcadores", new JScrollPane(bookmarksTree));
-    defaultTabColor = treeTab.getBackgroundAt(0);
-
-    boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists();
+    categoriesPanel = new JScrollPane(categoryTree);
+    bookmarksPanel = new JScrollPane(bookmarksTree);
+    
+    boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
 
     if (!isFTKReport) {
-      recursiveTreeList = new JCheckBox("Listagem recursiva de diretórios");
+      recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
       recursiveTreeList.setSelected(true);
 
       tree = new JTree(new Object[0]);
@@ -539,30 +524,48 @@ public class App extends JFrame implements WindowListener {
       treeListener = new TreeListener();
       tree.addTreeSelectionListener(treeListener);
       tree.addTreeExpansionListener(treeListener);
-      tree.addMouseListener(treeListener);
 
-      JPanel evidencePanel = new JPanel(new BorderLayout());
+      evidencePanel = new JPanel(new BorderLayout());
       evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
       evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-      treeTab.insertTab("Evidências", null, evidencePanel, null, 2);
+      //treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null, evidencePanel, null, 2); //$NON-NLS-1$
     }
-
-    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) {
-        int index = SwingUtil.getIndexOfTab(treeTab, "Marcadores");
-        treeTab.setSelectedIndex(index);
+   
+    dockingControl = new CControl(this);
+    dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
+    dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
+    this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
+    defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
+    defaultFocusedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED);
+    defaultSelectedColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
+    
+    if(triageGui) {
+        disposicaoVertical = true;
+        exportToZip.setVisible(true);
     }
-
-    status = new JLabel(" ");
+    
+    refazLayout(false);
+    
+    if(triageGui) {
+        zoomFont(this, -1);
+    }
+    
+    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
+        selectDockableTab(bookmarksTabDock);
+    }
+    
+    status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
 
     this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-    this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+    //this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
     this.getContentPane().add(status, BorderLayout.PAGE_END);
 
     progressBar = new JProgressBar(0, 1);
     progressBar.setValue(0);
-    progressBar.setString("Aguarde...");
+    progressBar.setString(Messages.getString("App.Wait")); //$NON-NLS-1$
+    progressBar.setForeground(Color.WHITE);
     progressBar.setStringPainted(true);
     progressBar.setIndeterminate(true);
 
@@ -580,6 +583,7 @@ public class App extends JFrame implements WindowListener {
     filtro.addActionListener(appletListener);
     pesquisar.addActionListener(appletListener);
     opcoes.addActionListener(appletListener);
+    exportToZip.addActionListener(appletListener);
     atualizar.addActionListener(appletListener);
     ajuda.addActionListener(appletListener);
     checkBox.addActionListener(appletListener);
@@ -598,7 +602,7 @@ public class App extends JFrame implements WindowListener {
     // filtro.getComponent(0).addMouseListener(appletListener);
     termo.getEditor().getEditorComponent().addMouseListener(appletListener);
     termo.getComponent(0).addMouseListener(appletListener);
-
+    
     //Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
     gallery.repaint();
     KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -631,7 +635,172 @@ public class App extends JFrame implements WindowListener {
     
     new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());    
   }
-
+  
+  private void createAllDockables() {
+	categoriesTabDock = createDockable("categoriestab", Messages.getString("CategoryTreeModel.RootName"), categoriesPanel); //$NON-NLS-1$ //$NON-NLS-2$
+	metadataTabDock = createDockable("metadatatab", Messages.getString("App.Metadata"), metadataPanel); //$NON-NLS-1$ //$NON-NLS-2$
+	if(evidencePanel != null) {
+		evidenceTabDock = createDockable("evidencetab", Messages.getString("TreeViewModel.RootName"), evidencePanel); //$NON-NLS-1$ //$NON-NLS-2$
+	}
+	bookmarksTabDock = createDockable("bookmarkstab", Messages.getString("BookmarksTreeModel.RootName"), bookmarksPanel); //$NON-NLS-1$ //$NON-NLS-2$
+    
+	tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	if (mapsScroll != null) {
+		mapTabDock = createDockable("maptab", Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+		mapTabDock.addCDockableLocationListener(new CDockableLocationListener() {
+			@Override
+			public void changed(CDockableLocationEvent event) {
+				if (event.isShowingChanged() && event.getNewShowing()) {
+					browserPane.redesenhaMapa();
+				}
+			}
+		});
+	}
+	
+	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	parentDock = createDockable("parentitemtab",  Messages.getString("ParentTableModel.ParentCount"), parentItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	
+	compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), compositeViewer); //$NON-NLS-1$ //$NON-NLS-2$
+	compositeViewerDock.setTitleShown(false);
+	compositeViewerDock.addCDockableStateListener(new CDockableStateListener() {
+        @Override
+        public void extendedModeChanged(CDockable arg0, ExtendedMode mode) {
+            if(mode == ExtendedMode.EXTERNALIZED || mode == ExtendedMode.NORMALIZED)
+                viewerControl.restartLibreOfficeFrame();
+        }
+        @Override
+        public void visibilityChanged(CDockable arg0) {
+            // TODO Auto-generated method stub
+        }
+    });
+	
+	dockingControl.addDockable(categoriesTabDock);
+	dockingControl.addDockable(metadataTabDock);
+	if (evidenceTabDock != null) {
+		dockingControl.addDockable(evidenceTabDock);
+	}
+	dockingControl.addDockable(bookmarksTabDock);
+	dockingControl.addDockable(tableTabDock);
+	dockingControl.addDockable(galleryTabDock);
+	dockingControl.addDockable(mapTabDock);
+	dockingControl.addDockable(hitsDock);
+	dockingControl.addDockable(subitemDock);
+	dockingControl.addDockable(parentDock);
+	dockingControl.addDockable(compositeViewerDock);
+	
+	setDockablesColors();
+  }
+  
+  private void removeAllDockables() {
+	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
+	  compositeViewerDock, hitsDock, subitemDock, parentDock, tableTabDock, galleryTabDock,
+	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
+	
+	for (DefaultSingleCDockable dockable : dockables) {
+	  if (dockable != null) {
+		Component c = dockable.getContentPane().getComponent(0);
+		  dockable.remove(c);
+		  dockingControl.removeDockable(dockable);
+		}
+	}
+  }
+  
+  private DefaultSingleCDockable createDockable(String id, String title, JComponent component) {
+	DefaultSingleCDockable dockable = new DefaultSingleCDockable(id, title);
+	dockable.setLayout(new BorderLayout());
+	dockable.add(component, BorderLayout.CENTER);
+	return dockable;
+  }
+  
+  private boolean categoriesDefaultColor = true;
+  private boolean metadataDefaultColor = true;
+  private boolean evidenceDefaultColor = true;
+  private boolean bookmarksDefaultColor = true;
+  
+  public void setCategoriesDefaultColor(boolean defaultColor) {
+	if (categoriesDefaultColor != defaultColor) {
+	  categoriesDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setMetadataDefaultColor(boolean defaultColor) {
+	if (metadataDefaultColor != defaultColor) {
+	  metadataDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setEvidenceDefaultColor(boolean defaultColor) {
+	if (evidenceDefaultColor != defaultColor) {
+	  evidenceDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  public void setBookmarksDefaultColor(boolean defaultColor) {
+	if (bookmarksDefaultColor != defaultColor) {
+	  bookmarksDefaultColor = defaultColor;
+	  setDockablesColors();
+	}
+  }
+  
+  private void setDockablesColors() {
+	setTabColor(categoriesTabDock, categoriesDefaultColor);
+	setTabColor(metadataTabDock, metadataDefaultColor);
+	setTabColor(evidenceTabDock, evidenceDefaultColor);
+	setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+  }
+  
+  private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
+	if (dock == null)
+	  return;
+	if (isDefault) {
+	  setTabColor(dock, defaultColor, defaultFocusedColor, defaultSelectedColor);
+	} else {
+	  setTabColor(dock, alertColor, alertFocusedColor, alertSelectedColor);
+	}
+  }
+  
+  private void setTabColor(DefaultSingleCDockable dock, Color colorBackground, Color colorFocused, Color colorSelected) {
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_FOCUSED, colorFocused);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED, colorSelected);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND_FOCUSED, colorFocused);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_MINIMIZED_BUTTON_BACKGROUND_SELECTED, colorSelected);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TITLE_BACKGROUND, colorBackground);
+	dock.getColors().setColor(ColorMap.COLOR_KEY_TITLE_BACKGROUND_FOCUSED, colorFocused);
+  }
+  
+  public void moveEvidenveTabToFront() {
+	selectDockableTab(evidenceTabDock);
+  }
+  
+  public void selectDockableTab(DefaultSingleCDockable dock) {
+	  Container cont = dock.getContentPane();
+	  if (cont != null) {
+		  Container parent;
+		  while ( (parent = cont.getParent()) != null) {
+			  if (parent instanceof JTabbedPane) {
+				  JTabbedPane tabbedPane = (JTabbedPane) parent;
+				  Component selectedTab = tabbedPane.getSelectedComponent();
+				  if (selectedTab != cont) {
+					  tabbedPane.setSelectedComponent(cont);
+				  }
+				  break;
+			  } else if (parent instanceof EclipseTabPaneContent) {
+				  EclipseTabPaneContent eclipseTPC = (EclipseTabPaneContent) parent;
+				  EclipseTabPane eclipseTab = eclipseTPC.getPane();
+				  eclipseTab.setSelectedDockable(dock.intern());
+			  }
+			  cont = parent;
+		  }
+	  }
+  }
+  
   private void zoomFont(Component c, int inc) {
     if (c instanceof Container) {
       Component[] childs = ((Container) c).getComponents();
@@ -649,68 +818,122 @@ public class App extends JFrame implements WindowListener {
     repaint();
   }
 
-  public void alterarDisposicao() {
+  public void refazLayout(boolean remove) {
+	if (!disposicaoVertical) {
+	  if (remove)
+		removeAllDockables();
+	  createAllDockables();
 
-    if (disposicaoVertical) {
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.4));
+      tableTabDock.setVisible(true);
+	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
+	  
+	  galleryTabDock.setLocation(nextLocation);
+	  galleryTabDock.setVisible(true);
+	  nextLocation = galleryTabDock.getBaseLocation().aside();
+	  
+	  if (mapTabDock != null) {
+	    mapTabDock.setLocation(nextLocation);
+	    mapTabDock.setVisible(true);
+	  }
+	        
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
+	  hitsDock.setVisible(true);
+	  nextLocation = hitsDock.getBaseLocation().aside();
+	  
+	  subitemDock.setLocation(nextLocation);
+	  subitemDock.setVisible(true);
+      nextLocation = subitemDock.getBaseLocation().aside();
+      
+      parentDock.setLocation(nextLocation);
+      parentDock.setVisible(true);
 
-      horizontalSplitPane.remove(verticalSplitPane);
-      horizontalSplitPane.remove(compositeViewer);
-      verticalSplitPane.remove(resultTab);
-      verticalSplitPane.remove(tabbedHits);
-      treeSplitPane.remove(treeTab);
-      treeSplitPane.remove(horizontalSplitPane);
-      app.getContentPane().removeAll();
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.6).east(0.65));
+	  compositeViewerDock.setVisible(true);
+	  
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
+	  categoriesTabDock.setVisible(true);
+	        
+	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
+	  metadataTabDock.setVisible(true);
+	        
+	  nextLocation = metadataTabDock.getBaseLocation().aside();
+	        
+	  if (evidenceTabDock != null) {
+		evidenceTabDock.setLocation(nextLocation);
+	    evidenceTabDock.setVisible(true);
+	    nextLocation = evidenceTabDock.getBaseLocation().aside();
+	  }
+	        
+	  bookmarksTabDock.setLocation(nextLocation);
+	  bookmarksTabDock.setVisible(true);
+	  selectDockableTab(categoriesTabDock);
+	  selectDockableTab(tableTabDock);
+	} else {
+	  if (remove)
+	    removeAllDockables();
+	  createAllDockables();
+	        
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.7));
+	  tableTabDock.setVisible(true);
+	  
+	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 
-      horizontalSplitPane.add(tabbedHits);
-      horizontalSplitPane.add(compositeViewer);
-      verticalSplitPane.add(resultTab);
-      verticalSplitPane.add(horizontalSplitPane);
-
-      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      app.getContentPane().add(status, BorderLayout.PAGE_END);
-      treeSplitPane.add(treeTab);
-      treeSplitPane.add(verticalSplitPane);
-      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-
-      app.getContentPane().invalidate();
-      app.getContentPane().validate();
-      app.getContentPane().repaint();
-      verticalSplitPane.setDividerLocation(0.5);
-      horizontalSplitPane.setDividerLocation(0.4);
-
-      disposicaoVertical = false;
-
-    } else {
-      horizontalSplitPane.remove(tabbedHits);
-      horizontalSplitPane.remove(compositeViewer);
-      verticalSplitPane.remove(resultTab);
-      verticalSplitPane.remove(horizontalSplitPane);
-      treeSplitPane.remove(treeTab);
-      treeSplitPane.remove(horizontalSplitPane);
-      app.getContentPane().removeAll();
-
-      verticalSplitPane.add(resultTab);
-      verticalSplitPane.add(tabbedHits);
-      horizontalSplitPane.add(verticalSplitPane);
-      horizontalSplitPane.add(compositeViewer);
-
-      app.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-      app.getContentPane().add(status, BorderLayout.PAGE_END);
-      treeSplitPane.add(treeTab);
-      treeSplitPane.add(horizontalSplitPane);
-      app.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-
-      app.getContentPane().invalidate();
-      app.getContentPane().validate();
-      app.getContentPane().repaint();
-      verticalSplitPane.setDividerLocation(0.7);
-      horizontalSplitPane.setDividerLocation(0.6);
-
-      disposicaoVertical = true;
+	  galleryTabDock.setLocation(nextLocation);
+	  galleryTabDock.setVisible(true);
+	  nextLocation = galleryTabDock.getBaseLocation().aside();
+	        
+	  if (mapTabDock != null) {
+	    mapTabDock.setLocation(nextLocation);
+	    mapTabDock.setVisible(true);
+	  }
+	        
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.3));
+	  hitsDock.setVisible(true);
+	  nextLocation = hitsDock.getBaseLocation().aside();
+      
+      subitemDock.setLocation(nextLocation);
+      subitemDock.setVisible(true);
+      nextLocation = subitemDock.getBaseLocation().aside();
+      
+      parentDock.setLocation(nextLocation);
+      parentDock.setVisible(true);
+	       
+	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.40));
+	  compositeViewerDock.setVisible(true);
+	       
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
+      categoriesTabDock.setVisible(true);
+      
+      metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
+      metadataTabDock.setVisible(true);
+      
+      nextLocation = metadataTabDock.getBaseLocation().aside();
+      
+      if (evidenceTabDock != null) {
+        evidenceTabDock.setLocation(nextLocation);
+        evidenceTabDock.setVisible(true);
+        nextLocation = evidenceTabDock.getBaseLocation().aside();
+      }
+      
+      bookmarksTabDock.setLocation(nextLocation);
+      bookmarksTabDock.setVisible(true);
+      selectDockableTab(categoriesTabDock);
+	  selectDockableTab(tableTabDock);
     }
 
-    viewerControl.restartLibreOffice();
+    viewerControl.restartLibreOfficeFrame();
+  }
+  
+  public void alterarDisposicao() {
 
+    if (disposicaoVertical) {   	
+      disposicaoVertical = false;
+    } else {
+      disposicaoVertical = true;
+    }
+    
+    refazLayout(true);
   }
 
   @Override
@@ -767,12 +990,7 @@ public class App extends JFrame implements WindowListener {
 	return treeListener;
   }
 
-  public JTabbedPane getResultTab() {
-	return resultTab;
-  }
-
   public AppMapaPanel getBrowserPane() {
 	return browserPane;
-  }
-  
+  }  
 }

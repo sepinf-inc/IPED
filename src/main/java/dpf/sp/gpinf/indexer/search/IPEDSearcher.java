@@ -44,10 +44,14 @@ public class IPEDSearcher {
 	IPEDSource ipedCase;
 	Query query;
 	String queryText;
-	boolean treeQuery;
+	boolean treeQuery, noScore;
 	NoScoringCollector collector;
 	
 	private volatile boolean canceled;
+	
+	public IPEDSearcher(IPEDSource ipedCase) {
+        this.ipedCase = ipedCase;
+    }
 
 	public IPEDSearcher(IPEDSource ipedCase, Query query) {
 		this.ipedCase = ipedCase;
@@ -63,9 +67,17 @@ public class IPEDSearcher {
 		this.treeQuery = treeQuery;
 	}
 	
+	public void setNoScoring(boolean noScore) {
+	    this.noScore = noScore;
+	}
+	
 	public void setQuery(Query query){
 		this.query = query;
 	}
+	
+	public void setQuery(String query){
+        this.queryText = query;
+    }
 	
 	public Query getQuery(){
 		return query;
@@ -79,14 +91,14 @@ public class IPEDSearcher {
 	
 	public SearchResult search() throws Exception {
 		if(ipedCase instanceof IPEDMultiSource)
-			throw new Exception("Use multiSearch() method for IPEDMultiSource!");
+			throw new Exception("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 		
 		return SearchResult.get(ipedCase, luceneSearch());
 	}
 	
 	public MultiSearchResult multiSearch() throws Exception {
 		if(!(ipedCase instanceof IPEDMultiSource))
-			throw new Exception("Use search() method for only one IPEDSource!");
+			throw new Exception("Use search() method for only one IPEDSource!"); //$NON-NLS-1$
 		
 		return MultiSearchResult.get((IPEDMultiSource)ipedCase, luceneSearch());
 	}
@@ -113,7 +125,7 @@ public class IPEDSearcher {
 			//e.printStackTrace();
 		}
 		//não calcula scores (lento) quando resultado é mto grande
-		if(collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
+		if(noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
 			return collector.getSearchResults();
 		
 		//obtém resultados calculando score
@@ -137,7 +149,7 @@ public class IPEDSearcher {
 	private Query getNonTreeQuery(){
 		BooleanQuery result = new BooleanQuery();
 		result.add(query, Occur.MUST);
-		result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT);
+		result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT); //$NON-NLS-1$
 		return result;
 	}
 

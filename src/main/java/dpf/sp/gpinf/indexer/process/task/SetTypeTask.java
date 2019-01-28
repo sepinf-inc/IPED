@@ -18,11 +18,10 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetTypeTask extends AbstractTask {
 
-  TikaConfig config;
+  TikaConfig tikaConfig;
 
-  public SetTypeTask(Worker worker) {
-    super(worker);
-    config = worker.config;
+  public SetTypeTask() {
+    tikaConfig = TikaConfig.getDefaultConfig();
   }
 
   @Override
@@ -44,14 +43,14 @@ public class SetTypeTask extends AbstractTask {
 
   public String getExtBySig(EvidenceFile evidence) {
 
-    String ext = "";
-    String ext1 = "." + evidence.getExt();
+    String ext = ""; //$NON-NLS-1$
+    String ext1 = "." + evidence.getExt(); //$NON-NLS-1$
     MediaType mediaType = evidence.getMediaType();
     if (!mediaType.equals(MediaType.OCTET_STREAM)) {
       try {
         do {
           boolean first = true;
-          for (String ext2 : config.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
+          for (String ext2 : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
             if (first) {
               ext = ext2;
               first = false;
@@ -62,12 +61,12 @@ public class SetTypeTask extends AbstractTask {
             }
           }
 
-        } while (ext.isEmpty() && !MediaType.OCTET_STREAM.equals((mediaType = config.getMediaTypeRegistry().getSupertype(mediaType))));
+        } while (ext.isEmpty() && !MediaType.OCTET_STREAM.equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
       } catch (MimeTypeException e) {
       }
     }
 
-    if (ext.isEmpty() || ext.equals(".txt")) {
+    if (ext.isEmpty() || ext.equals(".txt")) { //$NON-NLS-1$
       ext = ext1;
     }
 

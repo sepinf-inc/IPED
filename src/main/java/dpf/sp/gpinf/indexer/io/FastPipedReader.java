@@ -37,6 +37,10 @@ public class FastPipedReader extends Reader {
   public static void setTimeout(int timeout) {
     TIMEOUT = timeout;
   }
+  
+  public int getTotalTimeout() {
+      return TIMEOUT + timeOutBySize;
+  }
 
   boolean closedByWriter = false;
   boolean closedByReader = false;
@@ -129,7 +133,7 @@ public class FastPipedReader extends Reader {
 
   private void initPipe(int pipeSize) {
     if (pipeSize <= 0) {
-      throw new IllegalArgumentException("Pipe size <= 0");
+      throw new IllegalArgumentException("Pipe size <= 0"); //$NON-NLS-1$
     }
     buffer = new char[pipeSize];
   }
@@ -167,17 +171,17 @@ public class FastPipedReader extends Reader {
    */
   synchronized void receive(int c) throws IOException {
     if (!connected) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     } else if (closedByWriter || closedByReader) {
-      throw new IOException("Pipe closed");
+      throw new IOException("Pipe closed"); //$NON-NLS-1$
     } else if (readSide != null && !readSide.isAlive()) {
-      throw new IOException("Read end dead");
+      throw new IOException("Read end dead"); //$NON-NLS-1$
     }
 
     writeSide = Thread.currentThread();
     while (in == out) {
       if ((readSide != null) && !readSide.isAlive()) {
-        throw new IOException("Pipe broken");
+        throw new IOException("Pipe broken"); //$NON-NLS-1$
       }
       /* full: kick any waiting readers */
       notifyAll();
@@ -205,11 +209,11 @@ public class FastPipedReader extends Reader {
   synchronized void receive(char cbuf[], int off, int len) throws IOException {
 
     if (!connected) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     } else if (closedByWriter || closedByReader) {
-      throw new IOException("Pipe closed");
+      throw new IOException("Pipe closed"); //$NON-NLS-1$
     } else if (readSide != null && !readSide.isAlive()) {
-      throw new IOException("Read end dead");
+      throw new IOException("Read end dead"); //$NON-NLS-1$
     }
 
     writeSide = Thread.currentThread();
@@ -217,7 +221,7 @@ public class FastPipedReader extends Reader {
     while (--len >= 0) {
       while (in == out) {
         if ((readSide != null) && !readSide.isAlive()) {
-          throw new IOException("Pipe broken");
+          throw new IOException("Pipe broken"); //$NON-NLS-1$
         }
         /* full: kick any waiting readers */
         notifyAll();
@@ -269,14 +273,16 @@ public class FastPipedReader extends Reader {
      throw new IOException("Write end dead");
      }*/
     //readSide = Thread.currentThread();
-    int trials = 2;
+    int trials = 10;
     while (in < 0) {
       if (closedByWriter) {
         /* closed by writer, return EOF */
         return -1;
       }
       if ((writeSide != null) && (!writeSide.isAlive()) && (--trials < 0)) {
-        throw new IOException("Pipe broken");
+          //throw new IOException("Pipe broken");
+          System.out.println("Pipe broken, writer thread is dead?"); //$NON-NLS-1$
+          closedByWriter = true;
       }
       /* might be a writer waiting */
       notifyAll();
@@ -285,7 +291,7 @@ public class FastPipedReader extends Reader {
       } catch (InterruptedException ex) {
         throw new java.io.InterruptedIOException();
       }
-      if (!timeoutPaused && timer++ == TIMEOUT + timeOutBySize) {
+      if (!timeoutPaused && timer++ == getTotalTimeout()) {
         timedOut = true;
         throw new TimeoutException();
       }
@@ -322,11 +328,11 @@ public class FastPipedReader extends Reader {
   public synchronized int read(char cbuf[], int off, int len) throws IOException {
 
     if (!connected) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     } else if (closedByReader) {
-      throw new IOException("Pipe closed");
+      throw new IOException("Pipe closed"); //$NON-NLS-1$
     } else if (writeSide != null && !writeSide.isAlive() && !closedByWriter && (in < 0)) {
-      throw new IOException("Write end dead");
+      throw new IOException("Write end dead"); //$NON-NLS-1$
     }
 
     if ((off < 0) || (off > cbuf.length) || (len < 0) || ((off + len) > cbuf.length) || ((off + len) < 0)) {
@@ -369,11 +375,11 @@ public class FastPipedReader extends Reader {
   @Override
   public synchronized boolean ready() throws IOException {
     if (!connected) {
-      throw new IOException("Pipe not connected");
+      throw new IOException("Pipe not connected"); //$NON-NLS-1$
     } else if (closedByReader) {
-      throw new IOException("Pipe closed");
+      throw new IOException("Pipe closed"); //$NON-NLS-1$
     } else if (writeSide != null && !writeSide.isAlive() && !closedByWriter && (in < 0)) {
-      throw new IOException("Write end dead");
+      throw new IOException("Write end dead"); //$NON-NLS-1$
     }
     if (in < 0) {
       return false;

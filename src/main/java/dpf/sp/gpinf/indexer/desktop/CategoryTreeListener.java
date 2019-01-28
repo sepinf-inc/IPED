@@ -45,11 +45,11 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     }
 
     if (selection.contains(root) || selection.isEmpty()) {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+      App.get().setCategoriesDefaultColor(true);
       query = null;
 
     } else {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+    	App.get().setCategoriesDefaultColor(false);
 
       query = new BooleanQuery();
 

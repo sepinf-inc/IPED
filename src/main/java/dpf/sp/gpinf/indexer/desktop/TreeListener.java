@@ -47,11 +47,12 @@ import org.apache.lucene.search.TermQuery;
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.util.SwingUtil;
 import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 
-public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, MouseListener {
+public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener {
 
   Query treeQuery, recursiveTreeQuery;
   boolean rootSelected = false;
@@ -83,11 +84,11 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     }
 
     if (rootSelected || selection.isEmpty()) {
-      treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true"));
+      treeQuery = new TermQuery(new Term(IndexItem.ISROOT, "true")); //$NON-NLS-1$
       recursiveTreeQuery = null;
 
     } else {
-      String treeQueryStr = "";
+      String treeQueryStr = ""; //$NON-NLS-1$
       recursiveTreeQuery = new BooleanQuery();
 
       for (TreePath path : selection) {
@@ -98,7 +99,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
           parentId = doc.get(IndexItem.ID);
         
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-        treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ") ";
+        treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ") "; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
         BooleanQuery subQuery = new BooleanQuery();
         subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
@@ -120,44 +121,46 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
     LinkedList<Node> path = new LinkedList<Node>();
     LuceneSearchResult result = new LuceneSearchResult(0);
-    String textQuery = null;
+    String parentId = null;
     do {
       try {
         Document doc = App.get().appCase.getReader().document(docId);
 
-        textQuery = null;
-        String parentId = doc.get(IndexItem.PARENTID);
-        if (parentId != null)
-          textQuery = IndexItem.ID + ":" + parentId;
+        parentId = doc.get(IndexItem.PARENTID);
+        if (parentId != null){
+            String ftkId = doc.get(IndexItem.FTKID);
+            if (ftkId == null){
+                IPEDSource src = App.get().appCase.getAtomicSource(docId);
+                docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
+                path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
+            }else{
+                String textQuery = IndexItem.FTKID + ":" + parentId; //$NON-NLS-1$
+                if (textQuery != null) {
+                  String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+                  textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;  //$NON-NLS-1$ //$NON-NLS-2$
+                    
+                  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                  task.setTreeQuery(true);
+                  result = task.luceneSearch();
 
-        String ftkId = doc.get(IndexItem.FTKID);
-        if (ftkId != null)
-          textQuery = IndexItem.FTKID + ":" + parentId;
-        
-        if (textQuery != null) {
-          String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-          textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID;	
-        	
-		  IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-		  task.setTreeQuery(true);
-          result = task.luceneSearch();
-
-          if (result.getLength() == 1) {
-            docId = result.getLuceneIds()[0];
-            path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
-          }
+                  if (result.getLength() == 1) {
+                    docId = result.getLuceneIds()[0];
+                    path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
+                  }else
+                    parentId = null;
+                }
+            }
         }
 
       } catch (Exception e) {
         e.printStackTrace();
       }
 
-    } while (result.getLength() == 1 && textQuery != null);
+    } while (parentId != null);
 
     path.addFirst((Node) App.get().tree.getModel().getRoot());
     
-    int index = SwingUtil.getIndexOfTab(App.get().treeTab, "Evidências");
-    App.get().treeTab.setSelectedIndex(index);
+    App.get().moveEvidenveTabToFront();
 
     TreePath treePath = new TreePath(path.toArray());
     App.get().tree.setExpandsSelectedPaths(true);
@@ -170,12 +173,18 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   public void actionPerformed(ActionEvent e) {
 
     if ((App.get().recursiveTreeList.isSelected() && rootSelected) || selection.isEmpty()) {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+      App.get().setEvidenceDefaultColor(true);
     } else {
-      App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+      App.get().setEvidenceDefaultColor(false);
     }
 
     App.get().appletListener.updateFileListing();
+    
+    if(selection.size() == 1 && selection.iterator().next().getPathCount() > 2){
+        int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
+        FileProcessor parsingTask = new FileProcessor(luceneId, false);
+        parsingTask.execute();
+    }
 
   }
 
@@ -188,77 +197,6 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
   @Override
   public void treeCollapsed(TreeExpansionEvent event) {
     collapsedTime = System.currentTimeMillis();
-
-  }
-
-  @Override
-  public void mouseClicked(MouseEvent e) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mousePressed(MouseEvent e) {
-    if (e.isPopupTrigger()) {
-      showPopupMenu(e);
-    }
-
-  }
-
-  private void showPopupMenu(MouseEvent e) {
-    JPopupMenu menu = new JPopupMenu();
-
-    JMenuItem exportTree = new JMenuItem("Exportar árvore de diretórios");
-    exportTree.addActionListener(new TreeMenuListener(false));
-    menu.add(exportTree);
-
-    JMenuItem exportTreeChecked = new JMenuItem("Exportar árvore de diretórios (itens selecionados)");
-    exportTreeChecked.addActionListener(new TreeMenuListener(true));
-    menu.add(exportTreeChecked);
-
-    menu.show((Component) e.getSource(), e.getX(), e.getY());
-  }
-
-  @Override
-  public void mouseReleased(MouseEvent e) {
-    if (e.isPopupTrigger()) {
-      showPopupMenu(e);
-    }
-
-  }
-
-  class TreeMenuListener implements ActionListener {
-
-    boolean onlyChecked = false;
-
-    TreeMenuListener(boolean onlyChecked) {
-      this.onlyChecked = onlyChecked;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-
-      TreePath[] paths = App.get().tree.getSelectionPaths();
-      if (paths == null || paths.length != 1) {
-        JOptionPane.showMessageDialog(null, "Selecione 01 (um) nó na árvore de diretórios como base de exportação!");
-      } else {
-        Node treeNode = (Node) paths[0].getLastPathComponent();
-        ExportFileTree.salvarArquivo(treeNode.docId, onlyChecked);
-      }
-
-    }
-
-  }
-
-  @Override
-  public void mouseEntered(MouseEvent e) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mouseExited(MouseEvent e) {
-    // TODO Auto-generated method stub
 
   }
 

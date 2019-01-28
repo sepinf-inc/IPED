@@ -1,0 +1,41 @@
+########################################################################
+# Configuration for AUTOMATIC file export.
+# Useful in cases of blind data extraction
+# Uncomment the categories that should be EXPORTED.
+# Items will be exported to the folder ' Exported '
+# In this case, only the exported files will be indexed.
+########################################################################
+
+Emails
+Text Documents
+PDF Documents
+HTML Documents
+RTF Documents
+Other Documents
+XML Files
+Databases
+Spreadsheets
+Presentations
+Contacts
+Chats
+Internet History
+Link files
+URL links
+Peer-to-peer
+Temporary Internet Texts
+Texts in System Folders
+Other Texts
+Scanned Documents
+Temporary Internet Images
+#Images in System Folders
+Other Images
+#Videos
+#Audios
+#OLE files
+#Compressed Archives
+#Mailboxes
+Windows Registry
+#Programs and Libraries
+#Unallocated
+#Other files
+#Empty Files

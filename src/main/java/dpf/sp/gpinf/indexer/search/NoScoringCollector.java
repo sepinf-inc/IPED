@@ -38,7 +38,7 @@ public class NoScoringCollector extends Collector{
 	@Override
 	public void collect(int doc) throws IOException {
 		if(canceled)
-			throw new InterruptedIOException("Search canceled!");
+			throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
 		
 		totalHits++;
 		bits.set(doc + docBase);

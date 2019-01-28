@@ -44,12 +44,27 @@ expandContainers = true
 # Novas expressões podem ser configuradas em conf/RegexConfig.txt
 enableRegexSearch = true
 
+# Habilita detecção de mais de 70 idiomas nos documentos.
+enableLanguageDetect = true
+
+# Função EXPERIMENTAL de reconhecimento de entidades mencionadas: nomes de pessoas, organizações e lugares.
+# É necessário baixar e colocar na pasta optional-libs os modelos de interesse em:
+# StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
+# Ainda não foi treinado um modelo para o português, por isso os resultados podem não ser satisfatórios.
+# Esta função utiliza muita CPU, podendo aumentar o tempo de processamento em 4x.
+# Configurações avançadas podem ser alteradas em conf/NamedEntityRecognitionConfig.txt
+enableNamedEntityRecogniton = false
+
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
 
 # Indexa arquivos sem decodificador específico, como binários, desconhecidos, pagefile, não alocado, etc
 # Nesse caso são indexadas strings brutas em claro extraídas dos arquivos.
 indexUnknownFiles = true
+
+# Indexa arquivos corrompidos via strings. Por exemplo, imagens apagadas sobrescritas
+# parcialmente podem conter texto em claro relevante.
+indexCorruptedFiles = true
 
 # Habilita o OCR em imagens e PDFs digitalizados. Pode aumentar consideravelmente o tempo de processamento.
 # Os resultados dependem da qualidade e resolução das imagens e do tamanho e tipo das fontes utilizadas.

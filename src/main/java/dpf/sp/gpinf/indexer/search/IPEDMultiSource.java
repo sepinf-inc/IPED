@@ -9,10 +9,12 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.EvidenceFile;
 
 public class IPEDMultiSource extends IPEDSource{
@@ -40,7 +42,7 @@ public class IPEDMultiSource extends IPEDSource{
 			files = loadCasesFromTxtFile(file);
 		
 		for(File src : files){
-			LOGGER.info("Loading " + src.getAbsolutePath());
+			LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
 			IPEDSource icase = new IPEDSource(src);
 			this.cases.add(icase);
 		}
@@ -57,8 +59,8 @@ public class IPEDMultiSource extends IPEDSource{
 			if(bytes[0] == (byte)0xEF && bytes[1] == (byte)0xBB && bytes[2] == (byte)0xBF)
 				bytes[0] = bytes[1] = bytes[2] = 0;
 			
-			String content = new String(bytes, "UTF-8");
-			for(String pathStr : content.split("\n")){
+			String content = new String(bytes, "UTF-8"); //$NON-NLS-1$
+			for(String pathStr : content.split("\n")){ //$NON-NLS-1$
 				File path = new File(pathStr.trim());
 				if(!new File(path, MODULE_DIR).exists())
 					continue;
@@ -72,7 +74,7 @@ public class IPEDMultiSource extends IPEDSource{
 	}
 	
 	private List<File> searchCasesinFolder(File folder){
-		LOGGER.info("Searching cases in " + folder.getPath());
+		LOGGER.info("Searching cases in " + folder.getPath()); //$NON-NLS-1$
 		ArrayList<File> files = new ArrayList<File>();
 		File[] subFiles = folder.listFiles();
 		if(subFiles != null)
@@ -125,7 +127,7 @@ public class IPEDMultiSource extends IPEDSource{
 			if(iCase.isFTKReport)
 				isFTKReport = true;
 		
-		LOGGER.info("Loaded " + cases.size() + " cases.");
+		LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
 	private void openIndex() throws IOException{
@@ -134,13 +136,13 @@ public class IPEDMultiSource extends IPEDSource{
 		for(IPEDSource iCase : cases)
 			readers[i++] = iCase.reader;
 		
-		LOGGER.info("Opening MultiReader...");
+		LOGGER.info("Opening MultiReader..."); //$NON-NLS-1$
 		
 		reader = new MultiReader(readers, false);
 		
 		atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 		
-		LOGGER.info("MultiReader opened");
+		LOGGER.info("MultiReader opened"); //$NON-NLS-1$
 		
 		openSearcher();
 		
@@ -158,6 +160,12 @@ public class IPEDMultiSource extends IPEDSource{
 		
 		for(IPEDSource iCase : cases)
 			iCase.close();
+	}
+	
+	@Override
+	public void checkImagePaths() throws IPEDException, TskCoreException{
+	    for(IPEDSource iCase : cases)
+	        iCase.checkImagePaths();
 	}
 	
 	final public IPEDSource getAtomicSource(int luceneId){
@@ -178,7 +186,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return this.cases;
 	}
 	
-	final int getBaseLuceneId(IPEDSource atomicCase){
+	public final int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
 		for(IPEDSource iCase : cases){
 			if(atomicCase == iCase)
@@ -198,7 +206,7 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	@Override
 	final public EvidenceFile getItemByID(int id){
-		throw new RuntimeException("Use getItemByItemId() from " + this.getClass().getSimpleName());
+		throw new RuntimeException("Use getItemByItemId() from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
 	final public EvidenceFile getItemByItemId(ItemId item){
@@ -214,7 +222,7 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	@Override
 	final public int getId(int luceneId){
-		throw new RuntimeException("Use getItemId() from " + this.getClass().getSimpleName());
+		throw new RuntimeException("Use getItemId() from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
 	final public ItemId getItemId(int luceneId){
@@ -227,7 +235,7 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	@Override
 	final public int getLuceneId(int id){
-		throw new RuntimeException("Use getLuceneId(ItemId) from " + this.getClass().getSimpleName());
+		throw new RuntimeException("Use getLuceneId(ItemId) from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
 	final public int getLuceneId(ItemId id){
@@ -239,17 +247,17 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	@Override
 	boolean isSplited(int id){
-		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
 	@Override
-	public int getTextSize(int id) {
-		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
+	public long getTextSize(int id) {
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
 	@Override
 	public int getLastId() {
-		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName());
+		throw new RuntimeException("Forbidden call from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 
 }

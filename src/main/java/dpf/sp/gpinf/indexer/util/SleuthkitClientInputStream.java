@@ -45,10 +45,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
   public int read(byte b[], int off, int len) throws IOException {
 
     if (closed) {
-      throw new IOException("Stream is closed!");
+      throw new IOException("Stream is closed!"); //$NON-NLS-1$
     }
     if (client.serverError) {
-      throw new IOException("SleuthkitServer returned an error before.");
+      throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
     }
 
     synchronized (client) {
@@ -100,11 +100,12 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
       } catch (SocketTimeoutException e) {
         if (SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ) {
+          LOGGER.info("Waiting SleuthkitServer open file " + path); //$NON-NLS-1$
           continue;
         }
 
         client.serverError = true;
-        LOGGER.error("SocketTimeout aguardando SleuthkitServer: " + path);
+        LOGGER.error("SocketTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
         throw e;
 
       } catch (IOException e1) {
@@ -122,12 +123,12 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
           time = System.currentTimeMillis();
         }
         Thread.sleep(1);
-        LOGGER.error("Waiting Server memory write...");
+        LOGGER.error("Waiting Server memory write..."); //$NON-NLS-1$
 
         if (System.currentTimeMillis() - time >= TIMEOUT) {
           client.serverError = true;
-          LOGGER.error("MemoryReadTimeout aguardando SleuthkitServer: " + path);
-          throw new IOException("MemoryReadTimeout aguardando SleuthkitServer: " + path);
+          LOGGER.error("MemoryReadTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
+          throw new IOException("MemoryReadTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
         }
 
       } catch (InterruptedException e) {
@@ -141,7 +142,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
       mbb.position(17);
       mbb.get(b);
       try {
-        throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8"));
+        throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
       } catch (UnsupportedEncodingException e) {
       }
     }
@@ -160,17 +161,17 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
   }
 
   private String getCrashMsg() {
-    return "Possível crash do Sleuthkit ao ler " + path;
+    return "Possible Sleuthkit Crash reading " + path; //$NON-NLS-1$
   }
 
   @Override
   public void seek(long pos) throws IOException {
 
     if (closed) {
-      throw new IOException("Stream is closed!");
+      throw new IOException("Stream is closed!"); //$NON-NLS-1$
     }
     if (client.serverError) {
-      throw new IOException("SleuthkitServer returned an error before.");
+      throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
     }
 
     synchronized (client) {
@@ -189,10 +190,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
   public long position() throws IOException {
 
     if (closed) {
-      throw new IOException("Stream is closed!");
+      throw new IOException("Stream is closed!"); //$NON-NLS-1$
     }
     if (client.serverError) {
-      throw new IOException("SleuthkitServer returned an error before.");
+      throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
     }
 
     synchronized (client) {
@@ -210,10 +211,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
   public long size() throws IOException {
 
     if (closed) {
-      throw new IOException("Stream is closed!");
+      throw new IOException("Stream is closed!"); //$NON-NLS-1$
     }
     if (client.serverError) {
-      throw new IOException("SleuthkitServer returned an error before.");
+      throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
     }
 
     synchronized (client) {
@@ -230,10 +231,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
   @Override
   public int read() throws IOException {
     if (closed) {
-      throw new IOException("Stream is closed!");
+      throw new IOException("Stream is closed!"); //$NON-NLS-1$
     }
     if (client.serverError) {
-      throw new IOException("SleuthkitServer returned an error before.");
+      throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
     }
 
     byte[] b = new byte[1];

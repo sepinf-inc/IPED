@@ -40,6 +40,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
+import org.apache.tika.parser.microsoft.OfficeParserConfig;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
@@ -47,6 +48,7 @@ import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
@@ -57,7 +59,7 @@ import dpf.sp.gpinf.indexer.util.StreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 	
-  public static final String TEXT_SIZE = "textSize";
+  public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
 
   private static TextParser parsingTask;
   private StreamSource content;
@@ -169,7 +171,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
   @Override
   public void done() {
 	
-    App.get().tabbedHits.setTitleAt(0, hits.size() + " Ocorrências");
+    App.get().hitsDock.setTitleText(hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
     if (progressMonitor != null) {
       progressMonitor.close();
     }
@@ -185,7 +187,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
       }
 
       progressMonitor = new ProgressDialog(App.get(), parsingTask);
-      progressMonitor.setMaximum((Integer)item.getExtraAttribute(TEXT_SIZE) * 1000L);
+      progressMonitor.setMaximum((Long)item.getExtraAttribute(TEXT_SIZE));
       
       sortedHits = new TreeMap<Long, int[]>();
       hits = new ArrayList<Long>();
@@ -199,28 +201,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
     return null;
   }
 
-  private ParseContext getTikaContext() throws Exception {
-    ParseContext context = new ParseContext();
-    context.set(Parser.class, (Parser) App.get().getAutoParser());
-    context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(item));
-
-    ParsingTask expander = new ParsingTask(context);
-    expander.init(Configuration.properties, new File(Configuration.configPath, "conf"));
-    context.set(EmbeddedDocumentExtractor.class, expander);
-
-    // Tratamento p/ acentos de subitens de ZIP
-    ArchiveStreamFactory factory = new ArchiveStreamFactory();
-    factory.setEntryEncoding("Cp850");
-    context.set(ArchiveStreamFactory.class, factory);
-    
-    // Indexa conteudo de todos os elementos de HTMLs, como script, etc
-    context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
-
-    context.set(StreamSource.class, content);
-    
-    OCROutputFolder ocrOut = (OCROutputFolder)item.getExtraAttribute(OCROutputFolder.class.getName());
-    context.set(OCROutputFolder.class, ocrOut);
-
+  private ParseContext getTikaContext(EvidenceFile item) throws Exception {
+    ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
+    expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
+    ParseContext context = expander.getTikaContext(); 
+    expander.setExtractEmbedded(false);
     return context;
   }
   
@@ -244,11 +229,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
       Metadata metadata = item.getMetadata();
       ParsingTask.fillMetadata(item, metadata);
 
-      ParseContext context = getTikaContext();
+      ParseContext context = getTikaContext(item);
       InputStream is = item.getTikaStream();
       
       CountInputStream cis = null;
-      if(item.getLength() != null && !ParsingTask.hasSpecificParser((IndexerDefaultParser) App.get().getAutoParser(), item)){
+      if(item.getLength() != null && !((IndexerDefaultParser)App.get().getAutoParser()).hasSpecificParser(metadata)){
     	  progressMonitor.setMaximum(item.getLength());
     	  cis = new CountInputStream(is);
     	  is = cis;
@@ -259,10 +244,10 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
       tmp.dispose();
       File tmpFile = tmp.createTemporaryFile();
-      parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel();
+      parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
       tmp.addResource(parsedFile);
 
-      String contents, fieldName = "conteudo";
+      String contents, fieldName = IndexItem.CONTENT;
       int read = 0, lastRowInserted = -1;
       long totalRead = 0, lastNewLinePos = 0;
       boolean lineBreak = false;
@@ -279,7 +264,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
           off += read;
           totalRead += read;
           if(cis == null)
-        	  this.firePropertyChange("progress", 0, totalRead);
+        	  this.firePropertyChange("progress", 0, totalRead); //$NON-NLS-1$
         }
 
         if (this.isCancelled()) {
@@ -370,7 +355,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             // atualiza lista de hits
             appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
-            this.firePropertyChange("hits", numHits, numHits + 1);
+            this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
           }
 
           // adiciona linha no viewer para o fragmento
@@ -396,7 +381,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
       }
 
-      textReader.reallyClose();
+      textReader.close();
 
     } catch (InterruptedIOException | ClosedByInterruptException e1) {
       //e1.printStackTrace();

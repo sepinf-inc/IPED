@@ -13,15 +13,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.SwingUtilities;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+
 public class CategoryTreeModel implements TreeModel {
 
-  public static String rootName = "Categorias";
-  private static String CONF_FILE = "conf/CategoryHierarchy.txt";
+  public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
+  private static String CONF_FILE = "conf/CategoryHierarchy.txt"; //$NON-NLS-1$
 
   public Category root;
   
@@ -32,8 +36,11 @@ public class CategoryTreeModel implements TreeModel {
   public static void install(){
 	  if(App.get().categoryTree.getModel() instanceof CategoryTreeModel)
 		  ((CategoryTreeModel)App.get().categoryTree.getModel()).updateCategories();
-	  else
-		  App.get().categoryTree.setModel(new CategoryTreeModel());
+	  else {
+	      CategoryTreeModel model = new CategoryTreeModel();
+	      App.get().categoryTree.setModel(model);
+	      model.root.updateItemCount();
+	  }
   }
 
   private CategoryTreeModel() {
@@ -50,7 +57,8 @@ public class CategoryTreeModel implements TreeModel {
   private void updateCategories(){
 	try {
 		Category newRoot = loadHierarchy();
-		addNewChildren(this.root, newRoot);
+		updateChildren(this.root, newRoot);
+		this.root.updateItemCount();
 		
 	} catch (IOException e) {
 		e.printStackTrace();
@@ -58,10 +66,11 @@ public class CategoryTreeModel implements TreeModel {
   }
 
   class Category implements Comparable<Category> {
-
+    
     String name;
     Category parent;
     TreeSet<Category> children = new TreeSet<Category>();
+    volatile Integer numItems;
 
     private Category(String name, Category parent) {
       this.name = name;
@@ -69,7 +78,59 @@ public class CategoryTreeModel implements TreeModel {
     }
 
     public String toString() {
-      return name;
+      if(this.equals(root))
+          return name;
+      if(numItems == null) {
+          return name + " (...)"; //$NON-NLS-1$
+      }else
+          return name + " (" + numItems + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    
+    private synchronized Integer countNumItems() {
+        if(numItems != null)
+            return numItems;
+        
+        if(children.size() > 0) {
+            int num = 0;
+            for(Category child : children)
+                num += child.countNumItems();
+            numItems = num;
+            
+        }else {
+            String query = IndexItem.CATEGORY + ":\"" + name + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+            IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
+            try {
+                numItems = searcher.multiSearch().getLength();
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        fireNodeChanged(this);
+        return numItems;
+    }
+    
+    private void clearItemCount() {
+        numItems = null;
+        fireNodeChanged(this);
+    }
+    
+    private void updateItemCount() {
+        new Thread() {
+            public void run() {
+                countNumItems();
+            }
+        }.start();
+    }
+    
+    private int getIndexOfChild(Category child) {
+        int idx = 0;
+        for(Category c : children) {
+            if(c.equals(child))
+                return idx;
+            idx++;
+        }
+        return -1;
     }
 
     @Override
@@ -84,15 +145,34 @@ public class CategoryTreeModel implements TreeModel {
 
   }
   
+  private void fireNodeChanged(final Category category) {
+      if(category == root)
+          return;
+      SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+              Category cat = category;
+              int idx = cat.parent.getIndexOfChild(cat);
+              int[] idxs = {idx};
+              LinkedList<Category> path = new LinkedList<Category>();
+              while(cat.parent != null)
+                  path.addFirst(cat = cat.parent);
+              Category[] cats = {cat};
+              TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
+              for(TreeModelListener l : listeners)
+                  l.treeNodesChanged(e);
+          }
+      });
+  }
+  
   private String upperCaseChars(String cat){
 	  StringBuilder str = new StringBuilder();
-	  for(String s : cat.split(" "))
+	  for(String s : cat.split(" ")) //$NON-NLS-1$
 		  if(s.length() == 3)
-			  str.append(s.toUpperCase() + " ");
+			  str.append(s.toUpperCase() + " "); //$NON-NLS-1$
 		  else if(s.length() > 3)
-			  str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " ");
+			  str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " "); //$NON-NLS-1$
 		  else
-			  str.append(s + " ");
+			  str.append(s + " "); //$NON-NLS-1$
 	  return str.toString().trim();
   }
 
@@ -103,19 +183,19 @@ public class CategoryTreeModel implements TreeModel {
 	ArrayList<Category> categoryList = getLeafCategories(root);
 
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(
-        new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8"));
+        new File(App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir(), CONF_FILE)), "UTF-8")); //$NON-NLS-1$
 
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
-      if (line.startsWith("#")) {
+      if (line.startsWith("#")) { //$NON-NLS-1$
         continue;
       }
-      String[] keyValuePair = line.split("=");
+      String[] keyValuePair = line.split("="); //$NON-NLS-1$
       if (keyValuePair.length == 2) {
     	Category category = new Category(keyValuePair[0].trim(), root);
     	category = tryAddAndGet(categoryList, category);
         String subcats = keyValuePair[1].trim();
-        for (String subcat : subcats.split(";")) {
+        for (String subcat : subcats.split(";")) { //$NON-NLS-1$
           Category sub = new Category(subcat.trim(), category);
           Category cat = tryAddAndGet(categoryList, sub);
           cat.parent = category;
@@ -131,15 +211,18 @@ public class CategoryTreeModel implements TreeModel {
     return root;
   }
   
-  private void addNewChildren(Category oldRoot, Category newRoot){
+  private void updateChildren(Category oldRoot, Category newRoot){
 	  int idx = 0;
+	  oldRoot.clearItemCount();
 	  for(Category cat : newRoot.children){
 		  if(!oldRoot.children.contains(cat)){
 			  cat.parent = oldRoot;
 			  oldRoot.children.add(cat);
 			  notifyNewNode(cat, idx);
-		  }else
-			  addNewChildren(getFromSet(oldRoot.children, cat), cat);
+		  }else {
+		      Category oldCat = getFromSet(oldRoot.children, cat); 
+			  updateChildren(oldCat, cat);
+		  }
 		  idx++;
 	  }
   }
@@ -237,14 +320,7 @@ public class CategoryTreeModel implements TreeModel {
   public int getIndexOfChild(Object parent, Object child) {
 	if(parent == null || child == null)
 	  return -1;
-    int i = 0;
-    for (Category cat : ((Category) parent).children) {
-      if (cat.equals(child)) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
+    return ((Category) parent).getIndexOfChild((Category)child);
   }
 
   @Override

@@ -8,42 +8,58 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
+import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class MakePreviewTask extends AbstractTask {
 
-  public static String viewFolder = "view";
+  public static final String viewFolder = "view"; //$NON-NLS-1$
   
-  private Parser parser = new AutoDetectParser();
-
+  private static final String CONFIG_FILE_NAME = "MakePreviewConfig.txt";
+  
+  private static final String SUPPORTED_KEY = "supportedMimes";
+  
+  private static final String SUPPORTED_LINKS_KEY = "supportedMimesWithLinks";
+  
   private static boolean enableFileParsing = true;
+  
+  private Set<String> supportedMimes = new HashSet<>();
+  
+  private Set<String> supportedMimesWithLinks = new HashSet<>();
+  
+  private IndexerDefaultParser parser = new IndexerDefaultParser();
   
   private volatile Throwable exception;
 
-  public MakePreviewTask(Worker worker) {
-    super(worker);
+  public MakePreviewTask() {
+    parser.setPrintMetadata(false);
+    parser.setIgnoreStyle(false);
   }
 
   @Override
@@ -52,6 +68,19 @@ public class MakePreviewTask extends AbstractTask {
     if (value != null & !value.trim().isEmpty()) {
       enableFileParsing = Boolean.valueOf(value.trim());
     }
+    
+    File config = new File(confDir, CONFIG_FILE_NAME);
+    String content = Util.readUTF8Content(config);
+    for (String line : content.split("\n")) { //$NON-NLS-1$
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
+        continue;
+      }
+      if(line.startsWith(SUPPORTED_KEY) || line.startsWith(SUPPORTED_LINKS_KEY))
+          for(String mime : line.substring(line.indexOf('=') + 1).split(";")) {
+              if (line.startsWith(SUPPORTED_LINKS_KEY)) supportedMimesWithLinks.add(mime.trim());
+              else if (line.startsWith(SUPPORTED_KEY)) supportedMimes.add(mime.trim());
+          }
+    }
   }
 
   @Override
@@ -59,21 +88,13 @@ public class MakePreviewTask extends AbstractTask {
   }
 
   public boolean isSupportedType(String contentType) {
-    return contentType.equals("application/x-msaccess")
-        || contentType.equals("application/x-sqlite3")
-        || contentType.equals("application/sqlite-skype")
-        || contentType.equals("application/x-lnk")
-        || contentType.equals("application/x-whatsapp-db")
-        || contentType.equals("application/x-shareaza-searches-dat")
-        || contentType.equals("application/x-msie-cache")
+    return supportedMimes.contains(contentType)
         || mayContainLinks(contentType)
         || isSupportedTypeCSV(contentType);
   }
   
   private boolean mayContainLinks(String contentType){
-	  return contentType.equals("application/x-emule")
-			  || contentType.equals("application/x-ares-galaxy")
-			  || contentType.equals("application/x-shareaza-library-dat");
+      return supportedMimesWithLinks.contains(contentType);
   }
 
   private boolean isSupportedTypeCSV(String contentType) {
@@ -97,12 +118,13 @@ public class MakePreviewTask extends AbstractTask {
       return;
     }
 
-    String ext = "html";
+    String ext = "html"; //$NON-NLS-1$
     if (isSupportedTypeCSV(mediaType)) {
-      ext = "csv";
+      ext = "csv"; //$NON-NLS-1$
     }
-
+    
     File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
+    
     if (viewFile.exists()) {
       return;
     }
@@ -115,14 +137,15 @@ public class MakePreviewTask extends AbstractTask {
       makeHtmlPreview(evidence, viewFile, mediaType);
 
     } catch (Throwable e) {
-      Log.warning(this.getClass().getSimpleName(), "Erro ao processar " + evidence.getPath() + " " + e.toString());
+      Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString());  //$NON-NLS-1$//$NON-NLS-2$
+      
     }
 
   }
 
   private void makeHtmlPreview(EvidenceFile evidence, File outFile, String mediaType) throws Throwable {
     BufferedOutputStream outStream = null;
-    try {
+    try (ItemSearcherImpl itemSearcher = new ItemSearcherImpl(output.getParentFile(), worker.writer)){
       final Metadata metadata = new Metadata();
       ParsingTask.fillMetadata(evidence, metadata);
       
@@ -130,7 +153,16 @@ public class MakePreviewTask extends AbstractTask {
       final TikaInputStream tis = evidence.getTikaStream();
       
       final ParseContext context = new ParseContext();
-      context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+      context.set(ItemSearcher.class, itemSearcher);
+      context.set(Item.class, evidence);
+      context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
+      
+      //ForkServer timeout
+      if(evidence.getLength() != null) {
+          int timeOutBySize = (int) (evidence.getLength() / 1000000) * Configuration.timeOutPerMB;
+          int totalTimeout = (Configuration.timeOut + timeOutBySize) * 1000;
+          context.set(ParsingTimeout.class, new ParsingTimeout(totalTimeout));
+      }
       
       //Habilita parsing de subitens embutidos, o que ficaria ruim no preview de certos arquivos
       //Ex: Como renderizar no preview html um PDF embutido num banco de dados?
@@ -143,14 +175,19 @@ public class MakePreviewTask extends AbstractTask {
     	String comment = null;
     	if(mayContainLinks(mediaType))
     		comment = HtmlLinkViewer.PREVIEW_WITH_LINKS_HEADER;
-        handler = new ToXMLContentHandlerWithComment(outStream, "UTF-8", comment);
+        handler = new ToXMLContentHandlerWithComment(outStream, "UTF-8", comment); //$NON-NLS-1$
       } else {
-        handler = new ToCSVContentHandler(outStream, "UTF-8");
+        handler = new ToCSVContentHandler(outStream, "UTF-8"); //$NON-NLS-1$
       }
       final ProgressContentHandler pch = new ProgressContentHandler(handler);
       
+      if(MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType()) == 0) {
+          parser.setCanUseForkParser(true);
+      }else
+          parser.setCanUseForkParser(false);
+      
       exception = null;
-	  Thread t = new Thread(){
+	  Thread t = new Thread(Thread.currentThread().getName() + "-MakePreviewThread"){ //$NON-NLS-1$
 		  @Override
 		  public void run(){
 			  try {
@@ -196,7 +233,7 @@ public class MakePreviewTask extends AbstractTask {
 	  public void startDocument() throws SAXException{
 		  super.startDocument();
 		  if(comment != null)
-			  this.write(comment + "\n");
+			  this.write(comment + "\n"); //$NON-NLS-1$
 	  }
   }
   

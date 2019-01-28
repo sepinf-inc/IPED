@@ -1,0 +1,12 @@
+############################################################################
+# Automatic file extraction configuration based on keywords/regex.
+# 
+# Add keywords or regex below, one per line, to export and index 
+# ONLY items which contains at least one of the configured keywords or regexes.
+# 
+# Regex syntax: http://www.brics.dk/automaton/doc/index.html
+# 
+# Note accents and capitalization differences are ignored.
+#
+# Hits found are added to "Regex:KEYWORDS" metadata of each item
+############################################################################

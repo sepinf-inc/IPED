@@ -3,6 +3,10 @@ package dpf.mt.gpinf.mapas;
 import java.awt.Canvas;
 import java.awt.Component;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import javafx.application.Platform;
 
 abstract public class AbstractMapaCanvas extends Canvas {
 	MapSelectionListener mapSelectionListener = null;
@@ -21,6 +25,7 @@ abstract public class AbstractMapaCanvas extends Canvas {
 	abstract public void addSaveKmlFunction(Runnable save);
 	abstract public boolean isConnected();
 	abstract public Component getContainer();
+	abstract public void selecionaMarcador(String mid, boolean b);
 
 	public MapSelectionListener getMapSelectionListener() {
 		return mapSelectionListener;
@@ -43,8 +48,8 @@ abstract public class AbstractMapaCanvas extends Canvas {
 	public Runnable getSaveRunnable() {
 		return saveRunnable;
 	}
-
-	public void enviaSelecoes(HashMap<String, Boolean> selecoes){
+	
+	public void enviaSelecoes(final HashMap<String, Boolean> selecoes){
 		if(this.selecoesAfazer==null){
 			this.selecoesAfazer = new HashMap<String, Boolean>();
 		}

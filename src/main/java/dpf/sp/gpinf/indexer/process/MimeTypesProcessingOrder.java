@@ -12,6 +12,7 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 
 /**
  * Classe de definição de prioridade de processamento de itens com base no mimeType.
@@ -41,6 +42,11 @@ public class MimeTypesProcessingOrder {
 		
 		mediaTypes.put(WhatsAppParser.WA_DB, 1);
 		mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
+		mediaTypes.put(WhatsAppParser.CONTACTS_V2, 1);
+		mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
+		
+		mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
+		mediaTypes.put(UFEDChatParser.UFED_CHAT_WA_MIME, 1);
 		
 		return mediaTypes;
 	}

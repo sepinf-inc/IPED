@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.io.TimeoutException;
+import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -84,19 +85,15 @@ public abstract class AbstractTask {
   public void setNextTask(AbstractTask nextTask) {
     this.nextTask = nextTask;
   }
-
-  /**
-   * Construtor recebendo um worker.
-   *
-   * @param worker O worker que executará esta tarefa
-   */
-  public AbstractTask(Worker worker) {
-    this.worker = worker;
-    if (worker != null) {
-      this.stats = worker.stats;
-      this.caseData = worker.caseData;
-      this.output = worker.output;
-    }
+  
+  
+  public void setWorker(Worker worker) {
+      this.worker = worker;
+      if (worker != null) {
+        this.stats = worker.stats;
+        this.caseData = worker.caseData;
+        this.output = worker.output;
+      }
   }
 
   /**
@@ -148,7 +145,7 @@ public abstract class AbstractTask {
     AbstractTask prevTask = worker.runningTask;
     worker.runningTask = this;
 
-    if (!evidence.isToIgnore() || processIgnoredItem()) {
+    if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
       long t = System.nanoTime() / 1000;
       processMonitorTimeout(evidence);
       Long subitensTime = subitemProcessingTime.remove(evidence.getId());
@@ -210,17 +207,17 @@ public abstract class AbstractTask {
       this.process(evidence);
 
     } catch (TimeoutException e) {
-      LOGGER.warn("{} TIMEOUT ao processar {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e);
+      LOGGER.warn("{} TIMEOUT processing {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), evidence.getLength(), e); //$NON-NLS-1$
       stats.incTimeouts();
       evidence.setTimeOut(true);
       processMonitorTimeout(evidence);
 
     } catch (Throwable t) {
       //Ignora arquivos recuperados e corrompidos
-      if (t.getCause() instanceof TikaException && evidence.isCarved()) {
+      if (t.getCause() instanceof CorruptedCarvedException) {
         stats.incCorruptCarveIgnored();
         //System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " + "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" + length + "bytes)\t" + t.getCause());
-        evidence.setToIgnore(true);
+        evidence.setToIgnore(true, false);
         evidence.setAddToCase(false);
       } else {
         throw t;
@@ -246,5 +243,9 @@ public abstract class AbstractTask {
    */
   public boolean isEnabled() {
     return true;
+  }
+  
+  public String getName() {
+      return this.getClass().getSimpleName();
   }
 }

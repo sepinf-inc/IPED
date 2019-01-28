@@ -75,7 +75,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			searcher.setQuery(getQueryWithUIFilter());
 			
 		} catch (ParseException | QueryNodeException e) {
-			JOptionPane.showMessageDialog(App.get(), "Erro de sintaxe de pesquisa: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(App.get(), Messages.getString("UISearcher.Error.Msg") + e.getMessage(), Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
 			//e.printStackTrace();
 		}
 	}
@@ -152,6 +152,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 				}
 				
 				Query q = searcher.getQuery();
+				LOGGER.info("Searching for query " + q.toString()); //$NON-NLS-1$
+				
 				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
 					result = allItemsCache.get();
 				
@@ -161,18 +163,24 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 						allItemsCache = new SoftReference(result.clone());
 				}
 
-				String filtro = "";
+				String filtro = ""; //$NON-NLS-1$
 				if(App.get().filtro.getSelectedItem() != null)
 					filtro = App.get().filtro.getSelectedItem().toString();
 				
 				if (filtro.equals(App.FILTRO_SELECTED)){
 					result = App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
 					numFilters++;
+					LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
 				}
 				
 				HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
 				if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
 					numFilters++;
+					StringBuilder bookmarks = new StringBuilder();
+					for(String bookmark : bookmarkSelection)
+						bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+					LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
+					
 					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
 						if(bookmarkSelection.size() == 1)
 							result = App.get().appCase.getMultiMarcadores().filtrarSemMarcadores(result);
@@ -246,7 +254,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 			try {
 				App.get().ipedResult = this.get();
 				
-				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
 				App.get().resultsTable.getTableHeader().repaint();
 				if(App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null){
@@ -256,6 +263,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 					App.get().resultsModel.fireTableDataChanged();
 					App.get().galleryModel.fireTableStructureChanged();
 				}
+				ColumnsManager.getInstance().updateDinamicCols();
+				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 					
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -268,7 +277,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
   @Override
 	public boolean doCancel(boolean mayInterruptIfRunning) {
 		
-		LOGGER.error("Pesquisa cancelada!");
+		LOGGER.error(Messages.getString("UISearcher.Canceled")); //$NON-NLS-1$
 		searcher.cancel();
 		try {
 			App.get().appCase.reopen();

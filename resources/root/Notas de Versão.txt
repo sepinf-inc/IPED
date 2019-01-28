@@ -1,0 +1,1623 @@
+25/01/2019: IPED-3.15.2
+- Suporte a UFDR segmentados
+- Suporte a AD1 v3 segmentados (até FTKImager 3.4.0.5)
+- Compatibilização e atualização p/ Tesseract-4.0.0 (melhorias substanciais na acurácia)
+- Reabilita OCR em GIFs (eventualmente causavam problema com tesseract-3.02)
+- Melhor gerenciamento de threads nas chamadas ao imagemagick (Filipe Simões)
+Correções:
+- Comenta assinatura superfetch MAM0x84, cujos itens causavam hang e memory leak no agdbinfo 20181111 (3.15)
+- Destrói corretamente ferramentas externas de parsing após timeout (3.15)
+- Fecha handles pro índice que impediam apagá-lo qdo criado no temp (desde 3.12)
+- Evita SocketTimeout ao ligar 'robustImageReading' com imagens mto fragmentadas e segmentadas (3.8)
+- Tenta apagar arquivos pipe-xxxx criados no temp qdo 'robustImageReading' é ligado (3.8)
+- Diminui threads de merge do índice ao usar --append com outputOnSSD = false
+
+11/01/2019: IPED-3.15.1
+- Atualização para Tika-1.20 (tratamento de chars rotacionados em PDFs, correções)
+- Loga erro ao invés de abortar caso externalParsers não estejam instalados no Linux
+Correções:
+- Substituídas todas as chamadas process.destroy() por destroyForcibly() (mata 'convert' travados e outros no Linux)
+- "IOException: Stream closed" durante indexação que abortava processamento (3.15)
+- Timezone incorreto em datas de chats decodificados pelo UFED (PCF Pfeifer) (3.14)
+- Inclui DLLs faltantes no Imagemagick-7.0.8-14 (3.15)
+- Ignora UnsupportedEncodingException no GenericOLEParser
+
+11/12/2018: IPED-3.15
+- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
+- Suporte a relatórios UFDR do Physical Analyzer
+- Suporte a imagens lógicas AD1 v3 (contribuição Guilherme Dutra SEF/MG)
+- Suporte a imagens heic geradas pelo IOS 11+
+- Externalização da configuração da MakePreviewTask
+- Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml, firstLinesToIgnore
+- Parser genérico e expansão de OLEs sem parser específico (jumplists, thumbs.db, etc)
+- Configuração de parser externo para Prefetch (libscca)
+- Configuração de parser externo para Superfetch (libagdb)
+- Configuração de parser externo para Lixeira: INFO2 e $I* (rifiuti e rifiuti-vista)
+- Configuração de parser externo para Event logs evt e evtx (libevt e libevtx)
+- Cache em disco para texto extraído de itens gigantes, evitando reprocessá-los
+- Diminui textSplitSize para 10MB para evitar OutOfMemory em máquinas com poucos recursos
+- Possibilidade de desligar convertCharsToAscii para gerar melhor dicionário p/ quebra de senhas
+- Exporta p/ relatório anexos de chats automaticamente (desligável com --nolinkeditems)
+- Alerta para eventuais problemas com java 9+
+- Atualização para Tika-1.19.1
+- Atualização p/ ImageMagick 7.0.8-14
+- Atualização p/ Mplayer-6.2.0-r38109
+- Atualização p/ Libpff-20180714
+- Atualização p/ Regripper-2.8_20180406
+Correções:
+- Geração de quadros de vídeos no Linux qdo Mplayer não suporta "-lavdopts wait_keyframe" (PCF Wladimir)
+- Erro ao setar localização para 'en' em sistemas cujo padrão era 'pt_BR'
+- Opção robustImageReading não funcionava no Linux
+- Configuração errada da opção filterNonLatinChars no perfil triage
+- Eventual construção incorreta da árvore de diretórios ao processar pastas com links simbólicos
+- Datas de WhatsApp do iphone eram decodificadas usando timezone incorreto
+- Ocorria scrollToNextHit automático nos chats ao clicar em anexo
+- Corrige caminho de imagens processadas no Linux e abertas no Windows
+- Opção -dname não funcionava p/ relatórios do UFED
+- Raro ConcurrentModificationException abortava processamento
+
+22/10/2018: IPED-3.14.5
+- Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)
+- Funções para salvar, carregar e resetar layout das colunas
+- Desabilita por padrão gerenciamento automático de colunas
+- Usa java instalado no lugar do embutido no IPED-SearchApp devido a lentidão em mídias ópticas
+- Alerta para versões bugadas do java (1.8.0_161 a 1.8.0_171)
+- Habilita por padrão -XX:+HeapDumpOnOutOfMemoryError no iped.exe
+- Atualiza PDFbox para v2.0.12
+Correções:
+- Workaround para relatórios XML do UFED com caracteres inválidos (3.14)
+- Marcadores em multicasos estavam sendo perdidos (3.14)
+- Falso alerta de evidência não encontrada ao processar discos físicos (3.14)
+- Altera opção -nocontent para exportar conteúdo de itens presentes em outro marcador (PCF Wladimir)
+- Corrige abertura de casos via compartilhamento do Windows (PCF Wladimir)
+- Não copia para relatórios arquivos desnecessários referentes a nós da árvore
+- Arquivos zip não comprimidos contendo outros zips não eram expandidos corretamente
+- Exportação de árvore de diretórios renomeava itens ativos no caso de conflito de nomes
+- Corrige estatística de tempo de parsers de conteineres
+- Diferença de 1 dia em datas entre '01/03/2015' e '29/02/2016' em chats WhatsApp do Iphone (PCF Pfeifer)
+- Janela de erro ao exportar arquivos no caso de erros de escrita ou falta de espaço
+
+15/08/2018: IPED-3.14.4
+- Melhorias na geração de miniaturas de vídeos (PCF Wladimir)
+- Filtro textual no gerenciador de colunas visíveis (PCF Wladimir)
+- Opção openImagesCacheWarmUpEnabled para otimizar leitura de imagens E01 segmentadas (PCF Wladimir)
+Correções:
+- OutOfMemory ao finalizar ScriptTask em casos muito grandes (3.14)
+- Falso alerta de evidência não encontrada em extrações automáticas (3.14)
+- Erro "getting case database connection" durante --append com --portable (3.14)
+- Travamentos raros durante geração de miniaturas de imagens (png corrompido, jpg2k)
+- Erro ao localizar evidências de casos processados no Linux e abertos no Windows
+- Erro causado por nomes corrompidos muito longos nos XML do UFED
+- Remove limitadores de heap do iped.exe
+
+06/07/2018: IPED-3.14.3
+- Inclusão da JRE 1.8.0_152 x64
+- Desliga descarte de itens carveados com erro de parsing nos profiles forensic e pedo
+- Prioriza MetadataViewer apenas para itens de celulares sem viewer específico
+- Extrai datas estendidas (criação e acesso) de subitens de ZIP
+- Configuração de novas categorias Tor, Cloud, backup iphone, RFB, CEF, etc (contribuição PCF Sícoli)
+Correções:
+- Travamento da interface ao selecionar ou marcar grande quantidade de itens na tabela (3.14)
+- Erros de parsing em Known.met, Ares e Skype ao usar idioma inglês (3.14)
+- Grande lentidão no profile triage em itens com parser desabilitado (lia primeiros bytes de todos)
+- Datas de criação e acesso não eram armazenadas nos ZIPs com itens exportados
+
+12/06/2018: IPED-3.14.2
+Correções:
+- Remoção de DLL que provocava erro de linkagem no Windows 7
+- Eventual inserção de miniatura errada em chats do Skype (3.12)
+- Resultado vazio de um filtro provocava remoção de todas as colunas
+- Erro ao gerar relatório via interface em casos com OCR
+- Inserção de marcadores não selecionados no relatório de itens com vários marcadores
+- Erro ao processar relatórios XML do UFED no Linux devido a barras invertidas no XML
+- Erro ClassNotFound ao processar pastas com --addowner
+- Corrige ArrayIndexOutOfBounds no gerenciador automático de colunas
+- Comenta regex p/ IBAN e restringe regex p/ SWIFT
+
+28/05/2018: IPED-3.14.1-beta
+- Configuração de parsers externos em conf/ExternalParsers.xml (ex: ffmpeg, exiftool, etc)
+- Divisão do visualizador de metadados em abas
+- Centralização no mapa de item georreferenciado selecionado na tabela (PCF Patrick)
+Correções:
+- Nomes de chats truncados quando continham caracter '/' nos nomes de participantes
+- Erro ao processar pastas com nomes terminados com extensões de imagens (000, 001, dd, etc)
+- ClassNotFound devido a atualização de lib jbig2 impedia limpeza de cache de imagens
+- Estimativa errada de término de processamento ao processar XML do UFED
+
+21/05/2018: IPED-3.14-beta
+- Suporte inicial aos relatórios XML do UFED Physical Analyser (importação de itens, categorias e metadados)
+- Internacionalização e suporte inicial ao idioma inglês
+- Destaque de painéis da interface via DockingFrames (PCF Pfeifer)
+- Externaliza instalador de tarefas de processamento para conf/TaskInstaller.xml
+- Tarefas de processamento via script: podem acessar propriedades, conteudo, texto, ignorar itens, criar propriedades extras, marcadores, etc
+- Parser de WhatsApp para Iphone (PCF Pfeifer)
+- Opção phoneParsersToUse no AdvancedConfig.xml para escolher parsers de celulares
+- Novo visualizador de propriedades e metadados
+- Geração de relatórios a partir da interface de análise
+- Opção para gerenciamento automático de colunas visíveis (útil p/ celulares)
+- Melhor configuração de parâmetros da linha de comando (PCF Átila)
+- Marcadores automáticos p/ itens enviados via chats interpretados pelo PA
+- Integra perfil triage para uso em locais de busca por documentos
+- Visualização de itens selecionados na árvore de diretórios
+- Opção no menu de contexto para abrir versão de visualização dos itens externamente
+- Cálculo simultâneo de MD5 ao exportar itens para ZIP
+- Exportação de itens em árvore sem necessidade de escolher nó base
+- Externalização da opção indexCorruptFiles (padrão true)
+- Opções no ParserConfig.xml para usar SAX parsers p/ docx e pptx (usam menos memória, padrão false)
+- Opções no ParserConfig.xml para PSTParser: recoverDeleted e useLibpffParser (padrão true)
+- Lista nomes de anexos no preview de emails extraídos de PST/OST
+- Menor consumo de memória ao processar PDFs usando arquivos temporários
+- Backups automáticos de marcadores: opções maxBackups e backupInterval em AdvancedConfig.txt
+- Pergunta ao usuário novo caminho para imagem forense caso não localizada
+- Extração de imagens embutidas em HTMLs no perfil pedo
+- Exibição do número de itens por categoria
+- Comentários para marcadores
+- Opção externalPdfToImgConv habilitada por padrão (evita OutOfMemory durante OCR)
+- Atualização p/ Tika 1.18 (parser XPS, inúmeras melhorias e correções)
+- Atualização p/ sleuthkit-4.6 (suporte a itens HFS comprimidos via LZVN, correções diversas)
+Correções:
+- Correção de sincronização da tabela/galeria para o mapa (PCF Patrick)
+- Relatório HTML com link [Sem Marcador] vazio (3.13.5)
+- Falha eventual ao gerar miniaturas de imagens devido a bug no java
+- Itens orphans corrompidos maiores que sua partição automaticamente ignorados
+- Travamento raro na detecção de assinatura de certos ZIPs corrompidos
+- Correções no parser de WhatsApp p/ Android (thumb p/ anexos documentais, algumas msgs descartadas)
+- Classificação correta de vídeos MTS
+- Corrige abertura de HTMLs gigantes externamente
+- NullPointer ao desabilitar certas opções do processamento
+
+02/02/2018: IPED-3.13.5
+- Detecção de itens 7zip cifrados que omitem nomes dos subitens
+- Habilita ignoreHardLinks por padrão em todos os perfis de processamento
+- Expõe novamente opção textSplitSize no AdvancedConfig.txt
+- Aborta processamento no caso de conflito em CustomSignatures.xml
+Correções:
+- Carregamento de cookie de marcadores em casos somente leitura (3.13.1 - PCF Wladimir)
+- Não funcionamento da opção robustImageReading no Linux (3.13.1)
+- Travamento eventual no processamento durante geração de thumbs de vídeos (3.13.3)
+- Falso alerta de "imagem não encontrada" ao abrir casos com discos físicos no Windows (3.13)
+- Conversão externa de PDF p/ imagem via PDFBox não incluia imagens jbig2 (3.13.4)
+- Não cria marcadores automáticos p/ itens pequenos com hash comum (3.11)
+- IgnoreHardLinks ignorava hash de itens enviados para filas posteriores de processamento (3.12)
+
+12/01/2018: IPED-3.13.4
+Melhorias:
+- Opção no OCR para converter PDF p/ imagem externamente, isolando hangs e OutOfMemoryErrors
+- Gera galeria e relatório html para itens sem marcador
+- Move HashTask no pipeline de processamento, permitindo ignorar o hash de itens via javascript
+- Opção para desligar uso de thumbs embutidos em imagens JPG como miniaturas
+- Log de mais infos durante análise (pesquisas, filtros, itens exportados e duplo clique)
+Correções:
+- Compatibiliza alerta de versão java e atalho IPED-SearchApp.exe com Java 9
+- NullPointer no WhatsAppParser com chat vazio que abortava extração de chats seguintes (3.12.x)
+- NullPointer fatal no processamento ao desabilitar detecção de idioma (3.13)
+- Erro raro IllegalArgumentException durante detecção de idioma (3.13)
+- Detecção de disco cheio (temp e destino) no Windows 10 e Linux (3.10)
+- Descarte de thumbs rotacionados embutidos em JPGs ao gerar miniaturas (PCF Wladimir)
+- Não linkagem de tranferências Skype com itens enviados qdo duplicados na evidência (3.12.x)
+
+05/12/2017: IPED-3.13.3
+Correções:
+- NullPointer que impedia a descompactação do LibreOffice em novas máquinas (3.13-final)
+- Erro eventual no processamento devido a alteração de tipo do ocrCharCount durante timeouts (3.13)
+- Não carregamento do tsk_datamodel.jar em sistemas Linux no App de análise (3.13.1)
+- Expansão de itens 7z criados pelo 7zip-16.04 ou posterior (3.13)
+- NullPointer raro na geração de thumbs de vídeos que abortava processamento (3.13)
+- ArrayIndexOutOfBounds em análise durante processamento com --append (3.12)
+- Erro ao importar base de hashes NSRL (3.12.x)
+- Tentativa de proteção para OutOfMemory causado por cache na lib Levigo-jbig2 (3.11)
+- Alerta para plug-in jpeg2000 ausente (removido na 3.13)
+- Atualização p/ PDFBox-2.0.8
+
+06/10/2017: IPED-3.13.2
+- Correção de ClassCastException na detecção de nudez após alterar ClassLoader (3.13.1)
+
+04/10/2017: IPED-3.13.1
+- Compatibilização com java 9 (e alerta para novas versões do java)
+- WhatsAppParser: trata vCards com fotos e mimetypes com sufixos (PCF Pfeifer)
+- Configuração no logging para imprimir classe de origem da mensagem
+- Atualização do Manual.pdf
+Correções:
+- Lentidão na tabela na interface de análise com dados multivalorados (3.13)
+- SkypeParser: fileslacks obtidos do cache de midias no lugar dos anexos (3.12.x)
+- Não criação de marcadores de envios via Skype ao desabilitar hash MD5 (3.12.x)
+- Patch no Sleuthkit-4.4.2 para melhorar processamento de time machines hfs+
+
+14/09/2017: IPED-3.13-final
+Melhorias:
+- Indexação do nome de subitens de ZIPs cifrados
+- Tratamento de vídeos MTS/M2TS (contribuição PCF Cinelli)
+- Expansão de itens vnd.openxmlformats-officedocument genéricos (derivados de zip)
+- Melhoria no descarte de ZIPs carveados corrompidos
+Correções:
+- Erro ao indexar EMLs com corpo puramente textual sem versão html (3.13-beta)
+- Erro ao indexar palavras acentuadas de txt e binários com mais de 128KB de texto (3.13-beta)
+- Emails de caixas DBX sem cabeçalhos conhecidos não reconhecidos como EML (3.13-beta)
+- Metadados de emails MSG prefixados incorretamente como office (3.13-beta)
+- Downgrade p/ sqlite-jdbc-3.8.11.2 devido a erro de linkagem (3.13-beta)
+- Marcador automático para envios via Skype estava incluindo itens zerados ou com poucos bytes (3.12)
+- Itens carveados cifrados estavam sendo descartados (3.0)
+- Eventualmente emails com anexos de PSTs não apareciam na árvore de diretórios
+
+01/09/2017: IPED-3.13-beta
+- Nova aba de filtragem/agrupamento por valores de quaisquer metadados
+- Tarefa de busca por Regex: cpf, cnpj, cnh, conta, valores, cartões, emails, ips, urls, boletos, swift, iban, etc (ajuda do PCF Herrmann)
+- Exportação automática de arquivos com base em palavras-chave (configurar conf/KeywordsToExport.txt)
+- Troca do graphicsmagick pelo imagemagick: melhor e maior suporte a formatos de imagens (de 100 para 200)
+- Detecção de idioma via optimaize language-detect (71 idiomas suportados)
+- Extração de metadados de vídeos (resolução, bitrate, fps, codec, modelo - qdo disponível, etc)
+- Novos grupos de metadados (audio, imagens, vídeos, pdf, office, html, regex, idioma)
+- Função EXPERIMENTAL para reconhecimento de entidades mencionadas (pessoas, empresas, lugares), sem modelo p/ português
+- Detecção de possíveis itens cifrados por entropia
+- Executa OCR em imagens PPM, JP2 e JPX
+- Exportação de arquivos para ZIP mantendo estrutura em árvore
+- Otimização significativa na geração de thumbs wmf e de thumbs parciais jpg, png, gif e bmp, 10x mais rápido
+- Otimização no StringsParser, 80% mais rápido em certos casos
+- Otimização ao abrir casos grandes e cancelar pesquisas, inicializando sob demanda as ordenações das colunas
+- Dependências com licenças restritivas separadas ou removidas: java-dbx, levigo-jbig2, jpeg2000, oracle-jdbc, mplayer, regripper
+- Documentação de dependências e respectivas licenças
+- Externalização do arquivo de assinaturas CustomSignatures.xml
+- Novas estatísticas de tempo de processamento por parser
+- Janela de "aguarde" durante abertura inicial das imagens pelo sleuthkit
+- Atualização p/ Tika-1.15 (mais tipos, mais parsers, diversas correções)
+- Atualização p/ Sleuthlkit-4.4.2 com iped-patch-02 (correções p/ ISO, HFS, memory leaks, etc)
+- Atualização p/ xerial sqlite-jdbc-3.19.3
+- Atualização p/ PDFBox-2.0.7
+- Downgrade p/ 7zipJBinding-4.65-rc5
+Correções:
+- Alguns vídeos FLV carveados eram descartados devido a erro no parser do Tika
+- Janela de erro ao abrir casos corrompidos ou no caso de java < 1.8
+- Problema com LibreOffice ao abrir 2 instâncias do IPED na mesma máquina
+- Interrupção do processamento devido a arquivo "dosimg.7z"
+- Problema no fastmode ao adicionar mais de uma evidência (3.12.x)
+
+23/06/2017: IPED-3.12.5
+- Corrige extração incompleta de chats do WhatsApp qdo mediaType dos anexos é nulo
+
+31/05/2017: IPED-3.12.4
+- Corrige bug que ignorava itens alocados ao ligar ignoreHardLinks junto com addFileSlacks (3.12)
+- Corrige bug eventual ao tentar reaproveitar temporários apagados de itens pais
+- Algumas informações de appointments (como Subject e Body) e de outros objetos de PSTs não eram extraídas (2.15)
+- Corrige travamento raríssimo ao interromper thread após timeout
+- Extrai imagens (e outros itens) de documentos no profile pedo
+
+04/05/2017: IPED-3.12.3
+- Corrige otimização na libewf que causava erros ao processar vários E01 simultaneamente (PCF Pfeifer)
+- Corrige piora na velocidade de processamento de até 25%, na tarefa de parsing (regressão 3.10.1) 
+
+07/04/2017: IPED-3.12.2
+- Corrige regressão na abertura de links p/ anexos no Linux (3.12)
+- Corrige regressões no Sleuthkit 4.4.0:
+	- erro ao reconhecer partições DOS qdo há backup de GPT de formatação anterior
+	- erro na linkagem do libtsk_jni.so no Linux
+	- contorna piora na performance da opção robustImageReading
+
+01/04/2017: IPED-3.12.1
+- Corrige falha no parsing de bases SQLite (regressão 3.12)
+- Corrige ConcurrentModificationException que abortava processamento (3.12)
+
+29/03/2017: IPED-3.12
+- Análise simultânea ao processamento (apenas itens já processados)
+- Atualização para Sleuthkit-4.4 (processamento de FileSlacks)
+- API para acessar múltiplos itens de dentro dos parsers
+- Múltiplas filas de processamento para suportar dependências de parsing entre os itens
+- Melhorias no WhatsAppParser: abertura de anexos (necessita do sha-256), títulos de anexos, extrai contatos, inclui avatares, inclui apelidos nos chats, miniaturas de vídeos, renderiza emojis
+- Melhorias no SkypeParser: embute imagens em cache nos chats e insere miniaturas e links nas transferências 
+- Criação de marcadores automáticos p/ itens enviados via WhatsApp e Skype
+- Links no preview de históricos P2P (Emule, Ares e Shareaza) para itens encontrados na evidência
+- Profiles de processamento, sendo pré-configurados: forensic, pedo, fastmode, blind.
+- Função para localizar documentos por similaridade
+- Melhor detecção de tipos derivados de SQLite via nomes de tabelas
+- Otimizações no fastmode ao processar imagens e dispositivos
+- Aumenta cache de texto extraído para indexação mais rápida de itens grandes
+- Melhor progresso do viewer de texto com itens tratados pelo StringsParser
+- Melhor filtro para conteineres não expandidos
+- Exposição do parâmetro de timeout por tamanho (timeOutPerMB)
+- Carregamento mais rápido de bases do LED (PCF Wladimir)
+- Opção --addowner para indexar owner dos arquivos ao processar pastas
+- Atualização para PDFBox-2.0.5
+- Patch na libewf: cache p/ dados descompactados, acelerando em até 10x o processamento de imagens HFS+ compactadas (PCF Pfeifer)
+Correções:
+- Não extração de thumbs PNG de contatos do Skype
+
+
+27/03/2017: IPED-3.11.2
+Correções:
+- Falha ao armazenar referências relativas para os itens ao processar pastas (regressão 3.11)
+- Demora na atualização do viewer de texto após interromper visualização (regressão 3.10.1)
+- Processamento interminável devido a bug no carving de MP4 (3.10)
+- OutOfMemory ao processar caixas DBX corrompidas (2.15)
+- Visualização truncada de chats do skype devido a msgs com html mal formado
+- Contas do Skype não eram renderizadas no HTMLViewer
+
+
+07/02/2017: IPED-3.11.1
+- Geração de relatório único a partir de casos separados ou de caso múltiplo
+- Implementa -dname no processamento de marcadores.iped
+Correções:
+- corrige NullPointer ao gerar relatório de caso contendo apenas pastas (regressão 3.11-final)
+- erro ao indexar itens corrompidos via strings em alguns casos (regressão 3.10.1)
+- erro ao processar conteúdo de itens corrompidos após parsing com indexTempOnSSD = false (regressão 3.8)
+- loga erro ao invés de abortar ao processar arquivos com caminho inválido (montagens do FTKImager)
+- correção para processamento e análise a partir de compartilhamentos de rede não mapeados
+- proteção contra OutOfMemory durante análise de assinatura via Tika
+- controle de timeout na tarefa de geração de preview
+- pequenas correções no IndexDatParser
+
+19/01/2017: IPED-3.11-final
+- Exibição de data e hora de última alteração do registro do item no sistema de arquivos
+- Melhor categorização de temporários de Internet (PCF Gabriel)
+Correções:
+- Opção --portable estava sendo desfeita ao final do processamento (regressão 3.11-beta)
+- Erro no final do processamento de pastas avulsas em sistemas Linux (regressão 3.11-beta)
+- Erro ao gerar relatórios a partir de arquivos .iped salvos pelo usuário (regressão 3.11-beta) 
+- Exibição incorreta de horário de último acesso em sistemas FAT (apenas data existe)
+- Remoção de caracteres de controle do "Lista de arquivos.csv" e das extensões dos itens exportados
+- Remoção de colunas de outros casos não existentes no caso atual
+- Não recria marcadores automáticos ao gerar relatório
+
+
+13/12/2016: IPED-3.11-beta
+- Novo painel de Mapas com função de georreferenciamento (contribuição PCF Patrick)
+- Análise simultânea de múltiplos casos independentes (opção -multicases pasta_com_casos no iped-search-app)
+- Refatoração do código da interface e api para pesquisa, obtenção e marcação de itens
+- Otimizações da interface para casos com dezenas de milhões de itens
+- Unificação dos logs de processamento e geração de log de análise
+- Criação automática de marcadores para itens compartilhados via P2P
+- Carving específico para bancos de dados SQLite
+- Otimizações no --fastmode ao varrer pastas locais e em rede
+- Melhor atualização do caminho para imagens, inclusive em casos somente leitura
+- Visualizador de texto totalmente Unicode
+- Atualização para Tika-1.14 (POI-3.15, PDFBox-2.0.3, mais parsers, correções, etc)
+- Atualização para SevenzipJBindings-9.20-2.0beta
+- Atualização para IcePDF-6.1.3
+Correções:
+- OutOfMemory ao processar áudios M4A e itens CHM corrompidos
+- Melhor linkagem com sleuthkit em sistemas Linux (novo parâmetro tskJarPath no AdvancedConfig.txt)
+- Não geração de log ao processar discos físicos
+- Patch 04 no Sleuthkit-4.3 para suportar discos com setores de 4k
+- Inclusão de DLLs faltantes nas pastas da msiecfexport e esedbexport
+
+
+27/09/2016: IPED-3.10.5
+- Erro ao abrir App de pesquisa com java 32bits após processar em sistema x64 (regressão 3.10.1)
+- Patch 03 no Sleuthkit-4.3 para agilizar fastmode e cálculo de término estimado
+
+15/09/2016: IPED-3.10.4
+- Bloqueia novamente conexões externas ao renderizar itens HTML (regressão 3.10.3)
+- Eventualmente alguns nós da árvore de diretórios em relatórios iped não eram indexados
+
+08/09/2016: IPED-3.10.3
+- Corrige erro (não silencioso) ao gerar relatórios contendo emails de PST/OST (regressão 3.10.1)
+- Não inclui metadados ao final da coluna Message-Body
+- Compatibiliza novamente com java 7 (regressão 3.10.1)
+
+25/08/2016: IPED-3.10.2
+- Patch no Sleuthkit-4.3 e opção -tz para definição de timezone, necessários para correta decodificação de datas em sistemas FAT 
+
+23/08/2016: IPED-3.10.1
+Melhorias:
+- Atualização para Sleuthkit-4.3: suporte a VMDK e VHD (apenas Windows), correções para exFAT, HFS+, etc
+- Extrai informações da conta do usuário do Skype (PCF Patrick)
+- Função para exportar itens selecionados para arquivo ZIP
+- Novos metadados Message-Date e Message-Body
+- Função para pausar processamento
+- Parâmetro outputOnSSD para não degradar --append em discos magnéticos
+- Opção --portable para utilizar caminhos relativos ao invés de absolutos para imagens
+Correções:
+- Correções diversas na tarefa de KFFCarving (PCF Wladimir)
+- Correção na Galeria de relatórios HTML (PCF Wladimir)
+- Corrige raro NPE na geração de thumbs de vídeos que abortava processamento (PCF Wladimir)
+- Alerta no Console caso haja erros de leitura em mais de 5% dos itens
+- Alertas de disco cheio mais detalhados e em mais casos (geração de temporário, expansão de zip, etc)
+- Não fragmenta novamente itens grandes na geração de relatórios
+- Desabilita carving e expansão de conteineres ao processar relatórios do FTK
+- Corrige erros ao renomear subitens devido a timeout no OCR ou a bug na icepdf
+- Grava BOM UTF-8 no CSV de propriedades
+
+
+20/07/2015: IPED-3.10
+- Melhor carving (principalmente videos) e melhor pesquisa em itens grandes via divisão dos itens por tarefa
+- Integração do KnownMetCarver (PCF Wladimir)
+- Integração do KFFCarving (PCF Wladimir)
+- Carving específico para vídeos MP4, 3GP e MOV
+- Assinaturas para carving de RAR, WAV, MIDI, CDA, WEBP e CDR antigo
+- Carving simples para FLV (tamanho fixo) e MPG (possui falsos negativos)
+- Melhoria no carving de EML, ZIP e derivados e aumento do tamanho máximo carveado de vários tipos
+- Processamento de ISOs Raw UDF e expansão de ISOs Raw (UDF e ISO9660)
+- Parser para históricos index.dat do IE <= 9 (necessário libmsiecf no Linux)
+- Parser específico para main.db do Skype (PCF Patrick)
+- Recuperação de emails apagados de PSTs de qualquer versão
+- Opção para aplicar OCR em todas as imagens embutidas em PDFs (processImagesInPDFs)
+- CheckBox e ícones nas abas "Subitens" e "Item de Origem"
+- Otimizações na geração de relatórios HTML (PCF Wladimir) 
+- Modularização do viewer (PCF Marcelo)
+- Imprime estatísticas do processamento no console ao usar --nogui
+Correções:
+- Erro eventual na geração de reports com poucos itens
+- Controle de zipbombs e timeouts ao expandir conteineres
+- Indexação do conteúdo de elementos invisiveis de itens HTML (scripts, etc)
+- Abertura externa de HTMLs grandes e anexos de EML no Linux
+
+ 
+14/06/2015: IPED-3.9.5
+- Melhor decodificação e indexação de strings em emails PST
+- Renderização de PNGs parcialmente sobrescritos, como os de carving (PCF Wladimir)
+- Correção no Sleutkit para reconhecer NTFS >= 2TB e exFAT com cluster > 64KB
+- Remoção do termo "Departamento" (de Polícia Federal) do relatório HTML (PCF Wladimir)
+- Melhor obtenção do caminho relativo ao processar pastas, usando ".." se necessário
+- Reabilita proteção para zip bombs durante o parsing
+- Não mais imprime mensagens de timeout no console
+
+07/06/2015: IPED-3.9.4
+- Corrige erro de build que impedia expansão de PSTs (3.9.3)
+- Proteção para a tabela não carregar um conjunto vazio de colunas
+- Patch no Sleuthkit para corrigir leitura, indexação e carving de Volume Shadow Copy Files (contribuição PCF Gabriel)
+- Patch no Sleuthkit para corrigir rara construção errada da árvore de diretórios
+- Validação para impedir append de relatórios .iped (não permitido)
+- Não indexa metadados novos, possivelmente corrompidos, de itens HTML
+- Corrige geração de relatórios contendo itens raizes (3.9)
+
+15/04/2015: IPED-3.9.3
+- Autocompletar com nome de colunas via tab na caixa de pesquisa (PCF Wladimir)
+- Proteção contra leaks de memória ao usar robustImageReading via reinicialização do SleuthkitServer a cada 10mil itens
+- Corrige interrupções do processamento devido a motivos diversos
+- Corrige duplicação de remetentes e destinatários de emails EML no relatório
+- Corrige expansão da árvore após cancelamento de pesquisa
+- Corrige leitura da primeira linha da configuração de exportação automática de dados
+- Layout das colunas não era salvo no Linux
+- Corrige lentidão de filtros e ordenações em casos grandes
+- Não indexa metadados novos, possivelmente corrompidos, de itens HTML
+
+29/03/2015: IPED-3.9.2
+- Corrige raro NullPoiterException que fazia processamento abortar (3.9)
+- Falsos alertas no log de timeout ao gerar miniaturas (3.9)
+- Remoção de mensagens de erro da icepdf do Console
+- Melhor proteção contra erros de IO durante varredura de diretórios
+- Descarta PDFs de carving com zero páginas
+
+14/03/2015: IPED-3.9.1
+- Alguns casos não eram abertos devido a erro de leitura e sintaxe no arquivo conf/metadatatypes.txt 
+
+09/03/2015: IPED-3.9-final
+Melhorias:
+- Integração da Detecção de Imagens Explícitas (DIE) do LED (contribuição PCF Wladimir)
+- Exposição de atributos/colunas extras: id, parentId, contentType, kffstatus, kffgroup, hasThumb, ocrCharCount, etc
+- Metadados dos itens indexados como atributos/colunas (message-from, message-to, message-subject, author, cameraModel, etc)
+- Exibição dinâmica de colunas, salva disposição e tamanho definidos pelo usuário
+- Refatoração da pré-ordenação de propriedades
+- Geração de miniaturas de imagens durante o processamento (possivelmente lento)
+- Exibição da árvore de diretórios em relatórios .iped e extrações automáticas
+- Cálculo de múltiplos hashes simultaneamente (md5, sha-N, edonkey)
+- Destaque de registros known.met, shareH/L.dat e Library1.dat com hits na base do LED (+metadado kffHits)
+- Inclusão da Galeria no relatório HTML de casos sem marcadores
+- Adiciona check de versão da libpff
+- Novas Estatísticas em tempo real do processamento
+- Nova opção "--fastmode" para rápida execução em locais de busca (no geral leva poucos minutos)
+Correções:
+- Corrige clique em nó da árvore a após colapsar outro nó (3.8)
+- Bloqueio de novos filtros/pesquisas antes de retornar da pesquisa atual
+- Links para anexos EML deixaram de funcionar (3.8)
+- Altera lib padrão de conversão de PDF para PNG durante OCR para ICEPDF (mais estável)
+- Configura e limpa periodicamente pasta temp do graphicsmagick durante geração de thumbs
+
+
+18/02/2015: IPED-3.8.2
+- Suporte a arquivos .asap com mais de 1 perito (PCF Wladimir)
+- Correção na formatação de datas de itens sqlite
+- Não classifica possíveis digitalizações em outras categorias
+- Correta detecção de codificação de relatórios html do UFED mal formados
+
+27/01/2015: IPED-3.8.1
+- Corrige captura da imagem do visualizador (regressão 3.7)
+- Extrai Feeds Rss de OSTs 2013
+- Melhor controle de timeout nos parsers OST, EDB e Registro
+- Não exibição do menu de exportação em árvore no Linux
+
+20/01/2015: IPED-3.8
+- Processamento robusto contra crashes e travamentos do TSK (opcional em AdvancedConfig.txt, usa mais memória)
+- Atualização Tsk_Loaddb 20160106 (fix para pendrives nao reconhecidos, crashes ntfs, hfs, etc)
+- Parser para arquivos EDB via libesedb (Contacts.edb, histórico IE10, Windows Mail, Exchange, etc)
+- Parser para registro do Windows (RegRipper)
+- Parser para Outlook OST 2013 e melhor suporte a PST (libpff)
+- Escreve cabeçalhos originais de emails PST ao final do preview
+- Inclui automaticamente no relatório anexos de emails PST (desligável via --nopstattachs)
+- Exportação de itens mantendo estrutura em árvore
+- Uso de temporários locais com imagens DD (maior rapidez pela rede)
+- Substituição do filtro "Possíveis Digitalizações" por Categoria exportável
+- Inclui bibliotecas nativas para MacOSX x64 (contribuição PCF Ivanhoé)
+- Remoção de acentos específica para o português (menos falsos positivos)
+- Opção para abrir externamente visualização HTML mto grande
+- Assinatura e categorização de ISO UDF RAW
+- Compatibilização com FTK 6.0
+- Atualização para IcePDF-6.0.2
+Correções:
+- Agrupa setores não alocados não contíguos para carving de fragmentados (regressão 3.7)
+- Corrige visualização truncada de itens do Ares com valores nulos (PCF Wladimir)
+- Corrige geração de relatório contendo itens sem hash
+- Inconsistência na tabela ao esconder nó da árvore selecionado
+- Atualiza dinamicamente contadores do gerenciador de marcadores
+- Correta detecção de PST cifrado
+
+
+01/12/2015: IPED-3.7.3.1
+- Corrige exportação de "Outras Imagens" na configuração de extração automática de dados (3.7)
+
+27/11/2015: IPED-3.7.3
+- Resumo (incluindo erros) após importar lista de palavras-chave
+- Erro ao descompactar LibreOffice na primeira execução numa máquina (3.6)
+- Não mais inclui duplicatas de tamanho 0 nos marcadores
+
+27/10/2015: IPED-3.7.2
+- Visualizador Html mais rápido, não mais repete tentativas de conexao à Internet
+- Erro ao indexar relatórios de casos do FTK 5.4 em database separado
+- Highlight de palavras acentuadas no preview perdido (3.6)
+- Exibição apenas da miniatura da imagem no visualizador em relatórios (3.7)
+- Corrige localização da pasta de dicionários do tesseract (3.7)
+
+19/10/2015: IPED-3.7.1
+- Reorganização de categorias, marcadores e diretórios em abas
+- ISOs RAW não processados por limitação do 7zip (3.6)
+- ISOs não processados nem expandidos devido a classificação incorreta (3.7)
+- Corrige visualização de item carveado dentro de subitem (3.7)
+- Incompatibilidade com sleuthkit-4.2 no Linux
+- Contorna desaparecimento do Scrollbar (bug java 1.8_60)
+- Melhor filtro "Containers não expandidos"
+- Lentidão durante "Configurando Índice" (3.6)
+
+08/10/2015: IPED-3.7
+- Função para criar, nomear e salvar filtros
+- Filtros pre-definidos: timeout, erro de parsing, ignorar duplicados, kffignore, digitalização, etc
+- Visualizador Hexadecimal (contribuição PCF Wladimir)
+- Hierarquia entre Categorias
+- Seleção múltipla de diretórios, categorias e marcadores
+- Início do processamento não mais aguarda término da varredura da imagem (necessário patch no Sleuthkit-4.2)
+- Processamento até 50% mais rápido de itens alocados, via ordenação pelo setor ocupado, evitando seeks
+- Opção para ignorar Hard Links, causadores de lentidão em sistemas HFS+ do tipo time machines
+- Visualização dos itens mais rápida sem geração de temporários
+- Seleção de item por digitação em coluna ordenada na tabela (PCF Wladimir)
+- Melhor HTML de visualização de itens do Emule e Ares (PCF Wladimir)
+- Opção para indexar sem converter p/ minúsculas (melhor dicionário p/ quebra de senhas)
+Correções:
+- Crashes no parser nativo 7z com CHM, agora configurado para processar apenas ISO e 7z
+- Planilhas XLSX protegidas dentro de containers incorretamente tipadas
+- Lentidão ao abortar visualização de texto de itens grandes com conteúdo zerado
+
+
+17/09/2015: IPED-3.6.3
+- Inclui versão correta dos arquivos de configuração do log
+
+15/09/2015: IPED-3.6.2
+- Corrige geração do log ao executar fora da pasta do iped.jar
+
+14/09/2015: IPED-3.6.1
+- Habilitado por padrão geração de miniaturas de vídeos
+- Possível erro ao processar não alocado ao adicionar várias evidências devido a atualização do Sleuthkit (3.5)
+- Travamento da interface em pesquisas com milhares de termos após alteração do queryParser
+- Erro raro durante exportação de arquivos com certos nomes numéricos
+
+03/09/2015: IPED-3.6
+- Suporte a ISO com UDF e melhor parsing de CHM e 7z via 7zipJBindings
+- Expansão de ISO, ARJ, Snappy, Deflate e Z
+- Indexação e consulta em propriedades numéricas (datas e tamanho)
+- Reaproveitamento do OCR de arquivos duplicados
+- Opção para incluir/remover itens com mesmo hash nos marcadores
+- Opção para converter PDF para imagem via IcePDF ou PDFBox durante OCR
+- Decodificação genérica de datas em arquivos sqlite (históricos de internet, skype, etc)
+- Parsers para Library{1,2}.dat e Searches.dat do Shareaza (contribuição PCF Pfeifer)
+- Novo sistema de Log, imprimindo erros graves no Console (contribuição PCF Pfeifer)
+- Estrutura interna de pastas de containers reproduzida na árvore
+- Opção para ignorar arquivos Orphans por tamanho (AdvancedConfig.txt)
+- Novas categorias "Imagens de Disco" e "Imagens ISO"
+- Desabilitado carving dentro de imagens e OCR em GIF por padrão
+- Atualização p/ Tika 1.10
+Correções:
+- Erro de ConcurrentModificationException durante evidence.dispose()
+- Zips não compactados contendo data descriptors não expandidos
+- Lentidão ao expandir SQLite contendo milhares de Blobs pequenos
+- Vazamento de file handles durante OCR de TIF e geração de relatório HTML
+- Correta pausa do contador de timeout do pai ao processar subitem
+- Erro ao realizar append de diretório adicional em relatório
+- Falsos zip bomb exceptions devido a tags xml não fechadas
+- Não cria preview de itens com tamanho zero
+- Teste de execução do Tesseract ao habilitar OCR 
+
+
+27/07/2015: IPED-3.5.1
+- Ordenação das colunas em background e cancelável (útil com milhões de itens)
+- Parser inicial para msgstore.db (whatsapp) - contribuição PCF Pfeifer
+Correções:
+- Alguns tipos de RAR cifrados não eram identificados
+- Ordenação alfabética na árvore perdida (3.5)
+- Travamento raro durante geração de relatório HTML
+- Ícone do item não acompanhava movimentação da coluna Nome
+- Não gera novamente preview do item durante geração de relatório
+- Resize dos componentes da janela de marcadores
+
+15/07/2015: IPED-3.5
+Melhorias:
+- Rollback do Índice após erro ou cancelamento durante append de evidência
+- Análise do caso simultanea com append de evidências adicionais
+- Parâmetro para paralelizar pesquisas em índices gigantes
+- Carving para AVI e ASF (WMV e WMA)
+- Parser para atalhos LNK (Contribuição PCF Gabriel)
+- Exportação de lista de termos indexados para quebra de senhas
+- Reaproveitamento do resultado do OCR ao gerar relatório
+- Pré-ordenação de propriedades em paralelo (2 por vez)
+- Atualização Sleuthkit p/ Windows (correções HFS+)
+- Suporte a parâmetro -dname para pastas
+- Parâmetro -nocontent para não exportar conteúdo de itens de um marcador/categoria (apenas thumbs e propriedades)
+Correções:
+- Problema intermitente ao renderizar PDFs e perda de foco
+- Workers inicialmente suspensos devido a lentidão na leitura do sleuth.db
+- Itens com hit na base do LED não eram categorizados por tipo
+- Travamento ao processar pastas com arquivos especiais (named pipes, sockets, etc)
+- Melhor classificação de Históricos do MSN
+- Erro de ConcurrentModificationException durante indexação
+- Visualizador não limpo ao clicar em arquivo com conteúdo inacessível
+- Não exibição de thumbs de vídeos ao cancelar geração de temporário
+- Inconsistência na árvore de diretórios ao processar AD1 montado
+
+
+10/06/2015: IPED-3.4.1
+- Erro ao configurar hashes sha-256 e sha-512
+- Erro durante geração de relatório HTML ao processar item sem hash
+- Inclusão de dlls do MS Visual c++ necessárias
+- Correção do ajuste do nome de itens exportados, considerando limitações do Joliet
+- Geração de sleuth.db temporário quando readonly se necessário atualizar caminho para imagens
+- Correção para detectar tipo de itens com conteúdo inacessível via extensão
+
+21/05/2015: IPED-3.4
+Melhorias:
+- Geração de miniaturas de vídeos (PCF Wladimir)
+- Geração de relatório HTML dos itens exportados (PCF Wladimir)
+- Parser para arquivos Known.met do e-Mule (PCF Wladimir)
+- Parser para arquivos ShareH.dat e ShareL.dat do Ares Galaxy (PCF Wladimir)
+- Nova categoria Peer-to-Peer, com arquivos do Ares e e-Mule (PCF Wladimir)
+- Simplificação para instalar novos argumentos na linha de comando
+- Atribuição de nome para discos físicos ou imagens (parâmetro -dname)
+- Tarefa para gerar versão de visualização de itens com parser apropriado
+- Inclui no CSV de propriedades itens ignorados (duplicados ou kffignore)
+- Configurações avançadas movidas para arquivos de configuração adicionais
+- Habilitado uso de * no início de palavras pesquisadas
+- Carving e melhor classificação de arquivos index.dat
+- Carving de arquivos do Ares Galaxy (básico) e EMF
+- Carving especializado para EML, com recuperação de anexos base64, etc
+Correções:
+- Mantém extensão original do item caso detectado como TXT
+- Códigos-fonte de módulos ausentes na distribuição
+- Parsing incorreto de planilhas XLSX protegidas (regressão 3.3)
+- Assunto de emails de caixas postais contendo "/" truncado (regressão 3.3)
+
+
+05/05/2015: IPED-3.3.3
+- Não carregamento de marcadores em relatórios iped (3.3)
+- Arquivo CSV de relatórios gerado sem caminho de exportação dos itens (3.3) 
+
+01/05/2015: IPED-3.3.2
+- Correções no parser de arquivos SQLite (3.3)
+- Bug de concorrência fazia subitens não serem indexados e ficarem como lixo na pasta Exportados (3.3)
+- Erro ao gerar report a partir de arquivo *.iped (3.3)
+- Exclusão de subitens com mesmo hash de subitens corrompidos extraídos de zips recuperados (3.2.x)
+- Timeouts ao indexar via strings não mais monitorados
+
+27/04/2015: IPED-3.3.1
+- Teste de entropia ao indexar desconhecidos, melhorando sobremaneira eficiência de indexação de espaço não alocado.
+Correções:
+- Não indexação de corpo de emails e subitens não expandidos como xls dentro de doc (3.3)
+- Descarte de imagens de carving devido a exceção (3.3)
+
+
+24/04/2015: IPED-3.3
+- Refatoração, modularização e documentação parcial do código de processamento e divisão em subprojetos maven
+- Otimizações ao usar indexTemp em SSD, diminuindo em até 60% o tempo de processamento
+- Módulo simples de KFF local, com importação de base de hashes no formato NSRL
+- Consulta de hashes na base do LED
+- Categoria p/ arquivos cifrados (office97/07, openoffice, pdf, zip, rar, pst e agora 7z)
+- Novas categorias baseadas em propriedades (Lixeira, Atalhos e Histórico de Internet, contribuição PCF Gabriel)
+- Exibição da tarefa de processamento do IPED e pasta sendo adicionada pelo sleuthkit
+- Melhorias no parser de MDB (visualização e extração de subitens)
+- Atualização Tika-1.8 (SQLiteParser, etc)
+- Ordenação da tabela mantida após alterar filtro
+- Filtro para listar "Arquivos Sem Marcadores"
+- Exposição do parâmetro noFatOrphans
+Correções:
+- Opção em ParserConfig.xml p/ excluir GIFs do OCR (pode causar erros no Windows)
+- Criação automática da pasta de saída e abortagem do processamento caso já exista
+- Melhor detecção de assinatura de arquivos EMF e EML
+- Arquivo CSV sobrescrito ao usar --append
+- Erro ao processar pasta raiz cujo nome tenha 1 caracter
+- Perda de marcadores após adicionar evidência com --append
+- Erro durante exportação automática devido a deleção de arquivo por antivirus
+- Melhor categorização de arquivos office2007 cifrados
+- Timeout durante OCR em arquivos TIF com muitas páginas
+- Problema de seleção múltipla na galeria
+- Log com menos lixo de bibliotecas
+
+
+30/01/2015: IPED 3.2.4
+- Arquivos exe detectados como dll
+- Bug crítico exibia data de alteração do registro (CDate) no lugar da data de criação (CrDate)
+- Referências p/ imagens dd/e01 atualizadas ao mover pasta do caso
+- Categorização via nome da pasta apenas a partir do AsAP
+- Marcadores listados em ordem alfabética no filtro
+
+
+16/01/2015: IPED 3.2.3
+- Compatibilidade com FTK 5.6
+- Parser de metadados p/ arquivos 3gp, mp4, m4v e mov (via arquivo temporário)
+- Mais tipos categorizados: swf, mysql, berkleydb, cpio, old-excel(2,3,4)
+- Correções parametro ignoreDuplicates (erro ao gerar CSV, exportação de temporários, não exibição da árvore)
+- Problema de renderização de PDFs com hits
+- Filtro mudava p/ "Todos os itens" ao criar, deletar ou renomear marcador
+- Pastas exportadas renderizadas com ícone de arquivo
+- CSV total com link incorreto p/ alguns itens carveados não exportados
+- Imagens forenses com extensão 000 não eram reconhecidas
+- Configuração para não processar arquivos jar
+- Parser menos restrito para arquivos XML (menos exceções)
+- Atualização p/ Tika-1.7-final (melhorias PDFBox, etc)
+
+
+22/12/2014: IPED 3.2.2
+- Aumentada heap máxima do "Ferramenta de Pesquisa.exe" para 6GB
+- Fechamento forçado de processos "gm.exe" da galeria com TIMEOUT
+- Itens pai de arquivos recuperados via carving não exibidos na árvore (3.2)
+- Problema no CSV de propriedades devido a alteração de ordem das colunas (3.2.1)
+
+
+17/12/2014: IPED 3.2.1
+- Processamento até 2,5x mais rápido de containers (zip, pst, etc) e arquivos avulsos (testado no Windows)
+- Funcão para navegar até o item pai na visualização em árvore
+- Inclusão de Link e propriedade "Marcador" no CSV de propriedades, agora criado na raiz
+- Alerta na interface caso haja mais de 1 filtro aplicado
+- Cópia de propriedade selecionada na tabela via Ctrl+C
+- Diretórios não mais ignorados pelo parâmetro "ignoreDuplicates"
+
+
+13/11/2014: IPED 3.2
+Melhorias:
+- Processamento de dispositivos físicos
+- Função p/ importar e filtrar lista de palavras-chave após o processamento
+- Parâmetros de carving e expansão de containers movidos p/ IndexerConfig.txt
+- Imagens não mais carveadas de arquivos PDF (provocava dupla execução do OCR)
+- Conteúdo de arquivos OLE genéricos indexado via strings
+- Atualização p/ IcePDF-5.1.1
+Correções:
+- Árvore de diretórios exibida em casos de extração automática de dados
+- Arquivos VHD eram classificados como Texto
+- Erro ao gerar relatório contendo item causador de timeout
+- Erro ao usar --append em casos de extração automática de dados
+- Itens de carving corrompidos eram exportados em casos de extração automática de dados
+- Carving repetido sobre itens com TIMEOUT
+- Append adicionava novamente último item da imagem anterior
+- Problema ao pesquisar por "hash" contendo letras
+- Erro de concorrência do sleuthkit ao adicionar mais de uma evidência simultaneamente
+- Erro no parser de arquivos PDF (ao não usar OCR) fazia PDFs carveados serem descartados (3.1)
+
+
+07/10/2014: IPED 3.1.3
+- Filtro de duplicados inconsistente ao ser usado junto com pesquisa com múltiplos OR (2.18)
+- Marcadores não exibidos após reindexar arquivos selecionados (3.1.2)
+- Erro ao exibir conteúdo de espaços não alocados exportados (3.0)
+
+
+06/10/2014: IPED 3.1.2
+- Ordenação alfabética na Visualização em árvore
+- Limitação do tamanho de merges do índice
+- Itens com TIMEOUT eram classificados como duplicados (2.18)
+- Erro ao listar primeira categoria em casos sem marcador (3.1)
+- Erro ao reindexar caso gerado a partir de pasta avulsa (3.0)
+- Erro no salvamento automático de marcadores a partir de mídias ópticas (3.0)
+
+
+01/10/2014: IPED 3.1.1
+- Visualização hierárquica de arquivos PST incorreta (3.1)
+
+
+30/09/2014: IPED 3.1
+Melhorias:
+- Licenciamento sob GNU GPL v3
+- Visualização em árvore (exceto para relatórios)
+- Metadado OCRCharCount com nº de caracteres reconhecidos pelo OCR
+- Filtro p/ arquivos com marcador qualquer
+- Função para renomear marcador
+- Atualização p/ Sleuthkit 4.2.0
+- Atualização p/ IcePDF-5.1 (renderização de imagens mto mais rápida)
+Correções:
+- Reinicializações constantes do Libreoffice 4.2.x no Linux
+- Duplo clique e clique direito não funcionava no Linux
+- Dialog de exportação de propriedades incluía várias vezes o filtro CSV
+- TesseractPath descomentado
+
+
+09/09/2014: Indexador e Processador de Evidências Digitais 3.0
+- Atualização para tika-app-1.7-snapshot-20140908.180323-166 (atualização POI-3.11)
+- Obtenção da propriedade "deletado" de relatórios do FTK 1.8, caso incluída
+
+
+08/09/2014: Indexador e Processador de Evidências Digitais - IPED 3.0-beta
+Melhorias:
+- Data Carving (ver CarvingConfig.txt)
+- Opções para adicionar e indexar espaço não alocado de imagens
+- Atribuição, filtro e gerenciamento de múltiplos marcadores
+- Suporte a dezenas de formatos de imagem via Image/GraphicsMagick
+- Exibição do atributo "Deletado"
+- Opção para não incluir arquivos duplicados
+- Novas categorias: "Executáveis e Bibliotecas", "Arquivos OLE" e "Não Alocado"
+- Melhor categorização dos arquivos considerando hierarquia entre Mimetypes
+- Melhor estimativa de progresso e término de processameto pelo tamanho dos arquivos
+- Metadado "EncryptedDocument" para indicar arquivos criptografados (office, openoffice, pdf, rar e zip)
+- Pasta temporária individual, permitindo rodar mais de 1 instância simultaneamente.
+- Obtenção da data de modificação de subitens de ZIPs
+- Atualização p/ lucene-4.9 e icepdf-5.0.7
+Correções:
+- Exportação de arquivos criava subpasta após exportar primeiro arquivo
+- Problema ao gerar miniaturas de TIF devido a ordem de carregamento de dependências
+- Limitação da Pesquisa (Libreoffice) com Java 64 bits no Windo6ws removida
+- Progresso de highlight ficava aberto após alternar entre arquivos rapidamente
+- Problema ao ler parâmetros com espaços do arquivo IndexerConfig.txt
+- "Carregando" não fechava na galeria de relatórios do FTK 1.8 ao não encontrar pasta de thumbnails
+- Lentidão na galeria ao tentar extrair thumbs de imagens corrompidas
+- Vazamento de arquivos 7z, DBX e TIF temporarios
+- Erro ao acessar arquivo renomeado p/ hash ainda sendo exportado por outra thread
+- SleuthkitCase fechado antes do término do processamento, prejudicando acesso aos últimos arquivos
+
+
+03/06/2014: Indexador 2.18.1
+- Parser para caixas do IncrediMail (contribuição do PCF Gabriel)
+- Atualização p/ IcePDF-5.0.6 (visualizador PDF)
+- Atualização p/ Tika-1.6-Snapshot:
+	- correções diversas nos parsers (melhor indexação)
+	- melhor tratamento de acentos de subitens de ZIPs
+	- extração de subitens de RTF
+	- suporte a 7zip
+Correções:
+- Vazamento de arquivos temporários pela galeria (2.18)
+- Visualizador Office inicializado sem permissão do usuário (2.18)
+- Problema que adicionava "." a arquivos sem extensão no Linux (2.16)
+- Dependência redundante nas bibliotecas auxiliares (2.17.2)
+
+
+30/05/2014: Indexador 2.18
+Melhorias:
+- Galeria de Imagens (com contribuições do PCF Wladimir)
+- Filtro de arquivos duplicados
+Correções:
+- Problema ao exportar arquivos com extensão composta apenas por caracteres inválidos
+- Problemas por não acessar alguns componentes gráficos na thread de eventos
+- Parser de strings brutas não considerava 'Tab' como caracter textual
+- Algumas caixas Mbox eram identificadas como EMLX
+
+
+16/05/2014: Indexador 2.17.3
+- Configuração para indexar caracteres adicionais (IndexerConfig.txt)
+- Indexação de arquivos selecionados a partir do arquivo de marcadores não funcionava (2.17.2)
+- Operadores AND e OR deixaram de funcionar (2.17.2)
+
+
+14/05/2014: Indexador 2.17.2
+Melhorias:
+- Retorno das opções de salvar e carregar marcadores
+- Exportação indexada de arquivos selecionados agora deve ser executada sobre arquivo de marcação
+- Separação das customizações de assinaturas em conf/CustomSignatures.jar
+- Arquivos sqlite classificados como base de dados
+Correções:
+- Problema eventual de renderização do visualizador Office ao alternar rapidamente entre arquivos
+- Raw strings não extraídas de arquivos corrompidos durante a busca (2.17.1)
+- Problema ao exportar CSV de arquivos sem hash
+- Scroll horizontal automático removido
+
+
+08/05/2014: Indexador 2.17.1
+- Desabilitada opção do Sleuthkit para adicionar FatOrphanFiles
+- Progresso de exportação de arquivos fechava antes de terminar de exportar último arquivo
+- Possivel não extracao de emails devido a problema na biblioteca de PST
+
+
+07/05/2014: Indexador 2.17
+Melhorias:
+- Processamento de imagens DD, 001, ISO e E01 via Sleuthkit
+- Exportação indexada de arquivos selecionados na interface de pesquisa (via linha de comando)
+	(permite processar imagens e exportar arquivos selecionados)
+- Uso do hash na exportacao automatica de arquivos p/ otimizar espaço
+- Exibição do hash dos arquivos na interface de pesquisa
+- Exibição do tamanho total dos itens listados
+- Criação de cópia do arquivo no Clique duplo, caso haja permissão de escrita
+- Inclusão do caminho de exportação dos arquivos no CSV de propriedades
+- Tipo dos arquivos ativos definido com base na assinatura (exceto reports)
+- Opção para não indexar o conteúdo dos arquivos
+Correções:
+- Parser de strings brutas não considerava 0x0A e 0x0D como caracteres textuais (2.x)
+- LibreOffice permanecia aberto após fechar busca caso nenhum arquivo office fosse visualizado (2.14.1)
+- Tipo de subitens com assinatura desconhecida não usava extensão original (2.15)
+- TIMEOUT em subitem provocava timeout em item pai, abortando indexação (2.16)
+- Expansão incompleta de arquivos com muito conteúdo textual (2.16)
+- Exportação duplicada de arquivos com TIMEOUT (2.16)
+- Parser PST deixava handles abertos (2.15)
+
+
+04/04/2014: Report Indexer 2.16
+- Melhorias na arquitetura de processamento:
+	- Separação das etapas de expansão de containers e indexação
+	- Melhor concorrência ao expandir containers (IO e CPU), sem aumentar fila de processamento
+- Definição de Categorias com base nas propriedades dos arquivos (conf/CategoriesByPropsConfig.txt)
+- Opção para indexação correta de PDFs rotacionados (ver 'sortPDFChars' em IndexerConfig.txt)
+- Diminuição significativa no consumo de memória para pesquisar milhões de itens
+- Configuração para exportar itens por categoria (conf/CategoriesToExport.txt)
+- Configuração para exportar propriedades de todos os arquivos processados
+- Contatos do Outlook inseridos na categoria "Contatos" e com melhor nomenclatura
+- Mapeamento de versões de visualização para originais mais eficiente
+Correções:
+- Problema no filtro de versões e listagem de anexos ao indexar mais de 1 caso do FTK3+
+- Highlight de termos de queries de proximidade ("termo1 termo2"~5) não funcionava na pré-visualização
+- Parser de Strings brutas não decodificava caracteres UTF-8 iniciados com 0xC2
+- Erro ao indexar relatórios do FTK3+ com nº de itens múltiplo de 1000
+- RARParser e cálculo de Hash deixavam handles abertos
+- Dialog de progresso do highlight ficava escondido ao mover janela da aplicação
+- Bookmarks não inseridos no report eram incluídos na categoria dos arquivos
+
+
+24/02/2014: Report Indexer 2.15.2
+- Novo parser p/ arquivos RAR
+- Pequena melhoria na detecção de arquivos RFC822
+- Problema no acesso a EML (arquivo inacessível, antivírus) fazia o visualizador EML parar de funcionar
+- Dialog da cópia de propriedades precisava ser cancelado 2 vezes para fechar
+- Hash de arquivos causadores de TIMEOUT calculado 2 vezes
+
+
+20/02/2014: Report Indexer 2.15.1
+- Melhorias nas definições de categorias ao indexar pastas
+- Regressão: Erro ao indexar relatórios do FTK3+ com itens sem tamanho lógico
+
+
+19/02/2014: Report Indexer 2.15
+Melhorias:
+- Extração de subitens de containers suportados (zip e similares, dbx, pst, mbox, eml, pdf, office, etc)
+  (Deve ser habilitado em conf/CategoriesToExpand.txt)
+- Novo parser para arquivos PST (decodifica emails, contatos, tarefas, atividades, compromissos e rss)
+- Novo parser para arquivos DBX
+- Novo parser para arquivos MBOX
+- Melhoria no parser EML para extração de anexos
+- Opção para calcular e exportar hash dos arquivos
+- Exportação de propriedades sem limite do nº de itens (para CSV) e incluindo atributo 'Export'
+- Melhorias nas definições de categorias ao indexar pastas
+- Recuperação de raros congelamentos da interface causados pelo visualizador Office com certos docs corrompidos
+- Atualização para IcePdf 5.0.5
+Correções:
+- Emails anexos a emails (.eml) não decodificados corretamente
+- Arquivos causadores de TIMEOUT não renderizados e classificados em mais de uma categoria
+- Visualizadores PDF e HTML desperdiçavam CPU ao não haver palavras para destacar
+- CPU de computadores com mais de 8 núcleos sub-utilizada
+- Categorias ordenadas alfabeticamente considerando acentos
+
+
+13/01/2014: Report Indexer 2.14.1
+- Novo filtro por categoria na interface de pesquisa
+- Definição de categorias por mimetype (IndexerCategoriesConfig.txt) para indexação de pastas
+- Uso das categorias configuradas no AsAP
+- Detecção automática de relatórios do FTK 5.1
+Correções:
+- Melhor detecção de arquivos CDR, WAV e EML
+- Travamento ao abortar abertura de alguns documentos Office problemáticos
+- Problemas de renderização do visualizador Office
+
+
+10/12/2013: Report Indexer 2.14 
+- Armazenamento das buscas do usuário
+- Opção para interromper pesquisas demoradas
+- Configuração de categorias no aplicativo de pesquisa (caso não haja palavras-chave)
+- Melhorias no Visualizador EML: links para anexos e renderização inline de anexos gráficos, html e txt
+- Melhor logging de erros de parsing de subitens, indicando o caminho completo do subitem
+- Configuração para parser EML processar arquivos EMLX
+- Configuração para não indexar arquivos PST (não suportados)
+Correções:
+- Listagem de anexos de outros e-mails com caminho e assunto idênticos
+- Visualizador HTML não renderizava páginas com extensão trocada ou inexistente
+- Travamento da interface ao pesquisar
+Atualizações:
+- LibreOffice 4.0.6 e noa-libre-0.3
+- Jackcess 2.0.2 e commons-lang-2.6
+- Lucene 4.6.0
+- IcePDF 5.0.4
+
+
+22/10/2013: Report Indexer 2.13.3
+Melhorias:
+- Applet de pesquisa refatorado em Aplicação Java na raiz
+- Configuração para ignorar arquivos rar, mkv e rmvb e indexar dbb, main.db, rec e dec
+- Mensagens do parser OCR logadas apenas no modo verbose
+Correções:
+- Parsing incorreto de subitens com Content-Type declarado incorreto (2.9+)
+- Visualizador EML não listava anexos com nomes codificados segundo RFC2231 (2.12+)
+- Alguns erros durante o parsing não eram logados, como OutOfMemoryError (2.10+)
+- Interrupção da indexação no caso de OutOfMemoryError em thread de indexação 
+- Formatação do cabeçalho no Visualizador EML alterado pelo estilo do corpo do email (2.12+)
+- Alguns alertas logados durante a descoberta dos itens não indicavam o arquivo problemático (2.7+)
+
+
+26/09/2013: Report Indexer 2.13.2
+Correções:
+- Provável Indexação parcial de relatórios do FTK3+ contendo itens com tamanho lógico nulo (2.13+)
+- Mensagem de erro tinha sido suprimida caso haja diferença entre número de itens indexados e descobertos (2.12+)
+
+
+25/09/2013: Report Indexer 2.13.1
+Correções:
+- Quebra de compatibilidade do Java 1.7 update 40 com applet de busca (2.0+)
+- Problema que impediria funcionamento dos visualizadores HTML e EML com java 8 e posteriores (2.11+)
+- Visualizador EML não funcionava no caso de EML com EML anexo (2.12+)
+
+
+17/09/2013: Report Indexer 2.13
+Melhorias:
+- Navegação pelos Hits na Pré-visualização
+- Rolamento automático para o 1º hit
+- Indexação incremental (adiciona resultado a um índice existente, parâmetro --append)
+- Exibição da velocidade média e dos itens sendo indexados
+- Log do volume dados indexados, parsings recursivos e divisões de arquivos
+- Desabilitação do Tika Pkcs7Parser (causava muitas exceções)
+- Diminuição dos controles PDF para otimizar espaço
+- Inicialização tardia do visualizador Office
+Correções:
+- Problema de concorrência ao incrementar ID dos itens indexados (2.3+)
+
+
+09/09/2013: Report Indexer 2.12.2
+Correções:
+- Planilhas grandes demoravam para começar a abrir (2.12+)
+- Visualizador EML não decodificava alguns nomes de anexos corretamente (2.12+)
+- Highlight incorreto em raras páginas HTML com códigos incomuns (2.12+)
+
+
+29/08/2013: Report Indexer 2.12.1
+Correções:
+- Visualizador Office parava de funcionar após alterar layout dos painéis (2.12)
+
+
+27/08/2013: Report Indexer 2.12
+Melhorias:
+- Highlight das palavras-chave na Pré-visualização
+- Visualização de arquivos EML
+- Visualização de TIFF multipáginas
+- Salvamento automático dos marcadores no temp do usuário
+- Unificação dos visualizadores na mesma aba
+- Opção para capturar imagem do visualizador
+- Opção para fixar aba de visualização
+- Alerta visual e Interrupção da indexação caso a memória disponível seja considerada insuficiente (java x86)
+- Reorganização do código do visualizador de texto
+Atualizações:
+- Tika 1.4 (melhor parsing de containers, PDF, OCR de PDF, etc)
+- IcePDF 5.0.3 (melhoria na velocidade e qualidade na visualização de PDF's)
+- Lucene 4.4
+- Jackcess 1.2.14.1 (parsing de mdb)
+Correções:
+- Consulta de memória disponível retornava valor negativo
+- Problema com caminhos longos para armazenar texto extraído pelo OCR ao indexar HD's
+- Strings brutas UTF-16 posteriores a código não ascii extraídas sem o 1º caracter (v. 2.10+)
+- Reversão das alterações de formatação no visualizador de texto (2.10+)
+
+
+11/07/2013: Report Indexer 2.11.1
+Melhorias:
+- Detecção automática de relatórios do FTK 5.0
+Correções:
+- Adaptações para uso com AsAP 4.8
+- Problema de extração de texto bruto ao alternar entre arquivos grandes na busca sem 'cancelar' (v2.10+)
+- Utilização do LibreOffice embutido em ambientes Windows, ignorando versões instaladas
+- Execução em tela cheia de apresentações ".pps.ppt" (renomeadas pelo FTK)
+- OCR executado na ausência do parâmetro 'enableOCR' em IndexerConfig.txt
+- Erro ao apagar pasta temporária abortava indexação
+- Valor "false" do parâmetro "embutirLibreOffice" não funcionava
+- Limpeza dos visualizadores ao realizar nova pesquisa
+- Cancelamento do parsing de texto ao realizar nova pesquisa
+
+
+22/05/2013: Report Indexer 2.11
+Melhorias:
+- Novo visualizador Office via LibreOffice4 portable (compactado na mídia)
+- Novo visualizador HTML via javaFX WebView (OpenWebKit) - necessário java 1.7.0_06 ou superior
+- Novo visualizador PDF via IcePDF LGPL
+- Listagem de anexos e itens de origem em thread separada, agilizando exibição dos arquivos
+- Parâmetro para definir arquivo de log via linha de comando
+- Adaptações para uso com AsAP
+Correções:
+- Erro ao carregar a busca quando configurado diretório temporário de indexação
+- Tamanho variável dos fragmentos na aba de hits (causado por melhoria na aba Texto)
+- Interrupção da indexação ao ocorrer erros de IO durante descoberta dos itens (FS corrompido, disco defeituoso, etc)
+
+
+08/04/2013: Report Indexer 2.10
+Melhorias:
+- Novo parser OCR usando Tesseract 3.02 para imagens(tif, jpg, png, bmp e gif) e PDFs.
+  DEVE SER HABILITADO EM IndexerConfig.txt (Pode demorar vários segundos por digitalização)
+- Nova aba de emails/itens de origem
+- Melhor formatação do texto no visualizador
+- Customização de parsers em conf/ParserConfig.xml
+- Customização de mimetypes em conf/org/apache/tima/mime/custom-mimetypes.xml
+- Exposição de parâmetros fallBackParser (p/ arquivos desconhecidos) e errorParser (p/ corrompidos)
+- RawStringParser 2x mais rápido e exposição do parâmetro minRawStringSize
+- Menor consumo de memória durante pré-ordenação de milhões de itens
+- Melhor interrupção das threads de indexação ao cancelar
+- Log de informações do sistema e ALERTA de memória insuficiente
+- Atualização para Lucene 4.2
+Correções:
+- Botão de 'cancelar' durante highlight dos arquivos não funcionava
+- Busca não carregava em alguns ambientes Linux
+- Possível erro ao utilizar instâncias estáticas dos parsers em diferentes threads de indexação
+- Possível vazamento de arquivos temporários e handlers não fechados
+
+
+08/03/2013: Report Indexer 2.9.2
+- Interrupção da indexação ao ocorrer erro de IO durante detecção do tipo de arquivo
+
+06/03/2013: Report Indexer 2.9.1
+Melhorias:
+- Consumo de memória 4x menor para carregar dados de pré-ordenação (significante com milhões de itens)
+- Filtragem de metadados do tipo "Chroma Palette PaletteEntry"
+
+27/02/2013: Report Indexer 2.9
+Melhorias:
+- Reorganização geral do código
+- Compatibilização com FTK 4.2 e MSSQLServer (ajuda do PCF Wladimir)
+- Detecção e Indexação do CONTENT_TYPE dos arquivos, permitindo buscas por assinaturas
+- Exibição da "relevância" dos resultados (proporcional ao no de hits)
+- Indexação das versões originais E de visualização dos arquivos (FTK3+)
+- Melhor indexação de containers, incluindo metadados de subitens e strings brutas no caso de exceções
+- Exportação de arquivos em subpastas caso sejam exportados milhares de arquivos
+- Pergunta de "Abrir com" caso não haja programa associado durante clique duplo
+- Alteração do parser de arquivos TEXT_PLAIN para o parser de strings brutas
+- Utilização da pasta temporária para parsing de arquivos
+- Detecção automática da versão do FTK com AsAP 4.x
+- Remoção de quebras de linha iniciais no visualizador de texto
+- Visualização de imagens por assinatura
+- Atualização para Lucene 4.1
+- Atualização para Tika 1.3
+- Atualização para jackcess 1.2.9
+Correções:
+- Erro de exibição dos arquivos durante rápida iteração pelos resultados (setas pressionadas)
+- Erro em itens com a tag "Exportado como: (não foi possível expotar)" no FTK1.8
+
+
+07/12/2012: Report Indexer 2.8.5 (testado com jre 1.7.0_7 x64)
+- Erro durante pré-ordenação simultânea de propriedades com número de threads maior que 8
+- Erro de cálculo do caminho relativo de arquivos no Linux
+- Interrupção da indexação com erros de IO. Agora o erro é logado e a indexação prossegue.
+
+
+06/12/2012: Report Indexer 2.8.4 (testado com jre 1.7.0_7 x64)
+- Erro ao indexar relatórios do Cellebrite Physical contendo pasta "files"
+- Erro ao listar anexos na existência de 2 arquivos com mesmo caminho completo "analisado" (por ex. diferindo apenas na acentuação)
+- Possível erro de concorrência ao fechar container que tenha ocasionado timeout
+- Uso do parser de strings brutas com arquivos TTF (provocavam muitos timeouts ao indexar HD's)
+- Correção da versão informada no log
+
+
+17/10/2012: Report Indexer 2.8.3 (testado com jre 1.7.0_7 x64)
+- Anexos do 1º item visualizado da pesquisa atual não exibidos caso último item visualizado da pesquisa anterior tivesse mesmo nº de anexos
+
+15/10/2012: Report Indexer 2.8.2 (testado com jre 1.7.0_7 x64)
+- Atualização para versão final do Lucene 4.0
+
+
+10/10/2012: Report Indexer 2.8.1 (testado com jre 1.7.0_7 x64)
+- Adicionada opção "[Listar todos os itens]"
+Correções 2.8:
+- Buscas com coringas E acentos perdidas com novo queryParser. Reutilização do AnalyzingQueryParser.
+- Na busca, não era realizado strings ao ocorrer exceção do Tika, devido à separação dos jar's de indexação e busca
+
+
+08/10/2012: Report Indexer 2.8 (testado com jre 1.7.0_7 x64)
+Melhorias:
+- Aba de listagem de anexos ou subitens
+- Nova disposição dos painéis, com opção para alternar para a anterior
+- Carregamento do applet a partir de CDs/DVDs até 8x mais rápido em alguns ambientes
+- Novo componente para exibir o progresso do highlight
+- Listagem inicial de todos os arquivos
+- Ordenação em paralelo das propriedades
+- Atualização para Lucene 4.0b (menor uso de RAM, flush concorrente, expressões regulares, etc)
+Correções:
+- ver 2.7.3: Cálculo incorreto do caminho dos arquivos de relatórios do FTK3+ indexados via terminal
+- Progresso do highlight demorava para aparecer com certos arquivos
+- Perda de foco para o navegador ao exibir progresso do highlight
+- Tamanho dos arquivos reinserido na verificação de TimeOuts
+- Progresso incorreto do highlight com textos maiores que 2GB
+- Falsa msg de divergência entre itens descobertos e indexados
+
+
+06/08/2012: Report Indexer 2.7.3 (testado com jre 1.7.0_5 x64)
+- Ordenação incorreta do tamanho dos arquivos com a presença de arquivos maiores que 2GB
+- Marcadores inconsistentes entre os fragmentos de um mesmo arquivo fragmentado
+- Deadlock ao ocorrer timeouts em todas as threads de indexação ao mesmo tempo
+- Informação incorreta do número de arquivos indexados na ocorrência de timeouts
+- Parâmetro opcional -o de pasta de saída da indexação
+
+
+19/07/2012: Report Indexer 2.7.2 (testado com jre 1.7.0_5 x64)
+Melhorias:
+- Atualização para TIKA 1.2: melhorias diversas na extração de texto com consequente melhora na precisão dos resultados
+Correções:
+- Tabela não atualizava o primeiro resultado da busca caso consulta anterior retornasse apenas 1 item
+- Problema de identificação de relatórios do FTK3+ convertidos pelo AsAP3, sendo indexados como pasta adicional (v. 2.7)
+- Problema com a exportação e com o clique duplo sobre os arquivos (v. 2.7)
+
+
+17/07/2012: Report Indexer 2.7.1 (testado com jre 1.7.0_5 x64)
+Correções:
+- Categoria dos arquivos incluia bookmarks dos quais eles foram deletados em reports FTK3+ (regressão)
+
+
+16/07/2012: Report Indexer 2.7 (testado com jre 1.7.0_5 x64)
+Melhorias:
+- Compatibilidade com PostgreSQL (contribuição do PCF Dalpian)
+- Menor consumo de memória ao indexar reports do FTK3+ ou pastas avulsas com abordagem produtor-consumidor, permitindo indexar milhões de itens
+- Melhorias na indexação de pastas avulsas caso seja usado JAVA 7:
+	- links simbólicos e NTFS junctions são pulados
+	- obtidas datas de criação e acesso dos arquivos
+	- melhoria significativa na velocidade de indexação pela rede
+- Melhor controle de timeouts, agora disparados após longo tempo sem comunicação entre threads de extração de texto e indexação
+- Exibição das bordas da janela de progresso da indexação (contribuição do PCF Átila)
+- Opções --nologfile, --nogui (contribuição do PCF Átila) e --verbose
+Correções:
+- Apenas o primeiro valor de metadados multi-valorados era indexado (como campo "To" de arquivos "eml")
+- Relatórios FTK 1.8: Arquivos contidos em bookmark posterior a bookmark sem comentário não eram indexados
+- Relatórios FTK 1.8: datas e categoria de e-mails não obtidas caso aparecessem antes como "e-mail de origem"
+- Ordenação das propriedades estava "case sensitive"
+- Dialog "Carregando" não fechava após inicialização da busca especificamente com JRE 1.6_18
+- Possível erro de concorrência ao salvar tamanho dos textos, prejudicando progresso do highlight durante as buscas
+- Algumas exceções de IO eram capturadas e não eram logadas/tratadas, dificultando debug de erros
+
+
+19/06/2012: Report Indexer 2.6.2 (testado com jre x64 1.6.0_31)
+Correções:
+- Erro ao apagar diretório temporário de indexação compartilhado (agora é criado outro subdir exclusivo)
+- Ordenações secundária e terciária das colunas da tabela não funcionavam
+
+
+19/06/2012: Report Indexer 2.6.1 (testado com jre x64 1.6.0_31)
+Melhorias:
+- Indexação do atributo "tipo de arquivo"
+- Pequena melhora na velocidade de localização de arquivos em pastas na rede
+Correções:
+- Exibição da extensão do arquivo na coluna "Tipo" para diretórios avulsos
+
+
+24/05/2012: Report Indexer 2.6 (testado com jre x64 1.6.0_25)
+Melhorias:
+- Seleção, marcação, exportação e cópia de propriedades de múltiplos itens
+- Visualizador para imagens BMP, JPG, PNG e GIF (Contribuição do PCF Wladimir)
+- Highlight em background, exibição do progresso apenas quando demorado e maior velocidade de navegação pelos itens
+- Labels para número de resultados, hits, itens marcados e caminho atual (barra de status)
+- Marcadores "checkbox" e "Lido"
+- Opção para salvar e carregar os marcadores
+- Atualização para Lucene 3.6
+Correções:
+- Nome sugerido de exportação de arquivo sem a extensão corrigida (agora nome original é usado automaticamente)
+- Ordenação de propriedades do tipo string desconsiderando língua local
+- "Carregando" aparecendo fora do monitor atual
+- Menu de contexto inacessível em ambiente Linux
+- Links quebrados, apontando para diretórios, interrompendo indexação em reports do FTK 1.8x
+- Perda de foco para o navegador, principalmente no Firefox
+- Problema de codificação da lista de palavras-chave ao utilizar ambientes diferentes para indexação e busca (Linux e Windows)
+
+
+26/04/2012: Report Indexer 2.5.2 (testado com jre x64 1.6.0_25)
+Correções:
+- Problema com múltiplas execuções na mesma instância do AsAP
+- Índices permaneciam abertos no caso de erro de indexação, impedindo AsAP de apagar pastas
+- Envio da msg 'Finalizado' para a interface do AsAP
+- Highlight incorreto da primeira palavra-chave no conteúdo da Ajuda
+- Possível problema ao acessar componentes da interface de busca fora da thread de eventos
+- Erro ao filtrar palavras-chave contendo linhas em branco ou só com espaços
+
+
+23/04/2012: Report Indexer 2.5.1 (testado com jre x64 1.6.0_25)
+Correções:
+- Scroll para direita ao clicar na tabela de hits, escondendo o número do hit
+- Ctrl+C do conteúdo do visualizador e da tabela de arquivos incluindo códigos e tags html de formatação
+- Inversão das datas de última modificação e acesso
+
+
+19/04/2012: Report Indexer 2.5 (testado com jre x64 1.6.0_25)
+Melhorias:
+- Interface de busca totalmente refeita em java
+- Remoção da limitação do número de resultados da busca
+- Remoção da limitação do tamanho do texto no visualizador
+- Listagem de todos os arquivos indexados
+- Melhor formatação do texto no visualizador
+- Exibição de hits e preview assim que disponíveis
+- Exportação dos arquivos via menu de contexto
+Correções:
+- Tempo estimado para término da indexação negativo em reports gigantes
+- Alerta de ID não identificado alterado para ERRO durante indexação
+- Incompatibilidade com Chrome
+- Demora no cancelamento do highlight de arquivos de processamento lento
+- Progresso do highlight incorreto com arquivos acessados aleatoriamente, como PDF's
+
+
+29/03/2012: Report Indexer 2.4 (testado com jre x64 1.6.0_25)
+Melhorias:
+- atualização para TIKA 1.1 (diversas melhorias na extração de texto, como maior rapidez e menor consumo de memória com PDF's)
+- carregamento dos resultados das primeiras buscas ~10x mais rápido (ou mais), inclusive a partir de DVD's
+- consulta das propriedades dos arquivos no Oracle 3-4x mais rápida (contribuição do PCF Wladimir)
+- exposto parâmetro de timeout no arquivo de configuração
+- estimativa superficial de término da indexação
+Correções:
+- Arquivos edbXXXX.log indexados incorretamente como "text/plain"
+
+
+23/03/2012: Report Indexer 2.3.1 (testado com jre x64 1.6.0_25)
+Correções:
+- Botão de ajuda quebrado na versão 2.3 e exibição da ajuda inicialmente no visualizador
+- Mensagem de sucesso no console ao fim de indexação sem erros
+- FTK 1.8x: Timeouts em arquivos grandes devido a tamanho lógico incorreto (arquivos fragmentados) ou inexistente nos relatórios
+- Erro ao acessar content-type de arquivo que ocasione timeout, provocando extração de texto duplicada
+- Utilização do RFC822Parser para arquivos *.eml, independente do tipo detectado pelo TIKA
+- Confirmação incorreta do número de arquivos indexados na ocorrência de timeouts
+- Erro de concorrência ao acessar metadados. Agora metadados são exibidos após o conteúdo
+- Criação de interseção (10KB) entre os fragmentos de divisão de arquivos grandes para encontrar expressões e queries de proximidade nas bordas
+
+
+14/03/2012: Report Indexer 2.3 (testado com jre 1.6.0_25)
+Melhorias:
+- modificações para uso com AsAP4 E via linha de comando
+- indexação para índices múltiplos, melhorando concorrência com arquivos grandes
+- divisão do texto extraído de arquivos muito grandes para menor consumo de memória pela biblioteca de indexação
+- opções de indexação configuráveis no arquivo IndexerConfig.txt
+- logs salvos na pasta "Report Indexer/log" por padrão
+- rolagem automática para hit considerado mais importante no visualizador
+- atualização para jqgrid 4.3.1 (tabela de busca)
+Correções:
+- timeouts em arquivos pequenos durante indexação de arquivos muito grandes
+- rawstringparser aglomerava strings separadas por um único 0x00
+
+
+02/03/2012: Report Indexer 2.2.1 (testado com jre 1.6.0_25)
+Correções:
+- Bug grave introduzido na versão anterior em que os primeiros 1KB de texto dos arquivos não era indexado
+
+02/03/2012: Report Indexer 2.2 (testado com jre 1.6.0_25)
+Melhorias:
+- Patch nas classes PipedReader e PipedWriter (api do java) para menor overhead e maior paralelismo durante indexação e highlight
+- RawStringParser 2x mais rápido
+- Highlight 2x mais rápido em virtude das melhorias anteriores (relatórios em disco rígido)
+- número padrão de threads de indexação configurado para o número de processadores disponíveis para a JVM
+Correções:
+- RawStringParser era executado em vídeos não suportados pelo TIKA (todos exceto FLV), ocasionando índices grandes em casos com vídeos
+- problemas de execução do indexador no Linux (criação do log, codificação e maiúsculas/minúsculas nos nomes dos arquivos)
+
+
+24/02/2012: Report Indexer 2.1.1 (testado com jre 1.6.0_25)
+Correções:
+- NullpoiterException no parsing de relatórios do FTK 1.8x sem o caminho dos itens e contendo anexos ou emails com anexos;
+- Tamanho lógico de anexos e de emails de origem retornava zero (relatórios do FTK 1.8x);
+- Novos eventos na tabela javascript iniciados antes do tratamento do evento anterior ocasionavam tabelas vazias;
+- Dependendo do diretório do usuário, os arquivos adicionais não eram encontrados
+
+
+16/02/2012: Report Indexer 2.1.0-beta (testado com jre 1.6.0_25)
+Melhorias:
+- Redução significativa (~40%) do espaço ocupado na mídia. O texto dos arquivos não é mais armazenado, mas extraído sob demanda durante o highlight.
+- Indexação de pastas adicionais/avulsas
+- Menor consumo de memória durante indexação com abordagem produtor-consumidor (extrator-indexador) de texto
+- Melhor interrupção de threads que ocasionem timeout durante a extração de texto;
+- Redução do tempo de indexação;
+- Atualização para Lucene 3.5
+- Melhor atualização da barra de progresso durante indexação e highlight
+- passagem opcional da lista de palavras-chave como parâmetro
+- inserção de link para busca
+Correções:
+- Ordenação das colunas de data
+- Atributos e elementos de XML's extraídos via RawStringParser
+- Falso alerta de ZipBombException gerado pelo MSAccessParser
+- Bug introduzido na versão 2.0.0 em que o RawStringParser desconsiderava caracteres acentuados
+- Possível consumo de memória desnecessário no RawStringParser
+
+
+08/02/2012: Report Indexer 2.0.0-beta (testado com jre 1.6.0_25)
+Melhorias
+- removida dependência do Encase com extração de texto utilizando biblioteca Apache Tika
+- implementados extratores de texto específicos para bases Access e xBase (não suportadas pelo Tika)
+- melhora de performance do strings customizado para arquivos não suportados pelo Tika
+- indexação e compactação de texto executadas em threads paralelas, assim como já era a extração de texto
+- execução via linha de comando
+- arquivos de log separados para cada execução
+Correções:
+- extrator de strings customizado não considerava "ü" como caracter válido
+
+
+22/12/11: Report Converter 1.11 (Testado com EnCase 6.18.1 x64)
+Melhorias:
+- remoção de palavras-chave sem ocorrências da lista pré-carregada de palavras-chave;
+- ocultamento da coluna de "posição" dos hits para aumentar o espaço de exibição dos hits, que pode ser escasso em monitores com baixa resolução;
+Correções:
+- mensagem de "não foi possível visualizar o texto" era exibida desnecessariamente quando o hit ocorria apenas nas propriedades do arquivo
+
+
+05/12/11: Report Converter 1.10 (Testado com EnCase 6.18.1 x64)
+Melhorias:
+- habilitado highlight em todo o conteúdo dos arquivos (não mais nos primeiros 10MB de texto)
+- barra de progresso, quando possível, agora exibe o andamento do processamento (pesquisa ou highlighting)
+- opção para interromper o processo de highlighting (pode demorar com arquivos muito grandes)
+- aumento do bloco de divisão de texto para highlight para 1MB (menor chance de não destacar hits nas bordas ~ 0,001% para termos com 10 caracteres, a ser corrigido)
+- propriedades dos arquivos não são mais carregadas em memória (menor consumo de heap)
+Correções:
+- correção de bug na biblioteca de highlight que provocava grande consumo de memória, o que impedia highlight de arquivos grandes e ocasionava estouro de heap
+- caminhos de relatórios contendo acentuação ou outros caracteres não ascii impediam o funcionamento do applet
+- expressões de busca contendo acentuação E caracteres coringas (? * ~) não retornavam nada
+
+
+22/11/11: Report Converter 1.9.2 (Testado com EnCase 6.18.1 x64)
+Alterações:
+- stopwords do Inglês agora são indexadas (aumenta o tamanho do índice)
+Correções:
+- barra de "carregando" não fechava ao clicar sobre imagens ou vídeos cujos metadados não foram indexados
+
+
+27/10/11: Report Converter 1.9.1 (Testado com EnCase 6.18.1 x64)
+Correções:
+- stacktrace detalhado de erros do java havia sido removido do log na versão 1.9
+
+
+24/10/11: Report Converter 1.9 (Testado com EnCase 6.18.1 x64)
+Melhorias:
+- exibição de barra de progresso durante indexação
+- espelhamento das mensagens do Console do Encase para o log do indexador
+- padronização das mensagens do log (INFO, AVISO, ALERTA e ERRO)
+- logging de informações adicionais (nº de textos extraídos, itens indexados e versões alternativas dos itens indexadas)
+- verificação da quantidade de textos extraídos antes de iniciar indexação
+Correções:
+- em alguns casos a extração de texto não terminava, ocorrendo timeouts indefinidamente
+- em alguns casos, ao ocorrer crash do Encase durante a extração de texto, a indexação era realizada sem o texto de todos os arquivos
+- itens apagados do bookmark X no FTK3 eram retornados na busca por categoria:X
+
+
+04/10/11: Report Converter 1.8 (Testado com EnCase 6.18.1 x64)
+Melhorias:
+- menor consumo de memória com carregamento apenas das propriedades dos arquivos na RAM (não é mais carregado todo o índice), quando o relatório é acessado a partir do DVD. Cao seja acessado a partir do HD, nada é carregado para economizar memória.
+- habilitado highlight nos primeiros 10M de texto de arquivos grandes (> 10 MB)
+- melhoria do loop de conversão da saída do outsidein de unicode para windows-1252
+- aumento dos buffers de leitura e gravação em disco em diversas funções
+- time out variável de acordo com o tamanho do arquivo: 60s + 2s/MB
+- exibição de "carregando" durante carregamento dos hits ou preview
+- agilizada visualização no preview após exibição dos hits do mesmo arquivo e vice-versa
+- atualização da ajuda
+Correções:
+- nullpointer exception ao tentar obter categoria de arquivo exportado sem estar em algum bookmark (como anexo de email)
+- divisão dos arquivos a cada 100KB de texto para fazer highlight, consumindo muito menos heap pelo applet e evitando estouro de memória (~0,02% de chance de não exibir hit, a ser melhorado)
+
+
+13/09/11: Report Converter 1.7.1 (Testado com EnCase 6.18.1 x64)
+Novo:
+- indexação do caminho dos arquivos (não incluído na busca padrão), sendo possível pesquisar no atributo "caminho:"
+Correções:
+- strings.jar descartava última string caso não fosse seguida por algum caracter não imprimível;
+- remoção da busca da tabela javascript (lupa no rodapé)
+- substituído parâmetro java -Xmx300m por -Xms500m
+- aumentado TIME_OUT para 600000ms
+
+
+01/09/11: Report Converter 1.7 (Testado com EnCase 6.18.1 x64)
+Novo:
+- substituição do strings por um customizado que detecta utf8, utf16 e iso-8859-15, e não apenas ascii e correspondentes utf16
+- indexação da categoria do arquivo em relatórios do FTK 3, permitindo restringir buscas à determinada categoria
+
+
+30/08/11: Report Converter 1.6 (Testado com EnCase 6.18.1 x64)
+Novo:
+- extração de texo agora é executada em várias threads paralelas, agilizando bastante o processamento quando disponível mais de 1 processador ou em casos com mtos time outs;
+- extração de exif/metadados de imagens e vídeos agora é opcional, agilizando o processamento quando não utilizada;
+- aumentada largura da caixa de pesquisa e da coluna "nome";
+- adicionado aviso de alerta para nome de caso incorreto (FTK3.3)
+
+Bugs corrigidos:
+- aumentado limite de caracteres da caixa de palavras-chave;
+- remoção da coluna "Email de Origem" em relatóros do FTK 3.3, enquanto esse recurso não é implementado
+- alerta para arquivos exportados sem utilizar o ID como nomenclatura (FTK 3.3)
+
+
+19/08/11: Report Converter 1.5.2 (Testado com EnCase 6.18.1 x64)
+Bug corrigido:
+- problema com relatórios do FTK 1.8x divididos em mais de uma mídia com arquivos adicionais, como log do talon
+
+
+18/08/11: Report Converter 1.5.1 (Testado com EnCase 6.18.1 x64)
+Bugs corrigidos:
+- compatibilização da ferramenta de extração de texto de mdb's para relatórios do FTK3.3
+- nullPoiterException ao converter fatlastaccesseddate nulo para date (FTK3.3)
+
+
+15/08/11: Report Converter 1.5b (Testado com EnCase 6.18.1 x64)
+Novas funções:
+- compatibilização com o FTK 3.3 (contribuição do PCF Ayrton), ainda sem rastreamento de emails de origem e sem função de restringir buscas a determinado bookmark
+
+Bugs corrigidos e melhorias:
+- uso de menos memória para indexar e compactar os arquivos, corrigindo erros de outOfMemory com arquivos grandes
+- verificação se o tamanho do texto compactado é menor que 10M antes de descompactá-lo, evitando possível outOfMemory durante descompactação
+- erros de outOfMemory impediam a abertura do log ao término do indexador
+- ao executar uma nova busca, o visualizador permanecia exibindo o último arquivo visualizado
+- atualização da ajuda
+
+19/07/11: Report Converter 1.4.1 (Testado com EnCase 6.18.1 x64)
+Bugs corrigidos:
+- NullPointerException quando o caminho do arquivo não era exportado para o report
+- StringIndexOutOfBoundsException durante remoção dos arquivos de texto extraído não compactados
+- Verificação da disponibilidade de memória para carregar o índice, com exibição de aviso caso seja insuficiente
+
+
+05/07/11: Report Converter 1.4 beta (Testado com EnCase 6.18.1 x64)
+Novas funções:
+- indexação dos emails de origem (pai) dos arquivos exportados
+- removido teste para não indexar arquivos duplicados
+- alterado parâmetro do exiftool para extrair metadados básicos
+Bugs corrigidos:
+- aumentada memória máxima da VM para 1G para executar o indexador
+- aumentado TIMEOUT de extração de texto para 180s
+- alguns arquivos não eram encontrados pelo indexador devido a espaços no final do link no relatório
+- corrigido TIMEOUT para extração de texto de mdb's
+- corrigida ferramenta de extração de texto de mdb's para tratar colunas do tipo binário longo
+
+
+01/07/11: Report Converter 1.3.1 beta (Testado com EnCase 6.18.0.59 x64)
+Bugs corrigidos:
+- tratamento de reports com mais de uma mídia;
+- adicionado teste para ignorar anexos de email não exportados
+
+
+28/06/11: Report Converter 1.3 beta (Testado com EnCase 6.18.0.59 x64)
+Novas funções:
+- atualização da biblioteca de indexação lucene para a versão 3.2.0
+- extração de texto executada em thread separada, com TIMEOUT de 60s para cada arquivo, contornando problema de extração de texto do OutsideIn sem término para certos arquivos
+- adicionada extração de texto específica para arquivos de imagem e vídeo utilizando exiftool (contribuição do PCF Gabriel)
+- extração de texto de arquivos xml utilizando strings e não mais o OutsideIn (contribuição do PCF Gabriel)
+- inclusão das ferramentas strings e exiftool junto com o script
+- salvamento do caminho do relatório e palavras-chave utilizados na última execução
+- alteração de alguns exemplos de busca na ajuda, sendo incluído exemplo de busca restrita a determinada propriedade
+
+
+16/06/11: Report Converter 1.2.3 beta (Testado com EnCase 6.18.0.59 x64)
+Bugs corrigidos:
+- adicionados alguns limites, por exemplo, para evitar travamentos do browser durante visualização de arquivos grandes:
+	MAX_RESULTS = 10000,			//maximo de resultados da busca
+     	MAX_FRAGS = 1000,			//maximo de fragmentos a serem exibidos nos hits ou preview
+     	MAX_SIZE_TO_BREAK_LINES = 10000,	//tamanho maximo para inserir <br> - atrapalha renderização
+     	FRAG_SIZE = 100,			//tamanho do fragmento em bytes
+     	MAX_TEXT_SIZE = 10000000,		//tamanho maximo do texto para fazer highlight
+	MAX_INDEX_SIZE = 200000000;		//tamanho maximo do indice para carregar na memoria
+
+
+15/06/11: Report Converter 1.2.2 beta (Testado com EnCase 6.18.0.59 x64)
+Bugs corrigidos:
+- estavam sendo utilizados certificados diferentes para assinar os arquivos jar, ocasionando mais de uma pergunta de execução para o usuário
+
+
+07/06/11: Report Converter 1.2.1 beta (Testado com EnCase 6.18.0.59 x64)
+Bugs corrigidos:
+- não estava sendo obtido corretamente o nome do arquivo durante a verificação para não indexar arquivos com nome+hash(texto_extraído) duplicados
+
+
+02/06/11: Report Converter 1.2 beta (Testado com EnCase 6.18.0.59 x64)
+Novas funções:
+- substituição do tokenizer por um que considera como palavras apenas sequências alfanuméricas, como o FTK
+- extração de texto via strings.exe (ascii e unicode), caso o texto extraído pelo OutsideIn tenha tamanho zero (necessita que strings.exe esteja no path do sistema)
+
+
+01/06/11: Report Converter 1.1.1 beta (Testado com EnCase 6.18.0.59 x64)
+Bugs corrigidos:
+- fundo cinza do applet substituído por branco
+
+
+31/05/11: Report Converter 1.1 beta (Testado com EnCase 6.18.0.59 x64)
+Novas funções:
+- carregamento de índices de até 200M na RAM, agilizando bastante as buscas a partir da mídia óptica
+- indexação da categoria do arquivo, permitindo restringir buscas à determinada categoria e efetuar testes
+Bugs corrigidos:
+- buscas eram executadas mais de uma vez devido a vários eventos lançados pelo combobox
+- quando o parser demorava para terminar, o EnCase abria o log primeiro, impedindo o indexador de escrever no log e ficando parado até o log ser liberado
+- direcionamento da saída do parser para o log do indexador e abertura do log ao final da indexação
+- aumento do limite de memória da VM para 300MB
+- anexos ficavam com o tipo "Anexo de Email" caso ele aparecesse como anexo antes do seu bookmark específico, se houver;
+- emails pai de anexos não eram exibidos, caso o anexo seja listado como bookmark antes de ser listado como anexo do email
+
+
+27/05/11: Report Converter 1.0 beta (Testado com EnCase 6.18.0.59 x64)
+- versão inicial (parser dos relatórios do FTK 1.8x cedido pelo PCF Wladimir)

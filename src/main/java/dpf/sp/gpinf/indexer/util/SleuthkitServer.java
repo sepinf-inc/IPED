@@ -12,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -58,7 +59,7 @@ public class SleuthkitServer {
       //System.setOut(System.err);
 
       int size = 10 * 1024 * 1024;
-      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw");
+      RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
       raf.setLength(size);
       FileChannel fc = raf.getChannel();
       out = fc.map(MapMode.READ_WRITE, 0, size);
@@ -67,16 +68,17 @@ public class SleuthkitServer {
       ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
       serverSocket.setPerformancePreferences(0, 1, 2);
       serverSocket.setReceiveBufferSize(1);
+      serverSocket.setSoTimeout(10000);
       Socket clientSocket = serverSocket.accept();
       clientSocket.setTcpNoDelay(true);
       clientSocket.setSendBufferSize(1);
       InputStream in = clientSocket.getInputStream();
       os = clientSocket.getOutputStream();
 
-      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador");
+      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
       sleuthCase = SleuthkitCase.openCase(dbPath);
 
-      java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE);
+      java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$
 
       commitByte(out, 0, FLAGS.DONE);
       notify(os);
@@ -115,7 +117,7 @@ public class SleuthkitServer {
 
         } catch (Throwable e) {
           //e.printStackTrace(System.err);
-          byte[] msgBytes = e.getMessage().getBytes("UTF-8");
+          byte[] msgBytes = e.getMessage().getBytes("UTF-8"); //$NON-NLS-1$
           out.putInt(13, msgBytes.length);
           out.position(17);
           out.put(msgBytes);
@@ -134,6 +136,8 @@ public class SleuthkitServer {
       }
     }
   }
+  
+  private static HashSet<Long> warmedDataSources = new HashSet<>();
 
   private static SleuthkitInputStream getSis(MappedByteBuffer out) throws Exception {
     long streamId = out.getLong(5);
@@ -146,6 +150,14 @@ public class SleuthkitServer {
       }
       sis = new SleuthkitInputStream(content);
       sisMap.put(streamId, sis);
+      
+      //first read can take a long time, so do it here to prevent timeouts on client side
+      Long sourceId = content.getDataSource().getId();
+      if(!warmedDataSources.contains(sourceId)) {
+        sis.read();
+        sis.seek(0);
+        warmedDataSources.add(sourceId);
+      }
     }
     return sis;
   }
@@ -154,7 +166,7 @@ public class SleuthkitServer {
     in.read();
     byte cmd;
     while (!FLAGS.isClientCmd(cmd = getByte(out, 0))) {
-      System.err.println("Waiting Client Memory Write...");
+      System.err.println("Waiting Client Memory Write..."); //$NON-NLS-1$
       Thread.sleep(1);
     }
     return cmd;

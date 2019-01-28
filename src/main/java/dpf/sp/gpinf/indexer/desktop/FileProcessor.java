@@ -22,6 +22,13 @@ import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import gpinf.dev.data.EvidenceFile;
 
+import java.awt.Dialog.ModalityType;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashSet;
+
+import javax.swing.SwingUtilities;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
@@ -39,6 +46,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   private static int STATUS_LENGTH = 200;
   private volatile static FileProcessor parsingTask;
   private static Object lock = new Object(), lock2 = new Object();
+  private static HashSet<String> tskDataSourceInited = new HashSet<String>();
+  
   private Document doc;
   private int docId;
   private boolean listSubItens;
@@ -61,7 +70,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         String status = doc.get(IndexItem.PATH);
         if (status.length() > STATUS_LENGTH) {
-          status = "..." + status.substring(status.length() - STATUS_LENGTH);
+          status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
         }
         App.get().status.setText(status);
 
@@ -71,11 +80,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     } else {
       doc = new Document();
       doc.add(new IntField(IndexItem.ID, 0, Field.Store.YES));
-      doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
       String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
-      doc.add(new Field(IndexItem.EXPORT, moduleDir + "/htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
       doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-      doc.add(new Field(IndexItem.PATH, moduleDir + "/htm/Ajuda.htm", Field.Store.YES, Field.Index.NO));
+      doc.add(new Field(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
     }
   }
 
@@ -101,7 +110,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
   private void process() {
 
-    LOGGER.info(doc.get(IndexItem.PATH));
+    LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
 
     if (listSubItens) {
       // listRelatedItens();
@@ -116,13 +125,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
 	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 	
-	int textSize = iCase.getTextSize(item.getId());
+	long textSize = iCase.getTextSize(item.getId());
 	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
 	
-	OCROutputFolder ocrOut = new OCROutputFolder(iCase.getModuleDir());
-	item.setExtraAttribute(OCROutputFolder.class.getName(), ocrOut);
-	EvidenceFile.getAllExtraAttributes().remove(OCROutputFolder.class.getName());
-
+	OCROutputFolder.setStaticPath(iCase.getModuleDir());
+	
     disposeItem(lastItem);
     lastItem = item;
     String contentType = null;
@@ -136,7 +143,43 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
     }
     
+    waitSleuthkitInit(item);
+    
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+  }
+  
+  private void waitSleuthkitInit(final EvidenceFile item){
+      if(item.getSleuthFile() == null)
+          return;
+      if(!tskDataSourceInited.contains(item.getDataSource().getUUID())){
+          tskDataSourceInited.add(item.getDataSource().getUUID());
+          setWaitVisible(true);
+          try (InputStream is = item.getStream()){
+              is.read();    
+          } catch (IOException e) {
+            e.printStackTrace();
+          } 
+          setWaitVisible(false);
+      }
+  }
+  
+  private void setWaitVisible(final boolean visible){
+      try {
+        SwingUtilities.invokeLater(new Runnable(){
+              @Override
+              public void run(){
+                  ModalityType previous = App.get().dialogBar.getModalityType();
+                  String prevMsg = App.get().progressBar.getString();
+                  App.get().progressBar.setString(Messages.getString("FileProcessor.WaitingTSK")); //$NON-NLS-1$
+                  App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
+                  App.get().dialogBar.setVisible(visible);
+                  App.get().dialogBar.setModalityType(previous);
+                  App.get().progressBar.setString(prevMsg);
+              }
+          });
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
   }
 
   private void disposeItem(final EvidenceFile itemToDispose) {

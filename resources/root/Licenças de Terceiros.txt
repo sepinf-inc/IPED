@@ -1,0 +1,153 @@
+The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses, detailed below:
+
+Apache Lucene 4.9.0
+- Site: https://lucene.apache.org/core/
+- License: Apache License, Version 2.0
+
+Apache Tika 1.15
+- Site: https://tika.apache.org/
+- License: Apache License, Version 2.0
+
+Apache PDFBox
+- Site: https://pdfbox.apache.org/
+- License: Apache License, Version 2.0
+
+IcePDF 6.1.3
+- Site: http://www.icesoft.org/java/projects/ICEpdf
+- License: Apache License, Version 2.0
+
+Optimaize Language Detector:
+- Site: https://github.com/optimaize/language-detector
+- License: Apache License, Version 2.0
+
+Xerial SQLite JDBC
+- Site: https://github.com/xerial/sqlite-jdbc
+- License: Apache License, Version 2.0
+
+MapDB
+- Site: http://www.mapdb.org/
+- License: Apache License, Version 2.0
+
+Java Libpst
+- Site: https://github.com/rjohnsondev/java-libpst
+- License: Apache License, Version 2.0
+
+ImageMagick
+- Site: https://www.imagemagick.org/script/index.php
+- License: Apache License, Version 2.0
+
+Tesseract OCR
+- Site: https://github.com/tesseract-ocr/tesseract
+- License: Apache License, Version 2.0
+
+Apache Log4j2
+- Site: https://logging.apache.org/log4j/2.x/
+- License: Apache License, Version 2.0
+
+----------------------------------------------------
+
+Simple Logging Facade for Java
+- Site: https://www.slf4j.org/
+- License: MIT
+
+Danny Yoo Aho-Corasick
+- Site: https://github.com/raymanrt/aho-corasick
+- License: BSD 3 clause
+
+Dk Brics Automaton
+- Site: http://www.brics.dk/automaton/
+- License: BSD 3 clause
+
+JAI ImageIO Core
+- Site: https://github.com/jai-imageio/jai-imageio-core
+- License: BSD 3 clause
+
+Postgresql JDBC Driver
+- Site: https://jdbc.postgresql.org/
+- License BSD 2 clause
+
+Microsoft JDBC Driver for SQL Server
+- Site: https://github.com/Microsoft/mssql-jdbc
+- License: MIT
+
+ICE JNI Registry
+- Site: http://www.trustice.com/java/jnireg/
+- License: Public Domain
+
+ZSTD-jni
+- Site: https://github.com/luben/zstd-jni
+- License: BSD 2 clause
+
+--------------------------------------------
+
+Eclipse SWT
+- Site: https://www.eclipse.org/swt/
+- License: Eclipse Public License 1.0
+
+The Sleuthkit
+- Site: https://www.sleuthkit.org/
+- License: IBM Public License, Common Public License
+
+--------------------------------------------
+
+mchange commons java
+- Site: https://github.com/swaldman/mchange-commons-java
+- License: GNU LGPL 2.1
+
+mchange c3p0
+- Site: https://github.com/swaldman/c3p0
+- License: GNU LGPL 2.1
+
+Libewf
+- Site: https://github.com/libyal/libewf
+- License: GNU LGPL v.3
+
+Libvmdk
+- Site: https://github.com/libyal/libvmdk
+- License: GNU LGPL v.3
+
+Libvhdi
+- Site: https://github.com/libyal/libvhdi
+- License: GNU LGPL v.3
+
+Libesedb
+- Site: https://github.com/libyal/libesedb
+- License: GNU LGPL v.3
+
+Libpff
+- Site: https://github.com/libyal/libpff
+- License: GNU LGPL v.3
+
+Libmsiecf
+- Site: https://github.com/libyal/Libmsiecf
+- License: GNU LGPL v.3
+
+LibreOffice 4.0.4 for windows
+- Site: https://pt-br.libreoffice.org
+- License: GNU LGPL 3
+
+Noa-Libre 0.3
+- Site: https://code.google.com/p/noa-libre/
+- License: GNU LGPL 2.1
+
+SevenZipJBinding
+- Site: http://sevenzipjbind.sourceforge.net/
+- License: GNU LGPL 2.1
+
+JavaDBF
+- Site: https://github.com/albfernandez/javadbf
+- License: GNU LGPL 3
+
+DockingFrames
+- Site : http://www.docking-frames.org
+- License: GNU LGPL 2.1
+
+--------------------------------------------
+
+Zlib
+- Site: https://zlib.net/
+- License: licenses/ZLIB.txt
+
+JUnRAR
+- Site: https://github.com/edmund-wagner/junrar
+- License: licenses/JUNRAR.txt

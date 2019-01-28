@@ -59,9 +59,9 @@ public class MultiMarcadores implements Serializable {
 	public void setSelected(boolean value, ItemId item, IPEDSource ipedCase) {
 		map.get(item.getSourceId()).setSelected(value, item.getId(), ipedCase);
 	}
-
-	public String getLabels(ItemId item) {
-		return map.get(item.getSourceId()).getLabels(item.getId());
+	
+	public List<String> getLabelList(ItemId item) {
+	    return map.get(item.getSourceId()).getLabelList(item.getId());
 	}
 
 	public final boolean hasLabel(ItemId item){
@@ -96,8 +96,8 @@ public class MultiMarcadores implements Serializable {
 		return m.hasLabel(item.getId(), labelId);
 	}
 
-	public void addLabel(ArrayList<ItemId> ids, String labelName) {
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
+	public void addLabel(List<ItemId> ids, String labelName) {
+		HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
 			int labelId = m.getLabelId(labelName);
@@ -107,10 +107,10 @@ public class MultiMarcadores implements Serializable {
 		}
 	}
 	
-	private HashMap<Integer, ArrayList<Integer>> getIdsPerSource(ArrayList<ItemId> ids){
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = new HashMap<Integer, ArrayList<Integer>>(); 
+	private HashMap<Integer, List<Integer>> getIdsPerSource(List<ItemId> ids){
+		HashMap<Integer, List<Integer>> itemsPerSource = new HashMap<>(); 
 		for(ItemId item : ids){
-			ArrayList<Integer> items = itemsPerSource.get(item.getSourceId());
+			List<Integer> items = itemsPerSource.get(item.getSourceId());
 			if(items == null){
 				items = new ArrayList<Integer>();
 				itemsPerSource.put(item.getSourceId(), items);
@@ -120,8 +120,8 @@ public class MultiMarcadores implements Serializable {
 		return itemsPerSource;
 	}
 	
-	public void removeLabel(ArrayList<ItemId> ids, String labelName) {
-		HashMap<Integer, ArrayList<Integer>> itemsPerSource = getIdsPerSource(ids);
+	public void removeLabel(List<ItemId> ids, String labelName) {
+		HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
 		for(Integer sourceId : itemsPerSource.keySet()){
 			Marcadores m = map.get(sourceId);
 			int labelId = m.getLabelId(labelName);
@@ -147,6 +147,36 @@ public class MultiMarcadores implements Serializable {
 		for(Marcadores m : map.values())
 			m.changeLabel(m.getLabelId(oldLabel), newLabel);
 	}
+	
+	public void setLabelComment(String labelName, String comment) {
+	    for(Marcadores m : map.values())
+	        m.setLabelComment(m.getLabelId(labelName), comment);
+    }
+    
+    public String getLabelComment(String labelName) {
+        for(Marcadores m : map.values()) {
+            String comm = m.getLabelComment(m.getLabelId(labelName));
+            if(comm != null)
+                return comm;
+        }
+        return null;
+    }
+    
+    public void setInReport(String labelName, boolean inReport) {
+        for(Marcadores m : map.values()) {
+            int labelId = m.getLabelId(labelName);
+            m.setInReport(labelId, inReport);
+        }
+    }
+    
+    public boolean isInReport(String labelName) {
+        for(Marcadores m : map.values()) {
+            int labelId = m.getLabelId(labelName);
+            if(m.isInReport(labelId))
+                return true;
+        }
+        return false;
+    }
 	
 	public TreeSet<String> getLabelMap(){
 		TreeSet<String> labels = new TreeSet<String>();
@@ -249,9 +279,19 @@ public class MultiMarcadores implements Serializable {
 	  }
 	  
 	  public void loadState(File file) throws ClassNotFoundException, IOException{
-		  MultiMarcadores state = (MultiMarcadores) Util.readObject(file.getAbsolutePath());
-		  this.map = state.map;
-	  }
+	      Object obj = Util.readObject(file.getAbsolutePath());
+	      if(obj instanceof MultiMarcadores) {
+	          MultiMarcadores state = (MultiMarcadores) obj;
+	          map = state.map;
+	      }else {
+	          Marcadores m = (Marcadores) obj;
+	          if(map.size() > 1)
+	              throw new IOException("Invalid state file!"); //$NON-NLS-1$
+	          map.put(map.keySet().iterator().next(), m);
+	      }
+		  for(Marcadores marcador : this.map.values())
+              marcador.updateCookie();
+      }
 	  
 	  public void saveState(){
 		  for(Marcadores m : map.values())

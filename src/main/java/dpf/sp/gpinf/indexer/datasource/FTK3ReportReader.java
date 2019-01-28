@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -51,36 +52,36 @@ public class FTK3ReportReader extends DataSourceReader {
 
   @Override
   public boolean isSupported(File source) {
-    return (new File(source, "files")).exists() && bookmarkExists(source);
+    return (new File(source, "files")).exists() && bookmarkExists(source); //$NON-NLS-1$
   }
 
   public int read(File report) throws Exception {
 
 	// Configuração para não expandir containers
-	ParsingTask.expandContainers = false;
-	CarveTask.enableCarving = false;
+	ParsingTask.setExpandContainers(false);
+	CarveTask.setEnabled(false);
 	  
     caseData.setContainsReport(true);
     wasExecuted = true;
 
     String relativePath = Util.getRelativePath(output, report);
     if (!relativePath.isEmpty()) {
-      relativePath += "/";
+      relativePath += "/"; //$NON-NLS-1$
     }
 
     int alternativeFiles = 0;
     if (listOnly) {
-      lerListaDeArquivos(new File(report, "files"));
+      lerListaDeArquivos(new File(report, "files")); //$NON-NLS-1$
     }
 
     if (!listOnly) {
       String caseName = getFTK3CaseName(report);
 
-      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Obtendo  propriedades do banco...");
-      LOGGER.info("Obtendo propriedades do banco...");
+      IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("FTK3ReportReader.LoadDatabaseProps")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      LOGGER.info("Loading properties from database..."); //$NON-NLS-1$
 
       FTKDatabase ds = FTKDatabase.get(caseName, report);
-      ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList);
+      ds.getCaseData(caseData, new File(report, "files"), relativePath + "files", ADList); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     return alternativeFiles;
@@ -93,7 +94,7 @@ public class FTK3ReportReader extends DataSourceReader {
     if (names != null) {
       for (int i = 0; i < names.length; i++) {
         if (Thread.interrupted()) {
-          throw new InterruptedException(Thread.currentThread().getName() + "interrompida.");
+          throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
         }
 
         File subFile = new File(file, names[i]);
@@ -128,7 +129,7 @@ public class FTK3ReportReader extends DataSourceReader {
   public static boolean bookmarkExists(File report) {
     boolean hasBookmark = false;
     for (String fileName : report.list()) {
-      if (fileName.contains("Bookmark_bk_ID")) {
+      if (fileName.contains("Bookmark_bk_ID")) { //$NON-NLS-1$
         hasBookmark = true;
         break;
       }
@@ -137,11 +138,11 @@ public class FTK3ReportReader extends DataSourceReader {
   }
 
   public static String getFTKVersion(File report) throws Exception {
-    String version = "";
-    if ((new File(report, "CaseInfo.html")).exists()) {
-      File file = new File(report, "CaseInfo.html");
-      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-      String contents = "";
+    String version = ""; //$NON-NLS-1$
+    if ((new File(report, "CaseInfo.html")).exists()) { //$NON-NLS-1$
+      File file = new File(report, "CaseInfo.html"); //$NON-NLS-1$
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+      String contents = ""; //$NON-NLS-1$
       char[] buf = new char[(int) file.length()];
       int count;
       while ((count = reader.read(buf)) != -1) {
@@ -149,27 +150,27 @@ public class FTK3ReportReader extends DataSourceReader {
       }
       reader.close();
 
-      String str = "Versão</td><td>Versão do AccessData Forensic Toolkit: ";
+      String str = "Versão</td><td>Versão do AccessData Forensic Toolkit: "; //$NON-NLS-1$
       if (contents.contains(str)) {
         int start = contents.indexOf(str) + str.length();
-        version = contents.substring(start, contents.indexOf("</td>", start));
+        version = contents.substring(start, contents.indexOf("</td>", start)); //$NON-NLS-1$
       } else {
-        throw new Exception("'Versão' não encontrada em CaseInfo.html. O relatório está em português?");
+        throw new Exception("'Versão' not found on CaseInfo.html. Is the report on portuguese?"); //$NON-NLS-1$
       }
     } else {
-      throw new FileNotFoundException("'CaseInfo.html' não encontrado. Defina manualmente 'versaoFTK' nas configurações.");
+      throw new FileNotFoundException("'CaseInfo.html' not found. Configure 'versaoFTK' on FTKDatabaseConfig.txt"); //$NON-NLS-1$
     }
 
-    LOGGER.info("Detectado relatório gerado pelo FTK {}", version);
+    LOGGER.info("Detected report of FTK version {}", version); //$NON-NLS-1$
     return version;
   }
 
   public static HashSet<String> getBookmarks(File report) throws Exception {
     HashSet<String> bookmarks = new HashSet<String>();
-    File file = new File(report, "Bookmarks.html");
+    File file = new File(report, "Bookmarks.html"); //$NON-NLS-1$
     if (file.exists()) {
-      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-      String contents = "";
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+      String contents = ""; //$NON-NLS-1$
       char[] buf = new char[(int) file.length()];
       int count;
       while ((count = reader.read(buf)) != -1) {
@@ -177,34 +178,34 @@ public class FTK3ReportReader extends DataSourceReader {
       }
       reader.close();
 
-      String str1 = ".html\"><span";
-      String str2 = "</span>";
+      String str1 = ".html\"><span"; //$NON-NLS-1$
+      String str2 = "</span>"; //$NON-NLS-1$
       int off = 0, idx1 = 0, idx2 = 0;
       while ((off = contents.indexOf(str1, idx2)) != -1) {
-        idx1 = contents.indexOf(">", off + str1.length()) + 1;
+        idx1 = contents.indexOf(">", off + str1.length()) + 1; //$NON-NLS-1$
         idx2 = contents.indexOf(str2, idx1);
         String bookmark = contents.substring(idx1, idx2);
         bookmarks.add(bookmark);
       }
 
       if (bookmarks.size() == 0) {
-        throw new Exception("Bookmarks não encontrados em " + file.getAbsolutePath());
+        throw new Exception("Bookmarks not found in " + file.getAbsolutePath()); //$NON-NLS-1$
       } else {
-        LOGGER.info("Detectados {} bookmarks no relatório.", bookmarks.size());
+        LOGGER.info("Detected {} bookmarks in report.", bookmarks.size()); //$NON-NLS-1$
       }
 
     } else {
-      throw new FileNotFoundException(file.getName() + " não encontrado!");
+      throw new FileNotFoundException(file.getName() + " not found!"); //$NON-NLS-1$
     }
 
     return bookmarks;
   }
 
   public String getFTK3CaseName(File report) throws Exception {
-    File file = new File(report, "CaseInfo.html");
+    File file = new File(report, "CaseInfo.html"); //$NON-NLS-1$
     if (file.exists() && bookmarkExists(report)) {
-      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
-      String contents = "";
+      Reader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+      String contents = ""; //$NON-NLS-1$
       char[] buf = new char[(int) file.length()];
       int count;
       while ((count = reader.read(buf)) != -1) {
@@ -212,17 +213,17 @@ public class FTK3ReportReader extends DataSourceReader {
       }
 
       reader.close();
-      String str = "Nome do caso</td><td>";
+      String str = "Nome do caso</td><td>"; //$NON-NLS-1$
       if (contents.contains(str)) {
         int start = contents.indexOf(str) + str.length();
-        String caseName = contents.substring(start, contents.indexOf("</td>", start));
-        LOGGER.info("Detectado caso {}", caseName);
+        String caseName = contents.substring(start, contents.indexOf("</td>", start)); //$NON-NLS-1$
+        LOGGER.info("Detected FTK case {}", caseName); //$NON-NLS-1$
         return caseName;
       } else {
-        throw new Exception("Nome do caso não encontrado em CaseInfo.html. O relatório está em português?");
+        throw new Exception("Case name not found on CaseInfo.html. Is the report on portuguese?"); //$NON-NLS-1$
       }
     } else {
-      throw new Exception("Arquivo necessário não encontrado: CaseInfo.html");
+      throw new Exception("File not found: CaseInfo.html"); //$NON-NLS-1$
     }
   }
 

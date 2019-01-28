@@ -1,0 +1,181 @@
+# NSRL hash database product names which files will receive "alert" kffstatus.
+# ATTENTION: Product names not listed here will receive "ignore" kffstatus automatically.
+# Changes are automatically applied to new cases, without reimporting NSRL database.
+
+NSRL_Alert
+eMule
+Legion
+Nmap-Hacker Tool
+Grinder
+UltraScan
+Satan
+RPing
+Password Creator
+Genics 25
+PortScan
+Unsecure
+John The Ripper
+NetBus
+OpenLogoHack
+Sub7
+Hacker Tool
+Hacks and Cracks
+Hackers Encyclopedia 2002
+Guide to Hacking Software Security 2002
+Master Hacker Internet Terrorism
+Introduction to AVN
+Introduction to AVN (1)
+Introduction to AVN (2)
+Investigative Software
+Hackers Handbook
+PKZip AV Keymaker
+A_DIAL.ZIP
+Forensic Toolkit
+PAQ KeyLogger
+Key Board Logger Pro
+Key Board Logger Lite
+Absolute Disk Wiper
+Keyboard Logger Hot-Key manager
+Sanderson Collection
+SANS system forensics, investigation and response course
+Honeypots - Tracking Hackers
+Anti-Hacker Toolkit
+EnCase
+Ultimate Toolkit
+PGP for Personal Privacy
+EnCase Forensic Edition
+Keyboard Logger
+StegoArchive
+PC Smart Clean
+Steganographic Collection of NJ
+HashKeeper-Forensic
+Viacript PGP
+AccessData Ultimate Toolkit
+Spector Professional Edition
+Guidance Software-Forensic
+Crime Scene
+Corporate Cd-rom
+Spector CNE-Keyboard Logger
+eBlaster-Keyboard Logger
+AccessData Ultimate ToolKit
+Interactive Resource Center
+Forensic Toolkit (1)
+Anti-Keylogger
+Hack Attacks Denied Second Edition
+Invisible KeyLogger Stealth
+Invisible KeyLogger Stealth (1)
+Invisible KeyLogger Stealth (2)
+Invisible KeyLogger NT
+Invisible KeyLogger 2000
+Invisible KeyLogger
+Guidance Software-Forensic (1)
+High-Technology Crime: Email and Internet Chat
+DIAdem
+CAC Developer Kit (CDK)
+Hacker Tools From the Internet
+Hacker's Handbook
+Hacks AND Cracks
+Hackers Encyclopedia 2002 (1)
+Guide to Hacking Software Security 2002 (1)
+Master Hacker
+PGP for Personal Privacy (1)
+Deluxe System Commander-Disk Organizer,Disk Wiper,Partition
+ProDiscover Basic and ZeroView
+Zero View Full Disk Enryption Test
+Paraben Corporation  Bits and Info
+WinDD Workstation-Forensic
+Game Cracker-Hacker Tool
+Ultimate Toolkit (1)
+SANS Institute System Forensics, Investigation, and Response
+Demo Disk Encase
+SpectorPro Professional Edition
+Spector CNE Corporate Network Edition-Keyboard Logger
+eBlaster-Keyboard Logger (1)
+Ultimate ToolKit
+Data Fellows F-Secure Antivirus
+StegoArchive CD-Steganography,software collection
+Hackers Attacks Denied Second Edition
+Invisible KeyLogger Stealth for Windows 95/98/ME Downlaod Page
+Invisible KeyLogger Stealth 2.1 for Windows 2000/XP Download Page
+Invisible KeyLogger Stealth for Windows NT Download Page
+Invisible KeyLogger NT (1)
+Invisible KeyLogger 2000 (1)
+Microsoft Windows 2000 Professional, Server and Advanced Server
+Interactive Resource Center (1)
+Anti-Keylogger (1)
+Invisible KeyLogger (1)
+PrivacyKeyboard software
+Remove-IT
+CleanSweep-Disk Wiper
+Encase Forensic-Forensic
+Forensic Toolkit (2)
+Data Encryption 2.5
+Solaris 2.3 Data Encryption Supplement
+Drive Scrubber 2-Disk Wiper
+Approve It-Encryption
+PGP Personal Privacy-Encryption
+Guidance Software-Forensic (2)
+Internet Cleanup-Disk Wiper,Internet Security
+Fingerprint Identification Technology
+American Management Association Best Practices in Computer Forensics
+Paragon Disk Wiper 8.5 Personal Edition
+Absolute Disk Wiper (1)
+DriveScrubber 3-Disk Wiper
+Active@KillDisk Professional Suite 5.0
+Active@ Eraser Professional 4.1
+East-Tec Eraser 2008
+Evidence Eliminator
+All In One Keylogger
+Spector-Keyboard Logger
+Entrust Direct R4.0b1
+Family Cyber Alert
+Family Cyber Alert (1)
+Encase Version 5 Demo CD
+pc tuneup 2011
+Encase Forensic 
+Forensic Toolkit 3
+Wipedrive Six
+Drive Erase Pro
+WebWatcher
+Webroot Personal Security
+Forensic Toolkit (3)
+Forensics & Criminal Investigation: Password Recovery Software: IT Security Audit
+Spector Pro
+office CyberAlert
+family CyberAlert
+DISKExtinguisher
+File Extinguisher
+McAfee Total Protection 2012
+McAfee Internet Security 2012
+WinCleaner DataZapper Pro
+VIPRE Internet Security 2012
+P2 eXplorer Free v3.1
+The Volatility Framework
+Registry Decoder
+PC Lock
+MacLockPick II
+Tor
+Complete Data Wipe
+Active@ Kill Disk - Hard Drive Eraser
+Chaos Mash
+Wise Disk Cleaner Portable
+EncryptOnClick
+ScrambleOnClick
+TrueCrypt
+True Crypt
+Bitdefender Total Security 2012 
+Advanced Encryption Package Professional
+PC TuneUp
+WInZip 17 Pro
+UnReader
+Hotspot Shield-Anti Virus,Encryption,Security tool
+Spotflux
+Passwordstate 
+SealPath Desktop
+MEO File Encryption Software
+Aobo Keylogger for Mac OS X
+Perfect Keylogger for Mac Lite
+BackTrack
+Elite Keylogger
+Handy Keylogger
+Steganography

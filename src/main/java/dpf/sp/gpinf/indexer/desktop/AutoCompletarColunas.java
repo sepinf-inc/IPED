@@ -49,14 +49,16 @@ public class AutoCompletarColunas {
                             String[][] cols = ColumnsManager.getInstance().fieldGroups;
                             if (cols != null) {
                                 List<String> l = new ArrayList<String>();
-                                for (int i = 0; i < cols.length; i++) {
-                                    NEXT: for (int j = 0; j < cols[i].length; j++) {
-                                        String col = cols[i][j];
-                                        if (col.toLowerCase().startsWith(base)) {
-                                            for (int k = 0; k < l.size(); k++) {
-                                                if (l.get(k).equals(col)) continue NEXT;
+                                for (int step = 0; step <= 1; step++) {
+                                    for (int i = 0; i < cols.length; i++) {
+                                        NEXT: for (int j = 0; j < cols[i].length; j++) {
+                                            String col = cols[i][j];
+                                            if ((step == 0 && col.toLowerCase().startsWith(base)) || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
+                                                for (int k = 0; k < l.size(); k++) {
+                                                    if (l.get(k).equals(col)) continue NEXT;
+                                                }
+                                                l.add(col);
                                             }
-                                            l.add(col);
                                         }
                                     }
                                 }
@@ -67,7 +69,7 @@ public class AutoCompletarColunas {
                                     if (lastIdx >= l.size()) lastIdx = 0;
                                     else if (lastIdx < 0) lastIdx = l.size() - 1;
                                 }
-                                editor.setText(editor.getText().substring(0, pos) + addEscape(l.get(lastIdx)) + ":");
+                                editor.setText(editor.getText().substring(0, pos) + addEscape(l.get(lastIdx)) + ":"); //$NON-NLS-1$
                                 editor.setCaretPosition(editor.getText().length());
                             }
                         }

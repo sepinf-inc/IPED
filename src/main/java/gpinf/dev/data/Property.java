@@ -40,7 +40,7 @@ public class Property implements Serializable {
    */
   @Override
   public String toString() {
-    return name + ": " + value;
+    return name + ": " + value; //$NON-NLS-1$
   }
 
   /**

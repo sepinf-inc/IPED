@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.process.task;
 import gpinf.dev.data.EvidenceFile;
 
 import java.io.File;
-import java.nio.file.FileSystem;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -13,13 +12,9 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
-
 public class IgnoreHardLinkTask extends AbstractTask {
 
-  public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink";
+  public static final String IGNORE_HARDLINK_ATTR = "ignoredHardLink"; //$NON-NLS-1$
 
   private static Map<Long, Map<HardLink, Object>> fileSystemOrigMap = new HashMap<Long, Map<HardLink, Object>>();
   private static Map<Long, Map<HardLink, Object>> fileSystemSlackMap = new HashMap<Long, Map<HardLink, Object>>();
@@ -27,14 +22,10 @@ public class IgnoreHardLinkTask extends AbstractTask {
   private static Object lock = new Object();
   private boolean taskEnabled = false;
 
-  public IgnoreHardLinkTask(Worker worker) {
-    super(worker);
-  }
-
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
 
-    String value = confParams.getProperty("ignoreHardLinks");
+    String value = confParams.getProperty("ignoreHardLinks"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -65,16 +56,15 @@ public class IgnoreHardLinkTask extends AbstractTask {
     Content content = evidence.getSleuthFile();
     if (content != null && content instanceof FsContent) {
       FsContent fsContent = (FsContent) content;
-      /*TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType(); 
-       if(!fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS) && 
-       !fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS_DETECT))
-       return;
-       */
+      TSK_FS_TYPE_ENUM fsType = fsContent.getFileSystem().getFsType(); 
+      if(!fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS) && 
+         !fsType.equals(TSK_FS_TYPE_ENUM.TSK_FS_TYPE_HFS_DETECT))
+          return;
       long fsId = fsContent.getFileSystemId();
       long metaAddr = fsContent.getMetaAddr();
       HardLink hardLink;
       //Testa se é AlternateDataStream ou ResourceFork
-      if (!evidence.getName().contains(":")) {
+      if (!evidence.getName().contains(":")) { //$NON-NLS-1$
         hardLink = new HardLink(metaAddr);
       } else {
         hardLink = new DetailedHardLink(metaAddr, evidence.getLength(), evidence.getName());
@@ -93,16 +83,19 @@ public class IgnoreHardLinkTask extends AbstractTask {
           fileSystemMap.put(fsId, hardLinkMap);
         }
 
-        if (hardLinkMap.containsKey(hardLink)) {
-          ignore = true;
+        Object id = hardLinkMap.get(hardLink);
+        //test if it is not the same item from other processing queue
+        if (id != null) {
+        	if(!id.equals(evidence.getSleuthId()))
+                ignore = true;
         } else {
-          hardLinkMap.put(hardLink, null);
+            hardLinkMap.put(hardLink, evidence.getSleuthId());
         }
       }
 
       if (ignore) {
         evidence.setSleuthFile(null);
-        evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true");
+        evidence.setExtraAttribute(IGNORE_HARDLINK_ATTR, "true"); //$NON-NLS-1$
       }
 
     }

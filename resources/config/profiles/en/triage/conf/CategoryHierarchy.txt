@@ -1,0 +1,12 @@
+#############################################
+# Hierarchy Definitions between Categories:
+# category = subcategory1; subcategory2; ...
+#############################################
+
+Documents = Text Documents; PDF Documents; HTML Documents; RTF Documents; Other Documents
+Images = Temporary Internet Images; Images in System Folders; Other Images; Scanned Documents
+Plain Texts = Temporary Internet Texts; Texts in System Folders; Other Texts
+Links = Link files; URL links
+Emails and Mailboxes = Emails; Mailboxes
+Multimedia = Audios; Videos; Images
+Image Disks = ISO disks; Virtual disks; Other disks

@@ -24,12 +24,12 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
 import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -50,14 +50,10 @@ public class Worker extends Thread {
 
   private static Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 
-  private static String workerNamePrefix = "Worker-";
+  private static String workerNamePrefix = "Worker-"; //$NON-NLS-1$
   
   public IndexWriter writer;
   String baseFilePath;
-
-  //TODO mover para tarefas que usam estes objetos
-  public Detector detector;
-  public TikaConfig config;
 
   public volatile AbstractTask runningTask;
   public List<AbstractTask> tasks = new ArrayList<AbstractTask>();
@@ -78,7 +74,7 @@ public class Worker extends Thread {
   public volatile EvidenceFile evidence;
 
   public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
-    super(new ThreadGroup("ProcessingThreadGroup-" + k), workerNamePrefix + k);
+    super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); //$NON-NLS-1$
     this.caseData = caseData;
     this.writer = writer;
     this.output = output;
@@ -87,11 +83,8 @@ public class Worker extends Thread {
     baseFilePath = output.getParentFile().getAbsolutePath();
 
     if (k == 0) {
-      LOGGER.info("Inicializando Tika");
+      LOGGER.info("Starting Tika"); //$NON-NLS-1$
     }
-
-    config = TikaConfig.getDefaultConfig();
-    detector = config.getDetector();
     
     TaskInstaller taskInstaller = new TaskInstaller();
     taskInstaller.installProcessingTasks(this);
@@ -110,10 +103,10 @@ public class Worker extends Thread {
   private void initTasks() throws Exception {
     for (AbstractTask task : tasks) {
       if (this.getName().equals(workerNamePrefix + 0)) {
-        LOGGER.info("Inicializando " + task.getClass().getSimpleName());
+        LOGGER.info("Starting " + task.getName()); //$NON-NLS-1$
+        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
-      IndexFiles.getInstance().firePropertyChange("mensagem", "", "Inicializando " + task.getClass().getSimpleName() + "...");
-      task.init(Configuration.properties, new File(Configuration.configPath, "conf"));
+      task.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
     }
 
   }
@@ -162,7 +155,7 @@ public class Worker extends Thread {
 
     try {
 
-      LOGGER.debug("{} Processando {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
+      LOGGER.debug("{} Processing {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
 
       checkFile(evidence);
 
@@ -180,7 +173,7 @@ public class Worker extends Thread {
     	  if(t instanceof IPEDException)
     		  exception = (IPEDException)t;
     	  else{
-    		  exception = new Exception(this.getName() + " Erro durante processamento de " + evidence.getPath() + " (" + evidence.getLength() + "bytes)");
+    		  exception = new Exception(this.getName() + " Error while processing " + evidence.getPath() + " (" + evidence.getLength() + "bytes)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     		  exception.initCause(t);
     	  }
       }
@@ -197,9 +190,19 @@ public class Worker extends Thread {
    * @param evidence novo item a ser processado.
    */
   public void processNewItem(EvidenceFile evidence) {
+      processNewItem(evidence, ProcessTime.AUTO);
+  }
+  
+  public enum ProcessTime{
+      AUTO,
+      NOW,
+      LATER
+  }
+  
+  public void processNewItem(EvidenceFile evidence, ProcessTime time) {
     caseData.incDiscoveredEvidences(1);
     // Se a fila está pequena, enfileira
-    if (caseData.getItemQueue().size() < 10 * manager.getWorkers().length) {
+    if (time == ProcessTime.LATER || (time == ProcessTime.AUTO && caseData.getItemQueue().size() < 10 * manager.getWorkers().length)) {
     	caseData.getItemQueue().addFirst(evidence);
     } // caso contrário processa o item no worker atual
     else {
@@ -213,7 +216,7 @@ public class Worker extends Thread {
   @Override
   public void run() {
 
-    LOGGER.info("{} iniciado.", getName());
+    LOGGER.info("{} started.", getName()); //$NON-NLS-1$
 
     while (!this.isInterrupted() && exception == null) {
 
@@ -248,9 +251,9 @@ public class Worker extends Thread {
     }
 
     if (evidence == null) {
-      LOGGER.info("{} finalizado.", getName());
+      LOGGER.info("{} finished.", getName()); //$NON-NLS-1$
     } else {
-      LOGGER.info("{} interrompido com {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength());
+      LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
     }
   }
 

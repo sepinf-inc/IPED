@@ -21,6 +21,8 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -28,9 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -90,15 +90,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+      
+      App.get().appCase.checkImagePaths();
 		
       if(App.get().appCase.getTotalItens() > 100000000)
     	  RowComparator.setLoadDocValues(false);
       
-      ParsingReader.setTextSplitSize(Long.MAX_VALUE);
-      OCRParser.EXECTESS = false;
-      
       if(!updateItems){
-    	  LOGGER.info("Loading Columns");
+    	  LOGGER.info("Loading Columns"); //$NON-NLS-1$
           App.get().resultsModel.initCols();
     	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
     	  
@@ -114,19 +113,35 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
           this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
           App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
           
-          LOGGER.info("Listing all items");
+          LOGGER.info("Listing all items"); //$NON-NLS-1$
           PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
           pesquisa.execute();
-          LOGGER.info("Listing all items Finished");          
+          LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
       }
       
       treeModel = new TreeViewModel();
       
     } catch (Throwable e) {
-      e.printStackTrace();
+        e.printStackTrace();
+        showErrorDialog(e);
     }
     
     return null;
+  }
+  
+  private void showErrorDialog(final Throwable e){
+      SwingUtilities.invokeLater(new Runnable(){
+          @Override
+          public void run(){
+              JOptionPane.showMessageDialog(App.get(), 
+                      Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
+                      + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
+                      + Messages.getString("AppLazyInitializer.errorMsg.line3") + e.getMessage(),  //$NON-NLS-1$
+                      Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+              
+              App.get().dialogBar.setVisible(false);
+          }
+      });
   }
   
   @Override
@@ -141,8 +156,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
     }
+    if(App.get().appCase.getMultiMarcadores().getLabelMap().size() == 0)
+        App.get().selectDockableTab(App.get().categoriesTabDock);
+    
     if(updateItems){
     	App.get().appletListener.updateFileListing();
+    	ColumnsManager.getInstance().dispose();
     	App.get().dialogBar.setVisible(false);
     }
   }

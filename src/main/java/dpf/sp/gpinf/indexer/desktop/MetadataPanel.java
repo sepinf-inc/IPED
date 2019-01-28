@@ -43,9 +43,13 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.NumericUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -54,9 +58,13 @@ import dpf.sp.gpinf.indexer.search.QueryBuilder;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener{
     
-    private static final String SORT_COUNT = "Ocorrências";
-    private static final String SORT_ALFANUM = "Alfanumérica";
-    private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "VALOR_MONETARIO";
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
+    
+    private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
+    private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
+    private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
+    private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
+    private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
     
     private volatile static AtomicReader reader;
     
@@ -65,7 +73,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     JComboBox<String> sort = new JComboBox<String>();
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
-    JButton update = new JButton("Atualizar");
+    JComboBox<String> scale = new JComboBox<String>();
+    JButton update = new JButton(Messages.getString("MetadataPanel.Update")); //$NON-NLS-1$
     
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -77,6 +86,9 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     
     boolean updatingProps = false, updatingList = false;
     volatile boolean updatingResult = false;
+    
+    volatile boolean logScale = false;
+    volatile double min, max, interval;
 
     /**
      * 
@@ -88,10 +100,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         
         groups = new JComboBox<String>(ColumnsManager.groupNames);
         groups.setSelectedItem(null);
+        groups.setMaximumRowCount(15);
         groups.addActionListener(this);
         
         props.setMaximumRowCount(30);
         props.addActionListener(this);
+        
+        scale.addItem(LINEAR_SCALE);
+        scale.addItem(LOG_SCALE);
+        scale.setEnabled(false);
+        scale.addActionListener(this);
         
         sort.addItem(SORT_COUNT);
         sort.addItem(SORT_ALFANUM);
@@ -102,19 +120,25 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         list.addListSelectionListener(this);
         
         JPanel l1 = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("Grupo:");
+        JLabel label = new JLabel(Messages.getString("MetadataPanel.Group")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l1.add(label, BorderLayout.WEST);
         l1.add(groups, BorderLayout.CENTER);
         
         JPanel l2 = new JPanel(new BorderLayout());
-        label = new JLabel("Propriedade:");
+        label = new JLabel(Messages.getString("MetadataPanel.Property")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l2.add(label, BorderLayout.WEST);
         l2.add(props, BorderLayout.CENTER);
         
+        JPanel l4 = new JPanel(new BorderLayout());
+        label = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$
+        label.setPreferredSize(new Dimension(90, 20));
+        l4.add(label, BorderLayout.WEST);
+        l4.add(scale, BorderLayout.CENTER);
+        
         JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel("Ordenação:");
+        label = new JLabel(Messages.getString("MetadataPanel.Sort")); //$NON-NLS-1$
         label.setPreferredSize(new Dimension(90, 20));
         l3.add(label, BorderLayout.WEST);
         l3.add(sort, BorderLayout.CENTER);
@@ -126,6 +150,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.add(l1);
         top.add(l2);
+        top.add(l4);
         top.add(l3);
         
         this.add(top, BorderLayout.NORTH);
@@ -177,19 +202,19 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 
             }catch(Exception e){
                 //LookupOrd fica inválido (IndexReader fechado) ao atualizar interface durante processamento
-                return "[Clique em Atualizar]";
+                return Messages.getString("MetadataPanel.UpdateWarn"); //$NON-NLS-1$
             }
         }
         @Override
         public String toString() {
-            return getVal() + " (" + count + ")";
+            return getVal() + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
     
     private class RangeCount extends ValueCount{
-        long start, end;
+        double start, end;
         
-        RangeCount(long start, long end, int ord, int count) {
+        RangeCount(double start, double end, int ord, int count) {
             super(null, ord, count);
             this.start = start;
             this.end = end;
@@ -198,13 +223,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         public String toString() {
             String startStr = NumberFormat.getNumberInstance().format(start);
             String endStr = NumberFormat.getNumberInstance().format(end);
-            return startStr + " TO " + endStr + " (" + count + ")";
+            return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
     }
     
     private static class MoneyCount extends ValueCount implements Comparable<MoneyCount>{
         
-        private static Pattern pattern = Pattern.compile("[\\$\\s\\.\\,]");
+        private static Pattern pattern = Pattern.compile("[\\$\\s\\.\\,]"); //$NON-NLS-1$
         //String val;
         long money;
         
@@ -215,7 +240,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             if(centChar == '.' || centChar == ',')
                 val = val.substring(0, val.length() - 3);
             Matcher matcher = pattern.matcher(val);
-            money = Long.valueOf(matcher.replaceAll(""));
+            money = Long.valueOf(matcher.replaceAll("")); //$NON-NLS-1$
         }
         @Override
         public int compareTo(MoneyCount o) {
@@ -248,6 +273,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }
         ipedResult = App.get().ipedResult;
         
+        logScale = scale.getSelectedItem().equals(LOG_SCALE);
+        
         new Thread(){
             @Override
             public void run(){
@@ -262,24 +289,42 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     }
     
     private void loadDocValues(String field) throws IOException{
-        System.out.println("getDocValues");
+        //System.out.println("getDocValues");
         numValues = reader.getNumericDocValues(field);
         if(numValues == null)
-            numValues = reader.getNumericDocValues("_num_" + field);
+            numValues = reader.getNumericDocValues("_num_" + field); //$NON-NLS-1$
         numValuesSet = reader.getSortedNumericDocValues(field);
         if(numValuesSet == null)
-            numValuesSet = reader.getSortedNumericDocValues("_num_" + field);
+            numValuesSet = reader.getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
         docValues = reader.getSortedDocValues(field);
         if(docValues == null)
-            docValues = reader.getSortedDocValues("_" + field);
+            docValues = reader.getSortedDocValues("_" + field); //$NON-NLS-1$
         docValuesSet = reader.getSortedSetDocValues(field);
         if(docValuesSet == null)
-            docValuesSet = reader.getSortedSetDocValues("_" + field);
+            docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
+    }
+    
+    public static final boolean isFloat(String field){
+        return Float.class.equals(IndexItem.getMetadataTypes().get(field));
+    }
+    
+    public static final boolean isDouble(String field){
+        return Double.class.equals(IndexItem.getMetadataTypes().get(field));
+    }
+    
+    public static final boolean mayBeNumeric(String field){
+        return IndexItem.getMetadataTypes().get(field) == null ||
+                !IndexItem.getMetadataTypes().get(field).equals(String.class);
     }
     
     private List<ItemId> getIdsWithOrd(String field, int ordToGet, int valueCount){
+        
+        boolean mayBeNumeric = mayBeNumeric(field);
+        boolean isFloat = isFloat(field);
+        boolean isDouble = isDouble(field);
+        
         ArrayList<ItemId> items = new ArrayList<ItemId>(); 
-        if(numValues != null){
+        if(mayBeNumeric && numValues != null){
             Bits docsWithField = null;
             try {
                 docsWithField = reader.getDocsWithField(field);
@@ -289,21 +334,51 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 if(docsWithField != null && docsWithField.get(doc)){
-                    long val = numValues.get(doc);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValues.get(doc);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(logScale){
+                        if(val < 0){
+                            ord -= 1;
+                            val *= -1;
+                            if(val > 1) ord = ord - (int)Math.log10(val);
+                        }else
+                            if(val > 1) ord = (int)Math.log10(val) + ord;
+                    }else{
+                        ord = (int)((val - min) / interval);
+                        if(val == max && min != max)
+                            ord--;
+                    }
                     if(ord == ordToGet)
                         items.add(item);
                 }
-            }  
-        }else if(numValuesSet != null){
+            } 
+        }else if(mayBeNumeric && numValuesSet != null){
             for (ItemId item : ipedResult.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
                 for(int i = 0; i < numValuesSet.count(); i++){
-                    long val = numValuesSet.valueAt(i);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
+                    double val = numValuesSet.valueAt(i);
+                    if(isFloat)
+                        val = NumericUtils.sortableIntToFloat((int)val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long)val);
+                    int ord = 20;
+                    if(logScale){
+                        if(val < 0){
+                            ord -= 1;
+                            val *= -1;
+                            if(val > 1) ord = ord - (int)Math.log10(val);
+                        }else
+                            if(val > 1) ord = (int)Math.log10(val) + ord;
+                    }else{
+                        ord = (int)((val - min) / interval);
+                        if(val == max && min != max)
+                            ord--;
+                    }
                     if(ord == ordToGet){
                         items.add(item);
                         break;
@@ -336,13 +411,28 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private void countValues(boolean updateResult) throws IOException {
         
         reader = App.get().appCase.getAtomicReader();
-
+        
         String field = (String)props.getSelectedItem();
         if(field == null) return;
         field = field.trim();
         
         loadDocValues(field);
         
+        boolean mayBeNumeric = mayBeNumeric(field);
+        final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
+        boolean isFloat = isFloat(field);
+        boolean isDouble = isDouble(field);
+        
+        SwingUtilities.invokeLater(new Runnable(){
+            @Override
+            public void run() {
+                if(isNumeric)
+                    scale.setEnabled(true);
+                else
+                    scale.setEnabled(false);
+            }
+        });
+                
         if(updateResult){
             while(App.get().ipedResult == ipedResult)
                 try {
@@ -353,37 +443,121 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             ipedResult = App.get().ipedResult;
             updatingResult = false;
         }
-            
         
-        System.out.println("counting");
+        //System.out.println("counting");
         int[] valueCount = null;
-        if(numValues != null){
-            valueCount = new int[20];
+        min = Double.MAX_VALUE; max = Double.MIN_VALUE; interval = 0;
+        
+        if(isNumeric && numValues != null){
             Bits docsWithField = reader.getDocsWithField(field);
-            for (ItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                if(docsWithField.get(doc)){
-                    long val = numValues.get(doc);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
-                    valueCount[ord]++;
-                }
-            }  
-        }else if(numValuesSet != null){
-            valueCount = new int[20];
-            for (ItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                numValuesSet.setDocument(doc);
-                int prevOrd = -1;
-                for(int i = 0; i < numValuesSet.count(); i++){
-                    long val = numValuesSet.valueAt(i);
-                    int ord = 0;
-                    if(val > 1) ord = (int)Math.log10(val);
-                    if(ord != prevOrd)
+            if(logScale){
+                //0 to 19: count negative numbers. 20 to 39: count positive numbers
+                valueCount = new int[40];
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    if(docsWithField.get(doc)){
+                        double val = numValues.get(doc);
+                        if(isFloat)
+                            val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long)val);
+                        int ord = 20;
+                        if(val < 0){
+                            ord -= 1;
+                            val *= -1;
+                            if(val > 1) ord = ord - (int)Math.log10(val);
+                        }else
+                            if(val > 1) ord = (int)Math.log10(val) + ord;
                         valueCount[ord]++;
-                    prevOrd = ord;
+                    }
                 }
-            }  
+            }else{
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    if(docsWithField.get(doc)){
+                        double val = numValues.get(doc);
+                        if(isFloat) val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble) val = NumericUtils.sortableLongToDouble((long)val);
+                        if(val < min) min = val;
+                        if(val > max) max = val;
+                    }
+                }
+                valueCount = new int[10];
+                interval = (max - min) / valueCount.length;
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    if(docsWithField.get(doc)){
+                        double val = numValues.get(doc);
+                        if(isFloat)
+                            val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long)val);
+                        int ord = (int)((val - min) / interval);
+                        if(ord == valueCount.length)
+                            ord = valueCount.length - 1;
+                        valueCount[ord]++;
+                    }
+                }
+            }
+        }else if(isNumeric && numValuesSet != null){
+            if(logScale){
+              //0 to 19: count negative numbers. 20 to 39: count positive numbers
+                valueCount = new int[40];
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    numValuesSet.setDocument(doc);
+                    int prevOrd = -1;
+                    for(int i = 0; i < numValuesSet.count(); i++){
+                        double val = numValuesSet.valueAt(i);
+                        if(isFloat)
+                            val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long)val);
+                        int ord = 20;
+                        if(val < 0){
+                            ord -= 1;
+                            val *= -1;
+                            if(val > 1) ord = ord - (int)Math.log10(val);
+                        }else
+                            if(val > 1) ord = (int)Math.log10(val) + ord;
+                        if(ord != prevOrd)
+                            valueCount[ord]++;
+                        prevOrd = ord;
+                    }
+                }
+            }else{
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    numValuesSet.setDocument(doc);
+                    for(int i = 0; i < numValuesSet.count(); i++){
+                        double val = numValuesSet.valueAt(i);
+                        if(isFloat) val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble) val = NumericUtils.sortableLongToDouble((long)val);
+                        if(val < min) min = val;
+                        if(val > max) max = val;
+                    }
+                }
+                valueCount = new int[10];
+                interval = (max - min) / valueCount.length;
+                for (ItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    numValuesSet.setDocument(doc);
+                    int prevOrd = -1;
+                    for(int i = 0; i < numValuesSet.count(); i++){
+                        double val = numValuesSet.valueAt(i);
+                        if(isFloat)
+                            val = NumericUtils.sortableIntToFloat((int)val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long)val);
+                        int ord = (int)((val - min) / interval);
+                        if(ord == valueCount.length)
+                            ord = valueCount.length - 1;
+                        if(ord != prevOrd)
+                            valueCount[ord]++;
+                        prevOrd = ord;
+                    }
+                }
+            }
         }else if(docValues != null){
             valueCount = new int[docValues.getValueCount()];
             for (ItemId item : ipedResult.getIterator()) {
@@ -405,14 +579,26 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 }
             }
         }
-        System.out.println("new");
+        //System.out.println("new");
         ArrayList<ValueCount> list = new ArrayList<ValueCount>();
-        if(numValues != null || numValuesSet != null){
+        if(isNumeric){
             for(int ord = 0; ord < valueCount.length; ord++)
                 if(valueCount[ord] > 0){
-                    long start = ord == 0 ? 0 : (long)Math.pow(10, ord);
-                    long end = (long)Math.pow(10, ord + 1) - 1;
-                    list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                    if(logScale){
+                        if(ord < 20){
+                            long end = ord == 19 ? 0 : -(long)Math.pow(10, 19 - ord);
+                            long start = -((long)Math.pow(10, 19 - ord + 1) - 1);
+                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                        }else{
+                            long start = ord == 20 ? 0 : (long)Math.pow(10, ord - 20);
+                            long end = (long)Math.pow(10, ord - 20 + 1) - 1;
+                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                        }
+                    }else{
+                        double start = min + ord * interval;
+                        double end = min + (ord + 1) * interval;
+                        list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                    }
                 }
         }else if(docValues != null){
             LookupOrd lo = new LookupOrdSDV(docValues);
@@ -429,7 +615,6 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                     else
                         list.add(new MoneyCount(lo, ord, valueCount[ord]));
         }
-            
         
         array = list.toArray(new ValueCount[0]);
         
@@ -441,7 +626,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if(array == null)
             return;
         
-        System.out.println("sorting");
+        //System.out.println("sorting");
         
         ValueCount[] sortedArray = array;
         if(sort.getSelectedItem().equals(SORT_COUNT)){
@@ -451,7 +636,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }else if(array.length > 0 && array[0] instanceof MoneyCount){
             Arrays.sort(array);
         }
-        System.out.println("Sorted");
+        //System.out.println("Sorted");
         
         updateList(sortedArray);
            
@@ -475,7 +660,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                     list.setSelectedIndices(selIdx);
                 updatingList = false;
                 
-                System.out.println("finish");
+                //System.out.println("finish");
                 updateTabColor();
                 App.get().dialogBar.setVisible(false);
             }
@@ -489,7 +674,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if(updatingProps)
             return;
         
-        if(e.getSource() == update || e.getSource() == props)
+        if(e.getSource() == update || e.getSource() == props || e.getSource() == scale)
             populateList();
         
         else if(e.getSource() == sort)
@@ -506,7 +691,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if((e != null && e.getValueIsAdjusting()) || updatingList)
             return;
         
-        System.out.println("listSelectionEvent");
+        //System.out.println("listSelectionEvent");
         
         App.get().appletListener.updateFileListing();
         
@@ -516,9 +701,9 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     
     private void updateTabColor(){
         if(!list.isSelectionEmpty())
-            App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().alertColor);
+        	App.get().setMetadataDefaultColor(false);
         else
-            App.get().treeTab.setBackgroundAt(App.get().treeTab.getSelectedIndex(), App.get().defaultTabColor);
+        	App.get().setMetadataDefaultColor(true);
     }
     
     public Set<ItemId> getFilteredItemIds() throws ParseException, QueryNodeException{
@@ -541,7 +726,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public Set<String> getHighlightTerms() throws ParseException, QueryNodeException{
         
         String field = (String)props.getSelectedItem();
-        if(field == null || !field.startsWith(RegexTask.REGEX_PREFIX) || list.isSelectionEmpty())
+        if(field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
@@ -555,14 +740,14 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     public Query getHighlightQuery() throws ParseException, QueryNodeException{
         
         String field = (String)props.getSelectedItem();
-        if(field == null || !field.startsWith(RegexTask.REGEX_PREFIX) || list.isSelectionEmpty())
+        if(field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX)) || list.isSelectionEmpty())
             return null;
         
         StringBuilder str = new StringBuilder();
-        str.append(IndexItem.CONTENT + ":(");
+        str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
         for(ValueCount item : list.getSelectedValuesList())
-            str.append("\"" + escape(item.getVal()) + "\" ");
-        str.append(")");
+            str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        str.append(")"); //$NON-NLS-1$
         
         return new QueryBuilder(App.get().appCase).getQuery(str.toString());
         

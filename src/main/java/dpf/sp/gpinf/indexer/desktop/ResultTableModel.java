@@ -20,10 +20,12 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.text.Collator;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -33,7 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
@@ -41,6 +43,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
 
@@ -50,13 +53,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   
   private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
 
-  public static String BOOKMARK_COL = "marcador";
-  public static String SCORE_COL = "score";
+  public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
+  public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
 
   public static String[] fields;
 
-  private static int fixedColdWidths[] = {55, 20};
-  public static String[] fixedCols = {"", ""};
+  private static int fixedColdWidths[] = {55, 18};
+  public static String[] fixedCols = {"", ""}; //$NON-NLS-1$ //$NON-NLS-2$
 
   private static String[] columnNames = {};
 
@@ -104,13 +107,15 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     columnNames = cols.toArray(new String[0]);
   }
 
-  private SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss z");
-  private SimpleDateFormat fatAccessedDf = new SimpleDateFormat("dd/MM/yyyy");
+  private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ResultTableModel.DateFormat")); //$NON-NLS-1$
+  private SimpleDateFormat fatAccessedDf = new SimpleDateFormat(Messages.getString("ResultTableModel.FATDateFormat")); //$NON-NLS-1$
+  private Collator collator = Collator.getInstance();
 
   public ResultTableModel() {
     super();
-    df.setTimeZone(TimeZone.getTimeZone("UTC"));
-    fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC"));
+    df.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
+    fatAccessedDf.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
+    collator.setStrength(Collator.PRIMARY);
   }
 
   @Override
@@ -136,12 +141,14 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     for (int i = 0; i < columnNames.length; i++) {
       if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
         int col = App.get().resultsTable.convertColumnIndexToView(i);
+        if(col == -1)
+            return;
         if (mb == -1) {
           App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-              columnNames[i] + " (...)");
+              columnNames[i] + " (...)"); //$NON-NLS-1$
         } else {
           App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-              columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)");
+              columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
         }
       }
     }
@@ -162,11 +169,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   @Override
   public void setValueAt(Object value, int row, int col) {
 
-	app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);	
+    app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);   
+    App.get().resultsModel.fireTableCellUpdated(row, col);
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();
-    	MarcadoresController.get().atualizarGUI();
+    	MarcadoresController.get().atualizarGUISelection();
     }
   }
 
@@ -194,8 +202,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     
 	if (col == 0)
 		return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+	
+	if (col == 1)
+	    return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
 	      
-	String value = "";
+	String value = ""; //$NON-NLS-1$
 	
 	ItemId item = App.get().ipedResult.getItem(row);
     int docId = App.get().appCase.getLuceneId(item);
@@ -205,16 +216,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 			doc = app.appCase.getSearcher().doc(docId);
 		} catch (IOException e) {
 			e.printStackTrace();
-	        return "ERRO";
+	        return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$
 		}
     }
     lastDocRead = docId;
-      
-    if (col == 1) {
-      return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
-      
-    } else {
-      try {
+    
+    try {
         int fCol = col - fixedCols.length;
         String field = fields[fCol];
 
@@ -223,29 +230,32 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         }
 
         if (field.equals(BOOKMARK_COL)) {
-          return app.appCase.getMultiMarcadores().getLabels(app.ipedResult.getItem(row));
+          return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
         }
-
+        
+        SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);
+        if(sndv == null)
+            sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+        
+        boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
+        
+        String[] values = doc.getValues(field);
+        if(values.length > 1){
+            if(mayBeNumeric && sndv != null){
+                Arrays.sort(values, new Comparator<String>(){
+                    @Override
+                    public int compare(String o1, String o2){
+                        return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                    }
+                });
+            }else
+                Arrays.sort(values, collator);
+        }
+        
         StringBuilder sb = new StringBuilder();
-        
-        SortedSetDocValues ssdv = App.get().appCase.getAtomicReader().getSortedSetDocValues(field);
-        if(ssdv != null){
-            //System.out.println("getting val for " + field + ": " + row);
-            ssdv.setDocument(docId);
-            long ord;
-            boolean first = true;
-            while((ord = ssdv.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS){
-                if(!first) sb.append(" | ");
-                sb.append(ssdv.lookupOrd(ord).utf8ToString());
-                first = false;
-            }
-        
-        }else{
-            String[] values = doc.getValues(field);
-            for(int i = 0; i < values.length; i++){
-                sb.append(values[i]);
-                if(i != values.length - 1) sb.append(" | ");
-            }
+        for(int i = 0; i < values.length; i++){
+            sb.append(values[i]);
+            if(i != values.length - 1) sb.append(" | "); //$NON-NLS-1$
         }
         
         value = sb.toString().trim();
@@ -272,14 +282,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
         } else if (field.equals(IndexItem.NAME)) {
           TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
           if (fragments[0].getScore() > 0) {
-            value = "<html><nobr>" + fragments[0].toString() + "</html>";
+            value = "<html><nobr>" + fragments[0].toString() + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$
           }
         }
 
-      } catch (Exception e) {
+    } catch (Exception e) {
         e.printStackTrace();
-        return "ERRO";
-      }
+        return Messages.getString("ResultTableModel.Error"); //$NON-NLS-1$
     }
 
     return value;

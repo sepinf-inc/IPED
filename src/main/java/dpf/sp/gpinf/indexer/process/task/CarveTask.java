@@ -36,6 +36,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.ParseContext;
@@ -45,6 +46,7 @@ import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
@@ -61,9 +63,9 @@ public class CarveTask extends BaseCarveTask {
   private static Logger LOGGER = LoggerFactory.getLogger(CarveTask.class);
   private static final long serialVersionUID = 1L;
 
-  public static String CARVE_CONFIG = "CarvingConfig.txt";
-  public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated");
-  public static boolean enableCarving = false;
+  public static String CARVE_CONFIG = "CarvingConfig.txt"; //$NON-NLS-1$
+  public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
+  private static boolean enableCarving = false;
 
   public static boolean ignoreCorrupted = true;
   private static int CLUSTER_SIZE = 1;
@@ -74,21 +76,25 @@ public class CarveTask extends BaseCarveTask {
   private static int largestPatternLen = 100;
 
   EvidenceFile evidence;
-  MediaTypeRegistry registry;
+  private static MediaTypeRegistry registry;
 
   long prevLen = 0;
   int len = 0, k = 0;
   byte[] buf = new byte[1024 * 1024];
   byte[] cBuf;
 
-  public CarveTask(Worker worker) {
-    super(worker);
-    this.registry = worker.config.getMediaTypeRegistry();
+  public CarveTask() {
+      if(registry == null)
+          registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
   @Override
   public boolean isEnabled() {
     return enableCarving;
+  }
+  
+  public static void setEnabled(boolean enabled) {
+      enableCarving = enabled;
   }
   
   public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -99,31 +105,31 @@ public class CarveTask extends BaseCarveTask {
     if (signatures != null) {
       return;
     }
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
     String line = reader.readLine();
     while ((line = reader.readLine()) != null) {
-      if (line.trim().startsWith("#") || line.trim().isEmpty()) {
+      if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
         continue;
-      } else if (line.startsWith("bytesToSkip")) {
-        CLUSTER_SIZE = Integer.valueOf(line.split("=")[1].trim());
-      } else if (line.startsWith("ignoreCorrupted")) {
-        ignoreCorrupted = Boolean.valueOf(line.split("=")[1].trim());
-      } else if (line.startsWith("typesToProcess")) {
+      } else if (line.startsWith("bytesToSkip")) { //$NON-NLS-1$
+        CLUSTER_SIZE = Integer.valueOf(line.split("=")[1].trim()); //$NON-NLS-1$
+      } else if (line.startsWith("ignoreCorrupted")) { //$NON-NLS-1$
+        ignoreCorrupted = Boolean.valueOf(line.split("=")[1].trim()); //$NON-NLS-1$
+      } else if (line.startsWith("typesToProcess")) { //$NON-NLS-1$
         if (TYPES_TO_PROCESS == null) {
           TYPES_TO_PROCESS = new HashSet<MediaType>();
         }
-        String[] types = line.split("=")[1].split(";");
+        String[] types = line.split("=")[1].split(";"); //$NON-NLS-1$ //$NON-NLS-2$
         for (String type : types) {
           TYPES_TO_PROCESS.add(MediaType.parse(type.trim()));
         }
 
-      } else if (line.startsWith("typesToNotProcess")) {
-        String[] types = line.split("=")[1].split(";");
+      } else if (line.startsWith("typesToNotProcess")) { //$NON-NLS-1$
+        String[] types = line.split("=")[1].split(";"); //$NON-NLS-1$ //$NON-NLS-2$
         for (String type : types) {
           TYPES_TO_NOT_PROCESS.add(type.trim());
         }
       } else {
-        String[] values = line.split(",");
+        String[] values = line.split(","); //$NON-NLS-1$
         CarverType sig = new CarverType(values);
         sigArray.add(sig);
         TYPES_TO_CARVE.add(sig.mimeType);
@@ -153,7 +159,9 @@ public class CarveTask extends BaseCarveTask {
       return;
     }
     //Nova instancia pois o mesmo objeto é reusado e nao é imutável
-    new CarveTask(worker).safeProcess(evidence);
+    CarveTask carver = new CarveTask();
+    carver.setWorker(worker);
+    carver.safeProcess(evidence);
     
     //Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de itens
     //carveados através do KFF, esta pode ser removida. 
@@ -202,7 +210,7 @@ public class CarveTask extends BaseCarveTask {
       findSig(tis);
 
     } catch (Exception t) {
-      LOGGER.warn("{} Erro no Carving de {} {}", Thread.currentThread().getName(), evidence.getPath(), t.toString());
+      LOGGER.warn("{} Error carving on {} {}", Thread.currentThread().getName(), evidence.getPath(), t.toString()); //$NON-NLS-1$
       //t.printStackTrace();
 
     } finally {
@@ -279,13 +287,13 @@ public class CarveTask extends BaseCarveTask {
 
     public CarverType(String[] values) throws DecoderException {
       this.name = values[0].trim();
-      if (!values[1].trim().equals("null")) {
+      if (!values[1].trim().equals("null")) { //$NON-NLS-1$
         this.mimeType = MediaType.parse(values[1].trim());
       }
       this.minSize = Long.parseLong(values[2].trim());
       this.maxSize = Long.parseLong(values[3].trim());
       this.sigs[0] = decodeSig(values[4].trim());
-      if (!values[5].trim().equals("null")) {
+      if (!values[5].trim().equals("null")) { //$NON-NLS-1$
         this.sigs[1] = decodeSig(values[5].trim());
       } else {
         this.sigs[1] = new Signature();
@@ -374,17 +382,17 @@ public class CarveTask extends BaseCarveTask {
             head = new Hit(s, prevLen + i);
 
             //calcula tamanho customizado para OLE
-            if (signatures[s / 2].name.equals("OLE")) {
+            if (signatures[s / 2].name.equals("OLE")) { //$NON-NLS-1$
               int oleLen = getLenFromOLE(buf, i, evidence.getLength() - (prevLen + i));
               foot = new Hit(s, head.off + oleLen);
 
             //calcula tamanho customizado para MOV
-            } else if (signatures[s / 2].name.equals("MOV")) {
+            } else if (signatures[s / 2].name.equals("MOV")) { //$NON-NLS-1$
             	long mp4Len = getLenFromMP4(prevLen + i);
                 foot = new Hit(s, head.off + mp4Len);
             
               //calcula tamanho customizado para SQLITE
-            } else if (signatures[s / 2].name.equals("SQLITE")) {
+            } else if (signatures[s / 2].name.equals("SQLITE")) { //$NON-NLS-1$
             	long len = getLenFromSQLite(prevLen + i);
                 foot = new Hit(s, head.off + len);
             
@@ -393,8 +401,8 @@ public class CarveTask extends BaseCarveTask {
               long length = getLenFromHeader(i, s);
 
               //utiliza cabeçalho anterior ASF encontrado
-              if (signatures[s / 2].name.equals("ASF")) {
-                head = sigsFound.get("ASF").pollLast();
+              if (signatures[s / 2].name.equals("ASF")) { //$NON-NLS-1$
+                head = sigsFound.get("ASF").pollLast(); //$NON-NLS-1$
               }
 
               if (length > 0 && head != null) {
@@ -410,8 +418,8 @@ public class CarveTask extends BaseCarveTask {
                * pois se repete várias vezes, sendo usado o primeiro
                */
               Hit lastHit = sigsFound.get(signatures[s / 2].name).peekLast();
-              if (lastHit == null || (!signatures[s / 2].name.startsWith("FH")
-                  && (!signatures[s / 2].name.equals("EML") || lastHit.sig % 2 == 1))
+              if (lastHit == null || (!signatures[s / 2].name.startsWith("FH") //$NON-NLS-1$
+                  && (!signatures[s / 2].name.equals("EML") || lastHit.sig % 2 == 1)) //$NON-NLS-1$
                   || (head.off - lastHit.off > signatures[s / 2].maxSize )
             	) {
                 sigsFound.get(signatures[s / 2].name).addLast(head);
@@ -432,7 +440,7 @@ public class CarveTask extends BaseCarveTask {
             foot = new Hit(s, prevLen + i);
 
             //tratamento específico para EML: guarda último rodapé encontrado para recuperação posterior
-            if (signatures[s / 2].name.equals("EML")) {
+            if (signatures[s / 2].name.equals("EML")) { //$NON-NLS-1$
               eml = s / 2;
               Hit lastHit = sigsFound.get(signatures[s / 2].name).peekLast();
               if (lastHit != null) {
@@ -451,7 +459,7 @@ public class CarveTask extends BaseCarveTask {
           if (foot != null && head != null) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[s / 2].minSize && length <= signatures[s / 2].maxSize) {
-              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType);
+              addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[s / 2].mimeType); //$NON-NLS-1$
             }
             break;
           }
@@ -459,7 +467,7 @@ public class CarveTask extends BaseCarveTask {
 
       }
       //varre lista de cabeçalhos e rodapés EML encontrados e recupera
-      ArrayDeque<Hit> deque = sigsFound.get("EML");
+      ArrayDeque<Hit> deque = sigsFound.get("EML"); //$NON-NLS-1$
       if (deque != null) {
         while (deque.size() > 2 || (k == -1 && deque.size() > 1)) {
           Hit head = deque.pollFirst();
@@ -467,7 +475,7 @@ public class CarveTask extends BaseCarveTask {
           if (head.sig % 2 == 0 && foot.sig % 2 == 1) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[eml].minSize && length <= signatures[eml].maxSize) {
-                addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType);
+                addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType); //$NON-NLS-1$
             }
           }
         }
@@ -496,7 +504,7 @@ public class CarveTask extends BaseCarveTask {
       length = maxLen - (i + prevLen);
     }
 
-    if (signatures[s / 2].name.equals("RIFF")) {
+    if (signatures[s / 2].name.equals("RIFF")) { //$NON-NLS-1$
       length += 8;
     }
 
@@ -529,7 +537,7 @@ public class CarveTask extends BaseCarveTask {
     return len;
   }
   
-  private static final String[] mp4AtomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid", "meta", "pict", "PICT", "pdin", "junk"};
+  private static final String[] mp4AtomTypes = {"ftyp", "moov", "mdat", "skip", "free", "wide", "pnot", "uuid", "meta", "pict", "PICT", "pdin", "junk"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$ //$NON-NLS-13$
   private static HashSet<String> atomSet = new HashSet<String>();
   
   static{
@@ -549,7 +557,7 @@ public class CarveTask extends BaseCarveTask {
 			  while(i != -1 && (off += i) < data.length)
 				  i = is.read(data, off, data.length - off);
 			  
-			  String atomType = new String(data, "windows-1252");
+			  String atomType = new String(data, "windows-1252"); //$NON-NLS-1$
 			  if(!atomSet.contains(atomType))
 				  //EOF
 				  break;
@@ -641,13 +649,16 @@ public class CarveTask extends BaseCarveTask {
 
   @Override
   public void init(Properties confProps, File confDir) throws Exception {
-    String value = confProps.getProperty("enableCarving");
+    String value = confProps.getProperty("enableCarving"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
       enableCarving = Boolean.valueOf(value);
     }
+    
+    if(signatures == null && enableCarving && !Configuration.addUnallocated)
+        LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
     loadConfigFile(new File(confDir, CARVE_CONFIG));
   }

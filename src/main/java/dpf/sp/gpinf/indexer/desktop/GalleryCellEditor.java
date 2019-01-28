@@ -70,6 +70,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int col) {
 
+    table.putClientProperty("terminateEditOnFocusLost", true); //$NON-NLS-1$
+    
     GalleryValue cellValue = (GalleryValue) value;
     if (cellValue.id == null) {
       return new JPanel();
@@ -79,7 +81,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     cLabel.setText(cellValue.name);
 
     if (cellValue.icon == null && cellValue.image == null) {
-      label.setText("...");
+      label.setText("..."); //$NON-NLS-1$
       label.setIcon(null);
     } else {
       label.setText(null);
@@ -113,6 +115,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
       int idx = row * App.get().galleryModel.colCount + col;
       App.get().resultsTable.setValueAt(check.isSelected(), idx, 1);
     }
+    
+    this.stopCellEditing();
 
   }
 

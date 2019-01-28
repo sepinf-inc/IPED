@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.io.Serializable;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -29,18 +31,23 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
+import dpf.sp.gpinf.indexer.process.Statistics;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.filetypes.EvidenceFileType;
 
@@ -59,8 +66,6 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private static Logger LOGGER = LoggerFactory.getLogger(EvidenceFile.class);
 
   private static Set<String> extraAttributeSet = Collections.synchronizedSet(new HashSet<String>());
-
-  public static boolean robustImageReading = false;
 
   private static class Counter {
 
@@ -123,7 +128,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private List<Integer> parentIds = new ArrayList<Integer>();
 
-  private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
+  private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
 
   /**
    * Data de criação do arquivo.
@@ -162,7 +167,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private HashSet<String> categories = new HashSet<String>();
 
-  private String labels;
+  private List<String> labels = new ArrayList<>();
 
   private Metadata metadata;
 
@@ -190,7 +195,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   private boolean isQueueEnd = false, parsed = false;
 
-  private String parsedTextCache;
+  private TextCache textCache;
 
   private String hash;
 
@@ -205,8 +210,14 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private long startOffset = -1, tempStartOffset = -1;
 
   private Integer sleuthId;
+  
+  private String idInDataSource;
 
   private TikaInputStream tis;
+  
+  private byte[] thumb;
+  
+  private SeekableInputStreamFactory inputStreamFactory;
 
   static final int BUF_LEN = 8 * 1024 * 1024;
 
@@ -248,9 +259,15 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     } catch (Exception e) {
       //LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
     }
+    try {
+        if(textCache != null)
+            textCache.close();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
     if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
       if (!file.delete()) {
-        LOGGER.warn("{} Falha ao deletar {}", Thread.currentThread().getName(), file.getAbsolutePath());
+        LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
       }
     }
   }
@@ -285,7 +302,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return o nome das categorias do item concatenadas
    */
   public String getCategories() {
-    String names = "";
+    String names = ""; //$NON-NLS-1$
     int i = 0;
     for (String bookmark : categories) {
       names += bookmark;
@@ -378,7 +395,7 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     if (exportedFile != null) {
       return exportedFile.trim();
     } else {
-      return "";
+      return ""; //$NON-NLS-1$
     }
   }
 
@@ -422,9 +439,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
   /**
    *
-   * @return os marcadores do item concatenados
+   * @return lista de marcadores do item
    */
-  public String getLabels() {
+  public List<String> getLabels() {
     return labels;
   }
 
@@ -478,9 +495,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return ids dos itens pai concatenados com espaço
    */
   public String getParentIdsString() {
-    String parents = "";
+    String parents = ""; //$NON-NLS-1$
     for (Integer id : parentIds) {
-      parents += id + " ";
+      parents += id + " "; //$NON-NLS-1$
     }
 
     return parents;
@@ -491,9 +508,33 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * @return o texto extraído do item armazenado pela tarefa de expansão para alguns containers com
    * texto (eml, ppt, etc)
    */
+  @Deprecated
   public String getParsedTextCache() {
-    return parsedTextCache;
+    if(textCache == null)
+        return null;
+    StringBuilder sb = new StringBuilder();
+    try(Reader reader = textCache.getTextReader()){
+        int tot = 0, i = 0;
+        char[] cbuf = new char[64 * 1024];
+        while((tot += i) < 10000000 && (i = reader.read(cbuf)) != -1) {
+            sb.append(cbuf, 0, i);
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return sb.toString();
   }
+  
+  public TextCache getTextCache() {
+      return textCache;
+  }
+  
+  public Reader getTextReader() throws IOException {
+      if(textCache == null)
+          return null;
+      else
+          return textCache.getTextReader();
+    }
 
   /**
    * @return String com o caminho completo do item
@@ -557,23 +598,25 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       }
     }
 
-    if (stream == null) {
-      if (sleuthFile != null) {
+    if (stream == null && sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-        if (sleuthcase == null || !robustImageReading) {
+        if (sleuthcase == null || !Configuration.robustImageReading) {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
-          stream = sleuthProcess.getInputStream(Integer.valueOf(sleuthId), path);
+          stream = sleuthProcess.getInputStream((int)sleuthFile.getId(), path);
         }
-      } else {
-        return new EmptyInputStream();
-      }
     }
     
-    if (startOffset != -1) {
+    if(stream == null && inputStreamFactory != null)
+        stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
+    
+    if (stream != null && startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);
     }
+    
+    if(stream == null)
+        return new EmptyInputStream();
 
     return stream;
   }
@@ -598,11 +641,11 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
       if (tis != null && tis.hasFile()) {
         tmpFile = tis.getFile();
       } else {
-        String ext = ".tmp";
+        String ext = ".tmp"; //$NON-NLS-1$
         if (type != null && !type.toString().isEmpty()) {
-          ext = Util.getValidFilename("." + type.toString());
+          ext = Util.getValidFilename("." + type.toString()); //$NON-NLS-1$
         }
-        final Path path = Files.createTempFile("iped", ext);
+        final Path path = Files.createTempFile("iped", ext); //$NON-NLS-1$
         tmpResources.addResource(new Closeable() {
           public void close() throws IOException {
         	  Files.delete(path);
@@ -661,6 +704,13 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public EvidenceFileType getType() {
     return type;
+  }
+  
+  public String getTypeExt() {
+      if(type == null)
+          return null;
+      else
+          return type.getLongDescr();
   }
 
   /**
@@ -818,7 +868,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setCategory(String category) {
     categories = new HashSet<String>();
-    categories.add(category);
+    if(category != null)
+        categories.add(category);
   }
 
   /**
@@ -933,9 +984,9 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   /**
    * Define os marcadores do item
    *
-   * @param labels marcadores concatenados
+   * @param labels lista de marcadores
    */
-  public void setLabels(String labels) {
+  public void setLabels(List<String> labels) {
     this.labels = labels;
   }
 
@@ -954,6 +1005,10 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   public void setMediaType(MediaType mediaType) {
     this.mediaType = mediaType;
   }
+  
+  public void setMediaTypeStr(String mediaType) {
+      this.mediaType = MediaType.parse(mediaType);
+    }
 
   /**
    * @param modificationDate data da última modificação do arquivo
@@ -967,8 +1022,8 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    */
   public void setName(String name) {
     this.name = name;
-    int p = name.lastIndexOf(".");
-    extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase();
+    int p = name.lastIndexOf("."); //$NON-NLS-1$
+    extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
   }
 
   /**
@@ -996,8 +1051,18 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   /**
    * @param parsedTextCache texto extraído após o parsing
    */
-  public void setParsedTextCache(String parsedTextCache) {
-    this.parsedTextCache = parsedTextCache;
+  @Deprecated
+  public void setParsedTextCache(String parsedText) {
+    this.textCache = new TextCache();
+    try {
+        this.textCache.write(parsedText);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+  }
+  
+  public void setParsedTextCache(TextCache textCache) {
+      this.textCache = textCache;
   }
 
   /**
@@ -1061,7 +1126,17 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
    * do caso
    */
   public void setToIgnore(boolean toIgnore) {
+	  setToIgnore(toIgnore, true);
+  }
+  
+  /**
+   * @param toIgnore se o item deve ser ignorado pela tarefas de processamento seguintes e excluído
+   * do caso
+   */
+  public void setToIgnore(boolean toIgnore, boolean updateStats) {
     this.toIgnore = toIgnore;
+    if(updateStats && toIgnore)
+    	Statistics.get().incIgnored();
   }
 
   /**
@@ -1093,23 +1168,23 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Arquivo: " + name);
-    sb.append("\n\t\tCaminho: ").append(getPath());
+    sb.append("File: " + name); //$NON-NLS-1$
+    sb.append("\n\t\tPath: ").append(getPath()); //$NON-NLS-1$
     if (type != null) {
-      sb.append("\n\t\t").append("Tipo de Arquivo: ")
+      sb.append("\n\t\t").append("File type: ") //$NON-NLS-1$ //$NON-NLS-2$
           .append(type.getLongDescr());
     }
     if (creationDate != null) {
-      sb.append("\n\t\tData de Criação: ").append(creationDate.toString());
+      sb.append("\n\t\tCreation: ").append(creationDate.toString()); //$NON-NLS-1$
     }
     if (modificationDate != null) {
-      sb.append("\n\t\tData de Modificação: ").append(modificationDate.toString());
+      sb.append("\n\t\tModification: ").append(modificationDate.toString()); //$NON-NLS-1$
     }
     if (accessDate != null) {
-      sb.append("\n\t\tData de Último Acesso: ").append(accessDate.toString());
+      sb.append("\n\t\tLast Accessed: ").append(accessDate.toString()); //$NON-NLS-1$
     }
     if (length != null) {
-      sb.append("\n\t\tTamanho do Arquivo: ").append(length);
+      sb.append("\n\t\tSize: ").append(length); //$NON-NLS-1$
     }
     return sb.toString();
   }
@@ -1137,12 +1212,38 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
     this.metadata = metadata;
   }
 
-public DataSource getDataSource() {
+  public DataSource getDataSource() {
 	return dataSource;
-}
+  }
 
-public void setDataSource(DataSource evidence) {
+  public void setDataSource(DataSource evidence) {
 	this.dataSource = evidence;
-}
+  }
+
+    @Override
+    public byte[] getThumb() {
+        return thumb;
+    }
+    
+    public void setThumb(byte[] thumb) {
+        this.thumb = thumb;
+        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+    }
+
+    public SeekableInputStreamFactory getInputStreamFactory() {
+        return inputStreamFactory;
+    }
+
+    public void setInputStreamFactory(SeekableInputStreamFactory inputStreamFactory) {
+        this.inputStreamFactory = inputStreamFactory;
+    }
+
+    public String getIdInDataSource() {
+        return idInDataSource;
+    }
+
+    public void setIdInDataSource(String idInDataSource) {
+        this.idInDataSource = idInDataSource;
+    }
 
 }

@@ -1,13 +1,11 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.tika.dl.imagerec.DL4JInceptionV3Net;
@@ -16,10 +14,9 @@ import org.apache.tika.parser.recognition.RecognisedObject;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.datavec.image.loader.NativeImageLoader;
 
-import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.EvidenceFile;
 
-public class ImageRecognizerTask extends AbstractTask {
+public class ImageRecognizerTask extends AbstractTask { 
     
     private static final HashSet<String> formats = new HashSet<String>();
 
@@ -35,10 +32,6 @@ public class ImageRecognizerTask extends AbstractTask {
             return Double.compare(o2.getConfidence(), o1.getConfidence());
         }
     };
-
-    public ImageRecognizerTask(Worker worker) {
-        super(worker);
-    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

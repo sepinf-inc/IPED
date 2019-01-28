@@ -21,16 +21,16 @@ public class HtmlUtil {
     String s = table.toLowerCase();
     int p1 = 0;
     while (true) {
-      p1 = s.indexOf("<tr", p1);
+      p1 = s.indexOf("<tr", p1); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
-      p1 = s.indexOf(">", p1 + 3);
+      p1 = s.indexOf(">", p1 + 3); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
-      int p2 = s.indexOf("</tr>", p1);
-      int p3 = s.indexOf("<tr", p1);
+      int p2 = s.indexOf("</tr>", p1); //$NON-NLS-1$
+      int p3 = s.indexOf("<tr", p1); //$NON-NLS-1$
       if (p2 < 0) {
         p2 = s.length();
       }
@@ -58,15 +58,15 @@ public class HtmlUtil {
     String s = line.toLowerCase();
     int p1 = 0;
     while (true) {
-      p1 = s.indexOf("<td", p1);
+      p1 = s.indexOf("<td", p1); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
-      p1 = s.indexOf(">", p1 + 3);
+      p1 = s.indexOf(">", p1 + 3); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
-      int p2 = s.indexOf("</td>", p1);
+      int p2 = s.indexOf("</td>", p1); //$NON-NLS-1$
       if (p2 < 0) {
         p2 = s.length();
       }
@@ -87,12 +87,12 @@ public class HtmlUtil {
     String s = str.toLowerCase();
     int p1 = 0;
     while (true) {
-      p1 = s.indexOf("href=\"", p1);
+      p1 = s.indexOf("href=\"", p1); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
       p1 += 6;
-      int p2 = s.indexOf("\"", p1);
+      int p2 = s.indexOf("\"", p1); //$NON-NLS-1$
       if (p2 < 0) {
         break;
       }
@@ -103,12 +103,12 @@ public class HtmlUtil {
   }
 
   public static final String getAttachName(String str) {
-    int p1 = str.indexOf(">>");
-    int p2 = str.indexOf("</a>", p1);
+    int p1 = str.indexOf(">>"); //$NON-NLS-1$
+    int p2 = str.indexOf("</a>", p1); //$NON-NLS-1$
     if (p1 > 0 && p2 > 0) {
       return str.substring(p1 + 2, p2);
     } else {
-      return "";
+      return ""; //$NON-NLS-1$
     }
   }
 
@@ -119,17 +119,17 @@ public class HtmlUtil {
    * @return String Após a retirada de caracteres especiais.
    */
   public static final String removeSpecialChars(String str) {
-    if (str.indexOf("&#") < 0) {
+    if (str.indexOf("&#") < 0) { //$NON-NLS-1$
       return str;
     }
     StringBuilder ret = new StringBuilder(str);
     int p1 = 0;
     while (true) {
-      p1 = ret.indexOf("&#", p1);
+      p1 = ret.indexOf("&#", p1); //$NON-NLS-1$
       if (p1 < 0) {
         break;
       }
-      int p2 = ret.indexOf(";", p1);
+      int p2 = ret.indexOf(";", p1); //$NON-NLS-1$
       if (p2 < p1 + 3 || p2 > p1 + 5) {
         break;
       }

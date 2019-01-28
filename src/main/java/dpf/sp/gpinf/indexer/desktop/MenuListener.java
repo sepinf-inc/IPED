@@ -34,25 +34,39 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.tree.TreePath;
 
 import org.apache.lucene.search.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import gpinf.dev.data.EvidenceFile;
 
 public class MenuListener implements ActionListener {
+    
+  private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
   JFileChooser fileChooser = new JFileChooser();
   FileFilter defaultFilter = fileChooser.getFileFilter(), csvFilter = new Filtro();
   MenuClass menu;
-  static String CSV = ".csv";
+  static String CSV = ".csv"; //$NON-NLS-1$
 
   public MenuListener(MenuClass menu) {
     this.menu = menu;
     File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
     fileChooser.setCurrentDirectory(moduleDir.getParentFile());
+    
+	  /*[Triage] Se existe o diretório padrão de dados exportados, como o /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório */
+	  File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));    	  
+	  if (dirDadosExportados.exists()) {
+		 fileChooser.setCurrentDirectory(dirDadosExportados);
+	  }
+    
   }
 
   private class Filtro extends FileFilter {
@@ -71,7 +85,7 @@ public class MenuListener implements ActionListener {
 
     @Override
     public String getDescription() {
-      return "Comma Separeted Values (" + CSV + ")";
+      return "Comma Separeted Values (" + CSV + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
   }
@@ -82,6 +96,8 @@ public class MenuListener implements ActionListener {
     if (e.getSource() == menu.disposicao) {
       App.get().alterarDisposicao();
 
+    } else if (e.getSource() == menu.layoutPadrao) {
+    	App.get().refazLayout(true);
     } else if (e.getSource() == menu.marcarSelecionados) {
       MarcadoresController.get().setMultiSetting(true);
       int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -90,7 +106,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.desmarcarSelecionados) {
     	MarcadoresController.get().setMultiSetting(true);
@@ -100,7 +116,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     }
     if (e.getSource() == menu.lerSelecionados) {
@@ -111,7 +127,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.deslerSelecionados) {
     	MarcadoresController.get().setMultiSetting(true);
@@ -121,7 +137,7 @@ public class MenuListener implements ActionListener {
       }
       MarcadoresController.get().setMultiSetting(false);
       App.get().appCase.getMultiMarcadores().saveState();
-      MarcadoresController.get().atualizarGUI();
+      MarcadoresController.get().atualizarGUISelection();
 
     } else if (e.getSource() == menu.exportarSelecionados) {
       fileChooser.setFileFilter(defaultFilter);
@@ -210,18 +226,27 @@ public class MenuListener implements ActionListener {
         
         fileChooser.setFileFilter(defaultFilter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
           File file = fileChooser.getSelectedFile();
           (new ExportFilesToZip(file, uniqueSelectedIds)).execute();
         }
 
-      } else if (e.getSource() == menu.importarPalavras) {
+    } else if (e.getSource() == menu.importarPalavras) {
       fileChooser.setFileFilter(defaultFilter);
       fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
       if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
         File file = fileChooser.getSelectedFile();
         new KeywordListImporter(file).execute();
       }
+
+    } else if (e.getSource() == menu.exportTree || 
+            e.getSource() == menu.exportTreeChecked ||
+            e.getSource() == menu.exportCheckedTreeToZip) {
+        
+        boolean onlyChecked = e.getSource() != menu.exportTree;
+        boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
+        exportFileTree(onlyChecked, toZip);
 
     } else if (e.getSource() == menu.limparBuscas) {
       App.get().appCase.getMultiMarcadores().clearTypedWords();
@@ -244,14 +269,14 @@ public class MenuListener implements ActionListener {
 
       JDialog dialog = new JDialog();
       dialog.setModal(true);
-      dialog.setTitle("Galeria");
+      dialog.setTitle(Messages.getString("MenuListener.Gallery")); //$NON-NLS-1$
       dialog.setBounds(0, 0, 180, 140);
       SpinnerNumberModel model = new SpinnerNumberModel(App.get().galleryModel.colCount, 1, MAX_GALLERY_COLS, 1);
       model.setValue(App.get().galleryModel.colCount);
 
-      JLabel msg = new JLabel("Colunas:");
+      JLabel msg = new JLabel(Messages.getString("MenuListener.Cols")); //$NON-NLS-1$
       JSpinner spinner = new JSpinner(model);
-      JButton button = new JButton("OK");
+      JButton button = new JButton(Messages.getString("MenuListener.OK")); //$NON-NLS-1$
 
       msg.setBounds(20, 15, 50, 20);
       spinner.setBounds(80, 10, 50, 30);
@@ -295,14 +320,47 @@ public class MenuListener implements ActionListener {
     } else if(e.getSource() == menu.similarDocs){
         int selIdx = App.get().resultsTable.getSelectedRow();
         if (selIdx != -1) {
-      	  int percent = Integer.parseInt(JOptionPane.showInputDialog("Porcentual de similaridade (0 a 100)", 70));
+      	  int percent = Integer.parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
       	  ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
       	  
       	  Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent);
       	  App.get().appletListener.updateFileListing(query);
         }
+    
+    }else if(e.getSource() == menu.openViewfile) {
+        int selIdx = App.get().resultsTable.getSelectedRow();
+        ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+        EvidenceFile item = App.get().appCase.getItemByItemId(itemId);
+        LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
+        ExternalFileOpen.open(item.getViewFile());
+    
+    }else if(e.getSource() == menu.createReport) {
+        new ReportDialog().setVisible();
+    
+    }else if(e.getSource() == menu.lastColLayout) {
+        ColumnsManager.getInstance().resetToLastLayout();
+    
+    }else if(e.getSource() == menu.saveColLayout) {
+        ColumnsManager.getInstance().saveColumnsState();
+    
+    }else if(e.getSource() == menu.resetColLayout) {
+        ColumnsManager.getInstance().resetToDefaultLayout();
     }
 
+  }
+  
+  public void exportFileTree(boolean onlyChecked, boolean toZip) {
+      TreePath[] paths = App.get().tree.getSelectionPaths();
+      if (paths != null && paths.length > 1) {
+        JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
+      } else {
+        int baseDocId = -1;
+        if(paths != null) {
+            Node treeNode = (Node) paths[0].getLastPathComponent();
+            baseDocId = treeNode.docId;
+        }
+        ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
+      }
   }
 
   static class SpinnerListener implements ChangeListener, ActionListener {

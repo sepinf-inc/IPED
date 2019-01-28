@@ -18,34 +18,36 @@
  */
 package dpf.sp.gpinf.indexer;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.parser.EmptyParser;
-import org.apache.tika.parser.Parser;
+import org.apache.tika.fork.ForkParser2;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.search.SaveStateThread;
+import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
+import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 
@@ -53,11 +55,13 @@ import dpf.sp.gpinf.indexer.util.Util;
  * Classe principal de carregamento e acesso às configurações da aplicação.
  */
 public class Configuration {
-
-  public static final String CONFIG_FILE = "IPEDConfig.txt";
-  public static final String LOCAL_CONFIG = "LocalConfig.txt";
-  public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt";
-  public static final String PARSER_CONFIG = "ParserConfig.xml";
+    
+  public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
+  public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
+  public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
+  public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
+  public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
+  public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
 
   public static UTF8Properties properties = new UTF8Properties();
   public static File indexTemp, indexerTemp;
@@ -68,28 +72,43 @@ public class Configuration {
   public static int timeOutPerMB = 1;
   public static boolean forceMerge = true;
   public static String configPath, appRoot;
-  public static Parser errorParser = new RawStringParser(true);
-  public static Parser fallBackParser = new RawStringParser(true);
   public static boolean embutirLibreOffice = true;
-  public static boolean sortPDFChars = false;
   public static boolean addUnallocated = false;
   public static boolean addFileSlacks = false;
   public static long unallocatedFragSize = 1024 * 1024 * 1024;
   public static long minItemSizeToFragment = 100 * 1024 * 1024;
-  public static String javaTmpDir = System.getProperty("java.io.tmpdir");
   public static boolean indexTempOnSSD = false;
   public static boolean outputOnSSD = false;
   public static boolean entropyTest = true;
   public static boolean addFatOrphans = true;
   public static long minOrphanSizeToIgnore = -1;
   public static int searchThreads = 1;
+  public static boolean robustImageReading = false;
+  public static String phoneParsersToUse = "external"; //$NON-NLS-1$
+  public static File optionalJarDir;
+  public static File tskJarFile;
+  public static String loaddbPathWin;
+  public static Locale locale;
+  public static boolean autoManageCols = true;
+  public static boolean storeTermVectors = true;
+  public static int maxTokenLength = 255;
+  public static boolean filterNonLatinChars = false;
+  public static boolean convertCharsToAscii = true;
+  public static boolean preOpenImagesOnSleuth = false;
+  public static boolean openImagesCacheWarmUpEnabled = false;
+  public static int openImagesCacheWarmUpThreads = 256;
   
   private static AtomicBoolean loaded = new AtomicBoolean();
   
-  public static String getAppRoot(String configPath){
+  static {
+      Locale.setDefault(Locale.forLanguageTag("en")); //$NON-NLS-1$
+      locale = Locale.getDefault();
+  }
+  
+  private static String getAppRoot(String configPath){
 	  String appRoot = new File(configPath).getAbsolutePath();
-	  if(appRoot.contains("profiles"))
-	   	appRoot = new File(appRoot).getParentFile().getParent();
+	  if(appRoot.contains("profiles")) //$NON-NLS-1$
+	   	appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
 	  return appRoot;
   }
 
@@ -102,47 +121,59 @@ public class Configuration {
 		  return;
 
     // DataSource.testConnection(configPathStr);
-    LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName());
-
-    Logger LOGGER = LoggerFactory.getLogger(Configuration.class);
+    LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", NoOpLog.class.getName()); //$NON-NLS-1$
+    
+    Logger LOGGER = null;
+    if(Configuration.class.getClassLoader().getClass().getName()
+            .equals(CustomURLClassLoader.class.getName()))
+        LOGGER = LoggerFactory.getLogger(Configuration.class);
+    
+    if(LOGGER != null) LOGGER.info("Loading configuration from " + configPathStr); //$NON-NLS-1$
 
     configPath = configPathStr;
     appRoot = getAppRoot(configPath);
+    System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
 
-    System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG);
+    System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
+    System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
+    System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
-    properties.load(new File(appRoot + "/" + LOCAL_CONFIG));
-    properties.load(new File(configPath + "/" + CONFIG_FILE));
-    properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE));
+    properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
+    properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
+    properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
 
     String value;
 
-    File newTmp = null, tmp = new File(System.getProperty("java.io.tmpdir"));
+    if (System.getProperty("java.io.basetmpdir") == null) { //$NON-NLS-1$
+        System.setProperty("java.io.basetmpdir", System.getProperty("java.io.tmpdir")); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    
+    File newTmp = null, tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
 
-    value = properties.getProperty("indexTemp");
+    value = properties.getProperty("indexTemp"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (indexerTemp == null) {
-      if (value != null && !value.equalsIgnoreCase("default")) {
+      if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
         newTmp = new File(value);
         if (!newTmp.exists() && !newTmp.mkdirs()) {
-          LOGGER.info("Não foi possível criar diretório temporário {}", newTmp.getAbsolutePath());
+            if(LOGGER != null) LOGGER.info("Fail to create temp directory" + newTmp.getAbsolutePath()); //$NON-NLS-1$
         } else {
           tmp = newTmp;
         }
       }
-      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+      indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
       if (!indexerTemp.mkdirs()) {
-        tmp = new File(System.getProperty("java.io.tmpdir"));
-        indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime());
+        tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
+        indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
         indexerTemp.mkdirs();
       }
       if (indexerTemp.exists()) {
-        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath());
+        System.setProperty("java.io.tmpdir", indexerTemp.getAbsolutePath()); //$NON-NLS-1$
       }
       if (tmp == newTmp) {
-        indexTemp = new File(indexerTemp, "index");
+        indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
       }
     }
     if (indexerTemp != null) {
@@ -150,33 +181,55 @@ public class Configuration {
     }
     ConstantsViewer.indexerTemp = indexerTemp;
 
-    value = properties.getProperty("robustImageReading");
+    value = properties.getProperty("robustImageReading"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
-      EvidenceFile.robustImageReading = Boolean.valueOf(value);
+      robustImageReading = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("numThreads");
+    value = properties.getProperty("numThreads"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
-    if (value != null && !value.equalsIgnoreCase("default")) {
+    if (value != null && !value.equalsIgnoreCase("default")) { //$NON-NLS-1$
       numThreads = Integer.valueOf(value);
     } else {
       numThreads = Runtime.getRuntime().availableProcessors();
     }
+    
+    value = properties.getProperty("enableExternalParsing"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      ForkParser2.enabled = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
+    if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
+      ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
+    }else
+      ForkParser2.SERVER_POOL_SIZE = numThreads;
+    
+    value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      ForkParser2.SERVER_MAX_HEAP = value.trim();
+    }
+    
+    value = properties.getProperty("locale"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty())
+      locale = Locale.forLanguageTag(value.trim());
+    
+    System.setProperty("iped-locale", locale.toLanguageTag()); //$NON-NLS-1$
 
-    value = properties.getProperty("forceMerge");
+    value = properties.getProperty("forceMerge"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
-    if (value != null && value.equalsIgnoreCase("false")) {
+    if (value != null && value.equalsIgnoreCase("false")) { //$NON-NLS-1$
       forceMerge = false;
     }
 
-    value = properties.getProperty("timeOut");
+    value = properties.getProperty("timeOut"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -184,7 +237,7 @@ public class Configuration {
       timeOut = Integer.valueOf(value);
     }
     
-    value = properties.getProperty("timeOutPerMB");
+    value = properties.getProperty("timeOutPerMB"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -192,111 +245,101 @@ public class Configuration {
     	timeOutPerMB = Integer.valueOf(value);
     }    
 
-    ParsingReader.setTextSplitSize(textSplitSize);
-    ParsingReader.setTextOverlapSize(textOverlapSize);
-    FastPipedReader.setTimeout(timeOut);
-
-    value = properties.getProperty("entropyTest");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      entropyTest = Boolean.valueOf(value);
-    }
-
-    value = properties.getProperty("indexUnknownFiles");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !Boolean.valueOf(value)) {
-      fallBackParser = new EmptyParser();
-    } else {
-      fallBackParser = new RawStringParser(entropyTest);
-    }
-
-    errorParser = new RawStringParser(entropyTest);
-
-    value = properties.getProperty("minRawStringSize");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      RawStringParser.MIN_SIZE = Integer.valueOf(value);
-    }
-
-    value = properties.getProperty("enableOCR");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.ENABLED = Boolean.valueOf(value);
-    }
-
-    value = properties.getProperty("OCRLanguage");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.LANGUAGE = value;
-    }
-
-    value = properties.getProperty("minFileSize2OCR");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.MIN_SIZE = Long.valueOf(value);
-    }
-
-    value = properties.getProperty("maxFileSize2OCR");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.MAX_SIZE = Long.valueOf(value);
-    }
-
-    value = properties.getProperty("pageSegMode");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      OCRParser.PAGESEGMODE = value;
-    }
-
-    value = properties.getProperty("maxPDFTextSize2OCR");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFOCRTextParser.MAXCHARS2OCR = Integer.valueOf(value);
-    }
-
-    value = properties.getProperty("pdfToImgResolution");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFToImage.RESOLUTION = Integer.valueOf(value);
-    }
-
-    value = properties.getProperty("pdfToImgLib");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFToImage.PDFLIB = value;
+    value = properties.getProperty("textSplitSize"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+    	textSplitSize = Integer.valueOf(value.trim());
     }
     
-    value = properties.getProperty("processImagesInPDFs");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      PDFOCRTextParser.processEmbeddedImages = Boolean.valueOf(value);
+    FragmentingReader.setTextSplitSize(textSplitSize);
+    FragmentingReader.setTextOverlapSize(textOverlapSize);
+    FastPipedReader.setTimeout(timeOut);
+
+    value = properties.getProperty("entropyTest"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      entropyTest = Boolean.valueOf(value.trim());
+      System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, value.trim());
     }
 
-    value = properties.getProperty("embutirLibreOffice");
+    value = properties.getProperty("indexUnknownFiles"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, value.trim());
+    }
+    
+    value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, value.trim());
+    }
+    
+    value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
+    }
+
+    value = properties.getProperty("enableOCR"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        System.setProperty(OCRParser.ENABLE_PROP, value.trim());
+    }
+
+    value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.LANGUAGE_PROP, value.trim());
+    }
+
+    value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.MIN_SIZE_PROP, value.trim());
+    }
+
+    value = properties.getProperty("maxFileSize2OCR"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.MAX_SIZE_PROP, value.trim());
+    }
+
+    value = properties.getProperty("pageSegMode"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(OCRParser.PAGE_SEGMODE_PROP, value.trim());
+    }
+
+    value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, value.trim());
+    }
+    
+    value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, value.trim());
+    }
+    
+    value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, value.trim());
+    }
+
+    value = properties.getProperty("pdfToImgResolution"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.RESOLUTION_PROP, value.trim());
+    }
+
+    value = properties.getProperty("pdfToImgLib"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.PDFLIB_PROP, value.trim());
+    }
+    
+    value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
+    }
+    //do not open extra processes for OCR if forkParser is enabled
+    if(ForkParser2.enabled) {
+        System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
+    }
+    
+    value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+      System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, value.trim()); 
+    }
+    
+    value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -304,15 +347,7 @@ public class Configuration {
       embutirLibreOffice = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("sortPDFChars");
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      sortPDFChars = Boolean.valueOf(value);
-    }
-
-    value = properties.getProperty("extraCharsToIndex");
+    value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -320,7 +355,7 @@ public class Configuration {
       LetterDigitTokenizer.load(value);
     }
 
-    value = properties.getProperty("convertCharsToLowerCase");
+    value = properties.getProperty("convertCharsToLowerCase"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -328,7 +363,7 @@ public class Configuration {
       LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("addUnallocated");
+    value = properties.getProperty("addUnallocated"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -336,7 +371,7 @@ public class Configuration {
       addUnallocated = Boolean.valueOf(value);
     }
     
-    value = properties.getProperty("addFileSlacks");
+    value = properties.getProperty("addFileSlacks"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -344,7 +379,7 @@ public class Configuration {
       addFileSlacks = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("unallocatedFragSize");
+    value = properties.getProperty("unallocatedFragSize"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -352,7 +387,7 @@ public class Configuration {
       unallocatedFragSize = Long.valueOf(value);
     }
     
-    value = properties.getProperty("minItemSizeToFragment");
+    value = properties.getProperty("minItemSizeToFragment"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -360,7 +395,7 @@ public class Configuration {
     	minItemSizeToFragment = Long.valueOf(value);
     }
 
-    value = properties.getProperty("indexTempOnSSD");
+    value = properties.getProperty("indexTempOnSSD"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -368,17 +403,17 @@ public class Configuration {
       indexTempOnSSD = Boolean.valueOf(value);
     }
     
-    value = properties.getProperty("outputOnSSD");
+    value = properties.getProperty("outputOnSSD"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
       outputOnSSD = Boolean.valueOf(value);
     }
-    if(outputOnSSD)
+    if(outputOnSSD || !indexTempOnSSD || IndexFiles.getInstance().appendIndex)
     	indexTemp = null;
 
-    value = properties.getProperty("addFatOrphans");
+    value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -386,7 +421,7 @@ public class Configuration {
       addFatOrphans = Boolean.valueOf(value);
     }
 
-    value = properties.getProperty("minOrphanSizeToIgnore");
+    value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
@@ -394,49 +429,113 @@ public class Configuration {
       minOrphanSizeToIgnore = Long.valueOf(value);
     }
 
-    value = properties.getProperty("searchThreads");
+    value = properties.getProperty("searchThreads"); //$NON-NLS-1$
     if (value != null) {
       value = value.trim();
     }
     if (value != null && !value.isEmpty()) {
       searchThreads = Integer.valueOf(value);
     }
+    
+    value = properties.getProperty("maxBackups"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.MAX_BACKUPS = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("backupInterval"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        SaveStateThread.BKP_INTERVAL = Long.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        phoneParsersToUse = value.trim();
+    }
+    
+    value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        autoManageCols = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        storeTermVectors = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("maxTokenLength"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        maxTokenLength = Integer.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        filterNonLatinChars = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("convertCharsToAscii"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        convertCharsToAscii = Boolean.valueOf(value.trim());
+    }
 
-    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+    value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        preOpenImagesOnSleuth = Boolean.valueOf(value.trim());
+    }
+    
+    value = properties.getProperty("openImagesCacheWarmUpEnabled"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpEnabled = Boolean.valueOf(value.trim());
+    }
 
-      String arch = "x86";
-      if(System.getProperty("os.arch").contains("64"))
-    	  arch = "x64";
+    value = properties.getProperty("openImagesCacheWarmUpThreads"); //$NON-NLS-1$
+    if (value != null && !value.trim().isEmpty()) {
+        openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
+    }
+
+    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+
+      String arch = "x86"; //$NON-NLS-1$
+      if(System.getProperty("os.arch").contains("64")) //$NON-NLS-1$ //$NON-NLS-2$
+    	  arch = "x64"; //$NON-NLS-1$
       
-      String loaddbPath = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb";
-      SleuthkitReader.setTskPath(loaddbPath);
+      loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb"; //$NON-NLS-1$ //$NON-NLS-2$
 
-      File nativelibs = new File(loaddbPath).getParentFile().getParentFile();
+      File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
       nativelibs = new File(nativelibs, arch);
       
-      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true);
-      Util.loadNatLibs(new File(indexerTemp, "nativelibs"));
-
-      OCRParser.TESSERACTFOLDER = appRoot + "/tools/tesseract";
-      EDBParser.TOOL_PATH = appRoot + "/tools/esedbexport/";
-      LibpffPSTParser.TOOL_PATH = appRoot + "/tools/pffexport/";
-      IndexDatParser.TOOL_PATH = appRoot + "/tools/msiecfexport/";
+      if(LOGGER == null)
+        Util.loadNatLibs(nativelibs); //$NON-NLS-1$
+      
+      System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
+      System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
+      System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
+      System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
+      
+      String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
+      if(mplayerPath != null)
+          VideoThumbTask.mplayerWin = mplayerPath.trim();
     
     }else{
-    	String tskJarPath = properties.getProperty("tskJarPath");
+    	String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
     	if (tskJarPath != null && !tskJarPath.isEmpty())
         	tskJarPath = tskJarPath.trim();
     	else
-    		throw new IPEDException("Obrigatório configurar tskJarPath em LocalConfig.txt!");
+    		throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
     	
-    	File tskJarFile = new File(tskJarPath);
+    	tskJarFile = new File(tskJarPath);
     	if(!tskJarFile.exists())
-    		throw new IPEDException("Arquivo não encontrado " + tskJarPath + ". Configure tskJarPath em conf/AdvancedConfig.txt!");
-    	
-    	new JarLoader().loadJar(tskJarFile);
+    		throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    
+    String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
+    if(optional_jars != null) {
+        optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
+        ForkParser2.plugin_dir = optionalJarDir.getCanonicalPath();
     }
 
-    RegistryParser.TOOL_PATH = appRoot + "/tools/regripper/";
+    String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
+    if(regripperFolder != null)
+        System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
 
   }
 

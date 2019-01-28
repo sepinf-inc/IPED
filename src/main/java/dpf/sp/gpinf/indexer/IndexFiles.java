@@ -19,9 +19,14 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.slf4j.Logger;
@@ -32,7 +37,9 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
+import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém compatibilidade com
@@ -48,7 +55,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   public boolean fromCmdLine = false;
   public boolean appendIndex = false;
 
-  String configPath;
+  String rootPath, configPath;
   boolean nogui = false;
   boolean nologfile = false;
   File palavrasChave;
@@ -121,14 +128,33 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   private void setConfigPath() throws Exception {
 	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 	  //configPath = System.getProperty("user.dir");
-	  configPath = new File(url.toURI()).getParent();
+	  rootPath = new File(url.toURI()).getParent();
+	  //test for report generation from case folder
+	  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
+	      rootPath = new File(url.toURI()).getParentFile().getParent();
 	  
-	  if(cmdLineParams.getCmdArgs().containsKey("-profile")){
-		  String profile = cmdLineParams.getCmdArgs().get("-profile").get(0);
-		  configPath = new File(configPath, "profiles/" + profile).getAbsolutePath();
-		  if(!new File(configPath).exists())
-			  throw new IPEDException("Profile informado inexistente!");
-	  }
+	  configPath = rootPath;
+	  String locale = getProfileLocale();
+	  
+	  String profile = null;
+	  
+	  if(cmdLineParams.getProfile() != null){
+		  profile = cmdLineParams.getProfile();
+	  }else if(!locale.equals("pt-BR")) //$NON-NLS-1$
+		  profile = "default"; //$NON-NLS-1$
+	  
+	  if(profile != null)
+		  configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
+	  
+	  if(!new File(configPath).exists())
+		  throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
+  }
+  
+  public String getProfileLocale() throws IOException {
+	  UTF8Properties props = new UTF8Properties();
+	  props.load(new File(rootPath, Configuration.LOCAL_CONFIG));
+	  String locale = props.getProperty("locale").trim(); //$NON-NLS-1$
+	  return locale;
   }
 
   /**
@@ -136,13 +162,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    *
    * @param kffPath caminho para base de hashes.
    */
-  void importKFF(String kffPath) {
+  void importKFF(File kffPath) {
     try {
       setConfigPath();
       Configuration.getConfiguration(configPath);
-      KFFTask kff = new KFFTask(null);
+      KFFTask kff = new KFFTask();
       kff.init(Configuration.properties, null);
-      kff.importKFF(new File(kffPath));
+      kff.importKFF(kffPath);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -156,44 +182,27 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   @Override
   protected Boolean doInBackground() {
     try {
-      if (fromCmdLine) 
-    	  setConfigPath();
-    	
-      logConfiguration = new LogConfiguration(logFile);
-      logConfiguration.configureLogParameters(configPath, nologfile);
-      
-      LOGGER = LoggerFactory.getLogger(IndexFiles.class);
-      
-      if(nogui){
-    	 ProgressConsole console = new ProgressConsole();
-    	 this.addPropertyChangeListener(console);
-      }
-
-      LOGGER.info(Versao.APP_NAME);
-
-      Configuration.getConfiguration(configPath);
-
       manager = new Manager(dataSource, output, palavrasChave);
       cmdLineParams.saveIntoCaseData(manager.getCaseData());
       manager.process();
 
-      this.firePropertyChange("mensagem", "", "Finalizado");
-      LOGGER.info("{} finalizado.", Versao.APP_EXT);
+      this.firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+      LOGGER.info("{} finished.", Versao.APP_EXT); //$NON-NLS-1$
       success = true;
 
     } catch (Throwable e) {
       success = false;
       if(e instanceof IPEDException)
-    	  LOGGER.error("Erro no processamento: " + e.getMessage());
+    	  LOGGER.error("Processing Error: " + e.getMessage()); //$NON-NLS-1$
       else
-    	  LOGGER.error("Erro no processamento:", e);
+    	  LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
 
     } finally {
+      done = true;
       if(manager != null)
        	manager.setProcessingFinished(true);
       if(manager == null || !manager.isSearchAppOpen())
-    	logConfiguration.closeConsoleLogFile();
-      done = true;
+        logConfiguration.closeConsoleLogFile();
     }
 
     return success;
@@ -214,28 +223,24 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   volatile boolean done = false, success = false;
 
   /**
-   * Executa o processamento com janela de progresso.
-   */
-  public boolean executeWithProgressBar() {
-    progressFrame = new ProgressFrame(this);
-    this.addPropertyChangeListener(progressFrame);
-    progressFrame.setVisible(true);
-    return executar();
-  }
-
-  /**
-   * Executa o processamento sem janela de progresso. Chamado pelo AsAP.
+   * Instancia listener de progresso, executa o processamento e aguarda.
    */
   public boolean executar() {
+    if(!nogui){
+        SwingUtilities.invokeLater(new Runnable(){
+            public void run(){
+                progressFrame = new ProgressFrame(lastInstance);
+                lastInstance.addPropertyChangeListener(progressFrame);
+                progressFrame.setVisible(true);
+            }
+        });
+    }else{
+        ProgressConsole console = new ProgressConsole();
+        this.addPropertyChangeListener(console);
+    }
+    
     this.execute();
-    /*try {
-     return this.get();
-		
-     } catch (InterruptedException | ExecutionException e) {
-     //e.printStackTrace();
-     return false;
-     }
-     * */
+    
     while (!done) {
       try {
         Thread.sleep(2000);
@@ -251,30 +256,60 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    * Entrada principal da aplicação para processamento de evidências
    */
   public static void main(String[] args) {
-
-    IndexFiles indexador;
-    indexador = new IndexFiles(args);
-    boolean success;
-
-    if (!indexador.nogui) {
-      success = indexador.executeWithProgressBar();
-    } else {
-      success = indexador.executar();
+      
+    boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
+    String logPath = null;
+    if(fromCustomLoader) {
+        logPath = CustomLoader.getLogPathFromCustomArgs(args);
+        args = CustomLoader.clearCustomLoaderArgs(args);
     }
 
+    IndexFiles indexador = new IndexFiles(args);
+    PrintStream SystemOut = System.out;
+    boolean success = false;
+    
+    try {
+        indexador.setConfigPath();
+        indexador.logConfiguration = new LogConfiguration(indexador, logPath);
+        indexador.logConfiguration.configureLogParameters(indexador.nologfile, fromCustomLoader);
+        
+        LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+        if(!fromCustomLoader)
+            LOGGER.info(Versao.APP_NAME);
+        
+        Configuration.getConfiguration(indexador.configPath);
+        
+        if(!fromCustomLoader) {
+            List<File> jars = new ArrayList<File>();
+            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
+            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
+            jars.add(Configuration.tskJarFile);
+            
+            String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
+            CustomLoader.run(customArgs, jars);
+            return;
+            
+        }else{
+            success = indexador.executar();
+        }
+        
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    
     if (!success) {
-    	getInstance().logConfiguration.getSystemOut().println("\nERRO!!!");
+        SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
     } else {
-    	getInstance().logConfiguration.getSystemOut().println("\n" + Versao.APP_EXT + " finalizado.");
+        SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    if (!indexador.nologfile) {
-    	getInstance().logConfiguration.getSystemOut().println("Consulte o LOG na pasta \"IPED/log\".");
+    if (indexador.logFile != null) {
+        SystemOut.println("Check the log at " + indexador.logFile.getAbsolutePath()); //$NON-NLS-1$
     }
     
     if(getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
-    	System.exit((success)?0:1);
-
+        System.exit((success)?0:1);
+    
     // PARA ASAP:
     // IndexFiles indexador = new IndexFiles(List<File> reports, File
     // output, String configPath, File logFile, File keywordList);

@@ -1,0 +1,31 @@
+###########################################################################
+# Image thumbnail extraction configuration
+###########################################################################
+
+# It uses external tools to render hundreds of image formats not supported by Java (slower).
+# Imagemagick tool is already distributed for Windows systems.
+# For other systems, like Linux, it must be installed and on system path.
+
+# Configure "graphicsmagick" or "imagemagick" to external image rendering.
+# ImageMagick supports about twice image formats and decoding of common formats was better in a past evaluation.
+# Eventually GraphicsMagick may decode some format better.
+# Comment out to disable external image decoding of java not supported image formats.
+externalConversionTool = imagemagick
+
+# Timeout (seconds) to wait for external image decoding.
+imgConvTimeout = 10
+
+# Pixel size of generated thumbnails.
+imgThumbSize = 160
+
+# Extract embedded thumbs from exif, faster than generating them again.
+# Eventually these thumbs may have lower quality or be different of the original image.
+extractThumb = true
+
+# Number of threads for on demand thumbnail creation in gallery. "default" uses the number of CPU cores
+# Decrease the value if you have high memory usage problems.
+galleryThreads = default
+
+# Logs rendering of each image in gallery. Could generate huge logs or
+# slow down gallery rendering depending on log location.
+logGalleryRendering = false

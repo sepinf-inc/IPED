@@ -1,0 +1,50 @@
+#############################################
+# HTML Report configuration
+#############################################
+
+# Case information may be loaded from .asap file (Brazilian Federal Police) informed by command line optionin (-asap). 
+# If not used -asap option, default values below will be used.
+Header=ORGANIZATION HEADER<br>LABORATORY NAME<br>
+RequestDate=xx/xx/201x
+ReportDate=xx/xx/201x
+RecordDate=xx/xx/201x
+RequestDoc=Examination request xxxxx
+Investigation=Investigation xxxxxxx
+Report=Examination number
+Material=Evidence identification
+ExaminerID=XX.XXX
+Examiner=Examiner name
+Record=Laboratory internal record number
+Requester = Investigator name
+Title= Examination Report Name
+
+# Items per HTML page.
+ItemsPerPage = 100
+
+# Inserts image thumbnails in report.
+EnableImageThumbs = true
+
+# Pixel size of image thumbnails, if enabled above.
+ThumbSize = 112
+
+# Inserts video thumbnails in report.
+# This option just inserts video thumbs in report, its creation must be enabled in processing options.
+EnableVideoThumbs = true
+
+# Total pixel width of video thumbs stripe, if enabled above
+VideoStripeWidth = 800
+
+# Number of frames per video thumbs stripe.
+FramesPerStripe = 8 
+
+# Insert category section in left report frame.
+# If disabled, will be included only the bookmark section. If enabled, both will be included.
+# It should be disabled if bookmark names are very similar to category names.
+EnableCategoriesList = true
+
+# Enable HTML gallery of images in report.
+EnableThumbsGallery = true
+
+# Thumbnails per page in HTML gallery.
+ThumbsPerPage = 500
+

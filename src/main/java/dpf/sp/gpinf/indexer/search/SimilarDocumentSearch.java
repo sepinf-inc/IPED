@@ -59,11 +59,11 @@ public class SimilarDocumentSearch {
 		    String[] keyTerms = mlt.retrieveInterestingTerms(docId);
 		    
 		    BooleanQuery query = new BooleanQuery();
-		    System.out.print(keyTerms.length + ": ");
+		    System.out.print(keyTerms.length + ": "); //$NON-NLS-1$
 		    
 		    for(String s : keyTerms){
 		    	query.add(new TermQuery(new Term(IndexItem.CONTENT, s)), Occur.SHOULD);
-		    	System.out.print(s + " ");
+		    	System.out.print(s + " "); //$NON-NLS-1$
 		    }
 		    System.out.println();
 		    
