@@ -1,3 +1,7 @@
+28/01/2019: IPED-3.15.3
+- Corrige NullPointer que impedia abertura da interface de análise (3.15.2)
+- Remove metadados de imagens obtidos do sistema de arquivos local (3.13)
+
 25/01/2019: IPED-3.15.2
 - Suporte a UFDR segmentados
 - Suporte a AD1 v3 segmentados (até FTKImager 3.4.0.5)
