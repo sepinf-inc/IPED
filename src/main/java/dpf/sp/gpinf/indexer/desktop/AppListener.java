@@ -118,6 +118,15 @@ public class AppListener implements ActionListener, MouseListener {
       updateFileListing();
 
     }
+    
+    if (evt.getSource() == App.get().filterDuplicates) {
+        if(App.get().filterDuplicates.getForeground() == App.get().alertColor)
+            App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
+        else
+            App.get().filterDuplicates.setForeground(App.get().alertColor);
+        
+        updateFileListing();  
+    }
 
     if (evt.getSource() == App.get().ajuda) {
       FileProcessor exibirAjuda = new FileProcessor(-1, false);

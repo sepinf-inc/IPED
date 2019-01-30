@@ -210,6 +210,12 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 	                        ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
 				}
 				
+				if(App.get().filterDuplicates.isSelected()) {
+				    DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
+	                result = duplicateFilter.filter(result);
+	                numFilters++;
+				}
+				
 				saveHighlightTerms();
 
 			} catch (Throwable e) {

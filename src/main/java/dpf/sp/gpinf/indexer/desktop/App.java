@@ -123,7 +123,7 @@ public class App extends JFrame implements WindowListener {
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
   JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
-  JCheckBox checkBox, recursiveTreeList;
+  JCheckBox checkBox, recursiveTreeList, filterDuplicates;
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
@@ -372,6 +372,9 @@ public class App extends JFrame implements WindowListener {
     filtro.addItem(App.FILTRO_TODOS);
     filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
     filterManager = new FilterManager(filtro);
+    
+    filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
+    filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
 
     topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
@@ -387,6 +390,7 @@ public class App extends JFrame implements WindowListener {
     multiFilterAlert.setVisible(false);
 
     topPanel.add(filtro);
+    topPanel.add(filterDuplicates);
     topPanel.add(multiFilterAlert);
     topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
     topPanel.add(termo);
@@ -581,6 +585,7 @@ public class App extends JFrame implements WindowListener {
     }
     termo.addActionListener(appletListener);
     filtro.addActionListener(appletListener);
+    filterDuplicates.addActionListener(appletListener);
     pesquisar.addActionListener(appletListener);
     opcoes.addActionListener(appletListener);
     exportToZip.addActionListener(appletListener);
