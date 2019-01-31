@@ -17,14 +17,14 @@ public class DynamicDuplicateFilter {
     
     private static SortedDocValues docValues;
     
-    private IPEDMultiSource ipedCase;
+    private static IPEDMultiSource ipedCase;
     
     private BitSet ordSet = new BitSet(1 << 23);
     
-    public DynamicDuplicateFilter(IPEDMultiSource ipedCase) throws IOException{
-        this.ipedCase = ipedCase;
-        if(docValues == null) {
-            AtomicReader reader = App.get().appCase.getAtomicReader();
+    public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException{
+        if(ipedCase != ipedSource) {
+            ipedCase = ipedSource;
+            AtomicReader reader = ipedCase.getAtomicReader();
             docValues = reader.getSortedDocValues(IndexItem.HASH);
         }
     }
