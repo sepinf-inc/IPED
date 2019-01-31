@@ -45,35 +45,31 @@ public class PhotoDNATask extends AbstractTask{
         if(!evidence.getMediaType().getType().equals("image"))
             return;
         
-        BufferedImage img = null;
-        byte[] data = null;
-        
-        //try (InputStream is = evidence.getBufferedStream()){
-        try (InputStream is = new ByteArrayInputStream(evidence.getThumb())){
-            img = ImageIO.read(is);
+        try (InputStream is = evidence.getBufferedStream()){
+        //try (InputStream is = new ByteArrayInputStream(evidence.getThumb())){
+            
+            BufferedImage img = ImageIO.read(is);
             
             if(img.getRaster() == null)
                 throw new IOException("No raster for image");
             
-            data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+            byte[] data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+            
+            byte[] hash = new byte[64];
+            
+            int ret = photodna.ComputeShort(data, img.getWidth(), img.getHeight(), 0, 0, hash);
+            
+            if(ret == 0) {
+                String hashStr = new String(Hex.encodeHex(hash, false));
+                evidence.setExtraAttribute(PHOTO_DNA, hashStr);
+            }else
+                throw new Exception("photodna returned error " + ret);
             
         }catch(Throwable e) {
             e.printStackTrace();
-            LOGGER.info("Error loading image " + evidence.getPath() + " " + e.toString());
+            LOGGER.info("Error computing photoDNA for " + evidence.getPath() + ": " + e.toString());
             evidence.setExtraAttribute("photodna_exception", e.toString());
             return;
-        }
-        
-        BigInteger a = new BigInteger("", 32);
-        byte[] hash = new byte[64];
-        int ret = photodna.ComputeShort(data, img.getWidth(), img.getHeight(), 0, 0, hash);
-        
-        if(ret == 0) {
-            String hashStr = new String(Hex.encodeHex(hash, false));
-            evidence.setExtraAttribute(PHOTO_DNA, hashStr);
-        }else {
-            LOGGER.info("Error computing photoDNA for " + evidence.getPath());
-            evidence.setExtraAttribute("photodna_error", ret);
         }
         
     }
