@@ -55,9 +55,10 @@ public class PhotoDNATask extends AbstractTask{
             
             byte[] data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
             
-            byte[] hash = new byte[64];
+            byte[] hash = new byte[HASH_SIZE];
             
-            int ret = photodna.ComputeShort(data, img.getWidth(), img.getHeight(), 0, 0, hash);
+            photodna.reset();
+            int ret = photodna.ComputeHash(data, img.getWidth(), img.getHeight(), 0, hash);
             
             if(ret == 0) {
                 String hashStr = new String(Hex.encodeHex(hash, false));

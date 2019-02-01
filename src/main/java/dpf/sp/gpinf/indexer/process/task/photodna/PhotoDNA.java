@@ -60,7 +60,7 @@ public class PhotoDNA {
     
     private static File libPath;
     
-    private static AtomicBoolean setuped = new AtomicBoolean();
+    private static boolean setuped = false;
 
     // Private data
     long hashBuffer = 0;
@@ -71,7 +71,9 @@ public class PhotoDNA {
         libPath = path;
     }
     
-    public static void setup() {
+    private static synchronized void setup() {
+        if(setuped) return;
+        
         String dllname = "PhotoDNA";
 
         String osArch = System.getProperty("os.arch");
@@ -106,6 +108,8 @@ public class PhotoDNA {
             String path2 = new File(libPath, dllname).getCanonicalPath();
             System.load(path2);
             
+            setuped = true;
+            
         } catch (Throwable ex2) {
             throw new RuntimeException(ex2);
         }
@@ -116,7 +120,7 @@ public class PhotoDNA {
     }
 
     public PhotoDNA(int initialSize) {
-        if(!setuped.getAndSet(true))
+        if(!setuped)
             setup();
         
         photodna = (PhotoDNAJNA) Native.load(PhotoDNAJNA.class);
@@ -130,6 +134,10 @@ public class PhotoDNA {
         distance += diff * diff;
       }
       return distance;
+    }
+    
+    public void reset() {
+        photodna.RobustHashResetBuffer(hashBuffer);
     }
 
     public int ComputeHash(byte[] imageData, int width, int height, int stride, byte[] hashValue) {
@@ -165,7 +173,7 @@ public class PhotoDNA {
     public int HashVersion() {
         return photodna.RobustHashVersion();
     }
-
+    
     @Override
     protected void finalize() throws Throwable {
         try {
