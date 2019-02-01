@@ -1,7 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task.photodna;
 
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,14 +25,27 @@ public class PhotoDNATest {
         PhotoDNA photodna = new PhotoDNA();
         
         for(int i = 0; i < 1000; i++) {
-            try (InputStream is = Files.newInputStream(file.toPath())){
+            try {
+                byte[] bytes = Files.readAllBytes(file.toPath());
+                InputStream is = new ByteArrayInputStream(bytes);
                 
                 BufferedImage img = ImageIO.read(is);
                 
                 if(img.getRaster() == null)
                     throw new IOException("No raster for image");
                 
-                byte[] data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+                byte[] data;
+                if (img.getType() == BufferedImage.TYPE_3BYTE_BGR) {
+                    // get DataBufferBytes from Raster
+                    data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
+                } else {
+                    //System.out.println("alternate");
+                    BufferedImage bgrImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+                    Graphics g = bgrImg.getGraphics();  
+                    g.drawImage(img, 0, 0, null);  
+                    g.dispose();  
+                    data = ((DataBufferByte) bgrImg.getRaster().getDataBuffer()).getData();
+                }
                 
                 byte[] hash = new byte[HASH_SIZE];
                 
