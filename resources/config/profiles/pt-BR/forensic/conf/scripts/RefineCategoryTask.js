@@ -37,6 +37,13 @@ function process(e){
 		e.setMediaTypeStr("video/mp2t");
 		e.setCategory("Vídeos");
 	}
+	
+	var mime = e.getMediaType().toString();
+	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Outros Arquivos") != -1){
+		var cat = mime.substring(mime.indexOf("x-ufed-") + 7);
+		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
+		e.setCategory(cat);
+	}
 
 	if(categorias.indexOf("Imagens") > -1){
 
