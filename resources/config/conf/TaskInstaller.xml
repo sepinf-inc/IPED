@@ -29,7 +29,6 @@
     
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
     
     <!--Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
