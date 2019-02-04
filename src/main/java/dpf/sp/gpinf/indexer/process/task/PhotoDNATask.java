@@ -49,7 +49,7 @@ public class PhotoDNATask extends AbstractTask{
             BufferedImage img = ImageIO.read(is);
             
             byte[] data;
-            if (img.getType() == BufferedImage.TYPE_3BYTE_BGR) {
+            if (img.getType() == BufferedImage.TYPE_3BYTE_BGR && img.getRaster() != null && img.getRaster().getDataBuffer() instanceof DataBufferByte) {
                 data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
             } else {
                 //System.out.println("alternate");
