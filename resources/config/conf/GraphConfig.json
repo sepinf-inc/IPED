@@ -146,6 +146,16 @@
                     "relationship":"CONTEM"
                 }
             ]
+        },
+        {  
+            "label":"RIF",
+            "metadata":[  
+                {  
+                    "name":"Regex:RIF",
+                    "property":"rif",
+                    "relationship":"CONTEM"
+                }
+            ]
         }
     ],
     "post-generation-statements":[

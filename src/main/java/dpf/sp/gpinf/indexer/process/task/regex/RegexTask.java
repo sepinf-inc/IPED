@@ -1,7 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -177,57 +179,68 @@ public class RegexTask extends AbstractTask{
 	}
 
 	@Override
-	protected void process(EvidenceFile evidence) throws Exception {
-		
-	    if(!enabled || evidence.getTextCache() == null)
-			return;
+  protected void process(EvidenceFile evidence) throws Exception {
 
+    if (!enabled || evidence.getTextCache() == null)
+      return;
+
+    try (Reader reader = evidence.getTextReader()) {
+      processRegex(evidence, reader);
+    }
+    processRegex(evidence, new StringReader(evidence.getName()));
+  }
+
+  private void processRegex(EvidenceFile evidence, Reader reader) throws IOException {
     List<Set<String>> hitList = new ArrayList<Set<String>>();
-//		List<List<String>> fragList = new ArrayList<List<String>>();
-		for(int i = 0; i < regexList.size(); i++){
-			hitList.add(new HashSet<String>());
-//			fragList.add(new ArrayList<String>());
-		}
-		
-		char[] cbuf= new char[1000000];
-        int k = 0;
-        try(Reader reader = evidence.getTextReader()){
-            while(k != -1) {
-                int off = 0; k = 0;
-                while(k != -1 && (off += k) < cbuf.length)
-                    k = reader.read(cbuf, off, cbuf.length - off);
-                
-                String text = new String(cbuf, 0, off);
+    for (int i = 0; i < regexList.size(); i++) {
+      hitList.add(new HashSet<String>());
+    }
 
-                RegexValidator regexValidator = RegexValidator.get();
-                
-                AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
-                while(fullMatcher.find()){
-                    int start = fullMatcher.start();
-                    int end = fullMatcher.end();
-                    String hit = text.substring(start, end);
-                    int i = 0;
-                    for(Regex regex : regexList){
-                        if(regex.pattern.run(hit)){
-                          hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
-                          if (regexValidator.validate(regex, hit)) {
-                            hit = regexValidator.format(regex, hit);
-                            Set<String> hits = hitList.get(i);
-                            hits.add(hit);
-                          }
-                        }
-                        i++;
-                    }
-                }
-                for(int i = 0; i < regexList.size(); i++){
-                  if (hitList.get(i).size() > 0) {
-                    evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name, new ArrayList<>(hitList.get(i)));
-                    if (regexList.get(i).name.equals(KEYWORDS_NAME))
-                      evidence.setToExtract(true);
-                  }
-                }
+    char[] cbuf = new char[1000000];
+    int k = 0;
+    while (k != -1) {
+      int off = 0;
+      k = 0;
+      while (k != -1 && (off += k) < cbuf.length)
+        k = reader.read(cbuf, off, cbuf.length - off);
+
+      String text = new String(cbuf, 0, off);
+
+      RegexValidator regexValidator = RegexValidator.get();
+
+      AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
+      while (fullMatcher.find()) {
+        int start = fullMatcher.start();
+        int end = fullMatcher.end();
+        String hit = text.substring(start, end);
+        int i = 0;
+        for (Regex regex : regexList) {
+          if (regex.pattern.run(hit)) {
+            hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+            if (regexValidator.validate(regex, hit)) {
+              hit = regexValidator.format(regex, hit);
+              Set<String> hits = hitList.get(i);
+              hits.add(hit);
             }
+          }
+          i++;
         }
-	}
+      }
+      for (int i = 0; i < regexList.size(); i++) {
+        if (hitList.get(i).size() > 0) {
+          String key = REGEX_PREFIX + regexList.get(i).name;
+          List<String> hits = (List<String>) evidence.getExtraAttribute(key);
+          if (hits == null) {
+            hits = new ArrayList<>(hitList.get(i));
+          } else {
+            hits.addAll(new ArrayList<>(hitList.get(i)));
+          }
+          evidence.setExtraAttribute(key, hits);
+          if (regexList.get(i).name.equals(KEYWORDS_NAME))
+            evidence.setToExtract(true);
+        }
+      }
+    }
+  }
 
 }

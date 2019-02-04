@@ -10,3 +10,4 @@ br.gov.pf.labld.iped.regex.TelefoneRegexValidatorService
 br.gov.pf.labld.iped.regex.PlacaRegexValidatorService
 br.gov.pf.labld.iped.regex.IPLRegexValidatorService
 br.gov.pf.labld.iped.regex.FacebookContactValidatorService
+br.gov.pf.labld.iped.regex.RIFRegexValidatorService

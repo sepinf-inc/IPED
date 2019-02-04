@@ -20,6 +20,7 @@ public class ExportLinksAction extends AbstractAction {
 
   public ExportLinksAction(GraphModel model, ExportLinksDialog dialog) {
     super();
+    this.model = model;
     this.dialog = dialog;
   }
 

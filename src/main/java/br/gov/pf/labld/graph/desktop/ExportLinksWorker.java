@@ -14,6 +14,8 @@ import javax.swing.SwingWorker;
 
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import br.gov.pf.labld.graph.ExportLinksQuery;
 import br.gov.pf.labld.graph.GraphService;
@@ -22,6 +24,8 @@ import br.gov.pf.labld.graph.LinkQueryListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
 public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQueryListener {
+
+  private static Logger LOGGER = LoggerFactory.getLogger(ExportLinksWorker.class);
 
   private GraphModel model;
   private ExportLinksDialog dialog;
@@ -102,7 +106,11 @@ public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQu
     writeHeader();
 
     GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-    graphService.findLinks(query, this);
+    try {
+      graphService.findLinks(query, this);
+    } catch (Exception e) {
+      LOGGER.error(e.getMessage(), e);
+    }
 
     dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     dialog.setEnabled(false);

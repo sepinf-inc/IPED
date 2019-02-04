@@ -5,13 +5,13 @@ import java.util.regex.Pattern;
 
 import dpf.sp.gpinf.indexer.process.task.regex.RegexValidatorService;
 
-public class IPLRegexValidatorService implements RegexValidatorService {
+public class RIFRegexValidatorService implements RegexValidatorService {
 
   private static final String REPLACEMENT = " ";
 
-  private static final String REGEX_NAME = "IPL";
-  
-  private final Pattern NOT_ALLOWED_CHARS_PATTERN = Pattern.compile("[^IPLRE0-9\\-]");
+  private static final String REGEX_NAME = "RIF";
+
+  private final Pattern NOT_ALLOWED_CHARS_PATTERN = Pattern.compile("[^RIF0-9]+");
 
   @Override
   public boolean validate(String hit) {

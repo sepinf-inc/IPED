@@ -22,7 +22,7 @@ public class GraphModel {
   private double angleStep = Math.PI / 32d;
 
   private Set<String> knownTypes = new HashSet<>(
-      Arrays.asList("EVIDENCIA", "PESSOA_FISICA", "PESSOA_JURIDICA", "PLACA", "EMAIL", "TELEFONE"));
+      Arrays.asList("EVIDENCIA", "PESSOA_FISICA", "PESSOA_JURIDICA", "PLACA", "EMAIL", "TELEFONE", "RIF", "IPL"));
 
   public Node convert(org.neo4j.graphdb.Node neo4jNode) {
     String nodeId = Long.toString(neo4jNode.getId());
@@ -63,8 +63,10 @@ public class GraphModel {
       return new String[] { "email" };
     } else if (type.equals("TELEFONE")) {
       return new String[] { "telefone" };
-//    } else if (type.equals("IPEDCASE")) {
-//      return new String[] { "name" };
+    } else if (type.equals("RIF")) {
+      return new String[] { "rif" };
+    } else if (type.equals("IPL")) {
+      return new String[] { "ipl" };
     } else {
       Iterable<String> keys = neo4jNode.getPropertyKeys();
       List<String> props = new ArrayList<>();
