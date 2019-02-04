@@ -1,3 +1,7 @@
+xx/02/2019: IPED-3.15.4
+- Corrige Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na geração de temporários (ex: bloqueio de antivirus)
+- Corrige NullPointer no GenericOLEParser
+
 28/01/2019: IPED-3.15.3
 - Corrige NullPointer que impedia abertura da interface de análise (3.15.2)
 - Remove metadados de imagens obtidos do sistema de arquivos local (3.13)
