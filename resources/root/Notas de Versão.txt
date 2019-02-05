@@ -1,6 +1,9 @@
 xx/02/2019: IPED-3.15.4
-- Corrige Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na geração de temporários (ex: bloqueio de antivirus)
-- Corrige NullPointer no GenericOLEParser
+- Novo filtro de duplicados sob demanda, útil em multicasos
+- Identificação de novas categorias do UFED automaticamente
+Correções:
+- Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na geração de temporários (ex: bloqueio de antivirus)
+- NullPointerException no GenericOLEParser
 
 28/01/2019: IPED-3.15.3
 - Corrige NullPointer que impedia abertura da interface de análise (3.15.2)

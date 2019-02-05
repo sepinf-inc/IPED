@@ -50,11 +50,11 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   
   private Document doc;
   private int docId;
-  private boolean listSubItens;
+  private boolean listRelated;
   private static volatile EvidenceFile lastItem;
 
-  public FileProcessor(int docId, boolean listSubItens) {
-    this.listSubItens = listSubItens;
+  public FileProcessor(int docId, boolean listRelated) {
+    this.listRelated = listRelated;
     this.docId = docId;
 
     App.get().getSearchParams().lastSelectedDoc = docId;
@@ -112,15 +112,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
     LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
 
-    if (listSubItens) {
-      // listRelatedItens();
-      App.get().subItemModel.listSubItens(doc);
-      if (Thread.currentThread().isInterrupted()) {
-        return;
-      }
-      App.get().parentItemModel.listParents(doc);
-    }
-
     //TODO usar nova API e contornar exibição da Ajuda
     IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
 	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
@@ -146,6 +137,17 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     waitSleuthkitInit(item);
     
     App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+    
+    if (listRelated) {
+        // listRelatedItens();
+        App.get().subItemModel.listSubItens(doc);
+        if (Thread.currentThread().isInterrupted()) {
+          return;
+        }
+        App.get().parentItemModel.listParents(doc);
+        
+        App.get().duplicatesModel.listDuplicates(doc);
+    }
   }
   
   private void waitSleuthkitInit(final EvidenceFile item){
@@ -212,6 +214,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             return;
           }
           App.get().parentItemModel.listParents(doc);
+          App.get().duplicatesModel.listDuplicates(doc);
         }
 
       }
