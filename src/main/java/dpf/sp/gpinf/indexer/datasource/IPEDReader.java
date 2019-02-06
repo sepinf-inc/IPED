@@ -294,7 +294,7 @@ public class IPEDReader extends DataSourceReader {
   private void insertLinkedItems(LuceneSearchResult result) {
       int[] luceneIds = result.getLuceneIds();
       Arrays.sort(luceneIds);
-      String queryText = ExtraProperties.LINKED_HASHES + ":*"; //$NON-NLS-1$
+      String queryText = ExtraProperties.LINKED_ITEMS + ":*"; //$NON-NLS-1$
       IPEDSearcher searcher = new IPEDSearcher(ipedCase, queryText);
       try {
           SearchResult itemsWithLinks = searcher.search();
@@ -304,25 +304,21 @@ public class IPEDReader extends DataSourceReader {
                   continue;
               
               Document doc = ipedCase.getReader().document(luceneId);
-              String[] linkedHashes = doc.getValues(ExtraProperties.LINKED_HASHES);
-              StringBuilder hashes = new StringBuilder();
-              for(String hash : linkedHashes)
-                  hashes.append(hash).append(" "); //$NON-NLS-1$
+              String[] items = doc.getValues(ExtraProperties.LINKED_ITEMS);
+              StringBuilder query = new StringBuilder();
+              for(String item : items)
+                  query.append("(").append(item).append(") "); //$NON-NLS-1$
               
-              for(HashTask.HASH hash : HashTask.HASH.values()) {    
-                  StringBuilder queryBuilder = new StringBuilder();
-                  queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND "); //$NON-NLS-1$
-                  queryBuilder.append(hash + ":("); //$NON-NLS-1$
-                  queryBuilder.append(hashes.toString());
-                  queryBuilder.append(")"); //$NON-NLS-1$
-                  searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
-                  
-                  LuceneSearchResult linkedItems = searcher.luceneSearch();
-                  if(linkedItems.getLength() > 0) {
-                      LOGGER.info("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + linkedItems.getLength()); //$NON-NLS-1$
-                      insertIntoProcessQueue(linkedItems, false);
-                      break;
-                  }
+              StringBuilder queryBuilder = new StringBuilder();
+              queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
+              queryBuilder.append(query.toString());
+              queryBuilder.append(")"); //$NON-NLS-1$
+              searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
+              
+              LuceneSearchResult linkedItems = searcher.luceneSearch();
+              if(linkedItems.getLength() > 0) {
+                  LOGGER.info("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + linkedItems.getLength()); //$NON-NLS-1$
+                  insertIntoProcessQueue(linkedItems, false);
               }
           }
       } catch (Exception e1) {

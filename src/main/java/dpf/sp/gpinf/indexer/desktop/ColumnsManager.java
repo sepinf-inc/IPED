@@ -123,7 +123,8 @@ public class ColumnsManager implements ActionListener, Serializable{
 	        ExtraProperties.WKFF_HITS,
 	        ExtraProperties.P2P_REGISTRY_COUNT,
 	        ExtraProperties.SHARED_HASHES,
-	        ExtraProperties.LINKED_HASHES
+	        ExtraProperties.SHARED_ITEMS,
+	        ExtraProperties.LINKED_ITEMS
 	    };
 	
 	public static final String[] email = {
