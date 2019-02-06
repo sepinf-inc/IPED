@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
@@ -41,11 +44,26 @@ public class IPEDMultiSource extends IPEDSource{
 		else
 			files = loadCasesFromTxtFile(file);
 		
-		for(File src : files){
-			LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
-			IPEDSource icase = new IPEDSource(src);
-			this.cases.add(icase);
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		cases = Collections.synchronizedList(cases);
+		for(final File src : files){
+		    Runnable openCase = new Runnable() {
+		        public void run() {
+		            LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
+		            IPEDSource icase = new IPEDSource(src);
+		            cases.add(icase);
+		        }
+		    };
+		    executor.execute(openCase);
 		}
+		try {
+            while(cases.size() < files.size())
+                Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+		executor.shutdown();
+		
 		init();
 		
 	}
