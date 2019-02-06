@@ -3,7 +3,9 @@ xx/02/2019: IPED-3.15.4
 - Novo filtro de duplicados sob demanda, útil em multicasos
 - Novo painel de exibição de duplicatas
 Correções:
-- Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na geração de temporários (ex: bloqueio de antivirus)
+- Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na leitura dos itens (ex: bloqueio de antivirus)
+- Áudios de WhatsApp não linkados nas conversas caso seu mimetype não existisse no banco
+- Marcadores para envios via WhatsApp-Iphone não eram criados se anexos fossem adicionados com --append
 - NullPointerException no GenericOLEParser
 
 28/01/2019: IPED-3.15.3
