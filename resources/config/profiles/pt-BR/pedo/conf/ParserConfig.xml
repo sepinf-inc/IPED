@@ -110,7 +110,7 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
-            <mime-exclude>image/gif</mime-exclude>
+            <!--mime-exclude>image/gif</mime-exclude-->
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>

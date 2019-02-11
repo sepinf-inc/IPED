@@ -47,7 +47,6 @@ import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -411,7 +410,7 @@ public class Configuration {
     if (value != null && !value.isEmpty()) {
       outputOnSSD = Boolean.valueOf(value);
     }
-    if(outputOnSSD)
+    if(outputOnSSD || !indexTempOnSSD || (IndexFiles.getInstance() != null && IndexFiles.getInstance().appendIndex))
     	indexTemp = null;
 
     value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$

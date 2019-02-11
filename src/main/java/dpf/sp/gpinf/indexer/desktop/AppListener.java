@@ -60,6 +60,7 @@ public class AppListener implements ActionListener, MouseListener {
     App.get().resultsTable.getRowSorter().setSortKeys(null);
     App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
     App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+    App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
     App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
     App.get().status.setText(" "); //$NON-NLS-1$
 
@@ -67,6 +68,8 @@ public class AppListener implements ActionListener, MouseListener {
 
     App.get().subItemModel.results = new LuceneSearchResult(0);
     App.get().subItemModel.fireTableDataChanged();
+    App.get().duplicatesModel.results = new LuceneSearchResult(0);
+    App.get().duplicatesModel.fireTableDataChanged();
     App.get().parentItemModel.results = new LuceneSearchResult(0);
     App.get().parentItemModel.fireTableDataChanged();
 
@@ -117,6 +120,15 @@ public class AppListener implements ActionListener, MouseListener {
 
       updateFileListing();
 
+    }
+    
+    if (evt.getSource() == App.get().filterDuplicates) {
+        if(App.get().filterDuplicates.getForeground() == App.get().alertColor)
+            App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
+        else
+            App.get().filterDuplicates.setForeground(App.get().alertColor);
+        
+        updateFileListing();  
     }
 
     if (evt.getSource() == App.get().ajuda) {

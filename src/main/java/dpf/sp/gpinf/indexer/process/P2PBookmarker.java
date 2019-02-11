@@ -60,7 +60,7 @@ public class P2PBookmarker {
 		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		
 		IPEDSource ipedSrc = new IPEDSource(caseDir);
-		String queryText = ExtraProperties.SHARED_HASHES + ":*"; //$NON-NLS-1$
+		String queryText = ExtraProperties.SHARED_HASHES + ":* || " + ExtraProperties.SHARED_ITEMS + ":*"; //$NON-NLS-1$
 		IPEDSearcher searcher = new IPEDSearcher(ipedSrc, queryText);
 		try {
 			SearchResult p2pItems = searcher.search();
@@ -69,15 +69,23 @@ public class P2PBookmarker {
 				Document doc = ipedSrc.getReader().document(luceneId);
 				String mediaType = doc.get(IndexItem.CONTENTTYPE);
 				P2PProgram program = p2pPrograms.get(mediaType);
-				String[] sharedHashes = doc.getValues(ExtraProperties.SHARED_HASHES);
-				StringBuilder hashes = new StringBuilder();
-				for(String hash : sharedHashes)
-				    hashes.append(hash).append(" "); //$NON-NLS-1$
-				
+				String[] sharedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
+				boolean isHash = true;
+				if(sharedItems.length == 0) {
+				    isHash = false;
+				    sharedItems = doc.getValues(ExtraProperties.SHARED_ITEMS);
+				}
+				StringBuilder items = new StringBuilder();
+				for(String item : sharedItems) {
+				    if(!isHash) items.append("(");
+				    items.append(item).append(" "); //$NON-NLS-1$
+				    if(!isHash) items.append(") ");
+				}
 				StringBuilder queryBuilder = new StringBuilder();
-				queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND "); //$NON-NLS-1$
-				queryBuilder.append(program.hashName + ":("); //$NON-NLS-1$
-				queryBuilder.append(hashes.toString());
+				queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
+				if(isHash) queryBuilder.append(program.hashName + ":("); //$NON-NLS-1$
+				queryBuilder.append(items.toString());
+				if(isHash) queryBuilder.append(")"); //$NON-NLS-1$
 				queryBuilder.append(")"); //$NON-NLS-1$
 				searcher = new IPEDSearcher(ipedSrc, queryBuilder.toString());
 				

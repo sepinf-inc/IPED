@@ -112,7 +112,7 @@ public class Manager {
   }
 
   private List<File> sources;
-  private File output, indexDir, indexTemp, palavrasChave;
+  private File output, finalIndexDir, indexDir, palavrasChave;
 
   private ItemProducer contador, produtor;
   private Worker[] workers;
@@ -129,7 +129,7 @@ public class Manager {
   }
 
   public Manager(List<File> sources, File output, File palavras) {
-    this.indexTemp = Configuration.indexTemp;
+    this.indexDir = Configuration.indexTemp;
     this.sources = sources;
     this.output = output;
     this.palavrasChave = palavras;
@@ -138,19 +138,20 @@ public class Manager {
 
     EvidenceFile.setStartID(0);
 
-    indexDir = new File(output, "index"); //$NON-NLS-1$
-    if (indexTemp == null || IndexFiles.getInstance().appendIndex) {
-      indexTemp = indexDir;
+    finalIndexDir = new File(output, "index"); //$NON-NLS-1$
+    
+    if (indexDir == null) {
+      indexDir = finalIndexDir;
     }
 
-    stats = Statistics.get(caseData, indexDir);
+    stats = Statistics.get(caseData, finalIndexDir);
     
     instance = this;
 
   }
   
   public File getIndexTemp(){
-	  return indexTemp;
+	  return indexDir;
   }
 
   Worker[] getWorkers() {
@@ -253,7 +254,7 @@ public class Manager {
 
   private void loadExistingData() throws Exception {
 
-    IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
+    IndexReader reader = IndexReader.open(FSDirectory.open(finalIndexDir));
     stats.previousIndexedFiles = reader.numDocs();
     reader.close();
 
@@ -269,7 +270,7 @@ public class Manager {
 	    conf.setMaxThreadStates(Configuration.numThreads);
 	    conf.setSimilarity(new IndexerSimilarity());
 	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-	    if ((Configuration.indexTempOnSSD && Configuration.indexTemp != null) || Configuration.outputOnSSD) {
+	    if ((Configuration.indexTempOnSSD && indexDir != finalIndexDir) || Configuration.outputOnSSD) {
 	      mergeScheduler.setMaxMergesAndThreads(8, 4);
 	    }
 	    conf.setMergeScheduler(mergeScheduler);
@@ -291,7 +292,7 @@ public class Manager {
     IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     LOGGER.info("Creating index..."); //$NON-NLS-1$
 
-    writer = new IndexWriter(FSDirectory.open(indexTemp), getIndexWriterConfig());
+    writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
 
     workers = new Worker[Configuration.numThreads];
     for (int k = 0; k < workers.length; k++) {
@@ -386,15 +387,15 @@ public class Manager {
     writer.close();
     writer = null;
 
-    if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
+    if (!indexDir.getCanonicalPath().equalsIgnoreCase(finalIndexDir.getCanonicalPath())) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       LOGGER.info("Moving Index..."); //$NON-NLS-1$
       try {
-        Files.move(indexTemp.toPath(), indexDir.toPath());
+        Files.move(indexDir.toPath(), finalIndexDir.toPath());
 
       } catch (IOException e) {
         LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
-        IOUtil.copiaDiretorio(indexTemp, indexDir);
+        IOUtil.copiaDiretorio(indexDir, finalIndexDir);
       }
     }
     
@@ -568,7 +569,7 @@ public class Manager {
 	        }
 	      }
 	      
-	      writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
+	      writer = new IndexWriter(FSDirectory.open(finalIndexDir), getIndexWriterConfig());
 
 	      BooleanQuery query;
 	      int startId = 0, interval = 1000, endId = interval;

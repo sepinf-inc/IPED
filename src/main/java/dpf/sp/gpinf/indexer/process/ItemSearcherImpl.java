@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
@@ -49,6 +50,11 @@ public class ItemSearcherImpl implements ItemSearcher{
 		
 		return items;
 	}
+	
+	@Override
+    public String escapeQuery(String string) {
+        return QueryParserUtil.escape(string);
+    }
 
   @Override
   public void close() throws IOException {
