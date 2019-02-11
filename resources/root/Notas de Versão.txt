@@ -2,11 +2,14 @@ xx/02/2019: IPED-3.15.4
 - Identificação de novas categorias do UFED automaticamente
 - Novo filtro de duplicados sob demanda, útil em multicasos
 - Novo painel de exibição de duplicatas
+- Abertura de multicasos em paralelo
+- Atualização p/ icepdf-6.3.2 (abre digitalizações antes não abertas)
+- Atualização p/ sleuthkit-4.6.5 (compatível com 4.6.0)
 Correções:
 - Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na leitura dos itens (ex: bloqueio de antivirus)
 - Áudios de WhatsApp não linkados nas conversas caso seu mimetype não existisse no banco
 - Marcadores para envios via WhatsApp-Iphone não eram criados se anexos fossem adicionados com --append
-- NullPointerException no GenericOLEParser
+- Ignora NullPointerException no GenericOLEParser
 
 28/01/2019: IPED-3.15.3
 - Corrige NullPointer que impedia abertura da interface de análise (3.15.2)
