@@ -55,6 +55,8 @@ public class GraphImportRunner {
       }
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
+    } finally {
+      process.destroy();
     }
   }
 

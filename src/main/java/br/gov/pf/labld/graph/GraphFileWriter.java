@@ -44,8 +44,8 @@ public class GraphFileWriter implements Closeable, Flushable {
     root.mkdirs();
   }
 
-  private CSVWriter openNodeWriter(String labelName) throws IOException {
-    return new CSVWriter(root, "nodes", labelName, suffix);
+  private CSVWriter openNodeWriter(Label... labels) throws IOException {
+    return new CSVWriter(root, "nodes", labels, suffix);
   }
 
   private CSVWriter openRelationshipWriter(RelationshipType type) throws IOException {
@@ -62,10 +62,10 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
 
   private synchronized CSVWriter getNodeWriter(Label... labels) throws IOException {
-    String labelsNames = Arrays.stream(labels).map(l -> l.name()).sorted().collect(Collectors.joining("_"));
+    String labelsNames = CSVWriter.join(labels);
     CSVWriter out = nodeWriters.get(labelsNames);
     if (out == null) {
-      out = openNodeWriter(labelsNames);
+      out = openNodeWriter(labels);
       nodeWriters.put(labelsNames, out);
     }
     return out;
@@ -111,12 +111,21 @@ public class GraphFileWriter implements Closeable, Flushable {
     return file;
   }
 
-  public void writeCreateNode(String uniquePropertyName, Object uniquePropertyValue, Map<String, Object> propeties,
+  public String writeCreateNode(String uniquePropertyName, Object uniquePropertyValue, Map<String, Object> properties,
       Label label, Label... labels) throws IOException {
     String id = uniqueId(label, uniquePropertyName, uniquePropertyValue.toString());
     List<Label> list = new ArrayList<>(Arrays.asList(labels));
     list.add(label);
-    writeCreateNode(id, propeties, list.toArray(new Label[list.size()]));
+
+    String labelsNames = list.stream().map(l -> l.name()).collect(Collectors.joining(";"));
+    Map<String, Object> record = new LinkedHashMap<>();
+    record.put("nodeId:ID", id);
+    record.put(":LABEL", labelsNames);
+    record.putAll(properties);
+
+    CSVWriter out = getNodeWriter(label);
+    out.write(record);
+    return id;
   }
 
   public void writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
@@ -135,6 +144,11 @@ public class GraphFileWriter implements Closeable, Flushable {
       String idProperty2, Object propertyValue2, RelationshipType relationshipType, Map<String, Object> properties)
       throws IOException {
     String uniqueId1 = uniqueId(label1, idProperty1, propertyValue1.toString());
+    writeRelationship(uniqueId1, label2, idProperty2, propertyValue2, relationshipType, properties);
+  }
+
+  public void writeRelationship(String uniqueId1, Label label2, String idProperty2, Object propertyValue2,
+      RelationshipType relationshipType, Map<String, Object> properties) throws IOException {
     String uniqueId2 = uniqueId(label2, idProperty2, propertyValue2.toString());
     Map<String, Object> record = new LinkedHashMap<>();
     record.put(":START_ID", uniqueId1);
@@ -153,15 +167,9 @@ public class GraphFileWriter implements Closeable, Flushable {
         Collections.emptyMap());
   }
 
-  public void writeCreateNode(String id, Map<String, Object> properties, Label... labels) throws IOException {
-    String labelsNames = Arrays.stream(labels).map(l -> l.name()).collect(Collectors.joining(";"));
-    Map<String, Object> record = new LinkedHashMap<>();
-    record.put("nodeId:ID", id);
-    record.put(":LABEL", labelsNames);
-    record.putAll(properties);
-
-    CSVWriter out = getNodeWriter(labels);
-    out.write(record);
+  public void writeRelationship(String uniqueId1, Label label2, String idProperty2, Object propertyValue2,
+      RelationshipType relationshipType) throws IOException {
+    writeRelationship(uniqueId1, label2, idProperty2, propertyValue2, relationshipType, Collections.emptyMap());
   }
 
   public void writeMergeNode(String id, Label label, Map<String, Object> properties) throws IOException {
@@ -194,6 +202,8 @@ public class GraphFileWriter implements Closeable, Flushable {
   public void close() throws IOException {
     close(nodeWriters.values());
     close(relationshipWriters.values());
+    writeArgsFile();
+    deduplicate();
   }
 
   private void close(Collection<? extends Closeable> closeables) throws IOException {
@@ -231,6 +241,10 @@ public class GraphFileWriter implements Closeable, Flushable {
     private String name;
     private String suffix;
     private File output;
+
+    public CSVWriter(File root, String prefix, Label[] labels, String suffix) throws IOException {
+      this(root, prefix, join(labels), suffix);
+    }
 
     public CSVWriter(File root, String prefix, String name, String suffix) throws IOException {
       super();
@@ -271,7 +285,9 @@ public class GraphFileWriter implements Closeable, Flushable {
         String line;
         while ((line = reader.readLine()) != null) {
           String id = line.substring(0, line.indexOf(",")).trim();
-          uniques.put(id, line);
+          if (!uniques.containsKey(id)) {
+            uniques.put(id, line);
+          }
         }
       }
 
@@ -313,6 +329,10 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     public File getOutput() {
       return output;
+    }
+
+    public static String join(Label... labels) {
+      return Arrays.stream(labels).map(l -> l.name()).sorted().collect(Collectors.joining("_"));
     }
 
   }

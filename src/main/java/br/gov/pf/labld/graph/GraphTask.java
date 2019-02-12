@@ -38,7 +38,7 @@ public class GraphTask extends AbstractTask {
 
   private boolean enabled = false;
 
-//  private GraphService graphService;
+  private static Map<Integer, String> datasourcesId = new HashMap<>();
 
   private static GraphFileWriter graphFileWriter;
 
@@ -47,6 +47,7 @@ public class GraphTask extends AbstractTask {
     enabled = isGraphGenerationEnabled(confParams);
     if (enabled) {
       configuration = loadConfiguration(confDir);
+
       if (graphFileWriter == null) {
         graphFileWriter = new GraphFileWriter(new File(Configuration.indexerTemp, GENERATED_PATH), "iped");
       }
@@ -69,11 +70,12 @@ public class GraphTask extends AbstractTask {
 
   @Override
   public void finish() throws Exception {
-
     if (graphFileWriter != null) {
-      graphFileWriter.close();
-      graphFileWriter.writeArgsFile();
-      graphFileWriter.deduplicate();
+      synchronized (graphFileWriter) {
+        if (graphFileWriter != null) {
+          graphFileWriter.close();
+        }
+      }
       graphFileWriter = null;
     }
   }
@@ -98,6 +100,7 @@ public class GraphTask extends AbstractTask {
     boolean isIpedCase = ipedCase != null;
     boolean isDir = evidence.isDir();
     boolean isCaseRoot = isIpedCase && parentIds.size() < 3;
+    boolean isGraphDatasource = false;
 
     if (isDir && !isCaseRoot) {
       return;
@@ -126,8 +129,8 @@ public class GraphTask extends AbstractTask {
       }
 
       labels.add(DynLabel.label("DATASOURCE"));
+      isGraphDatasource = true;
 
-//      batch.setData("evidence_" + evidence.getId() + "_label", entity.getLabel());
       nodeProperties.put("type", type.name());
 
       Object entityProperty = evidence.getExtraAttribute("X-EntityProperty");
@@ -174,7 +177,11 @@ public class GraphTask extends AbstractTask {
     }
 
     nodeProperties.put(propertyName, property);
-    graphFileWriter.writeCreateNode(propertyName, property, nodeProperties, label, labels.toArray(new Label[labels.size()]));
+    String nodeId = graphFileWriter.writeCreateNode(propertyName, property, nodeProperties, label,
+        labels.toArray(new Label[labels.size()]));
+    if (isGraphDatasource) {
+      datasourcesId.put(evidence.getId(), nodeId);
+    }
 
     RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
 
@@ -185,15 +192,16 @@ public class GraphTask extends AbstractTask {
     } else if (isIpedCase && parentIds.size() == 2) {
       // Cria vinculo da entrada com o datasource se ipedCase.
       Integer datasourceId = parentIds.get(1);
-      graphFileWriter.writeRelationship(label, "evidenceId", datasourceId, label, propertyName, property,
-          relationshipType);
+      String datasourceNodeId = datasourcesId.get(datasourceId);
+      graphFileWriter.writeRelationship(datasourceNodeId, label, propertyName, property, relationshipType);
     }
 
-    processMetadata(evidence, label);
+    processMetadata(evidence, label, propertyName, property);
   }
 
   @SuppressWarnings("unchecked")
-  private void processMetadata(EvidenceFile evidence, Label evidenceLabel) throws IOException {
+  private void processMetadata(EvidenceFile evidence, Label evidenceLabel, String evidenceProp, Object evidenceId)
+      throws IOException {
     Map<String, Object> extraAttributeMap = evidence.getExtraAttributeMap();
     if (includeEvidence(evidence) && extraAttributeMap != null) {
       Set<Entry<String, Object>> entries = extraAttributeMap.entrySet();
@@ -203,7 +211,8 @@ public class GraphTask extends AbstractTask {
         if (entities != null) {
           for (GraphEntity entity : entities) {
             GraphEntityMetadata metadata = entity.getMetadata(key);
-            processMatches(entity, metadata, evidence, (List<Object>) entry.getValue(), evidenceLabel);
+            processMatches(entity, metadata, evidence, (List<Object>) entry.getValue(), evidenceLabel, evidenceProp,
+                evidenceId);
           }
         }
       }
@@ -225,7 +234,7 @@ public class GraphTask extends AbstractTask {
   }
 
   private void processMatches(GraphEntity entity, GraphEntityMetadata metadata, EvidenceFile evidence,
-      List<Object> matches, Label evidenceLabel) throws IOException {
+      List<Object> matches, Label evidenceLabel, String evidenceProp, Object evidenceId) throws IOException {
     String labelName = entity.getLabel();
     String propertyName = metadata.getProperty();
 
@@ -239,8 +248,8 @@ public class GraphTask extends AbstractTask {
         String propertyValue = match.toString();
         if (controlSet.add(propertyValue)) {
           graphFileWriter.writeMergeNode(label, propertyName, propertyValue);
-          graphFileWriter.writeRelationship(evidenceLabel, "evidenceId", evidence.getId(), label, propertyName,
-              propertyValue, relationshipType);
+          graphFileWriter.writeRelationship(evidenceLabel, evidenceProp, evidenceId, label, propertyName, propertyValue,
+              relationshipType);
         }
       }
     }
