@@ -1,15 +1,20 @@
 package br.gov.pf.labld.graph;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.neo4j.tooling.ImportTool;
@@ -29,6 +34,30 @@ public class GraphImportRunner {
     this.root = root;
   }
 
+  private class InputReader implements Runnable {
+
+    private InputStream in;
+
+    public InputReader(InputStream in) {
+      super();
+      this.in = in;
+    }
+
+    @Override
+    public void run() {
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
+      String line = null;
+      try {
+        while ((line = reader.readLine()) != null) {
+          LOGGER.info(line);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+  }
+
   public void run(File databaseDir, String dbName, boolean highIO) throws IOException {
 
     List<String> args = new ArrayList<>();
@@ -43,13 +72,15 @@ public class GraphImportRunner {
     args.add("--f");
     args.add(argsFile.getAbsolutePath());
 
+    ExecutorService executorService = null;
+
     ProcessBuilder processBuilder = new ProcessBuilder(args);
-    processBuilder.redirectErrorStream(true);
     Process process = processBuilder.start();
     try {
+      executorService = Executors.newFixedThreadPool(2);
+      executorService.submit(new InputReader(process.getErrorStream()));
+      executorService.submit(new InputReader(process.getInputStream()));
       int result = process.waitFor();
-      String output = IOUtils.toString(process.getInputStream(), Charset.forName("utf-8"));
-      LOGGER.info(output);
       if (result != 0) {
         throw new RuntimeException("Could not import graph database.");
       }
@@ -57,6 +88,9 @@ public class GraphImportRunner {
       throw new RuntimeException(e);
     } finally {
       process.destroy();
+      if (executorService != null) {
+        executorService.shutdown();
+      }
     }
   }
 
@@ -66,7 +100,7 @@ public class GraphImportRunner {
         new OutputStreamWriter(new FileOutputStream(file), Charset.forName("utf-8")))) {
 
       writer.write("--into ");
-      writer.write(databaseDir.getAbsolutePath());
+      writer.write("\"" + databaseDir.getAbsolutePath() + "\"");
       writer.write("\r\n");
       writer.write("--input-encoding utf-8\r\n");
       writer.write("--bad-tolerance 0\r\n");

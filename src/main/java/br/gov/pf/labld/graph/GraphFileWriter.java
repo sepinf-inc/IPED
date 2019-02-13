@@ -161,13 +161,13 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   }
 
-  public void writeRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
+  public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
       String idProperty2, Object propertyValue2, RelationshipType relationshipType) throws IOException {
     writeRelationship(label1, idProperty1, propertyValue1, label2, idProperty2, propertyValue2, relationshipType,
         Collections.emptyMap());
   }
 
-  public void writeRelationship(String uniqueId1, Label label2, String idProperty2, Object propertyValue2,
+  public void writeCreateRelationship(String uniqueId1, Label label2, String idProperty2, Object propertyValue2,
       RelationshipType relationshipType) throws IOException {
     writeRelationship(uniqueId1, label2, idProperty2, propertyValue2, relationshipType, Collections.emptyMap());
   }

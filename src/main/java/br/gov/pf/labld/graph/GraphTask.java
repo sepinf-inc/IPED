@@ -186,14 +186,19 @@ public class GraphTask extends AbstractTask {
     RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
 
     if (isIpedCase && parentIds.size() > 2) {
-      // Cria vinculo com a entrada do datasource se ipedCase.
+      // Cria vinculo da entidade com a entrada do datasource se ipedCase.
       Integer inputId = parentIds.get(2);
-      graphFileWriter.writeRelationship(label, "evidenceId", inputId, label, propertyName, property, relationshipType);
+      graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, property,
+          relationshipType);
     } else if (isIpedCase && parentIds.size() == 2) {
       // Cria vinculo da entrada com o datasource se ipedCase.
       Integer datasourceId = parentIds.get(1);
       String datasourceNodeId = datasourcesId.get(datasourceId);
-      graphFileWriter.writeRelationship(datasourceNodeId, label, propertyName, property, relationshipType);
+      if (datasourceNodeId == null) {
+        throw new IllegalStateException(
+            "Datasource #" + datasourceId + " not found for evidence " + evidence.getName() + ".");
+      }
+      graphFileWriter.writeCreateRelationship(datasourceNodeId, label, propertyName, property, relationshipType);
     }
 
     processMetadata(evidence, label, propertyName, property);
@@ -248,8 +253,8 @@ public class GraphTask extends AbstractTask {
         String propertyValue = match.toString();
         if (controlSet.add(propertyValue)) {
           graphFileWriter.writeMergeNode(label, propertyName, propertyValue);
-          graphFileWriter.writeRelationship(evidenceLabel, evidenceProp, evidenceId, label, propertyName, propertyValue,
-              relationshipType);
+          graphFileWriter.writeCreateRelationship(evidenceLabel, evidenceProp, evidenceId, label, propertyName,
+              propertyValue, relationshipType);
         }
       }
     }
