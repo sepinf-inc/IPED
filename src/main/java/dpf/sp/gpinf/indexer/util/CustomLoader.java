@@ -74,7 +74,7 @@ public final class CustomLoader {
             addUrls(vec, classpath, File.pathSeparator);
             
             for(File f : extensionJars)
-                if(f != null && f.getName().toLowerCase().endsWith(".jar")) //$NON-NLS-1$
+                if(f != null) //$NON-NLS-1$
                     try {
                         vec.add(f.toURI().toURL());
                         LOGGER.info("Adding to classpath: " + f.getCanonicalPath()); //$NON-NLS-1$
