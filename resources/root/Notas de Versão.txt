@@ -5,7 +5,6 @@ xx/02/2019: IPED-3.15.4
 - Ordenação de colunas multithread (5-10x mais rápido com 24 cores)
 - Abertura de multicasos em paralelo
 - Atualização p/ icepdf-6.3.2 (abre digitalizações antes não abertas)
-- Atualização p/ sleuthkit-4.6.5 (compatível com 4.6.0)
 Correções:
 - Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na leitura dos itens (ex: bloqueio de antivirus)
 - Áudios de WhatsApp não linkados nas conversas caso seu mimetype não existisse no banco

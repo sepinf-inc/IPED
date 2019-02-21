@@ -55,15 +55,9 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>sleuthkit</artifactId>
-            <version>4.6.5-p01</version>
+            <version>4.6.0-p01</version>
             <type>jar</type>
         </dependency>
-        <!--Needed by sleuthkit-->
-        <dependency>
-    		<groupId>com.zaxxer</groupId>
-    		<artifactId>SparseBitSet</artifactId>
-    		<version>1.2</version>
-	  	</dependency>
         <dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
@@ -481,7 +475,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.6.5-p1</version>
+                                    <version>4.6.0-p1.1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -500,7 +494,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>4.6.5-p01</version>
+                                    <version>4.6.0-p01</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
