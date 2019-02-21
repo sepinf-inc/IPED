@@ -150,11 +150,6 @@
             <version>0.9.5.2</version>
         </dependency>
         <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>0.3</version>
-        </dependency>
-        <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
             <version>3.15</version>
@@ -513,7 +508,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>libreoffice</artifactId>
-                                    <version>1.0.4</version>
+                                    <version>6.1.5-p2</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
