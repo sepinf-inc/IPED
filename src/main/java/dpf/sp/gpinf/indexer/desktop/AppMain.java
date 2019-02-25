@@ -12,12 +12,15 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
+import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 
 public class AppMain {
 	
@@ -29,7 +32,7 @@ public class AppMain {
 	private static final String[] buggedVersions = {"1.8.0_161", "1.8.0_162", "1.8.0_171"};
 	
 	File casePath;
-    File testPath;// = new File("E:\\teste\\noteAcer-nofork-default");
+    File testPath;// = new File("E:\\teste\\noteAcer-forensic-3.15-2");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -43,6 +46,8 @@ public class AppMain {
 	
 	private static void checkJavaVersion(){
 	    try {
+	        if(System.getProperty("iped.javaVersionChecked") != null) //$NON-NLS-1$
+	            return;
             SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
@@ -73,7 +78,9 @@ public class AppMain {
                       }
                       Messages.resetLocale();
                   }
-              });
+            });
+            System.setProperty("iped.javaVersionChecked", "true"); //$NON-NLS-1$
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -164,6 +171,11 @@ public class AppMain {
 		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
 		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
 		            jars.add(Configuration.tskJarFile);
+		            
+		            System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(libDir, "nativeview").getAbsolutePath());
+		            LibreOfficeFinder loFinder = new LibreOfficeFinder(libDir.getParentFile());
+		            if(loFinder.getLOPath() != null)
+		                UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
 		            
 		            String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
 		            

@@ -6,8 +6,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
@@ -45,23 +48,22 @@ public class IPEDMultiSource extends IPEDSource{
 			files = loadCasesFromTxtFile(file);
 		
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		cases = Collections.synchronizedList(cases);
+		ArrayList<Future<IPEDSource>> futures = new ArrayList<>(); 
 		for(final File src : files){
-		    Runnable openCase = new Runnable() {
-		        public void run() {
+		    Callable<IPEDSource> openCase = new Callable<IPEDSource>() {
+		        public IPEDSource call() {
 		            LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
-		            IPEDSource icase = new IPEDSource(src);
-		            cases.add(icase);
+		            return new IPEDSource(src);
 		        }
 		    };
-		    executor.execute(openCase);
+		    futures.add(executor.submit(openCase));
 		}
-		try {
-            while(cases.size() < files.size())
-                Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+		for(Future<IPEDSource> f : futures)
+            try {
+                cases.add(f.get());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
 		executor.shutdown();
 		
 		init();

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.15.3</version>
+    <version>3.15.4</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,15 +61,9 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>sleuthkit</artifactId>
-            <version>4.6.5-p01</version>
+            <version>4.6.0-p01</version>
             <type>jar</type>
         </dependency>
-        <!--Needed by sleuthkit-->
-        <dependency>
-    		<groupId>com.zaxxer</groupId>
-    		<artifactId>SparseBitSet</artifactId>
-    		<version>1.2</version>
-	  	</dependency>
         <dependency>
 			<groupId>com.microsoft.sqlserver</groupId>
 			<artifactId>mssql-jdbc</artifactId>
@@ -160,11 +154,6 @@
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
             <version>0.9.5.2</version>
-        </dependency>
-        <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>0.3</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
@@ -487,7 +476,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>4.6.5-p1</version>
+                                    <version>4.6.0-p1.1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -506,7 +495,7 @@
                                 <artifactItem>
                                     <groupId>tsk</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
-                                    <version>4.6.5-p01</version>
+                                    <version>4.6.0-p01</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/sources</outputDirectory>
@@ -525,7 +514,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>libreoffice</artifactId>
-                                    <version>1.0.4</version>
+                                    <version>6.1.5-p2</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

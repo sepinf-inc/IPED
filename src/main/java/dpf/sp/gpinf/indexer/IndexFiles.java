@@ -32,6 +32,7 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
@@ -39,6 +40,8 @@ import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
+import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
@@ -284,6 +287,14 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
             	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
             jars.add(Configuration.tskJarFile);
+            
+            //currently with --nogui, user can not open analysis app, so no need to load libreoffice jars
+            if(!indexador.nogui) {
+                System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());
+                LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(indexador.rootPath));
+                if(loFinder.getLOPath() != null)
+                    UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+            }
             
             String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
