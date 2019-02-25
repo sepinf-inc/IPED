@@ -30,7 +30,7 @@ public class ScriptValidatorService implements RegexValidatorService {
   @Override
   public void init(File confDir) {
 
-    File validatorsDir = new File(confDir, "validators");
+    File validatorsDir = new File(confDir, "regex_validators");
 
     for (File file : validatorsDir.listFiles()) {
       registerScript(file);
