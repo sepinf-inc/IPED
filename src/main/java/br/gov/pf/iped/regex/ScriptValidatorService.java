@@ -32,8 +32,11 @@ public class ScriptValidatorService implements RegexValidatorService {
 
     File validatorsDir = new File(confDir, "regex_validators");
 
-    for (File file : validatorsDir.listFiles()) {
-      registerScript(file);
+    File[] subFiles = validatorsDir.listFiles();
+    if(subFiles != null) {
+        for (File file : subFiles) {
+            registerScript(file);
+        }
     }
   }
 
