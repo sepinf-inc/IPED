@@ -14,7 +14,7 @@ function getRegexNames() {
 
 /**
  * Valida a ocorrência do regex.
- * @param hit - a ocorrência do regex.
+ * @param String hit - a ocorrência do regex.
  * @returns boolean - true se for uma ocorrencia válida, ou false caso contrário.
  */
 function validate(hit) {
@@ -23,8 +23,8 @@ function validate(hit) {
 
 /**
  * Formata a ocorrência válida.
- * @param hit - a ocorrência do regex.
- * @returns a ocorrência formatada.
+ * @param String hit - a ocorrência do regex.
+ * @returns String - a ocorrência formatada.
  */
 function format(hit) {
 	return hit;
