@@ -16,8 +16,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import com.sun.star.lang.IllegalArgumentException;
-
 import dpf.sp.gpinf.indexer.process.task.regex.RegexValidatorService;
 
 public class ScriptValidatorService implements RegexValidatorService {
