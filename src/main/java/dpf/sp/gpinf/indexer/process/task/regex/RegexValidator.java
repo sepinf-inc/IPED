@@ -24,7 +24,7 @@ public class RegexValidator {
   }
 
   public void init(File confDir) {
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    ClassLoader cl = this.getClass().getClassLoader();
     init(cl, confDir);
   }
 
