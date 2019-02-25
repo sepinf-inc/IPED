@@ -211,11 +211,7 @@ public class RegexTask extends AbstractTask{
 
   @SuppressWarnings("unchecked")
   private void processRegex(EvidenceFile evidence, Reader reader) throws IOException {
-    List<Set<String>> hitList = new ArrayList<Set<String>>();
-    for (int i = 0; i < regexList.size(); i++) {
-      hitList.add(new HashSet<String>());
-    }
-
+    
     char[] cbuf = new char[1000000];
     int k = 0;
     while (k != -1) {
@@ -225,6 +221,11 @@ public class RegexTask extends AbstractTask{
         k = reader.read(cbuf, off, cbuf.length - off);
 
       String text = new String(cbuf, 0, off);
+      
+      List<Set<String>> hitList = new ArrayList<Set<String>>();
+      for (int i = 0; i < regexList.size(); i++) {
+        hitList.add(new HashSet<String>());
+      }
 
       AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
       while (fullMatcher.find()) {
@@ -249,13 +250,13 @@ public class RegexTask extends AbstractTask{
       for (int i = 0; i < regexList.size(); i++) {
         if (hitList.get(i).size() > 0) {
           String key = REGEX_PREFIX + regexList.get(i).name;
-          List<String> hits = (List<String>) evidence.getExtraAttribute(key);
-          if (hits == null) {
-            hits = new ArrayList<>(hitList.get(i));
-          } else {
-            hits.addAll(new ArrayList<>(hitList.get(i)));
+          Set<String> hitSet = new HashSet<>();
+          List<String> prevHits = (List<String>) evidence.getExtraAttribute(key);
+          if (prevHits != null) {
+            hitSet.addAll(prevHits);
           }
-          evidence.setExtraAttribute(key, hits);
+          hitSet.addAll(hitList.get(i));
+          evidence.setExtraAttribute(key, new ArrayList<>(hitSet));
           if (regexList.get(i).name.equals(KEYWORDS_NAME))
             evidence.setToExtract(true);
         }
