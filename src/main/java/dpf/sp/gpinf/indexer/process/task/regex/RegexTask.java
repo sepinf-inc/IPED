@@ -37,11 +37,15 @@ public class RegexTask extends AbstractTask{
 	
 	private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
 	
+	private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
+	
 	private static List<Regex> regexList;
 	
 	private static Regex regexFull;
 	
 	private static volatile boolean extractByKeywords = false;
+	
+	private static boolean formatRegexMatches = false;
 	
 	private boolean enabled = true;
 
@@ -134,6 +138,10 @@ public class RegexTask extends AbstractTask{
 	                  if(values.length < 2)
 	                      throw new IPEDException(Messages.getString("RegexTask.SeparatorNotFound.1") + REGEX_CONFIG + Messages.getString("RegexTask.SeparatorNotFound.2") + line); //$NON-NLS-1$ //$NON-NLS-2$
 	                  String name = values[0].trim();
+	                  if(name.equals(FORMAT_MATCHES)) {
+	                      formatRegexMatches = Boolean.valueOf(values[1].trim());
+	                      continue;
+	                  }
 	                  String[] params = name.split(","); //$NON-NLS-1$
 	                  String regexName = params[0].trim();
 	                  int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
@@ -228,7 +236,9 @@ public class RegexTask extends AbstractTask{
           if (regex.pattern.run(hit)) {
             hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
             if (regexValidator.validate(regex, hit)) {
-              hit = regexValidator.format(regex, hit);
+              if(formatRegexMatches) {
+                  hit = regexValidator.format(regex, hit);
+              }
               Set<String> hits = hitList.get(i);
               hits.add(hit);
             }
