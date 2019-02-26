@@ -132,7 +132,9 @@ body
     visibility: hidden;
 }
 
-#conversation .incoming, #conversation .outgoing, #conversation .date {
+#conversation .incoming, #conversation .outgoing,
+ #conversation .date, #conversation .systemmessage, 
+ #conversation .specialmessage {
 	cursor: pointer;
 	border-radius: 2px;
 	box-shadow: 0 0 6px #b8b7b7;
@@ -151,6 +153,21 @@ body
 	text-align: center;
 	margin-top: 8px;
 	margin-bottom: 8px;
+}
+
+#conversation .systemmessage
+{
+	background-color: #f7f76e;
+	color: 92998b;
+	margin: 0 auto;
+	text-align: center;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+#conversation .systemmessage:hover
+{
+	background-color: #f0f075;
 }
 
 #conversation .pages
@@ -200,6 +217,37 @@ body
 #conversation .incoming:hover:before
 {
 	background-color: #def1f3;
+}
+
+#conversation .specialmessage
+{
+	background-color: #66ccff;
+}
+
+#conversation .specialmessage:hover
+{
+	background-color: #00aaff;
+}
+
+#conversation .specialmessage:before
+{
+	background-color: #66ccff;
+	content: "\00a0";
+	display: block;
+	height: 16px;
+	position: absolute;
+	top: 11px;
+	transform:         rotate(29deg) skew(-35deg);
+	-moz-transform:    rotate(29deg) skew(-35deg);
+	-ms-transform:     rotate(29deg) skew(-35deg);
+        -o-transform:      rotate(29deg) skew(-35deg);
+        -webkit-transform: rotate(29deg) skew(-35deg);
+	width:  20px;
+}
+
+#conversation .specialmessage:hover:before
+{
+	background-color: #00aaff;
 }
 
 #conversation .outgoing
