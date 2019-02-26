@@ -37,6 +37,12 @@
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
       <dependency>
     	<groupId>net.lingala.zip4j</groupId>
     	<artifactId>zip4j</artifactId>
@@ -226,7 +232,7 @@
                                     <version>1.8.0_152</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/jre</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
