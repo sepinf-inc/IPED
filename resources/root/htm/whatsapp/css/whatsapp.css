@@ -186,6 +186,7 @@ body
 	color: 92998b;
 	float: right;
 	padding-left: 12px;
+	font-size: small;
 }
 
 #conversation .incoming
