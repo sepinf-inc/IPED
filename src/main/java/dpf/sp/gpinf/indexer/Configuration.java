@@ -492,8 +492,8 @@ public class Configuration {
         openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
     }
     
-    //we have seen records of 195720 bytes
-    org.apache.poi.util.IOUtils.setByteArrayMaxOverride(500000);
+    //we have seen very large records in valid docs
+    org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 

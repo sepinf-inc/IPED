@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.15.4</version>
+    <version>3.15.5</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,6 +37,12 @@
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
       <dependency>
     	<groupId>net.lingala.zip4j</groupId>
     	<artifactId>zip4j</artifactId>
@@ -226,7 +232,7 @@
                                     <version>1.8.0_152</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/jre</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -508,7 +514,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>libreoffice</artifactId>
-                                    <version>6.1.5-p2</version>
+                                    <version>6.1.5-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

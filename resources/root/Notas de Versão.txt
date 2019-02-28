@@ -1,3 +1,8 @@
+27/02/2019: IPED-3.15.5
+- Corrige erro no LibreOffice qdo há espaço no nome do usuário atual (3.15.4)
+- Corrige erro no LibreOffice se MSVC Redistributable não estiver instalado (3.15.4)
+- Remove limite de tamanho máximo de registros decodificados pelo POI-4.0
+
 21/02/2019: IPED-3.15.4
 - Identificação de novas categorias do UFED automaticamente
 - Novo filtro de duplicados sob demanda, útil em multicasos

@@ -1,7 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +20,6 @@ import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -36,13 +37,19 @@ public class RegexTask extends AbstractTask{
 	
 	private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
 	
+	private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
+	
 	private static List<Regex> regexList;
 	
 	private static Regex regexFull;
 	
 	private static volatile boolean extractByKeywords = false;
 	
+	private static boolean formatRegexMatches = false;
+	
 	private boolean enabled = true;
+
+  private static RegexValidator regexValidator;
 	
 	public static boolean isExtractByKeywordsOn(){
 	    return extractByKeywords;
@@ -131,6 +138,10 @@ public class RegexTask extends AbstractTask{
 	                  if(values.length < 2)
 	                      throw new IPEDException(Messages.getString("RegexTask.SeparatorNotFound.1") + REGEX_CONFIG + Messages.getString("RegexTask.SeparatorNotFound.2") + line); //$NON-NLS-1$ //$NON-NLS-2$
 	                  String name = values[0].trim();
+	                  if(name.equals(FORMAT_MATCHES)) {
+	                      formatRegexMatches = Boolean.valueOf(values[1].trim());
+	                      continue;
+	                  }
 	                  String[] params = name.split(","); //$NON-NLS-1$
 	                  String regexName = params[0].trim();
 	                  int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
@@ -160,9 +171,18 @@ public class RegexTask extends AbstractTask{
 				automatonList.add(regex.automaton);
 			Automaton automata = BasicOperations.union(automatonList);
 			regexFull = new Regex("FULL", automata); //$NON-NLS-1$
+
+			initValidators(confDir);
 		}
 		
 	}
+
+  private synchronized void initValidators(File confDir) {
+    if (regexValidator == null) {
+      regexValidator = new RegexValidator();
+      regexValidator.init(confDir);
+    }
+  }
 	
 	private static final String replace(String s){
 	    return s.replace("\\t", "\t") //$NON-NLS-1$ //$NON-NLS-2$
@@ -178,60 +198,70 @@ public class RegexTask extends AbstractTask{
 	}
 
 	@Override
-	protected void process(EvidenceFile evidence) throws Exception {
-		
-	    if(!enabled || evidence.getTextCache() == null)
-			return;
-		
-		List<List<Object>> hitList = new ArrayList<List<Object>>();
-		List<List<String>> fragList = new ArrayList<List<String>>();
-		for(int i = 0; i < regexList.size(); i++){
-			hitList.add(new ArrayList<Object>());
-			fragList.add(new ArrayList<String>());
-		}
-		
-		char[] cbuf= new char[1000000];
-        int k = 0;
-        try(Reader reader = evidence.getTextReader()){
-            while(k != -1) {
-                int off = 0; k = 0;
-                while(k != -1 && (off += k) < cbuf.length)
-                    k = reader.read(cbuf, off, cbuf.length - off);
-                
-                String text = new String(cbuf, 0, off);
-                
-                AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
-                while(fullMatcher.find()){
-                    int start = fullMatcher.start();
-                    int end = fullMatcher.end();
-                    String hit = text.substring(start, end);
-                    int i = 0;
-                    for(Regex regex : regexList){
-                        if(regex.pattern.run(hit)){
-                            hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
-                            if(!RegexValidation.checkVerificationCode(regex, hit))
-                                continue;
-                            List<Object> hits = hitList.get(i);
-                            hits.add(hit);
-                            /*List<String> frags = fragList.get(i);
-                            String frag = text.substring(Math.max(0, start - 50), Math.min(text.length(), end + 50));
-                            if(frags.size() > 0) frag = "(...) " + frag;
-                            frags.add(frag);
-                            */
-                        }
-                        i++;
-                    }
-                }
-                for(int i = 0; i < regexList.size(); i++){
-                    if(hitList.get(i).size() > 0){
-                        evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name, hitList.get(i));
-                        //evidence.setExtraAttribute(REGEX_PREFIX + regexList.get(i).name + "_Frag", fragList.get(i));
-                        if(regexList.get(i).name.equals(KEYWORDS_NAME))
-                            evidence.setToExtract(true);
-                    }
-                }
+  protected void process(EvidenceFile evidence) throws Exception {
+
+    if (!enabled || evidence.getTextCache() == null)
+      return;
+
+    try (Reader reader = evidence.getTextReader()) {
+      processRegex(evidence, reader);
+    }
+    processRegex(evidence, new StringReader(evidence.getName()));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void processRegex(EvidenceFile evidence, Reader reader) throws IOException {
+    
+    char[] cbuf = new char[1000000];
+    int k = 0;
+    while (k != -1) {
+      int off = 0;
+      k = 0;
+      while (k != -1 && (off += k) < cbuf.length)
+        k = reader.read(cbuf, off, cbuf.length - off);
+
+      String text = new String(cbuf, 0, off);
+      
+      List<Set<String>> hitList = new ArrayList<Set<String>>();
+      for (int i = 0; i < regexList.size(); i++) {
+        hitList.add(new HashSet<String>());
+      }
+
+      AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
+      while (fullMatcher.find()) {
+        int start = fullMatcher.start();
+        int end = fullMatcher.end();
+        String hit = text.substring(start, end);
+        int i = 0;
+        for (Regex regex : regexList) {
+          if (regex.pattern.run(hit)) {
+            hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+            if (regexValidator.validate(regex, hit)) {
+              if(formatRegexMatches) {
+                  hit = regexValidator.format(regex, hit);
+              }
+              Set<String> hits = hitList.get(i);
+              hits.add(hit);
             }
+          }
+          i++;
         }
-	}
+      }
+      for (int i = 0; i < regexList.size(); i++) {
+        if (hitList.get(i).size() > 0) {
+          String key = REGEX_PREFIX + regexList.get(i).name;
+          Set<String> hitSet = new HashSet<>();
+          List<String> prevHits = (List<String>) evidence.getExtraAttribute(key);
+          if (prevHits != null) {
+            hitSet.addAll(prevHits);
+          }
+          hitSet.addAll(hitList.get(i));
+          evidence.setExtraAttribute(key, new ArrayList<>(hitSet));
+          if (regexList.get(i).name.equals(KEYWORDS_NAME))
+            evidence.setToExtract(true);
+        }
+      }
+    }
+  }
 
 }
