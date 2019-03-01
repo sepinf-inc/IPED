@@ -200,6 +200,11 @@
             <artifactId>docking-frames-common</artifactId>
             <version>1.1.1</version>
         </dependency>
+        <dependency>
+        	<groupId>org.glassfish.jersey.containers</groupId>
+        	<artifactId>jersey-container-grizzly2-http</artifactId>
+        	<version>2.22.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -680,6 +685,28 @@
                                     <addClasspath>true</addClasspath>
                                     <mainClass>dpf.sp.gpinf.indexer.desktop.AppMain</mainClass>
                                 </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-webapi-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>iped-webapi</finalName>
+                            <outputDirectory>${lib.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>br.gov.pf.iped.webapi.Main</mainClass>
+                                </manifest>
+                                <manifestEntries>
+                                    <Build-By>MACEE</Build-By>
+                                     <Class-Path>conf/CustomSignatures.jar</Class-Path>
+                                </manifestEntries>
                             </archive>
                         </configuration>
                     </execution>
