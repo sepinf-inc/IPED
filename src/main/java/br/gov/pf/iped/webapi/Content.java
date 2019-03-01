@@ -1,6 +1,5 @@
 package br.gov.pf.iped.webapi;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
@@ -15,10 +14,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.lucene.document.Document;
 import org.sleuthkit.datamodel.TskCoreException;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
 

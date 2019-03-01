@@ -1,27 +1,19 @@
 package br.gov.pf.iped.webapi;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;

@@ -1,6 +1,5 @@
 package br.gov.pf.iped.webapi;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -19,7 +18,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.xml.sax.ContentHandler;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
