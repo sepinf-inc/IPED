@@ -17,7 +17,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -53,7 +53,7 @@ public class Text {
     	return new StreamingOutput() {
             @Override
 			public void write(OutputStream arg0) throws IOException, WebApplicationException {
-        		ContentHandler handler = new BodyContentHandler(arg0);
+        		ContentHandler handler = new ToTextContentHandler(arg0, "UTF-8");
 				try {
 					parser.parse(is, handler, metadata, context);
 				} catch (Exception e) {
