@@ -1,4 +1,4 @@
-﻿################################################################################################
+################################################################################################
 # Configuração de CARVING
 ################################################################################################
 
@@ -99,6 +99,10 @@ EML, message/rfc822, 1000, 10000000, Received: by, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
+
+# VCARD
+VCF, text/x-vcard, 100, 100000, begin:vcard, end:vcard
+VCF, text/x-vcard, 100, 100000, BEGIN:VCARD, END:VCARD
 
 # Derivados do container RIFF (soma 8 bytes ao tamanho no cabeçalho)
 # Videos AVI
