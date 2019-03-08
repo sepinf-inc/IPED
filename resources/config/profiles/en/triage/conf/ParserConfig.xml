@@ -96,7 +96,6 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
 		<!--<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser> SQLite will be parsed by RawStringParser, configured below-->
-		<parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
         	<!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->

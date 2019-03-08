@@ -100,10 +100,6 @@ EML, message/rfc822, 1000, 10000000, Received: from, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Message-ID:\20<, --\0d\0a
 EML, message/rfc822, 1000, 10000000, Return-Path:\20, --\0d\0a
 
-# VCARD
-VCF, text/x-vcard, 100, 100000, begin:vcard, end:vcard
-VCF, text/x-vcard, 100, 100000, BEGIN:VCARD, END:VCARD
-
 # RIFF container derivatives (adds 8 bytes to size in header)
 #  AVI Videos
 RIFF, video/x-msvideo, 10000, 500000000, RIFF????AVI LIST, null, 4, 4, false
