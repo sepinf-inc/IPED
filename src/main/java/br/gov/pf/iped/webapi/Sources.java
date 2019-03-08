@@ -18,6 +18,7 @@ import javax.ws.rs.core.MediaType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 import org.sleuthkit.datamodel.TskCoreException;
 
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -26,7 +27,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 @Path("sources")
 public class Sources {
 	public static IPEDMultiSource multiSource = null;
-	public static void init(String urlToAskSources) throws IOException {
+	public static void init(String urlToAskSources) throws IOException, ParseException {
 		ArrayList<IPEDSource> sources = new ArrayList<IPEDSource>(); 
 		JSONArray arr = askSources(urlToAskSources);
 		for (Object object : arr) {
@@ -83,7 +84,7 @@ public class Sources {
 		return multiSource.getAtomicSourceBySourceId(sourceID);
 	}
 
-	private static JSONArray askSources(String urlToAskSources) throws MalformedURLException, IOException{
+	private static JSONArray askSources(String urlToAskSources) throws MalformedURLException, IOException, ParseException{
 		InputStream in;
 		JSONArray result = new JSONArray();
 		if ((new File(urlToAskSources)).exists()){
@@ -92,7 +93,7 @@ public class Sources {
 			in = (new URL(urlToAskSources)).openConnection().getInputStream();
 		}
 		try {
-			result = (JSONArray)JSONValue.parse(new InputStreamReader(in));
+			result = (JSONArray)JSONValue.parseWithException(new InputStreamReader(in));
 		}finally{
 			in.close();
 		}

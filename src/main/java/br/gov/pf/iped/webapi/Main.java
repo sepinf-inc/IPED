@@ -3,6 +3,7 @@ package br.gov.pf.iped.webapi;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,8 +20,9 @@ public class Main {
      * Starts Grizzly HTTP server exposing JAX-RS resources defined in this application.
      * @return Grizzly HTTP server.
      * @throws IOException 
+     * @throws ParseException 
      */
-    public static HttpServer startServer(String host, int port, String urlToAskSources) throws IOException {
+    public static HttpServer startServer(String host, int port, String urlToAskSources) throws IOException, ParseException {
         // create a resource config that scans for JAX-RS resources and providers
         // in gpinf.api package
         final ResourceConfig rc = new ResourceConfig().packages("br.gov.pf.iped.webapi");
@@ -45,7 +47,7 @@ public class Main {
      * @param args
      * @throws IOException
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
     	String host = "0.0.0.0";
     	int port = 8080;
     	String urlToAskSources = null;
