@@ -30,7 +30,7 @@ public class Thumbnail {
 
         IPEDSource source = Sources.get(sourceID);
         EvidenceFile item = source.getItemByID(id);
-        final byte[] thumb = item.getThumb();
+        final byte[] thumb = item.getThumb() != null ? item.getThumb() : new byte[0];
         return new StreamingOutput() {
             @Override
             public void write(OutputStream arg0) throws IOException, WebApplicationException {
