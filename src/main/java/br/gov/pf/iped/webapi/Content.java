@@ -1,6 +1,7 @@
 package br.gov.pf.iped.webapi;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 
@@ -37,7 +38,9 @@ public class Content {
 				.entity(new StreamingOutput() {
 					@Override
 					public void write(OutputStream arg0) throws IOException, WebApplicationException {
-						IOUtils.copy(item.getStream(), arg0);
+					    try (InputStream is = item.getBufferedStream()){
+					        IOUtils.copy(is, arg0);
+					    }
 					}})
 				.build();
 	}
