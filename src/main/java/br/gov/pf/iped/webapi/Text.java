@@ -46,7 +46,6 @@ public class Text {
 		metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, contentType);
 		metadata.set(Metadata.RESOURCE_NAME_KEY, item.getName());
 		
-		final TikaInputStream is = item.getTikaStream();
 		final IndexerDefaultParser parser = new IndexerDefaultParser();
 		parser.setPrintMetadata(false);
 
@@ -54,7 +53,7 @@ public class Text {
             @Override
 			public void write(OutputStream arg0) throws IOException, WebApplicationException {
         		ContentHandler handler = new ToTextContentHandler(arg0, "UTF-8");
-				try {
+				try (TikaInputStream is = item.getTikaStream()){
 					parser.parse(is, handler, metadata, context);
 				} catch (Exception e) {
 					throw new WebApplicationException(e);
