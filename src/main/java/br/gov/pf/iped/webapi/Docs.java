@@ -17,6 +17,8 @@ import org.json.simple.JSONObject;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiMarcadores;
 import dpf.sp.gpinf.indexer.search.SearchResult;
 
 @Path("sources/{sourceID}/docs")
@@ -69,6 +71,12 @@ public class Docs {
 		for (IndexableField field : doc.getFields()) {
 			data.put(field.name(), field.stringValue());
 		}
+        JSONArray bookmarks = new JSONArray();
+        for (String b : source.getMarcadores().getLabelList(id)) {
+            bookmarks.add(b);
+        }
+        data.put("bookmarks", bookmarks);
+        
 		return json.toString();
 	}
 
