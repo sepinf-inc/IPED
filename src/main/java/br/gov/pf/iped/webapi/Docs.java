@@ -69,7 +69,15 @@ public class Docs {
 		json.put("id", id); 
 		json.put("luceneID", luceneID); 
 		for (IndexableField field : doc.getFields()) {
-			data.put(field.name(), field.stringValue());
+		    String[] values = doc.getValues(field.name());
+		    if(values.length == 1) {
+		        data.put(field.name(), values[0]);
+		    }else {
+		        JSONArray array = new JSONArray();
+		        for(String v : values)
+		            array.add(v);
+		        data.put(field.name(), array);
+		    }
 		}
         JSONArray bookmarks = new JSONArray();
         for (String b : source.getMarcadores().getLabelList(id)) {
