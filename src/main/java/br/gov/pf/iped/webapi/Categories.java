@@ -13,7 +13,7 @@ public class Categories {
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String doSearch() throws Exception{
+    public String get() throws Exception{
         
         JSONArray data = new JSONArray();
         for (String category : Sources.multiSource.getCategories()) {
