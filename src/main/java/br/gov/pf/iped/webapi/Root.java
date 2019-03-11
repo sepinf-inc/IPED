@@ -21,5 +21,9 @@ public class Root {
 		json.put("relationships", relationships);
 		relationships.put("sources", "/sources");
 		relationships.put("search", "/search");
+		relationships.put("bookmarks", "/bookmarks");
+		relationships.put("categories", "/categories");
+		relationships.put("selection", "/selection");
+		relationships.put("thumbnail", "/thumbnail");
 		return json.toString();
 	}}

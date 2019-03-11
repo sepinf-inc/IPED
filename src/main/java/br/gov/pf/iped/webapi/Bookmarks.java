@@ -1,12 +1,15 @@
 package br.gov.pf.iped.webapi;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -14,6 +17,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.cxf.jaxrs.ext.PATCH;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -34,7 +38,14 @@ public class Bookmarks {
         JSONArray data = new JSONArray();
         Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap(); 
         for (String b : bookmarks) {
-            data.add(b);
+            JSONObject inner = new JSONObject();
+            inner.put("id", b);
+            JSONObject relationships = new JSONObject();
+    		inner.put("relationships", relationships);
+    		relationships.put("add", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/add");
+    		relationships.put("remove", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/remove");
+    		relationships.put("rename", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/rename/{new}");
+            data.add(inner);
         }
         
         JSONObject json = new JSONObject();
@@ -66,8 +77,8 @@ public class Bookmarks {
         return json.toString();
     }
     
-    @PUT
-    @Path("add/{bookmark}")
+    @PATCH
+    @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
@@ -77,8 +88,8 @@ public class Bookmarks {
         return Response.ok().build();
     }
     
-    @PUT
-    @Path("remove/{bookmark}")
+    @PATCH
+    @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response removeLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
@@ -93,17 +104,17 @@ public class Bookmarks {
         List<ItemId> itemIds = new ArrayList<>();
         for(Object o : list){
             JSONObject obj = (JSONObject)o;
-            int sourceID = Integer.valueOf((String)obj.get("source"));
+            int sourceID = (int)(long)obj.get("source");
             for(Object id : (JSONArray)obj.get("ids")) {
-                ItemId item = new ItemId(sourceID, Integer.valueOf((String)id));
+                ItemId item = new ItemId(sourceID, (int)(long)id);
                 itemIds.add(item);
             }
         }
         return itemIds;
     }
     
-    @PUT
-    @Path("new/{bookmark}")
+    @POST
+    @Path("{bookmark}")
     public Response addLabel(@PathParam("bookmark") String bookmark) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.newLabel(bookmark);
@@ -111,8 +122,8 @@ public class Bookmarks {
         return Response.ok().build();
     }
     
-    @PUT
-    @Path("del/{bookmark}")
+    @DELETE
+    @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.delLabel(bookmark);
@@ -121,7 +132,7 @@ public class Bookmarks {
     }
     
     @PUT
-    @Path("rename/{old}/{new}")
+    @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.changeLabel(oldLabel, newLabel);
