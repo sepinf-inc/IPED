@@ -84,6 +84,7 @@ public class Docs {
             bookmarks.add(b);
         }
         data.put("bookmarks", bookmarks);
+        data.put("selected", source.getMarcadores().isSelected(id));
         
 		return json.toString();
 	}

@@ -88,7 +88,7 @@ public class Bookmarks {
         return Response.ok().build();
     }
     
-    private List<ItemId> getItemIdFromJsonArray(String json) throws ParseException{
+    public static List<ItemId> getItemIdFromJsonArray(String json) throws ParseException{
         JSONArray list = (JSONArray)JSONValue.parseWithException(json);
         List<ItemId> itemIds = new ArrayList<>();
         for(Object o : list){
