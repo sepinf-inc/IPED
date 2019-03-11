@@ -12,6 +12,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -68,9 +69,26 @@ public class Bookmarks {
     @PUT
     @Path("add/{bookmark}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void createLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
-        
+    public Response insertLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        List<ItemId> itemIds = getItemIdFromJsonArray(json);
+        mm.addLabel(itemIds, bookmark);
+        mm.saveState();
+        return Response.ok().build();
+    }
+    
+    @PUT
+    @Path("remove/{bookmark}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response removeLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
+        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        List<ItemId> itemIds = getItemIdFromJsonArray(json);
+        mm.removeLabel(itemIds, bookmark);
+        mm.saveState();
+        return Response.ok().build();
+    }
+    
+    private List<ItemId> getItemIdFromJsonArray(String json) throws ParseException{
         JSONArray list = (JSONArray)JSONValue.parseWithException(json);
         List<ItemId> itemIds = new ArrayList<>();
         for(Object o : list){
@@ -81,8 +99,34 @@ public class Bookmarks {
                 itemIds.add(item);
             }
         }
-        mm.addLabel(itemIds, bookmark);
+        return itemIds;
+    }
+    
+    @PUT
+    @Path("new/{bookmark}")
+    public Response addLabel(@PathParam("bookmark") String bookmark) {
+        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        mm.newLabel(bookmark);
         mm.saveState();
+        return Response.ok().build();
+    }
+    
+    @PUT
+    @Path("del/{bookmark}")
+    public Response delLabel(@PathParam("bookmark") String bookmark) {
+        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        mm.delLabel(bookmark);
+        mm.saveState();
+        return Response.ok().build();
+    }
+    
+    @PUT
+    @Path("rename/{old}/{new}")
+    public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
+        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        mm.changeLabel(oldLabel, newLabel);
+        mm.saveState();
+        return Response.ok().build();
     }
     
 }
