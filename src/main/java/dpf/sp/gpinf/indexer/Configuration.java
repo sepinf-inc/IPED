@@ -35,6 +35,7 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.KFFConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
@@ -143,7 +144,7 @@ public class Configuration {
     properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
   }
 
-    void loadLibs(File indexerTemp) throws IOException {
+    public void loadLibs(File indexerTemp) throws IOException {
 	    if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
 	      String arch = "x86"; //$NON-NLS-1$
@@ -210,6 +211,9 @@ public class Configuration {
 	    
 	    IPEDConfig ipedConfig = new IPEDConfig();
         configManager.addObject(ipedConfig);
+        
+        KFFConfig kffConfig = new KFFConfig();
+        configManager.addObject(kffConfig);
 
 	    AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
 	    configManager.addObject(advancedConfig);
