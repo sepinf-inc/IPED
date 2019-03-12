@@ -23,7 +23,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import io.swagger.annotations.Api;
 
+@Api(value="Sources")
 @Path("sources")
 public class Sources {
 	public static IPEDMultiSource multiSource = null;
@@ -52,10 +54,7 @@ public class Sources {
 				data.add(getonejson(sourceId));
 		}
 		JSONObject json = new JSONObject();
-		JSONObject links = new JSONObject();
 		json.put("data", data);
-		json.put("links", links);
-		links.put("self", "/sources");
 		return json.toString();
 	}
 
@@ -69,12 +68,9 @@ public class Sources {
 		IPEDSource source = get(sourceID);
 		JSONObject json = new JSONObject();
 		JSONObject relationships = new JSONObject();
-		JSONObject links = new JSONObject();
 		
 		json.put("id", sourceID);
 		json.put("path", source.getCaseDir().toString());
-		json.put("links", links);
-		links.put("self", "/sources/" + sourceID);
 		json.put("relationships", relationships);
 		relationships.put("docs", "/sources/" + sourceID + "/docs/");
 		return json;

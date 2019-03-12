@@ -19,7 +19,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
+import io.swagger.annotations.Api;
 
+@Api(value="Documents")
 @Path("sources/{sourceID}/docs/{id}/content")
 public class Content {
 

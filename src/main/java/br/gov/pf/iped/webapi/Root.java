@@ -14,15 +14,13 @@ public class Root {
 	public static String root(){
 		JSONObject json = new JSONObject();
 		JSONObject relationships = new JSONObject();
-		JSONObject links = new JSONObject();
 		
-		json.put("links", links);
-		links.put("self", "/");
 		json.put("relationships", relationships);
 		relationships.put("sources", "/sources");
 		relationships.put("search", "/search");
 		relationships.put("bookmarks", "/bookmarks");
 		relationships.put("categories", "/categories");
 		relationships.put("selection", "/selection");
+		relationships.put("swagger.json", "/swagger.json");
 		return json.toString();
 	}}

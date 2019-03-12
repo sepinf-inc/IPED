@@ -1,6 +1,5 @@
 package br.gov.pf.iped.webapi;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,77 +22,76 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 
+import br.gov.pf.iped.webapi.models.DataListModel;
+import br.gov.pf.iped.webapi.models.DocumentModel;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
+
+@Api(value="Bookmarks")
 @Path("bookmarks")
 public class Bookmarks {
-    
+  
+	@ApiOperation(value="List bookmarks")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String getAll() throws Exception{
-        
-        JSONArray data = new JSONArray();
-        Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap(); 
-        for (String b : bookmarks) {
-            JSONObject inner = new JSONObject();
-            inner.put("id", b);
-            JSONObject relationships = new JSONObject();
-    		inner.put("relationships", relationships);
-    		relationships.put("add", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/add");
-    		relationships.put("remove", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/remove");
-    		relationships.put("rename", "/bookmarks/"+ URLEncoder.encode(b, "UTF-8") +"/rename/{new}");
-            data.add(inner);
-        }
-        
-        JSONObject json = new JSONObject();
-        json.put("data", data);
-
-        return json.toString();
+    public DataListModel<String> getAll() throws Exception{
+        Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap();
+        String[]IDs = bookmarks.toArray(new String[0]);
+        return new DataListModel<String>(IDs);
     }
     
+	@ApiOperation(value="List bookmark items")
     @GET
     @Path("{bookmark}")
     @Produces(MediaType.APPLICATION_JSON)
-    public String get(@PathParam("bookmark") String bookmark) throws Exception{
+    public DataListModel<DocumentModel> get(@PathParam("bookmark") String bookmark) throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
         
-        JSONArray data = new JSONArray();
+        DocumentModel[] docs = new DocumentModel[result.getLength()];
+        int i = 0;
         for (ItemId id : result.getIterator()) {
-            JSONObject item = new JSONObject();
-            item.put("source", id.getSourceId());
-            item.put("id", id.getId());
-            data.add(item);
+        	docs[i++] = new DocumentModel(id.getSourceId(), id.getId());
         }
         
-        JSONObject json = new JSONObject();
-        json.put("data", data);
-
-        return json.toString();
+        return new DataListModel<DocumentModel>(docs);
     }
     
-    @PATCH
+	@ApiOperation(value="Add items to bookmark")
+    @POST
     @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
+    public Response insertLabel(@PathParam("bookmark") String bookmark, 
+    		@ApiParam(required=true) DocumentModel[] docs) throws ParseException {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = getItemIdFromJsonArray(json);
+        List<ItemId> itemIds = new ArrayList<>();
+        for (DocumentModel d: docs) {
+        	itemIds.add(new ItemId(d.getSource(), d.getId()));
+        }
         mm.addLabel(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
     
+	@ApiOperation(value="Remove items from bookmark")
     @PATCH
     @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response removeLabel(@PathParam("bookmark") String bookmark, String json) throws ParseException {
+    public Response removeLabel(@PathParam("bookmark") String bookmark, 
+    		@ApiParam(required=true) DocumentModel[] docs) throws ParseException {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = getItemIdFromJsonArray(json);
+        List<ItemId> itemIds = new ArrayList<>();
+        for (DocumentModel d: docs) {
+        	itemIds.add(new ItemId(d.getSource(), d.getId()));
+        }
         mm.removeLabel(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
@@ -113,15 +111,7 @@ public class Bookmarks {
         return itemIds;
     }
     
-    @POST
-    @Path("{bookmark}")
-    public Response addLabel(@PathParam("bookmark") String bookmark) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        mm.newLabel(bookmark);
-        mm.saveState();
-        return Response.ok().build();
-    }
-    
+	@ApiOperation(value="Delete bookmark")
     @DELETE
     @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
@@ -131,6 +121,7 @@ public class Bookmarks {
         return Response.ok().build();
     }
     
+	@ApiOperation(value="Rename bookmark")
     @PUT
     @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {

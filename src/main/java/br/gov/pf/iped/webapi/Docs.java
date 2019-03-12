@@ -17,10 +17,10 @@ import org.json.simple.JSONObject;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiMarcadores;
 import dpf.sp.gpinf.indexer.search.SearchResult;
+import io.swagger.annotations.Api;
 
+@Api(value="Documents")
 @Path("sources/{sourceID}/docs")
 public class Docs {
 
@@ -39,10 +39,7 @@ public class Docs {
 		}
 
 		JSONObject json = new JSONObject();
-		JSONObject links = new JSONObject();
 		json.put("data", data);
-		json.put("links", links);
-		links.put("self", "/sources/" + sourceID + "/docs?q=" + q);
 
 		return json.toString();
 	}
@@ -57,10 +54,7 @@ public class Docs {
 		
 		JSONObject json = new JSONObject();
 		JSONObject data = new JSONObject();
-		JSONObject links = new JSONObject();
 		JSONObject relationships = new JSONObject();
-		json.put("links", links);
-		links.put("self", "/sources/" + sourceID + "/docs/" + id);
 		json.put("relationships", relationships);
 		relationships.put("content", "/sources/" + sourceID + "/docs/" + id + "/content");
 		relationships.put("text", "/sources/" + sourceID + "/docs/" + id + "/text");

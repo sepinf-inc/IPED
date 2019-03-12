@@ -25,7 +25,9 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
+import io.swagger.annotations.Api;
 
+@Api(value="Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
 public class Text {
     

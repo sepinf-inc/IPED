@@ -5,6 +5,9 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.simple.parser.ParseException;
 
+import dpf.sp.gpinf.indexer.Versao;
+import io.swagger.jaxrs.config.BeanConfig;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.logging.ConsoleHandler;
@@ -25,7 +28,18 @@ public class Main {
     public static HttpServer startServer(String host, int port, String urlToAskSources) throws IOException, ParseException {
         // create a resource config that scans for JAX-RS resources and providers
         // in gpinf.api package
-        final ResourceConfig rc = new ResourceConfig().packages("br.gov.pf.iped.webapi");
+    	String resources = "br.gov.pf.iped.webapi";
+    	BeanConfig beanConfig = new BeanConfig();
+        beanConfig.setVersion(Versao.APP_VERSION);
+        beanConfig.setSchemes(new String[]{"http"});
+        beanConfig.setBasePath("/");
+        beanConfig.setResourcePackage(resources);
+        beanConfig.setScan(true);
+        final ResourceConfig rc = 
+        		new ResourceConfig()
+        		.packages(resources)
+        		.register(io.swagger.jaxrs.listing.ApiListingResource.class)
+        		.register(io.swagger.jaxrs.listing.SwaggerSerializers.class);
         
         Sources.init(urlToAskSources);
         

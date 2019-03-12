@@ -8,6 +8,9 @@ import javax.ws.rs.core.MediaType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import io.swagger.annotations.Api;
+
+@Api(value="Categories")
 @Path("categories")
 public class Categories {
     

@@ -13,7 +13,9 @@ import org.json.simple.JSONObject;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import io.swagger.annotations.Api;
 
+@Api(value="Search")
 @Path("search")
 public class Search {
 	
@@ -35,10 +37,7 @@ public class Search {
 		}
 
 		JSONObject json = new JSONObject();
-		JSONObject links = new JSONObject();
 		json.put("data", data);
-		json.put("links", links);
-		links.put("self", "/search?q=" + q);
 
 		return json.toString();
 	}	
