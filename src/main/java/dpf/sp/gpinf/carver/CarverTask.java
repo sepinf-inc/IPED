@@ -188,19 +188,25 @@ public class CarverTask extends BaseCarverTask {
 
                     Carver carver = getCarver(sig.getCarverType());
 
-                    carver.notifyHit(this.evidence, hit);
-                }
-            }
-
-            // varre lista de itens carveados
-            for (int i = 0; i < carverTypes.length; i += 2) {
-                Carver carver = getCarver(carverTypes[i]);
-                if (carver != null) {
-                    carver.notifyEnd(this.evidence);
+                    try {
+                        carver.notifyHit(this.evidence, hit);
+                    }catch(Exception e) {
+                        LOGGER.warn("{} Skipping unexpected error carving on hit {} {} - CarverClass {}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
+                                hit.getOffset(), carver.getClass().getName());
+                        e.printStackTrace();
+                    }
                 }
             }
 
         } while (k != -1);
+
+        // varre lista de itens carveados
+        for (int i = 0; i < carverTypes.length; i += 2) {
+            Carver carver = getCarver(carverTypes[i]);
+            if (carver != null) {
+                carver.notifyEnd(this.evidence);
+            }
+        }
         
         return null;
     }
