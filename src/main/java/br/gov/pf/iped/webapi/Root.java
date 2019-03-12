@@ -24,6 +24,5 @@ public class Root {
 		relationships.put("bookmarks", "/bookmarks");
 		relationships.put("categories", "/categories");
 		relationships.put("selection", "/selection");
-		relationships.put("thumbnail", "/thumbnail");
 		return json.toString();
 	}}
