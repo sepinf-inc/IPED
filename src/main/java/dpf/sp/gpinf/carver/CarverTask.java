@@ -210,36 +210,6 @@ public class CarverTask extends BaseCarverTask {
         
         return null;
     }
-
-//private int eml;
-    public void init() throws Exception {
-    	AppCarverTaskConfig ctConfig = null;
-    	try {
-        	ctConfig = (AppCarverTaskConfig) ConfigurationManager.getInstance().findObjects(AppCarverTaskConfig.class).iterator().next();
-    	}catch (Exception e) {
-    		ctConfig = new AppCarverTaskConfig();
-    		ConfigurationManager.getInstance().addObject(ctConfig);
-    		ConfigurationManager.getInstance().loadConfigs();
-		}
-
-    	enableCarving = ctConfig.getCarvingEnabled();
-    	
-    	IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-
-        if (carverTypes == null && enableCarving && !ipedConfig.isToAddUnallocated())
-            LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
-        
-        carverConfig = ctConfig.getCarverConfiguration();
-
-        CarvedItemListener cil = new CarvedItemListener() {
-            public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
-                addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
-            }
-        };
-        
-        carverConfig.configTask(new File(ipedConfig.getConfDir()), cil);
-        carverTypes = carverConfig.getCarverTypes();
-    }
     
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
