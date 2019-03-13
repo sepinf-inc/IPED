@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -24,8 +26,11 @@ public class AD1Extractor implements Closeable{
 
     static long assinatura_tam = 512; //0x200
     
+    private static Object lock = new Object();
+    
     private File file;
-    private Map<Integer, FileChannel> fcMap = new ConcurrentHashMap<>();
+    private Map<Integer, List<ByteBuffer>> fcMap = new HashMap<>();
+    private List<FileChannel> channels = new ArrayList<>();
     
     long tamanho_bloco_arquivo = 0L;
     long numero_arquivo = 0L;
@@ -58,7 +63,14 @@ public class AD1Extractor implements Closeable{
             throw new FileNotFoundException("Arquivo AD1 nao encontrado");
         }
         file = arquivo;
-        fcMap.put(1, FileChannel.open(file.toPath(), StandardOpenOption.READ));
+        FileChannel fc = FileChannel.open(file.toPath(), StandardOpenOption.READ);
+        channels.add(fc);
+        List<ByteBuffer> bbList = new ArrayList<>();
+        for(long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
+            int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
+            bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
+        }
+        fcMap.put(1, bbList);
         
         headerInit();
     }
@@ -176,7 +188,7 @@ public class AD1Extractor implements Closeable{
         lerBytesArquivoRelativo(vetor_variavel, PC, header.nome_objeto_tam);
         PC += header.nome_objeto_tam;
         
-        header.objeto_nome = new String(vetor_variavel, charset);
+        header.objeto_nome = new String(vetor_variavel, "UTF-8");
         
         vetor_variavel = null;
         
@@ -307,31 +319,41 @@ public class AD1Extractor implements Closeable{
     }
     
     private void lerBytesArquivoAbsoluto(byte[] cbuf, long off, int len) throws IOException {
-        
-        FileChannel fc = fcMap.get(1);
-        ByteBuffer bb = ByteBuffer.wrap(cbuf, 0, len);
-        int r = 0, pos = 0;
-        while (r != -1 && (pos += r) < len)
-            r = fc.read(bb, off + pos);
-        
+        //reads from first ad1 only
+        ByteBuffer src = fcMap.get(1).get((int)(off / Integer.MAX_VALUE));
+        src.duplicate().get(cbuf, (int)(off % Integer.MAX_VALUE), len);
     }
     
     private int seekAndRead(int ad1Ord, long seekOff, byte[] buf, int off, int len) throws IOException {
         
-        FileChannel fc = null;
         try {
-            fc = fcMap.get(ad1Ord);
-            if(fc == null) {
-                File newAd1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
-                fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
-                fcMap.put(ad1Ord, fc);
+            List<ByteBuffer> bbList;
+            synchronized(lock) {
+                bbList = fcMap.get(ad1Ord);
+                if(bbList == null) {
+                    File newAd1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
+                    FileChannel fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
+                    channels.add(fc);
+                    bbList = new ArrayList<>();
+                    for(long pos = 0; pos < fc.size(); pos += Integer.MAX_VALUE) {
+                        int size = (int) Math.min(fc.size() - pos, Integer.MAX_VALUE);
+                        bbList.add(fc.map(MapMode.READ_ONLY, pos, size));
+                    }
+                    fcMap.put(ad1Ord, bbList);
+                }
             }
-            ByteBuffer bb = ByteBuffer.wrap(buf, off, len);
-            return fc.read(bb, seekOff);
+            ByteBuffer src = bbList.get((int)(seekOff / Integer.MAX_VALUE));
+            int seek = (int)(seekOff % Integer.MAX_VALUE);
+            ByteBuffer bb = src.duplicate();
+            bb.position(seek);
+            int size = Math.min(len, bb.remaining());
+            bb.get(buf, off, size);
+            return size;
             
         }catch(ClosedChannelException e) {
-            fc.close();
-            fcMap.put(ad1Ord, null);
+            synchronized(lock) {
+                fcMap.put(ad1Ord, null);
+            }
             throw e;
         }
     }
@@ -388,7 +410,7 @@ public class AD1Extractor implements Closeable{
 
     @Override
     public void close() throws IOException {
-        for(Closeable c : fcMap.values())
+        for(Closeable c : channels)
             c.close();
     }
     
