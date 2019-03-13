@@ -4,13 +4,16 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 
 /**
@@ -22,7 +25,7 @@ public class AD1Extractor implements Closeable{
     static long assinatura_tam = 512; //0x200
     
     private File file;
-    private Map<Integer, SeekableFileInputStream> sfisMap = new HashMap<>();
+    private Map<Integer, FileChannel> fcMap = new ConcurrentHashMap<>();
     
     long tamanho_bloco_arquivo = 0L;
     long numero_arquivo = 0L;
@@ -55,7 +58,7 @@ public class AD1Extractor implements Closeable{
             throw new FileNotFoundException("Arquivo AD1 nao encontrado");
         }
         file = arquivo;
-        sfisMap.put(1, new SeekableFileInputStream(file));
+        fcMap.put(1, FileChannel.open(file.toPath(), StandardOpenOption.READ));
         
         headerInit();
     }
@@ -303,32 +306,32 @@ public class AD1Extractor implements Closeable{
     
     }
     
-    private synchronized void lerBytesArquivoAbsoluto(byte[] cbuf, long off, long len) throws IOException {
+    private void lerBytesArquivoAbsoluto(byte[] cbuf, long off, int len) throws IOException {
         
-        SeekableFileInputStream sfis = sfisMap.get(1);
-        sfis.seek(off);
+        FileChannel fc = fcMap.get(1);
+        ByteBuffer bb = ByteBuffer.wrap(cbuf, 0, len);
         int r = 0, pos = 0;
         while (r != -1 && (pos += r) < len)
-            r = sfis.read(cbuf, pos, (int) (len - pos));    
+            r = fc.read(bb, off + pos);
         
     }
     
-    private synchronized int seekAndRead(int ad1Ord, long seekOff, byte[] buf, int off, int len) throws IOException {
+    private int seekAndRead(int ad1Ord, long seekOff, byte[] buf, int off, int len) throws IOException {
         
-        SeekableFileInputStream sfis = null;
+        FileChannel fc = null;
         try {
-            sfis = sfisMap.get(ad1Ord); 
-            if(sfis == null) {
+            fc = fcMap.get(ad1Ord);
+            if(fc == null) {
                 File newAd1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf(".") + 3) + ad1Ord);
-                sfis = new SeekableFileInputStream(newAd1);
-                sfisMap.put(ad1Ord, sfis);
+                fc = FileChannel.open(newAd1.toPath(), StandardOpenOption.READ);
+                fcMap.put(ad1Ord, fc);
             }
-            sfis.seek(seekOff);
-            return sfis.read(buf, off, len);
+            ByteBuffer bb = ByteBuffer.wrap(buf, off, len);
+            return fc.read(bb, seekOff);
             
         }catch(ClosedChannelException e) {
-            sfis.close();
-            sfisMap.put(ad1Ord, null);
+            fc.close();
+            fcMap.put(ad1Ord, null);
             throw e;
         }
     }
@@ -385,7 +388,7 @@ public class AD1Extractor implements Closeable{
 
     @Override
     public void close() throws IOException {
-        for(Closeable c : sfisMap.values())
+        for(Closeable c : fcMap.values())
             c.close();
     }
     
