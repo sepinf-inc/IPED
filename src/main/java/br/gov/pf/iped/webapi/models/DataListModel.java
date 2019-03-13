@@ -1,18 +1,25 @@
 package br.gov.pf.iped.webapi.models;
 
+import java.util.Arrays;
+import java.util.List;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value="DataList")
 public class DataListModel<T>{
-	private T[] IDs;
+	private List<T> IDs;
 	
 	public DataListModel(T[] IDs) {
-		this.IDs = IDs;
+		this.IDs = Arrays.asList(IDs);
+	}
+	
+	public DataListModel(List<T> IDs) {
+		this.IDs = IDs; 
 	}
 	
 	@ApiModelProperty()
-	public T[] getData(){
+	public List<T> getData(){
 		return this.IDs;
 	}
 }

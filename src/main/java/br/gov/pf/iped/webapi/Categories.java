@@ -1,31 +1,28 @@
 package br.gov.pf.iped.webapi;
 
+import java.util.List;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
+import br.gov.pf.iped.webapi.models.DataListModel;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Categories")
 @Path("categories")
 public class Categories {
     
+	@ApiOperation(value="List categories")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String get() throws Exception{
+    public DataListModel<String> get() throws Exception{
         
-        JSONArray data = new JSONArray();
-        for (String category : Sources.multiSource.getCategories()) {
-            data.add(category);
-        }
-        
-        JSONObject json = new JSONObject();
-        json.put("data", data);
+    	List<String> categories = Sources.multiSource.getCategories();
+    	DataListModel<String> result = new DataListModel<String>(categories);
 
-        return json.toString();
+        return result;
     }   
 }

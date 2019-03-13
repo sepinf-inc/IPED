@@ -4,14 +4,14 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value="Document")
-public class DocumentModel{
+public class DocIDModel{
 	private int source;
 	private int id;
 	
-	public DocumentModel() {
+	public DocIDModel() {
 	}
 	
-	public DocumentModel(int source, int id) {
+	public DocIDModel(int source, int id) {
 		this.source = source;
 		this.id = id;
 	}

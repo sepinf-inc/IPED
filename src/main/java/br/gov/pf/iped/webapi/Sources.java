@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -21,9 +22,12 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.sleuthkit.datamodel.TskCoreException;
 
+import br.gov.pf.iped.webapi.models.DataListModel;
+import br.gov.pf.iped.webapi.models.SourceModel;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Sources")
 @Path("sources")
@@ -43,43 +47,29 @@ public class Sources {
 		multiSource = new IPEDMultiSource(sources);
 	}
 
-
+	@ApiOperation(value="List sources")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public static String listSources() throws TskCoreException, IOException{
-		JSONArray data = new JSONArray();
-		int sourceId = -1;
+	public static DataListModel<SourceModel> listSources() throws TskCoreException, IOException{
+		List<SourceModel> data = new ArrayList<SourceModel>();
 		for (IPEDSource source : multiSource.getAtomicSources()) {
-				sourceId = source.getSourceId();
-				data.add(getonejson(sourceId));
+				data.add(getone(source.getSourceId()));
 		}
-		JSONObject json = new JSONObject();
-		json.put("data", data);
-		return json.toString();
+		return new DataListModel<SourceModel>(data);
 	}
 
+	@ApiOperation(value="Get source's properties")
 	@GET
 	@Path("{sourceID}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static String getone(@PathParam("sourceID") int sourceID) throws IOException, TskCoreException{
-		return getonejson(Integer.valueOf(sourceID)).toString();
-	}
-	public static JSONObject getonejson(int sourceID) throws IOException, TskCoreException{
-		IPEDSource source = get(sourceID);
-		JSONObject json = new JSONObject();
-		JSONObject relationships = new JSONObject();
-		
-		json.put("id", sourceID);
-		json.put("path", source.getCaseDir().toString());
-		json.put("relationships", relationships);
-		relationships.put("docs", "/sources/" + sourceID + "/docs/");
-		return json;
+	public static SourceModel getone(@PathParam("sourceID") int sourceID) throws IOException, TskCoreException{
+		SourceModel result = new SourceModel();
+		IPEDSource source = multiSource.getAtomicSourceBySourceId(sourceID);
+		result.setId(sourceID);
+		result.setPath(source.getCaseDir().toString());
+		return result;
 	}
 	
-	public static IPEDSource get(int sourceID) {
-		return multiSource.getAtomicSourceBySourceId(sourceID);
-	}
-
 	private static JSONArray askSources(String urlToAskSources) throws MalformedURLException, IOException, ParseException{
 		InputStream in;
 		JSONArray result = new JSONArray();

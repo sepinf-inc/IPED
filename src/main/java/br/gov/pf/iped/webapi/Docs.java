@@ -1,108 +1,50 @@
 package br.gov.pf.iped.webapi;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import br.gov.pf.iped.webapi.models.DocPropsModel;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.SearchResult;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs")
 public class Docs {
 
-	@DefaultValue("") @QueryParam("q") String q;
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public String doSearch(@PathParam("sourceID") final int sourceID) throws Exception{
-    	String escapeq = q.replaceAll("/", "\\\\/");
-		IPEDSource source = Sources.get(sourceID); 
-    	IPEDSearcher searcher = new IPEDSearcher(source, escapeq);
-    	
-    	SearchResult result = searcher.search();
-		JSONArray data = new JSONArray();
-		for (int i = 0; i < result.getLength(); i++) {
-			data.add(result.getId(i));
-		}
-
-		JSONObject json = new JSONObject();
-		json.put("data", data);
-
-		return json.toString();
-	}
-
+	@ApiOperation(value="Get document's properties")
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static String properties(@PathParam("sourceID") int sourceID, @PathParam("id") int id) throws IOException{
-		IPEDSource source = Sources.get(sourceID);
+	public static DocPropsModel properties(@PathParam("sourceID") int sourceID, @PathParam("id") int id) throws IOException{
+		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
 		int luceneID = source.getLuceneId(id);
 		Document doc = source.getReader().document(luceneID);
 		
-		JSONObject json = new JSONObject();
-		JSONObject data = new JSONObject();
-		JSONObject relationships = new JSONObject();
-		json.put("relationships", relationships);
-		relationships.put("content", "/sources/" + sourceID + "/docs/" + id + "/content");
-		relationships.put("text", "/sources/" + sourceID + "/docs/" + id + "/text");
-		json.put("data", data);
-		json.put("sourceID", sourceID);
-		json.put("id", id); 
-		json.put("luceneID", luceneID); 
+		DocPropsModel result = new DocPropsModel();
+		result.setSource(sourceID);
+		result.setId(id);
+		result.setLuceneId(luceneID);
+		Map<String, String[]> properties = new HashMap<String, String[]>();
 		for (IndexableField field : doc.getFields()) {
 		    String[] values = doc.getValues(field.name());
-		    if(values.length == 1) {
-		        data.put(field.name(), values[0]);
-		    }else {
-		        JSONArray array = new JSONArray();
-		        for(String v : values)
-		            array.add(v);
-		        data.put(field.name(), array);
-		    }
+	        properties.put(field.name(), values);
 		}
-        JSONArray bookmarks = new JSONArray();
-        for (String b : source.getMarcadores().getLabelList(id)) {
-            bookmarks.add(b);
-        }
-        data.put("bookmarks", bookmarks);
-        data.put("selected", source.getMarcadores().isSelected(id));
+		result.setProperties(properties);
+		
+        result.setBookmarks(source.getMarcadores().getLabelList(id));
+        result.setSelected(source.getMarcadores().isSelected(id));
         
-		return json.toString();
+		return result;
 	}
-
-//	@POST
-//	@Produces(MediaType.APPLICATION_JSON)
-//	public static StreamingOutput getmanydocs(String docs){
-//		final JSONArray arr = (JSONArray)JSONValue.parse(docs);
-//
-//		return  new StreamingOutput() {
-//			@Override
-//			public void write(OutputStream output) throws IOException, WebApplicationException {
-//				output.write("[".getBytes());
-//				String comma = "";
-//				for (Object object: arr) {
-//					output.write(comma.getBytes());
-//					comma = ",";
-//					JSONArray item = (JSONArray)object;
-//					String src = (String)item.get(0);
-//					long docid = (Long)item.get(1);
-//					output.write(properties(src, (int)docid).getBytes());
-//				}
-//				output.write("]".getBytes());
-//			}
-//		};
-//	}
 }

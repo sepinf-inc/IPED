@@ -20,11 +20,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs/{id}/content")
 public class Content {
 
+	@ApiOperation(value="Get document's raw content")
 	@GET
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response content(
@@ -32,7 +34,7 @@ public class Content {
 			@PathParam("id") int id)
 					throws TskCoreException, IOException, URISyntaxException{
 
-		IPEDSource source = Sources.get(sourceID);
+		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
     	final EvidenceFile item = source.getItemByID(id);
 		return Response.status(200)
 				.header("Content-Length", String.valueOf(item.getLength()))

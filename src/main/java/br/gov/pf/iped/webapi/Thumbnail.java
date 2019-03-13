@@ -18,11 +18,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs/{id}/thumb")
 public class Thumbnail {
 
+	@ApiOperation(value="Get document's thumbnail")
     @GET
     @Produces("image/jpg")
     public StreamingOutput content(
@@ -30,7 +32,7 @@ public class Thumbnail {
             @PathParam("id") int id)
                     throws TskCoreException, IOException, URISyntaxException{
 
-        IPEDSource source = Sources.get(sourceID);
+        IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
         EvidenceFile item = source.getItemByID(id);
         final byte[] thumb = item.getThumb() != null ? item.getThumb() : new byte[0];
         return new StreamingOutput() {

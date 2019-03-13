@@ -26,18 +26,20 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 
 @Api(value="Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
 public class Text {
     
+	@ApiOperation(value="Get document's content converted as text")
     @GET
     @Produces(MediaType.TEXT_PLAIN+"; charset=UTF-8")
 	public static StreamingOutput content(
 			@PathParam("sourceID") int sourceID, 
 			@PathParam("id") int id) throws Exception{
-    	
-    	IPEDSource source = Sources.get(sourceID);
+
+    	IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
     	final EvidenceFile item = source.getItemByID(id);
     	final IndexerDefaultParser parser = new IndexerDefaultParser();
 		final ParseContext context = getTikaContext(item, parser, source.getModuleDir());

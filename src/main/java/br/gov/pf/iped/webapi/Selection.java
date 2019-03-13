@@ -1,6 +1,6 @@
 package br.gov.pf.iped.webapi;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -11,62 +11,59 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.ParseException;
-
+import br.gov.pf.iped.webapi.models.DataListModel;
+import br.gov.pf.iped.webapi.models.DocIDModel;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 @Api(value="Selection")
 @Path("selection")
 public class Selection {
     
+	@ApiOperation(value="List selected documents")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String get() throws Exception{
+    public DataListModel<DocIDModel> get() throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarSelecionados(result);
         
-        JSONArray data = new JSONArray();
+        List<DocIDModel> docs = new ArrayList<DocIDModel>();
         for (ItemId id : result.getIterator()) {
-            JSONObject item = new JSONObject();
-            item.put("source", id.getSourceId());
-            item.put("id", id.getId());
-            data.add(item);
+        	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
         }
         
-        JSONObject json = new JSONObject();
-        json.put("data", data);
-
-        return json.toString();
+        return new DataListModel<DocIDModel>(docs);
     }
     
+	@ApiOperation(value="Add documents to selection")
     @PUT
     @Path("add")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response add(String json) throws ParseException {
+    public Response add(@ApiParam(required=true) DocIDModel[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = Bookmarks.getItemIdFromJsonArray(json);
-        for(ItemId item : itemIds)
-            mm.setSelected(true, item, Sources.multiSource);
+        for (DocIDModel d: docs) {
+            mm.setSelected(true, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
+        }
         mm.saveState();
         return Response.ok().build();
     }
     
+	@ApiOperation(value="Remove documents from selection")
     @PUT
     @Path("remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response remove(String json) throws ParseException {
+    public Response remove(@ApiParam(required=true) DocIDModel[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = Bookmarks.getItemIdFromJsonArray(json);
-        for(ItemId item : itemIds)
-            mm.setSelected(false, item, Sources.multiSource);
+        for (DocIDModel d: docs) {
+            mm.setSelected(false, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
+        }
         mm.saveState();
         return Response.ok().build();
     }
