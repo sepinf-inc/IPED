@@ -35,7 +35,7 @@ public class AD1Extractor implements Closeable{
     long tamanho_bloco_arquivo = 0L;
     long numero_arquivo = 0L;
     long total_arquivos = 0L;
-    static String charset = "ISO-8859-1";   
+    static String charset = "UTF-8";   
 
     private FileHeader rootHeader = null;
     
@@ -188,7 +188,7 @@ public class AD1Extractor implements Closeable{
         lerBytesArquivoRelativo(vetor_variavel, PC, header.nome_objeto_tam);
         PC += header.nome_objeto_tam;
         
-        header.objeto_nome = new String(vetor_variavel, "UTF-8");
+        header.objeto_nome = new String(vetor_variavel, charset);
         
         vetor_variavel = null;
         
