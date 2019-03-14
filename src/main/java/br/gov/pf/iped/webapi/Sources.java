@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -30,6 +32,7 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 @Api(value="Sources")
 @Path("sources")
@@ -70,7 +73,8 @@ public class Sources {
 	}
 	
 	public static IPEDSource getSource(String sourceID) {
-		return multiSource.getAtomicSourceBySourceId(sourceStringToInt.get(sourceID));
+		int id = sourceStringToInt.get(sourceID);
+		return multiSource.getAtomicSourceBySourceId(id);
 	}
 
 	@ApiOperation(value="List sources")
@@ -79,9 +83,40 @@ public class Sources {
 	public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException{
 		List<SourceJSON> data = new ArrayList<SourceJSON>();
 		for (IPEDSource source : multiSource.getAtomicSources()) {
-				data.add(getone(sourceIntToString.get(source.getSourceId())));
+			int id = source.getSourceId();
+			String sourceID = sourceIntToString.get(id);
+			data.add(getone(sourceID));
 		}
 		return new DataListJSON<SourceJSON>(data);
+	}
+
+	@ApiOperation(value="Add source")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	public synchronized static Response addSource(@ApiParam(required=true) SourceJSON sourcejson){
+		String id = sourcejson.getId();
+		String path = sourcejson.getPath();
+		if (sourceStringToInt.containsKey(id)) {
+			throw new RuntimeException("duplicated id: " + id);
+		}
+		sourcePathToStringID.put(path, id);
+		
+		List<IPEDSource> sources = multiSource.getAtomicSources();
+		int last = sources.size();
+		sources.add(new IPEDSource(new File(path)));
+		if (last+1 != sources.size()) {
+			throw new RuntimeException("concurrency error adding source");
+		}
+		multiSource.init();
+		IPEDSource source = multiSource.getAtomicSourceBySourceId(last);
+		String realpath = source.getCaseDir().toString();
+		if (!path.equals(realpath)) {
+			throw new RuntimeException("error adding source; expected " + path +" got " + realpath);
+		}
+		sourceStringToInt.put(id, last);
+		sourceIntToString.put(last, id);
+
+		return Response.ok().build();
 	}
 
 	@ApiOperation(value="Get source's properties")

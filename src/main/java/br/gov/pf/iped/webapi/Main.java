@@ -92,7 +92,7 @@ public class Main {
         	"http://"+host+":"+port+"/"));
     }
     public static void printHelp(){
-    	System.out.println("--sources=(URL|Path)\tfile or url with json: [{path}...]");
+    	System.out.println("--sources=(URL|Path)\tfile or url with json: [{id, path}...]");
     	System.out.println("--host=\t\tdefault:0.0.0.0");
     	System.out.println("--port=\t\tdefault:8080");
     }

@@ -109,7 +109,7 @@ public class IPEDMultiSource extends IPEDSource{
 		return files;
 	}
 		
-	private void init(){
+	public void init(){
 		
 		int i = 0;
 		for(IPEDSource iCase : cases)
