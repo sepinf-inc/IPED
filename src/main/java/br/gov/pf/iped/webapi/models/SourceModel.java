@@ -2,6 +2,12 @@ package br.gov.pf.iped.webapi.models;
 
 import io.swagger.annotations.ApiModelProperty;
 
+/** SourceModel represents a IPED source:
+ * {
+ *   "id": 0,
+ *   "path": "string"
+ * }
+*/
 public class SourceModel {
 	private int id;
 	private String path;

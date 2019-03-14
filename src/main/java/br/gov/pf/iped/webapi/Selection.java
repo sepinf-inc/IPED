@@ -11,8 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import br.gov.pf.iped.webapi.models.DataListModel;
 import br.gov.pf.iped.webapi.models.DocIDModel;
+import br.gov.pf.iped.webapi.models.SourceToIDsModel;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
@@ -28,7 +28,7 @@ public class Selection {
 	@ApiOperation(value="List selected documents")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DataListModel<DocIDModel> get() throws Exception{
+    public SourceToIDsModel get() throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
@@ -39,7 +39,7 @@ public class Selection {
         	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
         }
         
-        return new DataListModel<DocIDModel>(docs);
+        return new SourceToIDsModel(docs);
     }
     
 	@ApiOperation(value="Add documents to selection")

@@ -3,6 +3,12 @@ package br.gov.pf.iped.webapi.models;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+/** DocIDModel identifies a single document:
+ * {
+ *   "source": 0,
+ *   "id": 0
+ * }
+*/
 @ApiModel(value="Document")
 public class DocIDModel{
 	private int source;

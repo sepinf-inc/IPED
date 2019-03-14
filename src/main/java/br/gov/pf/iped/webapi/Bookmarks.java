@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 
 import br.gov.pf.iped.webapi.models.DataListModel;
 import br.gov.pf.iped.webapi.models.DocIDModel;
+import br.gov.pf.iped.webapi.models.SourceToIDsModel;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
@@ -44,7 +45,7 @@ public class Bookmarks {
     @GET
     @Path("{bookmark}")
     @Produces(MediaType.APPLICATION_JSON)
-    public DataListModel<DocIDModel> get(@PathParam("bookmark") String bookmark) throws Exception{
+    public SourceToIDsModel get(@PathParam("bookmark") String bookmark) throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
@@ -55,7 +56,7 @@ public class Bookmarks {
         	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
         }
         
-        return new DataListModel<DocIDModel>(docs);
+        return new SourceToIDsModel(docs);
     }
     
 	@ApiOperation(value="Add documents to bookmark")

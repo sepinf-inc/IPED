@@ -6,6 +6,11 @@ import java.util.List;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+/** DataListModel puts an array in a "data" property:
+ * {
+ *   "data": []
+ * }
+*/
 @ApiModel(value="DataList")
 public class DataListModel<T>{
 	private List<T> IDs;

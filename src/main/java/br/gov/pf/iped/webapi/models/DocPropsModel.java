@@ -5,6 +5,18 @@ import java.util.Map;
 
 import io.swagger.annotations.ApiModelProperty;
 
+/** DocPropsModel list properties of a document:
+ * {
+ *  "source": 0,
+ *  "id": 0,
+ *  "luceneId": 0,
+ *  "properties": {},
+ *  "bookmarks": [
+ *    "string"
+ *  ],
+ *  "selected": false
+ *}
+*/
 public class DocPropsModel {
 	private int source;
 	private int id;

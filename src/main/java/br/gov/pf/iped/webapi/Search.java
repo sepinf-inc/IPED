@@ -10,8 +10,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import br.gov.pf.iped.webapi.models.DataListModel;
 import br.gov.pf.iped.webapi.models.DocIDModel;
+import br.gov.pf.iped.webapi.models.SourceToIDsModel;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -29,7 +29,7 @@ public class Search {
 	@ApiOperation(value="Search documents")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public DataListModel<DocIDModel> doSearch() throws Exception{
+	public SourceToIDsModel doSearch() throws Exception{
     	String escapeq = q.replaceAll("/", "\\\\/");
     	IPEDSearcher searcher;
     	int sourceID = Integer.parseInt(sourceIDstr);
@@ -45,7 +45,7 @@ public class Search {
         	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
         }
         
-        return new DataListModel<DocIDModel>(docs);
+        return new SourceToIDsModel(docs);
 	}	
 }
 
