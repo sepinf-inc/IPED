@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 
-import br.gov.pf.iped.webapi.models.DocPropsModel;
+import br.gov.pf.iped.webapi.json.DocPropsJSON;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -26,12 +26,12 @@ public class Docs {
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static DocPropsModel properties(@PathParam("sourceID") int sourceID, @PathParam("id") int id) throws IOException{
+	public static DocPropsJSON properties(@PathParam("sourceID") int sourceID, @PathParam("id") int id) throws IOException{
 		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
 		int luceneID = source.getLuceneId(id);
 		Document doc = source.getReader().document(luceneID);
 		
-		DocPropsModel result = new DocPropsModel();
+		DocPropsJSON result = new DocPropsJSON();
 		result.setSource(sourceID);
 		result.setId(id);
 		result.setLuceneId(luceneID);

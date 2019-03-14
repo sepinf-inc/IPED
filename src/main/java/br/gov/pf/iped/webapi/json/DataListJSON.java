@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,14 +12,14 @@ import io.swagger.annotations.ApiModelProperty;
  * }
 */
 @ApiModel(value="DataList")
-public class DataListModel<T>{
+public class DataListJSON<T>{
 	private List<T> IDs;
 	
-	public DataListModel(T[] IDs) {
+	public DataListJSON(T[] IDs) {
 		this.IDs = Arrays.asList(IDs);
 	}
 	
-	public DataListModel(List<T> IDs) {
+	public DataListJSON(List<T> IDs) {
 		this.IDs = IDs; 
 	}
 	

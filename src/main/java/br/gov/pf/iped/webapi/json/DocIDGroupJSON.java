@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import java.util.List;
 
@@ -10,12 +10,12 @@ import io.swagger.annotations.ApiModelProperty;
  *   "ids":[0,1,2]
  * }
 */
-public class DocIDGroupModel{
+public class DocIDGroupJSON{
 	private Integer source;
 	private List<Integer> ids;
 	
-	public DocIDGroupModel() {}
-	public DocIDGroupModel(Integer source, List<Integer> ids) {
+	public DocIDGroupJSON() {}
+	public DocIDGroupJSON(Integer source, List<Integer> ids) {
 		this.source = source;
 		this.ids = ids;
 	}

@@ -16,9 +16,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import br.gov.pf.iped.webapi.models.DataListModel;
-import br.gov.pf.iped.webapi.models.DocIDModel;
-import br.gov.pf.iped.webapi.models.SourceToIDsModel;
+import br.gov.pf.iped.webapi.json.DataListJSON;
+import br.gov.pf.iped.webapi.json.DocIDJSON;
+import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
@@ -35,28 +35,28 @@ public class Bookmarks {
 	@ApiOperation(value="List bookmarks")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DataListModel<String> getAll(){
+    public DataListJSON<String> getAll(){
         Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap();
         String[]IDs = bookmarks.toArray(new String[0]);
-        return new DataListModel<String>(IDs);
+        return new DataListJSON<String>(IDs);
     }
     
 	@ApiOperation(value="List bookmark documents")
     @GET
     @Path("{bookmark}")
     @Produces(MediaType.APPLICATION_JSON)
-    public SourceToIDsModel get(@PathParam("bookmark") String bookmark) throws Exception{
+    public SourceToIDsJSON get(@PathParam("bookmark") String bookmark) throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
         
-        List<DocIDModel> docs = new ArrayList<DocIDModel>();
+        List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
+        	docs.add(new DocIDJSON(id.getSourceId(), id.getId()));
         }
         
-        return new SourceToIDsModel(docs);
+        return new SourceToIDsJSON(docs);
     }
     
 	@ApiOperation(value="Add documents to bookmark")
@@ -64,10 +64,10 @@ public class Bookmarks {
     @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertLabel(@PathParam("bookmark") String bookmark, 
-    		@ApiParam(required=true) DocIDModel[] docs){
+    		@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
-        for (DocIDModel d: docs) {
+        for (DocIDJSON d: docs) {
         	itemIds.add(new ItemId(d.getSource(), d.getId()));
         }
         mm.addLabel(itemIds, bookmark);
@@ -80,10 +80,10 @@ public class Bookmarks {
     @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response removeLabel(@PathParam("bookmark") String bookmark, 
-    		@ApiParam(required=true) DocIDModel[] docs){
+    		@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
-        for (DocIDModel d: docs) {
+        for (DocIDJSON d: docs) {
         	itemIds.add(new ItemId(d.getSource(), d.getId()));
         }
         mm.removeLabel(itemIds, bookmark);

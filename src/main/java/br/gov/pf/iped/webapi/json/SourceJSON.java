@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -8,7 +8,7 @@ import io.swagger.annotations.ApiModelProperty;
  *   "path": "string"
  * }
 */
-public class SourceModel {
+public class SourceJSON {
 	private int id;
 	private String path;
 	

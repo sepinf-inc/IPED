@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,17 +21,17 @@ import io.swagger.annotations.ApiModelProperty;
  *  ]
  * }
  */
-public class SourceToIDsModel {
+public class SourceToIDsJSON {
 	
 	private Map<Integer, List<Integer>> sourceToids;
 	
-	public SourceToIDsModel() {
+	public SourceToIDsJSON() {
 		this.sourceToids = new HashMap<Integer, List<Integer>>();
 	}
 	
-	public SourceToIDsModel(List<DocIDModel> docs) {
+	public SourceToIDsJSON(List<DocIDJSON> docs) {
 		this();
-		for (DocIDModel doc: docs) {
+		for (DocIDJSON doc: docs) {
 			Integer source = new Integer(doc.getSource());
 			Integer id = new Integer(doc.getId());
 			if (!this.sourceToids.containsKey(source)) {
@@ -43,16 +43,16 @@ public class SourceToIDsModel {
 	}
 	
 	@ApiModelProperty
-	public List<DocIDGroupModel> getData() {
-		List<DocIDGroupModel> result = new ArrayList<DocIDGroupModel>();
+	public List<DocIDGroupJSON> getData() {
+		List<DocIDGroupJSON> result = new ArrayList<DocIDGroupJSON>();
 		for (Map.Entry<Integer, List<Integer>> entry: this.sourceToids.entrySet()) {
-			result.add(new DocIDGroupModel(entry.getKey(), entry.getValue()));
+			result.add(new DocIDGroupJSON(entry.getKey(), entry.getValue()));
 		}
 		return result;
 	}
 	
-	public void setData(List<DocIDGroupModel> data) {
-		for (DocIDGroupModel grp: data) {
+	public void setData(List<DocIDGroupJSON> data) {
+		for (DocIDGroupJSON grp: data) {
 			this.sourceToids.put(grp.getSource(), grp.getIds());
 		}
 	}

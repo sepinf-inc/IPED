@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -10,14 +10,14 @@ import io.swagger.annotations.ApiModelProperty;
  * }
 */
 @ApiModel(value="Document")
-public class DocIDModel{
+public class DocIDJSON{
 	private int source;
 	private int id;
 	
-	public DocIDModel() {
+	public DocIDJSON() {
 	}
 	
-	public DocIDModel(int source, int id) {
+	public DocIDJSON(int source, int id) {
 		this.source = source;
 		this.id = id;
 	}

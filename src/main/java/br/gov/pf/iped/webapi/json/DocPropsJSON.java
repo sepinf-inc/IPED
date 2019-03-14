@@ -1,4 +1,4 @@
-package br.gov.pf.iped.webapi.models;
+package br.gov.pf.iped.webapi.json;
 
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,7 @@ import io.swagger.annotations.ApiModelProperty;
  *  "selected": false
  *}
 */
-public class DocPropsModel {
+public class DocPropsJSON {
 	private int source;
 	private int id;
 	private int luceneId;

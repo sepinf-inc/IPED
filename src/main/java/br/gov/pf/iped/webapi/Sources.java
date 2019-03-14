@@ -22,8 +22,8 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.sleuthkit.datamodel.TskCoreException;
 
-import br.gov.pf.iped.webapi.models.DataListModel;
-import br.gov.pf.iped.webapi.models.SourceModel;
+import br.gov.pf.iped.webapi.json.DataListJSON;
+import br.gov.pf.iped.webapi.json.SourceJSON;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
@@ -50,20 +50,20 @@ public class Sources {
 	@ApiOperation(value="List sources")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public static DataListModel<SourceModel> listSources() throws TskCoreException, IOException{
-		List<SourceModel> data = new ArrayList<SourceModel>();
+	public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException{
+		List<SourceJSON> data = new ArrayList<SourceJSON>();
 		for (IPEDSource source : multiSource.getAtomicSources()) {
 				data.add(getone(source.getSourceId()));
 		}
-		return new DataListModel<SourceModel>(data);
+		return new DataListJSON<SourceJSON>(data);
 	}
 
 	@ApiOperation(value="Get source's properties")
 	@GET
 	@Path("{sourceID}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static SourceModel getone(@PathParam("sourceID") int sourceID) throws IOException, TskCoreException{
-		SourceModel result = new SourceModel();
+	public static SourceJSON getone(@PathParam("sourceID") int sourceID) throws IOException, TskCoreException{
+		SourceJSON result = new SourceJSON();
 		IPEDSource source = multiSource.getAtomicSourceBySourceId(sourceID);
 		result.setId(sourceID);
 		result.setPath(source.getCaseDir().toString());

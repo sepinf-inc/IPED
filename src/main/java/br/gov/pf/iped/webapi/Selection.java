@@ -11,8 +11,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import br.gov.pf.iped.webapi.models.DocIDModel;
-import br.gov.pf.iped.webapi.models.SourceToIDsModel;
+import br.gov.pf.iped.webapi.json.DocIDJSON;
+import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiMarcadores;
@@ -28,27 +28,27 @@ public class Selection {
 	@ApiOperation(value="List selected documents")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public SourceToIDsModel get() throws Exception{
+    public SourceToIDsJSON get() throws Exception{
         
         IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarSelecionados(result);
         
-        List<DocIDModel> docs = new ArrayList<DocIDModel>();
+        List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDModel(id.getSourceId(), id.getId()));
+        	docs.add(new DocIDJSON(id.getSourceId(), id.getId()));
         }
         
-        return new SourceToIDsModel(docs);
+        return new SourceToIDsJSON(docs);
     }
     
 	@ApiOperation(value="Add documents to selection")
     @PUT
     @Path("add")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response add(@ApiParam(required=true) DocIDModel[] docs){
+    public Response add(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        for (DocIDModel d: docs) {
+        for (DocIDJSON d: docs) {
             mm.setSelected(true, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
         }
         mm.saveState();
@@ -59,9 +59,9 @@ public class Selection {
     @PUT
     @Path("remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response remove(@ApiParam(required=true) DocIDModel[] docs){
+    public Response remove(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        for (DocIDModel d: docs) {
+        for (DocIDJSON d: docs) {
             mm.setSelected(false, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
         }
         mm.saveState();
