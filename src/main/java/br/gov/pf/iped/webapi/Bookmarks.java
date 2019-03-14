@@ -53,7 +53,7 @@ public class Bookmarks {
         
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDJSON(id.getSourceId(), id.getId()));
+        	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
         }
         
         return new SourceToIDsJSON(docs);
@@ -68,7 +68,7 @@ public class Bookmarks {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemId(d.getSource(), d.getId()));
+        	itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.addLabel(itemIds, bookmark);
         mm.saveState();
@@ -84,7 +84,7 @@ public class Bookmarks {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemId(d.getSource(), d.getId()));
+        	itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.removeLabel(itemIds, bookmark);
         mm.saveState();

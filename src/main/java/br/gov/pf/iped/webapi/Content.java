@@ -30,11 +30,11 @@ public class Content {
 	@GET
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response content(
-			@PathParam("sourceID") int sourceID,
+			@PathParam("sourceID") String sourceID,
 			@PathParam("id") int id)
 					throws TskCoreException, IOException, URISyntaxException{
 
-		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
+		IPEDSource source = Sources.getSource(sourceID);
     	final EvidenceFile item = source.getItemByID(id);
 		return Response.status(200)
 				.header("Content-Length", String.valueOf(item.getLength()))

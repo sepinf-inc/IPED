@@ -36,7 +36,7 @@ public class Selection {
         
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDJSON(id.getSourceId(), id.getId()));
+        	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
         }
         
         return new SourceToIDsJSON(docs);
@@ -49,7 +49,7 @@ public class Selection {
     public Response add(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d: docs) {
-            mm.setSelected(true, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
+            mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();
@@ -62,7 +62,7 @@ public class Selection {
     public Response remove(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d: docs) {
-            mm.setSelected(false, new ItemId(d.getSource(), d.getId()), Sources.multiSource);
+            mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();

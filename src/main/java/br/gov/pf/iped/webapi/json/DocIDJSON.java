@@ -5,29 +5,29 @@ import io.swagger.annotations.ApiModelProperty;
 
 /** DocIDModel identifies a single document:
  * {
- *   "source": 0,
+ *   "source": "A",
  *   "id": 0
  * }
 */
 @ApiModel(value="Document")
 public class DocIDJSON{
-	private int source;
+	private String source;
 	private int id;
 	
 	public DocIDJSON() {
 	}
 	
-	public DocIDJSON(int source, int id) {
+	public DocIDJSON(String source, int id) {
 		this.source = source;
 		this.id = id;
 	}
 	
 	@ApiModelProperty()
-	public int getSource(){
+	public String getSource(){
 		return this.source;
 	}
 
-	public void setSource(int source) {
+	public void setSource(String source) {
 		this.source = source;
 	}
 

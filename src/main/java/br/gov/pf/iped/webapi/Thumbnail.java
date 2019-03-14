@@ -28,11 +28,11 @@ public class Thumbnail {
     @GET
     @Produces("image/jpg")
     public StreamingOutput content(
-            @PathParam("sourceID") int sourceID,
+            @PathParam("sourceID") String sourceID,
             @PathParam("id") int id)
                     throws TskCoreException, IOException, URISyntaxException{
 
-        IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
+        IPEDSource source = Sources.getSource(sourceID);
         EvidenceFile item = source.getItemByID(id);
         final byte[] thumb = item.getThumb() != null ? item.getThumb() : new byte[0];
         return new StreamingOutput() {

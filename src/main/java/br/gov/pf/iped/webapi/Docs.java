@@ -26,8 +26,8 @@ public class Docs {
 	@GET
 	@Path("{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static DocPropsJSON properties(@PathParam("sourceID") int sourceID, @PathParam("id") int id) throws IOException{
-		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
+	public static DocPropsJSON properties(@PathParam("sourceID") String sourceID, @PathParam("id") int id) throws IOException{
+		IPEDSource source = Sources.getSource(sourceID);
 		int luceneID = source.getLuceneId(id);
 		Document doc = source.getReader().document(luceneID);
 		

@@ -16,6 +16,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.SearchResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -25,25 +26,27 @@ public class Search {
 
 
 	@DefaultValue("") @QueryParam("q") String q;
-	@DefaultValue("-1") @QueryParam("sourceID") String sourceIDstr;
+	@DefaultValue("") @QueryParam("sourceID") String sourceID;
 	@ApiOperation(value="Search documents")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public SourceToIDsJSON doSearch() throws Exception{
     	String escapeq = q.replaceAll("/", "\\\\/");
-    	IPEDSearcher searcher;
-    	int sourceID = Integer.parseInt(sourceIDstr);
-    	if (sourceID == -1) { 
-    		searcher = new IPEDSearcher(Sources.multiSource, escapeq);
-    	} else {
-    		IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID); 
-    		searcher = new IPEDSearcher(source, escapeq);
-    	}    	
-    	MultiSearchResult result = searcher.multiSearch();
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
-        for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDJSON(id.getSourceId(), id.getId()));
-        }
+    	if (sourceID.equals("")) { 
+    		IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, escapeq);
+        	MultiSearchResult result = searcher.multiSearch();
+            for (ItemId id : result.getIterator()) {
+            	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
+            }
+    	} else {
+    		IPEDSource source = Sources.getSource(sourceID); 
+    		IPEDSearcher searcher = new IPEDSearcher(source, escapeq);
+        	SearchResult result = searcher.search();
+        	for (int id: result.getIds()) {
+            	docs.add(new DocIDJSON(sourceID, id));
+			}
+    	}    	
         
         return new SourceToIDsJSON(docs);
 	}	

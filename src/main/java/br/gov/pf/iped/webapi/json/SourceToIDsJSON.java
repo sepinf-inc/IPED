@@ -11,7 +11,7 @@ import io.swagger.annotations.ApiModelProperty;
  * {
  *  "data": [
  *    {
- *      "source": 0,
+ *      "source": "A",
  *      "ids": [ 1, 2, 3 ]
  *    },
  *    {
@@ -23,16 +23,16 @@ import io.swagger.annotations.ApiModelProperty;
  */
 public class SourceToIDsJSON {
 	
-	private Map<Integer, List<Integer>> sourceToids;
+	private Map<String, List<Integer>> sourceToids;
 	
 	public SourceToIDsJSON() {
-		this.sourceToids = new HashMap<Integer, List<Integer>>();
+		this.sourceToids = new HashMap<String, List<Integer>>();
 	}
 	
 	public SourceToIDsJSON(List<DocIDJSON> docs) {
 		this();
 		for (DocIDJSON doc: docs) {
-			Integer source = new Integer(doc.getSource());
+			String source = doc.getSource();
 			Integer id = new Integer(doc.getId());
 			if (!this.sourceToids.containsKey(source)) {
 				this.sourceToids.put(source, new ArrayList<Integer>());
@@ -45,7 +45,7 @@ public class SourceToIDsJSON {
 	@ApiModelProperty
 	public List<DocIDGroupJSON> getData() {
 		List<DocIDGroupJSON> result = new ArrayList<DocIDGroupJSON>();
-		for (Map.Entry<Integer, List<Integer>> entry: this.sourceToids.entrySet()) {
+		for (Map.Entry<String, List<Integer>> entry: this.sourceToids.entrySet()) {
 			result.add(new DocIDGroupJSON(entry.getKey(), entry.getValue()));
 		}
 		return result;

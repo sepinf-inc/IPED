@@ -7,7 +7,7 @@ import io.swagger.annotations.ApiModelProperty;
 
 /** DocPropsModel list properties of a document:
  * {
- *  "source": 0,
+ *  "source": "A",
  *  "id": 0,
  *  "luceneId": 0,
  *  "properties": {},
@@ -18,7 +18,7 @@ import io.swagger.annotations.ApiModelProperty;
  *}
 */
 public class DocPropsJSON {
-	private int source;
+	private String source;
 	private int id;
 	private int luceneId;
 	private Map<String, String[]> properties;
@@ -26,10 +26,10 @@ public class DocPropsJSON {
 	private boolean selected;
 	
 	@ApiModelProperty()
-	public int getSource() {
+	public String getSource() {
 		return source;
 	}
-	public void setSource(int source) {
+	public void setSource(String source) {
 		this.source = source;
 	}
 

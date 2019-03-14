@@ -36,10 +36,10 @@ public class Text {
     @GET
     @Produces(MediaType.TEXT_PLAIN+"; charset=UTF-8")
 	public static StreamingOutput content(
-			@PathParam("sourceID") int sourceID, 
+			@PathParam("sourceID") String sourceID, 
 			@PathParam("id") int id) throws Exception{
 
-    	IPEDSource source = Sources.multiSource.getAtomicSourceBySourceId(sourceID);
+    	IPEDSource source = Sources.getSource(sourceID);
     	final EvidenceFile item = source.getItemByID(id);
     	final IndexerDefaultParser parser = new IndexerDefaultParser();
 		final ParseContext context = getTikaContext(item, parser, source.getModuleDir());

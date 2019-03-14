@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -33,18 +35,42 @@ import io.swagger.annotations.ApiOperation;
 @Path("sources")
 public class Sources {
 	public static IPEDMultiSource multiSource = null;
-	public static void init(String urlToAskSources) throws IOException, ParseException {
-		ArrayList<IPEDSource> sources = new ArrayList<IPEDSource>(); 
+	public static Map <Integer, String> sourceIntToString;
+	public static Map <String, Integer> sourceStringToInt;
+	public static Map <String, String> sourcePathToStringID;
+	public static void init(String urlToAskSources) throws IOException, ParseException{
+		sourceIntToString = new HashMap<Integer, String>();
+		sourceStringToInt = new HashMap <String, Integer>();
+		sourcePathToStringID = new HashMap <String, String>();
+		List<IPEDSource> sources = new ArrayList<IPEDSource>(); 
 		JSONArray arr = askSources(urlToAskSources);
 		for (Object object : arr) {
 			JSONObject jsonobj = (JSONObject)object;
+			String id = (String)jsonobj.get("id");
 			String path = (String)jsonobj.get("path");
-
+			
+			sourcePathToStringID.put(path,id);
+			
 			IPEDSource source = new IPEDSource(new File(path));
 			sources.add(source);
 		}
 
 		multiSource = new IPEDMultiSource(sources);
+		// filling maps using path, to avoid relying on provided order 
+		for (int i = 0; i < multiSource.getAtomicSources().size(); i++) {
+			IPEDSource source = multiSource.getAtomicSourceBySourceId(i);
+			String path = source.getCaseDir().toString();
+			String id = sourcePathToStringID.get(path);
+			if (sourceStringToInt.containsKey(id)) {
+				throw new RuntimeException("duplicated id: " + id);
+			}
+			sourceStringToInt.put(id, i);
+			sourceIntToString.put(i, id);
+		}
+	}
+	
+	public static IPEDSource getSource(String sourceID) {
+		return multiSource.getAtomicSourceBySourceId(sourceStringToInt.get(sourceID));
 	}
 
 	@ApiOperation(value="List sources")
@@ -53,7 +79,7 @@ public class Sources {
 	public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException{
 		List<SourceJSON> data = new ArrayList<SourceJSON>();
 		for (IPEDSource source : multiSource.getAtomicSources()) {
-				data.add(getone(source.getSourceId()));
+				data.add(getone(sourceIntToString.get(source.getSourceId())));
 		}
 		return new DataListJSON<SourceJSON>(data);
 	}
@@ -62,9 +88,9 @@ public class Sources {
 	@GET
 	@Path("{sourceID}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public static SourceJSON getone(@PathParam("sourceID") int sourceID) throws IOException, TskCoreException{
+	public static SourceJSON getone(@PathParam("sourceID") String sourceID) throws IOException, TskCoreException{
 		SourceJSON result = new SourceJSON();
-		IPEDSource source = multiSource.getAtomicSourceBySourceId(sourceID);
+		IPEDSource source = getSource(sourceID);
 		result.setId(sourceID);
 		result.setPath(source.getCaseDir().toString());
 		return result;
