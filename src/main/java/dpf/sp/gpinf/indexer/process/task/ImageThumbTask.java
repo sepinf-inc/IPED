@@ -221,6 +221,14 @@ public class ImageThumbTask extends AbstractTask {
         }
         img = ImageUtil.getOpaqueImage(img);
 
+        //Ajusta rotacao da miniatura a partir do metadado orientacao 
+        try (BufferedInputStream stream = evidence.getBufferedStream()) {
+          int orientation = ImageUtil.getOrientation(stream);
+          if (orientation > 0) {
+            img = ImageUtil.rotate(img, orientation);
+          }
+        }
+
         ImageIO.write(img, "jpg", tmp); //$NON-NLS-1$
       }
 
