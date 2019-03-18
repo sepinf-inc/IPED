@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.carver;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import gpinf.dev.data.ItemImpl;
@@ -17,8 +19,9 @@ import java.util.Set;
  * outros métodos comuns.
  */
 public abstract class BaseCarverTask extends AbstractTask  {
+	private static Logger LOGGER = LoggerFactory.getLogger(AbstractTask.class);
 
-    public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
+	public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
     protected static final Map<Item, Set<Long>> kffCarved = new HashMap<Item, Set<Long>>();
     protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
     protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
@@ -42,12 +45,16 @@ public abstract class BaseCarverTask extends AbstractTask  {
     protected void addOffsetFile(Item offsetFile, Item parentEvidence) {
         // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
         // processa no worker atual
-        if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
-            caseData.incDiscoveredEvidences(1);
-            worker.process(offsetFile);
-        } else {
-            worker.processNewItem(offsetFile);
-        }
+    	try {
+            if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
+                caseData.incDiscoveredEvidences(1);
+                worker.process(offsetFile);
+            } else {
+                worker.processNewItem(offsetFile);
+            }
+    	}catch(Exception e) {
+    	      LOGGER.warn("Unexpected carving error on {} - {}\t{}", parentEvidence.getPath(), offsetFile, this.getClass().getName()); //$NON-NLS-1$
+    	}
     }
 
     protected boolean isToProcess(Item evidence) {
