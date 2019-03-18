@@ -579,7 +579,7 @@ public class ItemImpl implements SleuthKitItem {
     }
     
     if(stream == null && inputStreamFactory != null)
-        stream = inputStreamFactory.getSeekableInputStream();
+        stream = inputStreamFactory.getSeekableInputStream(null);
     
     if (stream != null && startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);

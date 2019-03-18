@@ -1,10 +1,12 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
@@ -49,6 +51,17 @@ public class ItemSearcherImpl implements ItemSearcher{
 		
 		return items;
 	}
+
+    @Override
+    public void close() throws IOException {
+        if(iSource != null)
+            iSource.close();
+    }
+
+    @Override
+    public String escapeQuery(String string) {
+        return QueryParserUtil.escape(string);
+    }
 	
 	
 

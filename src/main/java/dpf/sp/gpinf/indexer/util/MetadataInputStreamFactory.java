@@ -11,16 +11,17 @@ import org.apache.tika.metadata.Metadata;
 import iped3.io.SeekableInputStream;
 import iped3.util.ExtraProperties;
 
-public class MetadataInputStreamFactory implements SeekableInputStreamFactory{
+public class MetadataInputStreamFactory extends SeekableInputStreamFactory{
     
     private Metadata metadata;
     
     public MetadataInputStreamFactory(Metadata metadata) {
+        super(null);
         this.metadata = metadata;
     }
 
     @Override
-    public SeekableInputStream getSeekableInputStream() throws IOException {
+    public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(512);
         final byte[] BOM = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
         baos.write(BOM);
