@@ -27,12 +27,10 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 import iped3.sleuthkit.SleuthKitItem;
-import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 
 /**
  * Classe base de tarefas de carving. 
@@ -84,7 +82,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
   
   protected Item addCarvedFile(Item parentEvidence, long off, long len, String name, MediaType mediaType){
-    Item carvedEvidence = createCarvedFile(parentEvidence, off, len, name, mediaType);
+      Item carvedEvidence = createCarvedFile(parentEvidence, off, len, name, mediaType);
 	  if (carvedEvidence != null) addOffsetFile(carvedEvidence, parentEvidence);
 	  return carvedEvidence;
   }
@@ -107,7 +105,7 @@ public abstract class BaseCarveTask extends AbstractTask {
   }
 
   protected Item getOffsetFile(Item parentEvidence, long off, long len, String name, MediaType mediaType){
-	ItemImpl offsetFile = new ItemImpl();
+    ItemImpl offsetFile = new ItemImpl();
     offsetFile.setName(name);
     offsetFile.setPath(parentEvidence.getPath() + ">>" + name); //$NON-NLS-1$
     len = Math.min(len, parentEvidence.getLength() - off);
@@ -121,24 +119,23 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     long prevOff = parentEvidence.getFileOffset();
     offsetFile.setFileOffset(prevOff == -1 ? off : prevOff + off);
-
-    if(parentEvidence instanceof SleuthKitItem) {
-    	SleuthKitItem sparentEvidence = (SleuthKitItem) parentEvidence;
-        if (sparentEvidence.getSleuthFile() != null) {
-            offsetFile.setSleuthFile(sparentEvidence.getSleuthFile());
-            offsetFile.setSleuthId(sparentEvidence.getSleuthId());
-            if (parentEvidence.hasTmpFile()) {
-              try {
-      			offsetFile.setFile(parentEvidence.getTempFile());
-      			offsetFile.setTempStartOffset(off);
-      		} catch (IOException e) {
-      			//ignore
-      		}
-            }
-          } else {
-            offsetFile.setFile(parentEvidence.getFile());
-            offsetFile.setExportedFile(parentEvidence.getExportedFile());
-          }
+    
+    if (parentEvidence instanceof SleuthKitItem && ((SleuthKitItem)parentEvidence).getSleuthFile() != null) {
+      offsetFile.setSleuthFile(((SleuthKitItem)parentEvidence).getSleuthFile());
+      offsetFile.setSleuthId(((SleuthKitItem)parentEvidence).getSleuthId());
+      
+    } else {
+      offsetFile.setFile(parentEvidence.getFile());
+      offsetFile.setExportedFile(parentEvidence.getExportedFile());
+    }
+    //optimization to not create more temp files
+    if (parentEvidence.hasTmpFile()) {
+        try {
+            offsetFile.setFile(parentEvidence.getTempFile());
+            offsetFile.setTempStartOffset(off);
+        } catch (IOException e) {
+            //ignore
+        }
     }
     parentEvidence.setHasChildren(true);
     

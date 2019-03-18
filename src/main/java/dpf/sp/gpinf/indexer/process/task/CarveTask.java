@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+
 import iped3.Item;
 import iped3.io.SeekableInputStream;
 
@@ -76,7 +77,7 @@ public class CarveTask extends BaseCarveTask {
   private static int largestPatternLen = 100;
 
   Item evidence;
-  MediaTypeRegistry registry;
+  private static MediaTypeRegistry registry;
 
   long prevLen = 0;
   int len = 0, k = 0;
@@ -84,7 +85,8 @@ public class CarveTask extends BaseCarveTask {
   byte[] cBuf;
 
   public CarveTask() {
-    this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+      if(registry == null)
+          registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
   }
 
   @Override
@@ -153,6 +155,7 @@ public class CarveTask extends BaseCarveTask {
     tree.prepare();
   }
 
+  @Override
   public void process(Item evidence) {
     if (!enableCarving) {
       return;
@@ -387,12 +390,12 @@ public class CarveTask extends BaseCarveTask {
 
             //calcula tamanho customizado para MOV
             } else if (signatures[s / 2].name.equals("MOV")) { //$NON-NLS-1$
-            	long mp4Len = getLenFromMP4(prevLen + i);
+                long mp4Len = getLenFromMP4(prevLen + i);
                 foot = new Hit(s, head.off + mp4Len);
             
               //calcula tamanho customizado para SQLITE
             } else if (signatures[s / 2].name.equals("SQLITE")) { //$NON-NLS-1$
-            	long len = getLenFromSQLite(prevLen + i);
+                long len = getLenFromSQLite(prevLen + i);
                 foot = new Hit(s, head.off + len);
             
             //Testa se possui info de tamanho no header
@@ -420,7 +423,7 @@ public class CarveTask extends BaseCarveTask {
               if (lastHit == null || (!signatures[s / 2].name.startsWith("FH") //$NON-NLS-1$
                   && (!signatures[s / 2].name.equals("EML") || lastHit.sig % 2 == 1)) //$NON-NLS-1$
                   || (head.off - lastHit.off > signatures[s / 2].maxSize )
-            	) {
+                ) {
                 sigsFound.get(signatures[s / 2].name).addLast(head);
               }
 
@@ -526,7 +529,7 @@ public class CarveTask extends BaseCarveTask {
 
     //TODO melhorar detecção de tamanho para OLE
     /*int lastBatOffPos = i + 0x4C + (batSize - 1) * 4;
-     int lastBatOffP = 	(buf[lastBatOffPos] & 0xff) << 0 | 
+     int lastBatOffP =  (buf[lastBatOffPos] & 0xff) << 0 | 
      (buf[lastBatOffPos + 1] & 0xff) << 8 |
      (buf[lastBatOffPos + 2] & 0xff) << 16 |
      (buf[lastBatOffPos + 3] & 0xff) << 24;
@@ -540,110 +543,110 @@ public class CarveTask extends BaseCarveTask {
   private static HashSet<String> atomSet = new HashSet<String>();
   
   static{
-	  atomSet.addAll(Arrays.asList(mp4AtomTypes));
+      atomSet.addAll(Arrays.asList(mp4AtomTypes));
   }
   
   private long getLenFromMP4(long startOffset){
-	  
-	  long atomStart = startOffset;
-	  SeekableInputStream is = null;
-	  try{
-		  is = evidence.getStream();
-		  byte[] data = new byte[4];
-		  while(true){
-			  is.seek(atomStart + 4);
-			  int i = 0, off = 0;
-			  while(i != -1 && (off += i) < data.length)
-				  i = is.read(data, off, data.length - off);
-			  
-			  String atomType = new String(data, "windows-1252"); //$NON-NLS-1$
-			  if(!atomSet.contains(atomType))
-				  //EOF
-				  break;
-			  
-			  is.seek(atomStart);
-			  i = 0; off = 0;
-			  while(i != -1 && (off += i) < data.length)
-				  i = is.read(data, off, data.length - off);
-				  
-			  long atomSize = (long)(data[0] & 0xff) << 24
-					  | (data[1] & 0xff) << 16
-					  | (data[2] & 0xff) << 8
-					  | (data[3] & 0xff) ;
-			  
-			  if(atomSize <= 0)
-				  break;
-			  
-			  if(atomSize == 1){
-				  byte[] extendedSize = new byte[8];
-				  is.seek(atomStart + 8);
-				  i = 0; off = 0;
-				  while(i != -1 && (off += i) < extendedSize.length)
-					  i = is.read(extendedSize, off, extendedSize.length - off);
-				
-				  atomSize = (long)(extendedSize[0] & 0xff) << 56
-						  | (long)(extendedSize[1] & 0xff) << 48
-						  | (long)(extendedSize[2] & 0xff) << 40
-						  | (long)(extendedSize[3] & 0xff) << 32
-				  		  | (long)(extendedSize[4] & 0xff) << 24
-						  | (extendedSize[5] & 0xff) << 16
-						  | (extendedSize[6] & 0xff) << 8
-						  | (extendedSize[7] & 0xff) ;
-			  }
-			  
-			  if(atomSize <= 0)
-				  break;
-			  
-			  atomStart += atomSize;
-			  
-			  if(atomStart >= evidence.getLength())
-				  break;
-		  }
-	  }catch(Exception e){
-		  e.printStackTrace();
-		  
-	  }finally{
-		  IOUtil.closeQuietly(is);
-	  }
-	  
-	  return atomStart - startOffset;
+      
+      long atomStart = startOffset;
+      SeekableInputStream is = null;
+      try{
+          is = evidence.getStream();
+          byte[] data = new byte[4];
+          while(true){
+              is.seek(atomStart + 4);
+              int i = 0, off = 0;
+              while(i != -1 && (off += i) < data.length)
+                  i = is.read(data, off, data.length - off);
+              
+              String atomType = new String(data, "windows-1252"); //$NON-NLS-1$
+              if(!atomSet.contains(atomType))
+                  //EOF
+                  break;
+              
+              is.seek(atomStart);
+              i = 0; off = 0;
+              while(i != -1 && (off += i) < data.length)
+                  i = is.read(data, off, data.length - off);
+                  
+              long atomSize = (long)(data[0] & 0xff) << 24
+                      | (data[1] & 0xff) << 16
+                      | (data[2] & 0xff) << 8
+                      | (data[3] & 0xff) ;
+              
+              if(atomSize <= 0)
+                  break;
+              
+              if(atomSize == 1){
+                  byte[] extendedSize = new byte[8];
+                  is.seek(atomStart + 8);
+                  i = 0; off = 0;
+                  while(i != -1 && (off += i) < extendedSize.length)
+                      i = is.read(extendedSize, off, extendedSize.length - off);
+                
+                  atomSize = (long)(extendedSize[0] & 0xff) << 56
+                          | (long)(extendedSize[1] & 0xff) << 48
+                          | (long)(extendedSize[2] & 0xff) << 40
+                          | (long)(extendedSize[3] & 0xff) << 32
+                          | (long)(extendedSize[4] & 0xff) << 24
+                          | (extendedSize[5] & 0xff) << 16
+                          | (extendedSize[6] & 0xff) << 8
+                          | (extendedSize[7] & 0xff) ;
+              }
+              
+              if(atomSize <= 0)
+                  break;
+              
+              atomStart += atomSize;
+              
+              if(atomStart >= evidence.getLength())
+                  break;
+          }
+      }catch(Exception e){
+          e.printStackTrace();
+          
+      }finally{
+          IOUtil.closeQuietly(is);
+      }
+      
+      return atomStart - startOffset;
   }
   
   private long getLenFromSQLite(long startOffset){
-	  SeekableInputStream is = null;
-	  try{
-		  is = evidence.getStream();
-		  byte[] data = new byte[2];
-		  is.seek(startOffset + 16);
-		  int i = 0, off = 0;
-		  while(i != -1 && (off += i) < data.length)
-			  i = is.read(data, off, data.length - off);
-		  
-		  int pageSize = (data[0] & 0xff) << 8 | (data[1] & 0xff) ;
-		  if(pageSize == 1)
-			  pageSize = 65536;
-		  
-		  data = new byte[4];
-		  is.seek(startOffset + 28);
-		  i = 0; off = 0;
-		  while(i != -1 && (off += i) < data.length)
-			  i = is.read(data, off, data.length - off);
-		  
-		  int numPages = (data[0] & 0xff) << 24
-				  | (data[1] & 0xff) << 16
-				  | (data[2] & 0xff) << 8
-				  | (data[3] & 0xff) ;
-		  
-		  return numPages * pageSize;
-		  
-	  }catch(Exception e){
-		  e.printStackTrace();
-		  
-	  }finally{
-		  IOUtil.closeQuietly(is);
-	  }
-	  
-	  return 0;
+      SeekableInputStream is = null;
+      try{
+          is = evidence.getStream();
+          byte[] data = new byte[2];
+          is.seek(startOffset + 16);
+          int i = 0, off = 0;
+          while(i != -1 && (off += i) < data.length)
+              i = is.read(data, off, data.length - off);
+          
+          int pageSize = (data[0] & 0xff) << 8 | (data[1] & 0xff) ;
+          if(pageSize == 1)
+              pageSize = 65536;
+          
+          data = new byte[4];
+          is.seek(startOffset + 28);
+          i = 0; off = 0;
+          while(i != -1 && (off += i) < data.length)
+              i = is.read(data, off, data.length - off);
+          
+          int numPages = (data[0] & 0xff) << 24
+                  | (data[1] & 0xff) << 16
+                  | (data[2] & 0xff) << 8
+                  | (data[3] & 0xff) ;
+          
+          return numPages * pageSize;
+          
+      }catch(Exception e){
+          e.printStackTrace();
+          
+      }finally{
+          IOUtil.closeQuietly(is);
+      }
+      
+      return 0;
   }
 
   @Override
