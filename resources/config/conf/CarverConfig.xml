@@ -1,12 +1,12 @@
 ﻿<carverconfig>
-
+<!--
     <typesToProcess>application/x-unallocated;</typesToProcess>
     <typesToProcess>application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
-<!--	<typesToProcess>application/octet-stream</typesToProcess>
+	<typesToProcess>application/octet-stream</typesToProcess>
 	<typesToProcess>application/x-disk-image; application/x-vmdk; application/x-vhd; application/x-vdi</typesToProcess>
 	<typesToProcess>application/x-thumbs; application/x-thumbcache</typesToProcess>
 -->
-    <typesToNotProcess>video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
+    <typesToNotProcess>application/x-tika-msoffice; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
     <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
     <typesToNotProcess>application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;</typesToNotProcess>
@@ -22,24 +22,34 @@
 			<minLength>10000</minLength>
             <maxLength>100000000</maxLength>
         </carverType>
- <!-- 		<carverType>
+  		<carverType>
             <name>OLE</name>
             <carverClass>dpf.sp.gpinf.carving.carvers.OLECarver</carverClass>
 			<minLength>1000</minLength>
             <maxLength>50000000</maxLength>
         </carverType>
- -->
+		<carverType>
+            <name>ZIP</name>
+			<carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+            <!--carverClass>dpf.sp.gpinf.carving.carvers.ZIPCarver</carverClass-->
+			<signatures>
+    	        <headerSignature>PK\03\04</headerSignature>
+            	<footerSignature>PK\05\06??????????????????</footerSignature>
+            </signatures>
+			<minLength>1000</minLength>
+            <maxLength>100000000</maxLength>
+        </carverType>
          <carverType>
             <name>MOV</name>
             <carverClass>dpf.sp.gpinf.carving.carvers.MOVCarver</carverClass>
         </carverType>
-
+<!--
         <carverType>
             <name>DER</name>
             <mediaType>application/pkix-cert</mediaType>
             <carverClass>dpf.sp.gpinf.carving.carvers.DERCarver</carverClass>
         </carverType>
-
+-->
         <carverType>
             <name>EML</name>
             <signatures>
@@ -58,10 +68,6 @@
         <carverType>
             <name>BMP</name>
             <signatures>
-                <!-- headers inferred from https://www.fileformat.info/format/bmp/egff.htm -->
-    	        <!-- <headerSignature>BM????\00\00\00\00????\0E\00</headerSignature> --><!-- BMP version 2 -->
-                <!-- <headerSignature>BM????\00\00\00\00????\28\00</headerSignature> --><!-- BMP version 3 -->
-                <!-- <headerSignature>BM????\00\00\00\00????\6C\00</headerSignature> --><!-- BMP version 4 -->
                 <headerSignature>BM????????????????????????\01\00\01\00</headerSignature>
                 <headerSignature>BM????????????????????????\01\00\04\00</headerSignature>
                 <headerSignature>BM????????????????????????\01\00\08\00</headerSignature>
@@ -190,17 +196,6 @@
             <mediaType>application/x-ares-galaxy</mediaType>
         </carverType>
 
-        <carverType>
-            <name>FH-ZIP</name>
-            <signatures>
-    	        <headerSignature>PK\03\04</headerSignature>
-            	<footerSignature>PK\05\06??????????????????</footerSignature>
-    	    </signatures>
-            <minLength>1000</minLength>            
-            <maxLength>100000000</maxLength>
-            <carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
-        </carverType>
-		
 		<carverType>
             <name>ZIP-MS</name>
             <signatures>
