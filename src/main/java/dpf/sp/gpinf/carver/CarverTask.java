@@ -45,12 +45,13 @@ public class CarverTask extends BaseCarverTask {
     static CarverConfiguration carverConfig = null;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
+    
+    private static MediaTypeRegistry registry;
 
     // keeps only one instance per carvertype
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
     
     Item evidence;
-    MediaTypeRegistry registry;
 
     long prevLen = 0;
     int len = 0, k = 0;
@@ -58,7 +59,8 @@ public class CarverTask extends BaseCarverTask {
     byte[] cBuf;
 
     public CarverTask() {
-        this.registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+        if(registry == null)
+            registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
     }
 
     @Override
