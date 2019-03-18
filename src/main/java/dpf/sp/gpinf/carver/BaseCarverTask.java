@@ -4,7 +4,9 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 import iped3.sleuthkit.SleuthKitItem;
@@ -42,23 +44,15 @@ public abstract class BaseCarverTask extends AbstractTask  {
         return itensCarved;
     }
 
-    protected void addOffsetFile(Item offsetFile, Item parentEvidence) {
-        // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
-        // processa no worker atual
-    	try {
-            if (parentEvidence.isSubItem() && !parentEvidence.isToAddToCase()) {
-                caseData.incDiscoveredEvidences(1);
-                worker.process(offsetFile);
-            } else {
-                worker.processNewItem(offsetFile);
-            }
-    	}catch(Exception e) {
-    	      LOGGER.warn("Unexpected carving error on {} - {}\t{}", parentEvidence.getPath(), offsetFile, this.getClass().getName()); //$NON-NLS-1$
-    	}
+    protected void addOffsetFile(Item offsetFile, Item parentEvidence){
+        // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação, processa no worker atual
+        boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
+        ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+        worker.processNewItem(offsetFile, time);
     }
 
     protected boolean isToProcess(Item evidence) {
-        if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarverTask.FILE_FRAGMENT) != null) {
+        if (evidence.isCarved() || evidence.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null) {
             return false;
         }
         return true;
@@ -82,21 +76,22 @@ public abstract class BaseCarverTask extends AbstractTask  {
 
         if ((parentEvidence instanceof SleuthKitItem) && ((SleuthKitItem)parentEvidence).getSleuthFile() != null) {
         	SleuthKitItem sparentEvidence = (SleuthKitItem) parentEvidence;
-        	
             carvedEvidence.setSleuthFile(sparentEvidence.getSleuthFile());
             carvedEvidence.setSleuthId(sparentEvidence.getSleuthId());
-            if (parentEvidence.hasTmpFile()) {
-                try {
-                    carvedEvidence.setFile(parentEvidence.getTempFile());
-                    carvedEvidence.setTempStartOffset(off);
-                } catch (IOException e) {
-                    // ignore
-                }
-            }
         } else {
             carvedEvidence.setFile(parentEvidence.getFile());
             carvedEvidence.setExportedFile(parentEvidence.getExportedFile());
         }
+        //optimization to not create more temp files
+        if (parentEvidence.hasTmpFile()) {
+            try {
+                carvedEvidence.setFile(parentEvidence.getTempFile());
+                carvedEvidence.setTempStartOffset(off);
+            } catch (IOException e) {
+                //ignore
+            }
+        }
+        
         parentEvidence.setHasChildren(true);
 
         addOffsetFile(carvedEvidence, parentEvidence);

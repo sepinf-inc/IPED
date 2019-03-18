@@ -75,7 +75,6 @@ public class CarverTask extends BaseCarverTask {
 
         // Nova instancia pois o mesmo objeto é reusado e nao é imutável
         CarverTask carver = new CarverTask();
-        carver.enableCarving = this.enableCarving;
         carver.setWorker(worker);
         carver.registeredCarvers = carverConfig.getRegisteredCarvers();
         carver.safeProcess(evidence);
@@ -253,7 +252,6 @@ public class CarverTask extends BaseCarverTask {
 
     @Override
     protected boolean isToProcess(Item evidence) {
-        // TODO Auto-generated method stub
         return super.isToProcess(evidence) && carverConfig.isToProcess(evidence.getMediaType());
     }
 
