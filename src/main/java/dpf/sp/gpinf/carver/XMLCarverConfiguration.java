@@ -174,7 +174,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         TYPES_TO_CARVE.add(ct.getMimeType());
                         carverTypesArray.add(ct);
                     }else {
-                        Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(carverClass.getTextContent());
+                        Class<?> classe = this.getClass().getClassLoader().loadClass(carverClass.getTextContent());
                         Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();                        
                         CarverType[] cts = cv.getCarverTypes();
                         for (int k = 0; k < cts.length; k++) {
@@ -253,7 +253,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                 carver.registerCarvedItemListener(carvedItemListener);
                 registeredCarvers.put(ct, carver);
             } else {
-                Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(ct.getCarverClass());
+                Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
                 carver = (Carver) classe.getDeclaredConstructor().newInstance();
                 registeredCarvers.put(ct, carver);
                 carver.registerCarvedItemListener(carvedItemListener);
