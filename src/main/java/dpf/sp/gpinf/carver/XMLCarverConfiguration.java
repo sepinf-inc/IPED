@@ -222,7 +222,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
             ct.setMinLength(Integer.parseInt(minLength.getTextContent().trim()));
         }
         if (maxLength != null) {
-            ct.setMaxLength(Integer.parseInt(maxLength.getTextContent().trim()));
+            ct.setMaxLength(Long.parseLong(maxLength.getTextContent().trim()));
         }
         if (carverClass != null) {
             ct.setCarverClass(carverClass.getTextContent().trim());
