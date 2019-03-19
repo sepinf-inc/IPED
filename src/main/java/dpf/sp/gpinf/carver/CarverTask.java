@@ -41,15 +41,13 @@ public class CarverTask extends BaseCarverTask {
     private static final long serialVersionUID = 1L;
     public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
     public static boolean enableCarving = false;
-    static CarverType[] carverTypes;
-    static CarverConfiguration carverConfig = null;
+    private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
     
     private static MediaTypeRegistry registry;
 
-    // keeps only one instance per carvertype
-    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
+    private CarverConfiguration carverConfig = null;
     
     Item evidence;
 
@@ -76,7 +74,7 @@ public class CarverTask extends BaseCarverTask {
         // Nova instancia pois o mesmo objeto é reusado e nao é imutável
         CarverTask carver = new CarverTask();
         carver.setWorker(worker);
-        carver.registeredCarvers = carverConfig.getRegisteredCarvers();
+        carver.carverConfig = this.carverConfig;
         carver.safeProcess(evidence);
 
         // Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de
@@ -214,14 +212,10 @@ public class CarverTask extends BaseCarverTask {
     
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-    	AppCarverTaskConfig ctConfig = null;
-    	try {
-        	ctConfig = (AppCarverTaskConfig) ConfigurationManager.getInstance().findObjects(AppCarverTaskConfig.class).iterator().next();
-    	}catch (Exception e) {
-    		ctConfig = new AppCarverTaskConfig();
-    		ConfigurationManager.getInstance().addObject(ctConfig);
-    		ConfigurationManager.getInstance().loadConfigs();
-		}
+    	
+        AppCarverTaskConfig ctConfig = new AppCarverTaskConfig();
+    	ConfigurationManager.getInstance().addObject(ctConfig);
+    	ConfigurationManager.getInstance().loadConfigs();
 
     	enableCarving = ctConfig.getCarvingEnabled();
 
@@ -229,16 +223,13 @@ public class CarverTask extends BaseCarverTask {
         if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
-        if (carverConfig == null) {
-            carverConfig = ctConfig.getCarverConfiguration();
-        }
-
         CarvedItemListener cil = new CarvedItemListener() {
             public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
                 addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
             }
         };
-
+        
+        carverConfig = ctConfig.getCarverConfiguration();
         carverConfig.configTask(confDir, cil);
         carverTypes = carverConfig.getCarverTypes();
 
@@ -255,12 +246,8 @@ public class CarverTask extends BaseCarverTask {
         return super.isToProcess(evidence) && carverConfig.isToProcess(evidence.getMediaType());
     }
 
-    public Item getEvidence() {
-        return evidence;
-    }
-
     public Carver getCarver(CarverType ct) {
-        Carver carver = registeredCarvers.get(ct);
+        Carver carver = carverConfig.getRegisteredCarvers().get(ct);
         return carver;
     }
 }
