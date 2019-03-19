@@ -4,10 +4,8 @@ package dpf.sp.gpinf.carver;
  * Implementa as funcionalidades de persistência das configurações de parametrização do CarverTask
  */
 
-import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 import org.arabidopsis.ahocorasick.AhoCorasick;
-import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -48,14 +46,8 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
     //private int CLUSTER_SIZE = 1;
     private ConfigurationDirectory localConfig;
+    File confDir;
     
-    // keeps only one instance per carvertype
-    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
-
-    public HashMap<CarverType, Carver> getRegisteredCarvers() {
-		return registeredCarvers;
-	}
-
     /* initializes with the parameters */
     @Override
 	public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
@@ -243,25 +235,6 @@ public class XMLCarverConfiguration implements CarverConfiguration {
         TYPES_TO_CARVE.add(ct.getMimeType());
 	}
 
-    public Carver registerCarver(CarverType ct, File confDir,
-                                 CarvedItemListener carvedItemListener) throws Exception {
-        Carver carver = registeredCarvers.get(ct);
-        if (carver == null) {
-            if (ct.getCarverClass().equals(JSCarver.class.getName())) {
-                File file = new File(confDir, ct.getCarverScript());
-                carver = (Carver) new JSCarver(file);
-                carver.registerCarvedItemListener(carvedItemListener);
-                registeredCarvers.put(ct, carver);
-            } else {
-                Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
-                carver = (Carver) classe.getDeclaredConstructor().newInstance();
-                registeredCarvers.put(ct, carver);
-                carver.registerCarvedItemListener(carvedItemListener);
-            }
-        }
-        return carver;
-    }
-
     /* Verify if a mediaType is configured to be processed */
     public boolean isToProcess(MediaType mediaType) {
         if (TYPES_TO_PROCESS != null && TYPES_TO_PROCESS.size() > 0) {
@@ -296,12 +269,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     synchronized public void configTask(File confDir, CarvedItemListener carvedItemListener)
             throws CarverConfigurationException {
         try {
-            // creates the instances of the carvers
-            for (Iterator<CarverType> iterator = carverTypesArray.iterator(); iterator.hasNext(); ) {
-                CarverType ct = (CarverType) iterator.next();
-                Carver carver = null;
-                carver = registerCarver(ct, confDir, carvedItemListener);
-            }
+        	this.confDir = confDir;
 
             CarverType[] carverTypes = carverTypesArray.toArray(new CarverType[0]);
 
@@ -333,5 +301,21 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     public AhoCorasick getPopulatedTree() {
         return tree;
     }
+
+	@Override
+	public Carver createCarverFromJSName(String scriptName) {
+        File file = new File(confDir, scriptName);
+        try {
+			return (Carver) new JSCarver(file);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@Override
+	public HashMap<CarverType, Carver> getRegisteredCarvers() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }
