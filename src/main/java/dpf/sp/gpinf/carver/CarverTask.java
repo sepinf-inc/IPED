@@ -199,8 +199,8 @@ public class CarverTask extends BaseCarverTask {
 
         } while (k != -1);
 
-        // varre lista de itens carveados
-        for (int i = 0; i < carverTypes.length; i += 2) {
+        //notify end of carving in current item to all Carvers
+        for (int i = 0; i < carverTypes.length; i++) {
             Carver carver = getCarver(carverTypes[i]);
             if (carver != null) {
                 carver.notifyEnd(this.evidence);
