@@ -16,7 +16,7 @@ public class AppCarverTaskConfig implements Configurable<UTF8Properties, UTF8Pro
 	public static final String IPEDCONFIG = "IPEDConfig.txt"; //$NON-NLS-1$
 	public static final String CARVER_CONFIG_PREFIX = "carver-"; //$NON-NLS-1$
 	public static final String CARVER_CONFIG_SUFFIX = ".xml"; //$NON-NLS-1$
-	public static final String GLOBAL_CARVER_CONFIG = "conf\\CarverConfig.xml"; //$NON-NLS-1$
+	public static final String GLOBAL_CARVER_CONFIG = "CarverConfig.xml"; //$NON-NLS-1$
 	
 	UTF8Properties properties = new UTF8Properties();
 
