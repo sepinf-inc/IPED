@@ -148,7 +148,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                             if (footerSignatureEl != null) {
                                 ct.addFooter(footerSignatureEl.getTextContent().trim());
                             } else {
-                                ct.addSignature(new Signature(ct, SignatureType.FOOTER));// em branco
+                                ct.addSignature(new Signature(ct, footerSignatureEl.getTextContent().trim(), SignatureType.FOOTER));// em branco
                             }
                         }
                         for (int l = 0; l < escapeFooterSignatureEls.getLength(); l++) {
