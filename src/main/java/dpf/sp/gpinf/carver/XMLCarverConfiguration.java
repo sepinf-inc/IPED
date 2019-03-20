@@ -22,7 +22,6 @@ import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.util.XMLUtil;
 import iped3.configuration.ConfigurationDirectory;
 
-import javax.script.ScriptException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
@@ -135,6 +134,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         NodeList footerSignatureEls = sigsEl.getElementsByTagName("footerSignature");
                         NodeList escapeFooterSignatureEls = sigsEl.getElementsByTagName("escapeFooterSignature");
                         NodeList lengthRefSignatureEls = sigsEl.getElementsByTagName("lengthRefSignature");
+                        NodeList controlSignatureEls = sigsEl.getElementsByTagName("controlSignature");
 
                         CarverType ct = new CarverType();
                         configCarverType(ct, carverTypeEl, CARVE_DIR_INDIVIDUAIS);
@@ -161,6 +161,12 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                             Element lengthRefSignatureEl = (Element) lengthRefSignatureEls.item(l);
                             if (lengthRefSignatureEl != null) {
                                 ct.addSignature(lengthRefSignatureEl.getTextContent().trim(), SignatureType.LENGTHREF);
+                            }
+                        }
+                        for (int l = 0; l < controlSignatureEls.getLength(); l++) {
+                            Element controlSignatureEl = (Element) controlSignatureEls.item(l);
+                            if (controlSignatureEl != null) {
+                                ct.addSignature(controlSignatureEl.getTextContent().trim(), SignatureType.CONTROL);
                             }
                         }
                         TYPES_TO_CARVE.add(ct.getMimeType());
