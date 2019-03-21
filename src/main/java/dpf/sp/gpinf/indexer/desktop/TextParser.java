@@ -225,7 +225,11 @@ public class TextParser extends CancelableWorker implements ITextParser {
     ParsingReader textReader = null;
     try {
 
-      Metadata metadata = item.getMetadata();
+      //this can cause ConcurrentModificationException if another viewer access metadata
+      //and can insert duplicate values in metadata
+      //Metadata metadata = item.getMetadata();
+      Metadata metadata = new Metadata();
+      
       ParsingTask.fillMetadata(item, metadata);
 
       ParseContext context = getTikaContext(item);
@@ -380,7 +384,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
       }
 
-      textReader.reallyClose();
+      textReader.close();
 
     } catch (InterruptedIOException | ClosedByInterruptException e1) {
       //e1.printStackTrace();

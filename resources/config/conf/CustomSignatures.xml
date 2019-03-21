@@ -19,6 +19,60 @@
 -->
 <mime-info>
 
+	<mime-type type="application/x-superfetch">
+		<_comment>Windows EVT Log</_comment>
+    	<magic priority="40">
+    		<match value="MEMO" type="string" offset="0"/>
+      		<match value="MEM0" type="string" offset="0"/>
+      		<!--agdbinfo v20181111 leaks memory on files with sig below-->
+      		<!--match value="MAM" type="string" offset="0">
+      			<match value="0x84" type="string" offset="3"/>
+      		</match-->
+    	</magic>
+    	<glob pattern="Ag*.db"/>
+  	</mime-type>
+
+	<mime-type type="application/x-elf-log">
+		<_comment>Windows EVT Log</_comment>
+    	<magic priority="50">
+      		<match value="LfLe" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.evt"/>
+  	</mime-type>
+
+	<mime-type type="application/x-elf-file">
+		<_comment>Windows EVTX Log</_comment>
+    	<magic priority="50">
+      		<match value="ElfFile" type="string" offset="0"/>
+    	</magic>
+    	<glob pattern="*.evtx"/>
+  	</mime-type>
+
+	<mime-type type="application/x-prefetch">
+    	<magic priority="60">
+      		<match value="SCCA" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.pf"/>
+  	</mime-type>
+
+	<mime-type type="image/heic">
+    	<magic priority="60">
+      		<match value="ftypheic" type="string" offset="4"/>
+      		<match value="ftypheix" type="string" offset="4"/>
+      		<match value="ftyphevc" type="string" offset="4"/>
+      		<match value="ftyphevx" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+  	<mime-type type="image/heif">
+    	<magic priority="60">
+      		<match value="ftypmif1" type="string" offset="4"/>
+      		<match value="ftypmsf1" type="string" offset="4"/>
+    	</magic>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
 	<mime-type type="application/x-dbf">
     	<magic priority="100">
       		<match value="(?s)^[\\x02\\x03\\x30\\x31\\x32\\x43\\x63\\x83\\x8B\\xCB\\xF5\\xE5\\xFB].[\\x01-\\x0C][\\x01-\\x1F].{4}(?:.[^\\x00]|[\\x41-\\xFF].)(?:[^\\x00\\x01].|.[^\\x00]).{31}(?&lt;=[\\x00][^\\x00]{0,10})[A-Z@+]" type="regex" offset="0"/>

@@ -101,6 +101,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
       } catch (SocketTimeoutException e) {
         if (SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ) {
+          LOGGER.info("Waiting SleuthkitServer open file " + path); //$NON-NLS-1$
           continue;
         }
 

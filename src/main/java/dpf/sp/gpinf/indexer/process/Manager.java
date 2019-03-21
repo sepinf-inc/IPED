@@ -116,7 +116,7 @@ public class Manager {
   }
 
   private List<File> sources;
-  private File output, indexDir, indexTemp, palavrasChave;
+  private File output, finalIndexDir, indexDir, palavrasChave;
 
   private ItemProducer contador, produtor;
   private Worker[] workers;
@@ -124,10 +124,10 @@ public class Manager {
 
   public Statistics stats;
   public Exception exception;
-
+  
   private boolean isSearchAppOpen = false;
   private boolean isProcessingFinished = false;
-
+  
   public static Manager getInstance(){
       return instance;
   }
@@ -135,7 +135,7 @@ public class Manager {
   public Manager(List<File> sources, File output, File palavras) {
 	LocalConfig ipedConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
 	
-    this.indexTemp = ipedConfig.getIndexTemp();
+    this.indexDir = ipedConfig.getIndexTemp();
     this.sources = sources;
     this.output = output;
     this.palavrasChave = palavras;
@@ -144,18 +144,20 @@ public class Manager {
 
     ItemImpl.setStartID(0);
 
-    indexDir = new File(output, "index"); //$NON-NLS-1$
-    if (indexTemp == null || IndexFiles.getInstance().appendIndex) {
-      indexTemp = indexDir;
+    finalIndexDir = new File(output, "index"); //$NON-NLS-1$
+    
+    if (indexDir == null) {
+      indexDir = finalIndexDir;
     }
 
-    stats = Statistics.get(caseData, indexDir);
-
+    stats = Statistics.get(caseData, finalIndexDir);
+    
     instance = this;
+
   }
   
   public File getIndexTemp(){
-	  return indexTemp;
+	  return indexDir;
   }
 
   Worker[] getWorkers() {
@@ -212,8 +214,10 @@ public class Manager {
     
     updateImagePaths();
     
+    shutDownSleuthkitServers();
+    
     deleteTempDir();
-
+    
     stats.logarEstatisticas(this);
 
   }
@@ -243,23 +247,20 @@ public class Manager {
   }
   
   public void initSleuthkitServers(final String dbPath) throws InterruptedException{
-      ArrayList<Thread> threads = new ArrayList<Thread>(); 
-      for(final Worker worker : workers){
-          Thread t = new Thread(){
-              public void run(){
-                  SleuthkitClient.get(worker.getThreadGroup(), dbPath);
-              }
-          };
-          t.start();
-          threads.add(t);
-      }
-      for(Thread t : threads)
-          t.join();
+    ArrayList<ThreadGroup> threadGroups = new ArrayList<>();
+    for(Thread thread : workers)
+      threadGroups.add(thread.getThreadGroup());
+    SleuthkitClient.initSleuthkitServers(threadGroups, dbPath);
+  }
+  
+  private void shutDownSleuthkitServers() {
+    LOGGER.info("Closing Sleuthkit Servers."); //$NON-NLS-1$
+    SleuthkitClient.shutDownServers();
   }
 
   private void loadExistingData() throws Exception {
 
-    IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
+    IndexReader reader = IndexReader.open(FSDirectory.open(finalIndexDir));
     stats.previousIndexedFiles = reader.numDocs();
     reader.close();
 
@@ -277,7 +278,7 @@ public class Manager {
 	    conf.setMaxThreadStates(localConfig.getNumThreads());
 	    conf.setSimilarity(new IndexerSimilarity());
 	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-	    if ((localConfig.isIndexTempOnSSD() && localConfig.getIndexTemp() != null) || localConfig.isOutputOnSSD()) {
+	    if ((localConfig.isIndexTempOnSSD() && indexDir != finalIndexDir) || localConfig.isOutputOnSSD()) {
 	      mergeScheduler.setMaxMergesAndThreads(8, 4);
 	    }
 	    conf.setMergeScheduler(mergeScheduler);
@@ -299,7 +300,7 @@ public class Manager {
     IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     LOGGER.info("Creating index..."); //$NON-NLS-1$
 
-    writer = new IndexWriter(FSDirectory.open(indexTemp), getIndexWriterConfig());
+    writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
 
     LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
     workers = new Worker[localConfig.getNumThreads()];
@@ -396,17 +397,18 @@ public class Manager {
     writer.close();
     writer = null;
 
-    if (!indexTemp.getCanonicalPath().equalsIgnoreCase(indexDir.getCanonicalPath())) {
+    if (!indexDir.getCanonicalPath().equalsIgnoreCase(finalIndexDir.getCanonicalPath())) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-      LOGGER.info("Copying Index..."); //$NON-NLS-1$
+      LOGGER.info("Moving Index..."); //$NON-NLS-1$
       try {
-        Files.move(indexTemp.toPath(), indexDir.toPath());
+        Files.move(indexDir.toPath(), finalIndexDir.toPath());
 
       } catch (IOException e) {
-        IOUtil.copiaDiretorio(indexTemp, indexDir);
+        LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
+        IOUtil.copiaDiretorio(indexDir, finalIndexDir);
       }
     }
-
+    
     if (caseData.containsReport()) {
       new File(output, "data/containsReport.flag").createNewFile(); //$NON-NLS-1$
     }
@@ -536,8 +538,7 @@ public class Manager {
 	    IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	    LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
-	    try {
-	      IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
+	    try (IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile())){
 	      IPEDSearcherImpl searchAll = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
 	      LuceneSearchResult result = searchAll.searchAll();
 
@@ -551,7 +552,7 @@ public class Manager {
 	        }
 	      }
 	      
-	      writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
+	      writer = new IndexWriter(FSDirectory.open(finalIndexDir), getIndexWriterConfig());
 
 	      BooleanQuery query;
 	      int startId = 0, interval = 1000, endId = interval;
@@ -599,16 +600,10 @@ public class Manager {
       IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
       IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/imagemagick"), new File(output, "tools/imagemagick")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/esedbexport"), new File(output, "tools/esedbexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/pffexport"), new File(output, "tools/pffexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/msiecfexport"), new File(output, "tools/msiecfexport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/tesseract"), new File(output, "tools/tesseract")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools/tsk"), new File(output, "tools/tsk")); //$NON-NLS-1$ //$NON-NLS-2$
-      
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
       AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-      if (advancedConfig.isEmbutirLibreOffice()) {
-        IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "tools/libreoffice.zip"), new File(output, "tools/libreoffice.zip")); //$NON-NLS-1$ //$NON-NLS-2$
+      if (!advancedConfig.isEmbutirLibreOffice()) {
+        new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
       }
 
       IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$

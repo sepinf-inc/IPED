@@ -1,10 +1,9 @@
 package dpf.sp.gpinf.indexer.util;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
@@ -21,8 +20,8 @@ public class UFEDXMLWrapper extends Reader{
     int pos = 0, size = 0;
     boolean inModel = false, inData = false, replacing = false;
     
-    public UFEDXMLWrapper(File xml) throws FileNotFoundException, UnsupportedEncodingException {
-        reader = new BufferedReader(new InputStreamReader(new FileInputStream(xml), "UTF-8"));
+    public UFEDXMLWrapper(InputStream xml) throws FileNotFoundException, UnsupportedEncodingException {
+        reader = new BufferedReader(new InputStreamReader(xml, "UTF-8"));
     }
 
     @Override

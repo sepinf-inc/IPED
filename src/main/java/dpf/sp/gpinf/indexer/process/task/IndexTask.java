@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +36,8 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.CloseFilterReader;
+import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
@@ -72,6 +75,7 @@ public class IndexTask extends BaseCarveTask {
   }
 
   public static class IdLenPair {
+
     int id;
     long length;
 
@@ -86,11 +90,11 @@ public class IndexTask extends BaseCarveTask {
       return;
     }
 
-    String textCache = evidence.getParsedTextCache();
+    Reader textReader = null;
 
     if (!evidence.isToAddToCase()) {
       if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
-        textCache = ""; //$NON-NLS-1$
+        textReader = new StringReader(""); //$NON-NLS-1$
         if(evidence instanceof SleuthKitItem) {
             ((SleuthKitItem)evidence).setSleuthId(null);
         }
@@ -108,7 +112,7 @@ public class IndexTask extends BaseCarveTask {
     AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
     if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment() && !caseData.isIpedReport()
             && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
-    		&& ( ((evidence instanceof SleuthKitItem) && ((SleuthKitItem)evidence).getSleuthFile() != null) || evidence.getFile() != null)){
+    		&& ( ((evidence instanceof SleuthKitItem) && ((SleuthKitItem)evidence).getSleuthFile() != null) || evidence.getFile() != null || evidence.getInputStreamFactory() != null)){
     	
     	int fragNum = 0;
     	int overlap = 1024;
@@ -119,49 +123,40 @@ public class IndexTask extends BaseCarveTask {
             if(Thread.currentThread().isInterrupted())
             	return;
         }
-    	//if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE))
-    		textCache = ""; //$NON-NLS-1$
+    	textReader = new StringReader(""); //$NON-NLS-1$
     }
 
-    if (textCache != null) {
-      Document doc;
-      if (indexFileContents) {
-        doc = IndexItem.Document(evidence, new StringReader(textCache));
-      } else {
-        doc = IndexItem.Document(evidence, null);
-      }
-
-      try{
-    	  worker.writer.addDocument(doc);
-    	  
-      }catch(IOException e){
-    	  if(IOUtil.isDiskFull(e))
-    		  throw new IPEDException("Not enough space for the index on " + worker.manager.getIndexTemp().getAbsolutePath()); //$NON-NLS-1$
-    	  else
-    		  throw e;
-      }
-      
-      textSizes.add(new IdLenPair(evidence.getId(), textCache.length()));
-
-    } else{
-      Metadata metadata = getMetadata(evidence);
-      ParseContext context = getTikaContext(evidence);
-
-      ParsingReader reader = null;
+    if(textReader == null) {
       if (indexFileContents && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
-    	TikaInputStream tis = null;
-        try {
-            tis = evidence.getTikaStream();
-        } catch (IOException e) {
-            LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
-        }
-        if(tis != null){
-        	reader = new ParsingReader(this.autoParser, tis, metadata, context);
-            reader.startBackgroundParsing();
+        textReader = evidence.getTextReader();
+        if(textReader == null) {
+            try {
+                TikaInputStream tis = evidence.getTikaStream();
+                Metadata metadata = getMetadata(evidence);
+                final ParseContext context = getTikaContext(evidence);
+                textReader = new ParsingReader(this.autoParser, tis, metadata, context) {
+                  @Override
+                  public void close() throws IOException {
+                    IOUtil.closeQuietly(context.get(ItemSearcher.class));
+                    super.close();
+                  }
+                };
+                ((ParsingReader)textReader).startBackgroundParsing();
+                
+            } catch (IOException e) {
+                LOGGER.warn("{} Error opening: {} {}", Thread.currentThread().getName(), evidence.getPath(), e.toString()); //$NON-NLS-1$
+            }
         }
       }
-
-      Document doc = IndexItem.Document(evidence, reader);
+    }
+    
+      if(textReader == null)
+          textReader = new StringReader(""); //$NON-NLS-1$
+    
+      FragmentingReader fragReader = new FragmentingReader(textReader);
+      CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
+    
+      Document doc = IndexItem.Document(evidence, noCloseReader, output);
       int fragments = 0;
       try {
         /* Indexa os arquivos dividindo-os em fragmentos, pois a lib de
@@ -175,7 +170,7 @@ public class IndexTask extends BaseCarveTask {
 
           worker.writer.addDocument(doc);
 
-        } while (!Thread.currentThread().isInterrupted() && reader != null && reader.nextFragment());
+        } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
       }catch(IOException e){
     	  if(IOUtil.isDiskFull(e))
@@ -183,21 +178,13 @@ public class IndexTask extends BaseCarveTask {
     	  else
     	  	  throw e;
       }finally {
-        if (reader != null) {
-          reader.reallyClose();
-        }
+        noCloseReader.reallyClose();
         //comentado pois provoca problema de concorrência com temporaryResources
         //Já é fechado na thread de parsing do parsingReader
         //IOUtil.closeQuietly(tis);
       }
 
-      if (reader != null) {
-        textSizes.add(new IdLenPair(evidence.getId(), reader.getTotalTextSize()));
-      } else {
-        textSizes.add(new IdLenPair(evidence.getId(), 0));
-      }
-
-    }
+      textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
 
   }
 

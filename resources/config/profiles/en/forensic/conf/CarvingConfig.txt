@@ -21,7 +21,7 @@
 # File types that won't be carved. Subtypes will not be processed either.
 # All file types that are expanded are set by default so that repeated items are not retrieved.
 # Comment out if you don't want to exclude items from carving.
-typesToNotProcess = video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;
+typesToNotProcess = application/x-tika-msoffice; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;
 typesToNotProcess = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;
 typesToNotProcess = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst
 typesToNotProcess = application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;

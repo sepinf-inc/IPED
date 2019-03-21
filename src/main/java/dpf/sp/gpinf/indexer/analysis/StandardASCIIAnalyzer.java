@@ -64,8 +64,14 @@ public class StandardASCIIAnalyzer extends Analyzer {
   
   private boolean filterNonLatinChars = false;
   
+  private boolean convertCharsToAscii = true;
+  
   public void setFilterNonLatinChars(boolean filterNonLatinChars) {
       this.filterNonLatinChars = filterNonLatinChars;
+  }
+  
+  public void setConvertCharsToAscii(boolean convertCharsToAscii) {
+      this.convertCharsToAscii = convertCharsToAscii;
   }
 
   /**
@@ -95,7 +101,8 @@ public class StandardASCIIAnalyzer extends Analyzer {
     }
 
     // src.setMaxTokenLength(maxTokenLength);
-    TokenStream tok = new FastASCIIFoldingFilter(tokenizer);
+    TokenStream tok = tokenizer;
+    if(convertCharsToAscii) tok = new FastASCIIFoldingFilter(tokenizer);
 
     // tok = new StopFilter(matchVersion, tok, stopwords);
     
@@ -104,7 +111,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
     if (!(pipeTokenizer)) {
     	tok = new LengthFilter(matchVersion,tok, 1, maxTokenLength);
     	if(filterNonLatinChars)
-    	    tok = new AsciiCharacterFilter(matchVersion,tok);
+    	    tok = new Latin1CharacterFilter(matchVersion,tok);
     }        
     
         
@@ -116,14 +123,13 @@ public class StandardASCIIAnalyzer extends Analyzer {
       }
     };
   }
-	
-  
-  /* [Triage] Filters that identifies tokens that contain non-latin Unicode characters */
-  public class AsciiCharacterFilter extends FilteringTokenFilter { 
+
+/* [Triage] Filters that identifies tokens that contain non-latin Unicode characters */
+  public class Latin1CharacterFilter extends FilteringTokenFilter { 
 	  
 	    private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
-	    public AsciiCharacterFilter(Version matchVersion, TokenStream tokenStream) {
+	    public Latin1CharacterFilter(Version matchVersion, TokenStream tokenStream) {
 	        super(matchVersion, tokenStream);
 	    }
 
@@ -138,7 +144,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
 	        for (int i = 0; i < length; i++) 
 	        {
 	          final char c = buffer[i];
-	          if (c >= '\u0080') {	            
+	          if (c > '\u00FF') {
 	            return false;
 	          }
 	        }

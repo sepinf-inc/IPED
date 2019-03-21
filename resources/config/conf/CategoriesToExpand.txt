@@ -12,6 +12,7 @@ Chats
 Contatos
 Discos ISO
 Histórico de Internet
+Arquivos OLE
 Arquivos de Georeferenciamento
 
 # Gera relatórios de registro:

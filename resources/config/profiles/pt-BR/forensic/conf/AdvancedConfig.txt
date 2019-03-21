@@ -60,6 +60,13 @@ extraCharsToIndex =
 # Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
 convertCharsToLowerCase = true
 
+# Não indexa palavras formadas por caracteres fora do conjunto Latin-1, como chinês, cirílico, árabe, etc.
+# Padrão é false.
+filterNonLatinChars = false
+
+# Remove acentuação e converte os caracteres para seu equivalente ascii.
+convertCharsToAscii = true
+
 # Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
 # porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
 # Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
@@ -81,7 +88,7 @@ minItemSizeToFragment = 104857600
 
 # Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
 # não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
-textSplitSize = 100000000
+textSplitSize = 10000000
 
 ########################################################################
 # Configurações OCR

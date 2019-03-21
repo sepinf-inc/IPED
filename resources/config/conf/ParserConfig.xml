@@ -20,7 +20,7 @@
 <properties>
 
     <parsers>
-		<!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
+		<parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser>
 		
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
@@ -108,8 +108,9 @@
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
-            <mime-exclude>image/gif</mime-exclude>
+            <!--mime-exclude>image/gif</mime-exclude-->
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>
@@ -122,7 +123,6 @@
             <mime>text/plain</mime>
             <mime>application/skype</mime>
             <mime>application/irpf</mime>
-            <mime>application/x-tika-msoffice</mime>
             <mime>application/x-nls</mime>
         </parser>
         <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>

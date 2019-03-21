@@ -112,6 +112,9 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
             IndexItem.PARENTID,
             IndexItem.PARENTIDs,
             IndexItem.SLEUTHID,
+            IndexItem.ID_IN_SOURCE,
+            IndexItem.SOURCE_PATH,
+            IndexItem.SOURCE_DECODER,
             IndexItem.SUBITEM,
             IndexItem.TIMEOUT,
             IndexItem.TREENODE,
@@ -120,7 +123,9 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
             OCRParser.OCR_CHAR_COUNT,
             ExtraProperties.WKFF_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT,
-            ExtraProperties.SHARED_HASHES
+            ExtraProperties.SHARED_HASHES,
+            ExtraProperties.SHARED_ITEMS,
+            ExtraProperties.LINKED_ITEMS
         };
     
     public static final String[] email = {

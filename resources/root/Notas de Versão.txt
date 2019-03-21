@@ -1,9 +1,84 @@
-xx/11/2018
-- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos (habilitar enableExternalParsing)
+27/02/2019: IPED-3.15.5
+- Corrige erro no LibreOffice qdo há espaço no nome do usuário atual (3.15.4)
+- Corrige erro no LibreOffice se MSVC Redistributable não estiver instalado (3.15.4)
+- Remove limite de tamanho máximo de registros decodificados pelo POI-4.0
+
+21/02/2019: IPED-3.15.4
+- Identificação de novas categorias do UFED automaticamente
+- Novo filtro de duplicados sob demanda, útil em multicasos
+- Novo painel de exibição de duplicatas
+- Ordenação de colunas multithread (5-10x mais rápido com 24 cores)
+- Abertura de multicasos em paralelo
+- Atualização p/ icepdf-6.3.2 (abre digitalizações antes não abertas)
+- Atualização p/ LibreOffice 6.1.5
+Correções:
+- Timeouts infinitos ao ligar enableExternalParsing qdo ocorre erro na leitura dos itens (ex: bloqueio de antivirus)
+- Áudios de WhatsApp não linkados nas conversas caso seu mimetype não existisse no banco (3.14)
+- Marcadores para envios via WhatsApp-Iphone não eram criados se anexos fossem adicionados com --append (3.14)
+- Ignora NullPointerException no GenericOLEParser
+
+28/01/2019: IPED-3.15.3
+- Corrige NullPointer que impedia abertura da interface de análise (3.15.2)
+- Remove metadados de imagens obtidos do sistema de arquivos local (3.13)
+- Eventual ConcurrentModificationException no MetadataViewer com pesquisa ativa (3.14)
+
+25/01/2019: IPED-3.15.2
+- Suporte a UFDR segmentados
+- Suporte a AD1 v3 segmentados (até FTKImager 3.4.0.5)
+- Compatibilização e atualização p/ Tesseract-4.0.0 (melhorias substanciais na acurácia)
+- Reabilita OCR em GIFs (eventualmente causavam problema com tesseract-3.02)
+- Melhor gerenciamento de threads nas chamadas ao imagemagick (Filipe Simões)
+Correções:
+- Comenta assinatura superfetch MAM0x84, cujos itens causavam hang e memory leak no agdbinfo 20181111 (3.15)
+- Destrói corretamente ferramentas externas de parsing após timeout (3.15)
+- Fecha handles pro índice que impediam apagá-lo qdo criado no temp (desde 3.12)
+- Evita SocketTimeout ao ligar 'robustImageReading' com imagens mto fragmentadas e segmentadas (3.8)
+- Tenta apagar arquivos pipe-xxxx criados no temp qdo 'robustImageReading' é ligado (3.8)
+- Diminui threads de merge do índice ao usar --append com outputOnSSD = false
+
+11/01/2019: IPED-3.15.1
+- Atualização para Tika-1.20 (tratamento de chars rotacionados em PDFs, correções)
+- Loga erro ao invés de abortar caso externalParsers não estejam instalados no Linux
+Correções:
+- Substituídas todas as chamadas process.destroy() por destroyForcibly() (mata 'convert' travados e outros no Linux)
+- "IOException: Stream closed" durante indexação que abortava processamento (3.15)
+- Timezone incorreto em datas de chats decodificados pelo UFED (PCF Pfeifer) (3.14)
+- Inclui DLLs faltantes no Imagemagick-7.0.8-14 (3.15)
+- Ignora UnsupportedEncodingException no GenericOLEParser
+
+11/12/2018: IPED-3.15
+- Parsing robusto em outro processo, isolando OutOfMemoryErrors e travamentos no parsing (habilitar enableExternalParsing)
+- Suporte a relatórios UFDR do Physical Analyzer
+- Suporte a imagens lógicas AD1 v3 (contribuição Guilherme Dutra SEF/MG)
+- Suporte a imagens heic geradas pelo IOS 11+
+- Externalização da configuração da MakePreviewTask
+- Novos parâmetros no ExternalParsers.xml: win-tool-path, output-charset, isOutputHtml, firstLinesToIgnore
+- Parser genérico e expansão de OLEs sem parser específico (jumplists, thumbs.db, etc)
+- Configuração de parser externo para Prefetch (libscca)
+- Configuração de parser externo para Superfetch (libagdb)
+- Configuração de parser externo para Lixeira: INFO2 e $I* (rifiuti e rifiuti-vista)
+- Configuração de parser externo para Event logs evt e evtx (libevt e libevtx)
+- Cache em disco para texto extraído de itens gigantes, evitando reprocessá-los
+- Diminui textSplitSize para 10MB para evitar OutOfMemory em máquinas com poucos recursos
+- Possibilidade de desligar convertCharsToAscii para gerar melhor dicionário p/ quebra de senhas
+- Exporta p/ relatório anexos de chats automaticamente (desligável com --nolinkeditems)
+- Alerta para eventuais problemas com java 9+
 - Atualização para Tika-1.19.1
+- Atualização p/ ImageMagick 7.0.8-14
+- Atualização p/ Mplayer-6.2.0-r38109
+- Atualização p/ Libpff-20180714
+- Atualização p/ Regripper-2.8_20180406
 Correções:
 - Geração de quadros de vídeos no Linux qdo Mplayer não suporta "-lavdopts wait_keyframe" (PCF Wladimir)
 - Erro ao setar localização para 'en' em sistemas cujo padrão era 'pt_BR'
+- Opção robustImageReading não funcionava no Linux
+- Configuração errada da opção filterNonLatinChars no perfil triage
+- Eventual construção incorreta da árvore de diretórios ao processar pastas com links simbólicos
+- Datas de WhatsApp do iphone eram decodificadas usando timezone incorreto
+- Ocorria scrollToNextHit automático nos chats ao clicar em anexo
+- Corrige caminho de imagens processadas no Linux e abertas no Windows
+- Opção -dname não funcionava p/ relatórios do UFED
+- Raro ConcurrentModificationException abortava processamento
 
 22/10/2018: IPED-3.14.5
 - Novas opções p/ triage: filterNonLatinChars, maxTokenLength e storeTermVectors (PCF Sícoli e Nassif)

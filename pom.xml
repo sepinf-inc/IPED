@@ -37,6 +37,17 @@
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+      <dependency>
+    	<groupId>net.lingala.zip4j</groupId>
+    	<artifactId>zip4j</artifactId>
+    	<version>1.3.2</version>
+	  </dependency>
       <dependency>
           <groupId>com.beust</groupId>
           <artifactId>jcommander</artifactId>
@@ -145,11 +156,6 @@
             <version>0.9.5.2</version>
         </dependency>
         <dependency>
-            <groupId>libre-office</groupId>
-            <artifactId>noa-libre</artifactId>
-            <version>0.3</version>
-        </dependency>
-        <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
             <version>4.0.0-SNAPSHOT</version>
@@ -182,12 +188,12 @@
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox</artifactId>
-  			<version>2.0.12</version>
+  			<version>2.0.13</version>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.12</version>
+  			<version>2.0.13</version>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -251,7 +257,7 @@
                                     <version>1.8.0_152</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}</outputDirectory>
+                                    <outputDirectory>${release.dir}/jre</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -286,7 +292,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>libpff</artifactId>
-                                    <version>20131028</version>
+                                    <version>20180714</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -314,6 +320,101 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-agdbinfo</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>libagdb</artifactId>
+                                    <version>20181111</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-evtexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>evtexport</artifactId>
+                                    <version>20180317</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-evtxexport</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>evtxexport</artifactId>
+                                    <version>20170122</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-sccainfo</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>libyal</groupId>
+                                    <artifactId>sccainfo</artifactId>
+                                    <version>20170205</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-rifiuti</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>abelcheung</groupId>
+                                    <artifactId>rifiuti2</artifactId>
+                                    <version>0.6.1</version>
+                                    <type>zip</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-regripper</id>
                         <phase>package</phase>
                         <goals>
@@ -324,7 +425,7 @@
                                 <artifactItem>
                                     <groupId>keydet89</groupId>
                                     <artifactId>regripper</artifactId>
-                                    <version>2.8-p1</version>
+                                    <version>2.8_20180406</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/../</outputDirectory>
@@ -343,7 +444,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.0.5-4</version>
+                                    <version>7.0.8-14.1</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -362,7 +463,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>3.02</version>
+                                    <version>4.0.0</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -381,7 +482,7 @@
                                 <artifactItem>
                                     <groupId>mplayer</groupId>
                                     <artifactId>mplayer-zip</artifactId>
-                                    <version>4.9.2</version>
+                                    <version>6.2.0-r38109</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/../</outputDirectory>
@@ -438,7 +539,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>libreoffice</artifactId>
-                                    <version>1.0.4</version>
+                                    <version>6.1.5-p3</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>

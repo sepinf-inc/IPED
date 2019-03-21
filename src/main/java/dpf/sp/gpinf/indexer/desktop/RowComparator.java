@@ -136,6 +136,38 @@ public class RowComparator implements Comparator<Integer> {
     }
   }
   
+  private ThreadLocal<SortedSetDocValues> localSSDV = new ThreadLocal<SortedSetDocValues>() {
+      @Override
+      protected SortedSetDocValues initialValue() {
+        try {
+            SortedSetDocValues ssdv = atomicReader.getSortedSetDocValues(field);
+            if (ssdv == null)
+                ssdv = atomicReader.getSortedSetDocValues("_" + field);
+            return ssdv;
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+  };
+  
+  private ThreadLocal<SortedNumericDocValues> localSNDV = new ThreadLocal<SortedNumericDocValues>() {
+      @Override
+      protected SortedNumericDocValues initialValue() {
+        try {
+            SortedNumericDocValues sndv = atomicReader.getSortedNumericDocValues(field);
+            if (sndv == null)
+                sndv = atomicReader.getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+            return sndv;
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+  };
+  
   public static boolean isNewIndexReader(){
 	  return atomicReader != App.get().appCase.getAtomicReader();
   }
@@ -175,14 +207,15 @@ public class RowComparator implements Comparator<Integer> {
 			return sdv.getOrd(a) - sdv.getOrd(b);
 		
 		else if(ssdv != null){
+		    SortedSetDocValues lssdv = localSSDV.get();
 		    int result, k = 0, ordA = -1, ordB = -1;
 		    do{
-		        ssdv.setDocument(a);
 		        int i = 0;
-		        while(i++ <= k) ordA = (int)ssdv.nextOrd();
-	            ssdv.setDocument(b);
-	            i = 0;
-	            while(i++ <= k) ordB = (int)ssdv.nextOrd();
+		        lssdv.setDocument(a);
+                while(i++ <= k) ordA = (int)lssdv.nextOrd();
+                i = 0;
+                lssdv.setDocument(b);
+                while(i++ <= k) ordB = (int)lssdv.nextOrd();
 	            result = ordA - ordB;
 	            k++;
 	            
@@ -191,16 +224,17 @@ public class RowComparator implements Comparator<Integer> {
 		    return result;
 		}
 		else if(sndv != null){
+		    SortedNumericDocValues lsndv = localSNDV.get();
             int result, k = 0, countA = 0, countB = 0;
             do{
                 long ordA, ordB;
-                sndv.setDocument(a);
-                if(k == 0) countA = sndv.count();
-                if(k < countA) ordA = sndv.valueAt(k);
+                lsndv.setDocument(a);
+                if(k == 0) countA = lsndv.count();
+                if(k < countA) ordA = lsndv.valueAt(k);
                 else ordA = Long.MIN_VALUE;
-                sndv.setDocument(b);
-                if(k == 0) countB = sndv.count();
-                if(k < countB) ordB = sndv.valueAt(k);
+                lsndv.setDocument(b);
+                if(k == 0) countB = lsndv.count();
+                if(k < countB) ordB = lsndv.valueAt(k);
                 else ordB = Long.MIN_VALUE;
                 result = Long.compare(ordA, ordB);
                 k++;

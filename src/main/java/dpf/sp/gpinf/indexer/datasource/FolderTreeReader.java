@@ -129,9 +129,6 @@ public class FolderTreeReader extends DataSourceReader {
 
     private LinkedList<Integer> parentIds = new LinkedList<Integer>();
 
-    //Proteção caso postVisitDirectory seja chamado após SKIP_SUBTREE em preVisitDirectory?
-    private boolean removedInPreVisit = false;
-
     public void walk(File file) throws IOException {
       Path startingDir = file.toPath();
       Files.walkFileTree(startingDir, this);
@@ -176,15 +173,12 @@ public class FolderTreeReader extends DataSourceReader {
     @Override
     public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
-      removedInPreVisit = false;
-
       if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
         return FileVisitResult.TERMINATE;
       }
 
       if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
         parentIds.pollLast();
-        removedInPreVisit = true;
         return FileVisitResult.SKIP_SUBTREE;
 
       }
@@ -195,14 +189,10 @@ public class FolderTreeReader extends DataSourceReader {
     @Override
     public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-      if (!removedInPreVisit) {
-        parentIds.pollLast();
-      }
-
-      removedInPreVisit = false;
+      parentIds.pollLast();
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        System.err.println(new Date() + "\t[WARN]\t" + "Directory ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
 
       return FileVisitResult.CONTINUE;
@@ -212,7 +202,7 @@ public class FolderTreeReader extends DataSourceReader {
     public FileVisitResult visitFileFailed(Path path, IOException exception) throws IOException {
 
       if (exception != null) {
-        System.err.println(new Date() + "\t[WARN]\t" + "Item ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        System.err.println(new Date() + "\t[WARN]\t" + "File ignored: " + path.toFile().getAbsolutePath() + " " + exception.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       }
 
       return FileVisitResult.CONTINUE;

@@ -60,6 +60,13 @@ extraCharsToIndex =
 # Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
 convertCharsToLowerCase = true
 
+# Do not index words with characters not in Latin-1 charset, like chinese, cyrillic, arabic...
+# Default is false.
+filterNonLatinChars = false
+
+# Removes accents and converts characters to their equivalent ascii char.
+convertCharsToAscii = true
+
 # Ignores HFS + hard links pointing to items already processed. The hard links are added to the case,
 # but their content is not processed (indexed, expanded, carved, etc).
 # Optimizes HFS + image processing containing thousands of hard links (such as Time Machine volumes).
@@ -81,7 +88,7 @@ minItemSizeToFragment = 104857600
 
 # Size (bytes) of the text segments extracted from items before indexing. Includes all items,
 # not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
-textSplitSize = 100000000
+textSplitSize = 10000000
 
 ########################################################################
 # OCR Settings

@@ -190,6 +190,8 @@ public class DIETask extends AbstractTask {
     if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;
     }
+    if(evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null)
+        return;
 
     //Chama o método de detecção
     try {

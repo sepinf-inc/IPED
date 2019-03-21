@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,9 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -41,14 +39,15 @@ import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.Item;
 import iped3.EvidenceFileType;
 import iped3.HashValue;
 import iped3.datasource.DataSource;
+import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.SleuthKitItem;
 
@@ -196,7 +195,7 @@ public class ItemImpl implements SleuthKitItem {
 
   private boolean isQueueEnd = false, parsed = false;
 
-  private String parsedTextCache;
+  private TextCache textCache;
 
   private String hash;
 
@@ -211,12 +210,14 @@ public class ItemImpl implements SleuthKitItem {
   private long startOffset = -1, tempStartOffset = -1;
 
   private Integer sleuthId;
+  
+  private String idInDataSource;
 
   private TikaInputStream tis;
   
   private byte[] thumb;
   
-  private SeekableInputStreamFactory inputStreamFactory;
+  private ISeekableInputStreamFactory inputStreamFactory;
 
   static final int BUF_LEN = 8 * 1024 * 1024;
 
@@ -257,6 +258,12 @@ public class ItemImpl implements SleuthKitItem {
       tmpResources.close();
     } catch (Exception e) {
       //LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+    }
+    try {
+        if(textCache != null)
+            textCache.close();
+    } catch (IOException e) {
+        e.printStackTrace();
     }
     if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
       if (!file.delete()) {
@@ -501,8 +508,32 @@ public class ItemImpl implements SleuthKitItem {
    * @return o texto extraído do item armazenado pela tarefa de expansão para alguns containers com
    * texto (eml, ppt, etc)
    */
+  @Deprecated
   public String getParsedTextCache() {
-    return parsedTextCache;
+    if(textCache == null)
+        return null;
+    StringBuilder sb = new StringBuilder();
+    try(Reader reader = textCache.getTextReader()){
+        int tot = 0, i = 0;
+        char[] cbuf = new char[64 * 1024];
+        while((tot += i) < 10000000 && (i = reader.read(cbuf)) != -1) {
+            sb.append(cbuf, 0, i);
+        }
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+    return sb.toString();
+  }
+  
+  public TextCache getTextCache() {
+      return textCache;
+  }
+  
+  public Reader getTextReader() throws IOException {
+      if(textCache == null)
+          return null;
+      else
+          return textCache.getTextReader();
   }
 
   /**
@@ -569,8 +600,7 @@ public class ItemImpl implements SleuthKitItem {
 
     if (stream == null && sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-        SleuthKitConfig sleuthKitConfig = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class).iterator().next();
-        if (sleuthcase == null || !sleuthKitConfig.isRobustImageReading()) {
+        if (sleuthcase == null || !Configuration.robustImageReading) {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
@@ -579,7 +609,7 @@ public class ItemImpl implements SleuthKitItem {
     }
     
     if(stream == null && inputStreamFactory != null)
-        stream = inputStreamFactory.getSeekableInputStream(null);
+        stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
     
     if (stream != null && startOffset != -1) {
       stream = new LimitedSeekableInputStream(stream, startOffset, length);
@@ -950,6 +980,15 @@ public class ItemImpl implements SleuthKitItem {
   public void setIsDir(boolean isDir) {
     this.isDir = isDir;
   }
+  
+  /**
+   * Define os marcadores do item
+   *
+   * @param labels lista de marcadores
+   */
+  public void setLabels(List<String> labels) {
+    this.labels = labels;
+  }
 
   /**
    * @param length tamanho do arquivo
@@ -1012,8 +1051,18 @@ public class ItemImpl implements SleuthKitItem {
   /**
    * @param parsedTextCache texto extraído após o parsing
    */
-  public void setParsedTextCache(String parsedTextCache) {
-    this.parsedTextCache = parsedTextCache;
+  @Deprecated
+  public void setParsedTextCache(String parsedText) {
+    this.textCache = new TextCache();
+    try {
+        this.textCache.write(parsedText);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+  }
+  
+  public void setParsedTextCache(TextCache textCache) {
+      this.textCache = textCache;
   }
 
   /**
@@ -1171,32 +1220,31 @@ public class ItemImpl implements SleuthKitItem {
 	this.dataSource = evidence;
   }
 
-    @Override
-    public byte[] getThumb() {
-        return thumb;
-    }
-    
-    public void setThumb(byte[] thumb) {
-        this.thumb = thumb;
-        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
-    }
+  @Override
+  public byte[] getThumb() {
+      return thumb;
+  }
+  
+  public void setThumb(byte[] thumb) {
+      this.thumb = thumb;
+      this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+  }
 
-    public SeekableInputStreamFactory getInputStreamFactory() {
-        return inputStreamFactory;
-    }
+  public ISeekableInputStreamFactory getInputStreamFactory() {
+      return inputStreamFactory;
+  }
 
-    public void setInputStreamFactory(SeekableInputStreamFactory inputStreamFactory) {
-        this.inputStreamFactory = inputStreamFactory;
-    }
+  public void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory) {
+      this.inputStreamFactory = inputStreamFactory;
+  }
 
-    /**
-     * Define os marcadores do item
-     *
-     * @param labels lista de marcadores
-     */
-    public void setLabels(List<String> labels) {
-      this.labels = labels;
-    }
+  public String getIdInDataSource() {
+      return idInDataSource;
+  }
+
+  public void setIdInDataSource(String idInDataSource) {
+      this.idInDataSource = idInDataSource;
+  }
 
 	@Override
 	public Item createChildItem() {

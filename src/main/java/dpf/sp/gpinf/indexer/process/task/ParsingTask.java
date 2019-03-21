@@ -25,7 +25,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,11 +53,8 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -73,7 +69,9 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 import iped3.io.ItemBase;
@@ -258,7 +256,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     
     AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-    if (evidence.getParsedTextCache() == null && !evidence.isTimedOut() && ((evidence.getLength() == null || 
+    if (((ItemImpl)evidence).getTextCache() == null && ((evidence.getLength() == null || 
     		evidence.getLength() < advancedConfig.getMinItemSizeToFragment()) ||
             IndexerDefaultParser.isSpecificParser(parser) )) {
         try{
@@ -311,48 +309,25 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     reader.startBackgroundParsing();
 
     try {
-      StringWriter writer;
+      TextCache textCache = new TextCache();
       char[] cbuf = new char[128 * 1024];
       int len = 0;
-      int numFrags = 0;
-      
-      /*ContentHandler handler = new ToTextContentHandler(writer);
-      try {
-        numFrags++;
-		this.autoParser.parse(tis, handler, metadata, context);
-	  } catch (Throwable e) {
-		//e.printStackTrace();
-	  }
-      /*/
-      do {
-        numFrags++;
-        writer = new StringWriter();
-        if(numFrags > 1 && metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
-        	break;
-        while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
-          writer.write(cbuf, 0, len);
-        }
-
-      } while (reader.nextFragment());
-	
-      /**
-       * Armazena o texto extraído em cache até o limite de 1 fragmento, 
-       * o que totaliza ~100MB com o tamanho padrão de fragmento
-       */
-      if (numFrags == 1) {
-        evidence.setParsedTextCache(writer.toString());
-        totalText.addAndGet(evidence.getParsedTextCache().length());
+      while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
+          textCache.write(cbuf, 0, len);
+          //if(metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
+          //  break;
       }
-
+      
+      ((ItemImpl)evidence).setParsedTextCache(textCache);
       evidence.setParsed(true);
+      totalText.addAndGet(textCache.getSize());
 
     } finally {
       //IOUtil.closeQuietly(tis);
-      //do nothing
       reader.close();
-      reader.reallyClose();
       
       metadataToExtraAttribute(evidence);
+      IOUtil.closeQuietly(context.get(ItemSearcher.class));
     }
     
   }
@@ -536,11 +511,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       }
 
       LOGGER.warn("{} SAX error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      LOGGER.error("SAX error extracting subitem " + subitemPath, e);
+      LOGGER.debug("SAX error extracting subitem " + subitemPath, (Throwable) e);
 
     } catch (Exception e) {
       LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, e.toString()); //$NON-NLS-1$
-      LOGGER.error("Error extracting subitem " + subitemPath, e);
+      LOGGER.debug("Error extracting subitem " + subitemPath, (Throwable) e);
 
     } finally {
       tmp.close();

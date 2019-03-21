@@ -3,9 +3,7 @@
 ############################
 
 OST Mailboxes (not processed) = type:ost
-Filter Duplicates = duplicate:false
 Filter KFF Ignorable = *:* -kffstatus:ignore
-Filter Duplicates & Ignorable = duplicate:false AND NOT kffstatus:ignore
 Hash Alert = kffstatus:alert
 Hash Alert (Child Porn) = kffstatus:pedo
 Encrypted Files = encrypted:true

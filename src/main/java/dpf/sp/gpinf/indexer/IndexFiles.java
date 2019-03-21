@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
+import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
@@ -41,6 +42,8 @@ import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
+import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
@@ -148,7 +151,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 		  profile = cmdLineParams.getProfile();
 	  }else if(!locale.equals("pt-BR")) //$NON-NLS-1$
 		  profile = "default"; //$NON-NLS-1$
-
+	  
 	  if(profile != null)
 		  configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 	  
@@ -262,7 +265,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    * Entrada principal da aplicação para processamento de evidências
    */
   public static void main(String[] args) {
-
+      
     boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
     String logPath = null;
     if(fromCustomLoader) {
@@ -272,14 +275,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     IndexFiles indexador = new IndexFiles(args);
     PrintStream SystemOut = System.out;
-
     boolean success = false;
-
+    
     try {
         indexador.setConfigPath();
         indexador.logConfiguration = new LogConfiguration(indexador, logPath);
         indexador.logConfiguration.configureLogParameters(indexador.nologfile, fromCustomLoader);
-
+        
         LOGGER = LoggerFactory.getLogger(IndexFiles.class);
         if(!fromCustomLoader)
             LOGGER.info(Versao.APP_NAME);
@@ -292,14 +294,22 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
             jars.add(Configuration.getInstance().tskJarFile);
 
+            //currently with --nogui, user can not open analysis app, so no need to load libreoffice jars
+            if(!indexador.nogui) {
+                System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());
+                LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(indexador.rootPath));
+                if(loFinder.getLOPath() != null)
+                    UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+            }
+            
             String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args, indexador.logFile);
             CustomLoader.run(customArgs, jars);
             return;
-
+            
         }else{
             success = indexador.executar();
         }
-
+        
     } catch (Exception e) {
         e.printStackTrace();
     }

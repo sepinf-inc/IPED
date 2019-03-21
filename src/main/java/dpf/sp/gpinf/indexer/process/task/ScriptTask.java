@@ -37,6 +37,9 @@ import iped3.Item;
 
 
 public class ScriptTask extends AbstractTask {
+  
+  private static IPEDSourceImpl ipedCase;
+  private static int numInstances = 0;
 
   private File scriptFile;
   private ScriptEngine engine;
@@ -74,13 +77,18 @@ public class ScriptTask extends AbstractTask {
       engine.put("stats", this.stats); //$NON-NLS-1$
       
       inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
+      
+      numInstances++;
   }
 
   @Override
   public void finish() throws Exception {
+    
+      if(ipedCase == null)
+          ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer);
       
-      try(IPEDSourceImpl ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer)){
-          IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase); 
+      try{
+          IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase);
           
           engine.put("ipedCase", ipedCase); //$NON-NLS-1$
           engine.put("searcher", searcher); //$NON-NLS-1$
@@ -90,6 +98,8 @@ public class ScriptTask extends AbstractTask {
       }finally {
           //remove references to heavy objects
           engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+          if(--numInstances == 0)
+            ipedCase.close();
       }
   }
 

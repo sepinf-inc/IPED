@@ -25,12 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.RowSorter;
-import javax.swing.table.TableRowSorter;
 
+import dpf.sp.gpinf.indexer.desktop.parallelsorter.ParallelTableRowSorter;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 
-public class ResultTableRowSorter extends TableRowSorter<ResultTableSortModel> {
+public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
 
   private static volatile Map<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
 

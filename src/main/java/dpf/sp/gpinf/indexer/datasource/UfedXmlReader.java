@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ import java.util.TimeZone;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
@@ -35,21 +37,25 @@ import org.xml.sax.XMLReader;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import gpinf.dev.data.DataSourceImpl;
 import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
 import iped3.Item;
 import iped3.datasource.DataSource;
 import iped3.util.ExtraProperties;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
 
 public class UfedXmlReader extends DataSourceReader{
     
@@ -62,7 +68,9 @@ public class UfedXmlReader extends DataSourceReader{
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
     public static final String UFED_EMAIL_MIME = "message/x-ufed-email"; //$NON-NLS-1$
     
-    File root;
+    File root, ufdrFile;
+    ZipFile4j ufdr;
+    ZIPInputStreamFactory zisf;
     Item rootItem;
     Item decodedFolder;
     HashMap<String, Item> pathToParent = new HashMap<>();
@@ -74,34 +82,61 @@ public class UfedXmlReader extends DataSourceReader{
     @Override
     public boolean isSupported(File datasource) {
         
-        File xmlReport = getXmlReport(datasource);
+        InputStream xmlReport = lookUpXmlReportInputStream(datasource);
+        IOUtil.closeQuietly(xmlReport);
+        //IOUtil.closeQuietly(ufdr);
+        
         if(xmlReport != null)
             return true;
         
         return false;
     }
     
-    private File getXmlReport(File root) {
+    private InputStream getXmlInputStream(File file) {
+        if(file.getName().toLowerCase().endsWith(".xml")) { //$NON-NLS-1$
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")){ //$NON-NLS-1$
+                char[] cbuf = new char[1024];
+                int off = 0, i = 0;
+                while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
+                    off += i;
+                String header = new String(cbuf, 0, off); 
+                for(String str : HEADER_STRINGS)
+                    if(!header.contains(str))
+                        return null;
+                
+                return new FileInputStream(file);
+                
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }else if(file.getName().toLowerCase().endsWith(".ufdr")){
+            try {
+                ufdrFile = file;
+                //File part1 = new File(file.getAbsolutePath().substring(0, file.getAbsolutePath().lastIndexOf('.')) + ".z01");
+                //SequenceSeekableByteChannel ssbc = new SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()), Files.newByteChannel(ufdrFile.toPath()));
+                ufdr = new ZipFile4j(file);
+                FileHeader xml = ufdr.getFileHeader("report.xml");
+                if(xml == null) xml = ufdr.getFileHeader("Report.xml");
+                return ufdr.getInputStream(xml);
+                
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+    
+    private InputStream lookUpXmlReportInputStream(File root) {
+        if(root.isFile())
+            return getXmlInputStream(root);
         File[] files = root.listFiles();
-        if(files != null)
-            for(File file : files)
-                if(file.getName().toLowerCase().endsWith(".xml")) //$NON-NLS-1$
-                    try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")){ //$NON-NLS-1$
-                        char[] cbuf = new char[1024];
-                        int off = 0, i = 0;
-                        while(off < cbuf.length && (i = reader.read(cbuf, off, cbuf.length - off)) != -1)
-                            off += i;
-                        String header = new String(cbuf, 0, off); 
-                        for(String str : HEADER_STRINGS)
-                            if(!header.contains(str))
-                                return null;
-                        
-                        return file;
-                        
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-        
+        if(files != null) {
+            for(File file : files) {
+                InputStream is = getXmlInputStream(file);
+                if(is != null)
+                    return is;
+            }
+        }
         return null;
     }
 
@@ -111,7 +146,7 @@ public class UfedXmlReader extends DataSourceReader{
         this.root = root;
         addRootItem();
         addVirtualDecodedFolder();
-        File xml = getXmlReport(root);
+        InputStream xmlStream = lookUpXmlReportInputStream(root);
         
         configureParsers();
         
@@ -121,7 +156,10 @@ public class UfedXmlReader extends DataSourceReader{
         XMLReader xmlReader = saxParser.getXMLReader();
         xmlReader.setContentHandler(new XMLContentHandler());
         xmlReader.setErrorHandler(new XMLErrorHandler());
-        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xml)));
+        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
+        
+        IOUtil.closeQuietly(xmlStream);
+        //IOUtil.closeQuietly(ufdr);
         
         return 0;
     }
@@ -151,10 +189,13 @@ public class UfedXmlReader extends DataSourceReader{
         rootItem = new ItemImpl();
         rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
-        rootItem.setPath(root.getName());
-        rootItem.setName(root.getName());
+        rootItem.setPath(evidenceName);
+        rootItem.setName(evidenceName);
         rootItem.setHasChildren(true);
-        //rootItem.setLength(0L);
+        if(root.getName().endsWith(".ufdr")) {
+            rootItem.setLength(root.length());
+            rootItem.setSumVolume(false);
+        }
         rootItem.setHash(""); //$NON-NLS-1$
         
         pathToParent.put(rootItem.getPath(), rootItem);
@@ -388,7 +429,10 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setPath(path);
                     item.setParent(getParent(path));
                     item.setMediaType(MediaType.application(UFED_MIME_PREFIX + type));
-                    item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+                    if(caseData.containsReport()) {
+                        //export metadata as content only if generating blind report
+                        item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
+                    }
                     item.setHash(""); //$NON-NLS-1$
                                         
                     boolean deleted = "deleted".equalsIgnoreCase(atts.getValue("deleted_state")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -472,11 +516,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.setCategory(chars.toString());
                     
                 } else if("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    File file = new File(root, normalizePaths(chars.toString()));
-                    String relativePath = Util.getRelativePath(output, file);
-                    item.setExportedFile(relativePath);
-                    item.setFile(file);
-                    item.setLength(file.length());
+                    setContent(item, chars.toString());
                     
                 } else if(!ignoreNameAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif")) //$NON-NLS-1$
                     if(item != null && !chars.toString().trim().isEmpty())
@@ -651,10 +691,7 @@ public class UfedXmlReader extends DataSourceReader{
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
                         if(avatarPath != null) {
                             avatarPath = normalizePaths(avatarPath);
-                            File avatarFile = new File(avatarPath);
-                            if(!avatarFile.isAbsolute())
-                                avatarFile = new File(root, avatarPath);
-                            parentItem.getMetadata().add(AVATAR_PATH_META, avatarFile.getAbsolutePath());
+                            parentItem.getMetadata().add(AVATAR_PATH_META, avatarPath);
                         }
                     }else if("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for(String meta : item.getMetadata().names()) {
@@ -678,6 +715,37 @@ public class UfedXmlReader extends DataSourceReader{
             
         }
         
+        private void setContent(ItemImpl item, String path) {
+            item.setMediaType(null);
+            item.setHash(null);
+            item.setInputStreamFactory(null);
+            if(path == null)
+                return;
+            path = normalizePaths(path);
+            if(ufdrFile == null) {
+                File file = new File(root, path);
+                String relativePath = Util.getRelativePath(output, file);
+                item.setExportedFile(relativePath);
+                item.setFile(file);
+                item.setLength(file.length());
+            }else {
+                if(zisf == null) {
+                    zisf = new ZIPInputStreamFactory(ufdrFile.toPath());
+                }
+                FileHeader zae = null;
+                try {
+                    zae = ufdr.getFileHeader(path);
+                } catch (ZipException e) {
+                    e.printStackTrace();
+                }
+                if(zae != null) {
+                    item.setLength(zae.getUncompressedSize());
+                    item.setInputStreamFactory(zisf);
+                    item.setIdInDataSource(path);
+                }
+            }
+        }
+        
         private void updateName(Item item, String newName) {
             //prevents error DocValuesField is too large
             int maxNameSize = 4096;
@@ -691,19 +759,8 @@ public class UfedXmlReader extends DataSourceReader{
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if(name != null)
                 updateName(item, name);
-            item.setMediaType(null);
-            item.setInputStreamFactory(null);
-            item.setHash(null);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
-            if(extracted_path != null) {
-                File file = new File(root, normalizePaths(extracted_path));
-                if(file.exists()) {
-                    String relativePath = Util.getRelativePath(output, file);
-                    item.setExportedFile(relativePath);
-                    item.setFile(file);
-                    item.setLength(file.length());
-                }
-            }
+            setContent(item, extracted_path);
             if(item.getFile() == null)
                 try {
                     String ufedSize = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Size"); //$NON-NLS-1$
@@ -817,9 +874,28 @@ public class UfedXmlReader extends DataSourceReader{
                 String avatarPath = contact.getMetadata().get(AVATAR_PATH_META);
                 if(avatarPath != null) {
                     contact.getMetadata().remove(AVATAR_PATH_META);
-                    File avatarFile = new File(avatarPath);
-                    if(avatarFile.exists()) {
-                        byte[] bytes = Files.readAllBytes(avatarFile.toPath());
+                    byte[] bytes = null;
+                    if(ufdr != null) {
+                        FileHeader zae = null;
+                        try {
+                            zae = ufdr.getFileHeader(avatarPath);
+                        } catch (ZipException e) {
+                            e.printStackTrace();
+                        }
+                        if(zae != null)
+                            try(InputStream is = ufdr.getInputStream(zae)){
+                                bytes = IOUtils.toByteArray(is); 
+                            } catch (ZipException e) {
+                                e.printStackTrace();
+                            }
+                    }else {
+                        File avatarFile = new File(avatarPath);
+                        if(!avatarFile.isAbsolute())
+                            avatarFile = new File(root, avatarPath);
+                        if(avatarFile.exists())
+                            bytes = Files.readAllBytes(avatarFile.toPath());
+                    }
+                    if(bytes != null) {
                         bw.write("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes) + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
                         contact.setThumb(bytes);
                     }

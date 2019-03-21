@@ -23,7 +23,6 @@ import gpinf.dev.data.ItemImpl;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.CaseData;
 import iped3.IPEDSource;
-import iped3.Item;
 import iped3.datasource.DataSource;
 import iped3.search.IPEDSearcher;
 import iped3.search.LuceneSearchResult;
@@ -35,11 +34,15 @@ import iped3.util.ExtraProperties;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +53,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManagerImpl;
@@ -70,12 +74,17 @@ import dpf.sp.gpinf.indexer.search.MarcadoresImpl;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
 public class IPEDReader extends DataSourceReader {
+    
+  private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
+    
+  private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
   
   IPEDSourceImpl ipedCase;
   HashSet<Integer> selectedLabels;
@@ -86,7 +95,7 @@ public class IPEDReader extends DataSourceReader {
   private int[] oldToNewIdMap;
   private List<IPEDSource> srcList = new ArrayList<IPEDSource>();
   private String deviceName;
-
+  
   public IPEDReader(CaseData caseData, File output, boolean listOnly) {
     super(caseData, output, listOnly);
   }
@@ -153,6 +162,10 @@ public class IPEDReader extends DataSourceReader {
 
 	    //Inclui anexos de emails de PST
 	    insertEmailAttachs(result);
+	    
+	    //insert items referenced by bookmarked items
+	    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+	    if (!args.isNoLinkedItems()) insertLinkedItems(result);
 
 	    //Inclui pais para visualização em árvore
 	    insertParentTreeNodes(result);
@@ -275,6 +288,42 @@ public class IPEDReader extends DataSourceReader {
         }
       }
     }
+  }
+  
+  private void insertLinkedItems(LuceneSearchResult result) {
+      int[] luceneIds = result.getLuceneIds();
+      Arrays.sort(luceneIds);
+      String queryText = ExtraProperties.LINKED_ITEMS + ":*"; //$NON-NLS-1$
+      IPEDSearcher searcher = new IPEDSearcherImpl(ipedCase, queryText);
+      try {
+          SearchResult itemsWithLinks = searcher.search();
+          for (int i = 0; i < itemsWithLinks.getLength(); i++){
+              int luceneId = ipedCase.getLuceneId(itemsWithLinks.getId(i));
+              if(Arrays.binarySearch(luceneIds, luceneId) < 0)
+                  continue;
+              
+              Document doc = ipedCase.getReader().document(luceneId);
+              String[] items = doc.getValues(ExtraProperties.LINKED_ITEMS);
+              StringBuilder query = new StringBuilder();
+              for(String item : items)
+                  query.append("(").append(item).append(") "); //$NON-NLS-1$
+              
+              StringBuilder queryBuilder = new StringBuilder();
+              queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
+              queryBuilder.append(query.toString());
+              queryBuilder.append(")"); //$NON-NLS-1$
+              searcher = new IPEDSearcherImpl(ipedCase, queryBuilder.toString());
+              
+              LuceneSearchResult linkedItems = searcher.luceneSearch();
+              if(linkedItems.getLength() > 0) {
+                  LOGGER.info("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + linkedItems.getLength()); //$NON-NLS-1$
+                  insertIntoProcessQueue(linkedItems, false);
+              }
+          }
+      } catch (Exception e1) {
+          e1.printStackTrace();
+          
+      }
   }
 
   private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
@@ -404,20 +453,34 @@ public class IPEDReader extends DataSourceReader {
         evidence.setMediaType(MediaType.parse(mimetype));
       }
       
-      value = doc.get(IndexItem.EXPORT);
-      if (value != null && !value.isEmpty() && !treeNode) {
-        evidence.setFile(Util.getRelativeFile(basePath, value));
+      if(!treeNode) {
+          value = doc.get(IndexItem.EXPORT);
+          if (value != null && !value.isEmpty()) {
+            evidence.setFile(Util.getRelativeFile(basePath, value));
+          } else {
+            value = doc.get(IndexItem.SLEUTHID);
+            if (value != null && !value.isEmpty()) {
+              evidence.setSleuthId(Integer.valueOf(value));
+              evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
+           
+            }else if((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                evidence.setIdInDataSource(value.trim());
+                String relPath = doc.get(IndexItem.SOURCE_PATH);
+                Path absPath = Util.getRelativeFile(basePath, relPath).toPath();
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath); 
+                if(sisf == null) {
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    Class<?> clazz = Class.forName(className);
+                    Constructor<SeekableInputStreamFactory> c = (Constructor)clazz.getConstructor(Path.class);
+                    sisf = c.newInstance(absPath);
+                    inputStreamFactories.put(absPath, sisf);
+                }
+                evidence.setInputStreamFactory(sisf);
+              
+            }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+                evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+          }
       } else {
-        value = doc.get(IndexItem.SLEUTHID);
-        if (value != null && !value.isEmpty() && !treeNode) {
-          evidence.setSleuthId(Integer.valueOf(value));
-          evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-          
-        }else if(evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
-            evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
-      }
-
-      if (treeNode) {
         evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.setAddToCase(false);
       }

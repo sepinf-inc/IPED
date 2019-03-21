@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.fork.ParsingTimeout;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -49,6 +48,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
+import dpf.sp.gpinf.indexer.util.FragmentingReader;
 
 /**
  * Reader for the text content from a given binary stream. This class uses a background parsing task
@@ -62,20 +62,6 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 public class ParsingReader extends Reader {
 
   private static Logger LOGGER = LoggerFactory.getLogger(ParsingReader.class);
-
-  // Tamanho mínimo dos fragmentos de divisão do texto de arquivos grandes
-  private static long textSplitSize = 10000000;
-
-  // Tamanho de sobreposição de texto nas bordas dos fragmentos
-  private static int textOverlapSize = 10000;
-
-  public static void setTextSplitSize(long textSplitSize) {
-    ParsingReader.textSplitSize = textSplitSize;
-  }
-
-  public static void setTextOverlapSize(int textOverlapSize) {
-    ParsingReader.textOverlapSize = textOverlapSize;
-  }
 
   /**
    * Parser instance used for parsing the given binary stream.
@@ -334,59 +320,17 @@ public class ParsingReader extends Reader {
   @Override
   public int read(char[] cbuf, int off, int len) throws IOException {
 
-    if (fragmentRead >= textSplitSize) {
-      if (fragReadMark == 0) {
-        reader.mark(textOverlapSize);
-        fragReadMark = fragmentRead;
-      } else if (fragmentRead - fragReadMark == textOverlapSize) {
-        return -1;
-      }
-      if (fragmentRead + len > textSplitSize + textOverlapSize) {
-        len = (int) (textSplitSize + textOverlapSize - fragmentRead);
-      }
-    } else if (fragmentRead + len > textSplitSize) {
-      len = (int) (textSplitSize - fragmentRead);
-    }
-
-    lastRead = reader.read(cbuf, off, len);
-    if (lastRead != -1) {
-      fragmentRead += lastRead;
-    }
+    int read = reader.read(cbuf, off, len);
 
     if (throwable != null) {
       if (throwable instanceof IOException) {
         throw (IOException) throwable;
       } else {
-        IOException exception = new IOException(""); //$NON-NLS-1$
-        exception.initCause(throwable);
-        throw exception;
+        throw new IOException(throwable); //$NON-NLS-1$
       }
     }
 
-    return lastRead;
-
-  }
-
-  // private int metaDataRead = 0;
-  private long fragmentRead = 0;
-  private long totalTextSize = 0;
-  private long fragReadMark = 0;
-  private int lastRead = 0;
-
-  public boolean nextFragment() throws IOException {
-    totalTextSize += fragmentRead;
-    if (lastRead == -1) {
-      return false;
-    }
-    totalTextSize -= textOverlapSize;
-    fragmentRead = 0;
-    fragReadMark = 0;
-    reader.reset();
-    return true;
-  }
-
-  public long getTotalTextSize() {
-    return totalTextSize;
+    return read;
   }
 
   /**
@@ -398,14 +342,10 @@ public class ParsingReader extends Reader {
    */
   @Override
   public void close() throws IOException {
-    // nao implementado para indexWriter nao fechar o reader antes da hora
-  }
-
-  public void reallyClose() throws IOException {
-    reader.close();
-    if (!parseDone) {
-      closeAndInterruptParsingTask();
-    }
+      reader.close();
+      if (!parseDone) {
+        closeAndInterruptParsingTask();
+      }
   }
 
   /**

@@ -111,6 +111,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
         App.get().hitsDock.setTitleText(Messages.getString("AppListener.NoHits")); //$NON-NLS-1$
         App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
+        App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
         App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
 
         FileProcessor parsingTask = new FileProcessor(docId, true);

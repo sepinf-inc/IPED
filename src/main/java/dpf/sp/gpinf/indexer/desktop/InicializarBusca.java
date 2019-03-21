@@ -95,11 +95,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
       
       App.get().appCase.checkImagePaths();
-		
-      if(App.get().appCase.getTotalItens() > 100000000)
-    	  RowComparator.setLoadDocValues(false);
-      
-      ParsingReader.setTextSplitSize(Long.MAX_VALUE);
       
       if(!updateItems){
     	  LOGGER.info("Loading Columns"); //$NON-NLS-1$

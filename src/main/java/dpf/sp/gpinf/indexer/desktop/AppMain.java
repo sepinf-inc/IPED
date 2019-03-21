@@ -13,24 +13,29 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
-
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
+import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 
 public class AppMain {
+	
 	private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 	private static final int MIN_JAVA_VER = 8;
-	private static final int MAX_JAVA_VER = 9;
-
+	private static final int MAX_JAVA_VER = 8;
+	
 	//These java versions have a WebView bug that crashes the JVM: JDK-8196011
 	private static final String[] buggedVersions = {"1.8.0_161", "1.8.0_162", "1.8.0_171"};
-
+	
 	File casePath;
-    File testPath;// = new File("E:\\teste\\noteAcer-nofork-default");
+    File testPath;// = new File("E:\\teste\\noteAcer-forensic-3.15-2");
 	
 	boolean isMultiCase = false;
 	boolean nolog = false;
@@ -47,10 +52,12 @@ public class AppMain {
 	    checkJavaVersion();
 	    appMain.start(args);
 	}
-
+	
 	private static void checkJavaVersion(){
 	    try {
-	        SwingUtilities.invokeAndWait(new Runnable(){
+	        if(System.getProperty("iped.javaVersionChecked") != null) //$NON-NLS-1$
+	            return;
+            SwingUtilities.invokeAndWait(new Runnable(){
                   @Override
                   public void run(){
                       String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
@@ -78,9 +85,11 @@ public class AppMain {
                                       Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
                                       Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                       }
-                      //Messages.resetLocale();
+                      Messages.resetLocale();
                   }
-              });
+            });
+            System.setProperty("iped.javaVersionChecked", "true"); //$NON-NLS-1$
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -163,22 +172,27 @@ public class AppMain {
 			      if(!fromCustomLoader)
 			    	  LOGGER.info(Versao.APP_NAME);
 		      }
-
+		      
 		      if(!finalLoader && processingManager == null) {
 		            List<File> jars = new ArrayList<File>();
-		            if(Configuration.getInstance().optionalJarDir != null && Configuration.getInstance().optionalJarDir.listFiles() != null)
-		            	jars.addAll(Arrays.asList(Configuration.getInstance().optionalJarDir.listFiles()));
+		            PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance().findObjects(PluginConfig.class).iterator().next();
+		            jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
 		            jars.add(Configuration.getInstance().tskJarFile);
-
+		            
+		            System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(libDir, "nativeview").getAbsolutePath());
+		            LibreOfficeFinder loFinder = new LibreOfficeFinder(libDir.getParentFile());
+		            if(loFinder.getLOPath() != null)
+		                UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
+		            
 		            String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
-
+		            
 		            CustomLoader.run(customArgs, jars);
 		            return;
-
+		            
 		        }else{
 		        	App.get().getSearchParams().codePath = libDir.getAbsolutePath();
 					App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-					  
+					
 					InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
 					init.execute();
 		        }

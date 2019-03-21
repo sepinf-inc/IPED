@@ -1,21 +1,19 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.control;
 
-import ag.ion.bion.officelayer.application.IApplicationAssistant;
-import ag.ion.bion.officelayer.application.ILazyApplicationInfo;
-import ag.ion.bion.officelayer.application.OfficeApplicationException;
-import ag.ion.bion.officelayer.internal.application.ApplicationAssistant;
 import dpf.sp.gpinf.indexer.IFileProcessor;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.StreamSource;
+
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.IcePDFViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
@@ -26,10 +24,10 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.LOExtractor;
 
 import java.io.File;
 import java.util.Set;
+
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
@@ -45,10 +43,6 @@ public class ViewerControl implements IViewerControl {
   private static ViewerControl instance;
 
   private static Logger LOGGER = LoggerFactory.getLogger(ViewerControl.class);
-
-  private volatile int result = JOptionPane.NO_OPTION;
-
-  private String pathLO = System.getProperty("user.home") + "/.indexador/libreoffice4"; //$NON-NLS-1$ //$NON-NLS-2$
 
   private LibreOfficeViewer officeViewer = null;
 
@@ -108,61 +102,10 @@ public class ViewerControl implements IViewerControl {
 
         params.compositeViewer.initViewers();
 
-        exibirAjuda.execute();
-
-        boolean useLO = false;
-        String systemLO = null;
-        String compressedLO = params.codePath + "/../tools/libreoffice.zip"; //$NON-NLS-1$
-        final String useLOMsg = Messages.getString("EnableLibreOffice"); //$NON-NLS-1$
-
-        if (System.getProperty("os.name").startsWith("Linux")) { //$NON-NLS-1$ //$NON-NLS-2$
-          try {
-            IApplicationAssistant ass = new ApplicationAssistant(params.codePath + "/../lib/nativeview"); //$NON-NLS-1$
-            ILazyApplicationInfo[] ila = ass.getLocalApplications();
-            if (ila.length != 0) {
-              LOGGER.info("Detected LibreOffice {} {}", ila[0].getMajorVersion(), ila[0].getHome()); //$NON-NLS-1$
-              if (ila[0].getMajorVersion() != 4 && ila[0].getMajorVersion() != 5) {
-                LOGGER.info("Install LibreOffice 4/5 to enable the Libreoffice viewer!"); //$NON-NLS-1$
-              } else {
-                systemLO = ila[0].getHome();
-              }
-            }
-
-          } catch (OfficeApplicationException e1) {
-            e1.printStackTrace();
-          }
-        }
-
-        if (systemLO != null || (System.getProperty("os.name").startsWith("Windows") && (new File(pathLO).exists() || new File(compressedLO).exists()))) { //$NON-NLS-1$ //$NON-NLS-2$
-   
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                result = App.triageGui ? JOptionPane.YES_OPTION :
-                    JOptionPane.showConfirmDialog(params.mainFrame, useLOMsg, "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
-              }
-            });
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-         
-        if (result == JOptionPane.YES_OPTION) {
-            if (systemLO == null) {
-              LOExtractor extractor = new LOExtractor(new File(compressedLO), new File(pathLO));
-              useLO = extractor.decompressLO();
-            } else {
-              useLO = true;
-            }
-          }
-
-        }
-
-        if (systemLO != null) {
-          pathLO = systemLO;
-        }
-
-        if (useLO) {
+        LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+        final String pathLO = loFinder.getLOPath();
+        
+        if (pathLO != null) {
           try {
             SwingUtilities.invokeAndWait(new Runnable() {
               @Override
@@ -171,12 +114,18 @@ public class ViewerControl implements IViewerControl {
                 viewersRepository.addViewer(officeViewer);
               }
             });
+            officeViewer.init();
+          
+          } catch (NotSupported32BitPlatformExcepion e) {
+              JOptionPane.showMessageDialog(null, Messages.getString("ViewerControl.OfficeViewerUnSupported")); //$NON-NLS-1$
+              viewersRepository.removeViewer(officeViewer);
+              
           } catch (Exception e) {
             e.printStackTrace();
           }
-
-          officeViewer.init();
         }
+        
+        exibirAjuda.execute();
 
         SwingUtilities.invokeLater(new Runnable() {
           @Override

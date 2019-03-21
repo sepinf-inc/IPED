@@ -69,6 +69,7 @@ public class ItemProducer extends Thread {
       SleuthkitReader.class,
       IPEDReader.class,
       UfedXmlReader.class,
+      AD1DataSourceReader.class,
       FolderTreeReader.class //deve ser o último
     };
 

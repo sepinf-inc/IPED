@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
@@ -26,7 +31,7 @@ public class IPEDMultiSource extends IPEDSourceImpl{
 	
 	private static ArrayList<Integer> baseDocCache = new ArrayList<Integer>();
 	
-	List<IPEDSourceImpl> cases = new ArrayList<IPEDSourceImpl>();
+	List<IPEDSourceImpl> cases = new ArrayList<>();
 	
 	public IPEDMultiSource(List<IPEDSourceImpl> sources) {
 		super(null);
@@ -44,11 +49,25 @@ public class IPEDMultiSource extends IPEDSourceImpl{
 		else
 			files = loadCasesFromTxtFile(file);
 		
-		for(File src : files){
-			LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
-			IPEDSourceImpl icase = new IPEDSourceImpl(src);
-			this.cases.add(icase);
+		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		ArrayList<Future<IPEDSourceImpl>> futures = new ArrayList<>(); 
+		for(final File src : files){
+		    Callable<IPEDSourceImpl> openCase = new Callable<IPEDSourceImpl>() {
+		        public IPEDSourceImpl call() {
+		            LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
+		            return new IPEDSourceImpl(src);
+		        }
+		    };
+		    futures.add(executor.submit(openCase));
 		}
+		for(Future<IPEDSourceImpl> f : futures)
+            try {
+                cases.add(f.get());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+		executor.shutdown();
+		
 		init();
 		
 	}
@@ -245,7 +264,7 @@ public class IPEDMultiSource extends IPEDSourceImpl{
 		int sourceid = id.getSourceId();
 		IPEDSource atomicCase = getAtomicSourceBySourceId(sourceid);
 		int baseDoc = baseDocCache.get(sourceid);
-		return atomicCase.getLuceneId(id) + baseDoc;
+		return atomicCase.getLuceneId(id.getId()) + baseDoc;
 	}
 	
 	@Override

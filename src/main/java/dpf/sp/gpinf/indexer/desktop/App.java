@@ -138,12 +138,12 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
   JProgressBar progressBar;
   JComboBox<String> termo, filtro;
   JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
-  JCheckBox checkBox, recursiveTreeList;
+  JCheckBox checkBox, recursiveTreeList, filterDuplicates;
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
   
-  HitsTable subItemTable;
+  HitsTable subItemTable, duplicatesTable;
   JTree tree, bookmarksTree, categoryTree;
   MetadataPanel metadataPanel;
   JScrollPane categoriesPanel, bookmarksPanel;
@@ -157,7 +157,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
   List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
   
   DefaultSingleCDockable tableTabDock, galleryTabDock;
-  public DefaultSingleCDockable hitsDock, subitemDock, parentDock;
+  public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
   DefaultSingleCDockable compositeViewerDock;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
@@ -166,7 +166,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
   Color defaultColor;
   Color defaultFocusedColor;
   Color defaultSelectedColor;
-  private JScrollPane hitsScroll, subItemScroll, parentItemScroll;
+  private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
   MenuClass menu;
   JPanel topPanel;
@@ -177,6 +177,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
   List resultSortKeys;
   SubitemTableModel subItemModel = new SubitemTableModel();
   ParentTableModel parentItemModel = new ParentTableModel();
+  DuplicatesTableModel duplicatesModel = new DuplicatesTableModel();
   GalleryModel galleryModel = new GalleryModel();
   
   Color alertColor = Color.RED;
@@ -389,6 +390,9 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     filtro.addItem(App.FILTRO_TODOS);
     filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
     filterManager = new FilterManager(filtro);
+    
+    filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
+    filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
 
     topPanel = new JPanel();
     topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
@@ -404,6 +408,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     multiFilterAlert.setVisible(false);
 
     topPanel.add(filtro);
+    topPanel.add(filterDuplicates);
     topPanel.add(multiFilterAlert);
     topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
     topPanel.add(termo);
@@ -488,6 +493,18 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
     subItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
     subItemTable.setShowGrid(false);
+    
+    duplicatesTable = new HitsTable(duplicatesModel);
+    duplicatesScroll = new JScrollPane(duplicatesTable);
+    duplicatesTable.setFillsViewportHeight(true);
+    duplicatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+    duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+    duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+    duplicatesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
+    duplicatesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
+    duplicatesTable.setShowGrid(false);
 
     parentItemTable = new HitsTable(parentItemModel);
     parentItemScroll = new JScrollPane(parentItemTable);
@@ -593,6 +610,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     }
     termo.addActionListener(appletListener);
     filtro.addActionListener(appletListener);
+    filterDuplicates.addActionListener(appletListener);
     pesquisar.addActionListener(appletListener);
     opcoes.addActionListener(appletListener);
     exportToZip.addActionListener(appletListener);
@@ -608,6 +626,8 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
     parentItemTable.addMouseListener(parentItemModel);
     parentItemTable.getSelectionModel().addListSelectionListener(parentItemModel);
+    duplicatesTable.addMouseListener(duplicatesModel);
+    duplicatesTable.getSelectionModel().addListSelectionListener(duplicatesModel);
 
     hitsTable.addMouseListener(appletListener);
     // filtro.addMouseListener(appletListener);
@@ -683,6 +703,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	parentDock = createDockable("parentitemtab",  Messages.getString("ParentTableModel.ParentCount"), parentItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
+	duplicateDock = createDockable("duplicatestab",  Messages.getString("DuplicatesTableModel.Duplicates"), duplicatesScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	
 	compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), compositeViewer); //$NON-NLS-1$ //$NON-NLS-2$
 	compositeViewerDock.setTitleShown(false);
@@ -714,6 +735,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 	
 	dockingControl.addDockable(hitsDock);
 	dockingControl.addDockable(subitemDock);
+	dockingControl.addDockable(duplicateDock);
 	dockingControl.addDockable(parentDock);
 	dockingControl.addDockable(compositeViewerDock);
 	
@@ -735,7 +757,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 
 private void removeAllDockables() {
 	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
-	  compositeViewerDock, hitsDock, subitemDock, parentDock, tableTabDock, galleryTabDock,
+	  compositeViewerDock, hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
 	  bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
 	
 	for (DefaultSingleCDockable dockable : dockables) {
@@ -888,6 +910,10 @@ private void removeAllDockables() {
       
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
+      nextLocation = parentDock.getBaseLocation().aside();
+      
+      duplicateDock.setLocation(nextLocation);
+      duplicateDock.setVisible(true);
 
 	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.6).east(0.65));
 	  compositeViewerDock.setVisible(true);
@@ -940,6 +966,10 @@ private void removeAllDockables() {
       
       parentDock.setLocation(nextLocation);
       parentDock.setVisible(true);
+      nextLocation = parentDock.getBaseLocation().aside();
+      
+      duplicateDock.setLocation(nextLocation);
+      duplicateDock.setVisible(true);
 	       
 	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.40));
 	  compositeViewerDock.setVisible(true);

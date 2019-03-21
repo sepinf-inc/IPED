@@ -51,6 +51,7 @@ public class AppAnalyzer {
     AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
     defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
     defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
+    defaultAnalyzer.setConvertCharsToAscii(Configuration.convertCharsToAscii);
     return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
   }
 

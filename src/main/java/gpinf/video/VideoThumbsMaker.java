@@ -434,7 +434,7 @@ public class VideoThumbsMaker {
       if (!finished) {
           if (verbose) System.err.println("TIMEOUT!");
           isTimeout = true;
-          process.destroy();
+          process.destroyForcibly();
       }
       outputGobbler.join();
       exitCode = process.exitValue();
@@ -507,7 +507,7 @@ public class VideoThumbsMaker {
             System.err.println(line);
           }
           if (counter > maxLines) {
-            process.destroy();
+            process.destroyForcibly();
             break;
           }
         }

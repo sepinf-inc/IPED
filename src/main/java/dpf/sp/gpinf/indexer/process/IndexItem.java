@@ -21,7 +21,9 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +71,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSourceImpl;
@@ -89,6 +92,10 @@ public class IndexItem extends BasicProps{
 	
   public static final String FTKID = "ftkId"; //$NON-NLS-1$
   public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
+  
+  public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
+  public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
+  public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
 
   public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
@@ -97,6 +104,8 @@ public class IndexItem extends BasicProps{
   static HashSet<String> ignoredMetadata = new HashSet<String>();
 
   private static volatile boolean guessMetaTypes = false;
+  
+  private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
   
   private static class StringComparator implements Comparator<String>{
     @Override
@@ -180,7 +189,7 @@ public class IndexItem extends BasicProps{
       return new String(output).trim();
   }
 
-  public static Document Document(Item evidence, Reader reader) {
+  public static Document Document(Item evidence, Reader reader, File output) {
     Document doc = new Document();
 
     doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
@@ -203,6 +212,21 @@ public class IndexItem extends BasicProps{
             doc.add(new NumericDocValuesField(SLEUTHID, intVal));
         }
     }
+    
+    String value = evidence.getIdInDataSource();
+    if(value != null) {
+        doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
+        
+        Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
+        value = Util.getRelativePath(output, srcPath.toFile());
+        doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
+        
+        value = evidence.getInputStreamFactory().getClass().getName();
+        doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
+        doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+    }
 
     intVal = evidence.getParentId();
     if (intVal != null) {
@@ -213,7 +237,7 @@ public class IndexItem extends BasicProps{
     doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
     doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 
-    String value = evidence.getName();
+    value = evidence.getName();
     if (value == null) {
       value = ""; //$NON-NLS-1$
     }
@@ -655,6 +679,22 @@ public class IndexItem extends BasicProps{
           evidence.setSleuthId(Integer.valueOf(value));
           evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value))); 
         }
+        
+        value = doc.get(IndexItem.ID_IN_SOURCE);
+        if (value != null && !value.isEmpty()) {
+            evidence.setIdInDataSource(value.trim());
+            String relPath = doc.get(IndexItem.SOURCE_PATH);
+            Path absPath = Util.getRelativeFile(outputBase.getParent(), relPath).toPath();
+            SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath); 
+            if(sisf == null) {
+                String className = doc.get(IndexItem.SOURCE_DECODER);
+                Class<?> clazz = Class.forName(className);
+                Constructor<SeekableInputStreamFactory> c = (Constructor)clazz.getConstructor(Path.class);
+                sisf = c.newInstance(absPath);
+                inputStreamFactories.put(absPath, sisf);
+            }
+            evidence.setInputStreamFactory(sisf);
+        }
       }
 
       value = doc.get(IndexItem.TIMEOUT);
@@ -689,7 +729,7 @@ public class IndexItem extends BasicProps{
           if (viewFile != null) {
             evidence.setViewFile(viewFile);
             
-            if (viewItem || (!hasFile && evidence.getSleuthId() == null)) {
+            if (viewItem || (!hasFile && evidence.getSleuthId() == null && evidence.getIdInDataSource() == null)) {
                 evidence.setFile(viewFile);
                 evidence.setTempFile(viewFile);
                 evidence.setMediaType(null);
