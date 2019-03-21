@@ -21,6 +21,7 @@ import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker;
+import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 
 public class LanguageDetectTask extends AbstractTask {
@@ -70,7 +71,7 @@ public class LanguageDetectTask extends AbstractTask {
         if(evidence.getMediaType().equals(MediaType.OCTET_STREAM))
             return;
         
-        if(evidence.getTextCache() == null)
+        if(((ItemImpl)evidence).getTextCache() == null)
             return;
         
         char[] cbuf= new char[MAX_CHARS];

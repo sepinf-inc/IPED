@@ -3,9 +3,11 @@ package dpf.sp.gpinf.carver;
 import dpf.sp.gpinf.carver.api.CarvedItemListener;
 import dpf.sp.gpinf.carver.api.Carver;
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
+import dpf.sp.gpinf.carver.api.CarverConfigurationException;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.Signature;
+import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -44,6 +46,8 @@ public class CarverTask extends BaseCarverTask {
     private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
+    
+    private CarvedItemListener carvedItemListener = null; 
     
     private static MediaTypeRegistry registry;
 
@@ -141,10 +145,10 @@ public class CarverTask extends BaseCarverTask {
     }
 
     private Hit findSig(InputStream in) throws Exception {
-        HashMap<CarverType, TreeMap<Long, Integer>> map;
-        map = new HashMap<CarverType, TreeMap<Long, Integer>>();
+        HashMap<String, TreeMap<Long, Integer>> map;
+        map = new HashMap<String, TreeMap<Long, Integer>>();
         for (int i = 0; i < carverTypes.length; i++) {
-            map.put(carverTypes[i], new TreeMap<Long, Integer>());
+            map.put(carverTypes[i].getName(), new TreeMap<Long, Integer>());
         }
 
         AhoCorasick tree = carverConfig.getPopulatedTree();
@@ -165,16 +169,16 @@ public class CarverTask extends BaseCarverTask {
 
                     // tratamento para assinaturas com ? (divididas)
                     if (sig.seqs.length > 1) {
-                        Integer hits = (Integer) map.get(sig.getCarverType()).get(prevLen + i);
+                        Integer hits = (Integer) map.get(sig.getCarverType().getName()).get(prevLen + i);
                         if (hits == null) {
                             hits = 0;
                         }
                         if (hits != seq) {
                             continue;
                         }
-                        map.get(sig.getCarverType()).put(prevLen + i, ++hits);
-                        if (map.get(sig.getCarverType()).size() > largestPatternLen) {
-                            map.get(sig.getCarverType()).remove(map.get(sig.getCarverType()).firstKey());
+                        map.get(sig.getCarverType().getName()).put(prevLen + i, ++hits);
+                        if (map.get(sig.getCarverType().getName()).size() > largestPatternLen) {
+                            map.get(sig.getCarverType().getName()).remove(map.get(sig.getCarverType().getName()).firstKey());
                         }
 
                         if (hits < sig.seqs.length) {
@@ -199,13 +203,10 @@ public class CarverTask extends BaseCarverTask {
 
         } while (k != -1);
 
-        //notify end of carving in current item to all Carvers
-        for (int i = 0; i < carverTypes.length; i++) {
-            Carver carver = getCarver(carverTypes[i]);
-            if (carver != null) {
-                carver.notifyEnd(this.evidence);
-            }
-        }
+        for (Iterator<Carver> iterator = registeredCarvers.values().iterator(); iterator.hasNext();) {
+			Carver carver = iterator.next();
+            carver.notifyEnd(this.evidence);
+		}
         
         return null;
     }
@@ -223,14 +224,10 @@ public class CarverTask extends BaseCarverTask {
         if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
-        CarvedItemListener cil = new CarvedItemListener() {
-            public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
-                addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
-            }
-        };
+        carvedItemListener = getCarvedItemListener();
         
         carverConfig = ctConfig.getCarverConfiguration();
-        carverConfig.configTask(confDir, cil);
+        carverConfig.configTask(confDir, carvedItemListener);
         carverTypes = carverConfig.getCarverTypes();
 
     }
@@ -240,14 +237,43 @@ public class CarverTask extends BaseCarverTask {
         // TODO Auto-generated method stub
 
     }
+    
+    public CarvedItemListener getCarvedItemListener() {
+    	if(carvedItemListener==null) {
+    		carvedItemListener=new CarvedItemListener() {
+                public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
+                    addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
+                }
+            };
+    	}
+    	return carvedItemListener;
+    }
 
     @Override
     protected boolean isToProcess(Item evidence) {
         return super.isToProcess(evidence) && carverConfig.isToProcess(evidence.getMediaType());
     }
+    
+    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
 
     public Carver getCarver(CarverType ct) {
-        Carver carver = carverConfig.getRegisteredCarvers().get(ct);
+        Carver carver = registeredCarvers.get(ct);
+        try {
+        	if(carver==null) {
+                if (ct.getCarverClass().equals(JSCarver.class.getName())) {
+                	carver=carverConfig.createCarverFromJSName(ct.getCarverScript());
+                    carver.registerCarvedItemListener(getCarvedItemListener());
+                } else {
+            		Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
+            		carver = (Carver) classe.getDeclaredConstructor().newInstance();
+            		carver.registerCarvedItemListener(getCarvedItemListener());
+                }
+                registeredCarvers.put(ct, carver);
+        	}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return carver;
     }
 }

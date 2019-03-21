@@ -24,6 +24,8 @@ import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IPEDSource;
@@ -126,7 +128,8 @@ public class QueryBuilderImpl implements QueryBuilder {
 			  parser.setNumericConfigMap(getNumericConfigMap());
 			  
 			  //remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
-			  if(analyzer != spaceAnalyzer){
+			  AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+			  if(analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()){
 				  char[] input = texto.toCharArray();
 				  char[] output = new char[input.length*4];
 				  FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);

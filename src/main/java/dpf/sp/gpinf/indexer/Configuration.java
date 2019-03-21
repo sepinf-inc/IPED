@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -48,11 +47,9 @@ import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -123,6 +120,7 @@ public class Configuration {
     
     configureLogger(configPath);
 
+    System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
     System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
     System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
     System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
@@ -158,8 +156,10 @@ public class Configuration {
 	      File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
 	      nativelibs = new File(nativelibs, arch);
 
-	      IOUtil.copiaDiretorio(nativelibs, new File(indexerTemp, "nativelibs"), true); //$NON-NLS-1$
-	      Util.loadNatLibs(new File(indexerTemp, "nativelibs")); //$NON-NLS-1$
+	      if(System.getProperty("ipedNativeLibsLoaded") == null) { //$NON-NLS-1$
+	          Util.loadNatLibs(nativelibs);
+	          System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+	      }
 
 	      System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
 	      System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$

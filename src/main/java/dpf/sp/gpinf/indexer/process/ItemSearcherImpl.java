@@ -63,15 +63,4 @@ public class ItemSearcherImpl implements ItemSearcher{
         return QueryParserUtil.escape(string);
     }
 	
-	@Override
-    public String escapeQuery(String string) {
-        return QueryParserUtil.escape(string);
-    }
-
-  @Override
-  public void close() throws IOException {
-    if(iSource != null)
-      iSource.close();
-  }
-	
 }

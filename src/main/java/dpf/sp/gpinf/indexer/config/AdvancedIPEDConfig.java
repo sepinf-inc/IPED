@@ -9,10 +9,10 @@ import org.apache.tika.fork.ForkParser2;
 
 import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
+import dpf.sp.gpinf.indexer.util.FragmentingReader;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	long unallocatedFragSize = 1024 * 1024 * 1024;
@@ -29,6 +29,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	boolean entropyTest = true;
 	boolean storeTermVectors = true;
 	boolean filterNonLatinChars = false;
+	boolean convertCharsToAscii = true;
 	int maxTokenLength = 255;
 	boolean preOpenImagesOnSleuth = false;
 	boolean openImagesCacheWarmUpEnabled = false;
@@ -151,6 +152,11 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	    if (value != null && !value.trim().isEmpty()) {
 	        filterNonLatinChars = Boolean.valueOf(value.trim());
 	    }
+	    
+	    value = properties.getProperty("convertCharsToAscii"); //$NON-NLS-1$
+	    if (value != null && !value.trim().isEmpty()) {
+	        convertCharsToAscii = Boolean.valueOf(value.trim());
+	    }
 
 	    value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
 	    if (value != null) {
@@ -207,8 +213,8 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 	    	textSplitSize = Integer.valueOf(value.trim());
 	    }
 
-	    ParsingReader.setTextSplitSize(textSplitSize);
-	    ParsingReader.setTextOverlapSize(textOverlapSize);
+	    FragmentingReader.setTextSplitSize(textSplitSize);
+	    FragmentingReader.setTextOverlapSize(textOverlapSize);
 	    
 	    value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
 	    if (value != null && !value.trim().isEmpty()) {
@@ -284,6 +290,10 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable{
 
     public boolean isFilterNonLatinChars() {
         return filterNonLatinChars;
+    }
+    
+    public boolean isConvertCharsToAscii() {
+        return convertCharsToAscii;
     }
 
     public int getMaxTokenLength() {

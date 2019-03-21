@@ -25,7 +25,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -51,7 +50,7 @@ public class AppAnalyzer {
     AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
     defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
     defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
-    defaultAnalyzer.setConvertCharsToAscii(Configuration.convertCharsToAscii);
+    defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
     return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
   }
 

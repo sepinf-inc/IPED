@@ -163,6 +163,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     context.set(ArchiveStreamFactory.class,  new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    //we have seen very large records in valid docs
+    org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
     
     context.set(StreamSource.class, evidence);
     context.set(ItemBase.class, evidence);

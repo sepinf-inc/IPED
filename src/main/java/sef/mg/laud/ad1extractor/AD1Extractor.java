@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
+import iped3.io.SeekableInputStream;
 
 /**
  *

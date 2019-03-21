@@ -26,6 +26,7 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import gpinf.dev.data.ItemImpl;
 import iped3.Item;
 
 public class NamedEntityTask extends AbstractTask {
@@ -137,7 +138,7 @@ public class NamedEntityTask extends AbstractTask {
         String mime = evidence.getMediaType().toString();
         String categories = evidence.getCategories(); 
         
-        if(evidence.getTextCache() == null)
+        if(((ItemImpl)evidence).getTextCache() == null)
             return;
         
         for(String ignore : mimeTypesToIgnore)

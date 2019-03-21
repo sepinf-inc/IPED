@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -29,8 +30,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -128,7 +130,7 @@ public class ItemImpl implements SleuthKitItem {
 
   private List<Integer> parentIds = new ArrayList<Integer>();
 
-  private HashMap<String, Object> extraAttributes = new HashMap<String, Object>();
+  private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
 
   /**
    * Data de criação do arquivo.
@@ -600,7 +602,8 @@ public class ItemImpl implements SleuthKitItem {
 
     if (stream == null && sleuthFile != null) {
         SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-        if (sleuthcase == null || !Configuration.robustImageReading) {
+        SleuthKitConfig tskConfig = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class).iterator().next();
+        if (sleuthcase == null || !tskConfig.isRobustImageReading()) {
           stream = new SleuthkitInputStream(sleuthFile);
         } else {
           SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());

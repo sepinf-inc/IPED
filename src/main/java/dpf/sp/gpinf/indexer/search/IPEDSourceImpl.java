@@ -68,6 +68,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
 import gpinf.dev.data.ItemImpl;
@@ -161,11 +162,17 @@ public class IPEDSourceImpl implements Closeable, IPEDSource{
 			    else
 			        sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 			    
-			    if(!isReport)
+			    if(!isReport && iw == null)
 			        updateImagePathsToAbsolute(casePath, sleuthFile);
 			    
 				tskCaseList.add(sleuthCase);
 			}
+			
+			AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+			if (advancedConfig.isPreOpenImagesOnSleuth() && iw == null) {
+                TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, advancedConfig.isOpenImagesCacheWarmUpEnabled(),
+                        advancedConfig.getOpenImagesCacheWarmUpThreads());
+            }
 				
 			openIndex(index, iw);
 			
@@ -300,7 +307,7 @@ public class IPEDSourceImpl implements Closeable, IPEDSource{
 	}
 	
 	private void openIndex(File index, IndexWriter iw) throws IOException{
-		LOGGER.info("Openning index " + index.getAbsolutePath()); //$NON-NLS-1$
+		LOGGER.info("Opening index " + index.getAbsolutePath()); //$NON-NLS-1$
 		
 		if(iw == null){
 			Directory directory = FSDirectory.open(index);
@@ -409,48 +416,54 @@ public class IPEDSourceImpl implements Closeable, IPEDSource{
 		  }
 	  }
 	
-	private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
-		  char letter = casePath.getAbsolutePath().charAt(0);
-	      Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
-	      for (Long id : imgPaths.keySet()) {
-	        List<String> paths = imgPaths.get(id);
-	        ArrayList<String> newPaths = new ArrayList<String>();
-	        for(String path : paths){
-	        	if(new File(path).exists() && path.contains(File.separator)) {
-	        	    newPaths = null;
-	        		break;
-	        	}else{
-	        		String newPath = letter + ":\\" + path.substring(3);
-	        		if(new File(newPath).exists())
-	        			newPaths.add(newPath);	        				
-	        		else{
-	        			File baseFile = sleuthFile;
-		        		while((baseFile = baseFile.getParentFile()) != null){
-		        			File file = new File(path);
-		        			String relPath = ""; //$NON-NLS-1$
-		        			do{
-		        				relPath = File.separator + file.getName() + relPath;
-		        				newPath = baseFile.getAbsolutePath() + relPath;
-		        				file = file.getParentFile();
-		        				
-		        			}while(file != null && !new File(newPath).exists());
-		        			
-		        			if(new File(newPath).exists()){
-		        				newPaths.add(newPath);
-		        				break;
-		        			}
-		        		}		        			
-	        		}
-	        	}
-	        }
-	        if (newPaths != null)
-    	        if(newPaths.size() > 0) {
-    	            testCanWriteToCase(sleuthFile);
-    	            sleuthCase.setImagePaths(id, newPaths);
-    	        }else
-    	            askNewImagePath(id, paths, sleuthFile);
-	      }
-	}
+	  private void updateImagePathsToAbsolute(File casePath, File sleuthFile) throws Exception {
+          char letter = casePath.getAbsolutePath().charAt(0);
+          boolean isWindowsNetworkShare = casePath.getAbsolutePath().startsWith("\\\\"); 
+          Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
+          for (Long id : imgPaths.keySet()) {
+            List<String> paths = imgPaths.get(id);
+            ArrayList<String> newPaths = new ArrayList<String>();
+            for(String path : paths){
+                if (isWindowsNetworkShare && !path.startsWith("\\") && !path.startsWith("/") && path.length() > 1 && path.charAt(1) != ':') {
+                    String newPath = new File(casePath.getAbsolutePath() + File.separator + path).getCanonicalPath();
+                    if(new File(newPath).exists()) newPaths.add(newPath);
+                } else if((new File(path).exists() && path.contains(File.separator)) || 
+                        (System.getProperty("os.name").startsWith("Windows") && path.toLowerCase().contains("physicaldrive"))) {
+                    newPaths = null;
+                    break;
+                }else{
+                    path = path.replace("/", File.separator).replace("\\", File.separator);
+                    String newPath = letter + path.substring(1);
+                    if(new File(newPath).exists())
+                        newPaths.add(newPath);                          
+                    else{
+                        File baseFile = sleuthFile;
+                        while((baseFile = baseFile.getParentFile()) != null){
+                            File file = new File(path);
+                            String relPath = ""; //$NON-NLS-1$
+                            do{
+                                relPath = File.separator + file.getName() + relPath;
+                                newPath = baseFile.getAbsolutePath() + relPath;
+                                file = file.getParentFile();
+                                
+                            }while(file != null && !new File(newPath).exists());
+                            
+                            if(new File(newPath).exists()){
+                                newPaths.add(newPath);
+                                break;
+                            }
+                        }                           
+                    }
+                }
+            }
+            if (newPaths != null)
+                if(newPaths.size() > 0) {
+                    testCanWriteToCase(sleuthFile);
+                    sleuthCase.setImagePaths(id, newPaths);
+                }else
+                    askNewImagePath(id, paths, sleuthFile);
+          }
+    }
 	
 	File tmpCaseFile = null;
 	
@@ -458,7 +471,8 @@ public class IPEDSourceImpl implements Closeable, IPEDSource{
 	    if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
 	        tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
 	        tmpCaseFile.deleteOnExit();
-            sleuthCase.close();
+	        //causes "case is closed" error in some cases
+            //sleuthCase.close();
             IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);

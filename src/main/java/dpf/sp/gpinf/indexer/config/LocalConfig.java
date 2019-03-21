@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ConstantsViewer;
+import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
@@ -108,8 +109,8 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 	      outputOnSSD = Boolean.valueOf(value);
 	    }
 
-	    if(outputOnSSD)
-	    	indexTemp = null;
+	    if(outputOnSSD || !indexTempOnSSD || (IndexFiles.getInstance() != null && IndexFiles.getInstance().appendIndex))
+	        indexTemp = null;
 	}
 
 	public File getIndexerTemp() {

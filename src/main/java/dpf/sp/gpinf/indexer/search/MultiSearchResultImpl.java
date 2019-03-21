@@ -17,7 +17,7 @@ public class MultiSearchResultImpl implements MultiSearchResult {
 		this.scores = new float[0];
 	}
 	
-	public MultiSearchResultImpl(ItemIdImpl[] ids, float[] scores){
+	public MultiSearchResultImpl(ItemId[] ids, float[] scores){
 		this.ids = ids;
 		this.scores = scores;
 	}
