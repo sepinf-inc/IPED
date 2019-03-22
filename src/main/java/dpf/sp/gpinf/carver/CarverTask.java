@@ -145,10 +145,9 @@ public class CarverTask extends BaseCarverTask {
     }
 
     private Hit findSig(InputStream in) throws Exception {
-        HashMap<String, TreeMap<Long, Integer>> map;
-        map = new HashMap<String, TreeMap<Long, Integer>>();
+        HashMap<CarverType, TreeMap<Long, Integer>> map = new HashMap<>();
         for (int i = 0; i < carverTypes.length; i++) {
-            map.put(carverTypes[i].getName(), new TreeMap<Long, Integer>());
+            map.put(carverTypes[i], new TreeMap<Long, Integer>());
         }
 
         AhoCorasick tree = carverConfig.getPopulatedTree();
@@ -169,16 +168,16 @@ public class CarverTask extends BaseCarverTask {
 
                     // tratamento para assinaturas com ? (divididas)
                     if (sig.seqs.length > 1) {
-                        Integer hits = (Integer) map.get(sig.getCarverType().getName()).get(prevLen + i);
+                        Integer hits = (Integer) map.get(sig.getCarverType()).get(prevLen + i);
                         if (hits == null) {
                             hits = 0;
                         }
                         if (hits != seq) {
                             continue;
                         }
-                        map.get(sig.getCarverType().getName()).put(prevLen + i, ++hits);
-                        if (map.get(sig.getCarverType().getName()).size() > largestPatternLen) {
-                            map.get(sig.getCarverType().getName()).remove(map.get(sig.getCarverType().getName()).firstKey());
+                        map.get(sig.getCarverType()).put(prevLen + i, ++hits);
+                        if (map.get(sig.getCarverType()).size() > largestPatternLen) {
+                            map.get(sig.getCarverType()).remove(map.get(sig.getCarverType()).firstKey());
                         }
 
                         if (hits < sig.seqs.length) {
@@ -203,8 +202,7 @@ public class CarverTask extends BaseCarverTask {
 
         } while (k != -1);
 
-        for (Iterator<Carver> iterator = registeredCarvers.values().iterator(); iterator.hasNext();) {
-			Carver carver = iterator.next();
+        for (Carver carver : registeredCarvers.values()) {
             carver.notifyEnd(this.evidence);
 		}
         
