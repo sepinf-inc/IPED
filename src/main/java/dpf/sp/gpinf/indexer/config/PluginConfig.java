@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import macee.core.Configurable;
 
@@ -72,16 +71,14 @@ public class PluginConfig implements Configurable<UTF8Properties,UTF8Properties>
 	}
 
 	public File[] getOptionalJars(String appRoot) {
-		if(optionalJarDir==null) {
-			if(optional_jars!=null) {
-		        optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-			}else {
-				return null;
-			}
+		if(optionalJarDir == null && optional_jars != null) {
+		    optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
 		}
-
-	    File[] jars = optionalJarDir.listFiles();
-	    return jars;
+		File[] jars = null;
+		if(optionalJarDir != null) {
+		    jars = optionalJarDir.listFiles(); 
+		}
+	    return jars != null ? jars : new File[0];
 	}
 
 	@Override
