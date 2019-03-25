@@ -162,7 +162,8 @@ public class KMLResult {
 			  String metaPrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
 			  String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
 			  String query = "(" + metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			                  "(" + ufedPrefix + "Latitude:[-90 TO 90] AND " + ufedPrefix + "Longitude:[-180 TO 180])";  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			                  "(" + ufedPrefix + "Latitude:[-90 TO 90] AND " + ufedPrefix + "Longitude:[-180 TO 180]) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			                  "(" + ExtraProperties.LOCATIONS + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 			  IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
 			  MultiSearchResult multiResult = searcher.multiSearch();
 			  
@@ -193,69 +194,19 @@ public class KMLResult {
 				  if(longit == null)
                       longit = doc.get(ExtraProperties.UFED_META_PREFIX + "Longitude"); //$NON-NLS-1$
 				  
+				  String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
+				  
 				  if(lat != null && longit != null){
-					  
-					  if(progress != null) progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
-					  
-					  //necessário para múltiplos casos carregados, pois ids se repetem
-					  String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-					  
-					  kml.append("<Placemark>"); //$NON-NLS-1$
-					  //kml+="<styleUrl>#basico</styleUrl>";
-					  kml.append("<id>" + gid + "</id>"); //$NON-NLS-1$ //$NON-NLS-2$
-					  kml.append("<name>" + htmlFormat(doc.get(IndexItem.NAME)) + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
-				      if(!IndexItem.ID.equals(coluna))
-						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(doc.get(coluna))+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					  else
-						  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(gid)+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					  
-					  kml.append("<Point><coordinates>"+longit+","+lat+",0</coordinates></Point>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					  
-					  tourPlayList.append("<gx:FlyTo>" //$NON-NLS-1$
-					  		+ "<gx:duration>5.0</gx:duration>" //$NON-NLS-1$
-					  		+ "<gx:flyToMode>bounce</gx:flyToMode>" //$NON-NLS-1$
-					  		+ "<LookAt>" //$NON-NLS-1$
-					  		+ "<longitude>"+longit+"</longitude>" //$NON-NLS-1$ //$NON-NLS-2$
-					  		+ "<latitude>"+lat+"</latitude>" //$NON-NLS-1$ //$NON-NLS-2$
-					  		+ "<altitude>300</altitude>" //$NON-NLS-1$
-					  		+ "<altitudeMode>relativeToGround</altitudeMode>" //$NON-NLS-1$
-					  		+ "</LookAt>"						   //$NON-NLS-1$
-					  		+ "</gx:FlyTo>" //$NON-NLS-1$
-					  		+ "<gx:AnimatedUpdate><gx:duration>0.0</gx:duration><Update><targetHref/><Change>" //$NON-NLS-1$
-					  		+ "	<Placemark targetId=\"" + gid + "\"><gx:balloonVisibility>1</gx:balloonVisibility></Placemark>" //$NON-NLS-1$ //$NON-NLS-2$
-					  		+ "	</Change></Update></gx:AnimatedUpdate>" //$NON-NLS-1$
-					  		+ "<gx:Wait><gx:duration>1.0</gx:duration></gx:Wait>" //$NON-NLS-1$
-					  		+ "<gx:AnimatedUpdate><gx:duration>0.0</gx:duration><Update><targetHref/><Change>" //$NON-NLS-1$
-				  			+ "	<Placemark targetId=\"" + gid + "\"><gx:balloonVisibility>0</gx:balloonVisibility></Placemark>" //$NON-NLS-1$ //$NON-NLS-2$
-				  			+ "	</Change></Update></gx:AnimatedUpdate>"); //$NON-NLS-1$
-
-					  kml.append("<ExtendedData>"); //$NON-NLS-1$
-					  
-					  for(int j = 0; j < colunas.length; j++){
-						  if(!IndexItem.ID.equals(colunas[j]))
-							  kml.append("<Data name=\""+htmlFormat(colunas[j])+"\"><value>"+ htmlFormat(doc.get(colunas[j])) +"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-						  else
-							  kml.append("<Data name=\""+IndexItem.ID+"\"><value>"+ gid +"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					  generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, -1);
+				  } else if (locations != null) {
+					  int subitem = 0;
+					  for (String location : locations ) {
+						  String [] locs = location.split(";"); //$NON-NLS-1$
+						  lat = locs[0];
+						  longit = locs[1];
+						  generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, subitem ++);
 					  }
-					  
-					  boolean checked = App.get().appCase.getMultiMarcadores().isSelected(item);
-					  kml.append("<Data name=\"checked\"><value>"+checked+"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
-					  
-					  boolean selected  = App.get().getResultsTable().isRowSelected(row);
-					  kml.append("<Data name=\"selected\"><value>"+selected+"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
-					  kml.append("</ExtendedData>"); //$NON-NLS-1$
-
-					  String dataCriacao = doc.get(IndexItem.CREATED);
-					  if(dataCriacao != null && !dataCriacao.isEmpty())
-						try {
-							dataCriacao = df.format(DateUtil.stringToDate(dataCriacao)) + "Z"; //$NON-NLS-1$
-						} catch (ParseException e) {
-							dataCriacao = ""; //$NON-NLS-1$
-						} 
-					  kml.append("<TimeSpan><begin>"+dataCriacao+"</begin></TimeSpan>"); //$NON-NLS-1$ //$NON-NLS-2$
-
-					  kml.append("</Placemark>"); //$NON-NLS-1$
-				  }else{
+			  	  } else {
 					  contSemCoordenadas++;
 				  }
 				  
@@ -278,6 +229,76 @@ public class KMLResult {
 			  
 			  return kml.toString();
 			
+		}
+
+		private void generateLocationKML(StringBuilder tourPlayList, StringBuilder kml, String coluna,
+				org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, ItemId item, String lat,
+				String longit, int subitem) {
+			if(progress != null) progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$
+			  
+			  //necessário para múltiplos casos carregados, pois ids se repetem
+			  String gid;
+			  if (subitem < 0) {
+				  gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+			  } else {
+				  gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			  }
+			  
+			  kml.append("<Placemark>"); //$NON-NLS-1$
+			  //kml+="<styleUrl>#basico</styleUrl>";
+			  kml.append("<id>" + gid + "</id>"); //$NON-NLS-1$ //$NON-NLS-2$
+			  kml.append("<name>" + htmlFormat(doc.get(IndexItem.NAME)) + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$
+			  if(!IndexItem.ID.equals(coluna))
+				  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(doc.get(coluna))+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			  else
+				  kml.append("<description>"+htmlFormat(coluna)+":"+htmlFormat(gid)+"</description>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			  
+			  kml.append("<Point><coordinates>"+longit+","+lat+",0</coordinates></Point>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			  
+			  tourPlayList.append("<gx:FlyTo>" //$NON-NLS-1$
+			  		+ "<gx:duration>5.0</gx:duration>" //$NON-NLS-1$
+			  		+ "<gx:flyToMode>bounce</gx:flyToMode>" //$NON-NLS-1$
+			  		+ "<LookAt>" //$NON-NLS-1$
+			  		+ "<longitude>"+longit+"</longitude>" //$NON-NLS-1$ //$NON-NLS-2$
+			  		+ "<latitude>"+lat+"</latitude>" //$NON-NLS-1$ //$NON-NLS-2$
+			  		+ "<altitude>300</altitude>" //$NON-NLS-1$
+			  		+ "<altitudeMode>relativeToGround</altitudeMode>" //$NON-NLS-1$
+			  		+ "</LookAt>"						   //$NON-NLS-1$
+			  		+ "</gx:FlyTo>" //$NON-NLS-1$
+			  		+ "<gx:AnimatedUpdate><gx:duration>0.0</gx:duration><Update><targetHref/><Change>" //$NON-NLS-1$
+			  		+ "	<Placemark targetId=\"" + gid + "\"><gx:balloonVisibility>1</gx:balloonVisibility></Placemark>" //$NON-NLS-1$ //$NON-NLS-2$
+			  		+ "	</Change></Update></gx:AnimatedUpdate>" //$NON-NLS-1$
+			  		+ "<gx:Wait><gx:duration>1.0</gx:duration></gx:Wait>" //$NON-NLS-1$
+			  		+ "<gx:AnimatedUpdate><gx:duration>0.0</gx:duration><Update><targetHref/><Change>" //$NON-NLS-1$
+					+ "	<Placemark targetId=\"" + gid + "\"><gx:balloonVisibility>0</gx:balloonVisibility></Placemark>" //$NON-NLS-1$ //$NON-NLS-2$
+					+ "	</Change></Update></gx:AnimatedUpdate>"); //$NON-NLS-1$
+
+			  kml.append("<ExtendedData>"); //$NON-NLS-1$
+			  
+			  for(int j = 0; j < colunas.length; j++){
+				  if(!IndexItem.ID.equals(colunas[j]))
+					  kml.append("<Data name=\""+htmlFormat(colunas[j])+"\"><value>"+ htmlFormat(doc.get(colunas[j])) +"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				  else
+					  kml.append("<Data name=\""+IndexItem.ID+"\"><value>"+ gid +"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			  }
+			  
+			  boolean checked = App.get().appCase.getMultiMarcadores().isSelected(item);
+			  kml.append("<Data name=\"checked\"><value>"+checked+"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
+			  
+			  boolean selected  = App.get().getResultsTable().isRowSelected(row);
+			  kml.append("<Data name=\"selected\"><value>"+selected+"</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
+			  kml.append("</ExtendedData>"); //$NON-NLS-1$
+
+			  String dataCriacao = doc.get(IndexItem.CREATED);
+			  if(dataCriacao != null && !dataCriacao.isEmpty())
+				try {
+					dataCriacao = df.format(DateUtil.stringToDate(dataCriacao)) + "Z"; //$NON-NLS-1$
+				} catch (ParseException e) {
+					dataCriacao = ""; //$NON-NLS-1$
+				} 
+			  kml.append("<TimeSpan><begin>"+dataCriacao+"</begin></TimeSpan>"); //$NON-NLS-1$ //$NON-NLS-2$
+
+			  kml.append("</Placemark>"); //$NON-NLS-1$
 		}
 		  
 	  }
