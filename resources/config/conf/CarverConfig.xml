@@ -32,8 +32,7 @@
         </carverType>
 		<carverType>
             <name>ZIP</name>
-			<carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
-            <!--carverClass>dpf.sp.gpinf.carving.carvers.ZIPCarver</carverClass-->
+            <carverClass>dpf.sp.gpinf.carving.carvers.ZIPCarver</carverClass>
 			<signatures>
     	        <headerSignature>PK\03\04</headerSignature>
             	<footerSignature>PK\05\06??????????????????</footerSignature>
@@ -41,17 +40,20 @@
 			<minLength>1000</minLength>
             <maxLength>100000000</maxLength>
         </carverType>
+        
          <carverType>
             <name>MOV</name>
             <carverClass>dpf.sp.gpinf.carving.carvers.MOVCarver</carverClass>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
         </carverType>
-<!--
-        <carverType>
+
+        <!--carverType>
             <name>DER</name>
             <mediaType>application/pkix-cert</mediaType>
             <carverClass>dpf.sp.gpinf.carving.carvers.DERCarver</carverClass>
-        </carverType>
--->
+        </carverType-->
+
         <carverType>
             <name>EML</name>
             <signatures>
@@ -94,14 +96,14 @@
     	    	<headerSignature>\ff\d8\ff\E1</headerSignature>
     	    	<headerSignature>\ff\d8\ff\FE</headerSignature>
             	<footerSignature>\ff\d9</footerSignature>
-            	<!--escapeFooterSignature>\ff\ff\d9</escapeFooterSignature-->
+            	<escapeFooterSignature>\ff\ff\d9</escapeFooterSignature>
     	    </signatures>
             <minLength>1000</minLength>            
             <maxLength>20000000</maxLength>
             <mediaType>image/jpeg</mediaType>
         </carverType>
 
-	<carverType>
+		<carverType>
             <name>EMF</name>
             <signatures>
     	        <headerSignature>\01\00\00\00???????????????????????????????????? EMF</headerSignature>
@@ -196,16 +198,6 @@
             <minLength>1000</minLength>            
             <maxLength>1000000</maxLength>
             <mediaType>application/x-ares-galaxy</mediaType>
-        </carverType>
-
-		<carverType>
-            <name>ZIP-MS</name>
-            <signatures>
-    	        <headerSignature>PK\03\04??????????????????????????[Content_Types].xml\20</headerSignature>
-            	<footerSignature>PK\05\06??????????????????</footerSignature>
-    	    </signatures>
-            <minLength>1000</minLength>            
-            <maxLength>50000000</maxLength>
         </carverType>
 
         <!--carverType>
@@ -313,19 +305,6 @@
             <lengthBigEndian>false</lengthBigEndian>
         </carverType>
 
-        <!-- <carverType>
-            <name>KNOWNMET</name>
-            <signatures>
-    	        <headerSignature>\00\03\01\00\02????\02\01\00\27</headerSignature>
-    	        FT_FILESIZE tag followed by FT_AICH_HASH tag of the first KnownFile record
-    	        <headerSignature>\00\03\01\00\02????\03\01\00\34</headerSignature>
-    	        FT_FILESIZE tag followed by FT_LASTSHARED tag of the first KnownFile record
-    	    </signatures>
-            <minLength>1000</minLength>
-            <maxLength>500000000</maxLength>
-            <carverClass>dpf.sp.gpinf.carving.carvers.KnownMetCarver</carverClass>
-        </carverType> -->
-
         <carverType>
             <name>FLV</name>
             <signatures>
@@ -339,7 +318,7 @@
         </carverType>
 
         <carverType>
-            <name>FH-MPG</name>
+            <name>MPG</name>
             <signatures>
     	        <headerSignature>\00\00\01\ba\21\00</headerSignature>    	        
     	        <headerSignature>\00\00\01\ba\44\00</headerSignature>    	        
@@ -364,7 +343,7 @@
         </carverType>
 
         <carverType>
-            <name>FH-MPG2</name>
+            <name>MPG2</name>
             <signatures>
     	        <headerSignature>\00\00\01\b3</headerSignature>
     	        <footerSignature>\00\00\01\b7</footerSignature>
