@@ -36,7 +36,7 @@ import java.util.Properties;
 import java.util.function.Predicate;
 
 public class XMLCarverConfiguration implements CarverConfiguration {
-    public static boolean ignoreCorrupted = true;
+    public boolean ignoreCorrupted = true;
     static AhoCorasick tree = null;
     static String CARVE_DIR_INDIVIDUAIS = "carvers";
     protected HashSet<MediaType> TYPES_TO_PROCESS;
@@ -118,6 +118,9 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                     TYPES_TO_NOT_PROCESS.add(type.trim());
                 }
             }
+            
+            NodeList ignoreCorruptedEls = root.getElementsByTagName("ignoreCorrupted");
+            ignoreCorrupted = Boolean.valueOf(ignoreCorruptedEls.item(0).getTextContent().trim());
 
             NodeList carversEls = root.getElementsByTagName("carverTypes");
             for (int i = 0; i < carversEls.getLength(); i++) {
@@ -322,6 +325,10 @@ public class XMLCarverConfiguration implements CarverConfiguration {
 	public HashMap<CarverType, Carver> getRegisteredCarvers() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	public boolean isToIgnoreCorrupted() {
+	    return this.ignoreCorrupted;
 	}
 
 }

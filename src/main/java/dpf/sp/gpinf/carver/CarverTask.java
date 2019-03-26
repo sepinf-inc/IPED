@@ -43,6 +43,8 @@ public class CarverTask extends BaseCarverTask {
     private static final long serialVersionUID = 1L;
     public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
     public static boolean enableCarving = false;
+    public static boolean ignoreCorrupted = true;
+    
     private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
@@ -228,6 +230,7 @@ public class CarverTask extends BaseCarverTask {
         carverConfig.configTask(confDir, carvedItemListener);
         carverTypes = carverConfig.getCarverTypes();
 
+        ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
     }
 
     @Override
@@ -266,6 +269,7 @@ public class CarverTask extends BaseCarverTask {
             		carver = (Carver) classe.getDeclaredConstructor().newInstance();
             		carver.registerCarvedItemListener(getCarvedItemListener());
                 }
+                carver.setIgnoreCorrupted(carverConfig.isToIgnoreCorrupted());
                 registeredCarvers.put(ct, carver);
         	}
         } catch (Exception e) {

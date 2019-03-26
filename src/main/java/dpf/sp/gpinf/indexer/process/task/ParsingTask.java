@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
@@ -155,7 +156,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     else
         context.set(OCROutputFolder.class, new OCROutputFolder());
     
-    if (CarveTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
+    if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
       context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
     }
 
