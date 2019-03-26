@@ -1,0 +1,358 @@
+﻿<carverconfig>
+<!--
+    <typesToProcess>application/x-unallocated;</typesToProcess>
+    <typesToProcess>application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
+	<typesToProcess>application/octet-stream</typesToProcess>
+	<typesToProcess>application/x-disk-image; application/x-vmdk; application/x-vhd; application/x-vdi</typesToProcess>
+	<typesToProcess>application/x-thumbs; application/x-thumbcache</typesToProcess>
+-->
+    <typesToNotProcess>application/x-tika-msoffice; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>
+    <typesToNotProcess>application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail;</typesToNotProcess>
+    <typesToNotProcess>message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst</typesToNotProcess>
+    <typesToNotProcess>application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar;</typesToNotProcess>
+    <typesToNotProcess>application/rtf; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;</typesToNotProcess>
+	<typesToNotProcess>application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc;</typesToNotProcess>
+	<typesToNotProcess>application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;</typesToNotProcess>
+
+	<ignoreCorrupted>true</ignoreCorrupted>
+
+    <carverTypes>
+        <carverType>
+            <name>SQLITE</name>
+            <mediaType>application/x-sqlite3</mediaType>
+            <carverClass>dpf.sp.gpinf.carving.carvers.SQLiteCarver</carverClass>
+			<minLength>10000</minLength>
+            <maxLength>100000000</maxLength>
+        </carverType>
+  		<carverType>
+            <name>OLE</name>
+            <carverClass>dpf.sp.gpinf.carving.carvers.OLECarver</carverClass>
+			<minLength>1000</minLength>
+            <maxLength>50000000</maxLength>
+        </carverType>
+		<carverType>
+            <name>ZIP</name>
+            <carverClass>dpf.sp.gpinf.carving.carvers.ZIPCarver</carverClass>
+			<signatures>
+    	        <headerSignature>PK\03\04</headerSignature>
+            	<footerSignature>PK\05\06??????????????????</footerSignature>
+            </signatures>
+			<minLength>1000</minLength>
+            <maxLength>100000000</maxLength>
+        </carverType>
+        
+         <carverType>
+            <name>MOV</name>
+            <carverClass>dpf.sp.gpinf.carving.carvers.MOVCarver</carverClass>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+        </carverType>
+
+        <!--carverType>
+            <name>DER</name>
+            <mediaType>application/pkix-cert</mediaType>
+            <carverClass>dpf.sp.gpinf.carving.carvers.DERCarver</carverClass>
+        </carverType-->
+
+        <carverType>
+            <name>EML</name>
+            <signatures>
+    	        <headerSignature>Received: by</headerSignature>
+            	<headerSignature>Received: from</headerSignature>
+            	<headerSignature>Message-ID:\20&lt;</headerSignature>
+            	<headerSignature>Return-Path:\20</headerSignature>
+            	<footerSignature>--\0d\0a</footerSignature>
+            </signatures>
+            <minLength>1000</minLength>
+            <maxLength>10000000</maxLength>
+            <mediaType>message/rfc822</mediaType>
+            <carverClass>dpf.sp.gpinf.carving.carvers.EMLCarver</carverClass>
+        </carverType>
+
+        <carverType>
+            <name>BMP</name>
+            <signatures>
+                <headerSignature>BM????????????????????????\01\00\01\00</headerSignature>
+                <headerSignature>BM????????????????????????\01\00\04\00</headerSignature>
+                <headerSignature>BM????????????????????????\01\00\08\00</headerSignature>
+                <headerSignature>BM????????????????????????\01\00\10\00</headerSignature>
+                <headerSignature>BM????????????????????????\01\00\18\00</headerSignature>
+                <headerSignature>BM????????????????????????\01\00\20\00</headerSignature>
+            </signatures>
+            <minLength>1000</minLength>
+            <maxLength>50000000</maxLength>
+            <lengthOffset>2</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>image/bmp</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>JPG</name>
+            <signatures>
+    	        <headerSignature>\ff\d8\ff\DB</headerSignature>
+    	        <headerSignature>\ff\d8\ff\E0</headerSignature>
+    	        <headerSignature>\ff\d8\ff\EE</headerSignature>
+    	    	<headerSignature>\ff\d8\ff\E1</headerSignature>
+    	    	<headerSignature>\ff\d8\ff\FE</headerSignature>
+            	<footerSignature>\ff\d9</footerSignature>
+            	<escapeFooterSignature>\ff\ff\d9</escapeFooterSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>20000000</maxLength>
+            <mediaType>image/jpeg</mediaType>
+        </carverType>
+
+		<carverType>
+            <name>EMF</name>
+            <signatures>
+    	        <headerSignature>\01\00\00\00???????????????????????????????????? EMF</headerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>50000000</maxLength>
+            <lengthOffset>48</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>image/emf</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>PNG</name>
+            <signatures>
+    	        <headerSignature>\89PNG\0d\0a\1a\0a</headerSignature>
+            	<footerSignature>\49END\AE\42\60\82</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>20000000</maxLength>
+            <mediaType>image/png</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>GIF</name>
+            <signatures>
+    	        <headerSignature>GIF87a</headerSignature>
+    	        <headerSignature>GIF89a</headerSignature>
+            	<footerSignature>\00\3b</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>10000000</maxLength>
+            <mediaType>image/gif</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>RAR</name>
+            <signatures>
+    	        <headerSignature>\52\61\72\21\1a\07</headerSignature>
+            	<footerSignature>\c4\3d\7b\00\40\07\00</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>100000000</maxLength>
+            <mediaType>application/x-rar-compressed</mediaType>
+        </carverType>
+
+        <carverType>
+            <!-- A ser melhorado pois "se o PDF for editado, as alterações são adicionadas ao final com um novo rodapé, então deveria acumular rodapés para arquivos PDF também" -->
+            <name>PDF</name>
+            <signatures>
+    	        <headerSignature>%PDF-</headerSignature>
+            	<footerSignature>%%EOF?</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>50000000</maxLength>
+            <mediaType>application/pdf</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>HTM</name>
+            <signatures>
+    	        <headerSignature>&lt;html</headerSignature>
+    	        <headerSignature>&lt;HTML</headerSignature>
+            	<footerSignature>&lt;/html&gt;</footerSignature>
+            	<footerSignature>&lt;/HTML&gt;</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>10000000</maxLength>
+            <mediaType>text/html</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>INDEX.DAT</name>
+            <signatures>
+    	        <headerSignature>Client UrlCache MMF Ver 4</headerSignature>
+				<headerSignature>Client UrlCache MMF Ver 5</headerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>10000000</maxLength>
+            <lengthOffset>28</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>application/x-msie-cache</mediaType>
+        </carverType>
+		
+		<carverType>
+            <name>ARES</name>
+            <signatures>
+    	        <headerSignature>__ARESDB1.02H_</headerSignature>
+				<headerSignature>__ARESDB1.04L_</headerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>1000000</maxLength>
+            <mediaType>application/x-ares-galaxy</mediaType>
+        </carverType>
+
+        <!--carverType>
+            <name>PLIST</name>
+            <signatures>
+    	        <headerSignature>&lt;\3Fxml</headerSignature>
+            	<footerSignature>&lt;/plist&gt;</footerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>            
+            <maxLength>100000000</maxLength>
+            <mediaType>application/xml</mediaType>
+        </carverType-->
+
+        <carverType>
+            <name>RIFF-AVI</name>
+            <signatures>
+    	        <headerSignature>RIFF????AVI LIST</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>500000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>video/x-msvideo</mediaType>
+        </carverType>
+
+	<carverType>
+            <name>RIFF-WEBP</name>
+            <signatures>
+    	        <headerSignature>RIFF????WEBP</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>30000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>image/webp</mediaType>
+        </carverType>
+<!--
+        <carverType>
+            <name>RIFF-WAV</name>
+            <signatures>
+    	        <headerSignature>RIFF????WAVEfmt</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>300000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>audio/x-wav</mediaType>
+        </carverType>
+		
+		<carverType>
+            <name>RIFF-CDA</name>
+            <signatures>
+    	        <headerSignature>RIFF????CDDAfmt</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>300000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>audio/x-cda</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>RIFF-MIDI</name>
+            <signatures>
+    	        <headerSignature>RIFF????RMIDdata</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>300000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>audio/midi</mediaType>
+        </carverType>
+-->
+
+        <carverType>
+            <name>RIFF-CDR</name>
+            <signatures>
+    	        <headerSignature>RIFF????CDR vrsn</headerSignature>
+    	        <headerSignature>RIFF????CDR4vrsn</headerSignature>
+    	        <headerSignature>RIFF????CDRDvrsn</headerSignature>
+    	    </signatures>
+            <minLength>10000</minLength>            
+            <maxLength>300000000</maxLength>
+            <lengthOffset>4</lengthOffset>
+            <lengthSizeBytes>4</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+            <mediaType>application/coreldraw</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>ASF</name>
+            <signatures>
+    	        <headerSignature>\30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02</headerSignature>    	        
+    	        <lengthRefSignature>\A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65</lengthRefSignature><!-- Assinatura a partir de onde será bucado o tamanho -->
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+            <lengthOffset>40</lengthOffset>
+            <lengthSizeBytes>8</lengthSizeBytes>
+            <lengthBigEndian>false</lengthBigEndian>
+        </carverType>
+
+        <carverType>
+            <name>FLV</name>
+            <signatures>
+    	        <headerSignature>FLV\01\01\00\00\00</headerSignature>    	        
+    	        <headerSignature>FLV\01\04\00\00\00</headerSignature>    	        
+    	        <headerSignature>FLV\01\05\00\00\00</headerSignature>    	        
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>50000000</maxLength>
+            <mediaType>video/x-flv</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>MPG</name>
+            <signatures>
+    	        <headerSignature>\00\00\01\ba\21\00</headerSignature>    	        
+    	        <headerSignature>\00\00\01\ba\44\00</headerSignature>    	        
+    	        <headerSignature>\00\00\01\ba\2f\ff</headerSignature>    	        
+    	        <footerSignature>\00\00\01\b9</footerSignature>
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>500000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+            <carverClass>dpf.sp.gpinf.carving.FromFarthestHeaderCarver</carverClass>
+        </carverType>
+<!--
+        <carverType>
+            <name>TIF</name>
+            <signatures>
+    	        <headerSignature>MM\00\2a</headerSignature>
+    	        <headerSignature>II\2a\00</headerSignature>
+    	    </signatures>
+            <minLength>1000</minLength>
+            <maxLength>1000000</maxLength>
+            <mediaType>image/tiff</mediaType>
+        </carverType>
+
+        <carverType>
+            <name>MPG2</name>
+            <signatures>
+    	        <headerSignature>\00\00\01\b3</headerSignature>
+    	        <footerSignature>\00\00\01\b7</footerSignature>
+    	    </signatures>
+            <minLength>100000</minLength>
+            <maxLength>300000000</maxLength>
+            <mediaType>video/mpeg</mediaType>
+        </carverType>
+-->
+     </carverTypes>
+
+</carverconfig>
