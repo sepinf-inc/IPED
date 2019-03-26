@@ -444,13 +444,12 @@ public class CarveTask extends BaseCarveTask {
             //tratamento específico para EML: guarda último rodapé encontrado para recuperação posterior
             if (signatures[s / 2].name.equals("EML")) { //$NON-NLS-1$
               eml = s / 2;
-              Hit lastHit = sigsFound.get(signatures[s / 2].name).peekLast();
-              if (lastHit != null) {
-                if (lastHit.sig % 2 == 1 && foot.off - lastHit.off < signatures[s / 2].maxSize) {
+              Hit lastHit;
+                while ((lastHit = sigsFound.get(signatures[s / 2].name).peekLast()) != null && 
+                        lastHit.sig % 2 == 1 && foot.off - lastHit.off < signatures[s / 2].maxSize) {
                   sigsFound.get(signatures[s / 2].name).pollLast();
                 }
                 sigsFound.get(signatures[s / 2].name).addLast(foot);
-              }
 
             //para demais formatos, pega da pilha ultimo header encontrado
             } else {
@@ -472,9 +471,11 @@ public class CarveTask extends BaseCarveTask {
       ArrayDeque<Hit> deque = sigsFound.get("EML"); //$NON-NLS-1$
       if (deque != null) {
         while (deque.size() > 2 || (k == -1 && deque.size() > 1)) {
-          Hit head = deque.pollFirst();
-          Hit foot = deque.pollFirst();
-          if (head.sig % 2 == 0 && foot.sig % 2 == 1) {
+          Hit head;
+          while((head = deque.pollFirst()) != null && head.sig % 2 != 0);
+          Hit foot;
+          while((foot = deque.pollFirst()) != null && foot.sig % 2 == 0);
+          if (head != null && foot != null && head.sig % 2 == 0 && foot.sig % 2 == 1) {
             long length = foot.off + signatures[foot.sig / 2].sigs[1].len - head.off;
             if (length >= signatures[eml].minSize && length <= signatures[eml].maxSize) {
                 addCarvedFile(this.evidence, head.off, length, "Carved-" + head.off, signatures[eml].mimeType); //$NON-NLS-1$
