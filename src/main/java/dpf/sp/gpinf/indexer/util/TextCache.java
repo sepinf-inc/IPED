@@ -23,7 +23,7 @@ public class TextCache implements Closeable{
     }
     
     public void write(char[] buf, int off, int len) throws IOException {
-        if (tmp == null && sb != null && sb.length() > MAX_MEMORY_CHARS) {
+        if (tmp == null && sb != null && sb.length() + len > MAX_MEMORY_CHARS) {
             tmp = File.createTempFile("text", null);
             writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.APPEND);
             writer.write(sb.toString());
