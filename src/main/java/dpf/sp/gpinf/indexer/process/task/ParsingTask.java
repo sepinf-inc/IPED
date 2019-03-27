@@ -72,6 +72,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
+import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
@@ -117,7 +118,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   private String firstParentPath = null;
   private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
   private volatile int depth = 0;
-  private Map<Object, Item> idToItemMap = new HashMap<>();
+  private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
   
   private IndexerDefaultParser autoParser;
 
@@ -399,26 +400,26 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         firstParentPath = parentPath;
       }
 
-      Item parent = null;
       String parentId = metadata.get(ExtraProperties.PARENT_VIRTUAL_ID);
-      if (parentId != null) parent = idToItemMap.get(parentId);
-      if (parent == null && context.get(EmbeddedParent.class) != null)
-          parent = (Item) context.get(EmbeddedParent.class).getObj();
-      if (parent == null) parent = evidence;
+      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
+      ParentInfo parentInfo = null;
+      if (parentId != null)
+          parentInfo = idToItemMap.get(parentId);
+      if (parentInfo == null && context.get(EmbeddedParent.class) != null)
+          parentInfo = new ParentInfo((Item) context.get(EmbeddedParent.class).getObj());
+      if (parentInfo == null)
+          parentInfo = new ParentInfo(evidence);
       
-      if (parent != evidence) {
-        parentPath = parent.getPath();
+      if (parentInfo.getId() != evidence.getId()) {
+        parentPath = parentInfo.getPath();
         subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
         subitemPath = parentPath + ">>" + name; //$NON-NLS-1$
       }
 
-      Item subItem = new ItemImpl();
+      ItemImpl subItem = new ItemImpl();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-      
-      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
-      if(embeddedId != null) idToItemMap.put(embeddedId, subItem);
       
       String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
       char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -427,6 +428,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if (!extractEmbedded) {
         return;
       }
+      
+      //root has children
+      evidence.setHasChildren(true);
 
       subItem.setMetadata(metadata);
 
@@ -440,11 +444,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         subItem.setExtension(""); //$NON-NLS-1$
       }
 
-      subItem.setParent(parent);
+      subItem.setParent(parentInfo);
       
       //sometimes do not work, because parent may be already processed and 
       //stored in database/index so setting it later has no effect
-      parent.setHasChildren(true);
+      //parent.setHasChildren(true);
       
       //parsers should set this property to let created items be displayed in file tree
       if (metadata.get(BasicProps.HASCHILD) != null) {
@@ -470,10 +474,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.CREATED);
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.MODIFIED);
       removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
-      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
       
-      subItem.setDeleted(parent.isDeleted());
+      subItem.setDeleted(parentInfo.isDeleted());
       if (metadata.get(ExtraProperties.DELETED) != null) {
           metadata.remove(ExtraProperties.DELETED);
           subItem.setDeleted(true);
@@ -487,6 +489,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       ExportFileTask extractor = new ExportFileTask();
       extractor.setWorker(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());
+      
+      //subitem is populated, store its info now
+      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
+      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
+      if(embeddedId != null)
+          idToItemMap.put(embeddedId, new ParentInfo(subItem));
 
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {

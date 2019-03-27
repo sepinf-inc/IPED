@@ -39,6 +39,7 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
+import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
@@ -1042,6 +1043,14 @@ public class ItemImpl implements SleuthKitItem {
 	  this.addParentIds(parent.getParentIds());
 	  this.addParentId(parentId);
 	  this.setDataSource(parent.getDataSource());
+  }
+  
+  public void setParent(ParentInfo parent){
+      int parentId = parent.getId();
+      this.setParentId(parentId);
+      this.addParentIds(parent.getParentIds());
+      this.addParentId(parentId);
+      this.setDataSource(parent.getDataSource());
   }
 
   /**
