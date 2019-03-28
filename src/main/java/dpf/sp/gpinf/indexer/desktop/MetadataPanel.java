@@ -412,7 +412,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         reader = App.get().appCase.getAtomicReader();
         
         String field = (String)props.getSelectedItem();
-        if(field == null) return;
+        if(field == null) {
+            updatingResult = false;
+            array = new ValueCount[0];
+            sortList();
+            return;
+        }
         field = field.trim();
         
         loadDocValues(field);
