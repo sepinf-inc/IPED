@@ -157,7 +157,9 @@ public class ImageThumbTask extends AbstractTask {
    * Verifica se é imagem.
    */
   public static boolean isImageType(MediaType mediaType) {
-    return mediaType.getType().equals("image"); //$NON-NLS-1$
+    return mediaType.getType().equals("image") || //$NON-NLS-1$
+           mediaType.toString().equals("application/coreldraw") || //$NON-NLS-1$
+           mediaType.toString().equals("application/x-vnd.corel.zcf.draw.document+zip"); //$NON-NLS-1$
   }
   
   private class ThumbCreator implements Runnable{

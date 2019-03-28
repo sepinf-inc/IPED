@@ -46,7 +46,7 @@ Não Alocado = application/x-unallocated;
 
 File Slacks = application/x-fileslack
 
-Imagens = image; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
+Imagens = image; application/coreldraw; application/x-vnd.corel.zcf.draw.document+zip; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
 
 Vídeos = video; application/vnd.rn-realmedia; application/x-shockwave-flash
 
