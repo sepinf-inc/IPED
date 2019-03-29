@@ -580,10 +580,6 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
         zoomFont(this, -1);
     }
     
-    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
-        selectDockableTab(bookmarksTabDock);
-    }
-    
     status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
 
@@ -886,7 +882,7 @@ private void removeAllDockables() {
 		removeAllDockables();
 	  createAllDockables();
 
-	  tableTabDock.setLocation(CLocation.base().normalNorth(0.4));
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
       tableTabDock.setVisible(true);
 	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 	  
@@ -900,7 +896,7 @@ private void removeAllDockables() {
 		tabDock.setVisible(true);
       }
 	        
-	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
 	  hitsDock.setVisible(true);
 	  nextLocation = hitsDock.getBaseLocation().aside();
 	  
@@ -915,27 +911,29 @@ private void removeAllDockables() {
       duplicateDock.setLocation(nextLocation);
       duplicateDock.setVisible(true);
 
-	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.6).east(0.65));
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
 	  compositeViewerDock.setVisible(true);
 	  
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
-	  categoriesTabDock.setVisible(true);
-	        
-	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
-	  metadataTabDock.setVisible(true);
-	        
-	  nextLocation = metadataTabDock.getBaseLocation().aside();
-	        
-	  if (evidenceTabDock != null) {
-		evidenceTabDock.setLocation(nextLocation);
-	    evidenceTabDock.setVisible(true);
-	    nextLocation = evidenceTabDock.getBaseLocation().aside();
-	  }
-	        
-	  bookmarksTabDock.setLocation(nextLocation);
-	  bookmarksTabDock.setVisible(true);
-	  selectDockableTab(categoriesTabDock);
-	  selectDockableTab(tableTabDock);
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
+      categoriesTabDock.setVisible(true);
+            
+      if (evidenceTabDock != null) {
+        nextLocation = categoriesTabDock.getBaseLocation().aside();
+        evidenceTabDock.setLocation(nextLocation);
+        evidenceTabDock.setVisible(true);
+      }
+      
+      bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
+      bookmarksTabDock.setVisible(true);
+      
+      nextLocation = bookmarksTabDock.getBaseLocation().aside();
+      metadataTabDock.setLocation(nextLocation);
+      metadataTabDock.setVisible(true);
+            
+      selectDockableTab(categoriesTabDock);
+      selectDockableTab(bookmarksTabDock);
+      selectDockableTab(tableTabDock);
+	  
 	} else {
 	  if (remove)
 	    removeAllDockables();
@@ -971,26 +969,27 @@ private void removeAllDockables() {
       duplicateDock.setLocation(nextLocation);
       duplicateDock.setVisible(true);
 	       
-	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.40));
-	  compositeViewerDock.setVisible(true);
-	       
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
       categoriesTabDock.setVisible(true);
-      
-      metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
-      metadataTabDock.setVisible(true);
-      
-      nextLocation = metadataTabDock.getBaseLocation().aside();
-      
+            
       if (evidenceTabDock != null) {
+        nextLocation = categoriesTabDock.getBaseLocation().aside();
         evidenceTabDock.setLocation(nextLocation);
         evidenceTabDock.setVisible(true);
-        nextLocation = evidenceTabDock.getBaseLocation().aside();
       }
       
-      bookmarksTabDock.setLocation(nextLocation);
+      bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
       bookmarksTabDock.setVisible(true);
+      
+      nextLocation = bookmarksTabDock.getBaseLocation().aside();
+      metadataTabDock.setLocation(nextLocation);
+      metadataTabDock.setVisible(true);
+      
+      compositeViewerDock.setLocation(CLocation.base().normalEast(0.35));
+      compositeViewerDock.setVisible(true);
+            
       selectDockableTab(categoriesTabDock);
+      selectDockableTab(bookmarksTabDock);
 	  selectDockableTab(tableTabDock);
     }
 
@@ -998,13 +997,7 @@ private void removeAllDockables() {
   }
   
   public void alterarDisposicao() {
-
-    if (disposicaoVertical) {   	
-      disposicaoVertical = false;
-    } else {
-      disposicaoVertical = true;
-    }
-    
+    disposicaoVertical = !disposicaoVertical;
     refazLayout(true);
   }
 

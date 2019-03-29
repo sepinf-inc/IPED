@@ -159,8 +159,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
     }
-    if(App.get().appCase.getMultiMarcadores().getLabelMap().size() == 0)
-        App.get().selectDockableTab(App.get().categoriesTabDock);
     
     if(updateItems){
     	App.get().appletListener.updateFileListing();
