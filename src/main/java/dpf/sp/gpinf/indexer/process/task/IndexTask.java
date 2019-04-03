@@ -127,7 +127,7 @@ public class IndexTask extends BaseCarveTask {
     }
 
     if(textReader == null) {
-      if (indexFileContents && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+      if (indexFileContents && (indexUnallocated || !UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
         textReader = evidence.getTextReader();
         if(textReader == null) {
             try {

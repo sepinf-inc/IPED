@@ -55,12 +55,12 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.desktop.ColumnsManagerImpl;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -114,7 +114,7 @@ public class IPEDReader extends DataSourceReader {
 
     // Configuração para não expandir containers
     ParsingTask.setExpandContainers(false);
-    CarveTask.setEnabled(false);
+    CarverTask.setEnabled(false);
     KFFCarveTask.setEnabled(false);
     KFFTask.setEnabled(false);
     LedKFFTask.setEnabled(false);

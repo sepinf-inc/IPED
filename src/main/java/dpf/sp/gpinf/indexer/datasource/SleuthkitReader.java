@@ -64,7 +64,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSourceImpl;
@@ -80,7 +80,7 @@ public class SleuthkitReader extends DataSourceReader {
   
   public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
   private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
-  public static MediaType UNALLOCATED_MIMETYPE = CarveTask.UNALLOCATED_MIMETYPE;
+  public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
   public static final String IN_FAT_FS = "inFatFs"; //$NON-NLS-1$
 
   private static boolean tskChecked = false;

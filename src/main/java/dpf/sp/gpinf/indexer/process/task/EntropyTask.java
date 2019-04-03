@@ -49,7 +49,7 @@ public class EntropyTask extends AbstractTask {
             return;
         }
         
-        if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE) ||
+        if(evidence.getMediaType().equals(BaseCarveTask.UNALLOCATED_MIMETYPE) ||
                 Boolean.TRUE.equals(evidence.getExtraAttribute(ImageThumbTask.HAS_THUMB)))
             return;
         

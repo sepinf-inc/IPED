@@ -193,6 +193,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
   }
 
   private static boolean isAcceptedType(MediaType mediaType) {
-    return mediaType.getBaseType().equals(CarveTask.UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile);
+    return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile);
   }
 }

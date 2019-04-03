@@ -10,6 +10,7 @@ import dpf.sp.gpinf.carver.api.Signature;
 import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.ItemImpl;
 import iped3.Item;
@@ -38,10 +39,9 @@ import java.util.TreeMap;
  * proporcional ao volume de dados de entrada e ao número de padrões
  * descobertos.
  */
-public class CarverTask extends BaseCarverTask {
+public class CarverTask extends BaseCarveTask {
 
     private static final long serialVersionUID = 1L;
-    public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
     public static boolean enableCarving = false;
     public static boolean ignoreCorrupted = true;
     
@@ -52,8 +52,6 @@ public class CarverTask extends BaseCarverTask {
     private CarvedItemListener carvedItemListener = null; 
     
     private static MediaTypeRegistry registry;
-
-    private CarverConfiguration carverConfig = null;
     
     Item evidence;
 
@@ -65,6 +63,10 @@ public class CarverTask extends BaseCarverTask {
     public CarverTask() {
         if(registry == null)
             registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+    }
+    
+    public static void setEnabled(boolean enabled) {
+        enableCarving = enabled;
     }
 
     @Override
@@ -226,11 +228,12 @@ public class CarverTask extends BaseCarverTask {
 
         carvedItemListener = getCarvedItemListener();
         
-        carverConfig = ctConfig.getCarverConfiguration();
-        carverConfig.configTask(confDir, carvedItemListener);
-        carverTypes = carverConfig.getCarverTypes();
-
-        ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
+        if(carverConfig == null) {
+            carverConfig = ctConfig.getCarverConfiguration();
+            carverConfig.configTask(confDir, carvedItemListener);
+            carverTypes = carverConfig.getCarverTypes();
+            ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
+        }
     }
 
     @Override
@@ -248,11 +251,6 @@ public class CarverTask extends BaseCarverTask {
             };
     	}
     	return carvedItemListener;
-    }
-
-    @Override
-    protected boolean isToProcess(Item evidence) {
-        return super.isToProcess(evidence) && carverConfig.isToProcess(evidence.getMediaType());
     }
     
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
