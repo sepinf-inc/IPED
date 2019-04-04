@@ -163,7 +163,7 @@ public class KMLResult {
 			  String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
 			  String query = "(" + metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			                  "(" + ufedPrefix + "Latitude:[-90 TO 90] AND " + ufedPrefix + "Longitude:[-180 TO 180]) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			                  "(" + ExtraProperties.LOCATIONS + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+			                  "(" + ExtraProperties.LOCATIONS + ":*" + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 			  IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
 			  MultiSearchResult multiResult = searcher.multiSearch();
 			  
