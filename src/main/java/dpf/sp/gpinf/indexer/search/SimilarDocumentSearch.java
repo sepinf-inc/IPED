@@ -15,6 +15,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.ItemId;
 
 public class SimilarDocumentSearch {
 	

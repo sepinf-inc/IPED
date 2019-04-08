@@ -1,3 +1,11 @@
+29/03/2019: IPED-3.15.6
+- Corrige OutOfMemory ao expandir conteineres gigantes (3.15)
+- Corrige Travamentos raros na detecção de nudez com PNG corrompido
+- Classificação e visualização de imagens CDR (PCF Gabriel)
+- Erro ao executar plugins do RegRipper no Linux
+- Exibição de imagens rotacionadas corretamente (PCF Wladimir)
+- Alterações no layout padrão da interface
+
 27/02/2019: IPED-3.15.5
 - Corrige erro no LibreOffice qdo há espaço no nome do usuário atual (3.15.4)
 - Corrige erro no LibreOffice se MSVC Redistributable não estiver instalado (3.15.4)

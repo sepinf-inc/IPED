@@ -71,7 +71,7 @@ public class FTK42FileTypes {
   public static String getTypeDesc(int type) throws IOException {
 
     if (mapTypeDesc == null) {
-    	getFTK42FileTypes(Configuration.configPath);
+    	getFTK42FileTypes(Configuration.getInstance().configPath);
     }
 
     String desc = mapTypeDesc.get(type);

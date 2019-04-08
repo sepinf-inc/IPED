@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -24,6 +23,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
 
 public class ImageThumbTask extends AbstractTask {
 
@@ -72,7 +72,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-      GraphicsMagicConverter.setWinToolPathPrefix(Configuration.appRoot);
+      GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
     }
 
     value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
@@ -118,7 +118,7 @@ public class ImageThumbTask extends AbstractTask {
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception{
+  protected void process(Item evidence) throws Exception{
 
     if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;
@@ -157,15 +157,17 @@ public class ImageThumbTask extends AbstractTask {
    * Verifica se é imagem.
    */
   public static boolean isImageType(MediaType mediaType) {
-    return mediaType.getType().equals("image"); //$NON-NLS-1$
+    return mediaType.getType().equals("image") || //$NON-NLS-1$
+           mediaType.toString().equals("application/coreldraw") || //$NON-NLS-1$
+           mediaType.toString().equals("application/x-vnd.corel.zcf.draw.document+zip"); //$NON-NLS-1$
   }
   
   private class ThumbCreator implements Runnable{
       
-      EvidenceFile evidence;
+      Item evidence;
       File thumbFile;
       
-      public ThumbCreator(EvidenceFile evidence, File thumbFile) {
+      public ThumbCreator(Item evidence, File thumbFile) {
           this.evidence = evidence;
           this.thumbFile = thumbFile;
       }
@@ -177,7 +179,7 @@ public class ImageThumbTask extends AbstractTask {
       
   }
 
-  private void createImageThumb(EvidenceFile evidence, File thumbFile) {
+  private void createImageThumb(Item evidence, File thumbFile) {
 
     File tmp = null;
     try {
@@ -220,6 +222,14 @@ public class ImageThumbTask extends AbstractTask {
           img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
         }
         img = ImageUtil.getOpaqueImage(img);
+
+        //Ajusta rotacao da miniatura a partir do metadado orientacao 
+        try (BufferedInputStream stream = evidence.getBufferedStream()) {
+          int orientation = ImageUtil.getOrientation(stream);
+          if (orientation > 0) {
+            img = ImageUtil.rotate(img, orientation);
+          }
+        }
 
         ImageIO.write(img, "jpg", tmp); //$NON-NLS-1$
       }

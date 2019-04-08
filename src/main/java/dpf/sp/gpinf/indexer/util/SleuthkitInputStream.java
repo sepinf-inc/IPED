@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
+import iped3.io.SeekableInputStream;
+
 public class SleuthkitInputStream extends SeekableInputStream {
 
   ReadContentInputStream rcis;

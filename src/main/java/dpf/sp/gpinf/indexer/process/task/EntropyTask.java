@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class EntropyTask extends AbstractTask {
     
@@ -30,11 +32,12 @@ public class EntropyTask extends AbstractTask {
     
     @Override
     public boolean isEnabled(){
-        return Configuration.entropyTest;
+    	AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+        return advancedConfig.isEntropyTest();
     }
 
     @Override
-    protected void process(EvidenceFile evidence) throws Exception {
+    protected void process(Item evidence) throws Exception {
         
         if(!isEnabled())
             return;
@@ -46,7 +49,7 @@ public class EntropyTask extends AbstractTask {
             return;
         }
         
-        if(evidence.getMediaType().equals(CarveTask.UNALLOCATED_MIMETYPE) ||
+        if(evidence.getMediaType().equals(BaseCarveTask.UNALLOCATED_MIMETYPE) ||
                 Boolean.TRUE.equals(evidence.getExtraAttribute(ImageThumbTask.HAS_THUMB)))
             return;
         

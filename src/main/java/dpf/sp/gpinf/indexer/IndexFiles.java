@@ -32,6 +32,8 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -130,12 +132,16 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
    */
   private void setConfigPath() throws Exception {
 	  URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
-	  //configPath = System.getProperty("user.dir");
-	  rootPath = new File(url.toURI()).getParent();
-	  //test for report generation from case folder
-	  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
-	      rootPath = new File(url.toURI()).getParentFile().getParent();
 	  
+	  if("true".equals(System.getProperty("Debugging"))){
+		  rootPath = System.getProperty("user.dir");
+	  }else {
+		  rootPath = new File(url.toURI()).getParent();
+		  //test for report generation from case folder
+		  if(rootPath.endsWith("indexador" + File.separator + "lib")) //$NON-NLS-1$ //$NON-NLS-2$
+		      rootPath = new File(url.toURI()).getParentFile().getParent();
+	  }
+
 	  configPath = rootPath;
 	  String locale = getProfileLocale();
 	  
@@ -168,9 +174,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
   void importKFF(File kffPath) {
     try {
       setConfigPath();
-      Configuration.getConfiguration(configPath);
+      Configuration.getInstance().getConfiguration(configPath);
       KFFTask kff = new KFFTask();
-      kff.init(Configuration.properties, null);
+      kff.init(Configuration.getInstance().properties, null);
       kff.importKFF(kffPath);
     } catch (Exception e) {
       e.printStackTrace();
@@ -279,15 +285,15 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         LOGGER = LoggerFactory.getLogger(IndexFiles.class);
         if(!fromCustomLoader)
             LOGGER.info(Versao.APP_NAME);
-        
-        Configuration.getConfiguration(indexador.configPath);
-        
+
+        Configuration.getInstance().loadConfigurables(indexador.configPath);
+
         if(!fromCustomLoader) {
             List<File> jars = new ArrayList<File>();
-            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
-            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
-            jars.add(Configuration.tskJarFile);
-            
+            PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance().findObjects(PluginConfig.class).iterator().next();
+            jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
+            jars.add(Configuration.getInstance().tskJarFile);
+
             //currently with --nogui, user can not open analysis app, so no need to load libreoffice jars
             if(!indexador.nogui) {
                 System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());

@@ -1,13 +1,12 @@
 package gpinf.dev.filetypes;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.Messages;
+import iped3.Item;
 
-public class OriginalEmailFileType extends EvidenceFileType {
+public class OriginalEmailFileType extends EvidenceFileTypeImpl {
 
   /**
    *
@@ -20,7 +19,7 @@ public class OriginalEmailFileType extends EvidenceFileType {
   }
 
   @Override
-  public void processFiles(File baseDir, List<EvidenceFile> evidenceFiles) {
+  public void processFiles(File baseDir, List<Item> items) {
     // TODO Auto-generated method stub
 
   }

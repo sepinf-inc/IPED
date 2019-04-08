@@ -32,13 +32,13 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.CaseData;
+import iped3.CaseData;
 
 public class FTK3ReportReader extends DataSourceReader {
 
@@ -59,7 +59,7 @@ public class FTK3ReportReader extends DataSourceReader {
 
 	// Configuração para não expandir containers
 	ParsingTask.setExpandContainers(false);
-	CarveTask.setEnabled(false);
+	CarverTask.setEnabled(false);
 	  
     caseData.setContainsReport(true);
     wasExecuted = true;

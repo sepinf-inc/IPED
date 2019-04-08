@@ -125,6 +125,7 @@
             <mime>application/irpf</mime>
             <mime>application/x-nls</mime>
         </parser>
+        <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
 	
     </parsers>
 

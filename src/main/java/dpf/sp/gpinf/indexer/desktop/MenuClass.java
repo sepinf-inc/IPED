@@ -23,6 +23,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class MenuClass extends JPopupMenu {
 
@@ -172,7 +174,8 @@ public class MenuClass extends JPopupMenu {
     
     similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
     similarDocs.addActionListener(menuListener);
-    similarDocs.setEnabled(Configuration.storeTermVectors);
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
     this.add(similarDocs); 
     
     openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$

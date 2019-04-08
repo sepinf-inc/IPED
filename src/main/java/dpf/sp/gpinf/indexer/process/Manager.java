@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,22 +54,29 @@ import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
+import gpinf.dev.data.CaseDataImpl;
+import gpinf.dev.data.ItemImpl;
+import iped3.CaseData;
+import iped3.configuration.ConfigurationDirectory;
+import iped3.search.LuceneSearchResult;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do contador, produtor e
@@ -125,14 +133,16 @@ public class Manager {
   }
 
   public Manager(List<File> sources, File output, File palavras) {
-    this.indexDir = Configuration.indexTemp;
+	LocalConfig ipedConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+	
+    this.indexDir = ipedConfig.getIndexTemp();
     this.sources = sources;
     this.output = output;
     this.palavrasChave = palavras;
 
-    this.caseData = new CaseData(QUEUE_SIZE);
+    this.caseData = new CaseDataImpl(QUEUE_SIZE);
 
-    EvidenceFile.setStartID(0);
+    ItemImpl.setStartID(0);
 
     finalIndexDir = new File(output, "index"); //$NON-NLS-1$
     
@@ -263,10 +273,12 @@ public class Manager {
   private IndexWriterConfig getIndexWriterConfig(){
 	    IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
 	    conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-	    conf.setMaxThreadStates(Configuration.numThreads);
+	    
+	    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+	    conf.setMaxThreadStates(localConfig.getNumThreads());
 	    conf.setSimilarity(new IndexerSimilarity());
 	    ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
-	    if ((Configuration.indexTempOnSSD && indexDir != finalIndexDir) || Configuration.outputOnSSD) {
+	    if ((localConfig.isIndexTempOnSSD() && indexDir != finalIndexDir) || localConfig.isOutputOnSSD()) {
 	      mergeScheduler.setMaxMergesAndThreads(8, 4);
 	    }
 	    conf.setMergeScheduler(mergeScheduler);
@@ -290,7 +302,8 @@ public class Manager {
 
     writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
 
-    workers = new Worker[Configuration.numThreads];
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    workers = new Worker[localConfig.getNumThreads()];
     for (int k = 0; k < workers.length; k++) {
       workers[k] = new Worker(k, caseData, writer, output, this);
     }
@@ -367,7 +380,8 @@ public class Manager {
       workers[k].finish();
     }
 
-    if (Configuration.forceMerge) {
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    if (advancedConfig.isForceMerge()) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
       try {
@@ -408,15 +422,16 @@ public class Manager {
   private void updateImagePaths(){
 	  CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 	  if(args.isPortable()){ //$NON-NLS-1$
-		  IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+		  IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
 		  ipedCase.updateImagePathsToRelative();
 		  ipedCase.close();
 	  }
   }
   
   public void deleteTempDir(){
-      LOGGER.info("Deleting temp folder {}", Configuration.indexerTemp); //$NON-NLS-1$
-      IOUtil.deletarDiretorio(Configuration.indexerTemp);
+	  LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+	  LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
+	  IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
   }
 
   private void filtrarPalavrasChave() {
@@ -427,7 +442,7 @@ public class Manager {
       ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", Charset.defaultCharset().name()); //$NON-NLS-1$
 
       if (palavras.size() != 0) {
-    	IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+    	IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
         ArrayList<String> palavrasFinais = new ArrayList<String>();
         for (String palavra : palavras) {
           if (Thread.interrupted()) {
@@ -435,7 +450,7 @@ public class Manager {
             throw new InterruptedException("Processing canceled!"); //$NON-NLS-1$
           }
 
-          IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
+          IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, palavra);
           if (pesquisa.searchAll().getLength() > 0) {
             palavrasFinais.add(palavra);
           }
@@ -457,15 +472,15 @@ public class Manager {
 
   private void saveViewToOriginalFileMap() throws Exception {
 
-    VersionsMap viewToRaw = new VersionsMap(0);
+    VersionsMapImpl viewToRaw = new VersionsMapImpl(0);
 
     if (FTK3ReportReader.wasExecuted) {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
       LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
 
-      IPEDSource ipedCase = new IPEDSource(output.getParentFile());
+      IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
       String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))"; //$NON-NLS-1$
-      IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
+      IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, query);
       LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
 
       HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
@@ -484,7 +499,7 @@ public class Manager {
 
       IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
       Bits liveDocs = MultiFields.getLiveDocs(reader);
-      viewToRaw = new VersionsMap(stats.getLastId() + 1);
+      viewToRaw = new VersionsMapImpl(stats.getLastId() + 1);
 
       for (int i = 0; i < reader.maxDoc(); i++) {
         if (liveDocs != null && !liveDocs.get(i)) {
@@ -523,8 +538,8 @@ public class Manager {
 	    IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	    LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
-	    try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())){
-	      IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	    try (IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile())){
+	      IPEDSearcherImpl searchAll = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
 	      LuceneSearchResult result = searchAll.searchAll();
 
 	      boolean[] doNotDelete = new boolean[stats.getLastId() + 1];
@@ -582,28 +597,30 @@ public class Manager {
     }
 
     if (!IndexFiles.getInstance().appendIndex) {
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
-      if (!Configuration.embutirLibreOffice) {
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+      AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+      if (!advancedConfig.isEmbutirLibreOffice()) {
         new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
       }
 
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.appRoot, "htmlreport"), new File(output, "htmlreport")); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaDiretorio(new File(Configuration.configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
-      IOUtil.copiaArquivo(new File(Configuration.configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
-      IOUtil.copiaArquivo(new File(Configuration.appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-      File binDir = new File(Configuration.appRoot, "bin"); //$NON-NLS-1$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), new File(output, "htmlreport")); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), true); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+      File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
       if(binDir.exists())
           IOUtil.copiaDiretorio(binDir, output.getParentFile()); //$NON-NLS-1$
       else {
-          for(File f : new File(Configuration.appRoot).getParentFile().listFiles(new ExeFileFilter()))
+          for(File f : new File(Configuration.getInstance().appRoot).getParentFile().listFiles(new ExeFileFilter()))
               IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
       }
       //copia arquivo de assinaturas customizadas
-      IOUtil.copiaArquivo(new File(Configuration.appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$ //$NON-NLS-2$
+      IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     if (palavrasChave != null) {

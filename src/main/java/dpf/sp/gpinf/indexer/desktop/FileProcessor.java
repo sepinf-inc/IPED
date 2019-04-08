@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
-import gpinf.dev.data.EvidenceFile;
 
 import java.awt.Dialog.ModalityType;
 import java.io.IOException;
@@ -37,8 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import iped3.Item;
+import iped3.desktop.CancelableWorker;
+import iped3.sleuthkit.SleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
   private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -51,7 +52,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
   private Document doc;
   private int docId;
   private boolean listRelated;
-  private static volatile EvidenceFile lastItem;
+  private static volatile Item lastItem;
 
   public FileProcessor(int docId, boolean listRelated) {
     this.listRelated = listRelated;
@@ -113,8 +114,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
 
     //TODO usar nova API e contornar exibição da Ajuda
-    IPEDSource iCase = App.get().appCase.getAtomicSource(docId);
-	EvidenceFile item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+    IPEDSourceImpl iCase = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
+	Item item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 	
 	long textSize = iCase.getTextSize(item.getId());
 	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
@@ -128,7 +129,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
       contentType = item.getMediaType().toString();
     }
 
-    EvidenceFile viewItem = item;
+    Item viewItem = item;
 
     if (item.getViewFile() != null) {
     	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
@@ -150,9 +151,12 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
   }
   
-  private void waitSleuthkitInit(final EvidenceFile item){
-      if(item.getSleuthFile() == null)
-          return;
+  private void waitSleuthkitInit(final Item item){
+	  if(item instanceof SleuthKitItem) {
+		  SleuthKitItem sitem = (SleuthKitItem) item;
+	      if(sitem.getSleuthFile() == null)
+	          return;
+	  }
       if(!tskDataSourceInited.contains(item.getDataSource().getUUID())){
           tskDataSourceInited.add(item.getDataSource().getUUID());
           setWaitVisible(true);
@@ -184,7 +188,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
   }
 
-  private void disposeItem(final EvidenceFile itemToDispose) {
+  private void disposeItem(final Item itemToDispose) {
     if (itemToDispose != null) {
       new Thread() {
         public void run() {

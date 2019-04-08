@@ -5,18 +5,19 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.ItemImpl;
+import iped3.CaseData;
+import iped3.Item;
+import iped3.io.SeekableInputStream;
 import sef.mg.laud.ad1extractor.AD1Extractor;
 import sef.mg.laud.ad1extractor.FileHeader;
 
 public class AD1DataSourceReader extends DataSourceReader {
     
     AD1InputStreamFactory inputStreamFactory;
-    EvidenceFile rootItem;
+    Item rootItem;
 
     public AD1DataSourceReader(CaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -50,7 +51,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         return 0;
     }
     
-    private EvidenceFile addRootItem(File root) throws InterruptedException {
+    private Item addRootItem(File root) throws InterruptedException {
         
         if(listOnly) {
             caseData.incDiscoveredEvidences(1);
@@ -60,10 +61,10 @@ public class AD1DataSourceReader extends DataSourceReader {
         String evidenceName = getEvidenceName(root);
         if (evidenceName == null)
             evidenceName = root.getName();
-        dataSource = new DataSource(root);
+        dataSource = new DataSourceImpl(root);
         dataSource.setName(evidenceName);
         
-        EvidenceFile rootItem = new EvidenceFile();
+        Item rootItem = new ItemImpl();
         rootItem.setRoot(true);
         rootItem.setDataSource(dataSource);
         rootItem.setPath(evidenceName);
@@ -73,14 +74,14 @@ public class AD1DataSourceReader extends DataSourceReader {
         rootItem.setSumVolume(false);
         rootItem.setHash(""); //$NON-NLS-1$
         
-        caseData.addEvidenceFile(rootItem);
+        caseData.addItem(rootItem);
         
         return rootItem;
     }
     
-    private void createAndAddItem(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws IOException, InterruptedException{
+    private void createAndAddItem(AD1Extractor ad1, FileHeader header, Item parent) throws IOException, InterruptedException{
         
-        EvidenceFile item = new EvidenceFile();
+        Item item = new ItemImpl();
         
         if(!listOnly) {
             item.setDataSource(dataSource);
@@ -99,7 +100,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             item.setInputStreamFactory(inputStreamFactory);
             item.setIdInDataSource(Long.toString(header.object_address));
             
-            caseData.addEvidenceFile(item);
+            caseData.addItem(item);
             
         }else {
             caseData.incDiscoveredEvidences(1);
@@ -113,7 +114,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         
     }
     
-    private void createAndAddItemRecursive(AD1Extractor ad1, FileHeader header, EvidenceFile parent) throws IOException, InterruptedException{
+    private void createAndAddItemRecursive(AD1Extractor ad1, FileHeader header, Item parent) throws IOException, InterruptedException{
         
         createAndAddItem(ad1, header, parent);
         

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -38,7 +38,7 @@ public class SignatureTask extends AbstractTask {
     return true;
   }
 
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
 
     if (evidence.isDir()) {
       evidence.setMediaType(MediaType.OCTET_STREAM);

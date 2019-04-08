@@ -37,8 +37,9 @@ import org.xml.sax.XMLReader;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -47,9 +48,12 @@ import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ZipFile4j;
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.ItemImpl;
+import iped3.CaseData;
+import iped3.Item;
+import iped3.datasource.DataSource;
+import iped3.util.ExtraProperties;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -67,9 +71,9 @@ public class UfedXmlReader extends DataSourceReader{
     File root, ufdrFile;
     ZipFile4j ufdr;
     ZIPInputStreamFactory zisf;
-    EvidenceFile rootItem;
-    EvidenceFile decodedFolder;
-    HashMap<String, EvidenceFile> pathToParent = new HashMap<>();
+    Item rootItem;
+    Item decodedFolder;
+    HashMap<String, Item> pathToParent = new HashMap<>();
 
     public UfedXmlReader(CaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -161,10 +165,13 @@ public class UfedXmlReader extends DataSourceReader{
     }
     
     private void configureParsers() {
-        if(Configuration.phoneParsersToUse.equals("internal")) { //$NON-NLS-1$
+    	
+    	UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance().findObjects(UFEDReaderConfig.class).iterator().next();
+    	
+        if(ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             
-        }else if(Configuration.phoneParsersToUse.equals("external")) //$NON-NLS-1$
+        }else if(ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
     }
     
@@ -176,10 +183,10 @@ public class UfedXmlReader extends DataSourceReader{
         String evidenceName = getEvidenceName(root);
         if (evidenceName == null)
             evidenceName = root.getName();
-        DataSource evidenceSource = new DataSource(root);
+        DataSource evidenceSource = new DataSourceImpl(root);
         evidenceSource.setName(evidenceName);
         
-        rootItem = new EvidenceFile();
+        rootItem = new ItemImpl();
         rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
         rootItem.setPath(evidenceName);
@@ -194,7 +201,7 @@ public class UfedXmlReader extends DataSourceReader{
         pathToParent.put(rootItem.getPath(), rootItem);
         
         caseData.incDiscoveredEvidences(1);
-        caseData.addEvidenceFile(rootItem);
+        caseData.addItem(rootItem);
     }
     
     private void addVirtualDecodedFolder() throws InterruptedException {
@@ -202,7 +209,7 @@ public class UfedXmlReader extends DataSourceReader{
         if(listOnly)
             return;
         
-        decodedFolder = new EvidenceFile();
+        decodedFolder = new ItemImpl();
         decodedFolder.setName("_DecodedData"); //$NON-NLS-1$
         decodedFolder.setParent(rootItem);
         decodedFolder.setPath(rootItem.getPath() + "/" + decodedFolder.getName()); //$NON-NLS-1$
@@ -213,10 +220,8 @@ public class UfedXmlReader extends DataSourceReader{
         pathToParent.put(decodedFolder.getPath(), decodedFolder);
         
         caseData.incDiscoveredEvidences(1);
-        caseData.addEvidenceFile(decodedFolder);
+        caseData.addItem(decodedFolder);
     }
-    
-    
     
     private class XMLErrorHandler implements ErrorHandler{
 
@@ -245,12 +250,12 @@ public class UfedXmlReader extends DataSourceReader{
         DateFormat df2 = new SimpleDateFormat(df2Pattern);
         
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
-        ArrayList<EvidenceFile> itemSeq = new ArrayList<>();
+        ArrayList<ItemImpl> itemSeq = new ArrayList<>();
         
         HashSet<String> elements = new HashSet<>();
         HashSet<String> types = new HashSet<>();
         
-        HashMap<String, EvidenceFile> ids = new HashMap<>();
+        HashMap<String, Item> ids = new HashMap<>();
         
         private class XmlNode{
             String element;
@@ -330,17 +335,17 @@ public class UfedXmlReader extends DataSourceReader{
             
         }
         
-        private EvidenceFile getParent(String path) throws SAXException {
+        private Item getParent(String path) throws SAXException {
             int idx = path.lastIndexOf('/');
             if(idx < 1)
                 return rootItem;
             
             String parentPath = path.substring(0, idx);
-            EvidenceFile parent = pathToParent.get(parentPath);
+            Item parent = pathToParent.get(parentPath);
             if(parent != null)
                 return parent;
             
-            parent = new EvidenceFile();
+            parent = new ItemImpl();
             parent.setName(parentPath.substring(parentPath.lastIndexOf('/') + 1));
             parent.setPath(parentPath);
             parent.setHasChildren(true);
@@ -353,7 +358,7 @@ public class UfedXmlReader extends DataSourceReader{
             
             try {
                 caseData.incDiscoveredEvidences(1);
-                caseData.addEvidenceFile(parent);
+                caseData.addItem(parent);
                 
             } catch (InterruptedException e) {
                 throw new SAXException(e);
@@ -388,7 +393,7 @@ public class UfedXmlReader extends DataSourceReader{
                     return;
                 }
                 
-                EvidenceFile item = new EvidenceFile();
+                ItemImpl item = new ItemImpl();
                 
                 item.setLength(size);
                 
@@ -415,7 +420,7 @@ public class UfedXmlReader extends DataSourceReader{
                         return;
                     }
                     
-                    EvidenceFile item = new EvidenceFile();
+                    ItemImpl item = new ItemImpl();
                     
                     String type = atts.getValue("type"); //$NON-NLS-1$
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -445,8 +450,8 @@ public class UfedXmlReader extends DataSourceReader{
                         return;
                     }
                     
-                    EvidenceFile item = new EvidenceFile();
-                    EvidenceFile parent = itemSeq.get(itemSeq.size() - 1);
+                    ItemImpl item = new ItemImpl();
+                    Item parent = itemSeq.get(itemSeq.size() - 1);
                     
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     String prevNameAtt = prevNode.atts.get("name"); //$NON-NLS-1$
@@ -474,7 +479,7 @@ public class UfedXmlReader extends DataSourceReader{
                 
         }
         
-        private void fillCommonMeta(EvidenceFile item, Attributes atts) {
+        private void fillCommonMeta(Item item, Attributes atts) {
             if("StreetAddress".equals(atts.getValue("type"))) //$NON-NLS-1$ //$NON-NLS-2$
                 return;
             String extractionName = extractionInfoMap.get(atts.getValue("extractionId")); //$NON-NLS-1$
@@ -498,7 +503,7 @@ public class UfedXmlReader extends DataSourceReader{
                 return;
             
             String nameAttr = currentNode.atts.get("name"); //$NON-NLS-1$
-            EvidenceFile item = null;
+            ItemImpl item = null;
             if(itemSeq.size() > 0)
                 item = itemSeq.get(itemSeq.size() - 1);
             
@@ -563,7 +568,7 @@ public class UfedXmlReader extends DataSourceReader{
             } else if(qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
                 try {
-                    caseData.addEvidenceFile(item);
+                    caseData.addItem(item);
                 } catch (Exception e) {
                     throw new SAXException(e);
                 }
@@ -583,7 +588,7 @@ public class UfedXmlReader extends DataSourceReader{
                     
                 }else if("Attachment".equals(type)) { //$NON-NLS-1$
                     handleAttachment(item);
-                    EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
+                    Item parentItem = itemSeq.get(itemSeq.size() - 1);
                     if(parentItem.getMediaType().toString().contains("email")) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                 }else if("Chat".equals(type)) { //$NON-NLS-1$
@@ -622,7 +627,7 @@ public class UfedXmlReader extends DataSourceReader{
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
                 if(mergeInParentNode.contains(type) && itemSeq.size() > 0) {
-                    EvidenceFile parentItem = itemSeq.get(itemSeq.size() - 1);
+                    Item parentItem = itemSeq.get(itemSeq.size() - 1);
                     if("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
                         String parentNameAttr = parentNode.atts.get("name"); //$NON-NLS-1$
@@ -698,7 +703,7 @@ public class UfedXmlReader extends DataSourceReader{
                 }else
                     try {
                         caseData.incDiscoveredVolume(item.getLength());
-                        caseData.addEvidenceFile(item);
+                        caseData.addItem(item);
                         
                     } catch (InterruptedException e) {
                         throw new SAXException(e);
@@ -710,7 +715,7 @@ public class UfedXmlReader extends DataSourceReader{
             
         }
         
-        private void setContent(EvidenceFile item, String path) {
+        private void setContent(ItemImpl item, String path) {
             item.setMediaType(null);
             item.setHash(null);
             item.setInputStreamFactory(null);
@@ -741,7 +746,7 @@ public class UfedXmlReader extends DataSourceReader{
             }
         }
         
-        private void updateName(EvidenceFile item, String newName) {
+        private void updateName(Item item, String newName) {
             //prevents error DocValuesField is too large
             int maxNameSize = 4096;
             if(newName.length() > maxNameSize)
@@ -750,7 +755,7 @@ public class UfedXmlReader extends DataSourceReader{
             item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
         
-        private void handleAttachment(EvidenceFile item) {
+        private void handleAttachment(ItemImpl item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if(name != null)
                 updateName(item, name);
@@ -780,7 +785,7 @@ public class UfedXmlReader extends DataSourceReader{
             return sb.toString();
         }
         
-        private File createEmailPreview(EvidenceFile email) {
+        private File createEmailPreview(ItemImpl email) {
             File file = new File(output, "view/emails/view-" + email.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))){ //$NON-NLS-1$
@@ -845,7 +850,7 @@ public class UfedXmlReader extends DataSourceReader{
             return file;
         }
         
-        private File createContactPreview(EvidenceFile contact) {
+        private File createContactPreview(ItemImpl contact) {
             
             String name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
             if(name == null)

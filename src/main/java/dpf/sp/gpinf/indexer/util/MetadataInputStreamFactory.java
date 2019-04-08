@@ -8,7 +8,8 @@ import java.util.Arrays;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.tika.metadata.Metadata;
 
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
+import iped3.io.SeekableInputStream;
+import iped3.util.ExtraProperties;
 
 public class MetadataInputStreamFactory extends SeekableInputStreamFactory{
     

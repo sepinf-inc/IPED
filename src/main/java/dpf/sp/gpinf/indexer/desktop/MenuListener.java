@@ -41,11 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.ItemId;
 
 public class MenuListener implements ActionListener {
     
@@ -200,10 +201,10 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.exportarMarcados) {
     	ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
-        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        for(IPEDSourceImpl source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
                 if (source.getMarcadores().isSelected(id)) {
-                  uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                  uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
                 }
               }
         }
@@ -215,11 +216,11 @@ public class MenuListener implements ActionListener {
       }
 
     } else if (e.getSource() == menu.exportCheckedToZip) {
-        ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
-        for(IPEDSource source : App.get().appCase.getAtomicSources()){
+        ArrayList<ItemIdImpl> uniqueSelectedIds = new ArrayList<ItemIdImpl>();
+        for(IPEDSourceImpl source : App.get().appCase.getAtomicSources()){
         	for (int id = 0; id <= source.getLastId(); id++) {
         		if (source.getMarcadores().isSelected(id)) {
-                    uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                    uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
                 }
               }
         }
@@ -299,7 +300,7 @@ public class MenuListener implements ActionListener {
 
     } else if (e.getSource() == menu.gerenciarColunas) {
 
-      ColumnsManager.getInstance().setVisible();
+      ColumnsManagerImpl.getInstance().setVisible();
 
     } else if (e.getSource() == menu.gerenciarFiltros) {
 
@@ -330,7 +331,7 @@ public class MenuListener implements ActionListener {
     }else if(e.getSource() == menu.openViewfile) {
         int selIdx = App.get().resultsTable.getSelectedRow();
         ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
-        EvidenceFile item = App.get().appCase.getItemByItemId(itemId);
+        Item item = App.get().appCase.getItemByItemId(itemId);
         LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
         ExternalFileOpen.open(item.getViewFile());
     
@@ -338,13 +339,13 @@ public class MenuListener implements ActionListener {
         new ReportDialog().setVisible();
     
     }else if(e.getSource() == menu.lastColLayout) {
-        ColumnsManager.getInstance().resetToLastLayout();
+        ColumnsManagerImpl.getInstance().resetToLastLayout();
     
     }else if(e.getSource() == menu.saveColLayout) {
-        ColumnsManager.getInstance().saveColumnsState();
+        ColumnsManagerImpl.getInstance().saveColumnsState();
     
     }else if(e.getSource() == menu.resetColLayout) {
-        ColumnsManager.getInstance().resetToDefaultLayout();
+        ColumnsManagerImpl.getInstance().resetToDefaultLayout();
     }
 
   }

@@ -32,7 +32,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.Messages;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 /**
  * Classe que carrega o mapeamento de mimeTypes para Categoria da aplicação. Além disso utiliza
@@ -109,7 +109,7 @@ public class SetCategoryTask extends AbstractTask {
     return ""; //$NON-NLS-1$
   }
 
-  public void process(EvidenceFile e) throws Exception {
+  public void process(Item e) throws Exception {
 
     if (e.isDir()) {
         e.setCategory(FOLDER_CATEGORY);

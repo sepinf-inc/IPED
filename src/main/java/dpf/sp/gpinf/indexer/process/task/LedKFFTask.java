@@ -19,10 +19,11 @@ import java.util.regex.Pattern;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.HashValue;
 
 /**
  * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser integrada a tarefa
@@ -125,13 +126,13 @@ public class LedKFFTask extends AbstractTask {
             for (int col = 0; col < ledHashOrder.length; col++) {
               HashValue hv = null;
               if (ledHashOrder[col] != null) {
-                hv = new HashValue(hashes[col].trim());
+                hv = new HashValueImpl(hashes[col].trim());
                 hashList.get(col).add(hv);
               }
               if (col == idxMd5) {
                 md5 = hv;
               } else if (col == idxMd5_64K) {
-                md5_64K = new HashValue(hashes[col].trim());
+                md5_64K = new HashValueImpl(hashes[col].trim());
               } else if (col == idxLength) {
                 length = Long.parseLong(hashes[col]);
               } else if (col == idxName) {
@@ -225,7 +226,7 @@ public class LedKFFTask extends AbstractTask {
             for (int j = 0; j < arrLen; j++) {
               byte[] bytes = new byte[hashLen];
               is.read(bytes);
-              v[j] = new HashValue(bytes);
+              v[j] = new HashValueImpl(bytes);
             }
           }
         }
@@ -238,7 +239,7 @@ public class LedKFFTask extends AbstractTask {
           byte[] bytes2 = new byte[hashLen2];
           is.read(bytes1);
           is.read(bytes2);
-          kffItems[j] = new KffItem(new HashValue(bytes1), readLong(is), readString(is), new HashValue(bytes2));
+          kffItems[j] = new KffItem(new HashValueImpl(bytes1), readLong(is), readString(is), new HashValueImpl(bytes2));
         }
       }
     } catch (Exception e) {
@@ -312,7 +313,7 @@ public class LedKFFTask extends AbstractTask {
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     if (!taskEnabled) {
       return;
     }
@@ -321,7 +322,7 @@ public class LedKFFTask extends AbstractTask {
       if (ledHashOrder[col] != null) {
         String hash = (String) evidence.getExtraAttribute(ledHashOrder[col]);
         if (hash != null) {
-          if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
+          if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValueImpl(hash)) >= 0) {
             evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
           }
           break;

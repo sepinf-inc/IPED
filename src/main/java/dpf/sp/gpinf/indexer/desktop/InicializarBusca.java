@@ -30,11 +30,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
@@ -84,9 +87,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().appCase.close();
       
       if(!App.get().isMultiCase){
-    	  IPEDSource singleCase = null;
-    	  if(manager == null) singleCase = new IPEDSource(App.get().casesPathFile);
-    	  else singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
+    	  IPEDSourceImpl singleCase = null;
+    	  if(manager == null) singleCase = new IPEDSourceImpl(App.get().casesPathFile);
+    	  else singleCase = new IPEDSourceImpl(App.get().casesPathFile, manager.getIndexWriter());
     	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
       }else
     	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
@@ -99,8 +102,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
     	  
           IndexerDefaultParser autoParser = new IndexerDefaultParser();
-          autoParser.setFallback(new RawStringParser(Configuration.entropyTest));
-          autoParser.setErrorParser(new RawStringParser(Configuration.entropyTest));
+          
+          AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+          autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
+          autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
+          
           App.get().setAutoParser(autoParser);
     	  
     	  FileProcessor exibirAjuda = new FileProcessor(-1, false);
@@ -153,12 +159,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
       App.get().tree.setLargeModel(true);
       App.get().tree.setCellRenderer(new TreeCellRenderer());
     }
-    if(App.get().appCase.getMultiMarcadores().getLabelMap().size() == 0)
-        App.get().selectDockableTab(App.get().categoriesTabDock);
     
     if(updateItems){
     	App.get().appletListener.updateFileListing();
-    	ColumnsManager.getInstance().dispose();
+    	ColumnsManagerImpl.getInstance().dispose();
     	App.get().dialogBar.setVisible(false);
     }
   }

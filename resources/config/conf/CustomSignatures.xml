@@ -125,21 +125,6 @@
         <glob pattern="*-MemberShadow-v*"/>
     </mime-type>
     
-    <mime-type type="image/cdr">
-    	<magic priority="60">
-          <match value="RIFF" type="string" offset="0">
-           	<match value="CDR" type="stringignorecase" offset="8" />
-           	<match value="DES" type="stringignorecase" offset="8" />
-          </match>
-          <match value="RIFF" type="string" offset="50">
-           	<match value="CDR" type="stringignorecase" offset="58" />
-           	<match value="DES" type="stringignorecase" offset="58" />
-          </match>
-     	</magic>
-        <glob pattern="*.cdr"/>
-        <sub-class-of type="application/zip"/>
-    </mime-type>
-    
     <mime-type type="application/x-whatsapp-db">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="msgstore*.db"/>

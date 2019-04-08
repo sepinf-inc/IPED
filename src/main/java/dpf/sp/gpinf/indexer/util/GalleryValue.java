@@ -22,7 +22,7 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.ItemId;
 
 public class GalleryValue {
 

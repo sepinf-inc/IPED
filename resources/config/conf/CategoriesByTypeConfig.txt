@@ -12,7 +12,9 @@ Documentos PDF = application/pdf
 
 Documentos HTML = text/html; application/xhtml+xml; application/vnd.wap.xhtml+xml; application/x-asp; text/asp; text/aspdotnet
 
-Arquivos XML = application/xml; application/rdf+xml; application/rss+xml; application/vnd.google-earth.kml+xml
+Arquivos XML = application/xml; application/rdf+xml; application/rss+xml
+
+Arquivos de Georeferenciamento = application/vnd.google-earth.kml+xml; application/gpx
 
 Documentos de Texto = application/vnd.ms-wordml; application/x-tika-ooxml-protected-docx; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;
 
@@ -46,7 +48,7 @@ Não Alocado = application/x-unallocated;
 
 File Slacks = application/x-fileslack
 
-Imagens = image; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
+Imagens = image; application/coreldraw; application/x-vnd.corel.zcf.draw.document+zip; application/vnd.oasis.opendocument.graphics; application/vnd.oasis.opendocument.graphics-template; application/vnd.oasis.opendocument.image; application/vnd.oasis.opendocument.image-template; application/vnd.sun.xml.draw; application/vnd.sun.xml.draw.template; application/vnd.stardivision.draw;
 
 Vídeos = video; application/vnd.rn-realmedia; application/x-shockwave-flash
 

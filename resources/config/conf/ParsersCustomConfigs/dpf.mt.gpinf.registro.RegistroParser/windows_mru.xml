@@ -1,0 +1,38 @@
+<registryparserconfig>
+
+<registryKeyParsers>
+
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+        <key name="ROOT/Microsoft/Windows/CurrentVersion/Explorer/RecentDocs/*">
+        </key>
+
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/RecentDocs/*">
+        </key>
+
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/RunMRU">
+			<decoder type="REG_SZ" function="decodeMRU">
+				<exclude valueName="MRUListEx"/>
+			</decoder>
+        </key>
+
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/FindComputerMRU">
+        </key>
+
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/Doc Find Spec MRU">
+        </key>
+	</registryKeyParser>
+
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.MRUKeyParser">
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/ComDlg32/OpenSavePidlMRU/*">
+        </key>        
+	</registryKeyParser>
+
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.UserAssistKeyParser">
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/UserAssist/*/Count">
+			<decoder type="REG_BINARY" function="decodeUserAssist" decodeValueName="yes"/>
+        </key>        
+	</registryKeyParser>
+
+</registryKeyParsers>
+
+</registryparserconfig>

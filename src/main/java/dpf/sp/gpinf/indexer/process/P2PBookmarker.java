@@ -15,12 +15,12 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.SearchResult;
-import gpinf.dev.data.CaseData;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import iped3.CaseData;
+import iped3.search.SearchResult;
+import iped3.util.ExtraProperties;
 
 public class P2PBookmarker {
 	
@@ -59,9 +59,9 @@ public class P2PBookmarker {
 		p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
 		
-		IPEDSource ipedSrc = new IPEDSource(caseDir);
-		String queryText = ExtraProperties.SHARED_HASHES + ":* || " + ExtraProperties.SHARED_ITEMS + ":*"; //$NON-NLS-1$
-		IPEDSearcher searcher = new IPEDSearcher(ipedSrc, queryText);
+		IPEDSourceImpl ipedSrc = new IPEDSourceImpl(caseDir);
+		String queryText = ExtraProperties.SHARED_HASHES + ":*"; //$NON-NLS-1$
+		IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedSrc, queryText);
 		try {
 			SearchResult p2pItems = searcher.search();
 			for (int i = 0; i < p2pItems.getLength(); i++){
@@ -87,7 +87,7 @@ public class P2PBookmarker {
 				queryBuilder.append(items.toString());
 				if(isHash) queryBuilder.append(")"); //$NON-NLS-1$
 				queryBuilder.append(")"); //$NON-NLS-1$
-				searcher = new IPEDSearcher(ipedSrc, queryBuilder.toString());
+				searcher = new IPEDSearcherImpl(ipedSrc, queryBuilder.toString());
 				
 				SearchResult result = searcher.search();
 				LOGGER.info("Items shared by " + program.appName + " found: " + result.getLength()); //$NON-NLS-1$ //$NON-NLS-2$
