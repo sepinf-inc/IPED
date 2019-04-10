@@ -673,6 +673,10 @@ public class ItemImpl implements SleuthKitItem {
   public boolean hasTmpFile() {
     return tmpFile != null;
   }
+  
+  public boolean hasFile() {
+      return startOffset == -1 && file != null;
+  }
 
   /**
    *
