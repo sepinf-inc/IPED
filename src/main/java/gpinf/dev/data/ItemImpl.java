@@ -379,7 +379,7 @@ public class ItemImpl implements SleuthKitItem {
   public File getFile() {
     return file;
   }
-
+  
   /**
    *
    * @return o offset no item pai da onde o item foi recuperado (carving). Retorna -1 se o item não

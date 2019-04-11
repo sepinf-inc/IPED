@@ -340,6 +340,9 @@ public class CmdLineArgs {
       }
       file = file.getParentFile();
     }
+    
+    System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
+    System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$ //$NON-NLS-2$
 
   }
 
