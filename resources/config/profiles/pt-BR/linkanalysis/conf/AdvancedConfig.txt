@@ -1,0 +1,160 @@
+﻿########################################################################
+# Configurações Avançadas de Processamento
+########################################################################
+
+# OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
+
+# Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
+# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
+# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
+robustImageReading = false
+
+# Usa processos auxiliares para interpretar os arquivos, isolando travamentos e OutOfMemoryErrors no parsing.
+# Consome mais memória e é um pouco mais lento devido aos processos auxiliares e comunicação com eles.
+enableExternalParsing = false
+
+# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza o número de processadores lógicos.
+# Pode-se diminuir esse valor pois raramente todos os Workers estão realizando parsing ao mesmo tempo,
+# exceto em casos com OCR habilitado, pois o tempo de parsing é significativo.
+numExternalParsers = auto
+
+# Memória heap máxima a usar POR EXTERNAL PARSER. Valores baixos podem provocar erros de parsing por falta de memória.
+externalParsingMaxMem = 512M
+
+# Define se serão usados decodificadores internos ou externos (ex. ufed) para dados de celulares
+# com mais de um decodificador. Valores possíveis: internal, external, all
+phoneParsersToUse = internal
+
+# Força merge do índice para um único segmento, diminuindo o índice e otimizando a busca a partir de mídias ópticas.
+# É muito custoso, sendo desnecessário caso o índice seja acessado a partir de um HD.
+forceMerge = false
+
+# Tempo de espera mínimo (segundos) por progresso no parsing dos arquivos. É adicionado o valor em timeOutPerMB.
+# Após este limite, são indexadas strings brutas do arquivo.
+timeOut = 180
+
+# Tempo de espera (segundos) pelo parsing de cada item por Megabyte.
+# Assim para itens maiores são aguardados valores maiores de timeout.
+timeOutPerMB = 2
+
+# Copia LibreOffice.zip (100MB) para a pasta de saída, permitindo visualizar dezenas de formatos diferentes.
+embutirLibreOffice = true
+
+# Habilita ordenação dos caracteres de PDFs por posição.
+# Necessário para indexar corretamente PDFs rotacionados, mas dobra o tempo de processamento de PDFs
+sortPDFChars = false
+
+# Realiza teste de aleatoriedade antes de indexar trechos de itens binários e desconhecidos.
+# Torna a indexação mto mais rápida e o índice mto menor, principalmente ao indexar espaço não alocado.
+# Eventualmente pode ocasionar perda de hits cercados por conteúdo "aleatório".
+entropyTest = true
+
+# Tamanho mínimo de strings brutas extraídas de arquivos desconhecidos para indexação
+minRawStringSize = 4
+
+# Define caracteres adicionais a serem indexados além de letras e números, isto é, deixam de ser separadores
+# Utilize espaço para separar os caracteres
+extraCharsToIndex =
+
+# Converte os caracteres para minúsculas antes da indexação, tornando a pesquisa independente da capitalização.
+# Desabilite apenas em casos excepcionais para gerar um melhor dicionário para quebra de senhas.
+convertCharsToLowerCase = true
+
+# Não indexa palavras formadas por caracteres fora do conjunto Latin-1, como chinês, cirílico, árabe, etc.
+# Padrão é false.
+filterNonLatinChars = false
+
+# Remove acentuação e converte os caracteres para seu equivalente ascii.
+convertCharsToAscii = true
+
+# Não re-processa hard links HFS+ apontando para itens já processados. Os hard links são adicionados ao caso,
+# porém seu conteúdo não é processado (indexado, expandido, carveado, etc).
+# Otimiza consideravelmente processamento de imagens HFS+ contendo milhares de hard links (time machines).
+ignoreHardLinks = true
+
+# Configure caso queira ignorar arquivos orphans com base no seu tamanho.
+# Em raros casos podem ser recuperados pelo sleuthkit de milhares a milhões de orphans corrompidos gigantes, 
+# que podem tornar o processamento inviável.
+#minOrphanSizeToIgnore = 102400000
+
+# Tamanho em bytes de divisão do espaço não alocado. Em casos onde o carving de vídeos seja importante,
+# pode ser interessante aumentar esse valor para minimizar a perda de itens que atravessam as bordas.
+unallocatedFragSize = 1073741824
+
+# Tamanho mínimo (bytes) de itens para serem divididos antes de serem indexados via strings. Itens grandes sem parser 
+# específico são divididos em fragmentos de 10MB antes de serem indexados, facilitando o destaque de hits e a exportação 
+# de trechos com hits de itens grandes como pagefile, vss, etc
+minItemSizeToFragment = 104857600
+
+# Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
+# não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
+textSplitSize = 10000000
+
+########################################################################
+# Configurações OCR
+########################################################################
+
+# Opcionalmente, utilize o parâmetro -ocr "nome_bookmark" para restringir o OCR a determinado bookmark (pode ser utilizado várias vezes)
+
+# Idioma do dicionário a ser utilizado pelo OCR. Estão incluídos português(por) e inglês(eng). Podem ser utilizados em conjunto: por+eng
+OCRLanguage = por
+
+# Modo de análise de layout do Tesseract, por ex: 1 - com OSD (orientation & script detection), 3 - sem OSD (padrão Tesseract)
+pageSegMode = 1
+
+# Tamanho mínimo em bytes de arquivos para aplicar OCR
+minFileSize2OCR = 10000
+
+# Tamanho máximo em bytes de arquivos para aplicar OCR
+maxFileSize2OCR = 100000000
+
+# Resolução em dpi para conversão de PDF's para imagem. Aumente caso a fonte das digitalizações seja pequena
+pdfToImgResolution = 250
+
+# Máximo de caracteres de texto por página que um PDF pode conter para ser aplicado OCR
+maxPDFTextSize2OCR = 100
+
+# Biblioteca para conversão de PDFs para imagem antes do OCR.
+# Valores possíveis: pdfbox ou icepdf (geralmente mais rápido)
+pdfToImgLib = icepdf
+
+# Realiza a conversão de PDFs para imagem em outro processo, isolando OutOfMemoryErrors
+# e uso de CPU por threads desconectadas. Mais estável, porém torna o OCR mais lento.
+externalPdfToImgConv = true
+
+# Memória heap máxima a utilizar POR WORKER durante conversão externa de PDFs p/ imagem.
+externalConvMaxMem = 512M
+
+# Processa imagens embutidas em PDFs. Necessário para extrair imagens de PDFs caso sejam expandidos.
+# Caso habilitado, o OCR é aplicado nas imagens embutidas ao invés das imagens geradas pela renderização de cada página.
+# Às vezes as imagens ficam fragmentadas nos PDFs, podendo cortar palavras ou linhas. Nesse caso essa opção pode ser prejudicial ao OCR.
+# Além disso, com essa opção o OCR de imagens jbig2 em PDFs não funciona, pois o tesseract não suporta esse formato. 
+processImagesInPDFs = false
+
+########################################################################
+# Configurações da Pesquisa
+########################################################################
+
+# Número de threads utilizadas para pesquisar o índice. Pode agilizar pesquisas em índices grandes.
+# Valores altos podem degradar a pesquisa caso o índice esteja num disco lento.
+searchThreads = 1
+
+# Número máximo de backups do estado da análise (marcadores, seleções, histórico de busca)
+# Os backups são salvos na pasta do caso em indexador/bkp
+maxBackups = 10
+
+# Intervalo (em segundos) entre a realização dos backups
+backupInterval = 60
+
+# Habilita por padrão gerenciamento automático de colunas
+autoManageCols = false
+
+# Força abertura da imagens na inicialização do IPED. Desabilitado por padrão. 
+preOpenImagesOnSleuth = false
+
+# Caso a abertura das imagens esteja habilitada, é possível habilitar um aquecimento do cache de disco.
+# Desabilitado por padrão. Pode agilizar bastante a abertura de imagens E01 via rede.
+openImagesCacheWarmUpEnabled = false
+
+# Número de threads utilizado, caso o aquecimento do cache esteja habilitado.
+openImagesCacheWarmUpThreads = 256

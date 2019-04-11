@@ -75,6 +75,15 @@ public class UfedXmlReader extends DataSourceReader{
         super(caseData, output, listOnly);
     }
 
+    private void reset() {
+      root = null;
+      ufdrFile = null;
+      ufdr = null;
+      zisf = null;
+      rootItem = null;
+      decodedFolder = null;
+    }
+
     @Override
     public boolean isSupported(File datasource) {
         
@@ -148,21 +157,23 @@ public class UfedXmlReader extends DataSourceReader{
         this.root = root;
         addRootItem(parent);
         addVirtualDecodedFolder();
-        InputStream xmlStream = lookUpXmlReportInputStream(root);
+        InputStream xmlStream = null;
+        try {
+            xmlStream = lookUpXmlReportInputStream(root);
 
-        configureParsers();
+            configureParsers();
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-        spf.setNamespaceAware(true);
-        SAXParser saxParser = spf.newSAXParser();
-        XMLReader xmlReader = saxParser.getXMLReader();
-        xmlReader.setContentHandler(new XMLContentHandler());
-        xmlReader.setErrorHandler(new XMLErrorHandler());
-        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
-        
-        IOUtil.closeQuietly(xmlStream);
-        //IOUtil.closeQuietly(ufdr);
-        
+            SAXParserFactory spf = SAXParserFactory.newInstance();
+            spf.setNamespaceAware(true);
+            SAXParser saxParser = spf.newSAXParser();
+            XMLReader xmlReader = saxParser.getXMLReader();
+            xmlReader.setContentHandler(new XMLContentHandler());
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+            xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
+        } finally {
+            IOUtil.closeQuietly(xmlStream);
+            reset();
+        }
     }
     
     private void configureParsers() {

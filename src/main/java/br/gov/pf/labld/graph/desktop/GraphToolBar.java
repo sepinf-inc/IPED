@@ -13,7 +13,8 @@ import javax.swing.JToolBar;
 import org.kharon.history.GraphAction;
 import org.kharon.history.GraphHistory;
 import org.kharon.history.GraphHistoryListener;
-import org.kharon.layout.HierarquicalLayout;
+import org.kharon.layout.graphviz.GraphVizAlgorithm;
+import org.kharon.layout.graphviz.GraphVizLayout;
 
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
@@ -86,10 +87,13 @@ public class GraphToolBar extends JToolBar implements GraphHistoryListener {
 
     this.addSeparator();
 
-    URL layoutHLUrl = this.getClass().getResource("diagram-2x.png");
-    JButton layoutHLBtn = createButton(new ApplyGraphLayoutAction(app, new HierarquicalLayout(.1d, 5d)),
-        Messages.getString("GraphAnalysis.HierarquicalLayout"), layoutHLUrl);
-    this.addBtn(layoutHLBtn);
+    for (GraphVizAlgorithm algo : GraphVizAlgorithm.values()) {
+      URL layoutHLUrl = this.getClass().getResource("diagram-2x.png");
+      JButton layoutHLBtn = createButton(
+          new ApplyGraphLayoutAction(app, new GraphVizLayout(algo, new GraphVizIpedResolver())),
+          "Layout " + algo.name(), layoutHLUrl);
+      this.addBtn(layoutHLBtn);
+    }
   }
 
   private JButton createButton(Action action, String tooltip, URL icon) {

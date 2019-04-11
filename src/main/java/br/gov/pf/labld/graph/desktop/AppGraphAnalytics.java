@@ -52,6 +52,7 @@ import br.gov.pf.labld.graph.desktop.renderers.DocumentNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.EmailNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.MoneyBagNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
+import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -118,6 +119,12 @@ public class AppGraphAnalytics extends JPanel {
     renderers.registerNodeRenderer("CONTA_BANCARIA", new MoneyBagNodeRenderer());
     renderers.registerNodeRenderer("SWIFT", new MoneyTransferNodeRenderer());
     renderers.registerNodeRenderer("EVIDENCIA", new DocumentNodeRenderer());
+
+    renderers.registerNodeRenderer("DATASOURCE,EVIDENCIA", new DocumentNodeRenderer());
+    renderers.registerNodeRenderer("DATASOURCE,PESSOA_FISICA", new PersonNodeRenderer());
+    renderers.registerNodeRenderer("DATASOURCE,PESSOA_JURIDICA", new CompanyNodeRenderer());
+
+    renderers.registerNodeRenderer("CONTACT_GROUP", new PeopleNodeRenderer());
 
     this.sidePanel = new GraphSidePanel(this.graphPane);
 
@@ -399,7 +406,12 @@ public class AppGraphAnalytics extends JPanel {
 
       this.currentNode = graph.getNode(nodeId.toString());
 
-      graphService.getNeighboursWithLabels(labels, nodeId, this);
+      try {
+        graphService.getNeighboursWithLabels(labels, nodeId, this);
+      } catch (Exception e) {
+        AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
+        throw new RuntimeException(e);
+      }
       AppGraphAnalytics.this.graph.addElements(newNodes, newEdges);
 
       return null;

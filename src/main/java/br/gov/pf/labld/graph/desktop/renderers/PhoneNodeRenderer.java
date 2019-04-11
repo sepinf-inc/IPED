@@ -8,7 +8,7 @@ import org.kharon.renderers.RenderContext;
 import org.kharon.renderers.ShapeNodeRenderer;
 
 /**
- * This class has been generated using
+ * This class was generated using
  * <a href="http://ebourg.github.io/flamingo-svg-transcoder/">Flamingo SVG
  * transcoder</a>.
  * 

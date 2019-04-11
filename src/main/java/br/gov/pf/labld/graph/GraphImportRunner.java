@@ -12,9 +12,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.neo4j.tooling.ImportTool;
@@ -73,6 +75,8 @@ public class GraphImportRunner {
     args.add(argsFile.getAbsolutePath());
 
     ExecutorService executorService = null;
+
+    LOGGER.info("Running " + args.stream().collect(Collectors.joining(" ")));
 
     ProcessBuilder processBuilder = new ProcessBuilder(args);
     Process process = processBuilder.start();

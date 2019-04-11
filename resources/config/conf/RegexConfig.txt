@@ -44,26 +44,3 @@ SWIFT, 1 , 1 , false = [^A-Z][A-Z]{4}[A-Z]{2}[A-Z0-9]{2}[a-zA-Z0-9]{3}[^a-zA-Z0-
 # IBAN, 1 , 1 , false = [^A-Z][A-Z]{2}[0-9]{2}[A-Z0-9]{5,30}[^A-Z0-9]
 
 TELEFONE=((()|(Tel|Telefone)(:| |: )| )(\+55 |\+55|())(\([1-9]{2}\)|[1-9]{2})( |\-|())(9[0-9]{4}|[3-5][0-9]{3})( |\-|\.)([0-9]{4})([^0-9]|()))|(((Tel|Telefone)(:| |: )| )(\+55 |\+55|())(\([1-9]{2}\)|[1-9]{2})( |\-|())(9[0-9]{4}|[3-5][0-9]{3})( |\-|\.|())([0-9]{4})([^0-9]|()))
-
-#Telefones nas mensagens e grupos de whatsapp extraidas pelo UFED 
-TELEFONE=[0-9]{13}\@s\.whatsapp\.net
-TELEFONE=WhatsApp Chat - [^-]+ - [0-9]{13}
-TELEFONE=WhatsApp Chat - [0-9]{13}
-
-#Telefones nos metadados de chamadas extraidas pelo UFED
-TELEFONE=Message-(To|From): [^\(]+\(\+?[0-9]{8,}\)
-TELEFONE=Message-(To|From): .?[0-9]{8,}
-
-#Telefones com formatos estranhos nos contatos extraidos pelo UFED
-TELEFONE=ufed:PhoneNumber: [0-9\- \+\(\)]+ \([a-zA-Z]+\)
-TELEFONE=ufed:PhoneNumber: .?[0-9]{8,}
-TELEFONE=Contact ID: .?[0-9]{8,}
-
-PLACA = ((\r\n| |\	)([A-Z]{3})(()|-)([0-9]{4})( |\	|\r\n))|((Placa|Placas|PLACA|PLACAS)( |:|: )([A-Za-z]{3})( )([0-9]{4}))
-
-IPL=(IPL|RE)(_| ){1}[0-9]+-20[0-9]{2}-[0-9]{2}
-
-#Contatos do Facebook
-FACEBOOK=ufed:UserID: [0-9]{10,}
-
-RIF=RIF(_| ){1}[0-9]{3,}[^0-9]{1}

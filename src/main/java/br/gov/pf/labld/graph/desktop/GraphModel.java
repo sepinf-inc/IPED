@@ -1,5 +1,6 @@
 package br.gov.pf.labld.graph.desktop;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.kharon.Node;
 import org.neo4j.graphdb.Label;
@@ -21,41 +23,69 @@ public class GraphModel {
   private double distanceStep = 0.2d;
   private double angleStep = Math.PI / 32d;
 
-  private Set<String> knownTypes = new HashSet<>(
-      Arrays.asList("EVIDENCIA", "PESSOA_FISICA", "PESSOA_JURIDICA", "PLACA", "EMAIL", "TELEFONE", "RIF", "IPL"));
+  private List<String> knownTypes = Arrays.asList("DATASOURCE", "EVIDENCIA", "PESSOA_FISICA", "PESSOA_JURIDICA",
+      "PLACA", "EMAIL", "TELEFONE", "RIF", "IPL", "CONTACT_GROUP");
 
   public Node convert(org.neo4j.graphdb.Node neo4jNode) {
     String nodeId = Long.toString(neo4jNode.getId());
     Node node = new Node(nodeId);
 
     String[] fieldNames = getDefaultFieldNames(neo4jNode);
-    String type = getType(neo4jNode);
+    String type = getFullType(neo4jNode);
     node.setType(type);
     node.setLabel(getLabel(neo4jNode, fieldNames));
+
+    if (type.contains("DATASOURCE")) {
+      node.setSize(30);
+      node.setColor(Color.RED);
+    } else if (type.equals("CONTACT_GROUP")) {
+      node.setSize(25);
+      node.setColor(new Color(8, 160, 56));
+    } else {
+      node.setSize(20);
+    }
 
     return node;
   }
 
+  private String getFullType(org.neo4j.graphdb.Node neo4jNode) {
+    Set<String> labels = new HashSet<>();
+    Iterator<Label> iterator = neo4jNode.getLabels().iterator();
+    while (iterator.hasNext()) {
+      String type = iterator.next().name();
+      labels.add(type);
+    }
+    return labels.stream().sorted().collect(Collectors.joining(","));
+  }
+
   public String getType(org.neo4j.graphdb.Node neo4jNode) {
+    Set<String> labels = new HashSet<>();
     Iterator<Label> iterator = neo4jNode.getLabels().iterator();
     String type = null;
     while (iterator.hasNext()) {
       type = iterator.next().name();
-      if (knownTypes.contains(type)) {
-        return type;
+      labels.add(type);
+    }
+
+    for (String knownType : knownTypes) {
+      if (labels.contains(knownType)) {
+        return knownType;
       }
     }
+
     return type;
   }
 
   public String[] getDefaultFieldNames(org.neo4j.graphdb.Node neo4jNode) {
     // TODO Move to configuration file
     String type = getType(neo4jNode);
-    if (type.equals("EVIDENCIA")) {
+    if (type.contains("DATASOURCE")) {
+      return new String[] { "name", "nome", "cpf", "cnpj" };
+    } else if (type.contains("EVIDENCIA")) {
       return new String[] { "name", "path", "hash" };
-    } else if (type.equals("PESSOA_FISICA")) {
-      return new String[] { "cpf", "titulo_eleitor", "cnh", "pispasep" };
-    } else if (type.equals("PESSOA_JURIDICA")) {
+    } else if (type.contains("PESSOA_FISICA")) {
+      return new String[] { "cpf", "titulo_eleitor", "cnh", "pispasep", "name" };
+    } else if (type.contains("PESSOA_JURIDICA")) {
       return new String[] { "cnpj" };
     } else if (type.equals("PLACA")) {
       return new String[] { "placa" };
@@ -67,6 +97,8 @@ public class GraphModel {
       return new String[] { "rif" };
     } else if (type.equals("IPL")) {
       return new String[] { "ipl" };
+    } else if (type.equals("CONTACT_GROUP")) {
+      return new String[] { "name" };
     } else {
       Iterable<String> keys = neo4jNode.getPropertyKeys();
       List<String> props = new ArrayList<>();

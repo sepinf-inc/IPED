@@ -32,6 +32,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import gpinf.dev.data.EvidenceFile;
 
 /**
@@ -111,13 +112,14 @@ public class SetCategoryTask extends AbstractTask {
 
   public void process(EvidenceFile e) throws Exception {
 
+    String category;
     if (e.isDir()) {
-        e.setCategory(FOLDER_CATEGORY);
+        category = FOLDER_CATEGORY;
     }else {
-        String category = get(e.getMediaType());
-        e.setCategory(category);  
+        category = get(e.getMediaType());
     }
-    
+    e.setCategory(category);
+    e.setTempAttribute(BasicProps.CATEGORY, category);
   }
 
 }

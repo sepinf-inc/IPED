@@ -176,11 +176,11 @@ public class GraphSidePanel extends JPanel {
     }
 
     private Object asString(Object value) {
-      
+
       if (value.getClass().isArray()) {
-        value = Arrays.toString((Object[]) value);
+//        value = Arrays.stream((Object[]) value).map(t -> t.toString()).collect(Collectors.joining(", "));
       }
-      
+
       return value.toString();
     }
 

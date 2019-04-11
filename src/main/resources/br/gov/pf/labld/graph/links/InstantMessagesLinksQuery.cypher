@@ -1,139 +1,39 @@
 MATCH
-	path = (:EVIDENCIA {evidenceId : $start})-->
+	path = (:DATASOURCE {evidenceId : $start})-->
 	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
+	(sim:EVIDENCIA {category : 'Dados SIM'})-->
 	(:TELEFONE)<--
-	(msg:EVIDENCIA {subType : 'x-ufed-sms'})<--
+	(msg:EVIDENCIA {category : 'Mensagens SMS'})<--
 	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $end})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX msg:EVIDENCIA(subType)
+	(:DATASOURCE {evidenceId : $end})
 RETURN path
 UNION
 MATCH
-	path = (:EVIDENCIA {evidenceId : $end})-->
+	path = (:DATASOURCE {evidenceId : $end})-->
 	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
+	(sim:EVIDENCIA {category : 'Dados SIM'})-->
 	(:TELEFONE)<--
-	(msg:EVIDENCIA {subType : 'x-ufed-sms'})<--
+	(msg:EVIDENCIA {category : 'Mensagens SMS'})<--
 	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $start})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX msg:EVIDENCIA(subType)
+	(:DATASOURCE {evidenceId : $start})
 RETURN path
 UNION
 MATCH
-	path = (:EVIDENCIA {evidenceId : $start})-->
+	path = (:DATASOURCE {evidenceId : $start})-->
 	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
+	(sim:EVIDENCIA {category : 'Dados SIM'})-->
 	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat'})<--
+	(chat:EVIDENCIA {category : 'Chats'})<--
 	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $end})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
+	(:DATASOURCE {evidenceId : $end})
 RETURN path
 UNION
 MATCH
-	path = (:EVIDENCIA {evidenceId : $end})-->
+	path = (:DATASOURCE {evidenceId : $end})-->
 	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
+	(sim:EVIDENCIA {category : 'Dados SIM'})-->
 	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat'})<--
+	(chat:EVIDENCIA {category : 'Chats'})<--
 	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $start})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $start})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-whatsapp-msg'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $end})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $end})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-whatsapp-msg'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $start})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $start})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat-preview'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $end})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $end})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat-preview'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $start})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $start})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat-whatsapp'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $end})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
-RETURN path
-UNION
-MATCH
-	path = (:EVIDENCIA {evidenceId : $end})-->
-	(ext1:EVIDENCIA{source : 'UfedXmlReader'})-->
-	(sim:EVIDENCIA {subType : 'x-ufed-simdata'})-->
-	(:TELEFONE)<--
-	(chat:EVIDENCIA {subType : 'x-ufed-chat-whatsapp'})<--
-	(ext2:EVIDENCIA {source : 'UfedXmlReader'})<--
-	(:EVIDENCIA {evidenceId : $start})
-	USING INDEX ext1:EVIDENCIA(source)
-	USING INDEX sim:EVIDENCIA(subType)
-	USING INDEX ext2:EVIDENCIA(source)
-	USING INDEX chat:EVIDENCIA(subType)
+	(:DATASOURCE {evidenceId : $start})
 RETURN path

@@ -58,7 +58,7 @@ enableNamedEntityRecogniton = false
 # Função EXPERIMENTAL para geração de mapa de vínculos.
 # Utiliza o banco de dados neo4j.
 # Depende da geracao de expressoes regulares.
-enableGraphGeneration = true
+enableGraphGeneration = false
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true

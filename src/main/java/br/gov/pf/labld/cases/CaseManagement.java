@@ -23,6 +23,8 @@ public class CaseManagement extends JFrame {
 
   private OpenCasePanel openCasePanel;
 
+  private String profile;
+
   public CaseManagement() throws HeadlessException {
     super(Versao.APP_NAME);
     createGUI();
@@ -33,7 +35,7 @@ public class CaseManagement extends JFrame {
 
     newCasePanel = new NewCasePanel(this);
     openCasePanel = new OpenCasePanel(this);
-    CaseOptionsPanel caseOptionsPanel = new CaseOptionsPanel();
+    CaseOptionsPanel caseOptionsPanel = new CaseOptionsPanel(this);
 
     mainPanel.add(newCasePanel, NewCasePanel.getPanelName());
     mainPanel.add(openCasePanel, OpenCasePanel.getPanelName());
@@ -88,6 +90,18 @@ public class CaseManagement extends JFrame {
 
   protected OpenCasePanel getOpenCasePanel() {
     return openCasePanel;
+  }
+
+  public String getProfile() {
+    return profile;
+  }
+
+  public void setProfile(String profile) {
+    if (profile.equals("default")) {
+      this.profile = null;
+    } else {
+      this.profile = profile;
+    }
   }
 
   public static void main(String[] args) {

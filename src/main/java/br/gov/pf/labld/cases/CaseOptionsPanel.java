@@ -2,6 +2,8 @@ package br.gov.pf.labld.cases;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -14,6 +16,7 @@ import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -23,17 +26,23 @@ import javax.swing.border.TitledBorder;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
-public class CaseOptionsPanel extends JPanel {
+public class CaseOptionsPanel extends JPanel implements ComponentListener {
 
   private static final long serialVersionUID = -8590852801053774717L;
+
+  private CaseManagement caseManagement;
+
   private FormPanel formPanel;
 
   private OptionsHelper helper;
 
   private List<String> booleanOptions = new ArrayList<>();
 
-  public CaseOptionsPanel() {
+  private JComboBox<String> profileCombo;
+
+  public CaseOptionsPanel(CaseManagement caseManagement) {
     super();
+    this.caseManagement = caseManagement;
     createGUI();
   }
 
@@ -61,6 +70,8 @@ public class CaseOptionsPanel extends JPanel {
         Messages.getString("Case.addUnallocatedHelp"));
     createBooleanOptionGUI("enableOCR", Messages.getString("Case.enableOCR"), Messages.getString("Case.enableOCRHelp"));
 
+    createProfileComboBox();
+
     loadOptions();
 
     JButton cancelBtn = new JButton(new CancelAction());
@@ -75,7 +86,25 @@ public class CaseOptionsPanel extends JPanel {
     JScrollPane scrollPane = new JScrollPane(formPanel);
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     add(scrollPane, BorderLayout.CENTER);
+    
+    this.addComponentListener(this);
+  }
 
+  private void createProfileComboBox() {
+    String help = Messages.getString("Case.ProfileHelp");
+    JLabel jLabel = new JLabel(Messages.getString("Case.Profile"));
+    jLabel.setToolTipText(help);
+    jLabel.setHorizontalTextPosition(JLabel.LEFT);
+
+    ImageIcon imageIcon = createImageIcon("information.png", help);
+    jLabel.setIcon(imageIcon);
+
+    String[] items = new String[] { "default", "blind", "fastmode", "forensic", "linkanalysis", "pedo", "triage" };
+    profileCombo = new JComboBox<>(items);
+
+    profileCombo.setSelectedItem(caseManagement.getProfile());
+
+    formPanel.addItem("profile", jLabel, profileCombo);
   }
 
   private void createBooleanOptionGUI(String name, String label, String help) {
@@ -96,6 +125,8 @@ public class CaseOptionsPanel extends JPanel {
     for (String itemName : booleanOptions) {
       formPanel.setBooleanItemValue(itemName, helper.getBoolean(itemName));
     }
+
+    profileCombo.setSelectedItem(caseManagement.getProfile());
   }
 
   public void saveOptions() {
@@ -111,6 +142,7 @@ public class CaseOptionsPanel extends JPanel {
       String msg = Messages.getString("Case.OptionsSaveError", e.getLocalizedMessage());
       JOptionPane.showMessageDialog(null, msg);
     }
+    this.caseManagement.setProfile(formPanel.getItemText("profile"));
   }
 
   protected ImageIcon createImageIcon(String path, String description) {
@@ -142,6 +174,26 @@ public class CaseOptionsPanel extends JPanel {
       saveOptions();
     }
 
+  }
+
+  @Override
+  public void componentResized(ComponentEvent e) {
+    
+  }
+
+  @Override
+  public void componentMoved(ComponentEvent e) {
+    
+  }
+
+  @Override
+  public void componentShown(ComponentEvent e) {
+    loadOptions();
+  }
+
+  @Override
+  public void componentHidden(ComponentEvent e) {
+    
   }
 
 }

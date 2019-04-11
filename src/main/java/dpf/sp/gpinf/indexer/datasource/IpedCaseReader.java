@@ -135,6 +135,8 @@ public class IpedCaseReader extends DataSourceReader {
       evidenceFile.getExtraAttributeMap().put("X-EntityPropertyValue", value);
     }
 
+    evidenceFile.getId();
+
     caseData.incDiscoveredEvidences(1);
 
     try {
@@ -156,7 +158,8 @@ public class IpedCaseReader extends DataSourceReader {
     evidenceFile.setPath(evidenceName);
     evidenceFile.setName(evidenceName);
     evidenceFile.setHash("");
-//    evidenceFile.getExtraAttributeMap().put("X-EntityLabel", IpedCase.class.getSimpleName().toUpperCase());
+
+    evidenceFile.getId();
 
     caseData.incDiscoveredEvidences(1);
     try {

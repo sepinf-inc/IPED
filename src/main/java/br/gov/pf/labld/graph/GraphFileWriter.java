@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -34,22 +36,77 @@ public class GraphFileWriter implements Closeable, Flushable {
   private Map<String, CSVWriter> nodeWriters = new HashMap<>();
   private Map<String, CSVWriter> relationshipWriters = new HashMap<>();
 
+  private BufferedWriter replaceWriter = null;
+  private File replaceFile;
+
   private File root;
   private String suffix;
 
-  public GraphFileWriter(File root, String suffix) {
+  public GraphFileWriter(File root, String suffix, String defaultEntity) {
     super();
     this.root = root;
     this.suffix = suffix;
     root.mkdirs();
+    initReplaceWriter(root);
+    configureDefaultEntityFields(defaultEntity);
+  }
+
+  private void initReplaceWriter(File root) {
+    try {
+      replaceFile = new File(root, "replace.csv");
+      replaceWriter = new BufferedWriter(
+          new OutputStreamWriter(new FileOutputStream(replaceFile), Charset.forName("UTF-8")));
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void configureDefaultEntityFields(String defaultEntity) {
+    try {
+      CSVWriter writer = getNodeWriter(DynLabel.label(defaultEntity));
+      writer.fieldPositions = new LinkedHashSet<>(
+          Arrays.asList("nodeId", "label", "path", "evidenceId", "name", "categories", "hash"));
+
+      writer.fieldTypes = new HashMap<>();
+
+      writer.fieldTypes.put("nodeId", "ID");
+      writer.fieldTypes.put("label", "LABEL");
+      writer.fieldTypes.put("path", "string");
+      writer.fieldTypes.put("evidenceId", "string");
+      writer.fieldTypes.put("name", "string");
+      writer.fieldTypes.put("category", "string");
+      writer.fieldTypes.put("type", "string");
+      writer.fieldTypes.put("hash", "string");
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
   private CSVWriter openNodeWriter(Label... labels) throws IOException {
-    return new CSVWriter(root, "nodes", labels, suffix);
+    CSVWriter writer = new CSVWriter(root, "nodes", labels, suffix);
+
+    writer.fieldPositions = new LinkedHashSet<>(Arrays.asList("nodeId", "label"));
+
+    writer.fieldTypes = new HashMap<>();
+
+    writer.fieldTypes.put("nodeId", "ID");
+    writer.fieldTypes.put("label", "LABEL");
+
+    return writer;
   }
 
   private CSVWriter openRelationshipWriter(RelationshipType type) throws IOException {
-    return new CSVWriter(root, "relationships", type.name(), suffix);
+    CSVWriter writer = new CSVWriter(root, "relationships", type.name(), suffix);
+    writer.fieldPositions = new LinkedHashSet<>(Arrays.asList("start", "end", "type"));
+
+    writer.fieldTypes = new HashMap<>();
+
+    writer.fieldTypes.put("start", "START_ID");
+    writer.fieldTypes.put("end", "END_ID");
+    writer.fieldTypes.put("type", "TYPE");
+    return writer;
   }
 
   private synchronized CSVWriter getRelationshipWriter(RelationshipType type) throws IOException {
@@ -102,11 +159,20 @@ public class GraphFileWriter implements Closeable, Flushable {
   private File writeHeaderFile(CSVWriter out) throws IOException {
     String fileName = out.getPrefix() + "_" + out.getName() + "_headers_" + out.getSuffix() + ".csv";
     File file = new File(root, fileName);
-    LinkedHashSet<String> fields = out.getFieldPositions();
+    List<String> fields = new ArrayList<>(out.getFieldPositions());
+    Map<String, String> types = out.getFieldTypes();
     try (BufferedWriter writer = new BufferedWriter(
         new OutputStreamWriter(new FileOutputStream(file), Charset.forName("utf-8")))) {
-      String collected = fields.stream().collect(Collectors.joining(","));
-      writer.write(collected);
+      List<String> headers = new ArrayList<>(fields.size());
+      for (String field : fields) {
+        String type = types.get(field);
+        if (type == null) {
+          type = "string";
+        }
+        headers.add(field + ":" + type);
+      }
+      String header = headers.stream().collect(Collectors.joining(","));
+      writer.write(header);
     }
     return file;
   }
@@ -119,8 +185,8 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     String labelsNames = list.stream().map(l -> l.name()).collect(Collectors.joining(";"));
     Map<String, Object> record = new LinkedHashMap<>();
-    record.put("nodeId:ID", id);
-    record.put(":LABEL", labelsNames);
+    record.put("nodeId", id);
+    record.put("label", labelsNames);
     record.putAll(properties);
 
     CSVWriter out = getNodeWriter(label);
@@ -151,14 +217,27 @@ public class GraphFileWriter implements Closeable, Flushable {
       RelationshipType relationshipType, Map<String, Object> properties) throws IOException {
     String uniqueId2 = uniqueId(label2, idProperty2, propertyValue2.toString());
     Map<String, Object> record = new LinkedHashMap<>();
-    record.put(":START_ID", uniqueId1);
-    record.put(":END_ID", uniqueId2);
-    record.put(":TYPE", relationshipType.name());
+    record.put("start", uniqueId1);
+    record.put("end", uniqueId2);
+    record.put("type", relationshipType.name());
     record.putAll(properties);
 
     CSVWriter out = getRelationshipWriter(relationshipType);
     out.write(record);
 
+  }
+
+  public void writeNodeReplace(DynLabel label, String propName, Object propId, String nodeId) throws IOException {
+    String uniqueId1 = uniqueId(label, propName, propId.toString());
+    synchronized (replaceWriter) {
+      replaceWriter.write("\"");
+      replaceWriter.write(uniqueId1);
+      replaceWriter.write("\"");
+      replaceWriter.write(",");
+      replaceWriter.write("\"");
+      replaceWriter.write(nodeId);
+      replaceWriter.write("\"\r\n");
+    }
   }
 
   public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
@@ -174,15 +253,15 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   public void writeMergeNode(String id, Label label, Map<String, Object> properties) throws IOException {
     Map<String, Object> record = new LinkedHashMap<>();
-    record.put("nodeId:ID", id);
-    record.put(":LABEL", label.name());
+    record.put("nodeId", id);
+    record.put("label", label.name());
     record.putAll(properties);
 
     CSVWriter out = getNodeWriter(label);
     out.write(record);
   }
 
-  private String uniqueId(Label label, String uniquePropertyName, String uniquePropertyValue) {
+  private static String uniqueId(Label label, String uniquePropertyName, String uniquePropertyValue) {
     String unique = label.name() + "_" + uniquePropertyName + "_" + uniquePropertyValue;
     String id = DigestUtils.md5Hex(unique);
     return id;
@@ -200,10 +279,44 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   @Override
   public void close() throws IOException {
+    if (replaceWriter != null) {
+      replaceWriter.close();
+    }
+
     close(nodeWriters.values());
     close(relationshipWriters.values());
+    replace();
     writeArgsFile();
     deduplicate();
+  }
+
+  private void replace() throws IOException {
+    Map<String, String> replaces = loadReplaces();
+
+    if (!replaces.isEmpty()) {
+      for (CSVWriter writer : relationshipWriters.values()) {
+        writer.replace(replaces);
+      }
+    }
+  }
+
+  private Map<String, String> loadReplaces() throws IOException {
+    Map<String, String> replaces = new HashMap<>();
+
+    try (BufferedReader reader = new BufferedReader(
+        new InputStreamReader(new FileInputStream(replaceFile), Charset.forName("UTF-8")))) {
+      String line = null;
+      while ((line = reader.readLine()) != null) {
+        String[] values = line.split(",");
+        String id = values[0];
+        String newId = values[1];
+        if (!id.equals(newId)) {
+          replaces.put(id, newId);
+        }
+      }
+    }
+
+    return replaces;
   }
 
   private void close(Collection<? extends Closeable> closeables) throws IOException {
@@ -226,6 +339,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   private static class CSVWriter implements Closeable, Flushable {
 
+    private static final Pattern SLASH_PATTERN = Pattern.compile("\\\\");
     private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
     private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("\r|\n");
 
@@ -236,6 +350,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     private Writer out;
     private LinkedHashSet<String> fieldPositions = new LinkedHashSet<>();
+    private Map<String, String> fieldTypes = new HashMap<>();
 
     private String prefix;
     private String name;
@@ -257,6 +372,7 @@ public class GraphFileWriter implements Closeable, Flushable {
       this.suffix = suffix;
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized void write(Map<String, Object> record) throws IOException {
       fieldPositions.addAll(record.keySet());
       Iterator<String> iterator = fieldPositions.iterator();
@@ -265,8 +381,15 @@ public class GraphFileWriter implements Closeable, Flushable {
         Object value = record.get(field);
         if (value != null) {
           out.write("\"");
-          String strVal = value.toString();
+          String strVal = null;
+          if (value instanceof Collection) {
+            Collection<Object> col = (Collection<Object>) value;
+            strVal = col.stream().map(o -> o.toString()).collect(Collectors.joining(";"));
+          } else {
+            strVal = value.toString();
+          }
           strVal = QUOTE_PATTERN.matcher(strVal).replaceAll("'");
+          strVal = SLASH_PATTERN.matcher(strVal).replaceAll("\\\\\\\\\\\\\\\\");
           strVal = LINE_BREAK_PATTERN.matcher(strVal).replaceAll(" ");
           out.write(strVal);
           out.write("\"");
@@ -276,6 +399,35 @@ public class GraphFileWriter implements Closeable, Flushable {
         }
       }
       out.write("\r\n");
+    }
+
+    public void replace(Map<String, String> replaces) throws IOException {
+      BufferedReader reader = null;
+      BufferedWriter writer = null;
+      File tmp = new File(output.getParentFile(), output.getName() + ".tmp");
+      try {
+        writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp), Charset.forName("utf-8")));
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream(output), Charset.forName("utf-8")));
+        String line;
+        while ((line = reader.readLine()) != null) {
+          String id = line.substring(0, line.indexOf(",")).trim();
+          String newId = replaces.get(id);
+          if (newId != null) {
+            line = line.replaceFirst(id, newId);
+          }
+          writer.write(line);
+          writer.write("\r\n");
+        }
+      } finally {
+        if (reader != null) {
+          reader.close();
+        }
+        if (writer != null) {
+          writer.close();
+        }
+      }
+      output.delete();
+      tmp.renameTo(output);
     }
 
     public void deduplicate() throws IOException {
@@ -311,8 +463,12 @@ public class GraphFileWriter implements Closeable, Flushable {
       out.close();
     }
 
-    public LinkedHashSet<String> getFieldPositions() {
+    public Set<String> getFieldPositions() {
       return fieldPositions;
+    }
+
+    public Map<String, String> getFieldTypes() {
+      return fieldTypes;
     }
 
     public String getPrefix() {

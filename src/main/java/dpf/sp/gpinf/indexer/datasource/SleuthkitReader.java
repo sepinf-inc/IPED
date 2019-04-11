@@ -665,6 +665,7 @@ public class SleuthkitReader extends DataSourceReader {
     if (deviceName != null) {
       path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
     }
+    path = inheritedPath + path;
     evidence.setPath(path);
   }
 
@@ -740,14 +741,22 @@ public class SleuthkitReader extends DataSourceReader {
     Integer parentId = sleuthIdToId.get((int) (parent - firstId));
     evidence.setParentId(parentId);
 
+
     while (evidence.getId() >= parentIds.size()) {
       parentIds.add(-1);
     }
     parentIds.set(evidence.getId(), parentId);
 
+    List<Integer> parents = new ArrayList<>();
+    
     do {
-      evidence.addParentId(parentId);
+//      evidence.addParentId(parentId);
+      parents.add(parentId);
     } while ((parentId = parentIds.get(parentId)) != -1);
+
+    Collections.reverse(parents);
+    evidence.addParentIds(inheritedParents);
+    evidence.addParentIds(parents);
 
     if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)
         || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC)
@@ -829,12 +838,12 @@ public class SleuthkitReader extends DataSourceReader {
     String path = content.getUniquePath();
     if (deviceName != null) {
       if (path.indexOf('/', 1) == -1) {
-        evidence.setPath("/" + deviceName); //$NON-NLS-1$
+        evidence.setPath(inheritedPath +  "\\" + deviceName); //$NON-NLS-1$
       } else {
         setPath(evidence, path);
       }
     } else {
-      evidence.setPath(path);
+      evidence.setPath(inheritedPath + path);
     }
 
     if (content instanceof Image) {
@@ -870,20 +879,30 @@ public class SleuthkitReader extends DataSourceReader {
     if (parent != null) {
       parentId = sleuthIdToId.get((int) (parent.getId() - firstId));
       evidence.setParentId(parentId);
+    } else if (!inheritedParents.isEmpty()) {
+      evidence.setParentId(inheritedParents.get(inheritedParents.size() - 1));
+      evidence.setRoot(false);
     }
+
 
     while (evidence.getId() >= parentIds.size()) {
       parentIds.add(-1);
     }
     parentIds.set(evidence.getId(), parentId);
+    
+    List<Integer> parents = new ArrayList<>();
 
     while (parentId != -1) {
-      evidence.addParentId(parentId);
+//      evidence.addParentId(parentId);
+      parents.add(parentId);
       parentId = parentIds.get(parentId);
     }
 
-    caseData.addEvidenceFile(evidence);
+    Collections.reverse(parents);
+    evidence.addParentIds(inheritedParents);
+    evidence.addParentIds(parents);
 
+    caseData.addEvidenceFile(evidence);
   }
   
   private boolean isFATFile(Content content){

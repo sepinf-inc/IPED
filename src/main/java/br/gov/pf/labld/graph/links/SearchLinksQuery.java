@@ -11,5 +11,4 @@ public interface SearchLinksQuery {
   String getQueryName();
 
   String getLabel();
-
 }

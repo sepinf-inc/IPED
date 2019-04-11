@@ -235,7 +235,7 @@ public class SearchLinksDialog extends JDialog {
       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      graphService.search(DynLabel.label("DATASOURCE"), Collections.emptyMap(), this);
+      graphService.search(DynLabel.label("DATASOURCE"), Collections.emptyMap(), this, "name");
       return null;
     }
 

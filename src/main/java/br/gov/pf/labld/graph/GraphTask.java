@@ -12,7 +12,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.apache.tika.mime.MediaType;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
@@ -21,6 +20,7 @@ import br.gov.pf.labld.cases.IpedCase.IpedDatasourceType;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import gpinf.dev.data.EvidenceFile;
 
@@ -38,8 +38,6 @@ public class GraphTask extends AbstractTask {
 
   private boolean enabled = false;
 
-  private static Map<Integer, String> datasourcesId = new HashMap<>();
-
   private static GraphFileWriter graphFileWriter;
 
   @Override
@@ -49,7 +47,8 @@ public class GraphTask extends AbstractTask {
       configuration = loadConfiguration(confDir);
 
       if (graphFileWriter == null) {
-        graphFileWriter = new GraphFileWriter(new File(Configuration.indexerTemp, GENERATED_PATH), "iped");
+        graphFileWriter = new GraphFileWriter(new File(Configuration.indexerTemp, GENERATED_PATH), "iped",
+            configuration.getDefaultEntity());
       }
     }
   }
@@ -160,11 +159,20 @@ public class GraphTask extends AbstractTask {
     nodeProperties.put("name", evidence.getName());
     nodeProperties.put("path", evidence.getPath());
 
-    MediaType mediaType = evidence.getMediaType();
-    if (mediaType != null) {
-      nodeProperties.put("type", mediaType.getType());
-      nodeProperties.put("subType", mediaType.getSubtype());
+    Object category = evidence.getTempAttribute(BasicProps.CATEGORY);
+    if (category == null) {
+      if (!evidence.getCategorySet().isEmpty()) {
+        category = evidence.getCategorySet().iterator().next();
+      }
     }
+
+    String categoryValue;
+    if (category != null) {
+      categoryValue = category.toString();
+    } else {
+      categoryValue = null;
+    }
+    nodeProperties.put("category", categoryValue);
 
     String hash = evidence.getHash();
     if (hash != null && !hash.isEmpty()) {
@@ -180,25 +188,22 @@ public class GraphTask extends AbstractTask {
     String nodeId = graphFileWriter.writeCreateNode(propertyName, property, nodeProperties, label,
         labels.toArray(new Label[labels.size()]));
     if (isGraphDatasource) {
-      datasourcesId.put(evidence.getId(), nodeId);
+      graphFileWriter.writeNodeReplace(DynLabel.label(configuration.getDefaultEntity()), "evidenceId", evidence.getId(),
+          nodeId);
     }
 
     RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
 
     if (isIpedCase && parentIds.size() > 2) {
-      // Cria vinculo da entidade com a entrada do datasource se ipedCase.
+      // Cria vinculo da evidencia com a entrada do datasource se ipedCase.
       Integer inputId = parentIds.get(2);
       graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, property,
           relationshipType);
     } else if (isIpedCase && parentIds.size() == 2) {
       // Cria vinculo da entrada com o datasource se ipedCase.
       Integer datasourceId = parentIds.get(1);
-      String datasourceNodeId = datasourcesId.get(datasourceId);
-      if (datasourceNodeId == null) {
-        throw new IllegalStateException(
-            "Datasource #" + datasourceId + " not found for evidence " + evidence.getName() + ".");
-      }
-      graphFileWriter.writeCreateRelationship(datasourceNodeId, label, propertyName, property, relationshipType);
+      graphFileWriter.writeCreateRelationship(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
+          datasourceId, label, propertyName, property, relationshipType);
     }
 
     processMetadata(evidence, label, propertyName, property);

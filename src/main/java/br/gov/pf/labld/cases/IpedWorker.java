@@ -17,7 +17,7 @@ public class IpedWorker extends SwingWorker<Void, Void> {
 
   @Override
   protected Void doInBackground() throws Exception {
-    IpedProcessHelper processHelper = new IpedProcessHelper(ipedCase, oldCase);
+    IpedProcessHelper processHelper = new IpedProcessHelper(ipedCase, oldCase, caseManagement.getProfile());
     processHelper.process();
     return null;
   }

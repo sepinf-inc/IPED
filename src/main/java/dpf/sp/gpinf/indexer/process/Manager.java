@@ -47,6 +47,7 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.gov.pf.labld.graph.GraphGenerator;
 import br.gov.pf.labld.graph.GraphImportRunner;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
@@ -417,27 +418,11 @@ public class Manager {
     File graphDbOutput = new File(output, GraphTask.DB_PATH);
     File graphDbGenerated = new File(Configuration.indexerTemp, GraphTask.GENERATED_PATH);
 
-    GraphImportRunner runner = new GraphImportRunner(graphDbGenerated);
-    runner.run(graphDbOutput, GraphTask.DB_NAME, Configuration.outputOnSSD);
-    File graphGeneratedOutput = new File(output, GraphTask.GENERATED_PATH);
-    try {
-      Files.move(graphDbGenerated.toPath(), graphGeneratedOutput.toPath());
-    } catch (IOException e) {
-      IOUtil.copiaDiretorio(graphDbGenerated, graphGeneratedOutput);
-    }
-    GraphService graphService = null;
-    try {
-      graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      graphService.start(graphDbOutput, GraphTask.loadConfiguration(new File(Configuration.configPath, "conf")));
-      graphService.runPostGenerationStatements();
-    } finally {
-      if (graphService != null) {
-        graphService.stop();
-      }
-    }
+    GraphGenerator graphGenerator = new GraphGenerator();
+    graphGenerator.generate(graphDbGenerated, graphDbOutput);
   }
-  
-  private void updateImagePaths(){
+
+  private void updateImagePaths() {
 	  CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 	  if(args.isPortable()){ //$NON-NLS-1$
 		  IPEDSource ipedCase = new IPEDSource(output.getParentFile());
@@ -446,7 +431,7 @@ public class Manager {
 	  }
   }
   
-  public void deleteTempDir(){
+  public void deleteTempDir() {
       LOGGER.info("Deleting temp folder {}", Configuration.indexerTemp); //$NON-NLS-1$
       IOUtil.deletarDiretorio(Configuration.indexerTemp);
   }

@@ -1,8 +1,8 @@
 package br.gov.pf.labld.graph;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -31,9 +32,8 @@ public class GraphServiceImpl implements GraphService {
   private GraphDatabaseService graphDB;
   private boolean started = false;
   private File dbFile;
-  private GraphConfiguration config;
 
-  public void start(File path, GraphConfiguration config) {
+  public void start(File path) {
     if (!started) {
       dbFile = path;
       GraphDatabaseFactory graphDatabaseFactory = new GraphDatabaseFactory();
@@ -45,14 +45,9 @@ public class GraphServiceImpl implements GraphService {
 
       started = true;
 
-      this.config = config;
     } else {
       LOGGER.info("Service already started.");
     }
-  }
-
-  public synchronized void start(File path) throws IOException {
-    start(path, null);
   }
 
   public synchronized void stop() {
@@ -299,7 +294,7 @@ public class GraphServiceImpl implements GraphService {
   }
 
   @Override
-  public void search(Label label, Map<String, Object> params, NodeQueryListener listener) {
+  public void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering) {
     Transaction tx = null;
     try {
       tx = graphDB.beginTx();
@@ -319,6 +314,11 @@ public class GraphServiceImpl implements GraphService {
       }
       queryBuilder.append(" RETURN n ");
 
+      if (ordering.length > 0) {
+        queryBuilder.append(" ORDER BY ");
+        queryBuilder.append(Arrays.stream(ordering).map(o -> "n." + o).collect(Collectors.joining(", ")));
+      }
+
       Result result = graphDB.execute(queryBuilder.toString(), params);
       ResourceIterator<Node> resourceIterator = result.columnAs("n");
       boolean proceed = true;
@@ -328,7 +328,9 @@ public class GraphServiceImpl implements GraphService {
       }
 
       tx.success();
-    } finally {
+    } finally
+
+    {
       tx.close();
     }
 
@@ -464,27 +466,6 @@ public class GraphServiceImpl implements GraphService {
     } finally {
       tx.close();
     }
-  }
-
-  @Override
-  public void runPostGenerationStatements() {
-    long start = System.currentTimeMillis();
-    LOGGER.info("Running post generation statements.");
-    Transaction tx = null;
-    try {
-      tx = graphDB.beginTx();
-
-      for (String stmt : this.config.getPostGenerationStatements()) {
-        LOGGER.info("Running " + stmt);
-        graphDB.execute(stmt);
-      }
-
-      tx.success();
-    } finally {
-      tx.close();
-    }
-    LOGGER.info("Finished running post generation statements in " + (System.currentTimeMillis() - start) + "ms.");
-
   }
 
 }

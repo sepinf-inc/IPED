@@ -505,6 +505,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-graphviz</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>graphviz</groupId>
+                                    <artifactId>graphviz</artifactId>
+                                    <version>2.38</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${tools.dir}/graphviz</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-tsk-patch</id>
                         <phase>package</phase>
                         <goals>

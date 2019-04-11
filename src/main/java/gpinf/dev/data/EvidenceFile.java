@@ -37,8 +37,8 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
@@ -129,6 +129,11 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
   private List<Integer> parentIds = new ArrayList<Integer>();
 
   private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
+  
+  /**
+   * Temporaty attributes present only during processing flow.
+   */
+  private Map<String, Object> tempAttributes = new HashMap<>();
 
   /**
    * Data de criação do arquivo.
@@ -1244,6 +1249,18 @@ public class EvidenceFile implements Serializable, StreamSource, Item {
 
     public void setIdInDataSource(String idInDataSource) {
         this.idInDataSource = idInDataSource;
+    }
+
+    public Object getTempAttribute(String key) {
+      synchronized (tempAttributes) {
+        return tempAttributes.get(key);
+      }
+    }
+
+    public void setTempAttribute(String key, Object value) {
+      synchronized (tempAttributes) {
+        tempAttributes.put(key, value);
+      }
     }
 
 }

@@ -15,8 +15,6 @@ public interface GraphService {
 
   void start(File path) throws IOException;
 
-  void start(File file, GraphConfiguration config);
-
   void stop() throws IOException;
 
   GraphDatabaseService getGraphDb();
@@ -41,7 +39,7 @@ public interface GraphService {
 
   List<Node> search(Label label, Map<String, Object> params);
 
-  void search(Label label, Map<String, Object> params, NodeQueryListener listener);
+  void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering);
 
   void findLabels(LabelQueryListener listener);
 
@@ -50,7 +48,5 @@ public interface GraphService {
   void advancedSearch(String string, FreeQueryListener listener);
 
   void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
-
-  void runPostGenerationStatements();
 
 }
