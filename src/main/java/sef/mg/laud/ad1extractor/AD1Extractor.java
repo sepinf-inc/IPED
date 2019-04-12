@@ -103,7 +103,7 @@ public class AD1Extractor implements Closeable{
             throw new AD1ExtractorException("Expected signature not found in AD1: " + nome_ad1);           
         }
         if(vetor_17[16] != 0x03) {
-            throw new AD1ExtractorException("AD1 version not supported: " + vetor_17[16]);
+            ;//throw new AD1ExtractorException("AD1 version not supported: " + vetor_17[16]);
         }
             
         lerBytesArquivoRelativo(vetor_48, PC, local_ad1_tam);           
