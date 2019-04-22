@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -35,6 +39,7 @@ import iped3.HashValue;
  */
 public class LedKFFTask extends AbstractTask {
 
+  private static Logger logger = LoggerFactory.getLogger(LedKFFTask.class);
   private static Object lock = new Object();
   private static HashMap<String, HashValue[]> hashArrays;
   public static KffItem[] kffItems;
@@ -77,7 +82,16 @@ public class LedKFFTask extends AbstractTask {
       
       File wkffDir = new File(ledWkffPath.trim());
       if (!wkffDir.exists()) {
-        throw new IPEDException("Invalid LED database path: " + wkffDir.getAbsolutePath()); //$NON-NLS-1$
+          String msg = "Invalid LED database path: " + wkffDir.getAbsolutePath(); //$NON-NLS-1$
+          CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+          for(File source : args.getDatasources()) {
+              if(source.getName().endsWith(".iped")) {
+                  logger.warn(msg);
+                  taskEnabled = false;
+                  return;
+              }
+          }
+          throw new IPEDException(msg);
       }
 
       if(hash == null || hash.trim().isEmpty())

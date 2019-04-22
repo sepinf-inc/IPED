@@ -20,6 +20,7 @@ import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
@@ -102,6 +103,18 @@ public class KFFTask extends AbstractTask {
       excluded = 0;
 
       File kffDb = new File(kffDbPath.trim());
+      if(!kffDb.exists()) {
+          String msg = "Invalid hash database path on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+          CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+          for(File source : args.getDatasources()) {
+              if(source.getName().endsWith(".iped")) {
+                  LOGGER.warn(msg);
+                  taskEnabled = false;
+                  return;
+              }
+          }
+          throw new IPEDException(msg);
+      }
     	  
       try {
         db = DBMaker.newFileDB(kffDb)

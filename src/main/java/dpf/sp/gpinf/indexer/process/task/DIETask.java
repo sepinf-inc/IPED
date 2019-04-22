@@ -29,7 +29,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -48,6 +51,8 @@ import iped3.Item;
  * @author Wladimir Leite
  */
 public class DIETask extends AbstractTask {
+    
+  private static Logger logger = LoggerFactory.getLogger(DIETask.class);
 
   /**
    * Instância da classe reponsável pelo processo de detecção.
@@ -143,8 +148,18 @@ public class DIETask extends AbstractTask {
           }
         
         File dieDat = new File(diePath.trim());
-        if (!dieDat.exists() || !dieDat.canRead())
-          throw new IPEDException("DIE database file not found: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
+        if (!dieDat.exists() || !dieDat.canRead()) {
+            String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            for(File source : args.getDatasources()) {
+                if(source.getName().endsWith(".iped")) {
+                    logger.warn(msg);
+                    taskEnabled = false;
+                    return;
+                }
+            }
+            throw new IPEDException(msg);
+        }
         
         //Cria objeto responsável pela detecção
         predictor = RandomForestPredictor.load(dieDat, -1);
