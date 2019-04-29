@@ -718,7 +718,11 @@ public class IndexItem extends BasicProps{
               }else if(mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
                   String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
                   File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
-                  evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                  try {
+                      evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                  }catch(IOException e) {
+                      e.printStackTrace();
+                  }
               }
           }
           
