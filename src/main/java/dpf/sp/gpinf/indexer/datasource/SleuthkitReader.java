@@ -250,6 +250,7 @@ public class SleuthkitReader extends DataSourceReader {
     }
     
     int sectorSize = args.getBlocksize();
+    String password = args.getPassword();
 
     firstId = null;
     lastId = null;
@@ -305,6 +306,7 @@ public class SleuthkitReader extends DataSourceReader {
         int cmdLen = TSK_CMD.length;
         if(isTskPatched) cmdLen += 2;
         if(sectorSize > 0) cmdLen += 2;
+        if(password != null) cmdLen +=2;
 
         String[] cmd = new String[cmdLen];
         for (int i = 0; i < TSK_CMD.length; i++) {
@@ -319,6 +321,10 @@ public class SleuthkitReader extends DataSourceReader {
               if(sectorSize > 0){
               	cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
               	cmd[cmdLen - 2] = "" + sectorSize; //$NON-NLS-1$
+              }
+              if(password != null) {
+                  cmd[cmdLen - 3] = "-K"; //$NON-NLS-1$
+                  cmd[cmdLen - 2] = password; //$NON-NLS-1$  
               }
               cmd[cmdLen - 1] = image.getAbsolutePath();
           }

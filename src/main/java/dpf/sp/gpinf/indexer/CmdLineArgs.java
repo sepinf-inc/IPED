@@ -68,6 +68,9 @@ public class CmdLineArgs {
 
   @Parameter(names= {"-b", "-blocksize"}, description="sector block size (bytes), must set to 4k sector devices")
   private int blocksize;
+  
+  @Parameter(names= {"-p", "-password"}, description="password for encrypted images/volumes")
+  private String password;
 
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
       + "fastmode, blind, triage. More details in manual.")
@@ -149,6 +152,10 @@ public class CmdLineArgs {
 
   public int getBlocksize() {
       return blocksize;
+  }
+  
+  public String getPassword() {
+      return password;
   }
 
   public String getProfile() {
