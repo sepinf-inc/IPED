@@ -127,6 +127,7 @@ public class SleuthkitReader extends DataSourceReader {
         || name.endsWith(".aff") //$NON-NLS-1$
         || name.endsWith(".l01") //$NON-NLS-1$
         || name.endsWith(".dd") //$NON-NLS-1$
+        || name.endsWith(".dmg") //$NON-NLS-1$
         || name.endsWith(".vmdk") //$NON-NLS-1$
         || name.endsWith(".vhd") //$NON-NLS-1$
         || isPhysicalDrive(file)
@@ -217,9 +218,9 @@ public class SleuthkitReader extends DataSourceReader {
     String tskVer = str[str.length - 1].trim();
     LOGGER.info("Sleuthkit version " + tskVer + " detected."); //$NON-NLS-1$ //$NON-NLS-2$
     
-    if (tskVer.compareTo("4.6.0") < 0) //$NON-NLS-1$
-      throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version 4.6.0"); //$NON-NLS-1$ //$NON-NLS-2$
-    else if (tskVer.compareTo("4.6.1") >= 0) //$NON-NLS-1$
+    if (tskVer.compareTo("4.6.5") < 0) //$NON-NLS-1$
+      throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version 4.6.5"); //$NON-NLS-1$ //$NON-NLS-2$
+    else if (tskVer.compareTo("4.6.6") >= 0) //$NON-NLS-1$
     	LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
     	
 
