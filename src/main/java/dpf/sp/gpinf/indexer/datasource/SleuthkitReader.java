@@ -304,32 +304,34 @@ public class SleuthkitReader extends DataSourceReader {
           idRangeMap.notify();
         }
         
-        int cmdLen = TSK_CMD.length;
-        if(isTskPatched) cmdLen += 2;
-        if(sectorSize > 0) cmdLen += 2;
-        if(password != null) cmdLen +=2;
-
-        String[] cmd = new String[cmdLen];
-        for (int i = 0; i < TSK_CMD.length; i++) {
-          cmd[i] = TSK_CMD[i];
-          if (cmd[i].equals(DB_NAME))
-            cmd[i] = dbPath;
-          if (cmd[i].equals(IMG_NAME)){
-        	  if(isTskPatched){
-              	cmd[TSK_CMD.length - 1] = "-z"; //$NON-NLS-1$
-              	cmd[TSK_CMD.length] = timezone;
-              }
-              if(sectorSize > 0){
-              	cmd[cmdLen - 3] = "-b"; //$NON-NLS-1$
-              	cmd[cmdLen - 2] = "" + sectorSize; //$NON-NLS-1$
-              }
-              if(password != null) {
-                  cmd[cmdLen - 3] = "-K"; //$NON-NLS-1$
-                  cmd[cmdLen - 2] = password; //$NON-NLS-1$  
-              }
-              cmd[cmdLen - 1] = image.getAbsolutePath();
-          }
+        boolean extraParamsAdded = false;
+        ArrayList<String> cmdArray = new ArrayList<>();
+        for (String param : TSK_CMD) {
+            if (param.equals(DB_NAME)) {
+                cmdArray.add(dbPath);
+            }else if (param.equals(IMG_NAME)){
+                cmdArray.add(image.getAbsolutePath());
+            }else {
+                cmdArray.add(param);
+            }
+            if(!extraParamsAdded) {
+                if(isTskPatched){
+                    cmdArray.add("-z"); //$NON-NLS-1$
+                    cmdArray.add(timezone);
+                }
+                if(sectorSize > 0){
+                    cmdArray.add("-b"); //$NON-NLS-1$
+                    cmdArray.add("" + sectorSize); //$NON-NLS-1$
+                }
+                if(password != null) {
+                    cmdArray.add("-K"); //$NON-NLS-1$
+                    cmdArray.add(password); //$NON-NLS-1$  
+                }
+                extraParamsAdded = true;
+            }
         }
+        
+        String[] cmd = cmdArray.toArray(new String[0]);
 
         if (!isTskPatched) {
           sleuthCase.acquireExclusiveLock();
