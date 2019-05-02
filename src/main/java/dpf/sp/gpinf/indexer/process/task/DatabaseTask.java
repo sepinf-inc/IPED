@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,6 +8,9 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.process.Worker;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+import iped3.sleuthkit.SleuthKitItem;
 
 public class DatabaseTask extends AbstractTask {
 
@@ -18,7 +19,7 @@ public class DatabaseTask extends AbstractTask {
   private static boolean schemaDone = false;
   private Connection con;
 
-  private ArrayList<EvidenceFile> itemList = new ArrayList<EvidenceFile>();
+  private ArrayList<Item> itemList = new ArrayList<Item>();
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
@@ -72,7 +73,7 @@ public class DatabaseTask extends AbstractTask {
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
 
     if (!evidence.isQueueEnd()) {
       itemList.add(evidence);
@@ -86,11 +87,11 @@ public class DatabaseTask extends AbstractTask {
     sql.append("INSERT INTO ITEMS VALUES "); //$NON-NLS-1$
 
     for (int i = 0; i < itemList.size(); i++) {
-      EvidenceFile e = itemList.get(i);
+      Item e = itemList.get(i);
       sql.append("(" //$NON-NLS-1$
           + e.getId() + "," //$NON-NLS-1$
           + e.getParentId() + "," //$NON-NLS-1$
-          + e.getSleuthId() + ",\'" //$NON-NLS-1$
+          + ((e instanceof SleuthKitItem) ? ((SleuthKitItem) e).getSleuthId() : null ) + ",\'" //$NON-NLS-1$
           + e.getName() + "\',\'" //$NON-NLS-1$
           + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
           + e.getCategories() + "\',\'" //$NON-NLS-1$

@@ -18,10 +18,11 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
 import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
+import iped3.Item;
+import iped3.util.ExtraProperties;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -37,7 +38,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
@@ -242,7 +242,7 @@ public class VideoThumbTask extends AbstractTask {
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-        	mplayer = Configuration.appRoot + "/" + mplayerWin; //$NON-NLS-1$
+        	mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
         }
         videoThumbsMaker.setMPlayer(mplayer);
 
@@ -312,7 +312,7 @@ public class VideoThumbTask extends AbstractTask {
    * destino.
    */
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
     if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;

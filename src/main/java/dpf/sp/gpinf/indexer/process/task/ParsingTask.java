@@ -53,20 +53,18 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.carver.CarverTask;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
-import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
-import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
@@ -74,9 +72,15 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.StreamSource;
+import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+import iped3.io.ItemBase;
+import iped3.io.StreamSource;
+import iped3.search.ItemSearcher;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO, CASO PEQUENO, PARA
@@ -107,14 +111,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static AtomicLong totalText = new AtomicLong();
   public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
-  private EvidenceFile evidence;
+  private Item evidence;
   private ParseContext context;
   private boolean extractEmbedded;
   private volatile ParsingReader reader;
   private String firstParentPath = null;
   private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
   private volatile int depth = 0;
-  private Map<Object, EvidenceFile> idToItemMap = new HashMap<>();
+  private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
   
   private IndexerDefaultParser autoParser;
 
@@ -122,7 +126,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       this.autoParser = new IndexerDefaultParser();
   }
   
-  public ParsingTask(EvidenceFile evidence, IndexerDefaultParser parser) {
+  public ParsingTask(Item evidence, IndexerDefaultParser parser) {
       this.evidence = evidence;
       this.autoParser = parser;
   }
@@ -140,7 +144,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
   public static void setExpandContainers(boolean enabled) {
       expandContainers = enabled;
   }
-
+  
   public ParseContext getTikaContext() {
     // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
     context = new ParseContext();
@@ -153,7 +157,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     else
         context.set(OCROutputFolder.class, new OCROutputFolder());
     
-    if (CarveTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
+    if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
       context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
     }
 
@@ -161,9 +165,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     context.set(ArchiveStreamFactory.class,  new ArchiveStreamFactory("Cp850")); //$NON-NLS-1$
     // Indexa conteudo de todos os elementos de HTMLs, como script, etc
     context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+    //we have seen very large records in valid docs
+    org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
     
     context.set(StreamSource.class, evidence);
-    context.set(Item.class, evidence);
+    context.set(ItemBase.class, evidence);
     if(output != null && worker != null)
         context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
 
@@ -180,11 +186,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       this.extractEmbedded = extractEmbedded;
   }
 
-  private void fillMetadata(EvidenceFile evidence) {
+  private void fillMetadata(Item evidence) {
 	  fillMetadata(evidence, evidence.getMetadata());
   }
   
-  public static void fillMetadata(EvidenceFile evidence, Metadata metadata){
+  public static void fillMetadata(Item evidence, Metadata metadata){
 	Long len = evidence.getLength();
 	if (len != null)
 	    metadata.set(Metadata.CONTENT_LENGTH, len.toString());
@@ -235,7 +241,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     return subitensDiscovered;
   }
   
-  public void process(EvidenceFile evidence) throws IOException {
+  public void process(Item evidence) throws IOException {
 
     if (!enableFileParsing) {
       return;
@@ -253,9 +259,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     	times.put(getParserName(parser), time);
     }
     
-    if (evidence.getTextCache() == null && ((evidence.getLength() == null || 
-    		evidence.getLength() < Configuration.minItemSizeToFragment) ||
-    		IndexerDefaultParser.isSpecificParser(parser) )) {
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    if (((ItemImpl)evidence).getTextCache() == null && ((evidence.getLength() == null || 
+    		evidence.getLength() < advancedConfig.getMinItemSizeToFragment()) ||
+            IndexerDefaultParser.isSpecificParser(parser) )) {
         try{
             depth++;
             ParsingTask task = new ParsingTask(worker, autoParser);
@@ -282,11 +289,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           return parser.getClass().getSimpleName();
   }
       
-  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, EvidenceFile evidence) {
+  public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Item evidence) {
 	  return autoParser.hasSpecificParser(evidence.getMetadata());
   }
   
-  private void safeProcess(EvidenceFile evidence) throws IOException {
+  private void safeProcess(Item evidence) throws IOException {
 
     this.evidence = evidence;
 
@@ -314,8 +321,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
           //if(metadata.get(IndexerDefaultParser.PARSER_EXCEPTION) != null)
           //  break;
       }
-	
-      evidence.setParsedTextCache(textCache);
+      
+      ((ItemImpl)evidence).setParsedTextCache(textCache);
       evidence.setParsed(true);
       totalText.addAndGet(textCache.getSize());
 
@@ -329,7 +336,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     
   }
   
-  private static final void metadataToExtraAttribute(EvidenceFile evidence){
+  private static final void metadataToExtraAttribute(Item evidence){
       //Ajusta metadados:
       Metadata metadata = evidence.getMetadata();
       if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -393,26 +400,26 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         firstParentPath = parentPath;
       }
 
-      EvidenceFile parent = null;
       String parentId = metadata.get(ExtraProperties.PARENT_VIRTUAL_ID);
-      if (parentId != null) parent = idToItemMap.get(parentId);
-      if (parent == null && context.get(EmbeddedParent.class) != null)
-          parent = (EvidenceFile) context.get(EmbeddedParent.class).getObj();
-      if (parent == null) parent = evidence;
+      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
+      ParentInfo parentInfo = null;
+      if (parentId != null)
+          parentInfo = idToItemMap.get(parentId);
+      if (parentInfo == null && context.get(EmbeddedParent.class) != null)
+          parentInfo = new ParentInfo((Item) context.get(EmbeddedParent.class).getObj());
+      if (parentInfo == null)
+          parentInfo = new ParentInfo(evidence);
       
-      if (parent != evidence) {
-        parentPath = parent.getPath();
+      if (parentInfo.getId() != evidence.getId()) {
+        parentPath = parentInfo.getPath();
         subitemPath = parentPath + "/" + name; //$NON-NLS-1$
       } else {
         subitemPath = parentPath + ">>" + name; //$NON-NLS-1$
       }
 
-      EvidenceFile subItem = new EvidenceFile();
+      ItemImpl subItem = new ItemImpl();
       subItem.setPath(subitemPath);
       context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-      
-      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
-      if(embeddedId != null) idToItemMap.put(embeddedId, subItem);
       
       String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
       char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -421,6 +428,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if (!extractEmbedded) {
         return;
       }
+      
+      //root has children
+      evidence.setHasChildren(true);
 
       subItem.setMetadata(metadata);
 
@@ -434,11 +444,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         subItem.setExtension(""); //$NON-NLS-1$
       }
 
-      subItem.setParent(parent);
+      subItem.setParent(parentInfo);
       
       //sometimes do not work, because parent may be already processed and 
       //stored in database/index so setting it later has no effect
-      parent.setHasChildren(true);
+      //parent.setHasChildren(true);
       
       //parsers should set this property to let created items be displayed in file tree
       if (metadata.get(BasicProps.HASCHILD) != null) {
@@ -464,10 +474,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.CREATED);
       removeMetadataAndDuplicates(metadata, TikaCoreProperties.MODIFIED);
       removeMetadataAndDuplicates(metadata, ExtraProperties.ACCESSED);
-      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-      metadata.remove(ExtraProperties.PARENT_VIRTUAL_ID);
       
-      subItem.setDeleted(parent.isDeleted());
+      subItem.setDeleted(parentInfo.isDeleted());
       if (metadata.get(ExtraProperties.DELETED) != null) {
           metadata.remove(ExtraProperties.DELETED);
           subItem.setDeleted(true);
@@ -481,6 +489,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       ExportFileTask extractor = new ExportFileTask();
       extractor.setWorker(worker);
       extractor.extractFile(inputStream, subItem, evidence.getLength());
+      
+      //subitem is populated, store its info now
+      String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
+      metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
+      if(embeddedId != null)
+          idToItemMap.put(embeddedId, new ParentInfo(subItem));
 
       // pausa contagem de timeout do pai antes de extrair e processar subitem
       if (reader.setTimeoutPaused(true)) {
@@ -555,6 +569,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
       if(totalText != null)
           LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
       totalText = null;
+
   }
 
 }

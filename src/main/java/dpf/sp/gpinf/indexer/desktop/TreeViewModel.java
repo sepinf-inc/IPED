@@ -34,8 +34,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import iped3.search.LuceneSearchResult;
 
 public class TreeViewModel implements TreeModel {
 
@@ -129,7 +129,7 @@ public class TreeViewModel implements TreeModel {
       textQuery = "(" + textQuery + ") && (" + IndexItem.ISDIR + ":true || " + IndexItem.HASCHILD + ":true)"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
       try {
-		IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+		IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, textQuery);
 		task.setTreeQuery(true);
         children = task.luceneSearch();
         Integer[] array = ArrayUtils.toObject(children.getLuceneIds());
@@ -149,7 +149,7 @@ public class TreeViewModel implements TreeModel {
     root.doc = new Document();
     root.doc.add(new StoredField(IndexItem.NAME, Messages.getString("TreeViewModel.RootName"))); //$NON-NLS-1$
     try {
-      IPEDSearcher task = new IPEDSearcher(App.get().appCase, IndexItem.ISROOT + ":true"); //$NON-NLS-1$
+      IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, IndexItem.ISROOT + ":true"); //$NON-NLS-1$
 	  task.setTreeQuery(true);
       root.children = task.luceneSearch();
       Integer[] array = ArrayUtils.toObject(root.children.getLuceneIds());

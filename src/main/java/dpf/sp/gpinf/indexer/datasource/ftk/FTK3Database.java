@@ -18,9 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.datasource.ftk;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
 import gpinf.dev.filetypes.GenericFileType;
+import iped3.CaseData;
+import iped3.Item;
 
 import java.io.File;
 import java.sql.Connection;
@@ -179,59 +180,59 @@ public class FTK3Database extends FTKDatabase {
     while (rset.next()) {
       ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID")); //$NON-NLS-1$
       for (String path : paths) {
-        EvidenceFile evidenceFile = new EvidenceFile();
-        evidenceFile.setDataSource(ipedDataSource);
+        Item item = new ItemImpl();
+        item.setDataSource(ipedDataSource);
         int ftkId = rset.getInt("OBJECTID"); //$NON-NLS-1$
-        evidenceFile.setFtkID(ftkId);
+        item.setFtkID(ftkId);
         int parentId = rset.getInt("PARENTID"); //$NON-NLS-1$
-        evidenceFile.setParentId(parentId);
-        evidenceFile.setName(rset.getString("OBJECTNAME")); //$NON-NLS-1$
-        evidenceFile.setExportedFile(path);
-        evidenceFile.setPath(rset.getString("PATH")); //$NON-NLS-1$
+        item.setParentId(parentId);
+        item.setName(rset.getString("OBJECTNAME")); //$NON-NLS-1$
+        item.setExportedFile(path);
+        item.setPath(rset.getString("PATH")); //$NON-NLS-1$
         if ("Y".equals(rset.getString("DELETED")) || "Y".equals(rset.getString("ISFROMFREESPACE"))) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-          evidenceFile.setDeleted(true);
+          item.setDeleted(true);
         }
         byte[] hash = rset.getBytes("md5hash"); //$NON-NLS-1$
         if (hash != null) {
-          evidenceFile.setHash(HashTask.getHashString(hash));
+          item.setHash(HashTask.getHashString(hash));
         }
         long logicalSize = rset.getLong("LOGICALSIZE"); //$NON-NLS-1$
         if (logicalSize > -1) {
-          evidenceFile.setLength(logicalSize);
+          item.setLength(logicalSize);
         }
         String fileType = rset.getString("NAME"); //$NON-NLS-1$
         if (fileType != null) {
-          evidenceFile.setType(new GenericFileType(fileType));
+          item.setType(new GenericFileType(fileType));
         }
         long createdDate = rset.getLong("CREATEDDATE"); //$NON-NLS-1$
         if (createdDate > 0) {
-          evidenceFile.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
+          item.setCreationDate(TimeConverter.fileTimeToDate(createdDate));
         }
         long modifiedDate = rset.getLong("modifieddate"); //$NON-NLS-1$
         if (modifiedDate > 0) {
-          evidenceFile.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
+          item.setModificationDate(TimeConverter.fileTimeToDate(modifiedDate));
         }
         long accessedDate = rset.getLong("last_accesseddate"); //$NON-NLS-1$
         if (accessedDate > 0) {
-          evidenceFile.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
+          item.setAccessDate(TimeConverter.fileTimeToDate(accessedDate));
         } else {
           String fatDate = rset.getString("fatlastaccesseddateasstring"); //$NON-NLS-1$
           if (fatDate != null) {
             Calendar calendar = new GregorianCalendar();
             calendar.clear();
             calendar.set(Integer.parseInt(fatDate.substring(0, 4)), Integer.parseInt(fatDate.substring(5, 7)) - 1, Integer.parseInt(fatDate.substring(8, 10)));
-            evidenceFile.setAccessDate(calendar.getTime());
+            item.setAccessDate(calendar.getTime());
           }
         }
 
         ArrayList<String> bookmarks = fileToBookmarkMap.get(rset.getInt("OBJECTID")); //$NON-NLS-1$
         if (bookmarks != null) {
           for (String bookmarkName : bookmarks) {
-            evidenceFile.addCategory(bookmarkName);
+            item.addCategory(bookmarkName);
           }
         }
 
-        caseData.addEvidenceFile(evidenceFile);
+        caseData.addItem(item);
       }
       addedEvidences++;
     }

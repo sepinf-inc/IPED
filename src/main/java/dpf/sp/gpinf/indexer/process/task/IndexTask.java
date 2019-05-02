@@ -21,18 +21,17 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
 import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
-import dpf.sp.gpinf.indexer.parsers.util.Item;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.ItemSearcher;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
@@ -42,9 +41,13 @@ import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.StreamSource;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.ItemImpl;
+import iped3.Item;
+import iped3.io.ItemBase;
+import iped3.io.StreamSource;
+import iped3.search.ItemSearcher;
+import iped3.sleuthkit.SleuthKitItem;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a indexação do conteúdo esteja
@@ -80,11 +83,9 @@ public class IndexTask extends BaseCarveTask {
       this.id = id;
       this.length = len;
     }
-
   }
 
-  public void process(EvidenceFile evidence) throws IOException {
-
+  public void process(Item evidence) throws IOException {
     if (evidence.isQueueEnd()) {
       return;
     }
@@ -94,7 +95,9 @@ public class IndexTask extends BaseCarveTask {
     if (!evidence.isToAddToCase()) {
       if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
         textReader = new StringReader(""); //$NON-NLS-1$
-        evidence.setSleuthId(null);
+        if(evidence instanceof SleuthKitItem) {
+            ((SleuthKitItem)evidence).setSleuthId(null);
+        }
         evidence.setExportedFile(null);
         evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
         evidence.getCategorySet().clear();
@@ -104,11 +107,12 @@ public class IndexTask extends BaseCarveTask {
     }
 
     stats.updateLastId(evidence.getId());
- 
+
     //Fragmenta itens grandes indexados via strings
-    if (evidence.getLength() != null && evidence.getLength() >= Configuration.minItemSizeToFragment && !caseData.isIpedReport()
+    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+    if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment() && !caseData.isIpedReport()
             && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
-    		&& (evidence.getSleuthFile() != null || evidence.getFile() != null || evidence.getInputStreamFactory() != null)){
+    		&& ( ((evidence instanceof SleuthKitItem) && ((SleuthKitItem)evidence).getSleuthFile() != null) || evidence.getFile() != null || evidence.getInputStreamFactory() != null)){
     	
     	int fragNum = 0;
     	int overlap = 1024;
@@ -123,7 +127,7 @@ public class IndexTask extends BaseCarveTask {
     }
 
     if(textReader == null) {
-      if (indexFileContents && (indexUnallocated || !CarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+      if (indexFileContents && (indexUnallocated || !UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
         textReader = evidence.getTextReader();
         if(textReader == null) {
             try {
@@ -184,14 +188,14 @@ public class IndexTask extends BaseCarveTask {
 
   }
 
-  private Metadata getMetadata(EvidenceFile evidence) {
+  private Metadata getMetadata(Item evidence) {
 	//new metadata to prevent ConcurrentModificationException while indexing
     Metadata metadata = new Metadata();
     ParsingTask.fillMetadata(evidence, metadata);
     return metadata;
   }
 
-  private ParseContext getTikaContext(EvidenceFile evidence) {
+  private ParseContext getTikaContext(Item evidence) {
     ParsingTask pt = new ParsingTask(evidence, this.autoParser);
     pt.setWorker(worker);
     ParseContext context = pt.getTikaContext();
@@ -249,7 +253,7 @@ public class IndexTask extends BaseCarveTask {
         fileIn.close();
 
         stats.setLastId(textSizesArray.length - 1);
-        EvidenceFile.setStartID(textSizesArray.length);
+        ItemImpl.setStartID(textSizesArray.length);
       }
     }
 
@@ -279,7 +283,7 @@ public class IndexTask extends BaseCarveTask {
 
   private void saveExtraAttributes() throws IOException {
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
-    Set<String> extraAttr = EvidenceFile.getAllExtraAttributes();
+    Set<String> extraAttr = ItemImpl.getAllExtraAttributes();
     Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
   }
 
@@ -288,12 +292,11 @@ public class IndexTask extends BaseCarveTask {
     File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
     if (extraAttributtesFile.exists()) {
     	Set<String> extraAttributes = (Set<String>)Util.readObject(extraAttributtesFile.getAbsolutePath());
-    	EvidenceFile.getAllExtraAttributes().addAll(extraAttributes);
+    	ItemImpl.getAllExtraAttributes().addAll(extraAttributes);
     }
   }
 
   private void salvarTamanhoTextosExtraidos() throws Exception {
-
     IndexFiles.getInstance().firePropertyChange("mensagem", "", "Saving extracted text sizes..."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     LOGGER.info("Saving extracted text sizes..."); //$NON-NLS-1$
 

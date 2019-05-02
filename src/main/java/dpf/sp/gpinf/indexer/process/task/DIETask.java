@@ -29,7 +29,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.imageio.ImageIO;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -38,9 +41,9 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
+import iped3.Item;
 
 /**
  * Tarefa de Detecção de Imagens Explícitas (DIE).
@@ -48,6 +51,8 @@ import gpinf.die.RandomForestPredictor;
  * @author Wladimir Leite
  */
 public class DIETask extends AbstractTask {
+    
+  private static Logger logger = LoggerFactory.getLogger(DIETask.class);
 
   /**
    * Instância da classe reponsável pelo processo de detecção.
@@ -143,8 +148,18 @@ public class DIETask extends AbstractTask {
           }
         
         File dieDat = new File(diePath.trim());
-        if (!dieDat.exists() || !dieDat.canRead())
-          throw new IPEDException("DIE database file not found: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
+        if (!dieDat.exists() || !dieDat.canRead()) {
+            String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            for(File source : args.getDatasources()) {
+                if(source.getName().endsWith(".iped")) {
+                    logger.warn(msg);
+                    taskEnabled = false;
+                    return;
+                }
+            }
+            throw new IPEDException(msg);
+        }
         
         //Cria objeto responsável pela detecção
         predictor = RandomForestPredictor.load(dieDat, -1);
@@ -185,11 +200,13 @@ public class DIETask extends AbstractTask {
    * chama método de detecção.
    */
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     //Verifica se está habilitado e se o tipo de arquivo é tratado
     if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
       return;
     }
+    if(evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null)
+        return;
 
     //Chama o método de detecção
     try {
@@ -238,7 +255,7 @@ public class DIETask extends AbstractTask {
   /**
    * Obtém a imagem do arquivo. Se tiver miniatura utiliza, senão pega versão redimensionada.
    */
-  private BufferedImage getBufferedImage(EvidenceFile evidence) {
+  private BufferedImage getBufferedImage(Item evidence) {
     BufferedImage img = null;
     try {
       if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$

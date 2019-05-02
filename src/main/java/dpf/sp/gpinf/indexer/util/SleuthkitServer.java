@@ -18,6 +18,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 
 public class SleuthkitServer {
 
@@ -75,7 +77,13 @@ public class SleuthkitServer {
       InputStream in = clientSocket.getInputStream();
       os = clientSocket.getOutputStream();
 
-      Configuration.getConfiguration(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
+      Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
+      ConfigurationManager cm = ConfigurationManager.getInstance();
+      LocalConfig localConfig = new LocalConfig();
+      cm.addObject(localConfig);
+      cm.loadConfigs();
+      Configuration.getInstance().loadLibs(localConfig.getIndexerTemp());
+      
       sleuthCase = SleuthkitCase.openCase(dbPath);
 
       java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$

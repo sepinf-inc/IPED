@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.EvidenceFile;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -64,8 +63,13 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -73,6 +77,7 @@ import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.Item;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado quando a entrada do
@@ -221,10 +226,11 @@ public class HTMLReportTask extends AbstractTask {
    * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
    */
   private StringBuilder modeloPerito;
-
   
   private static Collator getCollator() {
-    Collator c = Collator.getInstance(Configuration.locale);
+	LocaleConfig localeConfig = (LocaleConfig) ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+
+    Collator c = Collator.getInstance(localeConfig.getLocale());
     c.setStrength(Collator.TERTIARY);
     return c;
   }
@@ -367,7 +373,7 @@ public class HTMLReportTask extends AbstractTask {
       IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("HTMLReportTask.MakingHtmlReport")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
       // Pasta com arquivos HTML formatado que são utilizados como entrada.
-      String codePath = Configuration.appRoot;
+      String codePath = Configuration.getInstance().appRoot;
       File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
 
       Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
@@ -378,7 +384,7 @@ public class HTMLReportTask extends AbstractTask {
 
       long t = System.currentTimeMillis();
       
-      try(IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)){
+      try(IPEDSourceImpl ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer)){
           for(int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
               String labelName = ipedCase.getMarcadores().getLabelName(labelId);
               String comments = ipedCase.getMarcadores().getLabelComment(labelId);
@@ -412,7 +418,7 @@ public class HTMLReportTask extends AbstractTask {
    * listas adequadas.
    */
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
     if (!taskEnabled || !caseData.containsReport() || !evidence.isToAddToCase()) {
       return;
     }
@@ -641,7 +647,10 @@ public class HTMLReportTask extends AbstractTask {
       }
     });
     final CustomComparator comparator = new CustomComparator();
-    final int numThreads = Configuration.numThreads;
+
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    final int numThreads = localConfig.getNumThreads();
+
     Thread[] threads = new Thread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       final int idx = i;
@@ -667,7 +676,10 @@ public class HTMLReportTask extends AbstractTask {
   private void processaBookmark(final String name, final String id, final StringBuilder model, final StringBuilder item, final boolean isLabel, final List<ReportEntry> regs) throws Exception {
     final int tot = regs.size();
     final int numPages = (tot + itemsPerPage - 1) / itemsPerPage;
-    final int numThreads = Configuration.numThreads;
+    
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    final int numThreads = localConfig.getNumThreads();
+    
     Thread[] threads = new Thread[numThreads];
     for (int i = 0; i < numThreads; i++) {
       final int idx = i;
@@ -845,7 +857,7 @@ public class HTMLReportTask extends AbstractTask {
     return pathBase.relativize(pathAbsolute).toString().replace('\\', '/');
   }
 
-  private void createImageThumb(EvidenceFile evidence, File thumbFile) {
+  private void createImageThumb(Item evidence, File thumbFile) {
     if (!thumbFile.getParentFile().exists()) {
       thumbFile.getParentFile().mkdirs();
     }

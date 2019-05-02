@@ -18,10 +18,19 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.EvidenceFile;
+import gpinf.dev.data.DataSourceImpl;
+import gpinf.dev.data.ItemImpl;
 import gpinf.dev.filetypes.GenericFileType;
+import iped3.CaseData;
+import iped3.IPEDSource;
+import iped3.datasource.DataSource;
+import iped3.search.IPEDSearcher;
+import iped3.search.LuceneSearchResult;
+import iped3.search.Marcadores;
+import iped3.search.MultiMarcadores;
+import iped3.search.SearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +38,6 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -47,18 +55,12 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.Parameter;
-
+import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.desktop.ColumnsManager;
+import dpf.sp.gpinf.indexer.desktop.ColumnsManagerImpl;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
-import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.parsers.util.BasicProps;
-import dpf.sp.gpinf.indexer.parsers.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.task.CarveTask;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -66,12 +68,9 @@ import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.Marcadores;
-import dpf.sp.gpinf.indexer.search.MultiMarcadores;
-import dpf.sp.gpinf.indexer.search.SearchResult;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.MarcadoresImpl;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -87,7 +86,7 @@ public class IPEDReader extends DataSourceReader {
     
   private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
   
-  IPEDSource ipedCase;
+  IPEDSourceImpl ipedCase;
   HashSet<Integer> selectedLabels;
   boolean extractCheckedItems = false;
   Marcadores state;
@@ -103,7 +102,7 @@ public class IPEDReader extends DataSourceReader {
 
   public boolean isSupported(File report) {
     String name = report.getName().toLowerCase();
-    return name.endsWith(Marcadores.EXT);
+    return name.endsWith(MarcadoresImpl.EXT);
   }
 
   public int read(File file) throws Exception {
@@ -115,7 +114,7 @@ public class IPEDReader extends DataSourceReader {
 
     // Configuração para não expandir containers
     ParsingTask.setExpandContainers(false);
-    CarveTask.setEnabled(false);
+    CarverTask.setEnabled(false);
     KFFCarveTask.setEnabled(false);
     KFFTask.setEnabled(false);
     LedKFFTask.setEnabled(false);
@@ -140,7 +139,7 @@ public class IPEDReader extends DataSourceReader {
 	  	selectedLabels = new HashSet<Integer>();
 	  	indexDir = state.getIndexDir().getCanonicalFile();
 	    basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-	    ipedCase = new IPEDSource(new File(basePath));
+	    ipedCase = new IPEDSourceImpl(new File(basePath));
 	    ipedCase.checkImagePaths();
 	    /*
 	     * Necessário guardar referência aos SleuthkitCase para não serem coletados e finalizados,
@@ -152,7 +151,7 @@ public class IPEDReader extends DataSourceReader {
 	    for(int i = 0; i < oldToNewIdMap.length; i++)
 	    	oldToNewIdMap[i] = -1;
 	    
-	    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
+	    IPEDSearcher pesquisa = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
 	    LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
 	    if(result.getLength() == 0) {
 	        result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
@@ -179,13 +178,13 @@ public class IPEDReader extends DataSourceReader {
 	  	return;
 	  int lastId = ipedCase.getLastId();
 	  int totalItens = ipedCase.getTotalItens();
-	  File stateFile = new File(output, Marcadores.STATEFILENAME);
+	  File stateFile = new File(output, MarcadoresImpl.STATEFILENAME);
 	  if(stateFile.exists()){
-		  Marcadores reportState = Marcadores.load(stateFile);
+		  Marcadores reportState = MarcadoresImpl.load(stateFile);
 		  lastId += reportState.getLastId() + 1;
 		  totalItens += reportState.getTotalItens();
 	  }
-	  Marcadores reportState = new Marcadores(totalItens, lastId, output);
+	  Marcadores reportState = new MarcadoresImpl(totalItens, lastId, output);
 	  reportState.loadState();
   	
       for(int oldLabelId : selectedLabels){
@@ -223,7 +222,7 @@ public class IPEDReader extends DataSourceReader {
         num++;
       }
       if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-    	IPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
+    	IPEDSearcher searchParents = new IPEDSearcherImpl(ipedCase, query);
   		searchParents.setTreeQuery(true);
         result = searchParents.luceneSearch();
         insertIntoProcessQueue(result, true);
@@ -258,7 +257,7 @@ public class IPEDReader extends DataSourceReader {
               num++;
           }
           if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-            IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+            IPEDSearcher searchAttachs = new IPEDSearcherImpl(ipedCase, query);
             SearchResult attachs = searchAttachs.search();
       	    for(int j = 0; j < attachs.getLength(); j++)
       	    	isAttachToAdd[attachs.getId(j)] = true;
@@ -281,7 +280,7 @@ public class IPEDReader extends DataSourceReader {
           num++;
         }
         if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-          IPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+          IPEDSearcher searchAttachs = new IPEDSearcherImpl(ipedCase, query);
     	  LuceneSearchResult attachs = searchAttachs.luceneSearch();
           insertIntoProcessQueue(attachs, false);
           query = new BooleanQuery();
@@ -295,7 +294,7 @@ public class IPEDReader extends DataSourceReader {
       int[] luceneIds = result.getLuceneIds();
       Arrays.sort(luceneIds);
       String queryText = ExtraProperties.LINKED_ITEMS + ":*"; //$NON-NLS-1$
-      IPEDSearcher searcher = new IPEDSearcher(ipedCase, queryText);
+      IPEDSearcher searcher = new IPEDSearcherImpl(ipedCase, queryText);
       try {
           SearchResult itemsWithLinks = searcher.search();
           for (int i = 0; i < itemsWithLinks.getLength(); i++){
@@ -313,7 +312,7 @@ public class IPEDReader extends DataSourceReader {
               queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
               queryBuilder.append(query.toString());
               queryBuilder.append(")"); //$NON-NLS-1$
-              searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
+              searcher = new IPEDSearcherImpl(ipedCase, queryBuilder.toString());
               
               LuceneSearchResult linkedItems = searcher.luceneSearch();
               if(linkedItems.getLength() > 0) {
@@ -346,7 +345,7 @@ public class IPEDReader extends DataSourceReader {
         continue;
       }
 
-      EvidenceFile evidence = new EvidenceFile();
+      ItemImpl evidence = new ItemImpl();
       evidence.setName(doc.get(IndexItem.NAME));
 
       evidence.setLength(len);
@@ -355,14 +354,14 @@ public class IPEDReader extends DataSourceReader {
       }
       
       //TODO obter source corretamente
-      DataSource dataSource = new DataSource(null);
+      DataSource dataSource = new DataSourceImpl(null);
       dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
       evidence.setDataSource(dataSource);
 
       int id = Integer.valueOf(doc.get(IndexItem.ID));
       int newId = oldToNewIdMap[id];
       if(newId == -1){
-    	  newId = EvidenceFile.getNextId();
+    	  newId = ItemImpl.getNextId();
     	  oldToNewIdMap[id] = newId;
       }
       evidence.setId(newId); 
@@ -385,7 +384,7 @@ public class IPEDReader extends DataSourceReader {
     	  id = Integer.valueOf(value);
     	  newId = oldToNewIdMap[id];
           if(newId == -1){
-        	  newId = EvidenceFile.getNextId();
+        	  newId = ItemImpl.getNextId();
         	  oldToNewIdMap[id] = newId;
           }
           evidence.setParentId(newId);
@@ -398,7 +397,7 @@ public class IPEDReader extends DataSourceReader {
         	id = Integer.valueOf(parent);
       	    newId = oldToNewIdMap[id];
             if(newId == -1){
-          	  newId = EvidenceFile.getNextId();
+          	  newId = ItemImpl.getNextId();
           	  oldToNewIdMap[id] = newId;
             }
           parents.add(newId);
@@ -530,7 +529,7 @@ public class IPEDReader extends DataSourceReader {
 
       //armazena metadados de emails, necessário para emails de PST
       if(OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))	
-        for (String key : ColumnsManager.email) {
+        for (String key : ColumnsManagerImpl.email) {
           for(String val : doc.getValues(key))
               evidence.getMetadata().add(key, val);
         }
@@ -570,7 +569,7 @@ public class IPEDReader extends DataSourceReader {
       for(IndexableField f : doc.getFields()) {
           if(BasicProps.SET.contains(f.name()))
               continue;
-          if(EvidenceFile.getAllExtraAttributes().contains(f.name())) {
+          if(ItemImpl.getAllExtraAttributes().contains(f.name())) {
               if(multiValuedFields.contains(f.name()))
                   continue;
               Class<?> c = IndexItem.getMetadataTypes().get(f.name());
@@ -587,7 +586,7 @@ public class IPEDReader extends DataSourceReader {
               evidence.getMetadata().add(f.name(), f.stringValue());
       }
 
-      caseData.addEvidenceFile(evidence);
+      caseData.addItem(evidence);
     }
 
   }

@@ -34,10 +34,10 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
+import iped3.ItemId;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 	
@@ -85,7 +85,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
           } while (!subdir.mkdir());
         }
         
-        EvidenceFile e = App.get().appCase.getItemByItemId(item);
+        Item e = App.get().appCase.getItemByItemId(item);
         String dstName = Util.getValidFilename(e.getName());
         InputStream in = e.getBufferedStream();
 

@@ -20,11 +20,12 @@ import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 /**
  * Tarefa de KFF com implementação simples utilizando base local, sem servidor de banco de dados. É
@@ -102,6 +103,18 @@ public class KFFTask extends AbstractTask {
       excluded = 0;
 
       File kffDb = new File(kffDbPath.trim());
+      if(!kffDb.exists()) {
+          String msg = "Invalid hash database path on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+          CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+          for(File source : args.getDatasources()) {
+              if(source.getName().endsWith(".iped")) {
+                  LOGGER.warn(msg);
+                  taskEnabled = false;
+                  return;
+              }
+          }
+          throw new IPEDException(msg);
+      }
     	  
       try {
         db = DBMaker.newFileDB(kffDb)
@@ -220,7 +233,7 @@ public class KFFTask extends AbstractTask {
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
 	  
 	if(!isEnabled()) return;
 

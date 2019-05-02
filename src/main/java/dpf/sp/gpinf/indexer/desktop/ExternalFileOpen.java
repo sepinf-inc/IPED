@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 public class ExternalFileOpen {
 	
@@ -17,7 +17,7 @@ public class ExternalFileOpen {
 	public static void open(final int luceneId){
 		new Thread() {
 	        public void run() {
-	            EvidenceFile item = App.get().appCase.getItemByLuceneID(luceneId);
+	            Item item = App.get().appCase.getItemByLuceneID(luceneId);
                 try {
                     File file = item.getTempFile();
                     file.setReadOnly();   

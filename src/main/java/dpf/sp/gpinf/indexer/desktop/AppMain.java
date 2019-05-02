@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,8 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
@@ -39,9 +42,15 @@ public class AppMain {
 	File casesPathFile = null;
 
 	public static void main(String[] args) {
-	    
+		AppMain appMain = new AppMain();
+		appMain.casePath = appMain.detectCasePath();
+	    try {
+            Configuration.getInstance().loadConfigurables(new File(appMain.casePath, "indexador").getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	    checkJavaVersion();
-		new AppMain().start(args);
+	    appMain.start(args);
 	}
 	
 	private static void checkJavaVersion(){
@@ -87,17 +96,17 @@ public class AppMain {
 	}
 	
 	private void start(String[] args) {	
-		
-	    if(testPath != null)
-	        casePath = testPath;
-	    
-		if(casePath == null)
-			casePath = detectCasePath();
-		
 		start(casePath, null, args);
 	}
 	
 	private File detectCasePath() {
+	    if(testPath != null)
+	        return testPath;
+	    
+	    if("true".equals(System.getProperty("Debugging"))){
+	    	return new File(System.getProperty("user.dir"));
+	    }
+		
 		URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
 		File jarFile = null;
 		try {
@@ -162,15 +171,13 @@ public class AppMain {
 		    	  Logger LOGGER = LoggerFactory.getLogger(IndexFiles.class);
 			      if(!fromCustomLoader)
 			    	  LOGGER.info(Versao.APP_NAME);
-			      
-			      Configuration.getConfiguration(libDir.getParentFile().getAbsolutePath());
 		      }
 		      
 		      if(!finalLoader && processingManager == null) {
 		            List<File> jars = new ArrayList<File>();
-		            if(Configuration.optionalJarDir != null && Configuration.optionalJarDir.listFiles() != null)
-		            	jars.addAll(Arrays.asList(Configuration.optionalJarDir.listFiles()));
-		            jars.add(Configuration.tskJarFile);
+		            PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance().findObjects(PluginConfig.class).iterator().next();
+		            jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
+		            jars.add(Configuration.getInstance().tskJarFile);
 		            
 		            System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH, new File(libDir, "nativeview").getAbsolutePath());
 		            LibreOfficeFinder loFinder = new LibreOfficeFinder(libDir.getParentFile());
@@ -185,7 +192,7 @@ public class AppMain {
 		        }else{
 		        	App.get().getSearchParams().codePath = libDir.getAbsolutePath();
 					App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-					  
+					
 					InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
 					init.execute();
 		        }

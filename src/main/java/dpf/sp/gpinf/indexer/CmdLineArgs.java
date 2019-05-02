@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer;
 
-import gpinf.dev.data.CaseData;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +15,7 @@ import com.beust.jcommander.ParameterException;
 
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.CaseData;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando. Parâmetros iniciados com 01
@@ -69,6 +68,9 @@ public class CmdLineArgs {
 
   @Parameter(names= {"-b", "-blocksize"}, description="sector block size (bytes), must set to 4k sector devices")
   private int blocksize;
+  
+  @Parameter(names= {"-p", "-password"}, description="password for encrypted images/volumes")
+  private String password;
 
   @Parameter(names="-profile", description="use a processing profile: forensic, pedo, "
       + "fastmode, blind, triage. More details in manual.")
@@ -150,6 +152,10 @@ public class CmdLineArgs {
 
   public int getBlocksize() {
       return blocksize;
+  }
+  
+  public String getPassword() {
+      return password;
   }
 
   public String getProfile() {
@@ -341,6 +347,9 @@ public class CmdLineArgs {
       }
       file = file.getParentFile();
     }
+    
+    System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
+    System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$ //$NON-NLS-2$
 
   }
 

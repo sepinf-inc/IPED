@@ -11,6 +11,7 @@ import java.nio.file.StandardCopyOption;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.commons.io.IOUtils;
 
+import iped3.io.SeekableInputStream;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 

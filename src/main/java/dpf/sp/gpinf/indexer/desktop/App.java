@@ -24,6 +24,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -36,7 +37,9 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -58,6 +61,8 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
@@ -69,7 +74,6 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.mt.gpinf.mapas.impl.AppMapaPanel;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.StackDockStation;
@@ -86,19 +90,30 @@ import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import dpf.sp.gpinf.indexer.util.JarLoader;
+import iped3.IPEDSource;
+import iped3.desktop.CancelableWorker;
+import iped3.desktop.ColumnsManager;
+import iped3.desktop.GUIProvider;
+import iped3.desktop.ProgressDialog;
+import iped3.desktop.ResultSetViewer;
+import iped3.desktop.ResultSetViewerConfiguration;
+import iped3.search.IPEDSearcher;
+import iped3.search.MultiSearchResult;
+import iped3.search.MultiSearchResultProvider;
 
-public class App extends JFrame implements WindowListener {
+public class App extends JFrame implements WindowListener, MultiSearchResultProvider, GUIProvider {
   /**
    *
    */
@@ -114,7 +129,7 @@ public class App extends JFrame implements WindowListener {
   
   private Manager processingManager;
 
-  MultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
+  MultiSearchResult ipedResult = new MultiSearchResultImpl(new ItemIdImpl[0], new float[0]);
   
   public IPEDMultiSource appCase;
   
@@ -127,7 +142,6 @@ public class App extends JFrame implements WindowListener {
   JTable resultsTable;
   GalleryTable gallery;
   public HitsTable hitsTable;
-  AppMapaPanel browserPane;
   
   HitsTable subItemTable, duplicatesTable;
   JTree tree, bookmarksTree, categoryTree;
@@ -140,19 +154,20 @@ public class App extends JFrame implements WindowListener {
   HitsTable parentItemTable;
   CControl dockingControl;
   DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
+  List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
+  
   DefaultSingleCDockable tableTabDock, galleryTabDock;
-  public DefaultSingleCDockable mapTabDock, hitsDock, subitemDock, parentDock, duplicateDock;
+  public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
   DefaultSingleCDockable compositeViewerDock;
 
   IViewerControl viewerControl = ViewerControl.getInstance();
   public CompositeViewer compositeViewer;
-
+  
   Color defaultColor;
   Color defaultFocusedColor;
   Color defaultSelectedColor;
   private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
   JScrollPane viewerScroll, resultsScroll, galleryScroll;
-  JScrollPane mapsScroll;
   MenuClass menu;
   JPanel topPanel;
   JPanel multiFilterAlert;
@@ -164,7 +179,7 @@ public class App extends JFrame implements WindowListener {
   ParentTableModel parentItemModel = new ParentTableModel();
   DuplicatesTableModel duplicatesModel = new DuplicatesTableModel();
   GalleryModel galleryModel = new GalleryModel();
-
+  
   Color alertColor = Color.RED;
   Color alertFocusedColor = Color.RED;
   Color alertSelectedColor = Color.RED;
@@ -194,6 +209,8 @@ public class App extends JFrame implements WindowListener {
   private static App app;
   
   AppListener appletListener;
+
+  private ResultSetViewerConfiguration resultSetViewerConfiguration;
 
   private App() {
     this.appSearchParams = new AppSearchParams();
@@ -294,7 +311,7 @@ public class App extends JFrame implements WindowListener {
     try {
     	
       if (this.resultsTable != null) {
-        ColumnsManager.getInstance().dispose();
+        ColumnsManagerImpl.getInstance().dispose();
       }
       if (compositeViewer != null) {
         compositeViewer.dispose();
@@ -453,11 +470,6 @@ public class App extends JFrame implements WindowListener {
       }
     });
     
-    if(new JarLoader().loadJavaFX()) {
-        browserPane = new AppMapaPanel(this);
-        mapsScroll = new JScrollPane(browserPane);
-    }
-
     hitsTable = new HitsTable(appSearchParams.hitsModel);
     appSearchParams.hitsTable = hitsTable;
     hitsScroll = new JScrollPane(hitsTable);
@@ -568,10 +580,6 @@ public class App extends JFrame implements WindowListener {
         zoomFont(this, -1);
     }
     
-    if (!isFTKReport && new File(casesPathFile, "indexador/data/containsReport.flag").exists()) { //$NON-NLS-1$
-        selectDockableTab(bookmarksTabDock);
-    }
-    
     status = new JLabel(" "); //$NON-NLS-1$
     this.appSearchParams.status = status;
 
@@ -666,17 +674,27 @@ public class App extends JFrame implements WindowListener {
     
 	tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
-	if (mapsScroll != null) {
-		mapTabDock = createDockable("maptab", Messages.getString("App.Map"), mapsScroll); //$NON-NLS-1$ //$NON-NLS-2$
-		mapTabDock.addCDockableLocationListener(new CDockableLocationListener() {
+	
+	List<ResultSetViewer> rsViewers = getResultSetViewerConfiguration().getResultSetViewers();
+	for (Iterator<ResultSetViewer> iterator = rsViewers.iterator(); iterator.hasNext();) {
+		final ResultSetViewer resultSetViewer = iterator.next();
+
+    	resultSetViewer.init(resultsTable, this, this);
+    	DefaultSingleCDockable tabDock = createDockable(resultSetViewer.getID(), resultSetViewer.getTitle(), resultSetViewer.getPanel());
+    	
+    	resultSetViewer.setDockableContainer(tabDock);
+
+    	rsTabDock.add(tabDock);
+    	tabDock.addCDockableLocationListener(new CDockableLocationListener() {
 			@Override
 			public void changed(CDockableLocationEvent event) {
 				if (event.isShowingChanged() && event.getNewShowing()) {
-					browserPane.redesenhaMapa();
+					resultSetViewer.redraw();
 				}
 			}
 		});
 	}
+
 	
 	hitsDock = createDockable("tabbedhits",  Messages.getString("App.Hits"), hitsScroll); //$NON-NLS-1$ //$NON-NLS-2$
 	subitemDock = createDockable("subitemstab",  Messages.getString("SubitemTableModel.Subitens"), subItemScroll); //$NON-NLS-1$ //$NON-NLS-2$
@@ -705,7 +723,12 @@ public class App extends JFrame implements WindowListener {
 	dockingControl.addDockable(bookmarksTabDock);
 	dockingControl.addDockable(tableTabDock);
 	dockingControl.addDockable(galleryTabDock);
-	dockingControl.addDockable(mapTabDock);
+	
+	for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
+		DefaultSingleCDockable tabDock = iterator.next();
+		dockingControl.addDockable(tabDock);
+	}
+	
 	dockingControl.addDockable(hitsDock);
 	dockingControl.addDockable(subitemDock);
 	dockingControl.addDockable(duplicateDock);
@@ -714,11 +737,24 @@ public class App extends JFrame implements WindowListener {
 	
 	setDockablesColors();
   }
-  
-  private void removeAllDockables() {
+
+  private ResultSetViewerConfiguration getResultSetViewerConfiguration() {
+	  try {
+			if(resultSetViewerConfiguration == null) {
+				resultSetViewerConfiguration = (new XMLResultSetViewerConfiguration(new File(casesPathFile,"indexador/conf/ResultSetViewersConf.xml")));
+				//resultSetViewerConfiguration = (new FixedResultSetViewerConfiguration());
+			}
+			return resultSetViewerConfiguration;
+	  }catch(Exception e) {
+		  e.printStackTrace();
+		  return null;
+	  }
+  }
+
+private void removeAllDockables() {
 	DefaultSingleCDockable [] dockables = new DefaultSingleCDockable[] {
 	  compositeViewerDock, hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
-	  mapTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
+	  bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock };
 	
 	for (DefaultSingleCDockable dockable : dockables) {
 	  if (dockable != null) {
@@ -846,20 +882,21 @@ public class App extends JFrame implements WindowListener {
 		removeAllDockables();
 	  createAllDockables();
 
-	  tableTabDock.setLocation(CLocation.base().normalNorth(0.4));
+	  tableTabDock.setLocation(CLocation.base().normalNorth(0.5));
       tableTabDock.setVisible(true);
 	  CLocation nextLocation = tableTabDock.getBaseLocation().aside();
 	  
 	  galleryTabDock.setLocation(nextLocation);
 	  galleryTabDock.setVisible(true);
 	  nextLocation = galleryTabDock.getBaseLocation().aside();
-	  
-	  if (mapTabDock != null) {
-	    mapTabDock.setLocation(nextLocation);
-	    mapTabDock.setVisible(true);
-	  }
+
+	  for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
+		DefaultSingleCDockable tabDock = iterator.next();
+		tabDock.setLocation(nextLocation);
+		tabDock.setVisible(true);
+      }
 	        
-	  hitsDock.setLocation(CLocation.base().normalSouth(0.6).west(0.18));
+	  hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
 	  hitsDock.setVisible(true);
 	  nextLocation = hitsDock.getBaseLocation().aside();
 	  
@@ -874,27 +911,29 @@ public class App extends JFrame implements WindowListener {
       duplicateDock.setLocation(nextLocation);
       duplicateDock.setVisible(true);
 
-	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.6).east(0.65));
+	  compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
 	  compositeViewerDock.setVisible(true);
 	  
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
-	  categoriesTabDock.setVisible(true);
-	        
-	  metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
-	  metadataTabDock.setVisible(true);
-	        
-	  nextLocation = metadataTabDock.getBaseLocation().aside();
-	        
-	  if (evidenceTabDock != null) {
-		evidenceTabDock.setLocation(nextLocation);
-	    evidenceTabDock.setVisible(true);
-	    nextLocation = evidenceTabDock.getBaseLocation().aside();
-	  }
-	        
-	  bookmarksTabDock.setLocation(nextLocation);
-	  bookmarksTabDock.setVisible(true);
-	  selectDockableTab(categoriesTabDock);
-	  selectDockableTab(tableTabDock);
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
+      categoriesTabDock.setVisible(true);
+            
+      if (evidenceTabDock != null) {
+        nextLocation = categoriesTabDock.getBaseLocation().aside();
+        evidenceTabDock.setLocation(nextLocation);
+        evidenceTabDock.setVisible(true);
+      }
+      
+      bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
+      bookmarksTabDock.setVisible(true);
+      
+      nextLocation = bookmarksTabDock.getBaseLocation().aside();
+      metadataTabDock.setLocation(nextLocation);
+      metadataTabDock.setVisible(true);
+            
+      selectDockableTab(categoriesTabDock);
+      selectDockableTab(bookmarksTabDock);
+      selectDockableTab(tableTabDock);
+	  
 	} else {
 	  if (remove)
 	    removeAllDockables();
@@ -909,9 +948,10 @@ public class App extends JFrame implements WindowListener {
 	  galleryTabDock.setVisible(true);
 	  nextLocation = galleryTabDock.getBaseLocation().aside();
 	        
-	  if (mapTabDock != null) {
-	    mapTabDock.setLocation(nextLocation);
-	    mapTabDock.setVisible(true);
+	  for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
+		DefaultSingleCDockable tabDock = iterator.next();
+	    tabDock.setLocation(nextLocation);
+	    tabDock.setVisible(true);
 	  }
 	        
 	  hitsDock.setLocation(CLocation.base().normalSouth(0.3));
@@ -929,26 +969,27 @@ public class App extends JFrame implements WindowListener {
       duplicateDock.setLocation(nextLocation);
       duplicateDock.setVisible(true);
 	       
-	  compositeViewerDock.setLocation(CLocation.base().normalEast(0.40));
-	  compositeViewerDock.setVisible(true);
-	       
-	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.17));
+	  categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
       categoriesTabDock.setVisible(true);
-      
-      metadataTabDock.setLocation(categoriesTabDock.getBaseLocation().aside());
-      metadataTabDock.setVisible(true);
-      
-      nextLocation = metadataTabDock.getBaseLocation().aside();
-      
+            
       if (evidenceTabDock != null) {
+        nextLocation = categoriesTabDock.getBaseLocation().aside();
         evidenceTabDock.setLocation(nextLocation);
         evidenceTabDock.setVisible(true);
-        nextLocation = evidenceTabDock.getBaseLocation().aside();
       }
       
-      bookmarksTabDock.setLocation(nextLocation);
+      bookmarksTabDock.setLocation(CLocation.base().normalWest(0.20).south(0.5));
       bookmarksTabDock.setVisible(true);
+      
+      nextLocation = bookmarksTabDock.getBaseLocation().aside();
+      metadataTabDock.setLocation(nextLocation);
+      metadataTabDock.setVisible(true);
+      
+      compositeViewerDock.setLocation(CLocation.base().normalEast(0.35));
+      compositeViewerDock.setVisible(true);
+            
       selectDockableTab(categoriesTabDock);
+      selectDockableTab(bookmarksTabDock);
 	  selectDockableTab(tableTabDock);
     }
 
@@ -956,13 +997,7 @@ public class App extends JFrame implements WindowListener {
   }
   
   public void alterarDisposicao() {
-
-    if (disposicaoVertical) {   	
-      disposicaoVertical = false;
-    } else {
-      disposicaoVertical = true;
-    }
-    
+    disposicaoVertical = !disposicaoVertical;
     refazLayout(true);
   }
 
@@ -1020,7 +1055,43 @@ public class App extends JFrame implements WindowListener {
 	return treeListener;
   }
 
-  public AppMapaPanel getBrowserPane() {
-	return browserPane;
-  }  
+  @Override
+  public String getSortColumn() {
+	SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);
+	String coluna = ColumnsManagerImpl.getInstance().getLoadedCols()[ordem.getColumn()-2];
+	return coluna;
+  }
+
+  @Override
+  public SortOrder getSortOrder() {
+	  SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);
+	  return ordem.getSortOrder();
+  }
+
+  @Override
+  public IPEDSearcher createNewSearch(String query) {
+	  IPEDSearcher searcher = new IPEDSearcherImpl(appCase, query);
+	  return searcher;
+  }
+
+  @Override
+  public IPEDSource getIPEDSource() {
+	return appCase;
+  }
+
+	@Override
+	public FileDialog createFileDialog(String title, int mode) {
+		return new FileDialog(this, title, mode);
+	}
+	
+	@Override
+	public ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
+			Dialog.ModalityType modal) {
+		return new ProgressDialog(this, task, indeterminate, millisToPopup, modal);
+	}
+	
+	@Override
+	public ColumnsManager getColumnsManager() {
+		return ColumnsManagerImpl.getInstance();
+	}
 }

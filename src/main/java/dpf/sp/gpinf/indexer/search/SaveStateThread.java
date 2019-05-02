@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.search.Marcadores;
 
 public class SaveStateThread extends Thread{
 	

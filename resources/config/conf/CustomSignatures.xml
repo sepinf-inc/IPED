@@ -125,21 +125,6 @@
         <glob pattern="*-MemberShadow-v*"/>
     </mime-type>
     
-    <mime-type type="image/cdr">
-    	<magic priority="60">
-          <match value="RIFF" type="string" offset="0">
-           	<match value="CDR" type="stringignorecase" offset="8" />
-           	<match value="DES" type="stringignorecase" offset="8" />
-          </match>
-          <match value="RIFF" type="string" offset="50">
-           	<match value="CDR" type="stringignorecase" offset="58" />
-           	<match value="DES" type="stringignorecase" offset="58" />
-          </match>
-     	</magic>
-        <glob pattern="*.cdr"/>
-        <sub-class-of type="application/zip"/>
-    </mime-type>
-    
     <mime-type type="application/x-whatsapp-db">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="msgstore*.db"/>
@@ -496,7 +481,19 @@
             <match value="0x4C0000000114020000000000C000000000000046" type="string" offset="0"/>
         </magic>
         <glob pattern="*.lnk"/>
-    </mime-type> 
+    </mime-type>
+    
+	<!-- considera tambem vcards com letra minuscula, como os exportados pelo thunderbird -->
+    <mime-type type="text/x-vcard">
+    	<magic priority="50">
+    		<match value="begin:vcard" type="string" offset="0"/>
+    	</magic>
+    </mime-type>
+    
+    <!-- vcard decodificado pelo parser -->
+    <mime-type type="application/x-vcard-html">
+    	<sub-class-of type="text/html"/>
+    </mime-type>    
     
     <!-- UFED specific mimes-->
     

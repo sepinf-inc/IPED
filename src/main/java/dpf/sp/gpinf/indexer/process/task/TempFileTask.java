@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.EvidenceFile;
+import iped3.Item;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do processamento. Caso indexTemp
@@ -48,7 +48,7 @@ public class TempFileTask extends AbstractTask {
   }
 
   @Override
-  protected void process(EvidenceFile evidence) throws Exception {
+  protected void process(Item evidence) throws Exception {
 
     Long len = evidence.getLength();
     if (indexTempOnSSD && len != null && len <= MAX_TEMPFILE_LEN /*&& evidence.getPath().toLowerCase().contains(".e01/vol_vol")*/) {

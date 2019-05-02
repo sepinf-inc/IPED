@@ -1,8 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.data.CaseData;
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
@@ -17,6 +14,8 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
+import iped3.CaseData;
+import iped3.Item;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving, indexação, etc).
@@ -120,7 +119,7 @@ public abstract class AbstractTask {
    * @param evidence Item a ser processado.
    * @throws Exception Caso ocorra erro inesperado.
    */
-  abstract protected void process(EvidenceFile evidence) throws Exception;
+  abstract protected void process(Item evidence) throws Exception;
 
   /**
    * Realiza o processamento do item na tarefa e o envia para a próxima tarefa.
@@ -128,7 +127,7 @@ public abstract class AbstractTask {
    * @param evidence Item a ser processado.
    * @throws Exception Caso ocorra erro inesperado.
    */
-  public final void processAndSendToNextTask(EvidenceFile evidence) throws Exception {
+  public final void processAndSendToNextTask(Item evidence) throws Exception {
 	  
 	while(worker.state != STATE.RUNNING){
 		synchronized(worker){
@@ -183,7 +182,7 @@ public abstract class AbstractTask {
    * @param evidence Item a ser processado
    * @throws Exception Caso ocorra erro inesperado.
    */
-  protected void sendToNextTask(EvidenceFile evidence) throws Exception {
+  protected void sendToNextTask(Item evidence) throws Exception {
     if (nextTask != null) {
     	int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
     	if(priority <= caseData.getCurrentQueuePriority())
@@ -202,7 +201,7 @@ public abstract class AbstractTask {
    * @param evidence Item a ser procesado
    * @throws Exception Se ocorrer erro inesperado.
    */
-  private void processMonitorTimeout(EvidenceFile evidence) throws Exception {
+  private void processMonitorTimeout(Item evidence) throws Exception {
     try {
       this.process(evidence);
 

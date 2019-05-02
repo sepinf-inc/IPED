@@ -46,12 +46,12 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.ItemId;
 
 public class GalleryModel extends AbstractTableModel {
 	
@@ -103,7 +103,7 @@ public class GalleryModel extends AbstractTableModel {
     if (imgThumbTask == null) {
       try {
         imgThumbTask = new ImageThumbTask();
-        imgThumbTask.init(Configuration.properties, new File(Configuration.configPath + "/conf")); //$NON-NLS-1$
+        imgThumbTask.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath + "/conf")); //$NON-NLS-1$
         thumbSize = imgThumbTask.thumbSize;
         galleryThreads = imgThumbTask.galleryThreads;
         logRendering = imgThumbTask.logGalleryRendering;
@@ -319,4 +319,10 @@ public class GalleryModel extends AbstractTableModel {
     return image;
   }
 
+  @Override
+  public void setValueAt(Object value, int row, int col) {
+	 super.setValueAt(value, row, col);
+	 fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
+  }
+  
 }

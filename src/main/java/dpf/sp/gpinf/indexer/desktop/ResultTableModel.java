@@ -40,10 +40,10 @@ import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.ItemId;
+import iped3.search.MultiSearchResult;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel{
 
@@ -76,11 +76,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(fixedColdWidths[i]);
           }
 
-          for (int i = 0; i < ColumnsManager.getInstance().colState.initialWidths.size(); i++) {
+          for (int i = 0; i < ColumnsManagerImpl.getInstance().colState.initialWidths.size(); i++) {
             TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
-            tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
+            tc.setPreferredWidth(ColumnsManagerImpl.getInstance().colState.initialWidths.get(i));
 
-            ColumnsManager.getInstance().setColumnRenderer(tc);
+            ColumnsManagerImpl.getInstance().setColumnRenderer(tc);
           }
 
         }
@@ -99,7 +99,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
       cols.add(col);
     }
 
-    fields = ColumnsManager.getInstance().getLoadedCols();
+    fields = ColumnsManagerImpl.getInstance().getLoadedCols();
     for (String col : fields) {
       cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
     }
@@ -170,7 +170,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
   public void setValueAt(Object value, int row, int col) {
 
     app.appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().ipedResult.getItem(row), app.appCase);   
+	App.get().galleryModel.setValueAt(value, row, col);
     App.get().resultsModel.fireTableCellUpdated(row, col);
+
 	//app.appCase.getMarcadores().setSelected((Boolean)value, app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
     if(!MarcadoresController.get().isMultiSetting()){
     	app.appCase.getMultiMarcadores().saveState();

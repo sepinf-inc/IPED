@@ -10,8 +10,9 @@ import org.apache.lucene.index.SortedDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import iped3.ItemId;
+import iped3.search.MultiSearchResult;
 
 public class DynamicDuplicateFilter {
     
@@ -29,7 +30,7 @@ public class DynamicDuplicateFilter {
         }
     }
     
-    public MultiSearchResult filter(MultiSearchResult result) {
+    public MultiSearchResultImpl filter(MultiSearchResult result) {
         
         ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
@@ -45,7 +46,7 @@ public class DynamicDuplicateFilter {
             }
             i++;
         }
-        return new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+        return new MultiSearchResultImpl(filteredItems.toArray(new ItemId[0]),
                 ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
     }
 

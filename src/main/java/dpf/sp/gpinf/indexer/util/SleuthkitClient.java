@@ -22,8 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
+import iped3.io.SeekableInputStream;
 
 public class SleuthkitClient {
 
@@ -105,12 +108,13 @@ public class SleuthkitClient {
     	portStart.set(port + 1);
     }
 
-    String pipePath = Configuration.indexerTemp + "/pipe-" + port; //$NON-NLS-1$
+    LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
+    String pipePath = localConfig.getIndexerTemp() + "/pipe-" + port; //$NON-NLS-1$
     
-    String classpath = Configuration.appRoot + "/iped.jar"; //$NON-NLS-1$
-    if(Configuration.tskJarFile != null) {
+    String classpath = Configuration.getInstance().appRoot + "/iped.jar"; //$NON-NLS-1$
+    if(Configuration.getInstance().tskJarFile != null) {
         classpath += SystemUtils.IS_OS_WINDOWS ? ";" : ":";
-        classpath += Configuration.tskJarFile.getAbsolutePath(); //$NON-NLS-1$
+        classpath += Configuration.getInstance().tskJarFile.getAbsolutePath(); //$NON-NLS-1$
     }
 
     String[] cmd = {"java", "-cp", classpath, "-Xmx128M", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$

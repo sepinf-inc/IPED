@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -21,17 +20,20 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import gpinf.dev.data.EvidenceFile;
+import iped3.IPEDSource;
+import iped3.Item;
+import iped3.ItemId;
+import iped3.search.LuceneSearchResult;
 
-public class IPEDMultiSource extends IPEDSource{
+public class IPEDMultiSource extends IPEDSourceImpl{
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(IPEDMultiSource.class);
 	
 	private static ArrayList<Integer> baseDocCache = new ArrayList<Integer>();
 	
-	List<IPEDSource> cases = new ArrayList<IPEDSource>();
+	List<IPEDSourceImpl> cases = new ArrayList<>();
 	
-	public IPEDMultiSource(List<IPEDSource> sources) {
+	public IPEDMultiSource(List<IPEDSourceImpl> sources) {
 		super(null);
 		this.cases = sources;
 		init();
@@ -48,17 +50,17 @@ public class IPEDMultiSource extends IPEDSource{
 			files = loadCasesFromTxtFile(file);
 		
 		ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		ArrayList<Future<IPEDSource>> futures = new ArrayList<>(); 
+		ArrayList<Future<IPEDSourceImpl>> futures = new ArrayList<>(); 
 		for(final File src : files){
-		    Callable<IPEDSource> openCase = new Callable<IPEDSource>() {
-		        public IPEDSource call() {
+		    Callable<IPEDSourceImpl> openCase = new Callable<IPEDSourceImpl>() {
+		        public IPEDSourceImpl call() {
 		            LOGGER.info("Loading " + src.getAbsolutePath()); //$NON-NLS-1$
-		            return new IPEDSource(src);
+		            return new IPEDSourceImpl(src);
 		        }
 		    };
 		    futures.add(executor.submit(openCase));
 		}
-		for(Future<IPEDSource> f : futures)
+		for(Future<IPEDSourceImpl> f : futures)
             try {
                 cases.add(f.get());
             } catch (InterruptedException | ExecutionException e) {
@@ -112,7 +114,7 @@ public class IPEDMultiSource extends IPEDSource{
 	public void init(){
 		
 		int i = 0;
-		for(IPEDSource iCase : cases)
+		for(IPEDSourceImpl iCase : cases)
 			iCase.sourceId = i++;
 		
 		try{
@@ -122,28 +124,28 @@ public class IPEDMultiSource extends IPEDSource{
 			e.printStackTrace();
 		}
 
-        for(IPEDSource iCase : cases)
+        for(IPEDSourceImpl iCase : cases)
         	totalItens += iCase.totalItens;
         
         for(IPEDSource iCase : cases)
 			baseDocCache.add(getBaseLuceneId(iCase));
 		
-		for(IPEDSource iCase : cases)
+		for(IPEDSourceImpl iCase : cases)
 			for(String category : iCase.categories)
 				if(!categories.contains(category))
 					categories.add(category);
 		
-		for(IPEDSource iCase : cases)
+		for(IPEDSourceImpl iCase : cases)
 			for(String keyword : iCase.keywords)
 				if(!keywords.contains(keyword))
 					keywords.add(keyword);
 		
 		//marcadores = new Marcadores(this, this.getCaseDir());
-		this.globalMarcadores = new MultiMarcadores(cases);
+		this.globalMarcadores = new MultiMarcadoresImpl(cases);
 		
 		analyzer = AppAnalyzer.get();
 		
-		for(IPEDSource iCase : cases)
+		for(IPEDSourceImpl iCase : cases)
 			if(iCase.isFTKReport)
 				isFTKReport = true;
 		
@@ -153,7 +155,7 @@ public class IPEDMultiSource extends IPEDSource{
 	private void openIndex() throws IOException{
 		int i = 0;
 		IndexReader[] readers = new IndexReader[cases.size()]; 
-		for(IPEDSource iCase : cases)
+		for(IPEDSourceImpl iCase : cases)
 			readers[i++] = iCase.reader;
 		
 		LOGGER.info("Opening MultiReader..."); //$NON-NLS-1$
@@ -184,13 +186,13 @@ public class IPEDMultiSource extends IPEDSource{
 	
 	@Override
 	public void checkImagePaths() throws IPEDException, TskCoreException{
-	    for(IPEDSource iCase : cases)
+	    for(IPEDSourceImpl iCase : cases)
 	        iCase.checkImagePaths();
 	}
 	
 	final public IPEDSource getAtomicSource(int luceneId){
 		int maxDoc = 0;
-		for(IPEDSource iCase : cases){
+		for(IPEDSourceImpl iCase : cases){
 			maxDoc += iCase.reader.maxDoc();
 			if(luceneId < maxDoc)
 				return iCase;
@@ -202,13 +204,13 @@ public class IPEDMultiSource extends IPEDSource{
 		return cases.get(sourceId);
 	}
 	
-	final public List<IPEDSource> getAtomicSources(){
+	final public List<IPEDSourceImpl> getAtomicSources(){
 		return this.cases;
 	}
 	
 	public final int getBaseLuceneId(IPEDSource atomicCase){
 		int maxDoc = 0;
-		for(IPEDSource iCase : cases){
+		for(IPEDSourceImpl iCase : cases){
 			if(atomicCase == iCase)
 				return maxDoc;
 			maxDoc += iCase.reader.maxDoc();
@@ -219,22 +221,23 @@ public class IPEDMultiSource extends IPEDSource{
 	private LuceneSearchResult rebaseLuceneIds(LuceneSearchResult resultsFromAtomicCase, IPEDSource atomicCase){
 		LuceneSearchResult result = resultsFromAtomicCase.clone();
 		int baseDoc = getBaseLuceneId(atomicCase);
-		for(int i = 0; i < result.docs.length; i++)
-			result.docs[i] += baseDoc;
+		int[] docs = result.getLuceneIds();
+		for(int i = 0; i < docs.length; i++)
+			docs[i] += baseDoc;
 		return result;
 	}
 	
 	@Override
-	final public EvidenceFile getItemByID(int id){
+	final public Item getItemByID(int id){
 		throw new RuntimeException("Use getItemByItemId() from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}
 	
-	final public EvidenceFile getItemByItemId(ItemId item){
+	final public Item getItemByItemId(ItemId item){
 		return getAtomicSourceBySourceId(item.getSourceId()).getItemByID(item.getId());
 	}
 	
 	@Override
-	final public EvidenceFile getItemByLuceneID(int luceneId){
+	final public Item getItemByLuceneID(int luceneId){
 		IPEDSource atomicCase = getAtomicSource(luceneId);
 		luceneId -= getBaseLuceneId(atomicCase);
 		return atomicCase.getItemByLuceneID(luceneId);
@@ -250,10 +253,9 @@ public class IPEDMultiSource extends IPEDSource{
 		int sourceId = atomicSource.getSourceId();
 		int baseDoc = getBaseLuceneId(atomicSource);
 		int id = atomicSource.getId(luceneId - baseDoc);
-		return new ItemId(sourceId, id);
+		return new ItemIdImpl(sourceId, id);
 	}
 	
-	@Override
 	final public int getLuceneId(int id){
 		throw new RuntimeException("Use getLuceneId(ItemId) from " + this.getClass().getSimpleName()); //$NON-NLS-1$
 	}

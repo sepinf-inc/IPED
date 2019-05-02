@@ -30,9 +30,9 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
-import gpinf.dev.data.EvidenceFile;
 import gpinf.emule.KnownMetEntry;
 import gpinf.emule.KnownMetParser;
+import iped3.Item;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.
@@ -127,7 +127,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
     }
   }
 
-  public void process(EvidenceFile evidence) {
+  public void process(Item evidence) {
     //Verifica se está desabilitado e se o tipo de arquivo é tratado
     if (!taskEnabled || caseData.isIpedReport() || !isAcceptedType(evidence.getMediaType())) return;
 
@@ -193,6 +193,6 @@ public class KnownMetCarveTask extends BaseCarveTask {
   }
 
   private static boolean isAcceptedType(MediaType mediaType) {
-    return mediaType.getBaseType().equals(CarveTask.UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile);
+    return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile);
   }
 }

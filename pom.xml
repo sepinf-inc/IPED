@@ -3,12 +3,12 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>gpinf</groupId>
     <artifactId>iped</artifactId>
-    <version>3.15.5</version>
+    <version>4.0.0-SNAPSHOT</version>
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <resources.dir>${basedir}/resources</resources.dir>
         <release.dir>${project.build.directory}/release/iped-${project.version}</release.dir>  
         <lib.dir>${release.dir}/lib</lib.dir>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.8.11.2</version>
+            <version>3.23.1</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -158,17 +158,32 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>3.15</version>
+            <version>4.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>gpinf.iped</groupId>
-            <artifactId>iped-viewer</artifactId>
-            <version>3.15</version>
+            <groupId>iped</groupId>
+            <artifactId>iped-carvers-api</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-carvers-impl</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-viewers-api</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-viewers-impl</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>3.15</version>
+            <version>4.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -200,6 +215,21 @@
             <artifactId>docking-frames-common</artifactId>
             <version>1.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-api</artifactId>
+            <version>4.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>iped</groupId>
+            <artifactId>iped-geo</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+   			<groupId>com.zaxxer</groupId>
+   			<artifactId>SparseBitSet</artifactId>
+   			<version>1.1</version>
+       	</dependency>
         <dependency>
         	<groupId>org.glassfish.jersey.containers</groupId>
         	<artifactId>jersey-container-grizzly2-servlet</artifactId>

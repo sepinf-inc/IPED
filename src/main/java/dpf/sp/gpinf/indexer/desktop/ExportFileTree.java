@@ -18,8 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import gpinf.dev.data.EvidenceFile;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,14 +44,17 @@ import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.LuceneSearchResult;
-import dpf.sp.gpinf.indexer.util.CancelableWorker;
-import dpf.sp.gpinf.indexer.util.ProgressDialog;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.IPEDSource;
+import iped3.Item;
+import iped3.desktop.CancelableWorker;
+import iped3.desktop.ProgressDialog;
+import iped3.search.IPEDSearcher;
+import iped3.search.LuceneSearchResult;
+import iped3.search.MultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 	
@@ -108,13 +109,13 @@ public class ExportFileTree extends CancelableWorker {
       else
           textQuery =  "(" + textQuery + ") AND NOT (" + activeStr + ")";
 
-      IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+      IPEDSearcher task = new IPEDSearcherImpl(App.get().appCase, textQuery);
       LuceneSearchResult result = task.luceneSearch();
 
       if (onlyChecked) {
-    	  MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
-    	  ir = App.get().appCase.getMultiMarcadores().filtrarSelecionados(ir);
-    	  result = MultiSearchResult.get(ir, App.get().appCase);
+    	  MultiSearchResultImpl ir = MultiSearchResultImpl.get(App.get().appCase, result);
+    	  ir = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSelecionados(ir);
+    	  result = MultiSearchResultImpl.get(ir, App.get().appCase);
       }
 
       return result.getLuceneIds();
@@ -193,7 +194,7 @@ public class ExportFileTree extends CancelableWorker {
         return exportItemToZip(docId, subdir, isParent);
     
     File dst = null;
-    EvidenceFile item = null;
+    Item item = null;
     try {
       item = App.get().appCase.getItemByLuceneID(docId);
 
@@ -236,7 +237,7 @@ public class ExportFileTree extends CancelableWorker {
   private String exportItemToZip(int docId, Object subdir, boolean isParent) {
 
       String dst = null;
-      EvidenceFile item = null;
+      Item item = null;
       try {
         if(zaos == null) {
             BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(baseDir));
