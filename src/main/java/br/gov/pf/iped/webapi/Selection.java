@@ -13,13 +13,15 @@ import javax.ws.rs.core.Response;
 
 import br.gov.pf.iped.webapi.json.DocIDJSON;
 import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiMarcadores;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import iped3.ItemId;
+import iped3.search.IPEDSearcher;
+import iped3.search.MultiMarcadores;
+import iped3.search.MultiSearchResult;
 
 @Api(value="Selection")
 @Path("selection")
@@ -30,7 +32,7 @@ public class Selection {
     @Produces(MediaType.APPLICATION_JSON)
     public SourceToIDsJSON get() throws Exception{
         
-        IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
+        IPEDSearcher searcher = new IPEDSearcherImpl(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarSelecionados(result);
         
@@ -49,7 +51,7 @@ public class Selection {
     public Response add(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d: docs) {
-            mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
+            mm.setSelected(true, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();
@@ -62,7 +64,7 @@ public class Selection {
     public Response remove(@ApiParam(required=true) DocIDJSON[] docs){
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d: docs) {
-            mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
+            mm.setSelected(false, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();

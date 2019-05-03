@@ -19,13 +19,14 @@ import javax.ws.rs.core.Response;
 import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.DocIDJSON;
 import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiMarcadores;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.ItemIdImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import iped3.ItemId;
+import iped3.search.MultiMarcadores;
+import iped3.search.MultiSearchResult;
 
 
 @Api(value="Bookmarks")
@@ -47,7 +48,7 @@ public class Bookmarks {
     @Produces(MediaType.APPLICATION_JSON)
     public SourceToIDsJSON get(@PathParam("bookmark") String bookmark) throws Exception{
         
-        IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
+	    IPEDSearcherImpl searcher = new IPEDSearcherImpl(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
         
@@ -68,7 +69,7 @@ public class Bookmarks {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+        	itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.addLabel(itemIds, bookmark);
         mm.saveState();
@@ -84,7 +85,7 @@ public class Bookmarks {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+        	itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.removeLabel(itemIds, bookmark);
         mm.saveState();

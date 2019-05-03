@@ -23,10 +23,10 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import iped3.IPEDSource;
+import iped3.Item;
 
 @Api(value="Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
@@ -40,7 +40,7 @@ public class Text {
 			@PathParam("id") int id) throws Exception{
 
     	IPEDSource source = Sources.getSource(sourceID);
-    	final EvidenceFile item = source.getItemByID(id);
+    	final Item item = source.getItemByID(id);
     	final IndexerDefaultParser parser = new IndexerDefaultParser();
 		final ParseContext context = getTikaContext(item, parser, source.getModuleDir());
     	final Metadata metadata = new Metadata();
@@ -61,9 +61,9 @@ public class Text {
 		};
     }
     
-    public static ParseContext getTikaContext(EvidenceFile item, Parser parser, File moduleDir) throws Exception {
+    public static ParseContext getTikaContext(Item item, Parser parser, File moduleDir) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
-        expander.init(Configuration.properties, new File(Configuration.configPath, "conf")); //$NON-NLS-1$
+        expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
         ParseContext context = expander.getTikaContext(); 
         expander.setExtractEmbedded(false);
         context.set(OCROutputFolder.class, new OCROutputFolder(moduleDir));

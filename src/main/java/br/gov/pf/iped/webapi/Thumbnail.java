@@ -15,10 +15,10 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import iped3.IPEDSource;
+import iped3.Item;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs/{id}/thumb")
@@ -33,7 +33,7 @@ public class Thumbnail {
                     throws TskCoreException, IOException, URISyntaxException{
 
         IPEDSource source = Sources.getSource(sourceID);
-        EvidenceFile item = source.getItemByID(id);
+        Item item = source.getItemByID(id);
         final byte[] thumb = item.getThumb() != null ? item.getThumb() : new byte[0];
         return new StreamingOutput() {
             @Override

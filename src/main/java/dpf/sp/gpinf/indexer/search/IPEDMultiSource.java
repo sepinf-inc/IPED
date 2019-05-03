@@ -33,9 +33,10 @@ public class IPEDMultiSource extends IPEDSourceImpl{
 	
 	List<IPEDSourceImpl> cases = new ArrayList<>();
 	
-	public IPEDMultiSource(List<IPEDSourceImpl> sources) {
+	public IPEDMultiSource(List<IPEDSource> sources) {
 		super(null);
-		this.cases = sources;
+		for(IPEDSource src : sources)
+		    this.cases.add((IPEDSourceImpl)src);
 		init();
 	}
 	

@@ -12,13 +12,14 @@ import javax.ws.rs.core.MediaType;
 
 import br.gov.pf.iped.webapi.json.DocIDJSON;
 import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.SearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import iped3.ItemId;
+import iped3.search.IPEDSearcher;
+import iped3.search.MultiSearchResult;
+import iped3.search.SearchResult;
 
 @Api(value="Search")
 @Path("search")
@@ -34,14 +35,14 @@ public class Search {
     	String escapeq = q.replaceAll("/", "\\\\/");
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
     	if (sourceID.equals("")) { 
-    		IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, escapeq);
+    	    IPEDSearcherImpl searcher = new IPEDSearcherImpl(Sources.multiSource, escapeq);
         	MultiSearchResult result = searcher.multiSearch();
             for (ItemId id : result.getIterator()) {
             	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
             }
     	} else {
-    		IPEDSource source = Sources.getSource(sourceID); 
-    		IPEDSearcher searcher = new IPEDSearcher(source, escapeq);
+    		IPEDSourceImpl source = (IPEDSourceImpl)Sources.getSource(sourceID); 
+    		IPEDSearcher searcher = new IPEDSearcherImpl(source, escapeq);
         	SearchResult result = searcher.search();
         	for (int id: result.getIds()) {
             	docs.add(new DocIDJSON(sourceID, id));

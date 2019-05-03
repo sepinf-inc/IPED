@@ -14,9 +14,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 
 import br.gov.pf.iped.webapi.json.DocPropsJSON;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import iped3.IPEDSource;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs")

@@ -17,10 +17,10 @@ import javax.ws.rs.core.StreamingOutput;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import gpinf.dev.data.EvidenceFile;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import iped3.IPEDSource;
+import iped3.Item;
 
 @Api(value="Documents")
 @Path("sources/{sourceID}/docs/{id}/content")
@@ -35,7 +35,7 @@ public class Content {
 					throws TskCoreException, IOException, URISyntaxException{
 
 		IPEDSource source = Sources.getSource(sourceID);
-    	final EvidenceFile item = source.getItemByID(id);
+    	final Item item = source.getItemByID(id);
 		return Response.status(200)
 				.header("Content-Length", String.valueOf(item.getLength()))
 				.header("Content-Disposition", "attachment; filename=\""+ item.getName() + "\"")

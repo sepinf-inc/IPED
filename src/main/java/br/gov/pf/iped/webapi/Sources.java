@@ -29,10 +29,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.SourceJSON;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import iped3.IPEDSource;
 
 @Api(value="Sources")
 @Path("sources")
@@ -54,7 +55,7 @@ public class Sources {
 			
 			sourcePathToStringID.put(path,id);
 			
-			IPEDSource source = new IPEDSource(new File(path));
+			IPEDSource source = new IPEDSourceImpl(new File(path));
 			sources.add(source);
 		}
 
@@ -101,9 +102,9 @@ public class Sources {
 		}
 		sourcePathToStringID.put(path, id);
 		
-		List<IPEDSource> sources = multiSource.getAtomicSources();
+		List<IPEDSourceImpl> sources = multiSource.getAtomicSources();
 		int last = sources.size();
-		sources.add(new IPEDSource(new File(path)));
+		sources.add(new IPEDSourceImpl(new File(path)));
 		if (last+1 != sources.size()) {
 			throw new RuntimeException("concurrency error adding source");
 		}
