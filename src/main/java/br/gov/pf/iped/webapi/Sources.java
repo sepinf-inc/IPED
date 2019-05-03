@@ -28,6 +28,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.SourceJSON;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import io.swagger.annotations.Api;
@@ -42,10 +43,13 @@ public class Sources {
 	public static Map <Integer, String> sourceIntToString;
 	public static Map <String, Integer> sourceStringToInt;
 	public static Map <String, String> sourcePathToStringID;
+	
 	public static void init(String urlToAskSources) throws IOException, ParseException{
 		sourceIntToString = new HashMap<Integer, String>();
 		sourceStringToInt = new HashMap <String, Integer>();
 		sourcePathToStringID = new HashMap <String, String>();
+		
+	    boolean confInited = false;
 		List<IPEDSource> sources = new ArrayList<IPEDSource>(); 
 		JSONArray arr = askSources(urlToAskSources);
 		for (Object object : arr) {
@@ -54,6 +58,11 @@ public class Sources {
 			String path = (String)jsonobj.get("path");
 			
 			sourcePathToStringID.put(path,id);
+			
+			if(!confInited) {
+			    Configuration.getInstance().loadConfigurables(path + "/indexador", true); //$NON-NLS-1$
+		        confInited = true;
+			}
 			
 			IPEDSource source = new IPEDSourceImpl(new File(path));
 			sources.add(source);

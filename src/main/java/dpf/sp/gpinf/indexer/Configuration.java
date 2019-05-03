@@ -182,8 +182,12 @@ public class Configuration {
 	    		throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
 	    }
     }
-
+    
     public void loadConfigurables(String configPathStr) throws IOException {
+        loadConfigurables(configPathStr, false);
+    }
+    
+    public void loadConfigurables(String configPathStr, boolean loadAll) throws IOException {
         
         if(loaded.getAndSet(true))
             return;
@@ -202,7 +206,7 @@ public class Configuration {
 	    PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
 	    
-	    if(!Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
+	    if(!loadAll && !Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
 	        //we still are in the application first classLoader, no need to load other configurables
 	        configManager.loadConfigs();
 	        return;
