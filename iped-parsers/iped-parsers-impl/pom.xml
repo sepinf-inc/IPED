@@ -2,31 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>gpinf.iped</groupId>
+        <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
         <version>4.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
-    <repositories>
-    	<repository>
-            <id>internal</id>
-            <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
-        </repository>
-        
-        <repository>
-      		<id>central</id>
-      		<name>Maven Repository Switchboard</name>
-      		<layout>default</layout>
-      		<url>http://repo1.maven.org/maven2</url>
-    	</repository>
-    </repositories>
+    
     <dependencies>
     	<dependency>
     		<groupId>org.slf4j</groupId>
@@ -90,7 +72,7 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.8.11.2</version>
+            <version>${xerial.sqlite.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -132,4 +114,22 @@
 	        <version>0.10.5</version>
         </dependency>
     </dependencies>
+    
+    <build>
+    	<plugins>
+    		<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+    	</plugins>
+    </build>
 </project>

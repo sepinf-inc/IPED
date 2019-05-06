@@ -5,20 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
 	<parent>
-        <groupId>gpinf</groupId>
-        <artifactId>iped</artifactId>
+        <groupId>iped</groupId>
+        <artifactId>iped-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>iped</groupId>
     <artifactId>iped-carvers</artifactId>
     <packaging>pom</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
 
     <modules>
         <module>iped-carvers-api</module>
@@ -31,7 +24,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.12</version>
+                <version>${junit.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -41,45 +34,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <repositories>
-        <repository>
-            <id>archiva.internal</id>
-            <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>archiva.snapshots</id>
-            <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>archiva.internal</id>
-            <name>Internal Release Repository</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
-        </repository>
-        <snapshotRepository>
-            <id>archiva.snapshots</id>
-            <name>Internal Snapshot Repository</name>
-            <layout>default</layout>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->

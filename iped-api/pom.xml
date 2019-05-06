@@ -2,11 +2,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>gpinf</groupId>
-        <artifactId>iped</artifactId>
+        <groupId>iped</groupId>
+        <artifactId>iped-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
     </parent>
-    <groupId>iped</groupId>
+    
     <artifactId>iped-api</artifactId>
     <packaging>jar</packaging>
     
@@ -37,30 +37,6 @@
             <version>${sleuthkit.version}</version>
         </dependency>
     </dependencies>
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <repositories>
-        <repository>
-            <id>internal</id>
-            <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
-        </repository>
-        <repository>
-            <id>central</id>
-            <name>Maven Repository Switchboard</name>
-            <layout>default</layout>
-            <url>http://repo1.maven.org/maven2</url>
-        </repository>
-    </repositories>
     
     <build>
     	<plugins>

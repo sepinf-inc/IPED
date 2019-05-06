@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>gpinf</groupId>
-    <artifactId>iped</artifactId>
+    <groupId>iped</groupId>
+    <artifactId>iped-parent</artifactId>
     <version>4.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     
@@ -34,7 +34,10 @@
         <sleuthkit.version>4.6.0-p01</sleuthkit.version>
         <libreoffice.version>5.1.4</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
+        <log4j.version>2.3</log4j.version>
+        <junit.version>4.12</junit.version>
         <icepdf.version>6.3.2</icepdf.version>
+        <xerial.sqlite.version>3.23.1</xerial.sqlite.version>
         <dockingframes.version>1.1.1</dockingframes.version>
     </properties>
     
@@ -57,99 +60,35 @@
         </repository>
     </repositories>
     
+    <distributionManagement>
+		<repository>
+			<id>archiva.internal</id>
+			<name>Internal Release Repository</name>
+			<url>http://10.61.242.12:8081/repository/internal/</url>
+		</repository>
+		<snapshotRepository>
+			<id>archiva.snapshots</id>
+			<name>Internal Snapshot Repository</name>
+			<layout>default</layout>
+			<url>http://10.61.242.12:8081/repository/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+    
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-      <dependency>
-    	<groupId>net.lingala.zip4j</groupId>
-    	<artifactId>zip4j</artifactId>
-    	<version>1.3.2</version>
-	  </dependency>
-      <dependency>
-          <groupId>com.beust</groupId>
-          <artifactId>jcommander</artifactId>
-          <version>1.72</version>
-      </dependency>
-    	<dependency>
-    		<groupId>dk.brics.automaton</groupId>
-    		<artifactId>automaton</artifactId>
-    		<version>1.11-8</version>
-		</dependency>
-        <dependency>
-            <groupId>org.sleuthkit</groupId>
-            <artifactId>sleuthkit</artifactId>
-            <version>${sleuthkit.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-			<groupId>com.microsoft.sqlserver</groupId>
-			<artifactId>mssql-jdbc</artifactId>
-			<version>6.2.0.jre8</version>
-		</dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.1-901-1.jdbc4</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-highlighter</artifactId>
-            <version>${lucene.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-queryparser</artifactId>
-            <version>${lucene.version}</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-            <groupId>org.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.23.1</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
-    		<groupId>com.github.luben</groupId>
-    		<artifactId>zstd-jni</artifactId>
-    		<version>1.3.3-3</version>
-		</dependency>
-        <dependency>
-            <groupId>org.mapdb</groupId>
-            <artifactId>mapdb</artifactId>
-            <version>1.0.9</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.3</version>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.3</version>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency> 
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.3</version>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -162,66 +101,11 @@
             <version>${slf4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mchange</groupId>
-            <artifactId>mchange-commons-java</artifactId>
-            <version>0.2.10</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.mchange</groupId>
-            <artifactId>c3p0</artifactId>
-            <version>0.9.5.2</version>
-        </dependency>
-        <dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox</artifactId>
-  			<version>2.0.13</version>
-		</dependency>
-		<dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.13</version>
-		</dependency>
-		<dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.2</version>
-		</dependency>
-        <dependency>
-            <groupId>org.eclipse</groupId>
-            <artifactId>swt</artifactId>
-            <version>4.527</version>
-        </dependency>
-        <dependency>
-	    	<groupId>com.optimaize.languagedetector</groupId>
-    		<artifactId>language-detector</artifactId>
-    		<version>0.6</version>
-		</dependency>
-        <dependency>
-            <groupId>org.dockingframes</groupId>
-            <artifactId>docking-frames-common</artifactId>
-            <version>${dockingframes.version}</version>
-        </dependency>
-        <dependency>
-   			<groupId>com.zaxxer</groupId>
-   			<artifactId>SparseBitSet</artifactId>
-   			<version>1.1</version>
-       	</dependency>
-        <dependency>
-        	<groupId>org.glassfish.jersey.containers</groupId>
-        	<artifactId>jersey-container-grizzly2-servlet</artifactId>
-        	<version>2.22.1</version>
-        </dependency>
-        <dependency>
-    		<groupId>io.swagger</groupId>
-    		<artifactId>swagger-jersey2-jaxrs</artifactId>
-    		<version>1.5.9</version>
-		</dependency>
-		<dependency>
-  			<groupId>org.glassfish.jersey.media</groupId>
-  			<artifactId>jersey-media-json-jackson</artifactId>
-  			<version>2.28</version>
-  			<scope>runtime</scope>
-		</dependency>
     </dependencies>
     
     <build>
@@ -248,34 +132,11 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeGroupIds>gpinf.iped</includeGroupIds>
+                            <includeGroupIds>gpinf</includeGroupIds>
                         </configuration>
                     </execution>
     			</executions>
     		</plugin>
-    		<!--plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-archiver</artifactId>
-                        <version>2.4.4</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${release.dir}/sources</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin-->
         </plugins>
     </build>
     		
