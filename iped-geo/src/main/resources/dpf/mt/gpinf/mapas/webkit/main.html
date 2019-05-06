@@ -1,0 +1,140 @@
+<html> 
+    <head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+		<link type="text/css" rel="stylesheet" href="gmap.css" />
+		<style type="text/css" media="screen">
+		#map-container { height:800px;overflow:scroll; }
+		.circle_class{
+			border-radius: 50%;
+		}
+		.rect_class{
+			border-radius: 0%;
+		}
+		body { margin:0px;padding:0px }
+		</style>		
+
+        <script type="text/javascript" src= "http://maps.google.com/maps/api/js?sensor=false&libraries=geometry"></script>
+        <script type="text/javascript">
+		{{load_geoxml3}}
+		</script>
+		<script type="text/javascript">
+		{{load_geoxml3_ext}}
+		</script>
+		<script type="text/javascript">
+		{{load_keydragzoom}}
+		</script>
+		<script type="text/javascript">
+		{{load_extensions}}
+		</script>
+        <script>
+    var map;
+	var gxml;
+	var proxy = "/cgi-bin/proxy.php?"
+    function initialize() {
+        var kmlUrl = '';
+        var myOptions = {
+            mapTypeId: google.maps.MapTypeId.HYBRID,
+			zoom: 3,
+			center: new google.maps.LatLng(0,0)
+			}
+        map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+	 	gxml = new GeoXmlIped("gxml", map, kmlUrl, {
+			sidebarid:"the_side_bar",
+			publishdirectory:"",
+			messagestyle:{opacity:1.0 ,backgroundColor:"#a0c0fE", borderWidth:"1px"},
+			iwwidth:280
+		});
+
+	    gxml.icone_marcador = "{{icone_base64}}"; 
+	    gxml.icone_marcador_selecionado = "{{icone_selecionado_base64}}"; 
+	    gxml.icone_marcador_selecionado_m = "{{icone_selecionado_m_base64}}";
+	    gxml.icone_marcador_m = "{{icone_m_base64}}";
+
+		gxml.processString('{{kml}}', 'Resultados'); 
+		map.enableKeyDragSelect();
+		
+		document.getElementById('ordem_descr').innerHTML = gxml.tourOrder;
+		document.getElementById('resultsinfo').innerHTML = 'Itens mapeados:'+gxml.overlayman.markers.length; 
+		
+	    map.addListener('dragend_rect', function(rect, proj) {
+	    	var ms = gxml.selecionaRetangulo(rect, proj);
+	    	window.app.selecionaMarcadorBF(ms);
+    	  });
+	    map.addListener('dragend_circle', function(pInicio, pFim, proj) {
+	    	var ms = gxml.selecionaCirculo(pInicio, pFim, proj);
+	    	window.app.selecionaMarcadorBF(ms);
+    	  });
+    }
+
+    function navega(mpos){
+    	if(mpos<0){
+    		alert('A navegação se encontra no primeiro item da lista.');
+    		return false;
+    	}
+    	if(mpos>=gxml.overlayman.markers.length){
+    		alert('A navegação se encontra no último item da lista.')
+    		return false;
+    	}
+    	google.maps.event.trigger(gxml.overlayman.markers[mpos],"click");
+    	map.setCenter(gxml.overlayman.markers[mpos].getPosition());
+    	gxml.navigationPos = mpos;
+    	return false;
+    }
+    
+    function zoomOut(){
+    	var markers = gxml.overlayman.markers;
+    	var bounds = new google.maps.LatLngBounds();
+    	for (var i = 0; i < markers.length; i++) {
+    	 bounds.extend(markers[i].getPosition());
+    	}
+
+    	map.fitBounds(bounds);
+    }
+
+    function exportarKml(){
+    	window.app.exportarKmlBF();
+    }
+    function toogleVisibility(){
+    	if(document.getElementById("barra_content").style.display == "none"){
+        	document.getElementById("td_barra").style.width="50px";
+        	document.getElementById("barra_content").style.display = "block";
+        	document.getElementById("toogleVisibilityButton").innerHTML = "-";
+    	}else{
+        	document.getElementById("td_barra").style.width="10px";
+        	document.getElementById("barra_content").style.display = "none";
+        	document.getElementById("toogleVisibilityButton").innerHTML = "+";
+    	}
+    }
+	</script>
+    </head>
+    <body onload="initialize();">
+       <table style="height:100%;width:100%"><tr><td width="*">
+  <div id="map_canvas" style="width:100%;height:100%;"></div></td>
+    <td width="50px" id="td_barra">
+   <div id="barra_lateral" style="height:100%;width:100%;">
+   		<a href="#" onclick="toogleVisibility();" id="toogleVisibilityButton">-</a>
+   		<div id="barra_content" style="width:100%; border:0px;">
+   	 		<div id="resultsinfo" style="width:100px"></div>
+   	 		<div style="background-color:#666666; color:white; border:1px solid #000000;">Seleção:</div>
+   			<input type="button" name="selecaoRetangular" value="Área" onclick="map.dragSelect.activateAreaDrag();" style="width:100%"/>
+   			<input type="button" name="selecaoRaio" value="Raio" onclick="map.dragSelect.activateRadiusDrag();" style="width:100%"/>
+   	 		<div style="background-color:#666666; color:white; border:1px solid #000000;">Ordem:</div>
+   	 		<div style="width:100px; font-size:80%; min-height:20px" id="ordem_descr"></div>
+   	 		<div style="background-color:#666666; color:white; border:1px solid #000000;">Navegação:</div>
+   			<input type="button" name="primeiro" value="Primeiro" onclick="navega(0);" style="width:100%"/>
+   			<input type="button" name="anterior" value="Anterior" onclick="navega(gxml.navigationPos-1);" style="width:100%"/>
+   			<input type="button" name="proximo" value="Próximo" onclick="navega(gxml.navigationPos+1);" style="width:100%"/>
+   			<input type="button" name="ultimo" value="Último" onclick="navega(gxml.overlayman.markers.length-1);" style="width:100%"/>
+   	 		<br/><br/>
+   			<input type="button" name="zoomout" value="Ver Todos" onclick="zoomOut();" style="width:100%"/>
+   			<input type="button" name="zoomout" value="Exportar KML" onclick="exportarKml();" style="width:100%"/>
+
+
+			<div style="position:absolute; bottom:20px; border:1px;" id="distancia_calc"></div>
+		</div>
+   </div>
+   </td></tr>
+</table>
+    </body>
+    <div id="the_side_bar" style="position:fixed;float:right;height:100%;width:100%; visibility:hidden"></div>    
+</html>

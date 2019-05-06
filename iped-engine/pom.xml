@@ -23,42 +23,42 @@
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-carvers-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-carvers-impl</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-viewers-api</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-viewers-impl</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>gpinf.iped</groupId>
             <artifactId>iped-utils</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-api</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-geo</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
     

@@ -33,6 +33,9 @@
         <lucene.version>4.9.0</lucene.version>
         <sleuthkit.version>4.6.0-p01</sleuthkit.version>
         <libreoffice.version>5.1.4</libreoffice.version>
+        <slf4j.version>1.7.25</slf4j.version>
+        <icepdf.version>6.3.2</icepdf.version>
+        <dockingframes.version>1.1.1</dockingframes.version>
     </properties>
     
     <repositories>
@@ -151,12 +154,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.12</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>jul-to-slf4j</artifactId>
-            <version>1.7.12</version>
+            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>com.mchange</groupId>
@@ -196,7 +199,7 @@
         <dependency>
             <groupId>org.dockingframes</groupId>
             <artifactId>docking-frames-common</artifactId>
-            <version>1.1.1</version>
+            <version>${dockingframes.version}</version>
         </dependency>
         <dependency>
    			<groupId>com.zaxxer</groupId>
