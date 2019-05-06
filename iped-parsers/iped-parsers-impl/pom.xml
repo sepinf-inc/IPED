@@ -82,19 +82,19 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>gpinf.iped</groupId>
+            <groupId>iped</groupId>
             <artifactId>java-dbf</artifactId>
             <version>1.0-patched</version>
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>gpinf.iped</groupId>
+            <groupId>iped</groupId>
             <artifactId>java-libpst</artifactId>
             <version>0.7-patched2</version>
             <type>jar</type>
         </dependency>
         <dependency>
-        	<groupId>gpinf.iped</groupId>
+        	<groupId>iped</groupId>
         	<artifactId>iped-utils</artifactId>
         	<version>${project.version}</version>
         </dependency>

@@ -28,7 +28,7 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>gpinf.iped</groupId>
+            <groupId>iped</groupId>
             <artifactId>iped-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -38,7 +38,7 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>gpinf.iped</groupId>
+            <groupId>iped</groupId>
             <artifactId>iped-parsers-impl</artifactId>
             <version>${project.version}</version>
         </dependency>

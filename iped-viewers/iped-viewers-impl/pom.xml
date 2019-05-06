@@ -16,7 +16,7 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>gpinf.iped</groupId>
+			<groupId>iped</groupId>
 			<artifactId>iped-parsers-impl</artifactId>
 			<version>${project.version}</version>
 			<type>jar</type>

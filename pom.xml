@@ -132,7 +132,7 @@
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeGroupIds>gpinf</includeGroupIds>
+                            <includeGroupIds>iped</includeGroupIds>
                         </configuration>
                     </execution>
     			</executions>
