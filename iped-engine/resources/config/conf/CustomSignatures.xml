@@ -101,6 +101,22 @@
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-firefox-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-firefox-bookmarks">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-chrome-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-chrome-downloads">
+        <sub-class-of type="text/html"/>
+    </mime-type>
    
     <mime-type type="application/x-webcache">     
         <sub-class-of type="application/x-edb"/>

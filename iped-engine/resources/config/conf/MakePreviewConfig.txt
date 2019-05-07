@@ -7,6 +7,8 @@
 supportedMimes = application/x-msaccess; application/x-sqlite3; application/sqlite-skype; application/x-lnk;
 supportedMimes = application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-shareaza-searches-dat; application/x-msie-cache
 supportedMimes = application/x-prefetch
+supportedMimes = application/x-firefox-places
+supportedMimes = application/x-chrome-sqlite
 
 # List of mimetypes which parsers insert links to other case items into preview
 supportedMimesWithLinks = application/x-emule; application/x-ares-galaxy; application/x-shareaza-library-dat

@@ -18,6 +18,8 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
+import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
+import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 
@@ -126,6 +128,16 @@ public class SQLiteContainerDetector implements Detector{
 		if(		tableNames.contains("ZWAADDRESSBOOKCONTACT") || //$NON-NLS-1$
 				(tableNames.contains("ZWACONTACT") && tableNames.contains("ZWAPHONE"))) //$NON-NLS-1$ //$NON-NLS-2$
 			return WhatsAppParser.CONTACTS_V2;
+		
+		if(		tableNames.contains("moz_places") && //$NON-NLS-1$
+				tableNames.contains("moz_bookmarks")) //$NON-NLS-1$
+			return FirefoxSqliteParser.MOZ_PLACES;
+		
+		if(		tableNames.contains("downloads") && //$NON-NLS-1$
+				tableNames.contains("urls") && //$NON-NLS-1$
+				tableNames.contains("visits") && //$NON-NLS-1$
+				tableNames.contains("downloads_url_chains"))
+			return ChromeSqliteParser.CHROME_SQLITE;
 		
 		return SQLITE_MIME;
 		

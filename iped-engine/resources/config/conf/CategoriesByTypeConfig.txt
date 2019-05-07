@@ -60,7 +60,7 @@ Outros Arquivos = application/octet-stream; application/x-nls
 
 Peer-to-peer = application/x-p2p
 
-Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-ufed-visitedpage
+Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-ufed-visitedpage; application/x-firefox-places; application/x-firefox-history; application/x-firefox-history-registry; application/x-firefox-bookmarks; application/x-firefox-bookmarks-registry; application/x-chrome-sqlite; application/x-chrome-history; application/x-chrome-history-registry; application/x-chrome-downloads; application/x-chrome-downloads-registry;
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
