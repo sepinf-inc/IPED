@@ -39,46 +39,46 @@ import dpf.sp.gpinf.indexer.Configuration;
  */
 public class FTK42FileTypes {
 
-  private static Map<Integer, String> mapTypeDesc;
+    private static Map<Integer, String> mapTypeDesc;
 
-  private static String CONFIG_FILE = "FTKCategoriesConfig.txt"; //$NON-NLS-1$
+    private static String CONFIG_FILE = "FTKCategoriesConfig.txt"; //$NON-NLS-1$
 
-  private static Logger LOGGER = LoggerFactory.getLogger(FTK42FileTypes.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(FTK42FileTypes.class);
 
-  private static void getFTK42FileTypes(String configPath) throws IOException {
-    Properties properties = new Properties();
-    File file = new File(configPath + "/conf/" + CONFIG_FILE); //$NON-NLS-1$
-    try {
-      properties.load(new FileInputStream(file));
-      mapTypeDesc = new HashMap<Integer, String>();
-      for (int i = 0; i < 10000; i++) {
-        String desc = properties.getProperty(String.valueOf(i));
-        if (desc == null) {
-          break;
+    private static void getFTK42FileTypes(String configPath) throws IOException {
+        Properties properties = new Properties();
+        File file = new File(configPath + "/conf/" + CONFIG_FILE); //$NON-NLS-1$
+        try {
+            properties.load(new FileInputStream(file));
+            mapTypeDesc = new HashMap<Integer, String>();
+            for (int i = 0; i < 10000; i++) {
+                String desc = properties.getProperty(String.valueOf(i));
+                if (desc == null) {
+                    break;
+                }
+                mapTypeDesc.put(i, desc);
+            }
+        } catch (FileNotFoundException e) {
+            LOGGER.error("Conf file not found: {}", file.getAbsolutePath()); //$NON-NLS-1$
+            throw e;
+        } catch (IOException e) {
+            LOGGER.error("Error loading {}", file.getAbsolutePath()); //$NON-NLS-1$
+            throw e;
         }
-        mapTypeDesc.put(i, desc);
-      }
-    } catch (FileNotFoundException e) {
-      LOGGER.error("Conf file not found: {}", file.getAbsolutePath()); //$NON-NLS-1$
-      throw e;
-    } catch (IOException e) {
-      LOGGER.error("Error loading {}", file.getAbsolutePath()); //$NON-NLS-1$
-      throw e;
+
     }
 
-  }
+    public static String getTypeDesc(int type) throws IOException {
 
-  public static String getTypeDesc(int type) throws IOException {
+        if (mapTypeDesc == null) {
+            getFTK42FileTypes(Configuration.getInstance().configPath);
+        }
 
-    if (mapTypeDesc == null) {
-    	getFTK42FileTypes(Configuration.getInstance().configPath);
+        String desc = mapTypeDesc.get(type);
+        if (desc == null) {
+            desc = "Other"; //$NON-NLS-1$
+        }
+        return desc;
     }
-
-    String desc = mapTypeDesc.get(type);
-    if (desc == null) {
-      desc = "Other"; //$NON-NLS-1$
-    }
-    return desc;
-  }
 
 }

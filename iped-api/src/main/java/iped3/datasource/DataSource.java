@@ -13,14 +13,14 @@ import java.io.File;
  */
 public interface DataSource {
 
-  String getName();
+    String getName();
 
-  File getSourceFile();
+    File getSourceFile();
 
-  String getUUID();
+    String getUUID();
 
-  void setName(String name);
+    void setName(String name);
 
-  void setUUID(String uuid);
-  
+    void setUUID(String uuid);
+
 }

@@ -6,13 +6,13 @@ import iped3.Item;
 import iped3.datasource.DataSource;
 
 public class ParentInfo {
-    
+
     private DataSource dataSource;
     private int id;
     private List<Integer> parentIds;
     private String path;
     private boolean isDeleted;
-    
+
     public ParentInfo(Item item) {
         this.dataSource = item.getDataSource();
         this.id = item.getId();
@@ -36,7 +36,7 @@ public class ParentInfo {
     public String getPath() {
         return path;
     }
-    
+
     public boolean isDeleted() {
         return this.isDeleted;
     }

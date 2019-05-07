@@ -26,25 +26,23 @@ import org.xml.sax.helpers.DefaultHandler;
 class UniqueMetadataContentHandler extends DefaultHandler {
 
     private final Metadata metadata;
-    
+
     private String lastMeta = null;
-    
+
     private HashSet<String> metasWritten = new HashSet<>();
 
     public UniqueMetadataContentHandler(Metadata metadata) {
         this.metadata = metadata;
     }
 
-    public void startElement(
-            String uri, String local, String name, Attributes attributes)
-            throws SAXException {
+    public void startElement(String uri, String local, String name, Attributes attributes) throws SAXException {
         if ("meta".equals(local)) {
             String aname = attributes.getValue("name");
             String content = attributes.getValue("content");
-            if(!metasWritten.contains(aname)){
+            if (!metasWritten.contains(aname)) {
                 metadata.add(aname, content);
             }
-            if(lastMeta != null && !aname.equals(lastMeta))
+            if (lastMeta != null && !aname.equals(lastMeta))
                 metasWritten.add(lastMeta);
             lastMeta = aname;
         }

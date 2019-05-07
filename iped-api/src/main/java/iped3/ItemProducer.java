@@ -7,30 +7,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * (INTERFACE DO IPED)
- * Responsável por instanciar e executar o contador e o produtor de itens do caso que adiciona os
- * itens a fila de processamento. Podem obter os itens de diversas fontes de dados: pastas,
- * relatórios do FTK, imagens forenses ou casos do IPED.
+ * (INTERFACE DO IPED) Responsável por instanciar e executar o contador e o
+ * produtor de itens do caso que adiciona os itens a fila de processamento.
+ * Podem obter os itens de diversas fontes de dados: pastas, relatórios do FTK,
+ * imagens forenses ou casos do IPED.
  *
  */
 public interface ItemProducer {
 
-  String currentDirectory();
+    String currentDirectory();
 
-  CaseData getCaseData();
+    CaseData getCaseData();
 
-  DataSourceReader getCurrentReader();
+    DataSourceReader getCurrentReader();
 
-  List<File> getDatasources();
+    List<File> getDatasources();
 
-  Manager getManager();
+    Manager getManager();
 
-  File getOutput();
+    File getOutput();
 
-  ArrayList<DataSourceReader> getSourceReaders();
+    ArrayList<DataSourceReader> getSourceReaders();
 
-  boolean isListOnly();
+    boolean isListOnly();
 
-  void run();
-  
+    void run();
+
 }

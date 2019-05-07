@@ -34,7 +34,7 @@ public class GenericOLEParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-tika-msoffice");
-    
+
     private final RawStringParser rawParser = new RawStringParser();
 
     @Override
@@ -45,74 +45,76 @@ public class GenericOLEParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
-        
+
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
-        
-        try(POIFSFileSystem poiFS = new POIFSFileSystem(tis.getFile())){
+
+        try (POIFSFileSystem poiFS = new POIFSFileSystem(tis.getFile())) {
             recurseDir(poiFS.getRoot(), extractor, xhtml);
-            
+
             rawParser.parse(tis, handler, metadata, context);
-            
-        }finally {
+
+        } finally {
             xhtml.endDocument();
             tmp.close();
         }
-        
+
     }
-    
+
     private void recurseDir(DirectoryEntry dir, EmbeddedDocumentExtractor extractor, XHTMLContentHandler handler) {
-        for(Entry entry : dir) {
+        for (Entry entry : dir) {
             try {
-                if(entry instanceof DirectoryEntry) {
-                    //System.out.println("dir=" + entry.getName());
-                    recurseDir((DirectoryEntry)entry, extractor, handler);
+                if (entry instanceof DirectoryEntry) {
+                    // System.out.println("dir=" + entry.getName());
+                    recurseDir((DirectoryEntry) entry, extractor, handler);
                 }
-                if(entry instanceof DocumentEntry) {
-                    //System.out.println("doc=" + entry.getName());
-                    DocumentEntry de = (DocumentEntry)entry;
-                    try (DocumentInputStream dis = new DocumentInputStream(de)){
+                if (entry instanceof DocumentEntry) {
+                    // System.out.println("doc=" + entry.getName());
+                    DocumentEntry de = (DocumentEntry) entry;
+                    try (DocumentInputStream dis = new DocumentInputStream(de)) {
                         Metadata metadata = new Metadata();
                         metadata.add(TikaCoreProperties.TITLE, de.getName());
-                        
-                        if(PropertySet.isPropertySetStream(dis)) {
+
+                        if (PropertySet.isPropertySetStream(dis)) {
                             dis.mark(10000000);
                             PropertySet ps = null;
                             try {
                                 ps = new PropertySet(dis);
-                                
-                            }catch(UnsupportedEncodingException e) {
-                                //ignore
+
+                            } catch (UnsupportedEncodingException e) {
+                                // ignore
                             }
-                            if(ps != null) {
-                                for(Section section : ps.getSections())
-                                    for(Property p : section.getProperties()) {
-                                        String prop = section.getDictionary() != null ? section.getDictionary().get(p.getID()) : String.valueOf(p.getID());   
-                                        if(p.getValue() != null)
+                            if (ps != null) {
+                                for (Section section : ps.getSections())
+                                    for (Property p : section.getProperties()) {
+                                        String prop = section.getDictionary() != null
+                                                ? section.getDictionary().get(p.getID())
+                                                : String.valueOf(p.getID());
+                                        if (p.getValue() != null)
                                             metadata.add("property_" + prop, p.getValue().toString());
                                     }
                             }
                             dis.reset();
                         }
                         /*
-                        if(de instanceof POIFSViewable) {
-                            List<String> props = POIFSViewEngine.inspectViewable(de, true, 4, " ");
-                            for(String prop : props)
-                                metadata.add("oleProp", prop);
-                        }*/
-                        extractor.parseEmbedded(dis, handler, metadata, true);   
+                         * if(de instanceof POIFSViewable) { List<String> props =
+                         * POIFSViewEngine.inspectViewable(de, true, 4, " "); for(String prop : props)
+                         * metadata.add("oleProp", prop); }
+                         */
+                        extractor.parseEmbedded(dis, handler, metadata, true);
                     }
                 }
-            }catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            
+
         }
-        
+
     }
 
 }

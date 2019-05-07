@@ -22,71 +22,71 @@ import java.io.Serializable;
 import java.util.HashSet;
 
 /**
- * Contém informações sobre o item sendo processado, sendo configurado no contexto
- * do parsing de forma que os parsers tenham acesso a tais informações.
+ * Contém informações sobre o item sendo processado, sendo configurado no
+ * contexto do parsing de forma que os parsers tenham acesso a tais informações.
  * 
  * @author Nassif
  *
  */
-public class ItemInfo implements Serializable{
+public class ItemInfo implements Serializable {
 
-	/**
+    /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     private int child = -1, id;
-	private HashSet<String> bookmarks;
-	private String path, hash;
-	private boolean carved = false;
+    private HashSet<String> bookmarks;
+    private String path, hash;
+    private boolean carved = false;
 
-	public ItemInfo(int id, String hash, HashSet<String> bookmarks, String path, boolean carved) {
-		this.id = id;
-		this.hash = hash;
-		this.bookmarks = bookmarks;
-		this.path = path;
-		this.setCarved(carved);
-	}
+    public ItemInfo(int id, String hash, HashSet<String> bookmarks, String path, boolean carved) {
+        this.id = id;
+        this.hash = hash;
+        this.bookmarks = bookmarks;
+        this.path = path;
+        this.setCarved(carved);
+    }
 
-	public int getId() {
-		return id;
-	}
+    public int getId() {
+        return id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public String getPath() {
-		return path;
-	}
+    public String getPath() {
+        return path;
+    }
 
-	public void setPath(String path) {
-		this.path = path;
-	}
+    public void setPath(String path) {
+        this.path = path;
+    }
 
-	public void incChild() {
-		this.child++;
-	}
+    public void incChild() {
+        this.child++;
+    }
 
-	public int getChild() {
-		return child;
-	}
+    public int getChild() {
+        return child;
+    }
 
-	public void setBookmarks(HashSet<String> bookmarks) {
-		this.bookmarks = bookmarks;
-	}
+    public void setBookmarks(HashSet<String> bookmarks) {
+        this.bookmarks = bookmarks;
+    }
 
-	public HashSet<String> getBookmarks() {
-		return bookmarks;
-	}
+    public HashSet<String> getBookmarks() {
+        return bookmarks;
+    }
 
-	public boolean isCarved() {
-		return carved;
-	}
+    public boolean isCarved() {
+        return carved;
+    }
 
-	public void setCarved(boolean carved) {
-		this.carved = carved;
-	}
+    public void setCarved(boolean carved) {
+        this.carved = carved;
+    }
 
     public String getHash() {
         return hash;
@@ -95,5 +95,5 @@ public class ItemInfo implements Serializable{
     public void setHash(String hash) {
         this.hash = hash;
     }
-	
+
 }

@@ -22,30 +22,27 @@ import io.swagger.annotations.ApiOperation;
 import iped3.IPEDSource;
 import iped3.Item;
 
-@Api(value="Documents")
+@Api(value = "Documents")
 @Path("sources/{sourceID}/docs/{id}/content")
 public class Content {
 
-	@ApiOperation(value="Get document's raw content")
-	@GET
-	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response content(
-			@PathParam("sourceID") String sourceID,
-			@PathParam("id") int id)
-					throws TskCoreException, IOException, URISyntaxException{
+    @ApiOperation(value = "Get document's raw content")
+    @GET
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
+            throws TskCoreException, IOException, URISyntaxException {
 
-		IPEDSource source = Sources.getSource(sourceID);
-    	final Item item = source.getItemByID(id);
-		return Response.status(200)
-				.header("Content-Length", String.valueOf(item.getLength()))
-				.header("Content-Disposition", "attachment; filename=\""+ item.getName() + "\"")
-				.entity(new StreamingOutput() {
-					@Override
-					public void write(OutputStream arg0) throws IOException, WebApplicationException {
-					    try (InputStream is = item.getBufferedStream()){
-					        IOUtils.copy(is, arg0);
-					    }
-					}})
-				.build();
-	}
+        IPEDSource source = Sources.getSource(sourceID);
+        final Item item = source.getItemByID(id);
+        return Response.status(200).header("Content-Length", String.valueOf(item.getLength()))
+                .header("Content-Disposition", "attachment; filename=\"" + item.getName() + "\"")
+                .entity(new StreamingOutput() {
+                    @Override
+                    public void write(OutputStream arg0) throws IOException, WebApplicationException {
+                        try (InputStream is = item.getBufferedStream()) {
+                            IOUtils.copy(is, arg0);
+                        }
+                    }
+                }).build();
+    }
 }

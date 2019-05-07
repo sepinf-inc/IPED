@@ -10,5 +10,5 @@ package macee.descriptor;
  * @author WERNECK
  */
 public interface EntityInstanceDescriptor extends Descriptor {
-  
+
 }

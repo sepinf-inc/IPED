@@ -44,127 +44,129 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
-	
-  private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
-  
-  private boolean updateItems; 
 
-  private AppSearchParams appSearchParams = null;
-  private TreeViewModel treeModel;
-  private Manager manager;
+    private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
 
-  public InicializarBusca(AppSearchParams params, Manager manager) {
-    this(params, manager, false);
-  }
-  
-  public InicializarBusca(AppSearchParams params, Manager manager, boolean updateItems) {
-	  this.appSearchParams = params;
-	  this.manager = manager;
-	  this.updateItems = updateItems;
-  }
+    private boolean updateItems;
 
-  @Override
-  protected void process(List<Integer> chunks) {
-    // App.get().setSize(1350, 500);
+    private AppSearchParams appSearchParams = null;
+    private TreeViewModel treeModel;
+    private Manager manager;
 
-    App.get().dialogBar.setLocationRelativeTo(App.get());
-
-    if (!this.isDone()) {
-      App.get().dialogBar.setVisible(true);
+    public InicializarBusca(AppSearchParams params, Manager manager) {
+        this(params, manager, false);
     }
 
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Void doInBackground() {
-    publish(0);
-
-    try {
-      // ImageIO.setUseCache(false);
-      
-      if(updateItems)
-    	  App.get().appCase.close();
-      
-      if(!App.get().isMultiCase){
-    	  IPEDSourceImpl singleCase = null;
-    	  if(manager == null) singleCase = new IPEDSourceImpl(App.get().casesPathFile);
-    	  else singleCase = new IPEDSourceImpl(App.get().casesPathFile, manager.getIndexWriter());
-    	  App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
-      }else
-    	  App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
-      
-      App.get().appCase.checkImagePaths();
-      
-      if(!updateItems){
-    	  LOGGER.info("Loading Columns"); //$NON-NLS-1$
-          App.get().resultsModel.initCols();
-    	  App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
-    	  
-          IndexerDefaultParser autoParser = new IndexerDefaultParser();
-          
-          AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-          autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
-          autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
-          
-          App.get().setAutoParser(autoParser);
-    	  
-    	  FileProcessor exibirAjuda = new FileProcessor(-1, false);
-    	  
-    	  IViewerControl viewerControl = ViewerControl.getInstance();
-          viewerControl.createViewers(this.appSearchParams, exibirAjuda);
-          this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-          App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
-          
-          LOGGER.info("Listing all items"); //$NON-NLS-1$
-          PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
-          pesquisa.execute();
-          LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
-      }
-      
-      treeModel = new TreeViewModel();
-      
-    } catch (Throwable e) {
-        e.printStackTrace();
-        showErrorDialog(e);
+    public InicializarBusca(AppSearchParams params, Manager manager, boolean updateItems) {
+        this.appSearchParams = params;
+        this.manager = manager;
+        this.updateItems = updateItems;
     }
-    
-    return null;
-  }
-  
-  private void showErrorDialog(final Throwable e){
-      SwingUtilities.invokeLater(new Runnable(){
-          @Override
-          public void run(){
-              JOptionPane.showMessageDialog(App.get(), 
-                      Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
-                      + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
-                      + Messages.getString("AppLazyInitializer.errorMsg.line3") + e.getMessage(),  //$NON-NLS-1$
-                      Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-              
-              App.get().dialogBar.setVisible(false);
-          }
-      });
-  }
-  
-  @Override
-  public void done() {
-	  CategoryTreeModel.install();
-	  App.get().menu = new MenuClass();
-	  App.get().filterManager.loadFilters();
-	  MarcadoresController.get().atualizarGUIandHistory();
 
-    if (!App.get().appCase.isFTKReport()) {
-      App.get().tree.setModel(treeModel);
-      App.get().tree.setLargeModel(true);
-      App.get().tree.setCellRenderer(new TreeCellRenderer());
+    @Override
+    protected void process(List<Integer> chunks) {
+        // App.get().setSize(1350, 500);
+
+        App.get().dialogBar.setLocationRelativeTo(App.get());
+
+        if (!this.isDone()) {
+            App.get().dialogBar.setVisible(true);
+        }
+
     }
-    
-    if(updateItems){
-    	App.get().appletListener.updateFileListing();
-    	ColumnsManagerImpl.getInstance().dispose();
-    	App.get().dialogBar.setVisible(false);
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected Void doInBackground() {
+        publish(0);
+
+        try {
+            // ImageIO.setUseCache(false);
+
+            if (updateItems)
+                App.get().appCase.close();
+
+            if (!App.get().isMultiCase) {
+                IPEDSourceImpl singleCase = null;
+                if (manager == null)
+                    singleCase = new IPEDSourceImpl(App.get().casesPathFile);
+                else
+                    singleCase = new IPEDSourceImpl(App.get().casesPathFile, manager.getIndexWriter());
+                App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
+            } else
+                App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+
+            App.get().appCase.checkImagePaths();
+
+            if (!updateItems) {
+                LOGGER.info("Loading Columns"); //$NON-NLS-1$
+                App.get().resultsModel.initCols();
+                App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
+
+                IndexerDefaultParser autoParser = new IndexerDefaultParser();
+
+                AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
+                        .findObjects(AdvancedIPEDConfig.class).iterator().next();
+                autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
+                autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
+
+                App.get().setAutoParser(autoParser);
+
+                FileProcessor exibirAjuda = new FileProcessor(-1, false);
+
+                IViewerControl viewerControl = ViewerControl.getInstance();
+                viewerControl.createViewers(this.appSearchParams, exibirAjuda);
+                this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
+                App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
+
+                LOGGER.info("Listing all items"); //$NON-NLS-1$
+                PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
+                pesquisa.execute();
+                LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
+            }
+
+            treeModel = new TreeViewModel();
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+            showErrorDialog(e);
+        }
+
+        return null;
     }
-  }
+
+    private void showErrorDialog(final Throwable e) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
+                        + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
+                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + e.getMessage(), //$NON-NLS-1$
+                        Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+
+                App.get().dialogBar.setVisible(false);
+            }
+        });
+    }
+
+    @Override
+    public void done() {
+        CategoryTreeModel.install();
+        App.get().menu = new MenuClass();
+        App.get().filterManager.loadFilters();
+        MarcadoresController.get().atualizarGUIandHistory();
+
+        if (!App.get().appCase.isFTKReport()) {
+            App.get().tree.setModel(treeModel);
+            App.get().tree.setLargeModel(true);
+            App.get().tree.setCellRenderer(new TreeCellRenderer());
+        }
+
+        if (updateItems) {
+            App.get().appletListener.updateFileListing();
+            ColumnsManagerImpl.getInstance().dispose();
+            App.get().dialogBar.setVisible(false);
+        }
+    }
 
 }

@@ -30,51 +30,51 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-public class MetadataViewer extends Viewer{
-    
+public class MetadataViewer extends Viewer {
+
     private TabPane tabPane;
     private JFXPanel jfxPanel;
     private List<HtmlViewer> htmlViewers = new ArrayList<>();;
-    
+
     private Collator collator;
     private Set<String> ignoreMetas = new HashSet<>();
-    
+
     public MetadataViewer() {
         super(new GridLayout());
-        
+
         jfxPanel = new JFXPanel();
-        for(int i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
             htmlViewers.add(new HtmlViewer());
 
         Platform.runLater(new Runnable() {
-          @Override
-          public void run() {
-              tabPane = new TabPane();
-              tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
-              tabPane.setSide(Side.RIGHT);
-              
-              Tab tab0 = new Tab();
-              tab0.setText(Messages.getString("MetadataViewer.BasicProps"));
-              tab0.setContent(htmlViewers.get(0).htmlViewer);
-              tabPane.getTabs().add(tab0);
-              
-              Tab tab1 = new Tab();
-              tab1.setText(Messages.getString("MetadataViewer.AdvancedProps"));
-              tab1.setContent(htmlViewers.get(1).htmlViewer);
-              tabPane.getTabs().add(tab1);
-              
-              Tab tab2 = new Tab();
-              tab2.setText(Messages.getString("MetadataViewer.Metadata"));
-              tab2.setContent(htmlViewers.get(2).htmlViewer);
-              tabPane.getTabs().add(tab2);
+            @Override
+            public void run() {
+                tabPane = new TabPane();
+                tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+                tabPane.setSide(Side.RIGHT);
 
-              StackPane root = new StackPane();
-              root.getChildren().add(tabPane);
-              Scene scene = new Scene(root);
-              jfxPanel.setScene(scene);
-          }
+                Tab tab0 = new Tab();
+                tab0.setText(Messages.getString("MetadataViewer.BasicProps"));
+                tab0.setContent(htmlViewers.get(0).htmlViewer);
+                tabPane.getTabs().add(tab0);
+
+                Tab tab1 = new Tab();
+                tab1.setText(Messages.getString("MetadataViewer.AdvancedProps"));
+                tab1.setContent(htmlViewers.get(1).htmlViewer);
+                tabPane.getTabs().add(tab1);
+
+                Tab tab2 = new Tab();
+                tab2.setText(Messages.getString("MetadataViewer.Metadata"));
+                tab2.setContent(htmlViewers.get(2).htmlViewer);
+                tabPane.getTabs().add(tab2);
+
+                StackPane root = new StackPane();
+                root.getChildren().add(tabPane);
+                Scene scene = new Scene(root);
+                jfxPanel.setScene(scene);
+            }
         });
-        
+
         this.getPanel().add(jfxPanel);
 
     }
@@ -91,13 +91,13 @@ public class MetadataViewer extends Viewer{
 
     @Override
     public void init() {
-        
-        for(HtmlViewer viewer : htmlViewers)
+
+        for (HtmlViewer viewer : htmlViewers)
             viewer.init();
-        
+
         collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
-        
+
         ignoreMetas.add(Metadata.RESOURCE_NAME_KEY);
         ignoreMetas.add(Metadata.CONTENT_LENGTH);
         ignoreMetas.add(Metadata.CONTENT_TYPE);
@@ -106,37 +106,38 @@ public class MetadataViewer extends Viewer{
 
     @Override
     public void loadFile(final StreamSource content, final Set<String> terms) {
-        
+
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                
-                for(HtmlViewer viewer : htmlViewers) {
+
+                for (HtmlViewer viewer : htmlViewers) {
                     WebEngine webEngine = viewer.webEngine;
                     webEngine.load(null);
-                    
-                    if(!(content instanceof ItemBase))
+
+                    if (!(content instanceof ItemBase))
                         return;
-                    
+
                     viewer.highlightTerms = terms;
-                    String preview = generatePreview((ItemBase)content, htmlViewers.indexOf(viewer));
+                    String preview = generatePreview((ItemBase) content, htmlViewers.indexOf(viewer));
                     try {
-                        if(viewer.tmpFile == null) {
+                        if (viewer.tmpFile == null) {
                             viewer.tmpFile = File.createTempFile("metadata", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
                             viewer.tmpFile.deleteOnExit();
                         }
-                        Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), StandardOpenOption.TRUNCATE_EXISTING); //$NON-NLS-1$
+                        Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), //$NON-NLS-1$
+                                StandardOpenOption.TRUNCATE_EXISTING);
                         webEngine.load(viewer.tmpFile.toURI().toURL().toString());
-                        
+
                     } catch (IOException e) {
                         webEngine.loadContent(preview);
                     }
                 }
-                
+
             }
         });
     }
-    
+
     private String generatePreview(ItemBase item, int tabIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n" //$NON-NLS-1$
@@ -145,37 +146,37 @@ public class MetadataViewer extends Viewer{
                 + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n" //$NON-NLS-1$
                 + "<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {background-color:#D7D7D7; border: 1px solid black; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; background-color:#F2F2F2; width:170px; border: 1px solid black; text-align:left;} td.s2 {font-size:10pt; background-color:#F2F2F2; border: 1px solid black; word-break: break-all; word-wrap: break-word; text-align:left;}" //$NON-NLS-1$
                 + "textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}" //$NON-NLS-1$
-                +"</style></head>\n" //$NON-NLS-1$
-                +"<body>\n"); //$NON-NLS-1$
-        
-        if(tabIndex == 0)
+                + "</style></head>\n" //$NON-NLS-1$
+                + "<body>\n"); //$NON-NLS-1$
+
+        if (tabIndex == 0)
             fillBasicProps(sb, item);
-        if(tabIndex == 1)
+        if (tabIndex == 1)
             fillAdvancedProps(sb, item);
-        if(tabIndex == 2)
+        if (tabIndex == 2)
             fillMetadata(sb, item.getMetadata());
-        
+
         sb.append("</body>"); //$NON-NLS-1$
         sb.append("</html>"); //$NON-NLS-1$
-        
+
         return sb.toString();
     }
-    
+
     private void fillMetadata(StringBuilder sb, Metadata metadata) {
-        
+
         String[] metas = metadata.names();
-        if(metas.length == 0)
+        if (metas.length == 0)
             return;
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         Arrays.sort(metas, collator);
-        for(String meta : metas) {
-            if(ignoreMetas.contains(meta))
+        for (String meta : metas) {
+            if (ignoreMetas.contains(meta))
                 continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
             sb.append(meta);
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
-            if(!metadata.isMultiValued(meta))
+            if (!metadata.isMultiValued(meta))
                 sb.append(SimpleHTMLEncoder.htmlEncode(metadata.get(meta)));
             else
                 sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(metadata.getValues(meta)).toString()));
@@ -183,7 +184,7 @@ public class MetadataViewer extends Viewer{
         }
         sb.append("</table>"); //$NON-NLS-1$
     }
-    
+
     private void fillBasicProps(StringBuilder sb, ItemBase item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -199,7 +200,7 @@ public class MetadataViewer extends Viewer{
         fillProp(sb, BasicProps.PATH, item.getPath());
         sb.append("</table>"); //$NON-NLS-1$
     }
-    
+
     private void fillAdvancedProps(StringBuilder sb, ItemBase item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.AdvancedProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -215,14 +216,14 @@ public class MetadataViewer extends Viewer{
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
         Arrays.sort(keys, collator);
-        for(String key : keys) {
+        for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
         sb.append("</table>"); //$NON-NLS-1$
     }
-    
+
     private void fillProp(StringBuilder sb, String key, Object value) {
-        if(value != null && !value.toString().isEmpty()) {
+        if (value != null && !value.toString().isEmpty()) {
             sb.append("<tr><td class=\"s1\">" + key + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
@@ -230,7 +231,7 @@ public class MetadataViewer extends Viewer{
 
     @Override
     public void dispose() {
-        for(HtmlViewer viewer : htmlViewers)
+        for (HtmlViewer viewer : htmlViewers)
             viewer.dispose();
     }
 

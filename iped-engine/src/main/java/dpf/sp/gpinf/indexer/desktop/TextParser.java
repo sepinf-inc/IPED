@@ -57,344 +57,347 @@ import iped3.desktop.ProgressDialog;
 import iped3.io.StreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
-	
-  public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
 
-  private static TextParser parsingTask;
-  private StreamSource content;
-  volatile int id;
-  private Item item;
-  private ProgressDialog progressMonitor;
+    public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
 
-  private static Object lock = new Object();
-  private TemporaryResources tmp;
-  private static FileChannel parsedFile;
-  private boolean firstHitAutoSelected = false;
-  AppSearchParams appSearchParams = null;
+    private static TextParser parsingTask;
+    private StreamSource content;
+    volatile int id;
+    private Item item;
+    private ProgressDialog progressMonitor;
 
-  // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
-  // sortedHits
-  private TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
+    private static Object lock = new Object();
+    private TemporaryResources tmp;
+    private static FileChannel parsedFile;
+    private boolean firstHitAutoSelected = false;
+    AppSearchParams appSearchParams = null;
 
-  // contém offset dos hits
-  private ArrayList<Long> hits = new ArrayList<Long>();
+    // contém offset, tamanho, viewRow inicial e viewRow final dos fragemtos com
+    // sortedHits
+    private TreeMap<Long, int[]> sortedHits = new TreeMap<Long, int[]>();
 
-  // contém offset das quebras de linha do preview
-  private ArrayList<Long> viewRows = new ArrayList<Long>();
+    // contém offset dos hits
+    private ArrayList<Long> hits = new ArrayList<Long>();
 
-  public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
-    try {
-      this.appSearchParams = params;
-      this.content = content;
-      this.tmp = tmp;
-      if (content instanceof Item) {
-        item = (Item) content;
-      }
+    // contém offset das quebras de linha do preview
+    private ArrayList<Long> viewRows = new ArrayList<Long>();
 
-      if (parsingTask != null) {
-        parsingTask.cancel(true);
-      }
-      parsingTask = this;
+    public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
+        try {
+            this.appSearchParams = params;
+            this.content = content;
+            this.tmp = tmp;
+            if (content instanceof Item) {
+                item = (Item) content;
+            }
 
-      id = item.getId();
+            if (parsingTask != null) {
+                parsingTask.cancel(true);
+            }
+            parsingTask = this;
 
-      this.addPropertyChangeListener(new TextParserListener(this));
+            id = item.getId();
 
-    } catch (Exception e) {
-      e.printStackTrace();
+            this.addPropertyChangeListener(new TextParserListener(this));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
-  }
-  
-  @Override
-  public FileChannel getParsedFile() {
-    return parsedFile;
-  }
-  
-  @Override
-  public void setParsedFile(FileChannel file) {
-    parsedFile = file;
-  }
-
-  @Override
-  public TreeMap<Long, int[]> getSortedHits() {
-    return this.sortedHits;
-  }
-  
-  @Override
-  public void setSortedHits(TreeMap<Long, int[]> hits) {
-    this.sortedHits = hits;
-  }
-  
-  @Override
-  public ArrayList<Long> getHits() {
-    return this.hits;
-  }
-  
-  @Override
-  public void setHits(ArrayList<Long> hits) {
-    this.hits = hits;
-  }
-
-  @Override
-  public ArrayList<Long> getViewRows() {
-    return this.viewRows;
-  }
-  
-  @Override
-  public void setViewRows(ArrayList<Long> viewRows) {
-    this.viewRows = viewRows;
-  }
-
-  @Override
-  public ProgressDialog getProgressMonitor() {
-    return this.progressMonitor;
-  }
-  
-  @Override
-  public void setProgressMonitor(ProgressDialog monitor) {
-    this.progressMonitor = monitor;
-  }
-  
-  @Override
-  public boolean getFirstHitAutoSelected() {
-    return this.firstHitAutoSelected;
-  }
-  
-  @Override
-  public void setFirstHitAutoSelected(boolean val) {
-    this.firstHitAutoSelected = val;
-  }
-  
-  
-  @Override
-  public void done() {
-	
-    App.get().hitsDock.setTitleText(hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
-    if (progressMonitor != null) {
-      progressMonitor.close();
+    @Override
+    public FileChannel getParsedFile() {
+        return parsedFile;
     }
-  }
 
-  @Override
-  public Void doInBackground() {
+    @Override
+    public void setParsedFile(FileChannel file) {
+        parsedFile = file;
+    }
 
-    synchronized (lock) {
+    @Override
+    public TreeMap<Long, int[]> getSortedHits() {
+        return this.sortedHits;
+    }
 
-      if (this.isCancelled()) {
+    @Override
+    public void setSortedHits(TreeMap<Long, int[]> hits) {
+        this.sortedHits = hits;
+    }
+
+    @Override
+    public ArrayList<Long> getHits() {
+        return this.hits;
+    }
+
+    @Override
+    public void setHits(ArrayList<Long> hits) {
+        this.hits = hits;
+    }
+
+    @Override
+    public ArrayList<Long> getViewRows() {
+        return this.viewRows;
+    }
+
+    @Override
+    public void setViewRows(ArrayList<Long> viewRows) {
+        this.viewRows = viewRows;
+    }
+
+    @Override
+    public ProgressDialog getProgressMonitor() {
+        return this.progressMonitor;
+    }
+
+    @Override
+    public void setProgressMonitor(ProgressDialog monitor) {
+        this.progressMonitor = monitor;
+    }
+
+    @Override
+    public boolean getFirstHitAutoSelected() {
+        return this.firstHitAutoSelected;
+    }
+
+    @Override
+    public void setFirstHitAutoSelected(boolean val) {
+        this.firstHitAutoSelected = val;
+    }
+
+    @Override
+    public void done() {
+
+        App.get().hitsDock.setTitleText(hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+        if (progressMonitor != null) {
+            progressMonitor.close();
+        }
+    }
+
+    @Override
+    public Void doInBackground() {
+
+        synchronized (lock) {
+
+            if (this.isCancelled()) {
+                return null;
+            }
+
+            progressMonitor = new ProgressDialog(App.get(), parsingTask);
+            progressMonitor.setMaximum((Long) item.getExtraAttribute(TEXT_SIZE));
+
+            sortedHits = new TreeMap<Long, int[]>();
+            hits = new ArrayList<Long>();
+            viewRows = new ArrayList<Long>();
+            appSearchParams.hitsModel.fireTableDataChanged();
+            App.get().getTextViewer().textViewerModel.fireTableDataChanged();
+
+            parseText();
+        }
+
         return null;
-      }
-
-      progressMonitor = new ProgressDialog(App.get(), parsingTask);
-      progressMonitor.setMaximum((Long)item.getExtraAttribute(TEXT_SIZE));
-      
-      sortedHits = new TreeMap<Long, int[]>();
-      hits = new ArrayList<Long>();
-      viewRows = new ArrayList<Long>();
-      appSearchParams.hitsModel.fireTableDataChanged();
-      App.get().getTextViewer().textViewerModel.fireTableDataChanged();
-
-      parseText();
     }
 
-    return null;
-  }
+    private ParseContext getTikaContext(Item item) throws Exception {
+        ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
+        expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+        ParseContext context = expander.getTikaContext();
+        expander.setExtractEmbedded(false);
+        return context;
+    }
 
-  private ParseContext getTikaContext(Item item) throws Exception {
-    ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
-    expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-    ParseContext context = expander.getTikaContext(); 
-    expander.setExtractEmbedded(false);
-    return context;
-  }
-  
-  private class CountInputStream extends CountingInputStream{
-	
-	public CountInputStream(InputStream in) {
-		super(in);
-	}
+    private class CountInputStream extends CountingInputStream {
 
-	@Override
-	protected synchronized void afterRead(final int n) {
-		super.afterRead(n);
-	    progressMonitor.setProgress(this.getByteCount());
-	}
-  }
-
-  public void parseText() {
-    ParsingReader textReader = null;
-    try {
-
-      //this can cause ConcurrentModificationException if another viewer access metadata
-      //and can insert duplicate values in metadata
-      //Metadata metadata = item.getMetadata();
-      Metadata metadata = new Metadata();
-      
-      ParsingTask.fillMetadata(item, metadata);
-
-      ParseContext context = getTikaContext(item);
-      InputStream is = item.getTikaStream();
-      
-      CountInputStream cis = null;
-      if(item.getLength() != null && !((IndexerDefaultParser)App.get().getAutoParser()).hasSpecificParser(metadata)){
-    	  progressMonitor.setMaximum(item.getLength());
-    	  cis = new CountInputStream(is);
-    	  is = cis;
-      }
-
-      textReader = new ParsingReader((Parser) App.get().getAutoParser(), is, metadata, context);
-      textReader.startBackgroundParsing();
-
-      tmp.dispose();
-      File tmpFile = tmp.createTemporaryFile();
-      parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
-      tmp.addResource(parsedFile);
-
-      String contents, fieldName = IndexItem.CONTENT;
-      int read = 0, lastRowInserted = -1;
-      long totalRead = 0, lastNewLinePos = 0;
-      boolean lineBreak = false;
-      viewRows.add(0L);
-
-      while (!this.isCancelled()) {
-        if (read == -1) {
-          break;
+        public CountInputStream(InputStream in) {
+            super(in);
         }
 
-        char[] buf = new char[App.TEXT_BREAK_SIZE];
-        int off = 0;
-        while (!this.isCancelled() && off != buf.length && (read = textReader.read(buf, off, buf.length - off)) != -1) {
-          off += read;
-          totalRead += read;
-          if(cis == null)
-        	  this.firePropertyChange("progress", 0, totalRead); //$NON-NLS-1$
+        @Override
+        protected synchronized void afterRead(final int n) {
+            super.afterRead(n);
+            progressMonitor.setProgress(this.getByteCount());
         }
+    }
 
-        if (this.isCancelled()) {
-          break;
-        }
+    public void parseText() {
+        ParsingReader textReader = null;
+        try {
 
-        contents = new String(buf, 0, off);
+            // this can cause ConcurrentModificationException if another viewer access
+            // metadata
+            // and can insert duplicate values in metadata
+            // Metadata metadata = item.getMetadata();
+            Metadata metadata = new Metadata();
 
-        // remove "vazio" do início do texto
-        if (lastRowInserted == -1) {
-          int lastIndex = contents.length() - 1;
-          if (lastIndex > 0) {
-            contents = contents.substring(0, lastIndex).trim() + contents.charAt(lastIndex);
-          }
-        }
+            ParsingTask.fillMetadata(item, metadata);
 
-        TextFragment[] fragments = TextHighlighter.getHighlightedFrags(lastRowInserted == -1, contents, fieldName, App.FRAG_SIZE);
+            ParseContext context = getTikaContext(item);
+            InputStream is = item.getTikaStream();
 
-        TreeMap<Integer, TextFragment> sortedFrags = new TreeMap<Integer, TextFragment>();
-        for (int i = 0; i < fragments.length; i++) {
-          sortedFrags.put(fragments[i].getFragNum(), fragments[i]);
-        }
+            CountInputStream cis = null;
+            if (item.getLength() != null
+                    && !((IndexerDefaultParser) App.get().getAutoParser()).hasSpecificParser(metadata)) {
+                progressMonitor.setMaximum(item.getLength());
+                cis = new CountInputStream(is);
+                is = cis;
+            }
 
-        if (this.isCancelled()) {
-          break;
-        }
+            textReader = new ParsingReader((Parser) App.get().getAutoParser(), is, metadata, context);
+            textReader.startBackgroundParsing();
 
-        // TODO reduzir código, caracteres nas bordas, codificação, nao
-        // juntar linhas
-        for (TextFragment frag : sortedFrags.values()) {
+            tmp.dispose();
+            File tmpFile = tmp.createTemporaryFile();
+            parsedFile = new RandomAccessFile(tmpFile, "rw").getChannel(); //$NON-NLS-1$
+            tmp.addResource(parsedFile);
 
-          // grava texto em disco
-          String fragment = frag.toString();
-          byte data[] = fragment.getBytes(ATextViewer.TEXT_ENCODING);
-          long startPos = parsedFile.position();
-          ByteBuffer out = ByteBuffer.wrap(data);
-          while (out.hasRemaining()) {
-            parsedFile.write(out);
-          }
+            String contents, fieldName = IndexItem.CONTENT;
+            int read = 0, lastRowInserted = -1;
+            long totalRead = 0, lastNewLinePos = 0;
+            boolean lineBreak = false;
+            viewRows.add(0L);
 
-          // adiciona linhas adicionais no viewer para cada \n dentro
-          // do fragmento
-          lineBreak = false;
-          int startRow = viewRows.size() - 1;
-          if (viewRows.size() - 1 < App.MAX_LINES) {
-            for (int i = 0; i < data.length - 1; i++) {
-              if (data[i] == 0x0A) {
-                viewRows.add(startPos + i + 1);
-                lineBreak = true;
-                if (viewRows.size() - 1 == App.MAX_LINES) {
-                  break;
+            while (!this.isCancelled()) {
+                if (read == -1) {
+                    break;
                 }
-                // lastNewLinePos = startPos + i;
-              }
-              /*
-               * else if((startPos + i) - lastNewLinePos >=
-               * App.MAX_LINE_SIZE){ int k = i; while(k >= 0 &&
-               * Character
-               * .isLetterOrDigit(fragment.codePointAt(k))) k--;
-               * lastNewLinePos = startPos + k;
-               * App.get().viewRows.add(lastNewLinePos + 1);
-               * if(App.get().viewRows.size() - 1 ==
-               * App.MAX_LINES) break; }
-               */
+
+                char[] buf = new char[App.TEXT_BREAK_SIZE];
+                int off = 0;
+                while (!this.isCancelled() && off != buf.length
+                        && (read = textReader.read(buf, off, buf.length - off)) != -1) {
+                    off += read;
+                    totalRead += read;
+                    if (cis == null)
+                        this.firePropertyChange("progress", 0, totalRead); //$NON-NLS-1$
+                }
+
+                if (this.isCancelled()) {
+                    break;
+                }
+
+                contents = new String(buf, 0, off);
+
+                // remove "vazio" do início do texto
+                if (lastRowInserted == -1) {
+                    int lastIndex = contents.length() - 1;
+                    if (lastIndex > 0) {
+                        contents = contents.substring(0, lastIndex).trim() + contents.charAt(lastIndex);
+                    }
+                }
+
+                TextFragment[] fragments = TextHighlighter.getHighlightedFrags(lastRowInserted == -1, contents,
+                        fieldName, App.FRAG_SIZE);
+
+                TreeMap<Integer, TextFragment> sortedFrags = new TreeMap<Integer, TextFragment>();
+                for (int i = 0; i < fragments.length; i++) {
+                    sortedFrags.put(fragments[i].getFragNum(), fragments[i]);
+                }
+
+                if (this.isCancelled()) {
+                    break;
+                }
+
+                // TODO reduzir código, caracteres nas bordas, codificação, nao
+                // juntar linhas
+                for (TextFragment frag : sortedFrags.values()) {
+
+                    // grava texto em disco
+                    String fragment = frag.toString();
+                    byte data[] = fragment.getBytes(ATextViewer.TEXT_ENCODING);
+                    long startPos = parsedFile.position();
+                    ByteBuffer out = ByteBuffer.wrap(data);
+                    while (out.hasRemaining()) {
+                        parsedFile.write(out);
+                    }
+
+                    // adiciona linhas adicionais no viewer para cada \n dentro
+                    // do fragmento
+                    lineBreak = false;
+                    int startRow = viewRows.size() - 1;
+                    if (viewRows.size() - 1 < App.MAX_LINES) {
+                        for (int i = 0; i < data.length - 1; i++) {
+                            if (data[i] == 0x0A) {
+                                viewRows.add(startPos + i + 1);
+                                lineBreak = true;
+                                if (viewRows.size() - 1 == App.MAX_LINES) {
+                                    break;
+                                }
+                                // lastNewLinePos = startPos + i;
+                            }
+                            /*
+                             * else if((startPos + i) - lastNewLinePos >= App.MAX_LINE_SIZE){ int k = i;
+                             * while(k >= 0 && Character .isLetterOrDigit(fragment.codePointAt(k))) k--;
+                             * lastNewLinePos = startPos + k; App.get().viewRows.add(lastNewLinePos + 1);
+                             * if(App.get().viewRows.size() - 1 == App.MAX_LINES) break; }
+                             */
+                        }
+                    }
+
+                    // adiciona hit
+                    int numHits = hits.size();
+                    if (numHits < App.MAX_HITS && frag.getScore() > 0) {
+                        int[] hit = new int[3];
+                        hit[0] = data.length;
+                        hit[1] = startRow;
+                        hit[2] = viewRows.size() - 1;
+                        hits.add(startPos);
+                        sortedHits.put(startPos, hit);
+
+                        // atualiza viewer permitindo rolar para o hit
+                        if (viewRows.size() - 1 < App.MAX_LINES) {
+                            App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
+                                    viewRows.size() - 2);
+                            lastRowInserted = viewRows.size() - 2;
+                        } else {
+                            int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+                            int line = App.MAX_LINES
+                                    + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
+                            App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
+                            lastRowInserted = line;
+                        }
+
+                        // atualiza lista de hits
+                        appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
+                        this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
+                    }
+
+                    // adiciona linha no viewer para o fragmento
+                    if (!lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
+                        viewRows.add(parsedFile.position());
+                    }
+
+                }
+                // atualiza viewer
+                if (viewRows.size() - 1 < App.MAX_LINES) {
+                    App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1,
+                            viewRows.size() - 2);
+                    lastRowInserted = viewRows.size() - 2;
+                } else {
+                    int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+                    int line = App.MAX_LINES
+                            + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
+                    App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
+                    lastRowInserted = line;
+                }
             }
-          }
-
-          // adiciona hit
-          int numHits = hits.size();
-          if (numHits < App.MAX_HITS && frag.getScore() > 0) {
-            int[] hit = new int[3];
-            hit[0] = data.length;
-            hit[1] = startRow;
-            hit[2] = viewRows.size() - 1;
-            hits.add(startPos);
-            sortedHits.put(startPos, hit);
-
-            // atualiza viewer permitindo rolar para o hit
-            if (viewRows.size() - 1 < App.MAX_LINES) {
-              App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
-              lastRowInserted = viewRows.size() - 2;
-            } else {
-              int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-              int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
-              App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
-              lastRowInserted = line;
+            if (lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
+                viewRows.add(parsedFile.size());
+                lastRowInserted++;
+                App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
             }
 
-            // atualiza lista de hits
-            appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
-            this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
-          }
+            textReader.close();
 
-          // adiciona linha no viewer para o fragmento
-          if (!lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
-            viewRows.add(parsedFile.position());
-          }
-
+        } catch (InterruptedIOException | ClosedByInterruptException e1) {
+            // e1.printStackTrace();
+        } catch (Throwable e) {
+            e.printStackTrace();
         }
-        // atualiza viewer
-        if (viewRows.size() - 1 < App.MAX_LINES) {
-          App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, viewRows.size() - 2);
-          lastRowInserted = viewRows.size() - 2;
-        } else {
-          int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-          int line = App.MAX_LINES + (int) ((parsedFile.size() - viewRows.get(App.MAX_LINES)) / line_disk_size);
-          App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted + 1, line);
-          lastRowInserted = line;
+        if (this.isCancelled() && textReader != null) {
+            textReader.closeAndInterruptParsingTask(false);
         }
-      }
-      if (lineBreak && viewRows.size() - 1 < App.MAX_LINES) {
-        viewRows.add(parsedFile.size());
-        lastRowInserted++;
-        App.get().getTextViewer().textViewerModel.fireTableRowsInserted(lastRowInserted, lastRowInserted);
-      }
 
-      textReader.close();
-
-    } catch (InterruptedIOException | ClosedByInterruptException e1) {
-      //e1.printStackTrace();
-    } catch (Throwable e) {
-      e.printStackTrace();
     }
-    if (this.isCancelled() && textReader != null) {
-      textReader.closeAndInterruptParsingTask(false);
-    }
-
-  }
 
 }

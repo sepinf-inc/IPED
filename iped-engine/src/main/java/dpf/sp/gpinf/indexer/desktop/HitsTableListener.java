@@ -30,73 +30,74 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 
 public class HitsTableListener implements ListSelectionListener {
 
-  private int lastSelectedRow = -1;
-  private JTextPane resizer = new JTextPane();
-  boolean autoSelect = false;
+    private int lastSelectedRow = -1;
+    private JTextPane resizer = new JTextPane();
+    boolean autoSelect = false;
 
-  public HitsTableListener(Font font) {
-    resizer.setFont(font);
-    resizer.setBorder(BorderFactory.createEmptyBorder());
-    resizer.setContentType("text/html"); //$NON-NLS-1$
-  }
-
-  private int getWidth(String html) {
-    resizer.setText(html);
-    return resizer.getPreferredSize().width;
-  }
-
-  // TODO melhorar scroll horizontal
-  @Override
-  public void valueChanged(ListSelectionEvent evt) {
-
-    try {
-      int row = App.get().hitsTable.getSelectedRow();
-      if (row != -1 && row != lastSelectedRow) {
-
-        long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
-        int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
-        int hitLen = hit[0];
-        
-        int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
-
-        int startViewRow = hit[1];
-        long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
-        if (startViewRow == App.MAX_LINES) {
-          startViewRow += (int) (hitOff - viewRowOff) / line_disk_size;
-        }
-
-        int endViewRow = hit[2];
-        viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
-        if (endViewRow == App.MAX_LINES) {
-          endViewRow += (int) (hitOff + hitLen - viewRowOff) / line_disk_size;
-        }
-
-        int viewRow = startViewRow;
-        do {
-          String line = App.get().getTextViewer().textViewerModel.getValueAt(viewRow, 0).toString();
-          int index1, index2, x = 0, width = 0;
-          if ((index1 = line.indexOf(App.get().getParams().HIGHLIGHT_START_TAG)) != -1) {
-            String text = line.substring(0, index1);
-            x = getWidth(text) - 100;
-            index2 = line.indexOf(App.get().getParams().HIGHLIGHT_END_TAG);
-            text = line.substring(index1, index2 - App.get().getParams().HIGHLIGHT_START_TAG.length());
-            width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont()).stringWidth(text) + 150;
-            Rectangle rect = App.get().getTextViewer().textTable.getCellRect(viewRow, 0, true);
-            rect.setBounds(x, rect.y, width, rect.height);
-            App.get().getTextViewer().textTable.scrollRectToVisible(rect);
-          }
-
-        } while (++viewRow <= endViewRow);
-
-        if (App.get().getTextViewer().textParser.getFirstHitAutoSelected()) {
-          App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
-        }
-
-      }
-      lastSelectedRow = row;
-    } catch (Exception e) {
-      // e.printStackTrace();
+    public HitsTableListener(Font font) {
+        resizer.setFont(font);
+        resizer.setBorder(BorderFactory.createEmptyBorder());
+        resizer.setContentType("text/html"); //$NON-NLS-1$
     }
 
-  }
+    private int getWidth(String html) {
+        resizer.setText(html);
+        return resizer.getPreferredSize().width;
+    }
+
+    // TODO melhorar scroll horizontal
+    @Override
+    public void valueChanged(ListSelectionEvent evt) {
+
+        try {
+            int row = App.get().hitsTable.getSelectedRow();
+            if (row != -1 && row != lastSelectedRow) {
+
+                long hitOff = App.get().getTextViewer().textParser.getHits().get(row);
+                int[] hit = App.get().getTextViewer().textParser.getSortedHits().get(hitOff);
+                int hitLen = hit[0];
+
+                int line_disk_size = App.MAX_LINE_SIZE * ATextViewer.CHAR_BYTE_COUNT;
+
+                int startViewRow = hit[1];
+                long viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(startViewRow);
+                if (startViewRow == App.MAX_LINES) {
+                    startViewRow += (int) (hitOff - viewRowOff) / line_disk_size;
+                }
+
+                int endViewRow = hit[2];
+                viewRowOff = App.get().getTextViewer().textParser.getViewRows().get(endViewRow);
+                if (endViewRow == App.MAX_LINES) {
+                    endViewRow += (int) (hitOff + hitLen - viewRowOff) / line_disk_size;
+                }
+
+                int viewRow = startViewRow;
+                do {
+                    String line = App.get().getTextViewer().textViewerModel.getValueAt(viewRow, 0).toString();
+                    int index1, index2, x = 0, width = 0;
+                    if ((index1 = line.indexOf(App.get().getParams().HIGHLIGHT_START_TAG)) != -1) {
+                        String text = line.substring(0, index1);
+                        x = getWidth(text) - 100;
+                        index2 = line.indexOf(App.get().getParams().HIGHLIGHT_END_TAG);
+                        text = line.substring(index1, index2 - App.get().getParams().HIGHLIGHT_START_TAG.length());
+                        width = App.get().getFontMetrics(App.get().getTextViewer().textTable.getFont())
+                                .stringWidth(text) + 150;
+                        Rectangle rect = App.get().getTextViewer().textTable.getCellRect(viewRow, 0, true);
+                        rect.setBounds(x, rect.y, width, rect.height);
+                        App.get().getTextViewer().textTable.scrollRectToVisible(rect);
+                    }
+
+                } while (++viewRow <= endViewRow);
+
+                if (App.get().getTextViewer().textParser.getFirstHitAutoSelected()) {
+                    App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
+                }
+
+            }
+            lastSelectedRow = row;
+        } catch (Exception e) {
+            // e.printStackTrace();
+        }
+
+    }
 }

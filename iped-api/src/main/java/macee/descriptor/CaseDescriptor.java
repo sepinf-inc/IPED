@@ -13,24 +13,24 @@ import java.time.LocalDate;
  */
 public interface CaseDescriptor extends Descriptor {
 
-  int getCaseId();
+    int getCaseId();
 
-  LocalDate getDataCriacao();
+    LocalDate getDataCriacao();
 
-  String[] getDocumentos();
+    String[] getDocumentos();
 
-  String getOperacao();
+    String getOperacao();
 
-  String getPerfil();
+    String getPerfil();
 
-  String getUnidade();
+    String getUnidade();
 
-  void setDocumentos(String[] documentos);
+    void setDocumentos(String[] documentos);
 
-  void setOperacao(String operacao);
+    void setOperacao(String operacao);
 
-  void setPerfil(String perfil);
+    void setPerfil(String perfil);
 
-  void setUnidade(String unidade);
-  
+    void setUnidade(String unidade);
+
 }

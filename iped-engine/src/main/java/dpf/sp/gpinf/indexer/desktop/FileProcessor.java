@@ -42,191 +42,193 @@ import iped3.desktop.CancelableWorker;
 import iped3.sleuthkit.SleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
-  private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
 
-  private static int STATUS_LENGTH = 200;
-  private volatile static FileProcessor parsingTask;
-  private static Object lock = new Object(), lock2 = new Object();
-  private static HashSet<String> tskDataSourceInited = new HashSet<String>();
-  
-  private Document doc;
-  private int docId;
-  private boolean listRelated;
-  private static volatile Item lastItem;
+    private static int STATUS_LENGTH = 200;
+    private volatile static FileProcessor parsingTask;
+    private static Object lock = new Object(), lock2 = new Object();
+    private static HashSet<String> tskDataSourceInited = new HashSet<String>();
 
-  public FileProcessor(int docId, boolean listRelated) {
-    this.listRelated = listRelated;
-    this.docId = docId;
+    private Document doc;
+    private int docId;
+    private boolean listRelated;
+    private static volatile Item lastItem;
 
-    App.get().getSearchParams().lastSelectedDoc = docId;
+    public FileProcessor(int docId, boolean listRelated) {
+        this.listRelated = listRelated;
+        this.docId = docId;
 
-    if (parsingTask != null) {
-      parsingTask.cancel(true);
-    }
-    parsingTask = this;
+        App.get().getSearchParams().lastSelectedDoc = docId;
 
-    if (docId >= 0) {
-      try {
-        doc = App.get().appCase.getSearcher().doc(docId);
-
-        String status = doc.get(IndexItem.PATH);
-        if (status.length() > STATUS_LENGTH) {
-          status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
+        if (parsingTask != null) {
+            parsingTask.cancel(true);
         }
-        App.get().status.setText(status);
+        parsingTask = this;
 
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      doc = new Document();
-      doc.add(new IntField(IndexItem.ID, 0, Field.Store.YES));
-      doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
-      String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
-      doc.add(new Field(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
-      doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
-      doc.add(new Field(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
+        if (docId >= 0) {
+            try {
+                doc = App.get().appCase.getSearcher().doc(docId);
+
+                String status = doc.get(IndexItem.PATH);
+                if (status.length() > STATUS_LENGTH) {
+                    status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
+                }
+                App.get().status.setText(status);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            doc = new Document();
+            doc.add(new IntField(IndexItem.ID, 0, Field.Store.YES));
+            doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
+            String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
+            doc.add(new Field(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"), //$NON-NLS-1$
+                    Field.Store.YES, Field.Index.NO));
+            doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
+            doc.add(new Field(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, //$NON-NLS-1$
+                    Field.Index.NO));
+        }
     }
-  }
 
-  @Override
-  protected Void doInBackground() {
+    @Override
+    protected Void doInBackground() {
 
-    synchronized (lock) {
+        synchronized (lock) {
 
-      if (this.isCancelled()) {
+            if (this.isCancelled()) {
+                return null;
+            }
+
+            try {
+                process();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
         return null;
-      }
-
-      try{
-    	  process();
-    	  
-      }catch(Exception e){
-    	  e.printStackTrace();
-      }
-
-    }
-    return null;
-  }
-
-  private void process() {
-
-    LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
-
-    //TODO usar nova API e contornar exibição da Ajuda
-    IPEDSourceImpl iCase = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
-	Item item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
-	
-	long textSize = iCase.getTextSize(item.getId());
-	item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
-	
-	OCROutputFolder.setStaticPath(iCase.getModuleDir());
-	
-    disposeItem(lastItem);
-    lastItem = item;
-    String contentType = null;
-    if (item.getMediaType() != null) {
-      contentType = item.getMediaType().toString();
     }
 
-    Item viewItem = item;
+    private void process() {
 
-    if (item.getViewFile() != null) {
-    	viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
-    }
-    
-    waitSleuthkitInit(item);
-    
-    App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
-    
-    if (listRelated) {
-        // listRelatedItens();
-        App.get().subItemModel.listSubItens(doc);
-        if (Thread.currentThread().isInterrupted()) {
-          return;
+        LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
+
+        // TODO usar nova API e contornar exibição da Ajuda
+        IPEDSourceImpl iCase = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
+        Item item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+
+        long textSize = iCase.getTextSize(item.getId());
+        item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
+
+        OCROutputFolder.setStaticPath(iCase.getModuleDir());
+
+        disposeItem(lastItem);
+        lastItem = item;
+        String contentType = null;
+        if (item.getMediaType() != null) {
+            contentType = item.getMediaType().toString();
         }
-        App.get().parentItemModel.listParents(doc);
-        
-        App.get().duplicatesModel.listDuplicates(doc);
+
+        Item viewItem = item;
+
+        if (item.getViewFile() != null) {
+            viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
+        }
+
+        waitSleuthkitInit(item);
+
+        App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+
+        if (listRelated) {
+            // listRelatedItens();
+            App.get().subItemModel.listSubItens(doc);
+            if (Thread.currentThread().isInterrupted()) {
+                return;
+            }
+            App.get().parentItemModel.listParents(doc);
+
+            App.get().duplicatesModel.listDuplicates(doc);
+        }
     }
-  }
-  
-  private void waitSleuthkitInit(final Item item){
-	  if(item instanceof SleuthKitItem) {
-		  SleuthKitItem sitem = (SleuthKitItem) item;
-	      if(sitem.getSleuthFile() == null)
-	          return;
-	  }
-      if(!tskDataSourceInited.contains(item.getDataSource().getUUID())){
-          tskDataSourceInited.add(item.getDataSource().getUUID());
-          setWaitVisible(true);
-          try (InputStream is = item.getStream()){
-              is.read();    
-          } catch (IOException e) {
+
+    private void waitSleuthkitInit(final Item item) {
+        if (item instanceof SleuthKitItem) {
+            SleuthKitItem sitem = (SleuthKitItem) item;
+            if (sitem.getSleuthFile() == null)
+                return;
+        }
+        if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
+            tskDataSourceInited.add(item.getDataSource().getUUID());
+            setWaitVisible(true);
+            try (InputStream is = item.getStream()) {
+                is.read();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            setWaitVisible(false);
+        }
+    }
+
+    private void setWaitVisible(final boolean visible) {
+        try {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    ModalityType previous = App.get().dialogBar.getModalityType();
+                    String prevMsg = App.get().progressBar.getString();
+                    App.get().progressBar.setString(Messages.getString("FileProcessor.WaitingTSK")); //$NON-NLS-1$
+                    App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
+                    App.get().dialogBar.setVisible(visible);
+                    App.get().dialogBar.setModalityType(previous);
+                    App.get().progressBar.setString(prevMsg);
+                }
+            });
+        } catch (Exception e) {
             e.printStackTrace();
-          } 
-          setWaitVisible(false);
-      }
-  }
-  
-  private void setWaitVisible(final boolean visible){
-      try {
-        SwingUtilities.invokeLater(new Runnable(){
-              @Override
-              public void run(){
-                  ModalityType previous = App.get().dialogBar.getModalityType();
-                  String prevMsg = App.get().progressBar.getString();
-                  App.get().progressBar.setString(Messages.getString("FileProcessor.WaitingTSK")); //$NON-NLS-1$
-                  App.get().dialogBar.setModalityType(ModalityType.APPLICATION_MODAL);
-                  App.get().dialogBar.setVisible(visible);
-                  App.get().dialogBar.setModalityType(previous);
-                  App.get().progressBar.setString(prevMsg);
-              }
-          });
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-  }
-
-  private void disposeItem(final Item itemToDispose) {
-    if (itemToDispose != null) {
-      new Thread() {
-        public void run() {
-          try {
-            Thread.sleep(2000);
-          } catch (InterruptedException e) {
-          }
-          itemToDispose.dispose();
         }
-      }.start();
-    }
-  }
-
-  private Thread listTask;
-
-  private void listRelatedItens() {
-    if (listTask != null) {
-      listTask.interrupt();
     }
 
-    listTask = new Thread(new Runnable() {
-      @Override
-      public void run() {
+    private void disposeItem(final Item itemToDispose) {
+        if (itemToDispose != null) {
+            new Thread() {
+                public void run() {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                    }
+                    itemToDispose.dispose();
+                }
+            }.start();
+        }
+    }
+
+    private Thread listTask;
+
+    private void listRelatedItens() {
+        if (listTask != null) {
+            listTask.interrupt();
+        }
+
+        listTask = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                synchronized (lock2) {
+                    App.get().subItemModel.listSubItens(doc);
+                    if (Thread.currentThread().isInterrupted()) {
+                        return;
+                    }
+                    App.get().parentItemModel.listParents(doc);
+                    App.get().duplicatesModel.listDuplicates(doc);
+                }
+
+            }
+        });
         synchronized (lock2) {
-          App.get().subItemModel.listSubItens(doc);
-          if (Thread.currentThread().isInterrupted()) {
-            return;
-          }
-          App.get().parentItemModel.listParents(doc);
-          App.get().duplicatesModel.listDuplicates(doc);
+            listTask.start();
         }
 
-      }
-    });
-    synchronized (lock2) {
-      listTask.start();
     }
-
-  }
 
 }

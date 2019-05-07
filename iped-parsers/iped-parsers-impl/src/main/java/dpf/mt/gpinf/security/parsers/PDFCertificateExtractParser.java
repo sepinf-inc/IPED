@@ -34,62 +34,62 @@ import com.itextpdf.text.pdf.security.PdfPKCS7;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 
 public class PDFCertificateExtractParser extends AbstractParser {
-	public static final MediaType PDF_MIME = MediaType.application("pdf");
+    public static final MediaType PDF_MIME = MediaType.application("pdf");
     private static Set<MediaType> SUPPORTED_TYPES = null;
 
-    
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		if(SUPPORTED_TYPES == null){
-			SUPPORTED_TYPES = new HashSet<MediaType>();
-			SUPPORTED_TYPES.add(PDF_MIME);
-		}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        if (SUPPORTED_TYPES == null) {
+            SUPPORTED_TYPES = new HashSet<MediaType>();
+            SUPPORTED_TYPES.add(PDF_MIME);
+        }
 
-		return SUPPORTED_TYPES;
-	}
+        return SUPPORTED_TYPES;
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-			throws IOException, SAXException, TikaException {
-		TemporaryResources tmp = new TemporaryResources();
-		TikaInputStream tis = TikaInputStream.get(stream, tmp);
-		File file = tis.getFile();
-		
-		java.security.Security.addProvider(new BouncyCastleProvider());
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        TemporaryResources tmp = new TemporaryResources();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        File file = tis.getFile();
 
-		EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+        java.security.Security.addProvider(new BouncyCastleProvider());
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
 
-    		try{
-    			PdfReader reader = new PdfReader(new FileInputStream(file));
-    			
-    			 AcroFields af = reader.getAcroFields();
-    			 ArrayList<String> names = af.getSignatureNames();
-    			 for (int k = 0; k < names.size(); ++k) {
-    			    String name = (String)names.get(k);
-    			    System.out.println("Signature name: " + name);
-    			    System.out.println("Signature covers whole document: " + af.signatureCoversWholeDocument(name));
+            try {
+                PdfReader reader = new PdfReader(new FileInputStream(file));
 
-    			    PdfPKCS7 pk = af.verifySignature(name);
-    			    Calendar cal = pk.getSignDate();
-    			    Certificate pkc[] = pk.getCertificates();
+                AcroFields af = reader.getAcroFields();
+                ArrayList<String> names = af.getSignatureNames();
+                for (int k = 0; k < names.size(); ++k) {
+                    String name = (String) names.get(k);
+                    System.out.println("Signature name: " + name);
+                    System.out.println("Signature covers whole document: " + af.signatureCoversWholeDocument(name));
 
-    			    X509Certificate cert = pk.getSigningCertificate();
+                    PdfPKCS7 pk = af.verifySignature(name);
+                    Calendar cal = pk.getSignDate();
+                    Certificate pkc[] = pk.getCertificates();
+
+                    X509Certificate cert = pk.getSigningCertificate();
 
                     Metadata kmeta = new Metadata();
                     kmeta.set(TikaCoreProperties.MODIFIED, pk.getSignDate());
-	                kmeta.set(HttpHeaders.CONTENT_TYPE, MediaType.application("pkix-cert").toString());
-	                kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("pkix-cert").toString());
-	                
-	                kmeta.add(TikaCoreProperties.TITLE, cert.getSubjectX500Principal().getName());
+                    kmeta.set(HttpHeaders.CONTENT_TYPE, MediaType.application("pkix-cert").toString());
+                    kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("pkix-cert").toString());
+
+                    kmeta.add(TikaCoreProperties.TITLE, cert.getSubjectX500Principal().getName());
 
                     extractor.parseEmbedded(new ByteArrayInputStream(cert.getEncoded()), handler, kmeta, false);
-    			 }
-    		}catch(Exception e){
-    			throw new TikaException("Invalid or unkown certificate format.", e);
-    		}finally {
-    			tis.close();
-    		}
+                }
+            } catch (Exception e) {
+                throw new TikaException("Invalid or unkown certificate format.", e);
+            } finally {
+                tis.close();
+            }
         }
-	}
+    }
 }

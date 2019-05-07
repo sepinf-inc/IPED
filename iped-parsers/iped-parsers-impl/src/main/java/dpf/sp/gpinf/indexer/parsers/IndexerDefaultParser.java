@@ -65,30 +65,30 @@ import iped3.io.StreamSource;
  */
 public class IndexerDefaultParser extends CompositeParser {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(IndexerDefaultParser.class);
-	
+    private static Logger LOGGER = LoggerFactory.getLogger(IndexerDefaultParser.class);
+
     private static final long serialVersionUID = 1L;
-    
+
     private static TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
-    
-	public static int parsingErrors = 0;
-	
-	public static final String METADATA_HEADER = Messages.getString("IndexerDefaultParser.MetadataTitle"); //$NON-NLS-1$
-	public static final String METADATA_FOOTER = "-----------------------------------"; //$NON-NLS-1$
-    
+
+    public static int parsingErrors = 0;
+
+    public static final String METADATA_HEADER = Messages.getString("IndexerDefaultParser.MetadataTitle"); //$NON-NLS-1$
+    public static final String METADATA_FOOTER = "-----------------------------------"; //$NON-NLS-1$
+
     public static final String INDEXER_CONTENT_TYPE = "Indexer-Content-Type"; //$NON-NLS-1$
     public static final String INDEXER_TIMEOUT = "Indexer-Timeout-Occurred"; //$NON-NLS-1$
     public static final String PARSER_EXCEPTION = "parserException"; //$NON-NLS-1$
     public static final String ENCRYPTED_DOCUMENT = "encryptedDocument"; //$NON-NLS-1$
-    
+
     public static final String FALLBACK_PARSER_PROP = "fallbackParser"; //$NON-NLS-1$
     public static final String ERROR_PARSER_PROP = "errorParser"; //$NON-NLS-1$
     public static final String ENTROPY_TEST_PROP = "entropyTest"; //$NON-NLS-1$
-    
+
     private boolean fallbackParserEnabled = Boolean.valueOf(System.getProperty(FALLBACK_PARSER_PROP, "true"));
     private boolean errorParserEnabled = Boolean.valueOf(System.getProperty(ERROR_PARSER_PROP, "true"));
     private boolean entropyTestEnabled = Boolean.valueOf(System.getProperty(ENTROPY_TEST_PROP, "true"));
-    
+
     private Parser errorParser;
     private final Detector detector;
     private boolean printMetadata = true;
@@ -96,16 +96,16 @@ public class IndexerDefaultParser extends CompositeParser {
     private boolean canUseForkParser = false;
 
     public IndexerDefaultParser() {
-        super(tikaConfig.getMediaTypeRegistry(), ((CompositeParser)tikaConfig.getParser()).getAllComponentParsers());
+        super(tikaConfig.getMediaTypeRegistry(), ((CompositeParser) tikaConfig.getParser()).getAllComponentParsers());
         detector = tikaConfig.getDetector();
-        if(fallbackParserEnabled) {
+        if (fallbackParserEnabled) {
             this.setFallback(new RawStringParser(entropyTestEnabled));
         }
-        if(errorParserEnabled) {
+        if (errorParserEnabled) {
             this.setErrorParser(new RawStringParser(entropyTestEnabled));
         }
     }
-    
+
     public void setCanUseForkParser(boolean shouldUseForkParser) {
         this.canUseForkParser = shouldUseForkParser;
     }
@@ -117,48 +117,48 @@ public class IndexerDefaultParser extends CompositeParser {
     private static synchronized void incParsingErrors() {
         parsingErrors++;
     }
-    
-    public Parser getBestParser(Metadata metadata){
-    	return super.getParser(metadata);
+
+    public Parser getBestParser(Metadata metadata) {
+        return super.getParser(metadata);
     }
-    
+
     public void setPrintMetadata(boolean printMetadata) {
-		this.printMetadata = printMetadata;
-	}
-    
+        this.printMetadata = printMetadata;
+    }
+
     public void setIgnoreStyle(boolean ignoreStyle) {
         this.ignoreStyle = ignoreStyle;
     }
-    
+
     public boolean hasSpecificParser(Metadata metadata) {
         Parser p = getLeafParser(metadata);
         return isSpecificParser(p);
     }
-    
+
     public Parser getLeafParser(Metadata metadata) {
         Parser parser = getBestParser(metadata);
-          while(parser instanceof CompositeParser || parser instanceof ParserDecorator){
-              if(parser instanceof CompositeParser)
-                  parser = getBestParser((CompositeParser)parser, metadata);
-              else
-                  parser = ((ParserDecorator)parser).getWrappedParser();
-          }
-          return parser;
+        while (parser instanceof CompositeParser || parser instanceof ParserDecorator) {
+            if (parser instanceof CompositeParser)
+                parser = getBestParser((CompositeParser) parser, metadata);
+            else
+                parser = ((ParserDecorator) parser).getWrappedParser();
+        }
+        return parser;
 
     }
-    
+
     public static boolean isSpecificParser(Parser parser) {
-      if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser)
-        return false;
-      else
-        return true;
+        if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser)
+            return false;
+        else
+            return true;
     }
-    
+
     private Parser getBestParser(CompositeParser comp, Metadata metadata) {
         Map<MediaType, Parser> map = comp.getParsers();
         MediaType type = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
         if (type != null)
-           type = comp.getMediaTypeRegistry().normalize(type);
+            type = comp.getMediaTypeRegistry().normalize(type);
         while (type != null) {
             Parser parser = map.get(type);
             if (parser != null)
@@ -167,17 +167,18 @@ public class IndexerDefaultParser extends CompositeParser {
         }
         return comp.getFallback();
     }
-    
+
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
         // Utilizado para não terminar documento antes de escrever metadados
         NoEndBodyContentHandler noEndHandler = new NoEndBodyContentHandler(handler);
 
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
-        
-        if(context.get(Parser.class) == null)
+
+        if (context.get(Parser.class) == null)
             context.set(Parser.class, this);
 
         ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -190,8 +191,8 @@ public class IndexerDefaultParser extends CompositeParser {
         }
 
         String filePath = null;
-        if(itemInfo != null)
-        	filePath = itemInfo.getPath();
+        if (itemInfo != null)
+            filePath = itemInfo.getPath();
         long length = -1;
 
         String lengthStr = metadata.get(Metadata.CONTENT_LENGTH);
@@ -210,10 +211,11 @@ public class IndexerDefaultParser extends CompositeParser {
                     contentType = detector.detect(tis, metadata).toString();
 
                 } catch (IOException e) {
-                	LOGGER.warn("{} Error detecting file type: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), filePath, length, e.toString()); //$NON-NLS-1$
+                    LOGGER.warn("{} Error detecting file type: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), //$NON-NLS-1$
+                            filePath, length, e.toString());
                 }
             }
-            //System.out.println(contentType);
+            // System.out.println(contentType);
             metadata.set(Metadata.CONTENT_TYPE, contentType);
             metadata.set(INDEXER_CONTENT_TYPE, contentType);
 
@@ -224,13 +226,13 @@ public class IndexerDefaultParser extends CompositeParser {
             try {
                 if (length != 0) {
                     if (metadata.get(INDEXER_TIMEOUT) == null) {
-                        if(canUseForkParser && ForkParser2.isEnabled() && hasSpecificParser(metadata))
+                        if (canUseForkParser && ForkParser2.isEnabled() && hasSpecificParser(metadata))
                             ForkParser2.getForkParser().parse(tis, sch, metadata, context);
                         else
                             super.parse(tis, sch, metadata, context);
                     } else {
-                    	if(errorParser != null)
-                    		errorParser.parse(tis, sch, metadata, context);
+                        if (errorParser != null)
+                            errorParser.parse(tis, sch, metadata, context);
                     }
                 }
 
@@ -239,80 +241,86 @@ public class IndexerDefaultParser extends CompositeParser {
                 try {
                     sch.throwIfCauseOf(e);
                     throw e;
-                }catch(TikaException t) {
-                    if(tis.getPosition() > 0)
+                } catch (TikaException t) {
+                    if (tis.getPosition() > 0)
                         throw t;
-                }    
+                }
             }
 
             // Parsing com rawparser no caso de exceções de parsing
         } catch (TikaException e) {
-            if (!Thread.currentThread().isInterrupted() && !(e.getCause() instanceof InterruptedException) /*
-            		//Extrair strings dos tipos abaixo?
-                     * && !contentType.equals("image/gif") &&
-                     * !contentType.equals("image/jpeg") &&
-                     * !contentType.equals("image/x-ms-bmp") &&
-                     * !contentType.equals("image/png") && !contentType.startsWith(
-                     * "application/vnd.openxmlformats-officedocument") &&
-                     * !contentType.startsWith("application/vnd.oasis.opendocument") &&
-                     * !contentType.equals("application/zip") &&
-                     * !contentType.equals("application/pdf") &&
-                     * !contentType.equals("application/gzip")
-                     */) {
+            if (!Thread.currentThread().isInterrupted()
+                    && !(e.getCause() instanceof InterruptedException) /*
+                                                                        * //Extrair strings dos tipos abaixo? &&
+                                                                        * !contentType.equals("image/gif") &&
+                                                                        * !contentType.equals("image/jpeg") &&
+                                                                        * !contentType.equals("image/x-ms-bmp") &&
+                                                                        * !contentType.equals("image/png") &&
+                                                                        * !contentType.startsWith(
+                                                                        * "application/vnd.openxmlformats-officedocument")
+                                                                        * && !contentType.startsWith(
+                                                                        * "application/vnd.oasis.opendocument") &&
+                                                                        * !contentType.equals("application/zip") &&
+                                                                        * !contentType.equals("application/pdf") &&
+                                                                        * !contentType.equals("application/gzip")
+                                                                        */) {
                 String value;
                 if ((e instanceof EncryptedDocumentException
                         || (value = metadata.get("pdf:encrypted")) != null && Boolean.valueOf(value)) //$NON-NLS-1$
                         || ((value = metadata.get("Security")) != null && Integer.valueOf(value) == 1) //$NON-NLS-1$
-                        //TODO melhorar detecção de arquivos openoffice cifrados 
+                        // TODO melhorar detecção de arquivos openoffice cifrados
                         || (contentType.contains("vnd.oasis.opendocument") && e.getCause() != null //$NON-NLS-1$
-                        	&& (e.getCause().toString().contains("only DEFLATED entries can have EXT descriptor") //$NON-NLS-1$
-                        	 || e.getCause().toString().contains("MalformedByteSequenceException")))) { //$NON-NLS-1$
+                                && (e.getCause().toString().contains("only DEFLATED entries can have EXT descriptor") //$NON-NLS-1$
+                                        || e.getCause().toString().contains("MalformedByteSequenceException")))) { //$NON-NLS-1$
 
                     metadata.set(ENCRYPTED_DOCUMENT, "true"); //$NON-NLS-1$
-                    
+
                 } else if (itemInfo != null && itemInfo.isCarved() && context.get(IgnoreCorruptedCarved.class) != null)
                     throw new CorruptedCarvedException(e);
-                
+
                 else {
-                	if(e.getCause() instanceof IOException && IOUtil.isDiskFull((IOException)e.getCause()))
-                	    LOGGER.error("No space on temp folder to process {} ({} bytes)", filePath, lengthStr); //$NON-NLS-1$
+                    if (e.getCause() instanceof IOException && IOUtil.isDiskFull((IOException) e.getCause()))
+                        LOGGER.error("No space on temp folder to process {} ({} bytes)", filePath, lengthStr); //$NON-NLS-1$
 
                     incParsingErrors();
                     metadata.set(PARSER_EXCEPTION, "true"); //$NON-NLS-1$
 
-                    LOGGER.warn("{} Parsing exception: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), filePath, lengthStr, e.toString()); //$NON-NLS-1$
+                    LOGGER.warn("{} Parsing exception: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), filePath, //$NON-NLS-1$
+                            lengthStr, e.toString());
                     LOGGER.debug(Thread.currentThread().getName() + " Parsing exception: " + filePath, e); //$NON-NLS-1$
-                    
+
                     InputStream is = null;
-                    if(errorParser != null)
-	                    try {
-	                        if (evidence != null) {
-	                        	is = evidence.getStream();
-	                        } else {
-	                        	is = TikaInputStream.get(file);
-	                        }
-	                        errorParser.parse(is, noEndHandler, metadata, context);
-	
-	                    } finally {
-	                    	if(is != null) is.close();
-	                    }
+                    if (errorParser != null)
+                        try {
+                            if (evidence != null) {
+                                is = evidence.getStream();
+                            } else {
+                                is = TikaInputStream.get(file);
+                            }
+                            errorParser.parse(is, noEndHandler, metadata, context);
+
+                        } finally {
+                            if (is != null)
+                                is.close();
+                        }
                 }
 
             }
 
         } finally {
             MetadataUtil.normalizeMetadata(metadata);
-            
-            if(printMetadata){
+
+            if (printMetadata) {
                 // Escreve metadados ao final do texto
                 noEndHandler.newLine();
                 noEndHandler.characters(METADATA_HEADER.toCharArray(), 0, METADATA_HEADER.length());
                 noEndHandler.newLine();
-                
+
                 String[] names = metadata.names();
                 Arrays.sort(names);
                 for (String name : names) {
-                    if (name != null && !name.equals(TikaMetadataKeys.RESOURCE_NAME_KEY) && !name.equals("PLTE PLTEEntry") && !name.equals("Chroma Palette PaletteEntry") //$NON-NLS-1$ //$NON-NLS-2$
+                    if (name != null && !name.equals(TikaMetadataKeys.RESOURCE_NAME_KEY)
+                            && !name.equals("PLTE PLTEEntry") && !name.equals("Chroma Palette PaletteEntry") //$NON-NLS-1$ //$NON-NLS-2$
                             && !name.equals(Metadata.CONTENT_TYPE)) {
                         String text = name + ": "; //$NON-NLS-1$
                         for (String value : metadata.getValues(name)) {
@@ -327,7 +335,7 @@ public class IndexerDefaultParser extends CompositeParser {
             }
 
             noEndHandler.reallyEndDocument();
-            
+
             tmp.close();
         }
 
@@ -341,36 +349,39 @@ public class IndexerDefaultParser extends CompositeParser {
         public NoEndBodyContentHandler(ContentHandler handler) {
             super(handler);
         }
-        
-        public void newLine() throws SAXException{
-        	//super.startElement(XHTML, "br", "br", new AttributesImpl());
-        	//super.endElement(XHTML, "br", "br");
-        	super.characters("\n".toCharArray(), 0, 1); //$NON-NLS-1$
+
+        public void newLine() throws SAXException {
+            // super.startElement(XHTML, "br", "br", new AttributesImpl());
+            // super.endElement(XHTML, "br", "br");
+            super.characters("\n".toCharArray(), 0, 1); //$NON-NLS-1$
         }
 
         @Override
-        public void startElement(String uri, String localName, String name, org.xml.sax.Attributes atts) throws SAXException {
+        public void startElement(String uri, String localName, String name, org.xml.sax.Attributes atts)
+                throws SAXException {
             if (name.equals("style")) { //$NON-NLS-1$
-                //Tag <style> foi aberta 
+                // Tag <style> foi aberta
                 inStyle = true;
-            }  else {
-                //Qualquer outra tag que é iniciada volta para o estado normal, para garantir que nada será perdido
-                //mesmo em arquivos mal formados (tag </style> ausente, por exemplo) 
+            } else {
+                // Qualquer outra tag que é iniciada volta para o estado normal, para garantir
+                // que nada será perdido
+                // mesmo em arquivos mal formados (tag </style> ausente, por exemplo)
                 inStyle = false;
             }
             super.startElement(uri, localName, name, atts);
-        } 
-        
+        }
+
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
-            //Filtra texto se está dentro de tag <style>
+            // Filtra texto se está dentro de tag <style>
             if (!inStyle || !ignoreStyle)
                 super.characters(ch, start, length);
         }
-        
+
         @Override
         public void endElement(String uri, String local, String name) throws SAXException {
-            //Qualquer fechamento também volta ao estado normal, para garantir que texto não será perdido.
+            // Qualquer fechamento também volta ao estado normal, para garantir que texto
+            // não será perdido.
             inStyle = false;
             if (name.equals("frameset")) { //$NON-NLS-1$
                 endFrameset = true;

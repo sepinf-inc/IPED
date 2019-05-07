@@ -44,15 +44,15 @@ public class CarverTask extends BaseCarveTask {
     private static final long serialVersionUID = 1L;
     public static boolean enableCarving = false;
     public static boolean ignoreCorrupted = true;
-    
+
     private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
-    
-    private CarvedItemListener carvedItemListener = null; 
-    
+
+    private CarvedItemListener carvedItemListener = null;
+
     private static MediaTypeRegistry registry;
-    
+
     Item evidence;
 
     long prevLen = 0;
@@ -61,10 +61,10 @@ public class CarverTask extends BaseCarveTask {
     byte[] cBuf;
 
     public CarverTask() {
-        if(registry == null)
+        if (registry == null)
             registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
     }
-    
+
     public static void setEnabled(boolean enabled) {
         enableCarving = enabled;
     }
@@ -121,7 +121,7 @@ public class CarverTask extends BaseCarveTask {
 
                 type = registry.getSupertype(type);
             }
-            
+
             findSig(tis);
 
         } catch (Exception t) {
@@ -196,9 +196,10 @@ public class CarverTask extends BaseCarveTask {
 
                     try {
                         carver.notifyHit(this.evidence, hit);
-                    }catch(Exception e) {
-                        LOGGER.warn("{} Skipping unexpected error carving on hit {} {} - CarverClass {}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
-                                hit.getOffset(), carver.getClass().getName());
+                    } catch (Exception e) {
+                        LOGGER.warn("{} Skipping unexpected error carving on hit {} {} - CarverClass {}", //$NON-NLS-1$
+                                Thread.currentThread().getName(), evidence.getPath(), hit.getOffset(),
+                                carver.getClass().getName());
                         e.printStackTrace();
                     }
                 }
@@ -208,27 +209,28 @@ public class CarverTask extends BaseCarveTask {
 
         for (Carver carver : registeredCarvers.values()) {
             carver.notifyEnd(this.evidence);
-		}
-        
+        }
+
         return null;
     }
-    
+
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-    	
+
         AppCarverTaskConfig ctConfig = new AppCarverTaskConfig();
-    	ConfigurationManager.getInstance().addObject(ctConfig);
-    	ConfigurationManager.getInstance().loadConfigs();
+        ConfigurationManager.getInstance().addObject(ctConfig);
+        ConfigurationManager.getInstance().loadConfigs();
 
-    	enableCarving = ctConfig.getCarvingEnabled();
+        enableCarving = ctConfig.getCarvingEnabled();
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
+                .next();
         if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
         carvedItemListener = getCarvedItemListener();
-        
-        if(carverConfig == null) {
+
+        if (carverConfig == null) {
             carverConfig = ctConfig.getCarverConfiguration();
             carverConfig.configTask(confDir, carvedItemListener);
             carverTypes = carverConfig.getCarverTypes();
@@ -241,35 +243,35 @@ public class CarverTask extends BaseCarveTask {
         // TODO Auto-generated method stub
 
     }
-    
+
     public CarvedItemListener getCarvedItemListener() {
-    	if(carvedItemListener==null) {
-    		carvedItemListener=new CarvedItemListener() {
+        if (carvedItemListener == null) {
+            carvedItemListener = new CarvedItemListener() {
                 public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
-                    addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);                
+                    addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);
                 }
             };
-    	}
-    	return carvedItemListener;
+        }
+        return carvedItemListener;
     }
-    
+
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
 
     public Carver getCarver(CarverType ct) {
         Carver carver = registeredCarvers.get(ct);
         try {
-        	if(carver==null) {
+            if (carver == null) {
                 if (ct.getCarverClass().equals(JSCarver.class.getName())) {
-                	carver=carverConfig.createCarverFromJSName(ct.getCarverScript());
+                    carver = carverConfig.createCarverFromJSName(ct.getCarverScript());
                     carver.registerCarvedItemListener(getCarvedItemListener());
                 } else {
-            		Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
-            		carver = (Carver) classe.getDeclaredConstructor().newInstance();
-            		carver.registerCarvedItemListener(getCarvedItemListener());
+                    Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
+                    carver = (Carver) classe.getDeclaredConstructor().newInstance();
+                    carver.registerCarvedItemListener(getCarvedItemListener());
                 }
                 carver.setIgnoreCorrupted(carverConfig.isToIgnoreCorrupted());
                 registeredCarvers.put(ct, carver);
-        	}
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

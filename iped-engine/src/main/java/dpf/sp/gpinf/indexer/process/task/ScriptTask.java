@@ -35,87 +35,87 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import iped3.Item;
 
-
 public class ScriptTask extends AbstractTask {
-  
-  private static IPEDSourceImpl ipedCase;
-  private static int numInstances = 0;
 
-  private File scriptFile;
-  private ScriptEngine engine;
-  private Invocable inv;
-  
-  public ScriptTask(File scriptFile) {
-      this.scriptFile = scriptFile;
-      try {
-        loadScript(this.scriptFile);
-        
-    } catch (Exception e) {
-        throw new RuntimeException(e);
+    private static IPEDSourceImpl ipedCase;
+    private static int numInstances = 0;
+
+    private File scriptFile;
+    private ScriptEngine engine;
+    private Invocable inv;
+
+    public ScriptTask(File scriptFile) {
+        this.scriptFile = scriptFile;
+        try {
+            loadScript(this.scriptFile);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
-  }
-  
-  public void loadScript(File file) throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
 
-      try(InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")){ //$NON-NLS-1$
-          
-          ScriptEngineManager manager = new ScriptEngineManager();
-          String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); //$NON-NLS-1$
-          engine = manager.getEngineByExtension(ext); //$NON-NLS-1$
-          engine.eval(reader);
-          inv = (Invocable) engine;
-      }
+    public void loadScript(File file)
+            throws IOException, ScriptException, UnsupportedEncodingException, NoSuchMethodException {
 
-  }
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), "UTF-8")) { //$NON-NLS-1$
 
-  @Override
-  public void init(Properties confProps, File configPath) throws Exception {
-      
-      engine.put("caseData", this.caseData); //$NON-NLS-1$
-      engine.put("moduleDir", this.output); //$NON-NLS-1$
-      engine.put("worker", this.worker); //$NON-NLS-1$
-      engine.put("stats", this.stats); //$NON-NLS-1$
-      
-      inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
-      
-      numInstances++;
-  }
+            ScriptEngineManager manager = new ScriptEngineManager();
+            String ext = file.getName().substring(file.getName().lastIndexOf('.') + 1); // $NON-NLS-1$
+            engine = manager.getEngineByExtension(ext); // $NON-NLS-1$
+            engine.eval(reader);
+            inv = (Invocable) engine;
+        }
 
-  @Override
-  public void finish() throws Exception {
-    
-      if(ipedCase == null)
-          ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer);
-      
-      try{
-          IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase);
-          
-          engine.put("ipedCase", ipedCase); //$NON-NLS-1$
-          engine.put("searcher", searcher); //$NON-NLS-1$
-          
-          inv.invokeFunction("finish"); //$NON-NLS-1$
-          
-      }finally {
-          //remove references to heavy objects
-          engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-          if(--numInstances == 0)
-            ipedCase.close();
-      }
-  }
+    }
 
-  @Override
-  public void process(Item e) throws Exception {
-      inv.invokeFunction("process", e); //$NON-NLS-1$
-  }
-  
-  @Override
-  public String getName() {
-      try {
-        return (String)inv.invokeFunction("getName"); //$NON-NLS-1$
-        
-    } catch (NoSuchMethodException | ScriptException e) {
-        throw new RuntimeException(e);
-    } 
-  }
+    @Override
+    public void init(Properties confProps, File configPath) throws Exception {
+
+        engine.put("caseData", this.caseData); //$NON-NLS-1$
+        engine.put("moduleDir", this.output); //$NON-NLS-1$
+        engine.put("worker", this.worker); //$NON-NLS-1$
+        engine.put("stats", this.stats); //$NON-NLS-1$
+
+        inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
+
+        numInstances++;
+    }
+
+    @Override
+    public void finish() throws Exception {
+
+        if (ipedCase == null)
+            ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer);
+
+        try {
+            IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase);
+
+            engine.put("ipedCase", ipedCase); //$NON-NLS-1$
+            engine.put("searcher", searcher); //$NON-NLS-1$
+
+            inv.invokeFunction("finish"); //$NON-NLS-1$
+
+        } finally {
+            // remove references to heavy objects
+            engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+            if (--numInstances == 0)
+                ipedCase.close();
+        }
+    }
+
+    @Override
+    public void process(Item e) throws Exception {
+        inv.invokeFunction("process", e); //$NON-NLS-1$
+    }
+
+    @Override
+    public String getName() {
+        try {
+            return (String) inv.invokeFunction("getName"); //$NON-NLS-1$
+
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

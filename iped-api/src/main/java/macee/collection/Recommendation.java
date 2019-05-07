@@ -7,9 +7,8 @@ package macee.collection;
  */
 public enum Recommendation {
 
-    ALERT(10, "Alertar"), IGNORE(0, "Ignorar"), INFORM(5, "Informar"), WARN(8,
-        "Informar com prioridade"), POSTPONE(3, "Adiar análise"), REVIEW_LATER(6,
-        "Para revisão posterior");
+    ALERT(10, "Alertar"), IGNORE(0, "Ignorar"), INFORM(5, "Informar"), WARN(8, "Informar com prioridade"), POSTPONE(3,
+            "Adiar análise"), REVIEW_LATER(6, "Para revisão posterior");
 
     private final int value;
     private final String name;
@@ -36,7 +35,8 @@ public enum Recommendation {
         return this.name;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return this.getName();
     }
 }

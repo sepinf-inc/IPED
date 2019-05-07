@@ -15,33 +15,33 @@ import iped3.ItemId;
 import iped3.search.MultiSearchResult;
 
 public class DynamicDuplicateFilter {
-    
+
     private static SortedDocValues docValues;
-    
+
     private static IPEDMultiSource ipedCase;
-    
+
     private BitSet ordSet = new BitSet(1 << 23);
-    
-    public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException{
-        if(ipedCase != ipedSource) {
+
+    public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException {
+        if (ipedCase != ipedSource) {
             ipedCase = ipedSource;
             AtomicReader reader = ipedCase.getAtomicReader();
             docValues = reader.getSortedDocValues(IndexItem.HASH);
         }
     }
-    
+
     public MultiSearchResultImpl filter(MultiSearchResult result) {
-        
+
         ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
-        for(ItemId item : result.getIterator()){
+        for (ItemId item : result.getIterator()) {
             int docId = ipedCase.getLuceneId(item);
             int ord = docValues.getOrd(docId);
-            if(ord <= 0 || !ordSet.get(ord)) {
+            if (ord <= 0 || !ordSet.get(ord)) {
                 filteredItems.add(item);
                 scores.add(result.getScore(i));
-                if(ord > 0)
+                if (ord > 0)
                     ordSet.set(ord);
             }
             i++;

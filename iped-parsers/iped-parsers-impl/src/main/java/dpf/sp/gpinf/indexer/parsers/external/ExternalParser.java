@@ -58,13 +58,13 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
- * Parser that uses an external program (like catdoc or pdf2txt) to extract
- * text content and metadata from a given document.
+ * Parser that uses an external program (like catdoc or pdf2txt) to extract text
+ * content and metadata from a given document.
  */
 public class ExternalParser extends AbstractParser {
-    
+
     private static Logger LOGGER;
-    
+
     public static final String EXTERNAL_PARSERS_ROOT = "iped.extParsers.root";
 
     /**
@@ -76,7 +76,8 @@ public class ExternalParser extends AbstractParser {
         /**
          * Consume a line
          *
-         * @param line a line of string
+         * @param line
+         *            a line of string
          */
         void consume(String line);
 
@@ -94,15 +95,13 @@ public class ExternalParser extends AbstractParser {
     private static final long serialVersionUID = -1079128990650687037L;
 
     /**
-     * The token, which if present in the Command string, will
-     * be replaced with the input filename.
-     * Alternately, the input data can be streamed over STDIN.
+     * The token, which if present in the Command string, will be replaced with the
+     * input filename. Alternately, the input data can be streamed over STDIN.
      */
     public static final String INPUT_FILE_TOKEN = "${INPUT}";
     /**
-     * The token, which if present in the Command string, will
-     * be replaced with the output filename.
-     * Alternately, the output data can be collected on STDOUT.
+     * The token, which if present in the Command string, will be replaced with the
+     * output filename. Alternately, the output data can be collected on STDOUT.
      */
     public static final String OUTPUT_FILE_TOKEN = "${OUTPUT}";
 
@@ -112,8 +111,7 @@ public class ExternalParser extends AbstractParser {
     private Set<MediaType> supportedTypes = Collections.emptySet();
 
     /**
-     * Regular Expressions to run over STDOUT to
-     * extract Metadata.
+     * Regular Expressions to run over STDOUT to extract Metadata.
      */
     private Map<Pattern, String> metadataPatterns = null;
 
@@ -122,28 +120,28 @@ public class ExternalParser extends AbstractParser {
      *
      * @see Runtime#exec(String[])
      */
-    private String[] command = new String[]{"cat"};
+    private String[] command = new String[] { "cat" };
 
     /**
      * A consumer for ignored Lines
      */
     private LineConsumer ignoredLineConsumer = LineConsumer.NULL;
-    
+
     /**
      * Name of external parser
      */
     private String parserName;
-    
+
     private String toolPath;
-    
+
     private static String rootFolder;
-    
+
     private String charset = "UTF-8";
-    
+
     private boolean outputHtml = false;
-    
+
     private int linesToIgnore = 0;
-    
+
     private HtmlParser htmlParser = new HtmlParser();
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -155,10 +153,8 @@ public class ExternalParser extends AbstractParser {
     }
 
     public void setSupportedTypes(Set<MediaType> supportedTypes) {
-        this.supportedTypes =
-                Collections.unmodifiableSet(new HashSet<MediaType>(supportedTypes));
+        this.supportedTypes = Collections.unmodifiableSet(new HashSet<MediaType>(supportedTypes));
     }
-
 
     public String[] getCommand() {
         return command;
@@ -166,8 +162,8 @@ public class ExternalParser extends AbstractParser {
 
     /**
      * Sets the command to be run. This can include either of
-     * {@link #INPUT_FILE_TOKEN} or {@link #OUTPUT_FILE_TOKEN}
-     * if the command needs filenames.
+     * {@link #INPUT_FILE_TOKEN} or {@link #OUTPUT_FILE_TOKEN} if the command needs
+     * filenames.
      *
      * @see Runtime#exec(String[])
      */
@@ -187,7 +183,8 @@ public class ExternalParser extends AbstractParser {
     /**
      * Set a consumer for the lines ignored by the parse functions
      *
-     * @param ignoredLineConsumer consumer instance
+     * @param ignoredLineConsumer
+     *            consumer instance
      */
     public void setIgnoredLineConsumer(LineConsumer ignoredLineConsumer) {
         this.ignoredLineConsumer = ignoredLineConsumer;
@@ -198,52 +195,47 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
-     * Sets the map of regular expression patterns and Metadata
-     * keys. Any matching patterns will have the matching
-     * metadata entries set.
-     * Set this to null to disable Metadata extraction.
+     * Sets the map of regular expression patterns and Metadata keys. Any matching
+     * patterns will have the matching metadata entries set. Set this to null to
+     * disable Metadata extraction.
      */
     public void setMetadataExtractionPatterns(Map<Pattern, String> patterns) {
         this.metadataPatterns = patterns;
     }
 
-
     /**
-     * Executes the configured external command and passes the given document
-     * stream as a simple XHTML document to the given SAX content handler.
-     * Metadata is only extracted if {@link #setMetadataExtractionPatterns(Map)}
-     * has been called to set patterns.
+     * Executes the configured external command and passes the given document stream
+     * as a simple XHTML document to the given SAX content handler. Metadata is only
+     * extracted if {@link #setMetadataExtractionPatterns(Map)} has been called to
+     * set patterns.
      */
-    public void parse(
-            InputStream stream, ContentHandler handler,
-            Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        XHTMLContentHandler xhtml =
-                new XHTMLContentHandler(handler, metadata);
-        
-        if(LOGGER == null)
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+
+        if (LOGGER == null)
             LOGGER = LoggerFactory.getLogger(ExternalParser.class);
 
         TemporaryResources tmp = new TemporaryResources();
         try {
-            parse(TikaInputStream.get(stream, tmp),
-                    xhtml, metadata, tmp);
+            parse(TikaInputStream.get(stream, tmp), xhtml, metadata, tmp);
         } finally {
             tmp.dispose();
         }
     }
-    
+
     public static String getRootFolder() {
-        if(rootFolder != null)
+        if (rootFolder != null)
             return rootFolder;
-        
+
         rootFolder = System.getProperty(EXTERNAL_PARSERS_ROOT);
-        if(rootFolder != null) return rootFolder;
-        
+        if (rootFolder != null)
+            return rootFolder;
+
         URL url = ExternalParser.class.getProtectionDomain().getCodeSource().getLocation();
         try {
             rootFolder = new File(url.toURI()).getParentFile().getParentFile().getAbsolutePath();
-            
+
         } catch (URISyntaxException e) {
             e.printStackTrace();
             rootFolder = "";
@@ -251,9 +243,7 @@ public class ExternalParser extends AbstractParser {
         return rootFolder;
     }
 
-    private void parse(
-            TikaInputStream stream, XHTMLContentHandler xhtml,
-            Metadata metadata, TemporaryResources tmp)
+    private void parse(TikaInputStream stream, XHTMLContentHandler xhtml, Metadata metadata, TemporaryResources tmp)
             throws IOException, SAXException, TikaException {
         boolean inputToStdIn = true;
         boolean outputFromStdOut = true;
@@ -280,9 +270,9 @@ public class ExternalParser extends AbstractParser {
                 outputFile.delete();
             }
         }
-        if(SystemUtils.IS_OS_WINDOWS && toolPath != null) {
+        if (SystemUtils.IS_OS_WINDOWS && toolPath != null) {
             String fullPath = getRootFolder() + "/" + toolPath;
-            cmd[0] = fullPath + cmd[0]; 
+            cmd[0] = fullPath + cmd[0];
         }
         // Execute
         Process process = null;
@@ -295,72 +285,73 @@ public class ExternalParser extends AbstractParser {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         try {
             if (inputToStdIn) {
                 sendInput(process, stream);
             } else {
                 process.getOutputStream().close();
             }
-            
+
             InputStream out = process.getInputStream();
             InputStream err = process.getErrorStream();
 
             if (hasPatterns) {
-                //some tools output info to stderr (eg ffmpeg)
+                // some tools output info to stderr (eg ffmpeg)
                 Thread t1 = extractMetadataInBackground(err, metadata);
-                
+
                 if (outputFromStdOut) {
-                    Thread t  = extractOutputInBackground(out, outputFile);
+                    Thread t = extractOutputInBackground(out, outputFile);
                     t.join();
                 } else {
                     ignoreStream(out);
                 }
                 t1.join();
-                
+
             } else {
                 ignoreStream(err);
 
                 if (outputFromStdOut) {
-                    Thread t  = extractOutputInBackground(out, outputFile);
+                    Thread t = extractOutputInBackground(out, outputFile);
                     t.join();
                 } else {
                     ignoreStream(out);
                 }
             }
-            
+
             process.waitFor();
-            
-            try(InputStream is = new FileInputStream(outputFile)){
+
+            try (InputStream is = new FileInputStream(outputFile)) {
                 if (hasPatterns) {
                     extractMetadata(is, metadata);
-                }else {
+                } else {
                     extractOutput(is, xhtml);
                 }
             }
-            
+
         } catch (InterruptedException e) {
-            LOGGER.warn(parserName + " interrupted while processing " + metadata.get(Metadata.RESOURCE_NAME_KEY)
-            + " (" + metadata.get(Metadata.CONTENT_LENGTH) + " bytes)");
-            
-            if(process != null)
+            LOGGER.warn(parserName + " interrupted while processing " + metadata.get(Metadata.RESOURCE_NAME_KEY) + " ("
+                    + metadata.get(Metadata.CONTENT_LENGTH) + " bytes)");
+
+            if (process != null)
                 process.destroyForcibly();
-            
+
             throw new TikaException(this.getParserName() + " interrupted.", e);
-            
-        }finally {
+
+        } finally {
             IOUtil.closeQuietly(tmp);
         }
 
     }
-    
+
     private Thread extractOutputInBackground(final InputStream stream, final File outFile) {
         Thread t = new Thread() {
             public void run() {
                 try {
                     Files.copy(stream, outFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    
-                } catch (IOException e) {}
+
+                } catch (IOException e) {
+                }
             }
         };
         t.start();
@@ -368,19 +359,23 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
-     * Starts a thread that extracts the contents of the standard output
-     * stream of the given process to the given XHTML content handler.
-     * The standard output stream is closed once fully processed.
+     * Starts a thread that extracts the contents of the standard output stream of
+     * the given process to the given XHTML content handler. The standard output
+     * stream is closed once fully processed.
      *
-     * @param process process
-     * @param xhtml   XHTML content handler
-     * @throws SAXException if the XHTML SAX events could not be handled
-     * @throws IOException  if an input error occurred
-     * @throws TikaException 
+     * @param process
+     *            process
+     * @param xhtml
+     *            XHTML content handler
+     * @throws SAXException
+     *             if the XHTML SAX events could not be handled
+     * @throws IOException
+     *             if an input error occurred
+     * @throws TikaException
      */
     private void extractOutput(InputStream stream, XHTMLContentHandler xhtml)
             throws SAXException, IOException, TikaException {
-        if(outputHtml) {
+        if (outputHtml) {
             ParseContext context = new ParseContext();
             context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
             htmlParser.parse(stream, xhtml, new Metadata(), context);
@@ -393,9 +388,9 @@ public class ExternalParser extends AbstractParser {
             int line = 1;
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
                 int prev = 0;
-                for(int i = 0; i < n; i++) {
-                    if(buffer[i] == '\n') {
-                        if(line++ > linesToIgnore) {
+                for (int i = 0; i < n; i++) {
+                    if (buffer[i] == '\n') {
+                        if (line++ > linesToIgnore) {
                             xhtml.characters(buffer, prev, i - prev);
                             xhtml.startElement("br");
                             xhtml.endElement("br");
@@ -403,7 +398,7 @@ public class ExternalParser extends AbstractParser {
                         prev = i + 1;
                     }
                 }
-                if(line > linesToIgnore) {
+                if (line > linesToIgnore) {
                     xhtml.characters(buffer, prev, n - prev);
                 }
             }
@@ -413,14 +408,15 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
-     * Starts a thread that sends the contents of the given input stream
-     * to the standard input stream of the given process. Potential
-     * exceptions are ignored, and the standard input stream is closed
-     * once fully processed. Note that the given input stream is <em>not</em>
-     * closed by this method.
+     * Starts a thread that sends the contents of the given input stream to the
+     * standard input stream of the given process. Potential exceptions are ignored,
+     * and the standard input stream is closed once fully processed. Note that the
+     * given input stream is <em>not</em> closed by this method.
      *
-     * @param process process
-     * @param stream  input stream
+     * @param process
+     *            process
+     * @param stream
+     *            input stream
      */
     private void sendInput(final Process process, final InputStream stream) {
         Thread t = new Thread() {
@@ -435,26 +431,29 @@ public class ExternalParser extends AbstractParser {
         t.start();
     }
 
-
     /**
-     * Starts a thread that reads and discards the contents of the
-     * standard stream of the given process. Potential exceptions
-     * are ignored, and the stream is closed once fully processed.
-     * Note: calling this starts a new thread and blocks the current(caller) thread until the new thread dies
+     * Starts a thread that reads and discards the contents of the standard stream
+     * of the given process. Potential exceptions are ignored, and the stream is
+     * closed once fully processed. Note: calling this starts a new thread and
+     * blocks the current(caller) thread until the new thread dies
      *
-     * @param stream stream to be ignored
+     * @param stream
+     *            stream to be ignored
      */
     private static void ignoreStream(final InputStream stream) {
         ignoreStream(stream, false);
     }
 
     /**
-     * Starts a thread that reads and discards the contents of the
-     * standard stream of the given process. Potential exceptions
-     * are ignored, and the stream is closed once fully processed.
+     * Starts a thread that reads and discards the contents of the standard stream
+     * of the given process. Potential exceptions are ignored, and the stream is
+     * closed once fully processed.
      *
-     * @param stream       stream to sent to black hole (a k a null)
-     * @param waitForDeath when {@code true} the caller thread will be blocked till the death of new thread.
+     * @param stream
+     *            stream to sent to black hole (a k a null)
+     * @param waitForDeath
+     *            when {@code true} the caller thread will be blocked till the death
+     *            of new thread.
      * @return The thread that is created and started
      */
     private static Thread ignoreStream(final InputStream stream, boolean waitForDeath) {
@@ -477,9 +476,9 @@ public class ExternalParser extends AbstractParser {
         }
         return t;
     }
-    
+
     private void extractMetadata(final InputStream stream, final Metadata metadata) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset))){
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, charset))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 boolean consumed = false;
@@ -487,8 +486,7 @@ public class ExternalParser extends AbstractParser {
                     Matcher m = p.matcher(line);
                     if (m.find()) {
                         consumed = true;
-                        if (metadataPatterns.get(p) != null &&
-                                !metadataPatterns.get(p).equals("")) {
+                        if (metadataPatterns.get(p) != null && !metadataPatterns.get(p).equals("")) {
                             metadata.add(metadataPatterns.get(p), m.group(1));
                         } else {
                             metadata.add(m.group(1), m.group(2));
@@ -517,20 +515,21 @@ public class ExternalParser extends AbstractParser {
     }
 
     /**
-     * Checks to see if the command can be run. Typically used with
-     * something like "myapp --version" to check to see if "myapp"
-     * is installed and on the path.
+     * Checks to see if the command can be run. Typically used with something like
+     * "myapp --version" to check to see if "myapp" is installed and on the path.
      *
-     * @param checkCmd   The check command to run
-     * @param errorValue What is considered an error value?
+     * @param checkCmd
+     *            The check command to run
+     * @param errorValue
+     *            What is considered an error value?
      */
     public static boolean check(String checkCmd, int... errorValue) {
-        return check(new String[]{checkCmd}, errorValue);
+        return check(new String[] { checkCmd }, errorValue);
     }
 
     public static boolean check(String[] checkCmd, int... errorValue) {
         if (errorValue.length == 0) {
-            errorValue = new int[]{127};
+            errorValue = new int[] { 127 };
         }
 
         try {
@@ -541,7 +540,8 @@ public class ExternalParser extends AbstractParser {
             stdOutSuckerThread.join();
             int result = process.waitFor();
             for (int err : errorValue) {
-                if (result == err) return false;
+                if (result == err)
+                    return false;
             }
             return true;
         } catch (IOException e) {
@@ -554,14 +554,13 @@ public class ExternalParser extends AbstractParser {
             // External process execution is banned by the security manager
             return false;
         } catch (Error err) {
-            if (err.getMessage() != null &&
-                    (err.getMessage().contains("posix_spawn") ||
-                            err.getMessage().contains("UNIXProcess"))) {
-                //"Error forking command due to JVM locale bug
-                //(see TIKA-1526 and SOLR-6387)"
+            if (err.getMessage() != null
+                    && (err.getMessage().contains("posix_spawn") || err.getMessage().contains("UNIXProcess"))) {
+                // "Error forking command due to JVM locale bug
+                // (see TIKA-1526 and SOLR-6387)"
                 return false;
             }
-            //throw if a different kind of error
+            // throw if a different kind of error
             throw err;
         }
     }

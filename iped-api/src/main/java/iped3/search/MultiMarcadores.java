@@ -22,66 +22,66 @@ import java.util.TreeSet;
  */
 public interface MultiMarcadores extends Serializable {
 
-  void addLabel(List<ItemId> ids, String labelName);
+    void addLabel(List<ItemId> ids, String labelName);
 
-  void addToTypedWords(String texto);
+    void addToTypedWords(String texto);
 
-  void changeLabel(String oldLabel, String newLabel);
+    void changeLabel(String oldLabel, String newLabel);
 
-  void clearSelected();
+    void clearSelected();
 
-  void clearTypedWords();
+    void clearTypedWords();
 
-  void delLabel(String labelName);
+    void delLabel(String labelName);
 
-  MultiSearchResult filtrarMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception;
+    MultiSearchResult filtrarMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception;
 
-  MultiSearchResult filtrarSelecionados(MultiSearchResult result) throws Exception;
+    MultiSearchResult filtrarSelecionados(MultiSearchResult result) throws Exception;
 
-  MultiSearchResult filtrarSemEComMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception;
+    MultiSearchResult filtrarSemEComMarcadores(MultiSearchResult result, Set<String> labelNames) throws Exception;
 
-  MultiSearchResult filtrarSemMarcadores(MultiSearchResult result);
+    MultiSearchResult filtrarSemMarcadores(MultiSearchResult result);
 
-  TreeSet<String> getLabelMap();
+    TreeSet<String> getLabelMap();
 
-  List<String> getLabelList(ItemId item);
+    List<String> getLabelList(ItemId item);
 
-  Collection<Marcadores> getSingleBookmarks();
+    Collection<Marcadores> getSingleBookmarks();
 
-  int getTotalSelected();
+    int getTotalSelected();
 
-  LinkedHashSet<String> getTypedWords();
+    LinkedHashSet<String> getTypedWords();
 
-  boolean hasLabel(ItemId item);
+    boolean hasLabel(ItemId item);
 
-  boolean hasLabel(ItemId item, Set<String> labelNames);
+    boolean hasLabel(ItemId item, Set<String> labelNames);
 
-  boolean hasLabel(ItemId item, String labelName);
+    boolean hasLabel(ItemId item, String labelName);
 
-  boolean isSelected(ItemId item);
+    boolean isSelected(ItemId item);
 
-  void loadState();
+    void loadState();
 
-  void loadState(File file) throws ClassNotFoundException, IOException;
+    void loadState(File file) throws ClassNotFoundException, IOException;
 
-  void newLabel(String labelName);
+    void newLabel(String labelName);
 
-  void removeLabel(List<ItemId> ids, String labelName);
+    void removeLabel(List<ItemId> ids, String labelName);
 
-  void saveState();
+    void saveState();
 
-  void saveState(File file) throws IOException;
+    void saveState(File file) throws IOException;
 
-  void selectAll();
+    void selectAll();
 
-  void setSelected(boolean value, ItemId item, IPEDSource ipedCase);
-  
-  public String getLabelComment(String labelName);
+    void setSelected(boolean value, ItemId item, IPEDSource ipedCase);
 
-  void setLabelComment(String texto, String comment);
+    public String getLabelComment(String labelName);
 
-  boolean isInReport(String label);
+    void setLabelComment(String texto, String comment);
 
-  void setInReport(String label, boolean checked);
-  
+    boolean isInReport(String label);
+
+    void setInReport(String label, boolean checked);
+
 }

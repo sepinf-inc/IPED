@@ -49,251 +49,254 @@ import iped3.search.LuceneSearchResult;
 
 public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Object> {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
-	
-	private static SoftReference<MultiSearchResultImpl> allItemsCache;
-	private static IPEDSourceImpl ipedCase;
-	
-	volatile int numFilters = 0;
-	ProgressDialog progressDialog;
-	
-	String queryText;
-	Query query;
-	IPEDSearcherImpl searcher;
+    private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 
-	public PesquisarIndice(String queryText) {
-		this.queryText = queryText;
-		searcher = new IPEDSearcherImpl(App.get().appCase, queryText);
-	}
-	
-	public PesquisarIndice(Query query) {
-		this.query = query;
-		searcher = new IPEDSearcherImpl(App.get().appCase, query);
-	}
-	
-	public void applyUIQueryFilters(){
-		try {
-			searcher.setQuery(getQueryWithUIFilter());
-			
-		} catch (ParseException | QueryNodeException e) {
-			JOptionPane.showMessageDialog(App.get(), Messages.getString("UISearcher.Error.Msg") + e.getMessage(), Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$ //$NON-NLS-2$
-			//e.printStackTrace();
-		}
-	}
-	
-	public LuceneSearchResult pesquisar() throws Exception {
-		return searcher.luceneSearch();
-	}
+    private static SoftReference<MultiSearchResultImpl> allItemsCache;
+    private static IPEDSourceImpl ipedCase;
 
-	private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
-		
-		Query result;
-		numFilters = 0;
-		if (queryText != null){
-			result = new QueryBuilderImpl(App.get().appCase).getQuery(queryText);
-			if(!queryText.trim().isEmpty())
-				numFilters++;
-		}else{
-			result = query;
-			if(!(query instanceof MatchAllDocsQuery))
-				numFilters++;
-		}
-		
-		if(App.get().filtro.getSelectedIndex() > 1){
-			String filter = App.get().filtro.getSelectedItem().toString();
-			filter =  App.get().filterManager.getFilterExpression(filter);
-			BooleanQuery boolQuery = new BooleanQuery();
-			boolQuery.add(new QueryBuilderImpl(App.get().appCase).getQuery(filter), Occur.MUST);
-			boolQuery.add(result, Occur.MUST);
-			result = boolQuery;
-			numFilters++;
-		}
-		
-		if(App.get().categoryListener.query != null){
-			BooleanQuery boolQuery = new BooleanQuery();
-			boolQuery.add(App.get().categoryListener.query, Occur.MUST);
-			boolQuery.add(result, Occur.MUST);
-			result = boolQuery;
-			numFilters++;
-		}
-		
-		if (!App.get().appCase.isFTKReport()) {
-		      Query treeQuery = App.get().treeListener.treeQuery;
-		      if (App.get().recursiveTreeList.isSelected())
-		    	  treeQuery = App.get().treeListener.recursiveTreeQuery;
-		
-		      if (treeQuery != null) {
-		        BooleanQuery boolQuery = new BooleanQuery();
-		        boolQuery.add(treeQuery, Occur.MUST);
-		        boolQuery.add(result, Occur.MUST);
-		        result = boolQuery;
-		        numFilters++;
-		      }
-		}  
-		
-		return result;
-  }
+    volatile int numFilters = 0;
+    ProgressDialog progressDialog;
 
+    String queryText;
+    Query query;
+    IPEDSearcherImpl searcher;
 
-	@Override
-	public MultiSearchResultImpl doInBackground() {
-		
-		synchronized(this.getClass()){
-			
-			if (this.isCancelled())
-				return null;
-			
-			MultiSearchResultImpl result = null;
-			try {
-				progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
-					
-				if(ipedCase == null || ipedCase != App.get().appCase){
-					allItemsCache = null;
-					ipedCase = App.get().appCase;
-				}
-				
-				Query q = searcher.getQuery();
-				LOGGER.info("Searching for query " + q.toString()); //$NON-NLS-1$
-				
-				if(q instanceof MatchAllDocsQuery && allItemsCache != null)
-					result = allItemsCache.get();
-				
-				if(result == null){
-					result = searcher.multiSearch();
-					if(q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
-						allItemsCache = new SoftReference(result.clone());
-				}
+    public PesquisarIndice(String queryText) {
+        this.queryText = queryText;
+        searcher = new IPEDSearcherImpl(App.get().appCase, queryText);
+    }
 
-				String filtro = ""; //$NON-NLS-1$
-				if(App.get().filtro.getSelectedItem() != null)
-					filtro = App.get().filtro.getSelectedItem().toString();
-				
-				if (filtro.equals(App.FILTRO_SELECTED)){
-					result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
-					numFilters++;
-					LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
-				}
-				
-				HashSet<String> bookmarkSelection = (HashSet<String>)App.get().bookmarksListener.selection.clone();
-				if(!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)){
-					numFilters++;
-					StringBuilder bookmarks = new StringBuilder();
-					for(String bookmark : bookmarkSelection)
-						bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
-					LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
-					
-					if(bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)){
-						if(bookmarkSelection.size() == 1)
-							result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSemMarcadores(result);
-						else{
-							bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-							result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSemEComMarcadores(result, bookmarkSelection);
-						}
-					}else
-						result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarMarcadores(result, bookmarkSelection);
-					
-				}
-				
-				Set<ItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
-				if(itemsWithValuesSelected != null){
-				    numFilters++;
-				    ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
-	                ArrayList<Float> scores = new ArrayList<Float>();
-	                int i = 0;
-	                for(ItemId item : result.getIterator()){
-	                    if(itemsWithValuesSelected.contains(item)){
-	                        filteredItems.add(item);
-	                        scores.add(result.getScore(i));
-	                    }
-	                    i++;
-	                }
-	                result = new MultiSearchResultImpl(filteredItems.toArray(new ItemIdImpl[0]),
-	                        ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
-				}
-				
-				if(App.get().filterDuplicates.isSelected()) {
-				    DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
-	                result = duplicateFilter.filter(result);
-	                numFilters++;
-				}
-				
-				saveHighlightTerms();
+    public PesquisarIndice(Query query) {
+        this.query = query;
+        searcher = new IPEDSearcherImpl(App.get().appCase, query);
+    }
 
-			} catch (Throwable e) {
-				e.printStackTrace();
-				return new MultiSearchResultImpl(new ItemIdImpl[0], new float[0]);
-				
-			}
-			
-			return result;
-		}
-		
-	}
-	
-	private void saveHighlightTerms() throws ParseException, QueryNodeException{
-	    Set<String> highlightTerms = new QueryBuilderImpl(App.get().appCase).getQueryStrings(queryText);
+    public void applyUIQueryFilters() {
+        try {
+            searcher.setQuery(getQueryWithUIFilter());
+
+        } catch (ParseException | QueryNodeException e) {
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("UISearcher.Error.Msg") + e.getMessage(), //$NON-NLS-1$
+                    Messages.getString("UISearcher.Error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            // e.printStackTrace();
+        }
+    }
+
+    public LuceneSearchResult pesquisar() throws Exception {
+        return searcher.luceneSearch();
+    }
+
+    private Query getQueryWithUIFilter() throws ParseException, QueryNodeException {
+
+        Query result;
+        numFilters = 0;
+        if (queryText != null) {
+            result = new QueryBuilderImpl(App.get().appCase).getQuery(queryText);
+            if (!queryText.trim().isEmpty())
+                numFilters++;
+        } else {
+            result = query;
+            if (!(query instanceof MatchAllDocsQuery))
+                numFilters++;
+        }
+
+        if (App.get().filtro.getSelectedIndex() > 1) {
+            String filter = App.get().filtro.getSelectedItem().toString();
+            filter = App.get().filterManager.getFilterExpression(filter);
+            BooleanQuery boolQuery = new BooleanQuery();
+            boolQuery.add(new QueryBuilderImpl(App.get().appCase).getQuery(filter), Occur.MUST);
+            boolQuery.add(result, Occur.MUST);
+            result = boolQuery;
+            numFilters++;
+        }
+
+        if (App.get().categoryListener.query != null) {
+            BooleanQuery boolQuery = new BooleanQuery();
+            boolQuery.add(App.get().categoryListener.query, Occur.MUST);
+            boolQuery.add(result, Occur.MUST);
+            result = boolQuery;
+            numFilters++;
+        }
+
+        if (!App.get().appCase.isFTKReport()) {
+            Query treeQuery = App.get().treeListener.treeQuery;
+            if (App.get().recursiveTreeList.isSelected())
+                treeQuery = App.get().treeListener.recursiveTreeQuery;
+
+            if (treeQuery != null) {
+                BooleanQuery boolQuery = new BooleanQuery();
+                boolQuery.add(treeQuery, Occur.MUST);
+                boolQuery.add(result, Occur.MUST);
+                result = boolQuery;
+                numFilters++;
+            }
+        }
+
+        return result;
+    }
+
+    @Override
+    public MultiSearchResultImpl doInBackground() {
+
+        synchronized (this.getClass()) {
+
+            if (this.isCancelled())
+                return null;
+
+            MultiSearchResultImpl result = null;
+            try {
+                progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
+
+                if (ipedCase == null || ipedCase != App.get().appCase) {
+                    allItemsCache = null;
+                    ipedCase = App.get().appCase;
+                }
+
+                Query q = searcher.getQuery();
+                LOGGER.info("Searching for query " + q.toString()); //$NON-NLS-1$
+
+                if (q instanceof MatchAllDocsQuery && allItemsCache != null)
+                    result = allItemsCache.get();
+
+                if (result == null) {
+                    result = searcher.multiSearch();
+                    if (q instanceof MatchAllDocsQuery && (allItemsCache == null || allItemsCache.get() == null))
+                        allItemsCache = new SoftReference(result.clone());
+                }
+
+                String filtro = ""; //$NON-NLS-1$
+                if (App.get().filtro.getSelectedItem() != null)
+                    filtro = App.get().filtro.getSelectedItem().toString();
+
+                if (filtro.equals(App.FILTRO_SELECTED)) {
+                    result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
+                    numFilters++;
+                    LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
+                }
+
+                HashSet<String> bookmarkSelection = (HashSet<String>) App.get().bookmarksListener.selection.clone();
+                if (!bookmarkSelection.isEmpty() && !bookmarkSelection.contains(BookmarksTreeModel.ROOT)) {
+                    numFilters++;
+                    StringBuilder bookmarks = new StringBuilder();
+                    for (String bookmark : bookmarkSelection)
+                        bookmarks.append("\"" + bookmark + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+                    LOGGER.info("Filtering for bookmarks " + bookmarks.toString()); //$NON-NLS-1$
+
+                    if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
+                        if (bookmarkSelection.size() == 1)
+                            result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                                    .filtrarSemMarcadores(result);
+                        else {
+                            bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
+                            result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                                    .filtrarSemEComMarcadores(result, bookmarkSelection);
+                        }
+                    } else
+                        result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                                .filtrarMarcadores(result, bookmarkSelection);
+
+                }
+
+                Set<ItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
+                if (itemsWithValuesSelected != null) {
+                    numFilters++;
+                    ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
+                    ArrayList<Float> scores = new ArrayList<Float>();
+                    int i = 0;
+                    for (ItemId item : result.getIterator()) {
+                        if (itemsWithValuesSelected.contains(item)) {
+                            filteredItems.add(item);
+                            scores.add(result.getScore(i));
+                        }
+                        i++;
+                    }
+                    result = new MultiSearchResultImpl(filteredItems.toArray(new ItemIdImpl[0]),
+                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+
+                if (App.get().filterDuplicates.isSelected()) {
+                    DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
+                    result = duplicateFilter.filter(result);
+                    numFilters++;
+                }
+
+                saveHighlightTerms();
+
+            } catch (Throwable e) {
+                e.printStackTrace();
+                return new MultiSearchResultImpl(new ItemIdImpl[0], new float[0]);
+
+            }
+
+            return result;
+        }
+
+    }
+
+    private void saveHighlightTerms() throws ParseException, QueryNodeException {
+        Set<String> highlightTerms = new QueryBuilderImpl(App.get().appCase).getQueryStrings(queryText);
         highlightTerms.addAll(App.get().metadataPanel.getHighlightTerms());
-        //for(String str : highlightTerms)
-        //    System.out.println("highlightTerm: " + str);
+        // for(String str : highlightTerms)
+        // System.out.println("highlightTerm: " + str);
         App.get().getSearchParams().highlightTerms = highlightTerms;
-        
+
         Query highlightQuery = App.get().metadataPanel.getHighlightQuery();
-        if(highlightQuery != null){
+        if (highlightQuery != null) {
             BooleanQuery boolQuery = new BooleanQuery();
             boolQuery.add(highlightQuery, Occur.SHOULD);
             boolQuery.add(searcher.getQuery(), Occur.SHOULD);
             highlightQuery = boolQuery;
-        }else
+        } else
             highlightQuery = searcher.getQuery();
-        
+
         App.get().setQuery(highlightQuery);
-	}
+    }
 
-	@Override
-	public void done() {
-		
-		if(numFilters > 1)
-			App.get().multiFilterAlert.setVisible(true);
-		else
-			App.get().multiFilterAlert.setVisible(false);
-		
-		if (!this.isCancelled())
-			try {
-				App.get().ipedResult = this.get();
-				
-				App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
-				App.get().resultsTable.getTableHeader().repaint();
-				if(App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null){
-					App.get().resultsTable.getRowSorter().allRowsChanged();
-					App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
-				}else{
-					App.get().resultsModel.fireTableDataChanged();
-					App.get().galleryModel.fireTableStructureChanged();
-				}
-				ColumnsManagerImpl.getInstance().updateDinamicCols();
-				new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
-					
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		if(progressDialog != null)
-			progressDialog.close();
+    @Override
+    public void done() {
 
-	}
+        if (numFilters > 1)
+            App.get().multiFilterAlert.setVisible(true);
+        else
+            App.get().multiFilterAlert.setVisible(false);
 
-  @Override
-	public boolean doCancel(boolean mayInterruptIfRunning) {
-		
-		LOGGER.error(Messages.getString("UISearcher.Canceled")); //$NON-NLS-1$
-		searcher.cancel();
-		try {
-			App.get().appCase.reopen();
+        if (!this.isCancelled())
+            try {
+                App.get().ipedResult = this.get();
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		return cancel(mayInterruptIfRunning);
-	}
+                App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
+                App.get().resultsTable.getTableHeader().repaint();
+                if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
+                    App.get().resultsTable.getRowSorter().allRowsChanged();
+                    App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+                } else {
+                    App.get().resultsModel.fireTableDataChanged();
+                    App.get().galleryModel.fireTableStructureChanged();
+                }
+                ColumnsManagerImpl.getInstance().updateDinamicCols();
+                new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        if (progressDialog != null)
+            progressDialog.close();
+
+    }
+
+    @Override
+    public boolean doCancel(boolean mayInterruptIfRunning) {
+
+        LOGGER.error(Messages.getString("UISearcher.Canceled")); //$NON-NLS-1$
+        searcher.cancel();
+        try {
+            App.get().appCase.reopen();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return cancel(mayInterruptIfRunning);
+    }
 
 }

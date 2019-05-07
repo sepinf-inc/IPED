@@ -11,12 +11,12 @@ package macee.descriptor;
  */
 public interface ScriptDescriptor extends Descriptor {
 
-  String getEvalString();
+    String getEvalString();
 
-  String getLanguage();
+    String getLanguage();
 
-  void setEvalString(String evalString);
+    void setEvalString(String evalString);
 
-  void setLanguage(String language);
-  
+    void setLanguage(String language);
+
 }

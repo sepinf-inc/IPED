@@ -8,10 +8,10 @@ import iped3.io.SeekableInputStream;
 
 public interface StreamSourceOldDelete {
 
-	public SeekableInputStream getStream() throws IOException;
-	
-	public SeekableByteChannel getSeekableByteChannel() throws IOException;
-	
-	public File getFile();
+    public SeekableInputStream getStream() throws IOException;
+
+    public SeekableByteChannel getSeekableByteChannel() throws IOException;
+
+    public File getFile();
 
 }

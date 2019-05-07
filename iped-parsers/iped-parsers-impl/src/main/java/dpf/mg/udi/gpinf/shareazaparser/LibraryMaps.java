@@ -26,47 +26,47 @@ import java.util.List;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 class LibraryMaps extends ShareazaEntity {
-	
-	private final List<LibraryFile> libraryFiles = new ArrayList<>();
-	private long nextIndex;
-	private long indexMapCount;
-	private long nameMapCount;
-	private long pathMapCount;
-	
-	public LibraryMaps() {
-		super("LIBRARY MAPS"); //$NON-NLS-1$
-	}
 
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		nextIndex = ar.readUInt();
-		if (version >= 28) {
-			indexMapCount = ar.readUInt();
-			nameMapCount = ar.readUInt();
-			pathMapCount = ar.readUInt();
-		}
-	}
-	
-	public void readExtra(MFCParser ar, int version) throws IOException {
-		if (version >= 18) {
-			int n = ar.readCount();
-			for (int i = 0; i < n; i++) {
-				LibraryFile file = new LibraryFile(null);
-				file.read(ar, version);
-				libraryFiles.add(file);
-			}
-		}
-	}
+    private final List<LibraryFile> libraryFiles = new ArrayList<>();
+    private long nextIndex;
+    private long indexMapCount;
+    private long nameMapCount;
+    private long pathMapCount;
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Next Index: " + nextIndex); //$NON-NLS-1$
-		f.out("Index Map Count: " + indexMapCount); //$NON-NLS-1$
-		f.out("Name Map Count: " + nameMapCount); //$NON-NLS-1$
-		f.out("Path Map Count: " + pathMapCount); //$NON-NLS-1$
-		for (LibraryFile file : libraryFiles) {
-			file.write(f);
-		}
-	}
+    public LibraryMaps() {
+        super("LIBRARY MAPS"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        nextIndex = ar.readUInt();
+        if (version >= 28) {
+            indexMapCount = ar.readUInt();
+            nameMapCount = ar.readUInt();
+            pathMapCount = ar.readUInt();
+        }
+    }
+
+    public void readExtra(MFCParser ar, int version) throws IOException {
+        if (version >= 18) {
+            int n = ar.readCount();
+            for (int i = 0; i < n; i++) {
+                LibraryFile file = new LibraryFile(null);
+                file.read(ar, version);
+                libraryFiles.add(file);
+            }
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Next Index: " + nextIndex); //$NON-NLS-1$
+        f.out("Index Map Count: " + indexMapCount); //$NON-NLS-1$
+        f.out("Name Map Count: " + nameMapCount); //$NON-NLS-1$
+        f.out("Path Map Count: " + pathMapCount); //$NON-NLS-1$
+        for (LibraryFile file : libraryFiles) {
+            file.write(f);
+        }
+    }
 
 }

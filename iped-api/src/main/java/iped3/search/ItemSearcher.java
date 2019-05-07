@@ -14,10 +14,10 @@ import java.util.List;
  *
  * @author Nassif
  */
-public interface ItemSearcher extends Closeable{
+public interface ItemSearcher extends Closeable {
 
-  List<ItemBase> search(String luceneQuery);
-  
-  String escapeQuery(String string);
-  
+    List<ItemBase> search(String luceneQuery);
+
+    String escapeQuery(String string);
+
 }

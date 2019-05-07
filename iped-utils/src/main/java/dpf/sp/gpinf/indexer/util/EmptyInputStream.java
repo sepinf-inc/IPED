@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import iped3.io.SeekableInputStream;
 
-public class EmptyInputStream extends SeekableInputStream{
+public class EmptyInputStream extends SeekableInputStream {
 
     @Override
     public int read(byte b[]) throws IOException {
@@ -15,23 +15,23 @@ public class EmptyInputStream extends SeekableInputStream{
     public int read(byte b[], int off, int len) throws IOException {
         return -1;
     }
-    
+
     @Override
-    public int read() throws IOException{
+    public int read() throws IOException {
         return -1;
     }
-    
+
     @Override
-    public int available() throws IOException{
+    public int available() throws IOException {
         return 0;
     }
-    
+
     @Override
-    public long skip(long n) throws IOException{
+    public long skip(long n) throws IOException {
         return 0;
-        
+
     }
-    
+
     @Override
     public void seek(long pos) throws IOException {
     }

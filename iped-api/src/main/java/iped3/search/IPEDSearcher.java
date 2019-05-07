@@ -13,24 +13,24 @@ import org.apache.lucene.search.Query;
  */
 public interface IPEDSearcher {
 
-  int MAX_SIZE_TO_SCORE = 1000000;
+    int MAX_SIZE_TO_SCORE = 1000000;
 
-  void cancel();
+    void cancel();
 
-  LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception;
+    LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception;
 
-  Query getQuery();
+    Query getQuery();
 
-  LuceneSearchResult luceneSearch() throws Exception;
+    LuceneSearchResult luceneSearch() throws Exception;
 
-  MultiSearchResult multiSearch() throws Exception;
+    MultiSearchResult multiSearch() throws Exception;
 
-  SearchResult search() throws Exception;
+    SearchResult search() throws Exception;
 
-  LuceneSearchResult searchAll() throws Exception;
+    LuceneSearchResult searchAll() throws Exception;
 
-  void setQuery(Query query);
+    void setQuery(Query query);
 
-  void setTreeQuery(boolean treeQuery);
-  
+    void setTreeQuery(boolean treeQuery);
+
 }

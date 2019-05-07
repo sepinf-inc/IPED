@@ -7,7 +7,9 @@ import java.lang.annotation.*;
  *
  * @author WERNECK
  */
-@Documented @Retention(RetentionPolicy.RUNTIME) @Target(ElementType.METHOD)
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
 public @interface Annotator {
 
     static final ComponentType TYPE = ComponentType.ANNOTATOR;

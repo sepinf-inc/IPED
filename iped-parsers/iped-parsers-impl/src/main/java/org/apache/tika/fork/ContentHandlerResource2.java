@@ -32,8 +32,7 @@ class ContentHandlerResource2 implements ForkResource {
         this.handler = handler;
     }
 
-    public Throwable process(DataInputStream input, DataOutputStream output)
-            throws IOException {
+    public Throwable process(DataInputStream input, DataOutputStream output) throws IOException {
         try {
             internalProcess(input);
             return null;
@@ -42,8 +41,7 @@ class ContentHandlerResource2 implements ForkResource {
         }
     }
 
-    private void internalProcess(DataInputStream input)
-            throws IOException, SAXException {
+    private void internalProcess(DataInputStream input) throws IOException, SAXException {
         int type = input.readUnsignedByte();
         if (type == ContentHandlerProxy.START_DOCUMENT) {
             handler.startDocument();
@@ -62,9 +60,7 @@ class ContentHandlerResource2 implements ForkResource {
             if (n >= 0) {
                 atts = new AttributesImpl();
                 for (int i = 0; i < n; i++) {
-                    atts.addAttribute(
-                            readString(input), readString(input),
-                            readString(input), readString(input),
+                    atts.addAttribute(readString(input), readString(input), readString(input), readString(input),
                             readString(input));
                 }
             }
@@ -89,33 +85,31 @@ class ContentHandlerResource2 implements ForkResource {
 
     private String readString(DataInputStream input) throws IOException {
         if (input.readBoolean()) {
-            //return input.readUTF();
+            // return input.readUTF();
             return readStringUTF(input);
         } else {
             return null;
         }
     }
-    
+
     private String readStringUTF(DataInputStream input) throws IOException {
         int frags = input.readInt();
-        if(frags == 0)
+        if (frags == 0)
             return "";
-        if(frags == 1)
+        if (frags == 1)
             return input.readUTF();
-        StringBuilder sb = new  StringBuilder();
-        for(int i = 0; i < frags; i++) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < frags; i++) {
             sb.append(input.readUTF());
         }
         return sb.toString();
     }
 
     private char[] readCharacters(DataInputStream input) throws IOException {
-        /*int n = input.readInt();
-        char[] ch = new char[n];
-        for (int i = 0; i < n; i++) {
-            ch[i] = input.readChar();
-        }
-        return ch;*/
+        /*
+         * int n = input.readInt(); char[] ch = new char[n]; for (int i = 0; i < n; i++)
+         * { ch[i] = input.readChar(); } return ch;
+         */
         return readStringUTF(input).toCharArray();
     }
 

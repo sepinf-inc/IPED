@@ -16,7 +16,6 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  * limitations under the License.
  */
 
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -80,12 +79,12 @@ class JDBCTableReader {
     }
 
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
-        //lazy initialization
+        // lazy initialization
         if (results == null) {
-        	results = getTableData();
+            results = getTableData();
         }
-        if(Thread.currentThread().isInterrupted())
-        	throw new InterruptedIOException("Parsing interrupted"); //$NON-NLS-1$
+        if (Thread.currentThread().isInterrupted())
+            throw new InterruptedIOException("Parsing interrupted"); //$NON-NLS-1$
         try {
             if (results == null || !results.next()) {
                 return false;
@@ -102,15 +101,16 @@ class JDBCTableReader {
                 handler.endElement(XHTMLContentHandler.XHTML, "td", "td"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             handler.endElement(XHTMLContentHandler.XHTML, "tr", "tr"); //$NON-NLS-1$ //$NON-NLS-2$
-            
-        }catch(Exception e2){
-        	LOGGER.warn("Error reading sqlite row {} from table {}", rows, tableName); //$NON-NLS-1$
+
+        } catch (Exception e2) {
+            LOGGER.warn("Error reading sqlite row {} from table {}", rows, tableName); //$NON-NLS-1$
         }
         rows++;
         return true;
     }
 
-    private void handleCell(ResultSetMetaData rsmd, int i, ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
+    private void handleCell(ResultSetMetaData rsmd, int i, ContentHandler handler, ParseContext context)
+            throws SQLException, IOException, SAXException {
         switch (rsmd.getColumnType(i)) {
             case Types.BLOB:
                 handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
@@ -131,8 +131,8 @@ class JDBCTableReader {
                 handleInteger(rsmd, results, i, handler);
                 break;
             case Types.FLOAT:
-                //this is necessary to handle rounding issues in presentation
-                //Should we just use getString(i)?
+                // this is necessary to handle rounding issues in presentation
+                // Should we just use getString(i)?
                 addAllCharacters(Float.toString(results.getFloat(i)), handler);
                 break;
             case Types.DOUBLE:
@@ -146,23 +146,24 @@ class JDBCTableReader {
 
     public List<String> getHeaders() throws IOException {
         List<String> headers = new LinkedList<String>();
-        //lazy initialization
+        // lazy initialization
         if (results == null) {
-        	results = getTableData();
+            results = getTableData();
         }
-        if(results != null)
-        try {
-            ResultSetMetaData meta = results.getMetaData();
-            for (int i = 1; i <= meta.getColumnCount(); i++) {
-                headers.add(meta.getColumnName(i));
+        if (results != null)
+            try {
+                ResultSetMetaData meta = results.getMetaData();
+                for (int i = 1; i <= meta.getColumnCount(); i++) {
+                    headers.add(meta.getColumnName(i));
+                }
+            } catch (SQLException e) {
+                throw new IOExceptionWithCause(e);
             }
-        } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
-        }
         return headers;
     }
 
-    protected void handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler) throws SQLException, SAXException {
+    protected void handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler)
+            throws SQLException, SAXException {
         addAllCharacters(Integer.toString(rs.getInt(columnIndex)), handler);
     }
 
@@ -170,10 +171,8 @@ class JDBCTableReader {
         addAllCharacters(Boolean.toString(aBoolean), handler);
     }
 
-
-    protected void handleClob(String tableName, String columnName, int rowNum,
-                              ResultSet resultSet, int columnIndex,
-                              ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
+    protected void handleClob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
+            ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
         Clob clob = resultSet.getClob(columnIndex);
         boolean truncated = clob.length() > Integer.MAX_VALUE || clob.length() > maxClobLength;
 
@@ -187,118 +186,119 @@ class JDBCTableReader {
         m.set(Database.PREFIX + "IS_CLOB_TRUNCATED", Boolean.toString(truncated)); //$NON-NLS-1$
         m.set(Metadata.CONTENT_TYPE, "text/plain; charset=UTF-8"); //$NON-NLS-1$
         m.set(Metadata.CONTENT_LENGTH, Integer.toString(readSize));
-      //just in case something screwy is going on with the column name
-        String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + ".txt"));  //$NON-NLS-1$ //$NON-NLS-2$
+        // just in case something screwy is going on with the column name
+        String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + ".txt")); //$NON-NLS-1$ //$NON-NLS-2$
         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
         addAllCharacters(name, handler);
 
-        //is there a more efficient way to go from a Reader to an InputStream?
+        // is there a more efficient way to go from a Reader to an InputStream?
         String s = clob.getSubString(0, readSize);
-        //EmbeddedDocumentExtractor ex = AbstractDBParser.getEmbeddedDocumentExtractor(context);
+        // EmbeddedDocumentExtractor ex =
+        // AbstractDBParser.getEmbeddedDocumentExtractor(context);
         ex.parseEmbedded(new ByteArrayInputStream(s.getBytes("UTF-8")), handler, m, false); //$NON-NLS-1$
     }
 
     protected void handleBlob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
-                              ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
+            ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
         Blob blob = null;
         Metadata m = new Metadata();
-        /*m.set(Database.TABLE_NAME, tableName);
-        m.set(Database.COLUMN_NAME, columnName);
-        m.set(Database.PREFIX + "ROW_NUM", Integer.toString(rowNum));
-        m.set(Database.PREFIX + "IS_BLOB", "true");
-        */
+        /*
+         * m.set(Database.TABLE_NAME, tableName); m.set(Database.COLUMN_NAME,
+         * columnName); m.set(Database.PREFIX + "ROW_NUM", Integer.toString(rowNum));
+         * m.set(Database.PREFIX + "IS_BLOB", "true");
+         */
         TikaInputStream is = getInputStreamFromBlob(resultSet, columnIndex, blob, m);
-        if(is != null)
-        try {
-            /*Attributes attrs = new AttributesImpl();
-            ((AttributesImpl) attrs).addAttribute("", "type", "type", "CDATA", "blob");
-            ((AttributesImpl) attrs).addAttribute("", "column_name", "column_name", "CDATA", columnName);
-            ((AttributesImpl) attrs).addAttribute("", "row_number", "row_number", "CDATA", Integer.toString(rowNum));
-            handler.startElement("", "span", "span", attrs);
-            MediaType mediaType = getDetector().detect(is, new Metadata());
-            String extension = "";
+        if (is != null)
             try {
-                MimeType mimeType = getMimeTypes().forName(mediaType.toString());
-                m.set(Metadata.CONTENT_TYPE, mimeType.toString());
-                extension = mimeType.getExtension();
-            } catch (MimeTypeException e) {
-                //swallow
-            }
-            //just in case something screwy is going on with the column name
-            String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + extension));
-            */
-            
-            int MIN_SIZE = 32;
-            if(is.getLength() > MIN_SIZE){
-            	String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            	if(context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)){
-            		m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
-            		ex.parseEmbedded(is, handler, m, false);
-            	}else
-            		addAllCharacters(name, handler);
-            }else{
-            	byte[] bytes = new byte[(int) is.getLength()];
-            	is.read(bytes);
-            	addAllCharacters("0x" + Hex.encodeHexString(bytes), handler); //$NON-NLS-1$
-            }
+                /*
+                 * Attributes attrs = new AttributesImpl(); ((AttributesImpl)
+                 * attrs).addAttribute("", "type", "type", "CDATA", "blob"); ((AttributesImpl)
+                 * attrs).addAttribute("", "column_name", "column_name", "CDATA", columnName);
+                 * ((AttributesImpl) attrs).addAttribute("", "row_number", "row_number",
+                 * "CDATA", Integer.toString(rowNum)); handler.startElement("", "span", "span",
+                 * attrs); MediaType mediaType = getDetector().detect(is, new Metadata());
+                 * String extension = ""; try { MimeType mimeType =
+                 * getMimeTypes().forName(mediaType.toString()); m.set(Metadata.CONTENT_TYPE,
+                 * mimeType.toString()); extension = mimeType.getExtension(); } catch
+                 * (MimeTypeException e) { //swallow } //just in case something screwy is going
+                 * on with the column name String name =
+                 * FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum +
+                 * extension));
+                 */
 
-        } finally {
-            if (blob != null) {
-                try {
-                    blob.free();
-                } catch (SQLException e) {
-                    //swallow
+                int MIN_SIZE = 32;
+                if (is.getLength() > MIN_SIZE) {
+                    String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    if (context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)) {
+                        m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
+                        ex.parseEmbedded(is, handler, m, false);
+                    } else
+                        addAllCharacters(name, handler);
+                } else {
+                    byte[] bytes = new byte[(int) is.getLength()];
+                    is.read(bytes);
+                    addAllCharacters("0x" + Hex.encodeHexString(bytes), handler); //$NON-NLS-1$
                 }
+
+            } finally {
+                if (blob != null) {
+                    try {
+                        blob.free();
+                    } catch (SQLException e) {
+                        // swallow
+                    }
+                }
+                IOUtils.closeQuietly(is);
             }
-            IOUtils.closeQuietly(is);
-        }
-        //handler.endElement("", "span", "span");
+        // handler.endElement("", "span", "span");
     }
 
-    protected TikaInputStream getInputStreamFromBlob(ResultSet resultSet, int columnIndex, Blob blob, Metadata metadata) throws SQLException {
+    protected TikaInputStream getInputStreamFromBlob(ResultSet resultSet, int columnIndex, Blob blob, Metadata metadata)
+            throws SQLException {
         return TikaInputStream.get(blob, metadata);
     }
 
-    protected void handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler) throws SAXException, SQLException {
+    protected void handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler)
+            throws SAXException, SQLException {
         addAllCharacters(resultSet.getString(columnIndex), handler);
     }
 
-    protected void handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler) throws SAXException, SQLException {
+    protected void handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler)
+            throws SAXException, SQLException {
         addAllCharacters(resultSet.getString(columnIndex), handler);
     }
 
     protected void addAllCharacters(String s, ContentHandler handler) throws SAXException {
-    	if(s == null)
-    		return;
+        if (s == null)
+            return;
         char[] chars = s.toCharArray();
         handler.characters(chars, 0, chars.length);
     }
 
     protected ResultSet getTableData() {
-        
+
         ResultSet results;
         String sql = "SELECT * from " + tableName; //$NON-NLS-1$
         try {
-        	Statement st = connection.createStatement();
+            Statement st = connection.createStatement();
             results = st.executeQuery(sql);
-            
+
         } catch (SQLException e) {
-        	results = null;
-            //throw new IOExceptionWithCause(e);
+            results = null;
+            // throw new IOExceptionWithCause(e);
         }
         rows = 0;
         return results;
     }
-    
-    public void closeReader() throws SQLException{
-    	if(results != null)
-    		results.close();
+
+    public void closeReader() throws SQLException {
+        if (results != null)
+            results.close();
     }
 
     public String getTableName() {
         return tableName;
     }
-
 
     protected TikaConfig getTikaConfig() {
         if (tikaConfig == null) {
@@ -308,14 +308,16 @@ class JDBCTableReader {
     }
 
     protected Detector getDetector() {
-        if (detector != null) return detector;
+        if (detector != null)
+            return detector;
 
         detector = getTikaConfig().getDetector();
         return detector;
     }
 
     protected MimeTypes getMimeTypes() {
-        if (mimeTypes != null) return mimeTypes;
+        if (mimeTypes != null)
+            return mimeTypes;
 
         mimeTypes = getTikaConfig().getMimeRepository();
         return mimeTypes;

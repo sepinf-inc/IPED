@@ -37,154 +37,158 @@ import iped3.search.IPEDSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.search.MultiSearchResult;
 
-public class DuplicatesTableModel extends AbstractTableModel implements MouseListener, ListSelectionListener, SearchResultTableModel {
+public class DuplicatesTableModel extends AbstractTableModel
+        implements MouseListener, ListSelectionListener, SearchResultTableModel {
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-  LuceneSearchResult results = new LuceneSearchResult(0);
-  int selectedIndex = -1;
+    LuceneSearchResult results = new LuceneSearchResult(0);
+    int selectedIndex = -1;
 
-  @Override
-  public int getColumnCount() {
-    return 3;
-  }
-
-  @Override
-  public int getRowCount() {
-    return results.getLength();
-  }
-  
-  @Override
-  public String getColumnName(int col) {
-    if (col == 2)
-      return IndexItem.PATH;
-    
-    return ""; //$NON-NLS-1$
-  }
-  
-  @Override
-  public boolean isCellEditable(int row, int col) {
-    if (col == 1) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-  
-  @Override
-  public Class<?> getColumnClass(int c) {
-    if (c == 1) {
-      return Boolean.class;
-    } else {
-      return String.class;
-    }
-  }
-  
-  @Override
-  public void setValueAt(Object value, int row, int col) {
-    App.get().appCase.getMultiMarcadores().setSelected((Boolean)value, App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
-    MarcadoresController.get().atualizarGUI();
-  }
-
-  @Override
-  public Object getValueAt(int row, int col) {
-    if (col == 0) {
-      return row + 1;
-      
-    }else if (col == 1) {
-      return App.get().appCase.getMultiMarcadores().isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        
-    }else{
-      try {
-        Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
-        return doc.get(IndexItem.PATH);
-        
-      } catch (Exception e) {
-        // e.printStackTrace();
-      }
-      return ""; //$NON-NLS-1$
-    }
-  }
-
-  @Override
-  public void mouseClicked(MouseEvent arg0) {
-  }
-
-  @Override
-  public void mouseEntered(MouseEvent arg0) {
-  }
-
-  @Override
-  public void mouseExited(MouseEvent arg0) {
-  }
-
-  @Override
-  public void mousePressed(MouseEvent arg0) {
-  }
-
-  @Override
-  public void mouseReleased(MouseEvent evt) {
-    if (evt.getClickCount() == 2 && selectedIndex != -1) {
-        int docId = results.getLuceneIds()[selectedIndex];
-        ExternalFileOpen.open(docId);
-    }
-  }
-
-  @Override
-  public void valueChanged(ListSelectionEvent evt) {
-    ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
-
-    if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
-      selectedIndex = lsm.getMinSelectionIndex();
-      return;
+    @Override
+    public int getColumnCount() {
+        return 3;
     }
 
-    selectedIndex = lsm.getMinSelectionIndex();
-    App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
-
-    FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
-    parsingTask.execute();
-
-    App.get().parentItemModel.fireTableDataChanged();
-  }
-
-  public void listDuplicates(Document doc) {
-
-    String hash = doc.get(IndexItem.HASH);
-    String textQuery = IndexItem.HASH + ":" + hash;
-    
-    String id = doc.get(IndexItem.ID);
-    String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
-    
-    textQuery += " && NOT (" + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$
-    textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    
-    try {
-      IPEDSearcher task = new IPEDSearcherImpl(App.get().appCase, textQuery);
-      results = task.luceneSearch();
-      
-      final int duplicates = results.getLength();
-
-      if (duplicates > 0) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            App.get().duplicateDock.setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
-          }
-        });
-      }
-
-    } catch (Exception e) {
-      results = new LuceneSearchResult(0);
-      e.printStackTrace();
+    @Override
+    public int getRowCount() {
+        return results.getLength();
     }
 
-    fireTableDataChanged();
+    @Override
+    public String getColumnName(int col) {
+        if (col == 2)
+            return IndexItem.PATH;
 
-  }
+        return ""; //$NON-NLS-1$
+    }
+
+    @Override
+    public boolean isCellEditable(int row, int col) {
+        if (col == 1) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public Class<?> getColumnClass(int c) {
+        if (c == 1) {
+            return Boolean.class;
+        } else {
+            return String.class;
+        }
+    }
+
+    @Override
+    public void setValueAt(Object value, int row, int col) {
+        App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
+                App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
+        MarcadoresController.get().atualizarGUI();
+    }
+
+    @Override
+    public Object getValueAt(int row, int col) {
+        if (col == 0) {
+            return row + 1;
+
+        } else if (col == 1) {
+            return App.get().appCase.getMultiMarcadores()
+                    .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+
+        } else {
+            try {
+                Document doc = App.get().appCase.getSearcher().doc(results.getLuceneIds()[row]);
+                return doc.get(IndexItem.PATH);
+
+            } catch (Exception e) {
+                // e.printStackTrace();
+            }
+            return ""; //$NON-NLS-1$
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent arg0) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent arg0) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent arg0) {
+    }
+
+    @Override
+    public void mousePressed(MouseEvent arg0) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent evt) {
+        if (evt.getClickCount() == 2 && selectedIndex != -1) {
+            int docId = results.getLuceneIds()[selectedIndex];
+            ExternalFileOpen.open(docId);
+        }
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent evt) {
+        ListSelectionModel lsm = (ListSelectionModel) evt.getSource();
+
+        if (lsm.getMinSelectionIndex() == -1 || selectedIndex == lsm.getMinSelectionIndex()) {
+            selectedIndex = lsm.getMinSelectionIndex();
+            return;
+        }
+
+        selectedIndex = lsm.getMinSelectionIndex();
+        App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
+
+        FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
+        parsingTask.execute();
+
+        App.get().parentItemModel.fireTableDataChanged();
+    }
+
+    public void listDuplicates(Document doc) {
+
+        String hash = doc.get(IndexItem.HASH);
+        String textQuery = IndexItem.HASH + ":" + hash;
+
+        String id = doc.get(IndexItem.ID);
+        String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
+
+        textQuery += " && NOT (" + IndexItem.ID + ":" + id; //$NON-NLS-1$ //$NON-NLS-2$
+        textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+        try {
+            IPEDSearcher task = new IPEDSearcherImpl(App.get().appCase, textQuery);
+            results = task.luceneSearch();
+
+            final int duplicates = results.getLength();
+
+            if (duplicates > 0) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        App.get().duplicateDock
+                                .setTitleText(duplicates + Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
+                    }
+                });
+            }
+
+        } catch (Exception e) {
+            results = new LuceneSearchResult(0);
+            e.printStackTrace();
+        }
+
+        fireTableDataChanged();
+
+    }
 
     @Override
     public MultiSearchResult getSearchResult() {

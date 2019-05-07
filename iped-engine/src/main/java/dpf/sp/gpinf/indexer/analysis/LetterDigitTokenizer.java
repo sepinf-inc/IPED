@@ -29,79 +29,80 @@ import org.apache.lucene.util.Version;
  */
 public class LetterDigitTokenizer extends CharTokenizer {
 
-  public static boolean convertCharsToLowerCase = true;
+    public static boolean convertCharsToLowerCase = true;
 
-  private static int[] extraCodePoints;
+    private static int[] extraCodePoints;
 
-  /**
-   * Construct a new LetterTokenizer.
-   */
-  public LetterDigitTokenizer(Version version, Reader in) {
-    super(version, in);
-  }
-
-  private static final boolean[] isChar = getCharMap();
-
-  private static boolean[] getCharMap() {
-
-    boolean[] isChar = new boolean[1114112];
-    for (int c = 0; c < isChar.length; c++) {
-      if (Character.isLetterOrDigit(c)) {
-        isChar[c] = true;
-      }
+    /**
+     * Construct a new LetterTokenizer.
+     */
+    public LetterDigitTokenizer(Version version, Reader in) {
+        super(version, in);
     }
 
-    return isChar;
+    private static final boolean[] isChar = getCharMap();
 
-  }
+    private static boolean[] getCharMap() {
 
-  /**
-   * Collects only characters which satisfy {@link Character#isLetter(char)}.
-   */
-  @Override
-  protected boolean isTokenChar(int c) {
-    //return Character.isLetterOrDigit(c) || (extraCodePoints != null && isExtraCodePoints(c));
-    return isChar[c] || (extraCodePoints != null && isExtraCodePoints(c));
-  }
+        boolean[] isChar = new boolean[1114112];
+        for (int c = 0; c < isChar.length; c++) {
+            if (Character.isLetterOrDigit(c)) {
+                isChar[c] = true;
+            }
+        }
 
-  public static void load(String chars) throws FileNotFoundException, IOException {
+        return isChar;
 
-    ArrayList<Integer> codePoints = new ArrayList<Integer>();
-
-    for (String c : chars.split(" ")) { //$NON-NLS-1$
-      codePoints.add(c.codePointAt(0));
     }
 
-    if (codePoints.size() > 0) {
-      extraCodePoints = new int[codePoints.size()];
-      for (int i = 0; i < extraCodePoints.length; i++) {
-        extraCodePoints[i] = codePoints.get(i);
-      }
+    /**
+     * Collects only characters which satisfy {@link Character#isLetter(char)}.
+     */
+    @Override
+    protected boolean isTokenChar(int c) {
+        // return Character.isLetterOrDigit(c) || (extraCodePoints != null &&
+        // isExtraCodePoints(c));
+        return isChar[c] || (extraCodePoints != null && isExtraCodePoints(c));
     }
 
-  }
+    public static void load(String chars) throws FileNotFoundException, IOException {
 
-  private static final boolean isExtraCodePoints(int c) {
+        ArrayList<Integer> codePoints = new ArrayList<Integer>();
 
-    for (int i = 0; i < extraCodePoints.length; i++) {
-      if (c == extraCodePoints[i]) {
-        return true;
-      }
+        for (String c : chars.split(" ")) { //$NON-NLS-1$
+            codePoints.add(c.codePointAt(0));
+        }
+
+        if (codePoints.size() > 0) {
+            extraCodePoints = new int[codePoints.size()];
+            for (int i = 0; i < extraCodePoints.length; i++) {
+                extraCodePoints[i] = codePoints.get(i);
+            }
+        }
+
     }
 
-    return false;
-  }
+    private static final boolean isExtraCodePoints(int c) {
 
-  /**
-   * Converts char to lower case {@link Character#toLowerCase(char)}.
-   */
-  @Override
-  protected int normalize(int c) {
-    if (convertCharsToLowerCase) {
-      return Character.toLowerCase(c);
-    } else {
-      return c;
+        for (int i = 0; i < extraCodePoints.length; i++) {
+            if (c == extraCodePoints[i]) {
+                return true;
+            }
+        }
+
+        return false;
     }
-  }
+
+    /**
+     * Converts char to lower case {@link Character#toLowerCase(char)}.
+     */
+    @Override
+    protected int normalize(int c) {
+        if (convertCharsToLowerCase) {
+            return Character.toLowerCase(c);
+        } else {
+            return c;
+        }
+    }
 
 }

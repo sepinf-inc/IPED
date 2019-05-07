@@ -4,85 +4,87 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LNKShellItem {
-	private String name;
-	private int type;
-	private List<String> listValues = new ArrayList<String>();
-	
-	private LNKShellItemFileEntry fileEntry = null;
+    private String name;
+    private int type;
+    private List<String> listValues = new ArrayList<String>();
 
-	private LNKShellItemNetwork networkLocation = null;
-	
-	private boolean unparsed = false;
-	
-	public boolean isUnparsed() {
-		return unparsed;
-	}
+    private LNKShellItemFileEntry fileEntry = null;
 
-	public void setUnparsed(boolean unparsed) {
-		this.unparsed = unparsed;
-	}
+    private LNKShellItemNetwork networkLocation = null;
 
-	public int getType() {
-		return type;
-	}
+    private boolean unparsed = false;
 
-	public void setType(int type) {
-		this.type = type;
-	}
+    public boolean isUnparsed() {
+        return unparsed;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setUnparsed(boolean unparsed) {
+        this.unparsed = unparsed;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public int getType() {
+        return type;
+    }
 
-	public List<String> getListValues() {
-		return listValues;
-	}
+    public void setType(int type) {
+        this.type = type;
+    }
 
-	public void addValue(String value) {
-		listValues.add(value);
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getStrValues() {
-		if (listValues.size() == 0 ) return ""; //$NON-NLS-1$
-		StringBuffer sb = new StringBuffer(listValues.get(0));
-		for (int i = 1; i < listValues.size(); i++) {
-			sb.append(", " + listValues.get(i)); //$NON-NLS-1$
-		}
-		return sb.toString();
-	}
-	
-	public boolean hasFileEntry() {
-		return (fileEntry != null);
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public LNKShellItemFileEntry getFileEntry() {
-		if (fileEntry == null) fileEntry = new LNKShellItemFileEntry(); 
-		return fileEntry;
-	}
+    public List<String> getListValues() {
+        return listValues;
+    }
 
-	public void setFileEntry(long flSize, long modDate, int flAtt, String pName) {
-		this.fileEntry = new LNKShellItemFileEntry();
-		this.fileEntry.setFileSize(flSize);
-		this.fileEntry.setModifiedDate(modDate);
-		this.fileEntry.setFileAttributeFlags(flAtt);
-		this.fileEntry.setPrimaryName(pName);
-		this.fileEntry.setTipoShell(type);
-	}
+    public void addValue(String value) {
+        listValues.add(value);
+    }
 
-	public boolean hasNetworkLocation() {
-		return (networkLocation != null);
-	}
-	
-	public LNKShellItemNetwork getNetworkLocation() {
-		return networkLocation;
-	}
+    public String getStrValues() {
+        if (listValues.size() == 0)
+            return ""; //$NON-NLS-1$
+        StringBuffer sb = new StringBuffer(listValues.get(0));
+        for (int i = 1; i < listValues.size(); i++) {
+            sb.append(", " + listValues.get(i)); //$NON-NLS-1$
+        }
+        return sb.toString();
+    }
 
-	public void setNetworkLocation(LNKShellItemNetwork networkLocation) {
-		this.networkLocation = networkLocation;
-	}
-	
+    public boolean hasFileEntry() {
+        return (fileEntry != null);
+    }
+
+    public LNKShellItemFileEntry getFileEntry() {
+        if (fileEntry == null)
+            fileEntry = new LNKShellItemFileEntry();
+        return fileEntry;
+    }
+
+    public void setFileEntry(long flSize, long modDate, int flAtt, String pName) {
+        this.fileEntry = new LNKShellItemFileEntry();
+        this.fileEntry.setFileSize(flSize);
+        this.fileEntry.setModifiedDate(modDate);
+        this.fileEntry.setFileAttributeFlags(flAtt);
+        this.fileEntry.setPrimaryName(pName);
+        this.fileEntry.setTipoShell(type);
+    }
+
+    public boolean hasNetworkLocation() {
+        return (networkLocation != null);
+    }
+
+    public LNKShellItemNetwork getNetworkLocation() {
+        return networkLocation;
+    }
+
+    public void setNetworkLocation(LNKShellItemNetwork networkLocation) {
+        this.networkLocation = networkLocation;
+    }
+
 }

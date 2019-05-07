@@ -7,18 +7,18 @@ import org.junit.Test;
 
 public class SwiftCodeRegexValidatorServiceTest {
 
-  private SwiftCodeRegexValidatorService service = new SwiftCodeRegexValidatorService();
+    private SwiftCodeRegexValidatorService service = new SwiftCodeRegexValidatorService();
 
-  @Test
-  public void testValidSwift() {
-    String swift = "BACAADAD";
-    assertTrue(service.validate(swift));
-  }
+    @Test
+    public void testValidSwift() {
+        String swift = "BACAADAD";
+        assertTrue(service.validate(swift));
+    }
 
-  @Test
-  public void testInvalidSwift() {
-    String swift = "XXXXADXX";
-    assertFalse(service.validate(swift));
-  }
+    @Test
+    public void testInvalidSwift() {
+        String swift = "XXXXADXX";
+        assertFalse(service.validate(swift));
+    }
 
 }

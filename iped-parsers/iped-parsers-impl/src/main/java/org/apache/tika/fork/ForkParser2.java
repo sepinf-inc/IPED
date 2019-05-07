@@ -50,21 +50,21 @@ public class ForkParser2 extends AbstractParser {
 
     /** Serial version UID */
     private static final long serialVersionUID = -4962742892274663950L;
-    
+
     public static boolean enabled = false;
-    
+
     public static String SERVER_MAX_HEAP = "512M";
-    
+
     public static int SERVER_POOL_SIZE = 4;
-    
+
     public static String plugin_dir = null;
 
-    //these are used by the legacy usage
+    // these are used by the legacy usage
     private final ClassLoader loader;
     private final Parser parser;
 
-    //these are used when the server builds a parser via a directory
-    //of jars, not via legacy bootstrap etc.
+    // these are used when the server builds a parser via a directory
+    // of jars, not via legacy bootstrap etc.
     private final Path tikaBin;
     private Path pluginDir;
     private final ParserFactoryFactory parserFactoryFactory;
@@ -91,23 +91,24 @@ public class ForkParser2 extends AbstractParser {
 
     @Field
     private int maxFilesProcessedPerClient = -1;
-    
+
     private static ForkParser2 forkParser;
-    
+
     public static boolean isEnabled() {
         return enabled;
     }
-    
+
     public static ForkParser2 getForkParser() {
-        if(!enabled) {
+        if (!enabled) {
             return null;
         }
-        if(forkParser == null) {
-            synchronized(ForkParser2.class) {
-                if(forkParser == null) {
-                    
+        if (forkParser == null) {
+            synchronized (ForkParser2.class) {
+                if (forkParser == null) {
+
                     forkParser = new ForkParser2(getMainJarsPath(), new File(plugin_dir).toPath(),
-                            new ParserFactoryFactory(ExternalParsingParserFactory.class.getName(), Collections.EMPTY_MAP));
+                            new ParserFactoryFactory(ExternalParsingParserFactory.class.getName(),
+                                    Collections.EMPTY_MAP));
                     forkParser.setJavaCommand(getCommand(SERVER_MAX_HEAP));
                     forkParser.setPoolSize(SERVER_POOL_SIZE);
                     forkParser.setServerParseTimeoutMillis(3600 * 1000);
@@ -118,7 +119,7 @@ public class ForkParser2 extends AbstractParser {
         }
         return forkParser;
     }
-    
+
     private static Path getMainJarsPath() {
         URL url = ForkParser2.class.getProtectionDomain().getCodeSource().getLocation();
         Path jarPath = null;
@@ -129,24 +130,25 @@ public class ForkParser2 extends AbstractParser {
         }
         return jarPath;
     }
-    
-    private static List<String> getCommand(String maxHeap){
+
+    private static List<String> getCommand(String maxHeap) {
         List<String> cmd = new ArrayList<>();
         cmd.add("java");
         cmd.add("-Xmx" + maxHeap);
-        for(Object key : System.getProperties().keySet()) {
+        for (Object key : System.getProperties().keySet()) {
             cmd.add("-D" + key + "=" + System.getProperty(key.toString()).replace("\"", "\\\""));
         }
         return cmd;
     }
 
     /**
-     * If you have a directory with, say, tike-app.jar and you want the child process/server to build a parser
-     * and run it from that -- so that you can keep all of those dependencies out of your client code, use
-     * this initializer.
+     * If you have a directory with, say, tike-app.jar and you want the child
+     * process/server to build a parser and run it from that -- so that you can keep
+     * all of those dependencies out of your client code, use this initializer.
      *
-     * @param tikaBin directory containing the tika-app.jar or similar -- full jar including tika-core and all
-     *                desired parsers and dependencies
+     * @param tikaBin
+     *            directory containing the tika-app.jar or similar -- full jar
+     *            including tika-core and all desired parsers and dependencies
      * @param factoryFactory
      */
     public ForkParser2(Path tikaBin, Path pluginDir, ParserFactoryFactory factoryFactory) {
@@ -159,10 +161,16 @@ public class ForkParser2 extends AbstractParser {
 
     /**
      * <b>EXPERT</b>
-     * @param tikaBin directory containing the tika-app.jar or similar -- full jar including tika-core and all
-     *                desired parsers and dependencies
-     * @param parserFactoryFactory -- the factory to use to generate the parser factory in the child process/server
-     * @param classLoader to use for all classes besides the parser in the child process/server
+     * 
+     * @param tikaBin
+     *            directory containing the tika-app.jar or similar -- full jar
+     *            including tika-core and all desired parsers and dependencies
+     * @param parserFactoryFactory
+     *            -- the factory to use to generate the parser factory in the child
+     *            process/server
+     * @param classLoader
+     *            to use for all classes besides the parser in the child
+     *            process/server
      */
     public ForkParser2(Path tikaBin, ParserFactoryFactory parserFactoryFactory, ClassLoader classLoader) {
         parser = null;
@@ -172,12 +180,15 @@ public class ForkParser2 extends AbstractParser {
     }
 
     /**
-     * @param loader The ClassLoader to use 
-     * @param parser the parser to delegate to. This one cannot be another ForkParser
+     * @param loader
+     *            The ClassLoader to use
+     * @param parser
+     *            the parser to delegate to. This one cannot be another ForkParser
      */
     public ForkParser2(ClassLoader loader, Parser parser) {
         if (parser instanceof ForkParser) {
-            throw new IllegalArgumentException("The underlying parser of a ForkParser should not be a ForkParser, but a specific implementation.");
+            throw new IllegalArgumentException(
+                    "The underlying parser of a ForkParser should not be a ForkParser, but a specific implementation.");
         }
         this.tikaBin = null;
         this.parserFactoryFactory = null;
@@ -205,7 +216,8 @@ public class ForkParser2 extends AbstractParser {
     /**
      * Sets the size of the process pool.
      *
-     * @param poolSize process pool size
+     * @param poolSize
+     *            process pool size
      */
     public synchronized void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
@@ -232,6 +244,7 @@ public class ForkParser2 extends AbstractParser {
      * Returns the command used to start the forked server process.
      * <p/>
      * Returned list is unmodifiable.
+     * 
      * @return java command line args
      */
     public List<String> getJavaCommandAsList() {
@@ -239,26 +252,28 @@ public class ForkParser2 extends AbstractParser {
     }
 
     /**
-     * Sets the command used to start the forked server process.
-     * The arguments "-jar" and "/path/to/bootstrap.jar"
-     * or "-cp" and "/path/to/tika_bin" are
-     * appended to the given command when starting the process.
-     * The default setting is {"java", "-Xmx32m"}.
+     * Sets the command used to start the forked server process. The arguments
+     * "-jar" and "/path/to/bootstrap.jar" or "-cp" and "/path/to/tika_bin" are
+     * appended to the given command when starting the process. The default setting
+     * is {"java", "-Xmx32m"}.
      * <p/>
      * Creates a defensive copy.
-     * @param java java command line
+     * 
+     * @param java
+     *            java command line
      */
     public void setJavaCommand(List<String> java) {
         this.java = new ArrayList<>(java);
     }
 
     /**
-     * Sets the command used to start the forked server process.
-     * The given command line is split on whitespace and the arguments
-     * "-jar" and "/path/to/bootstrap.jar" are appended to it when starting
-     * the process. The default setting is "java -Xmx32m".
+     * Sets the command used to start the forked server process. The given command
+     * line is split on whitespace and the arguments "-jar" and
+     * "/path/to/bootstrap.jar" are appended to it when starting the process. The
+     * default setting is "java -Xmx32m".
      *
-     * @param java java command line
+     * @param java
+     *            java command line
      * @deprecated since 1.8
      * @see ForkParser#setJavaCommand(List)
      */
@@ -273,67 +288,78 @@ public class ForkParser2 extends AbstractParser {
 
     /**
      *
-     * This sends the objects to the server for parsing, and the server via
-     * the proxies acts on the handler as if it were updating it directly.
+     * This sends the objects to the server for parsing, and the server via the
+     * proxies acts on the handler as if it were updating it directly.
      * <p>
      * If using a RecursiveParserWrapper, there are two options:
      * </p>
      * <p>
-     *     <ol>
-     *         <li>Send in a class that extends {@link org.apache.tika.sax.RecursiveParserWrapperHandler},
-     *              and the server will proxy back the data as best it can[0].</li>
-     *         <li>Send in a class that extends {@link AbstractRecursiveParserWrapperHandler}
-     *              and the server will act on the class but not proxy back the data.  This
-     *              can be used, for example, if all you want to do is write to disc, extend
-     *              {@link AbstractRecursiveParserWrapperHandler} to write to disc when
-     *              {@link AbstractRecursiveParserWrapperHandler#endDocument(ContentHandler, Metadata)}
-     *              is called, and the server will take care of the writing via the handler.</li>
-     *     </ol>
+     * <ol>
+     * <li>Send in a class that extends
+     * {@link org.apache.tika.sax.RecursiveParserWrapperHandler}, and the server
+     * will proxy back the data as best it can[0].</li>
+     * <li>Send in a class that extends
+     * {@link AbstractRecursiveParserWrapperHandler} and the server will act on the
+     * class but not proxy back the data. This can be used, for example, if all you
+     * want to do is write to disc, extend
+     * {@link AbstractRecursiveParserWrapperHandler} to write to disc when
+     * {@link AbstractRecursiveParserWrapperHandler#endDocument(ContentHandler, Metadata)}
+     * is called, and the server will take care of the writing via the handler.</li>
+     * </ol>
      * </p>
      * <p>
-     *     <b>NOTE:</b>[0] &quot;the server will proxy back the data as best it can&quot;.  If the handler
-     *     implements Serializable and is actually serializable, the server will send it and the
-     *     {@link Metadata} back upon {@link org.apache.tika.sax.RecursiveParserWrapperHandler#endEmbeddedDocument(ContentHandler, Metadata)}
-     *     or {@link org.apache.tika.sax.RecursiveParserWrapperHandler#endEmbeddedDocument(ContentHandler, Metadata)}.
-     *     If the handler does not implement {@link java.io.Serializable} or if there is a
-     *     {@link java.io.NotSerializableException} thrown during serialization, the server will
-     *     call {@link ContentHandler#toString()} on the ContentHandler and set that value with the
-     *     {@link org.apache.tika.sax.RecursiveParserWrapperHandler#TIKA_CONTENT} key and then
-     *     serialize and proxy that data back.
+     * <b>NOTE:</b>[0] &quot;the server will proxy back the data as best it
+     * can&quot;. If the handler implements Serializable and is actually
+     * serializable, the server will send it and the {@link Metadata} back upon
+     * {@link org.apache.tika.sax.RecursiveParserWrapperHandler#endEmbeddedDocument(ContentHandler, Metadata)}
+     * or
+     * {@link org.apache.tika.sax.RecursiveParserWrapperHandler#endEmbeddedDocument(ContentHandler, Metadata)}.
+     * If the handler does not implement {@link java.io.Serializable} or if there is
+     * a {@link java.io.NotSerializableException} thrown during serialization, the
+     * server will call {@link ContentHandler#toString()} on the ContentHandler and
+     * set that value with the
+     * {@link org.apache.tika.sax.RecursiveParserWrapperHandler#TIKA_CONTENT} key
+     * and then serialize and proxy that data back.
      * </p>
      *
-     * @param stream the document stream (input)
-     * @param handler handler for the XHTML SAX events (output)
-     * @param metadata document metadata (input and output)
-     * @param context parse context
+     * @param stream
+     *            the document stream (input)
+     * @param handler
+     *            handler for the XHTML SAX events (output)
+     * @param metadata
+     *            document metadata (input and output)
+     * @param context
+     *            parse context
      * @throws IOException
      * @throws SAXException
      * @throws TikaException
      */
-    public void parse(
-            InputStream stream, ContentHandler handler,
-            Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         if (stream == null) {
             throw new NullPointerException("null stream");
         }
 
         Throwable t;
-        
+
         boolean alive = false;
         ForkClient2 client = null;
         TemporaryResources tmp = new TemporaryResources();
         try {
-            //must create temp file because of parsers that read directly from stream when creating subitems (eg. rfc822parser)
+            // must create temp file because of parsers that read directly from stream when
+            // creating subitems (eg. rfc822parser)
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             tis.getFile();
-            
+
             client = acquireClient();
-            
-            //this here mixtures metadata of main and embedded docs. Will use TeeContentHandler later
-            /*ContentHandler tee = (handler instanceof AbstractRecursiveParserWrapperHandler) ? handler :
-                    new TeeContentHandler(handler, new MetadataContentHandler(metadata));
-            */
+
+            // this here mixtures metadata of main and embedded docs. Will use
+            // TeeContentHandler later
+            /*
+             * ContentHandler tee = (handler instanceof
+             * AbstractRecursiveParserWrapperHandler) ? handler : new
+             * TeeContentHandler(handler, new MetadataContentHandler(metadata));
+             */
             t = client.callInBackground("parse", tis, handler, metadata, context);
             alive = true;
         } catch (TikaException te) {
@@ -342,17 +368,18 @@ public class ForkParser2 extends AbstractParser {
             throw te;
         } catch (IOException e) {
             // Problem occurred on the other side
-            throw new TikaException(
-                    "Failed to communicate with a forked parser process."
+            throw new TikaException("Failed to communicate with a forked parser process."
                     + " The process has most likely crashed due to some error"
-                    + " like running out of memory. A new process will be"
-                    + " started for the next parsing request.", e);
+                    + " like running out of memory. A new process will be" + " started for the next parsing request.",
+                    e);
         } catch (InterruptedException e) {
-            if(client != null) client.close();
+            if (client != null)
+                client.close();
             throw new TikaException("ForkParser Interrupted, current ForkServer closed", e);
-        
+
         } finally {
-            if(client != null) releaseClient(client, alive);
+            if (client != null)
+                releaseClient(client, alive);
             IOUtil.closeQuietly(tmp);
         }
 
@@ -363,8 +390,7 @@ public class ForkParser2 extends AbstractParser {
         } else if (t instanceof TikaException) {
             throw (TikaException) t;
         } else if (t != null) {
-            throw new TikaException(
-                    "Unexpected error in forked server process", t);
+            throw new TikaException("Unexpected error in forked server process", t);
         }
     }
 
@@ -376,14 +402,13 @@ public class ForkParser2 extends AbstractParser {
         poolSize = 0;
     }
 
-    //patched to concurrently start new clients
-    private ForkClient2 acquireClient()
-            throws IOException, TikaException {
+    // patched to concurrently start new clients
+    private ForkClient2 acquireClient() throws IOException, TikaException {
         while (true) {
             boolean startNew = false;
             ForkClient2 client;
-            
-            synchronized(this) {
+
+            synchronized (this) {
                 client = pool.poll();
                 // Create a new process if there's room in the pool
                 if (client == null && currentlyInUse < poolSize) {
@@ -391,11 +416,11 @@ public class ForkParser2 extends AbstractParser {
                 }
                 currentlyInUse++;
             }
-            if(startNew) {
+            if (startNew) {
                 try {
                     client = newClient();
-                }catch(Throwable e) {
-                    synchronized(this) {
+                } catch (Throwable e) {
+                    synchronized (this) {
                         currentlyInUse--;
                     }
                     throw e;
@@ -406,18 +431,17 @@ public class ForkParser2 extends AbstractParser {
                 client.close();
                 client = null;
             }
-            synchronized(this) {
+            synchronized (this) {
                 if (client != null) {
                     return client;
-                    
+
                 } else {
                     currentlyInUse--;
                     if (currentlyInUse >= poolSize) {
                         try {
                             wait(1000);
                         } catch (InterruptedException e) {
-                            throw new TikaException(
-                                    "Interrupted while waiting for a fork parser", e);
+                            throw new TikaException("Interrupted while waiting for a fork parser", e);
                         }
                     }
                 }
@@ -426,15 +450,16 @@ public class ForkParser2 extends AbstractParser {
     }
 
     private ForkClient2 newClient() throws IOException, TikaException {
-        TimeoutLimits timeoutLimits = new TimeoutLimits(serverPulseMillis, serverParseTimeoutMillis, serverWaitTimeoutMillis);
+        TimeoutLimits timeoutLimits = new TimeoutLimits(serverPulseMillis, serverParseTimeoutMillis,
+                serverWaitTimeoutMillis);
         if (loader == null && parser == null && tikaBin != null && parserFactoryFactory != null) {
             return new ForkClient2(tikaBin, pluginDir, parserFactoryFactory, java, timeoutLimits);
         } else if (loader != null && parser != null && tikaBin == null && parserFactoryFactory == null) {
-           return new ForkClient2(loader, parser, java, timeoutLimits);
+            return new ForkClient2(loader, parser, java, timeoutLimits);
         } else if (loader != null && parser == null && tikaBin != null && parserFactoryFactory != null) {
             return new ForkClient2(tikaBin, pluginDir, parserFactoryFactory, loader, java, timeoutLimits);
         } else {
-            //TODO: make this more useful
+            // TODO: make this more useful
             throw new IllegalStateException("Unexpected combination of state items");
         }
     }
@@ -454,21 +479,22 @@ public class ForkParser2 extends AbstractParser {
     }
 
     /**
-     * The amount of time in milliseconds that the server
-     * should wait before checking to see if the parse has timed out
-     * or if the wait has timed out
-     * The default is 5 seconds.
+     * The amount of time in milliseconds that the server should wait before
+     * checking to see if the parse has timed out or if the wait has timed out The
+     * default is 5 seconds.
      *
-     * @param serverPulseMillis milliseconds to sleep before checking if there has been any activity
+     * @param serverPulseMillis
+     *            milliseconds to sleep before checking if there has been any
+     *            activity
      */
     public void setServerPulseMillis(long serverPulseMillis) {
         this.serverPulseMillis = serverPulseMillis;
     }
 
     /**
-     * The maximum amount of time allowed for the server to try to parse a file.
-     * If more than this time elapses, the server shuts down, and the ForkParser
-     * throws an exception.
+     * The maximum amount of time allowed for the server to try to parse a file. If
+     * more than this time elapses, the server shuts down, and the ForkParser throws
+     * an exception.
      *
      * @param serverParseTimeoutMillis
      */
@@ -477,9 +503,10 @@ public class ForkParser2 extends AbstractParser {
     }
 
     /**
-     * The maximum amount of time allowed for the server to wait for a new request to parse
-     * a file.  The server will shutdown after this amount of time, and a new server will have
-     * to be started by a new client.
+     * The maximum amount of time allowed for the server to wait for a new request
+     * to parse a file. The server will shutdown after this amount of time, and a
+     * new server will have to be started by a new client.
+     * 
      * @param serverWaitTimeoutMillis
      */
     public void setServerWaitTimeoutMillis(long serverWaitTimeoutMillis) {
@@ -487,14 +514,14 @@ public class ForkParser2 extends AbstractParser {
     }
 
     /**
-     * If there is a slowly building memory leak in one of the parsers,
-     * it is useful to set a limit on the number of files processed
-     * by a server before it is shutdown and restarted. Default value is -1.
+     * If there is a slowly building memory leak in one of the parsers, it is useful
+     * to set a limit on the number of files processed by a server before it is
+     * shutdown and restarted. Default value is -1.
      *
-     * @param maxFilesProcessedPerClient maximum number of files that a server can handle
-     *                                 before the parser shuts down a client and creates
-     *                                 a new process. If set to -1, the server is never restarted
-     *                                 because of the number of files handled.
+     * @param maxFilesProcessedPerClient
+     *            maximum number of files that a server can handle before the parser
+     *            shuts down a client and creates a new process. If set to -1, the
+     *            server is never restarted because of the number of files handled.
      */
     public void setMaxFilesProcessedPerServer(int maxFilesProcessedPerClient) {
         this.maxFilesProcessedPerClient = maxFilesProcessedPerClient;

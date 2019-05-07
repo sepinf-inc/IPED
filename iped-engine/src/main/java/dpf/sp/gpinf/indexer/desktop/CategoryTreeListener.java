@@ -19,73 +19,73 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener {
 
-  BooleanQuery query;
-  private HashSet<TreePath> selection = new HashSet<TreePath>();
-  private TreePath root;
-  private long collapsed = 0;
+    BooleanQuery query;
+    private HashSet<TreePath> selection = new HashSet<TreePath>();
+    private TreePath root;
+    private long collapsed = 0;
 
-  @Override
-  public void valueChanged(TreeSelectionEvent evt) {
+    @Override
+    public void valueChanged(TreeSelectionEvent evt) {
 
-	if(root == null)
-		root = new TreePath(App.get().categoryTree.getModel().getRoot());
-	  
-    if (System.currentTimeMillis() - collapsed < 100) {
-      //if(evt.getPath().getLastPathComponent().equals(App.get().categoryTree.getModel().getRoot()))
-      App.get().categoryTree.setSelectionPaths(selection.toArray(new TreePath[0]));
-      return;
+        if (root == null)
+            root = new TreePath(App.get().categoryTree.getModel().getRoot());
+
+        if (System.currentTimeMillis() - collapsed < 100) {
+            // if(evt.getPath().getLastPathComponent().equals(App.get().categoryTree.getModel().getRoot()))
+            App.get().categoryTree.setSelectionPaths(selection.toArray(new TreePath[0]));
+            return;
+        }
+
+        for (TreePath path : evt.getPaths()) {
+            if (selection.contains(path)) {
+                selection.remove(path);
+            } else {
+                selection.add(path);
+            }
+        }
+
+        if (selection.contains(root) || selection.isEmpty()) {
+            App.get().setCategoriesDefaultColor(true);
+            query = null;
+
+        } else {
+            App.get().setCategoriesDefaultColor(false);
+
+            query = new BooleanQuery();
+
+            for (TreePath path : selection) {
+                Category category = (Category) path.getLastPathComponent();
+                addCategoryToQuery(category, query);
+            }
+        }
+
+        App.get().appletListener.updateFileListing();
+
     }
 
-    for (TreePath path : evt.getPaths()) {
-      if (selection.contains(path)) {
-        selection.remove(path);
-      } else {
-        selection.add(path);
-      }
+    private void addCategoryToQuery(Category category, BooleanQuery query) {
+        String name = category.name;
+        char[] input = name.toLowerCase().toCharArray();
+        char[] output = new char[input.length * 4];
+        FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+        name = (new String(output)).trim();
+        query.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
+
+        for (Category subcat : category.children) {
+            addCategoryToQuery(subcat, query);
+        }
     }
 
-    if (selection.contains(root) || selection.isEmpty()) {
-      App.get().setCategoriesDefaultColor(true);
-      query = null;
+    @Override
+    public void treeExpanded(TreeExpansionEvent event) {
+        // TODO Auto-generated method stub
 
-    } else {
-    	App.get().setCategoriesDefaultColor(false);
-
-      query = new BooleanQuery();
-
-      for (TreePath path : selection) {
-        Category category = (Category) path.getLastPathComponent();
-        addCategoryToQuery(category, query);
-      }
     }
 
-    App.get().appletListener.updateFileListing();
+    @Override
+    public void treeCollapsed(TreeExpansionEvent event) {
+        collapsed = System.currentTimeMillis();
 
-  }
-
-  private void addCategoryToQuery(Category category, BooleanQuery query) {
-    String name = category.name;
-    char[] input = name.toLowerCase().toCharArray();
-    char[] output = new char[input.length * 4];
-    FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-    name = (new String(output)).trim();
-    query.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
-
-    for (Category subcat : category.children) {
-      addCategoryToQuery(subcat, query);
     }
-  }
-
-  @Override
-  public void treeExpanded(TreeExpansionEvent event) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void treeCollapsed(TreeExpansionEvent event) {
-    collapsed = System.currentTimeMillis();
-
-  }
 
 }

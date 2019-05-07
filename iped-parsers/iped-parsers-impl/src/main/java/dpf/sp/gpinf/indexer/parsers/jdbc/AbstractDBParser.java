@@ -54,36 +54,37 @@ abstract class AbstractDBParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
         connection = getConnection(stream, metadata, context);
         XHTMLContentHandler xHandler = null;
         List<String> tableNames = null;
         try {
             tableNames = getTableNames(connection, metadata, context);
             for (String tableName : tableNames) {
-                //add table names to parent metadata
+                // add table names to parent metadata
                 metadata.add(Database.TABLE_NAME, tableName);
             }
             xHandler = new XHTMLContentHandler(handler, metadata);
             xHandler.startDocument();
-            
+
             xHandler.startElement("head"); //$NON-NLS-1$
             xHandler.startElement("style"); //$NON-NLS-1$
             xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
-            
+
             xHandler.characters(Messages.getString("AbstractDBParser.ProbableDate")); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
-        	
+
             for (String tableName : tableNames) {
                 JDBCTableReader tableReader = getTableReader(connection, tableName, context);
-                
+
                 xHandler.startElement("b"); //$NON-NLS-1$
                 xHandler.characters(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
                 xHandler.endElement("b"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("table", "name", tableReader.getTableName()); //$NON-NLS-1$ //$NON-NLS-2$
                 xHandler.startElement("thead"); //$NON-NLS-1$
                 xHandler.startElement("tr"); //$NON-NLS-1$
@@ -96,33 +97,32 @@ abstract class AbstractDBParser extends AbstractParser {
                 xHandler.endElement("thead"); //$NON-NLS-1$
                 xHandler.startElement("tbody"); //$NON-NLS-1$
                 while (tableReader.nextRow(xHandler, context)) {
-                    //no-op
+                    // no-op
                 }
                 xHandler.endElement("tbody"); //$NON-NLS-1$
                 xHandler.endElement("table"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("br"); //$NON-NLS-1$
                 xHandler.endElement("br"); //$NON-NLS-1$
-                
+
                 tableReader.closeReader();
             }
-        } catch(SQLException e){
-        	throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
-        	
-        }finally{
-        	if(xHandler != null)
-        		xHandler.endDocument();
-        	try {
+        } catch (SQLException e) {
+            throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
+
+        } finally {
+            if (xHandler != null)
+                xHandler.endDocument();
+            try {
                 close();
             } catch (Exception e) {
-                //swallow
+                // swallow
             }
         }
     }
 
     protected static EmbeddedDocumentExtractor getEmbeddedDocumentExtractor(ParseContext context) {
-       return context.get(EmbeddedDocumentExtractor.class,
-               new ParsingEmbeddedDocumentExtractor(context));
+        return context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
     }
 
     /**
@@ -139,14 +139,18 @@ abstract class AbstractDBParser extends AbstractParser {
      * Override this for special configuration of the connection, such as limiting
      * the number of rows to be held in memory.
      *
-     * @param stream stream to use
-     * @param metadata metadata that could be used in parameterizing the connection
-     * @param context parsecontext that could be used in parameterizing the connection
+     * @param stream
+     *            stream to use
+     * @param metadata
+     *            metadata that could be used in parameterizing the connection
+     * @param context
+     *            parsecontext that could be used in parameterizing the connection
      * @return connection
      * @throws java.io.IOException
      * @throws org.apache.tika.exception.TikaException
      */
-    protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context) throws IOException, TikaException {
+    protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context)
+            throws IOException, TikaException {
         String connectionString = getConnectionString(stream, metadata, context);
 
         Connection connection = null;
@@ -155,7 +159,7 @@ abstract class AbstractDBParser extends AbstractParser {
         } catch (ClassNotFoundException e) {
             throw new TikaException(e.getMessage());
         }
-        try{
+        try {
             connection = DriverManager.getConnection(connectionString);
         } catch (SQLException e) {
             throw new IOExceptionWithCause(e);
@@ -164,21 +168,27 @@ abstract class AbstractDBParser extends AbstractParser {
     }
 
     /**
-     * Implement for db specific connection information, e.g. "jdbc:sqlite:/docs/mydb.db"
+     * Implement for db specific connection information, e.g.
+     * "jdbc:sqlite:/docs/mydb.db"
      * <p>
      * Include any optimization settings, user name, password, etc.
      * <p>
-     * @param stream stream for processing
-     * @param metadata metadata might be useful in determining connection info
-     * @param parseContext context to use to help create connectionString
+     * 
+     * @param stream
+     *            stream for processing
+     * @param metadata
+     *            metadata might be useful in determining connection info
+     * @param parseContext
+     *            context to use to help create connectionString
      * @return connection string to be used by {@link #getConnection}.
      * @throws java.io.IOException
-    */
-    abstract protected String getConnectionString(InputStream stream,
-                                               Metadata metadata, ParseContext parseContext) throws IOException;
+     */
+    abstract protected String getConnectionString(InputStream stream, Metadata metadata, ParseContext parseContext)
+            throws IOException;
 
     /**
      * JDBC class name, e.g. org.sqlite.JDBC
+     * 
      * @return jdbc class name
      */
     abstract protected String getJDBCClassName();
@@ -187,14 +197,20 @@ abstract class AbstractDBParser extends AbstractParser {
      *
      * Returns the names of the tables to process
      *
-     * @param connection Connection to use to make the sql call(s) to get the names of the tables
-     * @param metadata Metadata to use (potentially) in decision about which tables to extract
-     * @param context ParseContext to use (potentially) in decision about which tables to extract
+     * @param connection
+     *            Connection to use to make the sql call(s) to get the names of the
+     *            tables
+     * @param metadata
+     *            Metadata to use (potentially) in decision about which tables to
+     *            extract
+     * @param context
+     *            ParseContext to use (potentially) in decision about which tables
+     *            to extract
      * @return
      * @throws java.sql.SQLException
      */
-    abstract protected List<String> getTableNames(Connection connection, Metadata metadata,
-                                                  ParseContext context) throws SQLException;
+    abstract protected List<String> getTableNames(Connection connection, Metadata metadata, ParseContext context)
+            throws SQLException;
 
     /**
      * Given a connection and a table name, return the JDBCTableReader for this db.
@@ -203,6 +219,7 @@ abstract class AbstractDBParser extends AbstractParser {
      * @param tableName
      * @return
      */
-    abstract protected JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext parseContext);
+    abstract protected JDBCTableReader getTableReader(Connection connection, String tableName,
+            ParseContext parseContext);
 
 }

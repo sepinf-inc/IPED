@@ -32,267 +32,282 @@ import iped3.PathNode;
  */
 public class CaseDataImpl implements CaseData {
 
-  /**
-   * Identificador utilizado para serialização da classe.
-   */
-  private static final long serialVersionUID = 197209091220L;
+    /**
+     * Identificador utilizado para serialização da classe.
+     */
+    private static final long serialVersionUID = 197209091220L;
 
-  /**
-   * Informações do caso.
-   */
-  private final CaseInfo caseInformation = new CaseInfoImpl();
+    /**
+     * Informações do caso.
+     */
+    private final CaseInfo caseInformation = new CaseInfoImpl();
 
-  /**
-   * Grupos de arquivos por categoria.
-   */
-  public List<FileGroup> bookmarks = new ArrayList<FileGroup>();
+    /**
+     * Grupos de arquivos por categoria.
+     */
+    public List<FileGroup> bookmarks = new ArrayList<FileGroup>();
 
-  /**
-   * Grupos de arquivos por data.
-   */
-  private final List<FileGroup> timeGroups = new ArrayList<FileGroup>();
+    /**
+     * Grupos de arquivos por data.
+     */
+    private final List<FileGroup> timeGroups = new ArrayList<FileGroup>();
 
-  /**
-   * Filas de processamento dos itens do caso
-   */
-  private TreeMap<Integer,LinkedBlockingDeque<Item>> queues;
-  
-  private volatile Integer currentQueuePriority = 0;
+    /**
+     * Filas de processamento dos itens do caso
+     */
+    private TreeMap<Integer, LinkedBlockingDeque<Item>> queues;
 
-  /**
-   * Mapa genérico de objetos extras do caso. Pode ser utilizado como área de compartilhamento de
-   * objetos entre as instâncias das tarefas.
-   */
-  private HashMap<String, Object> objectMap = new HashMap<String, Object>();
+    private volatile Integer currentQueuePriority = 0;
 
-  private int discoveredEvidences = 0;
+    /**
+     * Mapa genérico de objetos extras do caso. Pode ser utilizado como área de
+     * compartilhamento de objetos entre as instâncias das tarefas.
+     */
+    private HashMap<String, Object> objectMap = new HashMap<String, Object>();
 
-  private int alternativeFiles = 0;
+    private int discoveredEvidences = 0;
 
-  /**
-   * @return retorna o volume de dados descobertos até o momento
-   */
-  public synchronized long getDiscoveredVolume() {
-    return discoveredVolume;
-  }
+    private int alternativeFiles = 0;
 
-  /**
-   * @param volume tamanho do novo item descoberto
-   */
-  public synchronized void incDiscoveredVolume(Long volume) {
-    if (volume != null) {
-      this.discoveredVolume += volume;
+    /**
+     * @return retorna o volume de dados descobertos até o momento
+     */
+    public synchronized long getDiscoveredVolume() {
+        return discoveredVolume;
     }
-  }
 
-  private long discoveredVolume = 0;
+    /**
+     * @param volume
+     *            tamanho do novo item descoberto
+     */
+    public synchronized void incDiscoveredVolume(Long volume) {
+        if (volume != null) {
+            this.discoveredVolume += volume;
+        }
+    }
 
-  /**
-   * Árvore de arquivos de evidência.
-   */
-  private final PathNode root = new PathNodeImpl(Messages.getString("CaseData.Case")); //$NON-NLS-1$
+    private long discoveredVolume = 0;
 
-  /**
-   * indica que o caso se trata de um relatório
-   */
-  private boolean containsReport = false, ipedReport = false;
+    /**
+     * Árvore de arquivos de evidência.
+     */
+    private final PathNode root = new PathNodeImpl(Messages.getString("CaseData.Case")); //$NON-NLS-1$
 
-  public boolean isIpedReport() {
-    return ipedReport;
-  }
+    /**
+     * indica que o caso se trata de um relatório
+     */
+    private boolean containsReport = false, ipedReport = false;
 
-  public void setIpedReport(boolean ipedReport) {
-    this.ipedReport = ipedReport;
-  }
+    public boolean isIpedReport() {
+        return ipedReport;
+    }
 
-  synchronized public void incAlternativeFiles(int inc) {
-    alternativeFiles += inc;
-  }
+    public void setIpedReport(boolean ipedReport) {
+        this.ipedReport = ipedReport;
+    }
 
-  synchronized public int getAlternativeFiles() {
-    return alternativeFiles;
-  }
+    synchronized public void incAlternativeFiles(int inc) {
+        alternativeFiles += inc;
+    }
 
-  synchronized public void incDiscoveredEvidences(int inc) {
-    discoveredEvidences += inc;
-  }
+    synchronized public int getAlternativeFiles() {
+        return alternativeFiles;
+    }
 
-  synchronized public int getDiscoveredEvidences() {
-    return discoveredEvidences;
-  }
+    synchronized public void incDiscoveredEvidences(int inc) {
+        discoveredEvidences += inc;
+    }
 
-  private int maxQueueSize;
+    synchronized public int getDiscoveredEvidences() {
+        return discoveredEvidences;
+    }
 
-  /**
-   * Cria objeto do caso
-   *
-   * @param queueSize tamanho da fila de processamento dos itens
-   */
-  public CaseDataImpl(int queueSize) {
-    this.maxQueueSize = queueSize;
-    initQueues();
-  }
-  
-  private void initQueues(){
-	  queues = new TreeMap<Integer,LinkedBlockingDeque<Item>>();
-	  queues.put(0, new LinkedBlockingDeque<Item>());
-	  for(Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
-		  queues.put(priority, new LinkedBlockingDeque<Item>());
-  }
+    private int maxQueueSize;
 
-  /**
-   * Retorna o objeto com as informações do caso.
-   *
-   * @return objeto da classe CaseInformation com informações do caso
-   */
-  public CaseInfo getCaseInformation() {
-    return caseInformation;
-  }
+    /**
+     * Cria objeto do caso
+     *
+     * @param queueSize
+     *            tamanho da fila de processamento dos itens
+     */
+    public CaseDataImpl(int queueSize) {
+        this.maxQueueSize = queueSize;
+        initQueues();
+    }
 
-  /**
-   * Adiciona um bookmark.
-   *
-   * @param bookmark bookmark a ser adicionado
-   */
-  public void addBookmark(FileGroup bookmark) {
-    bookmarks.add(bookmark);
-  }
+    private void initQueues() {
+        queues = new TreeMap<Integer, LinkedBlockingDeque<Item>>();
+        queues.put(0, new LinkedBlockingDeque<Item>());
+        for (Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
+            queues.put(priority, new LinkedBlockingDeque<Item>());
+    }
 
-  /**
-   * Obtém lista de bookmarks.
-   *
-   * @return lista não modificável de bookmarks.
-   */
-  public List<FileGroup> getBookmarks() {
-    return bookmarks;
-  }
+    /**
+     * Retorna o objeto com as informações do caso.
+     *
+     * @return objeto da classe CaseInformation com informações do caso
+     */
+    public CaseInfo getCaseInformation() {
+        return caseInformation;
+    }
 
-  /**
-   * Adiciona um grupo de arquivos classificados por data.
-   *
-   * @param timeGroup grupo de arquivos classificados por data
-   */
-  public void addTimeGroup(FileGroup timeGroup) {
-    timeGroups.add(timeGroup);
-  }
+    /**
+     * Adiciona um bookmark.
+     *
+     * @param bookmark
+     *            bookmark a ser adicionado
+     */
+    public void addBookmark(FileGroup bookmark) {
+        bookmarks.add(bookmark);
+    }
 
-  /**
-   * Obtém lista de grupo de arquivos por data.
-   *
-   * @return lista não modificável de grupo de arquivos por data.
-   */
-  public List<FileGroup> getTimeGroups() {
-    return Collections.unmodifiableList(timeGroups);
-  }
+    /**
+     * Obtém lista de bookmarks.
+     *
+     * @return lista não modificável de bookmarks.
+     */
+    public List<FileGroup> getBookmarks() {
+        return bookmarks;
+    }
 
-  /**
-   * Obtém o objeto raiz da árvore de arquivos do caso.
-   *
-   * @return objeto raiz, a partir do qual é possível navegar em todo estrutura de diretórios do
-   * caso.
-   */
-  public PathNode getRootNode() {
-    return root;
-  }
+    /**
+     * Adiciona um grupo de arquivos classificados por data.
+     *
+     * @param timeGroup
+     *            grupo de arquivos classificados por data
+     */
+    public void addTimeGroup(FileGroup timeGroup) {
+        timeGroups.add(timeGroup);
+    }
 
-  /**
-   * Adiciona um arquivo de evidência.
-   *
-   * @param item arquivo a ser adicionado
-   * @throws InterruptedException
-   */
-  public void addItem(Item item) throws InterruptedException {
-	  addItemToQueue(item, 0);
+    /**
+     * Obtém lista de grupo de arquivos por data.
+     *
+     * @return lista não modificável de grupo de arquivos por data.
+     */
+    public List<FileGroup> getTimeGroups() {
+        return Collections.unmodifiableList(timeGroups);
+    }
 
-  }
-  
-  public void addItemToQueue(Item item, int queuePriority) throws InterruptedException{
-	  LinkedBlockingDeque<Item> queue = queues.get(queuePriority);
-	  while (queue.size() >= maxQueueSize) {
-	      Thread.sleep(1000);
-	  }
+    /**
+     * Obtém o objeto raiz da árvore de arquivos do caso.
+     *
+     * @return objeto raiz, a partir do qual é possível navegar em todo estrutura de
+     *         diretórios do caso.
+     */
+    public PathNode getRootNode() {
+        return root;
+    }
 
-	  queue.put(item);
-  }
+    /**
+     * Adiciona um arquivo de evidência.
+     *
+     * @param item
+     *            arquivo a ser adicionado
+     * @throws InterruptedException
+     */
+    public void addItem(Item item) throws InterruptedException {
+        addItemToQueue(item, 0);
 
-  public Integer changeToNextQueue(){
-	  currentQueuePriority = queues.ceilingKey(currentQueuePriority + 1);
-	  return currentQueuePriority;
-  }
-  
-  public Integer getCurrentQueuePriority(){
-	  return currentQueuePriority;
-  }
-  
-  /**
-   * Obtém fila de arquivos de evidência do caso.
-   *
-   * @return fila de arquivos.
-   */
-  public LinkedBlockingDeque<Item> getItemQueue() {
-    return queues.get(currentQueuePriority);
-  }
+    }
 
-  /**
-   * Salva o objeto atual em arquivo. Utiliza serialização direta do objeto e compactação GZIP.
-   *
-   * @param file arquivo a ser salvo
-   * @throws IOException Erro no acesso ao arquivo.
-   */
-  public void save(File file) throws IOException {
-    file.getParentFile().mkdirs();
-    ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(file)));
-    out.writeObject(this);
-    out.close();
-  }
+    public void addItemToQueue(Item item, int queuePriority) throws InterruptedException {
+        LinkedBlockingDeque<Item> queue = queues.get(queuePriority);
+        while (queue.size() >= maxQueueSize) {
+            Thread.sleep(1000);
+        }
 
-  /**
-   * Carrega objeto previamente salvo em arquivo.
-   *
-   * @param file arquivo a ser lido
-   * @throws IOException Erro no acesso ao arquivo.
-   * @throws ClassNotFoundException Arquivo não contém dados esperados.
-   */
-  public static CaseData load(File file) throws IOException, ClassNotFoundException {
-    ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
-    CaseData data = (CaseData) in.readObject();
-    in.close();
-    return data;
-  }
+        queue.put(item);
+    }
 
-  /**
-   * @return true se o caso contém um report
-   */
-  public boolean containsReport() {
-    return containsReport;
-  }
+    public Integer changeToNextQueue() {
+        currentQueuePriority = queues.ceilingKey(currentQueuePriority + 1);
+        return currentQueuePriority;
+    }
 
-  /**
-   *
-   * @param containsReport se o caso contém um report
-   */
-  public void setContainsReport(boolean containsReport) {
-    this.containsReport = containsReport;
-  }
+    public Integer getCurrentQueuePriority() {
+        return currentQueuePriority;
+    }
 
-  /**
-   * Retorna um objeto armazenado no caso.
-   *
-   * @param key Nome do objeto
-   * @return O objeto armazenado no caso
-   */
-  public Object getCaseObject(String key) {
-    return objectMap.get(key);
-  }
+    /**
+     * Obtém fila de arquivos de evidência do caso.
+     *
+     * @return fila de arquivos.
+     */
+    public LinkedBlockingDeque<Item> getItemQueue() {
+        return queues.get(currentQueuePriority);
+    }
 
-  /**
-   * Armazena um objeto genérico no caso.
-   *
-   * @param key Nome do objeto a armazenar
-   * @param value Objeto a ser armazenado
-   */
-  public void putCaseObject(String key, Object value) {
-    objectMap.put(key, value);
-  }
+    /**
+     * Salva o objeto atual em arquivo. Utiliza serialização direta do objeto e
+     * compactação GZIP.
+     *
+     * @param file
+     *            arquivo a ser salvo
+     * @throws IOException
+     *             Erro no acesso ao arquivo.
+     */
+    public void save(File file) throws IOException {
+        file.getParentFile().mkdirs();
+        ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new FileOutputStream(file)));
+        out.writeObject(this);
+        out.close();
+    }
+
+    /**
+     * Carrega objeto previamente salvo em arquivo.
+     *
+     * @param file
+     *            arquivo a ser lido
+     * @throws IOException
+     *             Erro no acesso ao arquivo.
+     * @throws ClassNotFoundException
+     *             Arquivo não contém dados esperados.
+     */
+    public static CaseData load(File file) throws IOException, ClassNotFoundException {
+        ObjectInputStream in = new ObjectInputStream(new GZIPInputStream(new FileInputStream(file)));
+        CaseData data = (CaseData) in.readObject();
+        in.close();
+        return data;
+    }
+
+    /**
+     * @return true se o caso contém um report
+     */
+    public boolean containsReport() {
+        return containsReport;
+    }
+
+    /**
+     *
+     * @param containsReport
+     *            se o caso contém um report
+     */
+    public void setContainsReport(boolean containsReport) {
+        this.containsReport = containsReport;
+    }
+
+    /**
+     * Retorna um objeto armazenado no caso.
+     *
+     * @param key
+     *            Nome do objeto
+     * @return O objeto armazenado no caso
+     */
+    public Object getCaseObject(String key) {
+        return objectMap.get(key);
+    }
+
+    /**
+     * Armazena um objeto genérico no caso.
+     *
+     * @param key
+     *            Nome do objeto a armazenar
+     * @param value
+     *            Objeto a ser armazenado
+     */
+    public void putCaseObject(String key, Object value) {
+        objectMap.put(key, value);
+    }
 
 }

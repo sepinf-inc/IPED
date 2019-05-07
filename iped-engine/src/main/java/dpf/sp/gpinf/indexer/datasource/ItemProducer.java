@@ -35,100 +35,101 @@ import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
 
 /**
- * Responsável por instanciar e executar o contador e o produtor de itens do caso que adiciona os
- * itens a fila de processamento. Podem obter os itens de diversas fontes de dados: pastas,
- * relatórios do FTK, imagens forenses ou casos do IPED.
+ * Responsável por instanciar e executar o contador e o produtor de itens do
+ * caso que adiciona os itens a fila de processamento. Podem obter os itens de
+ * diversas fontes de dados: pastas, relatórios do FTK, imagens forenses ou
+ * casos do IPED.
  *
  */
 public class ItemProducer extends Thread {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
-  private final CaseData caseData;
-  private final boolean listOnly;
-  private List<File> datasources;
-  private File output;
-  private Manager manager;
-  private DataSourceReader currentReader;
-  private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
+    private final CaseData caseData;
+    private final boolean listOnly;
+    private List<File> datasources;
+    private File output;
+    private Manager manager;
+    private DataSourceReader currentReader;
+    private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
 
-  public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output) throws Exception {
-    this.caseData = caseData;
-    this.listOnly = listOnly;
-    this.datasources = datasources;
-    this.output = output;
-    this.manager = manager;
+    public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output)
+            throws Exception {
+        this.caseData = caseData;
+        this.listOnly = listOnly;
+        this.datasources = datasources;
+        this.output = output;
+        this.manager = manager;
 
-    installDataSourceReaders();
-  }
-
-  private void installDataSourceReaders() throws Exception {
-
-    Class<? extends DataSourceReader>[] readerList = new Class[]{
-      FTK3ReportReader.class,
-      SleuthkitReader.class,
-      IPEDReader.class,
-      UfedXmlReader.class,
-      AD1DataSourceReader.class,
-      FolderTreeReader.class //deve ser o último
-    };
-
-    for (Class<? extends DataSourceReader> srcReader : readerList) {
-      Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class, boolean.class);
-      sourceReaders.add(constr.newInstance(caseData, output, listOnly));
-    }
-  }
-
-  public String currentDirectory() {
-    if (currentReader != null) {
-      return currentReader.currentDirectory();
-    } else {
-      return null;
-    }
-  }
-
-  @Override
-  public void run() {
-    try {
-      for (File source : datasources) {
-        if (Thread.interrupted()) {
-          throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
-        }
-
-        if (listOnly) {
-          IndexFiles.getInstance().firePropertyChange("mensagem", 0, Messages.getString("ItemProducer.Adding") + source.getAbsolutePath() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-          LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
-        }
-
-        int alternativeFiles = 0;
-        for (DataSourceReader srcReader : sourceReaders) {
-          if (srcReader.isSupported(source)) {
-            currentReader = srcReader;
-            alternativeFiles += srcReader.read(source);
-            break;
-          }
-
-        }
-        caseData.incAlternativeFiles(alternativeFiles);
-      }
-      if (!listOnly) {
-        ItemImpl evidence = new ItemImpl();
-        evidence.setQueueEnd(true);
-        //caseData.addEvidenceFile(evidence);
-
-      } else {
-        IndexFiles.getInstance().firePropertyChange("taskSize", 0, (int) (caseData.getDiscoveredVolume() / 1000000)); //$NON-NLS-1$
-        LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-      }
-
-    } catch (Throwable e) {
-      if (manager.exception == null) {
-    	Exception e1 = new Exception();
-    	e1.initCause(e);
-        manager.exception = e1;
-      }
+        installDataSourceReaders();
     }
 
-  }
+    private void installDataSourceReaders() throws Exception {
+
+        Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
+                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, FolderTreeReader.class // deve ser o
+                                                                                                         // último
+        };
+
+        for (Class<? extends DataSourceReader> srcReader : readerList) {
+            Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class,
+                    boolean.class);
+            sourceReaders.add(constr.newInstance(caseData, output, listOnly));
+        }
+    }
+
+    public String currentDirectory() {
+        if (currentReader != null) {
+            return currentReader.currentDirectory();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            for (File source : datasources) {
+                if (Thread.interrupted()) {
+                    throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
+                }
+
+                if (listOnly) {
+                    IndexFiles.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
+                            Messages.getString("ItemProducer.Adding") + source.getAbsolutePath() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+                    LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
+                }
+
+                int alternativeFiles = 0;
+                for (DataSourceReader srcReader : sourceReaders) {
+                    if (srcReader.isSupported(source)) {
+                        currentReader = srcReader;
+                        alternativeFiles += srcReader.read(source);
+                        break;
+                    }
+
+                }
+                caseData.incAlternativeFiles(alternativeFiles);
+            }
+            if (!listOnly) {
+                ItemImpl evidence = new ItemImpl();
+                evidence.setQueueEnd(true);
+                // caseData.addEvidenceFile(evidence);
+
+            } else {
+                IndexFiles.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
+                        (int) (caseData.getDiscoveredVolume() / 1000000));
+                LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
+            }
+
+        } catch (Throwable e) {
+            if (manager.exception == null) {
+                Exception e1 = new Exception();
+                e1.initCause(e);
+                manager.exception = e1;
+            }
+        }
+
+    }
 
 }

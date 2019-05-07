@@ -42,136 +42,139 @@ import dpf.sp.gpinf.indexer.parsers.RegistryParser.ContainerVolatile;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 /**
- * Parser para históricos index.dat do Internet Explorer 9 e anteriores.
- * Utiliza a libmsiecf para o parsing via execução de processo auxiliar.
+ * Parser para históricos index.dat do Internet Explorer 9 e anteriores. Utiliza
+ * a libmsiecf para o parsing via execução de processo auxiliar.
  * 
  * @author Nassif
  *
  */
-public class IndexDatParser extends AbstractParser{
-	
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+public class IndexDatParser extends AbstractParser {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(IndexDatParser.class);
-	
-	private static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-msie-cache")); //$NON-NLS-1$
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    private static Logger LOGGER = LoggerFactory.getLogger(IndexDatParser.class);
+
+    private static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-msie-cache")); //$NON-NLS-1$
     private static final String TOOL_NAME = "msiecfexport"; //$NON-NLS-1$
-	private static boolean tested = false;
-	
-	public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
-	private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
+    private static boolean tested = false;
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		if(tested)
-			return SUPPORTED_TYPES;
-			
-		synchronized (this.getClass()) {
-			if(!tested)
-				try{
-					String[] cmd = {TOOL_PATH + TOOL_NAME, "-V"}; //$NON-NLS-1$
-					Process p = Runtime.getRuntime().exec(cmd);
-					Util.ignoreStream(p.getErrorStream());
-					Util.ignoreStream(p.getInputStream());
-					if(p.waitFor() != 0)
-						throw new Exception();
-	
-	            } catch (Exception e) {
-					LOGGER.error("Error testing msiecfexport (libmsiecf): index.dat files will NOT be parsed"); //$NON-NLS-1$
-	                SUPPORTED_TYPES = Collections.emptySet();
-	            }
+    public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
+    private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
+
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        if (tested)
+            return SUPPORTED_TYPES;
+
+        synchronized (this.getClass()) {
+            if (!tested)
+                try {
+                    String[] cmd = { TOOL_PATH + TOOL_NAME, "-V" }; //$NON-NLS-1$
+                    Process p = Runtime.getRuntime().exec(cmd);
+                    Util.ignoreStream(p.getErrorStream());
+                    Util.ignoreStream(p.getInputStream());
+                    if (p.waitFor() != 0)
+                        throw new Exception();
+
+                } catch (Exception e) {
+                    LOGGER.error("Error testing msiecfexport (libmsiecf): index.dat files will NOT be parsed"); //$NON-NLS-1$
+                    SUPPORTED_TYPES = Collections.emptySet();
+                }
             tested = true;
         }
 
         return SUPPORTED_TYPES;
-	}
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-		XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-		xhtml.startDocument();
-		xhtml.startElement("pre"); //$NON-NLS-1$
-		
-		TemporaryResources tmp = new TemporaryResources();
-		Process p = null;
-		Thread readThread = null;
-		try{
-			TikaInputStream tis = TikaInputStream.get(stream, tmp);
-			File file = tis.getFile();
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+        xhtml.startElement("pre"); //$NON-NLS-1$
 
-			String[] cmd = {TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath()}; //$NON-NLS-1$ //$NON-NLS-2$
-			ProcessBuilder pb = new ProcessBuilder(cmd);
-			p = pb.start();
-			Util.ignoreStream(p.getErrorStream());
-			
-			InputStream is = p.getInputStream();
-			byte[] data = new byte[64 * 1024];
-			BytesRead read = new BytesRead();
-			
-			readThread = readStream(is, data, read);
-			
-			while(true){
-				synchronized(read){
-					while(read.value == null)
-						read.wait();
-					if(read.value == -1)
-						break;
-				}
-				
-				byte[] out = new byte[read.value];
-				System.arraycopy(data, 0, out, 0, read.value);
-				
-				synchronized(read){
-					read.value = null;
-					read.notify();
-				}
-				String str = Util.decodeUnknowCharset(out);
-				xhtml.characters(str);
-				
-				if(Thread.currentThread().isInterrupted())
-					throw new InterruptedException();
-			}
-			
-			if(p.waitFor() != 0)
-				throw new TikaException(TOOL_NAME + " terminated with error code " + p.exitValue()); //$NON-NLS-1$
+        TemporaryResources tmp = new TemporaryResources();
+        Process p = null;
+        Thread readThread = null;
+        try {
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            File file = tis.getFile();
 
-		}catch(InterruptedException e){
-			throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
-			
-		}finally{
-			if(p != null) p.destroyForcibly();
-			if(readThread != null) readThread.interrupt();
-			tmp.close();
-			
-			xhtml.endElement("pre"); //$NON-NLS-1$
-			xhtml.endDocument();
-		}
-		
-	}
-	
-	private Thread readStream(final InputStream stream, final byte[] out, final BytesRead read) {
+            String[] cmd = { TOOL_PATH + TOOL_NAME, "-m", "all", file.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            p = pb.start();
+            Util.ignoreStream(p.getErrorStream());
+
+            InputStream is = p.getInputStream();
+            byte[] data = new byte[64 * 1024];
+            BytesRead read = new BytesRead();
+
+            readThread = readStream(is, data, read);
+
+            while (true) {
+                synchronized (read) {
+                    while (read.value == null)
+                        read.wait();
+                    if (read.value == -1)
+                        break;
+                }
+
+                byte[] out = new byte[read.value];
+                System.arraycopy(data, 0, out, 0, read.value);
+
+                synchronized (read) {
+                    read.value = null;
+                    read.notify();
+                }
+                String str = Util.decodeUnknowCharset(out);
+                xhtml.characters(str);
+
+                if (Thread.currentThread().isInterrupted())
+                    throw new InterruptedException();
+            }
+
+            if (p.waitFor() != 0)
+                throw new TikaException(TOOL_NAME + " terminated with error code " + p.exitValue()); //$NON-NLS-1$
+
+        } catch (InterruptedException e) {
+            throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
+
+        } finally {
+            if (p != null)
+                p.destroyForcibly();
+            if (readThread != null)
+                readThread.interrupt();
+            tmp.close();
+
+            xhtml.endElement("pre"); //$NON-NLS-1$
+            xhtml.endDocument();
+        }
+
+    }
+
+    private Thread readStream(final InputStream stream, final byte[] out, final BytesRead read) {
         Thread t = new Thread() {
             @Override
             public void run() {
                 try {
-                	while (!Thread.interrupted()){
-                		int i = stream.read(out);
-                		synchronized(read){
-                    		read.value = i;
-        					read.notify();
-        					if(read.value == -1)
-        						break;
-        					while(read.value != null)
-        						read.wait();
-        				}
-                	}
+                    while (!Thread.interrupted()) {
+                        int i = stream.read(out);
+                        synchronized (read) {
+                            read.value = i;
+                            read.notify();
+                            if (read.value == -1)
+                                break;
+                            while (read.value != null)
+                                read.wait();
+                        }
+                    }
 
                 } catch (Exception e) {
-                	e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
         };
@@ -179,9 +182,9 @@ public class IndexDatParser extends AbstractParser{
 
         return t;
     }
-	
-	class BytesRead{
-		Integer value = null;
-	}
+
+    class BytesRead {
+        Integer value = null;
+    }
 
 }

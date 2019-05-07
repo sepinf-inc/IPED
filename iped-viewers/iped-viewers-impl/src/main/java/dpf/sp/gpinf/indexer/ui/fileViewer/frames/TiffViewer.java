@@ -41,366 +41,372 @@ import iped3.io.StreamSource;
 
 public class TiffViewer extends Viewer {
 
-  private static final long serialVersionUID = -7364831780786494299L;
+    private static final long serialVersionUID = -7364831780786494299L;
 
-  private final JLabel pageCounter1 = new JLabel(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
-  private JTextField pageCounter2 = new JTextField(3);
-  private JLabel pageCounter3 = new JLabel(" / "); //$NON-NLS-1$
+    private final JLabel pageCounter1 = new JLabel(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
+    private JTextField pageCounter2 = new JTextField(3);
+    private JLabel pageCounter3 = new JLabel(" / "); //$NON-NLS-1$
 
-  private JPanel imgPanel;
-  private JScrollPane scrollPane;
-  
-  private ExecutorService executor = Executors.newFixedThreadPool(1);
-  
-  volatile private InputStream is = null;
-  volatile private ImageInputStream iis = null;
-  volatile private ImageReader reader = null;
-  
-  volatile private BufferedImage image = null;
-  volatile private StreamSource currentContent;
-  volatile private int currentPage = 0;
-  volatile private int numPages = 0;
-  volatile private double zoomFactor = 1;
-  volatile private int rotation = 0;
-  volatile private boolean painting = false;
+    private JPanel imgPanel;
+    private JScrollPane scrollPane;
 
-  @Override
-  public String getName() {
-    return "TIFF"; //$NON-NLS-1$
-  }
+    private ExecutorService executor = Executors.newFixedThreadPool(1);
 
-  @Override
-  public boolean isSupportedType(String contentType) {
-    return contentType.equals("image/tiff"); //$NON-NLS-1$
-  }
+    volatile private InputStream is = null;
+    volatile private ImageInputStream iis = null;
+    volatile private ImageReader reader = null;
 
-  public TiffViewer() {
-    super(new BorderLayout());
+    volatile private BufferedImage image = null;
+    volatile private StreamSource currentContent;
+    volatile private int currentPage = 0;
+    volatile private int numPages = 0;
+    volatile private double zoomFactor = 1;
+    volatile private int rotation = 0;
+    volatile private boolean painting = false;
 
-    imgPanel = new JPanel() {
-      @Override
-      public void paintComponent(Graphics g) {
-        painting = true;
-        // System.out.println("painting");
-        super.paintComponent(g);
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+    @Override
+    public String getName() {
+        return "TIFF"; //$NON-NLS-1$
+    }
+
+    @Override
+    public boolean isSupportedType(String contentType) {
+        return contentType.equals("image/tiff"); //$NON-NLS-1$
+    }
+
+    public TiffViewer() {
+        super(new BorderLayout());
+
+        imgPanel = new JPanel() {
+            @Override
+            public void paintComponent(Graphics g) {
+                painting = true;
+                // System.out.println("painting");
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                if (image != null) {
+                    int w = (int) (image.getWidth() * zoomFactor);
+                    int h = (int) (image.getHeight() * zoomFactor);
+                    g2.drawImage(image, 0, 0, w, h, null);
+                }
+                painting = false;
+            }
+        };
+
+        this.getPanel().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (image != null) {
+                    fitWidth();
+                    imgPanel.repaint();
+                }
+            }
+        });
+
+        scrollPane = new JScrollPane(imgPanel);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JPanel topPanel = initControlPanel();
+        this.getPanel().add(topPanel, BorderLayout.NORTH);
+        this.getPanel().add(scrollPane, BorderLayout.CENTER);
+
+    }
+
+    @Override
+    public void copyScreen(Component comp) {
+        super.copyScreen(scrollPane);
+    }
+
+    private void fitWidth() {
         if (image != null) {
-          int w = (int) (image.getWidth() * zoomFactor);
-          int h = (int) (image.getHeight() * zoomFactor);
-          g2.drawImage(image, 0, 0, w, h, null);
+            zoomFactor = (imgPanel.getVisibleRect().getWidth()) / image.getWidth();
+            Dimension d = new Dimension((int) imgPanel.getVisibleRect().getWidth(),
+                    (int) (image.getHeight() * zoomFactor));
+            imgPanel.setPreferredSize(d);
         }
-        painting = false;
-      }
-    };
-
-    this.getPanel().addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        if (image != null) {
-          fitWidth();
-          imgPanel.repaint();
-        }
-      }
-    });
-
-    scrollPane = new JScrollPane(imgPanel);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-    JPanel topPanel = initControlPanel();
-    this.getPanel().add(topPanel, BorderLayout.NORTH);
-    this.getPanel().add(scrollPane, BorderLayout.CENTER);
-
-  }
-
-  @Override
-  public void copyScreen(Component comp) {
-    super.copyScreen(scrollPane);
-  }
-
-  private void fitWidth() {
-    if (image != null) {
-      zoomFactor = (imgPanel.getVisibleRect().getWidth()) / image.getWidth();
-      Dimension d = new Dimension((int) imgPanel.getVisibleRect().getWidth(), (int) (image.getHeight() * zoomFactor));
-      imgPanel.setPreferredSize(d);
-    }
-  }
-
-  @Override
-  public void loadFile(StreamSource content, Set<String> highlightTerms) {
-
-    currentPage = 1;
-    numPages = 0;
-    rotation = 0;
-    image = null;
-    
-    if(content != currentContent && currentContent != null)
-    	refreshGUI();
-    currentContent = content;
-    
-    if (currentContent != null) {
-    	openContent(content);
     }
 
-  }
-  
-  private void disposeResources(){
-	  try{
-		if(reader != null)
-		  reader.dispose();
-	  }catch(Exception e){}
-	  
-	  IOUtil.closeQuietly(iis);
-	  IOUtil.closeQuietly(is);
-	  
-	  reader = null;
-	  iis = null;
-	  is = null;
-  }
-  
-  private void openContent(final StreamSource content){
-	  executor.submit(new Runnable() {
-	      @Override
-	      public void run() {
-	    	disposeResources();
-	    	if(content != currentContent)
-	    	  return;
-	    	try {
-	        	is = currentContent.getStream();
-	        	iis = ImageIO.createImageInputStream(is);
-	        	reader = ImageIO.getImageReaders(iis).next();
-	            reader.setInput(iis, false, true);
-	            
-	            numPages = reader.getNumImages(true);
+    @Override
+    public void loadFile(StreamSource content, Set<String> highlightTerms) {
 
-	        } catch (Exception e) {
-	          e.printStackTrace();
-	        }
-	    	displayPage(content);
-	      }
-	    });
+        currentPage = 1;
+        numPages = 0;
+        rotation = 0;
+        image = null;
 
-  }
-  
-  private void displayPage() {
-	  displayPage(currentContent);
-  }
+        if (content != currentContent && currentContent != null)
+            refreshGUI();
+        currentContent = content;
 
-  private void displayPage(final StreamSource content) {
+        if (currentContent != null) {
+            openContent(content);
+        }
 
-	  executor.submit(new Runnable() {
-      @Override
-      public void run() {
-    	if(content != currentContent)
-	      return;
+    }
+
+    private void disposeResources() {
         try {
-            int w0 = reader.getWidth(currentPage - 1);
-            int h0 = reader.getHeight(currentPage - 1);
-            
-            ImageReadParam params = reader.getDefaultReadParam();
-            int sampling = w0 > h0 ? w0 / 1000 : h0 / 1000;
-            if(sampling < 1) sampling = 1;
-            int finalW = (int)Math.ceil((float)w0 / sampling);
-            int finalH = (int)Math.ceil((float)h0 / sampling);
-            
-            params.setSourceSubsampling(sampling, sampling, 0, 0);
-            image = reader.getImageTypes(currentPage - 1).next().createBufferedImage(finalW, finalH);
-            params.setDestination(image);
-            
-            reader.read(currentPage - 1 , params);
-            
+            if (reader != null)
+                reader.dispose();
         } catch (Exception e) {
-          e.printStackTrace();
-          
-        }finally{
-        	if(image != null)
-        		image = getCompatibleImage(image);
         }
 
-        refreshGUI();
-      }
-    });
+        IOUtil.closeQuietly(iis);
+        IOUtil.closeQuietly(is);
 
-  }
-
-  private void refreshGUI() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        fitWidth();
-        imgPanel.scrollRectToVisible(new Rectangle());
-        imgPanel.revalidate();
-        imgPanel.repaint();
-        pageCounter2.setText(String.valueOf(currentPage));
-        pageCounter3.setText(" / " + numPages); //$NON-NLS-1$
-      }
-    });
-  }
-
-  private BufferedImage getCompatibleImage(BufferedImage image) {
-	//System.out.println("getCompat" + System.currentTimeMillis()/1000);
-	  
-    // obtain the current system graphical settings
-    GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
-
-    /*
-     * if image is already compatible and optimized for current system
-     * settings, simply return it
-     */
-    if (image.getColorModel().equals(gfx_config.getColorModel())) {
-      return image;
+        reader = null;
+        iis = null;
+        is = null;
     }
 
-    // image is not optimized, so create a new image that is
-    BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(), image.getTransparency());
+    private void openContent(final StreamSource content) {
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                disposeResources();
+                if (content != currentContent)
+                    return;
+                try {
+                    is = currentContent.getStream();
+                    iis = ImageIO.createImageInputStream(is);
+                    reader = ImageIO.getImageReaders(iis).next();
+                    reader.setInput(iis, false, true);
 
-    // get the graphics context of the new image to draw the old image on
-    Graphics2D g2d = (Graphics2D) new_image.getGraphics();
+                    numPages = reader.getNumImages(true);
 
-    // actually draw the image and dispose of context no longer needed
-    g2d.drawImage(image, 0, 0, null);
-    g2d.dispose();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                displayPage(content);
+            }
+        });
 
-    //System.out.println("CompatGot" + System.currentTimeMillis()/1000);
-    
-    // return the new optimized image
-    return new_image;
-  }
+    }
 
-  private JPanel initControlPanel() {
+    private void displayPage() {
+        displayPage(currentContent);
+    }
 
-    JPanel topBar = new JPanel();
-    topBar.setLayout(new GridLayout());// new
-    // FlowLayout(FlowLayout.CENTER,0,0));
-    topBar.setPreferredSize(new Dimension(30, 27));
+    private void displayPage(final StreamSource content) {
 
-    /**
-     * back to page 1
-     */
-    JButton start = new JButton();
-    start.setBorderPainted(false);
-    URL startImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/start.gif"); //$NON-NLS-1$
-    start.setIcon(new ImageIcon(startImage));
-    topBar.add(start);
+        executor.submit(new Runnable() {
+            @Override
+            public void run() {
+                if (content != currentContent)
+                    return;
+                try {
+                    int w0 = reader.getWidth(currentPage - 1);
+                    int h0 = reader.getHeight(currentPage - 1);
 
-    start.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (currentContent != null && currentPage != 1) {
-          currentPage = 1;
-          displayPage();
+                    ImageReadParam params = reader.getDefaultReadParam();
+                    int sampling = w0 > h0 ? w0 / 1000 : h0 / 1000;
+                    if (sampling < 1)
+                        sampling = 1;
+                    int finalW = (int) Math.ceil((float) w0 / sampling);
+                    int finalH = (int) Math.ceil((float) h0 / sampling);
+
+                    params.setSourceSubsampling(sampling, sampling, 0, 0);
+                    image = reader.getImageTypes(currentPage - 1).next().createBufferedImage(finalW, finalH);
+                    params.setDestination(image);
+
+                    reader.read(currentPage - 1, params);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+
+                } finally {
+                    if (image != null)
+                        image = getCompatibleImage(image);
+                }
+
+                refreshGUI();
+            }
+        });
+
+    }
+
+    private void refreshGUI() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                fitWidth();
+                imgPanel.scrollRectToVisible(new Rectangle());
+                imgPanel.revalidate();
+                imgPanel.repaint();
+                pageCounter2.setText(String.valueOf(currentPage));
+                pageCounter3.setText(" / " + numPages); //$NON-NLS-1$
+            }
+        });
+    }
+
+    private BufferedImage getCompatibleImage(BufferedImage image) {
+        // System.out.println("getCompat" + System.currentTimeMillis()/1000);
+
+        // obtain the current system graphical settings
+        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                .getDefaultConfiguration();
+
+        /*
+         * if image is already compatible and optimized for current system settings,
+         * simply return it
+         */
+        if (image.getColorModel().equals(gfx_config.getColorModel())) {
+            return image;
         }
-      }
-    });
 
-    /**
-     * back icon
-     */
-    JButton back = new JButton();
-    back.setBorderPainted(false);
-    URL backImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/back.gif"); //$NON-NLS-1$
-    back.setIcon(new ImageIcon(backImage));
-    topBar.add(back);
-    back.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (currentContent != null && currentPage > 1) {
-          currentPage -= 1;
-          displayPage();
-        }
-      }
-    });
+        // image is not optimized, so create a new image that is
+        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(),
+                image.getTransparency());
 
-    pageCounter2.setEditable(true);
-    pageCounter2.setToolTipText(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
-    pageCounter2.addActionListener(new ActionListener() {
+        // get the graphics context of the new image to draw the old image on
+        Graphics2D g2d = (Graphics2D) new_image.getGraphics();
 
-      @Override
-      public void actionPerformed(ActionEvent a) {
+        // actually draw the image and dispose of context no longer needed
+        g2d.drawImage(image, 0, 0, null);
+        g2d.dispose();
 
-        String value = pageCounter2.getText().trim();
-        int newPage;
+        // System.out.println("CompatGot" + System.currentTimeMillis()/1000);
 
-        // allow for bum values
-        try {
-          newPage = Integer.parseInt(value);
+        // return the new optimized image
+        return new_image;
+    }
 
-          if ((newPage > numPages) || (newPage < 1)) {
-            return;
-          }
+    private JPanel initControlPanel() {
 
-          currentPage = newPage;
-          displayPage();
+        JPanel topBar = new JPanel();
+        topBar.setLayout(new GridLayout());// new
+        // FlowLayout(FlowLayout.CENTER,0,0));
+        topBar.setPreferredSize(new Dimension(30, 27));
 
-        } catch (Exception e) {
-          JOptionPane.showMessageDialog(null, "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
-        }
+        /**
+         * back to page 1
+         */
+        JButton start = new JButton();
+        start.setBorderPainted(false);
+        URL startImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/start.gif"); //$NON-NLS-1$
+        start.setIcon(new ImageIcon(startImage));
+        topBar.add(start);
 
-      }
+        start.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentContent != null && currentPage != 1) {
+                    currentPage = 1;
+                    displayPage();
+                }
+            }
+        });
 
-    });
+        /**
+         * back icon
+         */
+        JButton back = new JButton();
+        back.setBorderPainted(false);
+        URL backImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/back.gif"); //$NON-NLS-1$
+        back.setIcon(new ImageIcon(backImage));
+        topBar.add(back);
+        back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentContent != null && currentPage > 1) {
+                    currentPage -= 1;
+                    displayPage();
+                }
+            }
+        });
 
-    topBar.add(new JPanel());
-    topBar.add(pageCounter2);
-    topBar.add(pageCounter3);
-    // topBar.add(new JPanel());
+        pageCounter2.setEditable(true);
+        pageCounter2.setToolTipText(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
+        pageCounter2.addActionListener(new ActionListener() {
 
-    /**
-     * forward icon
-     */
-    JButton forward = new JButton();
-    forward.setBorderPainted(false);
-    URL fowardImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/forward.gif"); //$NON-NLS-1$
-    forward.setIcon(new ImageIcon(fowardImage));
-    topBar.add(forward);
-    forward.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (currentContent != null && currentPage < numPages) {
-          currentPage += 1;
-          displayPage();
-        }
-      }
-    });
+            @Override
+            public void actionPerformed(ActionEvent a) {
 
-    /**
-     * goto last page
-     */
-    JButton end = new JButton();
-    end.setBorderPainted(false);
-    URL endImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/end.gif"); //$NON-NLS-1$
-    end.setIcon(new ImageIcon(endImage));
-    topBar.add(end);
-    end.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (currentContent != null && currentPage < numPages) {
-          currentPage = numPages;
-          displayPage();
-        }
-      }
-    });
+                String value = pageCounter2.getText().trim();
+                int newPage;
 
-    return topBar;
-  }
+                // allow for bum values
+                try {
+                    newPage = Integer.parseInt(value);
 
-  @Override
-  public void init() {
-    // TODO Auto-generated method stub
+                    if ((newPage > numPages) || (newPage < 1)) {
+                        return;
+                    }
 
-  }
+                    currentPage = newPage;
+                    displayPage();
 
-  @Override
-  public void dispose() {
-    // TODO Auto-generated method stub
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null,
+                            "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
+                }
 
-  }
+            }
 
-  @Override
-  public void scrollToNextHit(boolean forward) {
-    // TODO Auto-generated method stub
+        });
 
-  }
+        topBar.add(new JPanel());
+        topBar.add(pageCounter2);
+        topBar.add(pageCounter3);
+        // topBar.add(new JPanel());
+
+        /**
+         * forward icon
+         */
+        JButton forward = new JButton();
+        forward.setBorderPainted(false);
+        URL fowardImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/forward.gif"); //$NON-NLS-1$
+        forward.setIcon(new ImageIcon(fowardImage));
+        topBar.add(forward);
+        forward.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentContent != null && currentPage < numPages) {
+                    currentPage += 1;
+                    displayPage();
+                }
+            }
+        });
+
+        /**
+         * goto last page
+         */
+        JButton end = new JButton();
+        end.setBorderPainted(false);
+        URL endImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/end.gif"); //$NON-NLS-1$
+        end.setIcon(new ImageIcon(endImage));
+        topBar.add(end);
+        end.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentContent != null && currentPage < numPages) {
+                    currentPage = numPages;
+                    displayPage();
+                }
+            }
+        });
+
+        return topBar;
+    }
+
+    @Override
+    public void init() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void dispose() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void scrollToNextHit(boolean forward) {
+        // TODO Auto-generated method stub
+
+    }
 
 }

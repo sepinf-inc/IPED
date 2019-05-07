@@ -5,7 +5,8 @@ import macee.collection.CaseItemCollection;
 /**
  * COMENTÁRIO (Werneck): onde está sendo usado?
  */
-@FunctionalInterface public interface FilterCondition {
+@FunctionalInterface
+public interface FilterCondition {
 
     CaseItemCollection result();
 

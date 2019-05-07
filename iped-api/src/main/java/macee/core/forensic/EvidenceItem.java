@@ -18,16 +18,18 @@ public interface EvidenceItem extends ObjectRef {
      */
     String getCaseId();
 
-    @Override default String getRefType() {
+    @Override
+    default String getRefType() {
         return OBJECT_REF_TYPE;
     }
 
     /**
      * Sets the case associated with the evidence.
      *
-     * @param cse the case to set.
+     * @param cse
+     *            the case to set.
      */
-    //  void setCaseGuid(ObjectRef caseRef);
+    // void setCaseGuid(ObjectRef caseRef);
     //
-    //  void setCaseGuid(UUID caseGuid);
+    // void setCaseGuid(UUID caseGuid);
 }

@@ -44,136 +44,146 @@ public class KeystoreParser extends AbstractParser {
     private static final MediaType PKCS12_MIME = MediaType.application("x-pkcs12");
     private static final MediaType JAVA_KEYSTORE = MediaType.application("x-java-keystore");
     private static Set<MediaType> SUPPORTED_TYPES = null;
-	public static final Property PRIVATEKEY = Property.internalText("certificate:privatekey"); //$NON-NLS-1$
+    public static final Property PRIVATEKEY = Property.internalText("certificate:privatekey"); //$NON-NLS-1$
 
     static String DEFAULT_JKS_KEYSTORE_PASSWORD = "changeit";
     static List<String> passwordList = null;
-	public static final Property PASSWORD = Property.internalText("keystore:password"); //$NON-NLS-1$
+    public static final Property PASSWORD = Property.internalText("keystore:password"); //$NON-NLS-1$
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-		if(SUPPORTED_TYPES == null){
-			SUPPORTED_TYPES = new HashSet<MediaType>();
-			SUPPORTED_TYPES.add(PKCS12_MIME);
-			SUPPORTED_TYPES.add(JAVA_KEYSTORE);
-		}
-		
-		if(passwordList == null){
-			passwordList = new ArrayList();
-			passwordList.add(DEFAULT_JKS_KEYSTORE_PASSWORD);
-			passwordList.add("1234");
-			passwordList.add("mo");
-		}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+        if (SUPPORTED_TYPES == null) {
+            SUPPORTED_TYPES = new HashSet<MediaType>();
+            SUPPORTED_TYPES.add(PKCS12_MIME);
+            SUPPORTED_TYPES.add(JAVA_KEYSTORE);
+        }
 
-		return SUPPORTED_TYPES;
-	}
+        if (passwordList == null) {
+            passwordList = new ArrayList();
+            passwordList.add(DEFAULT_JKS_KEYSTORE_PASSWORD);
+            passwordList.add("1234");
+            passwordList.add("mo");
+        }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-			throws IOException, SAXException, TikaException {
-		TemporaryResources tmp = new TemporaryResources();
-		TikaInputStream tis = TikaInputStream.get(stream, tmp);
-		File file = tis.getFile();
+        return SUPPORTED_TYPES;
+    }
 
-		try {
-			String mimeType = metadata.get("Indexer-Content-Type");
-			KeyStore p12 = null;
-			
-			if(mimeType.equals(JAVA_KEYSTORE.toString())){
-				p12 = KeyStore.getInstance("JKS");
-			}else{
-				p12 = KeyStore.getInstance("PKCS12");
-			}
-			
-			String password = null;
-			boolean loaded = false;
-			for (Iterator<String> iterator = passwordList.iterator(); iterator.hasNext();) {
-				password = iterator.next();
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        TemporaryResources tmp = new TemporaryResources();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        File file = tis.getFile();
 
-				try(InputStream keyStoreStream = new FileInputStream(file)){					
-					p12.load(keyStoreStream, password.toCharArray());
-					loaded = true;
-					metadata.set(PASSWORD, password);
-					break;
-				}catch(IOException e){
-					// se for erro de senha ignora-o para tentar a próxima senha
-					//se não for erro de senha, redispara a exceção encapsulada em um objeto TikaException.
-					//if(!(e.getMessage().contains("keystore password was incorrect")||e.getMessage().contains("wrong password")||e.getMessage().contains("password was incorrect"))){
-					if(!(e.getCause() instanceof UnrecoverableKeyException)){
-						throw new TikaException(e.getMessage(), e);
-					}
-				}
-			}
-			if(!loaded){
-				//nenhuma das senhas tentadas era a correta.
-				throw new EncryptedDocumentException("Documento encriptado com senha diferente das senhas tentadas.");
-			}
+        try {
+            String mimeType = metadata.get("Indexer-Content-Type");
+            KeyStore p12 = null;
 
-			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-	        if (extractor.shouldParseEmbedded(metadata)) {
-		        Enumeration<String> e = p12.aliases();
-		        while (e.hasMoreElements()) {
-		        	String alias = (String) e.nextElement();
-		            X509Certificate cert = (X509Certificate) p12.getCertificate(alias);
+            if (mimeType.equals(JAVA_KEYSTORE.toString())) {
+                p12 = KeyStore.getInstance("JKS");
+            } else {
+                p12 = KeyStore.getInstance("PKCS12");
+            }
 
-					Metadata kmeta = new Metadata();
-		            try{
-		            	Key key = p12.getKey(alias, password.toCharArray());
-		            	if(key instanceof PrivateKey){
-		            		//se tem uma privatekey a passa.
-	            			kmeta.add(PRIVATEKEY, Base64.getEncoder().encodeToString(key.getEncoded()));
-		            	}else{
-		            		//se tem uma privatekey a passa.
-		            	}
-		            }catch(UnrecoverableKeyException ue){
-            			kmeta.add(PRIVATEKEY, "Protegida por senha desconhecida.");
-	            		//tem uma privatekey mas não foi possivel extraí-la por causa da senha inválida
-		            }
-    	            parseCertificate(alias, cert,  handler, kmeta, context);
-			    }
-	        }
+            String password = null;
+            boolean loaded = false;
+            for (Iterator<String> iterator = passwordList.iterator(); iterator.hasNext();) {
+                password = iterator.next();
 
-		} catch (CertificateException | KeyStoreException | NoSuchAlgorithmException e) {
-			throw new TikaException("Erro de formatação da base de certificados.", e);
-		}
-	}
+                try (InputStream keyStoreStream = new FileInputStream(file)) {
+                    p12.load(keyStoreStream, password.toCharArray());
+                    loaded = true;
+                    metadata.set(PASSWORD, password);
+                    break;
+                } catch (IOException e) {
+                    // se for erro de senha ignora-o para tentar a próxima senha
+                    // se não for erro de senha, redispara a exceção encapsulada em um objeto
+                    // TikaException.
+                    // if(!(e.getMessage().contains("keystore password was
+                    // incorrect")||e.getMessage().contains("wrong
+                    // password")||e.getMessage().contains("password was incorrect"))){
+                    if (!(e.getCause() instanceof UnrecoverableKeyException)) {
+                        throw new TikaException(e.getMessage(), e);
+                    }
+                }
+            }
+            if (!loaded) {
+                // nenhuma das senhas tentadas era a correta.
+                throw new EncryptedDocumentException("Documento encriptado com senha diferente das senhas tentadas.");
+            }
 
-	public void parseCertificate(String alias, X509Certificate cert, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException{
-  		try {
-  			InputStream certStream = new ByteArrayInputStream(cert.getEncoded());
-			parseCertificate(alias, certStream, handler, metadata, context);			
-		} catch (CertificateEncodingException e) {
-			throw new IOException(e);
-		}
-	}
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            if (extractor.shouldParseEmbedded(metadata)) {
+                Enumeration<String> e = p12.aliases();
+                while (e.hasMoreElements()) {
+                    String alias = (String) e.nextElement();
+                    X509Certificate cert = (X509Certificate) p12.getCertificate(alias);
 
-	public void parseCertificate(String alias, InputStream certStream, ContentHandler handler, Metadata kmeta, ParseContext context) throws IOException, SAXException, TikaException{
-		EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-		try{
+                    Metadata kmeta = new Metadata();
+                    try {
+                        Key key = p12.getKey(alias, password.toCharArray());
+                        if (key instanceof PrivateKey) {
+                            // se tem uma privatekey a passa.
+                            kmeta.add(PRIVATEKEY, Base64.getEncoder().encodeToString(key.getEncoded()));
+                        } else {
+                            // se tem uma privatekey a passa.
+                        }
+                    } catch (UnrecoverableKeyException ue) {
+                        kmeta.add(PRIVATEKEY, "Protegida por senha desconhecida.");
+                        // tem uma privatekey mas não foi possivel extraí-la por causa da senha inválida
+                    }
+                    parseCertificate(alias, cert, handler, kmeta, context);
+                }
+            }
+
+        } catch (CertificateException | KeyStoreException | NoSuchAlgorithmException e) {
+            throw new TikaException("Erro de formatação da base de certificados.", e);
+        }
+    }
+
+    public void parseCertificate(String alias, X509Certificate cert, ContentHandler handler, Metadata metadata,
+            ParseContext context) throws IOException, SAXException, TikaException {
+        try {
+            InputStream certStream = new ByteArrayInputStream(cert.getEncoded());
+            parseCertificate(alias, certStream, handler, metadata, context);
+        } catch (CertificateEncodingException e) {
+            throw new IOException(e);
+        }
+    }
+
+    public void parseCertificate(String alias, InputStream certStream, ContentHandler handler, Metadata kmeta,
+            ParseContext context) throws IOException, SAXException, TikaException {
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        try {
             kmeta.set(HttpHeaders.CONTENT_TYPE, MediaType.application("pkix-cert").toString());
             kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("pkix-cert").toString());
-			kmeta.add(TikaCoreProperties.TITLE, alias);
+            kmeta.add(TikaCoreProperties.TITLE, alias);
 
             extractor.parseEmbedded(certStream, handler, kmeta, false);
-		}catch(Exception e){
-			throw new IOException(e);
-		}
-	}
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
 
-	public void parsePKCS7(String alias, InputStream certStream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException{
-		EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+    public void parsePKCS7(String alias, InputStream certStream, ContentHandler handler, Metadata metadata,
+            ParseContext context) throws IOException, SAXException, TikaException {
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
         if (extractor.shouldParseEmbedded(metadata)) {
-			try{
-				Metadata kmeta = new Metadata();
+            try {
+                Metadata kmeta = new Metadata();
                 kmeta.set(HttpHeaders.CONTENT_TYPE, MediaType.application("pkcs7-signature").toString());
-                kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("pkcs7-signature").toString());
-    			kmeta.add(TikaCoreProperties.TITLE, alias);
+                kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+                        MediaType.application("pkcs7-signature").toString());
+                kmeta.add(TikaCoreProperties.TITLE, alias);
 
                 extractor.parseEmbedded(certStream, handler, kmeta, false);
-			}catch(Exception e){
-				throw new IOException(e);
-			}
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
         }
-	}
+    }
 
 }

@@ -7,7 +7,9 @@ import java.lang.annotation.*;
  *
  * @author WERNECK
  */
-@Documented @Retention(RetentionPolicy.RUNTIME) @Target(ElementType.METHOD)
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
 public @interface Identifier {
 
     static final ComponentType TYPE = ComponentType.IDENTIFIER;
@@ -27,8 +29,8 @@ public @interface Identifier {
     NotificationLevel level() default NotificationLevel.INFORM;
 
     /**
-     * An URL to a technical reference (such as a web page or wiki article) related to what was
-     * identified.
+     * An URL to a technical reference (such as a web page or wiki article) related
+     * to what was identified.
      *
      * @return the technical reference related to the identified item.
      */

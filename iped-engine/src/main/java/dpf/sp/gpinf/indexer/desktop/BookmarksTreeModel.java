@@ -14,104 +14,104 @@ import javax.swing.tree.TreePath;
 
 public class BookmarksTreeModel implements TreeModel {
 
-  public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
-  public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
-  public Set<String> labels;
+    public static String ROOT = Messages.getString("BookmarksTreeModel.RootName"); //$NON-NLS-1$
+    public static String NO_BOOKMARKS = Messages.getString("BookmarksTreeModel.NoBookmarks"); //$NON-NLS-1$
+    public Set<String> labels;
 
-  static class Bookmark implements Comparator<Bookmark> {
+    static class Bookmark implements Comparator<Bookmark> {
 
-    int id;
-    String name;
+        int id;
+        String name;
 
-    public Bookmark(int id, String name) {
-      this.id = id;
-      this.name = name;
-    }
+        public Bookmark(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
 
-    public String toString() {
-      return name;
-    }
+        public String toString() {
+            return name;
+        }
 
-    public boolean equals(Bookmark b) {
-      return this.id == b.id;
+        public boolean equals(Bookmark b) {
+            return this.id == b.id;
+        }
+
+        @Override
+        final public int compare(Bookmark a, Bookmark b) {
+            return a.name.compareTo(b.name);
+        }
     }
 
     @Override
-    final public int compare(Bookmark a, Bookmark b) {
-      return a.name.compareTo(b.name);
-    }
-  }
-
-  @Override
-  public Object getRoot() {
-    return ROOT;
-  }
-
-  @Override
-  public Object getChild(Object parent, int index) {
-    if (!ROOT.equals(parent)) {
-      return null;
+    public Object getRoot() {
+        return ROOT;
     }
 
-    if (labels == null) {
-    	labels = (TreeSet<String>)App.get().appCase.getMultiMarcadores().getLabelMap().clone();
+    @Override
+    public Object getChild(Object parent, int index) {
+        if (!ROOT.equals(parent)) {
+            return null;
+        }
+
+        if (labels == null) {
+            labels = (TreeSet<String>) App.get().appCase.getMultiMarcadores().getLabelMap().clone();
+        }
+
+        if (index == 0) {
+            return NO_BOOKMARKS;
+        }
+
+        String[] array = labels.toArray(new String[0]);
+        Arrays.sort(array, Collator.getInstance());
+
+        return array[index - 1];
+
     }
 
-    if (index == 0) {
-      return NO_BOOKMARKS;
+    @Override
+    public int getChildCount(Object parent) {
+        if (!ROOT.equals(parent)) {
+            return 0;
+        } else {
+            if (App.get().appCase == null) {
+                return 0;
+            } else {
+                return App.get().appCase.getMultiMarcadores().getLabelMap().size() + 1;
+            }
+        }
     }
 
-    String[] array = labels.toArray(new String[0]);
-    Arrays.sort(array, Collator.getInstance());
+    @Override
+    public boolean isLeaf(Object node) {
+        if (!ROOT.equals(node)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    return array[index - 1];
+    @Override
+    public void valueForPathChanged(TreePath path, Object newValue) {
+        // TODO Auto-generated method stub
 
-  }
+    }
 
-  @Override
-  public int getChildCount(Object parent) {
-    if (!ROOT.equals(parent)) {
-      return 0;
-    } else {
-      if (App.get().appCase == null) {
+    @Override
+    public int getIndexOfChild(Object parent, Object child) {
+        System.out.println("get index of child"); //$NON-NLS-1$
         return 0;
-      } else {
-        return App.get().appCase.getMultiMarcadores().getLabelMap().size() + 1;
-      }
     }
-  }
 
-  @Override
-  public boolean isLeaf(Object node) {
-    if (!ROOT.equals(node)) {
-      return true;
-    } else {
-      return false;
+    @Override
+    public void addTreeModelListener(TreeModelListener l) {
+        // treeModelListeners.addElement(l);
+
     }
-  }
 
-  @Override
-  public void valueForPathChanged(TreePath path, Object newValue) {
-    // TODO Auto-generated method stub
+    @Override
+    public void removeTreeModelListener(TreeModelListener l) {
+        // treeModelListeners.removeElement(l);
 
-  }
-
-  @Override
-  public int getIndexOfChild(Object parent, Object child) {
-    System.out.println("get index of child"); //$NON-NLS-1$
-    return 0;
-  }
-
-  @Override
-  public void addTreeModelListener(TreeModelListener l) {
-    //treeModelListeners.addElement(l);
-
-  }
-
-  @Override
-  public void removeTreeModelListener(TreeModelListener l) {
-    //treeModelListeners.removeElement(l);
-
-  }
+    }
 
 }

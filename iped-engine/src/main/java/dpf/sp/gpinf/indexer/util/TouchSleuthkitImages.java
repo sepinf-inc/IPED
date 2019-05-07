@@ -24,15 +24,16 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class TouchSleuthkitImages {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TouchSleuthkitImages.class);
-    
-    private static final byte[] ewfSignature = new byte[] {0x45,0x56,0x46,0x09,0x0D,0x0A,(byte) 0xFF,0x00};
-    
-    private static final Set<Long> preOpenedEvidenceIDs = new HashSet<Long>();  
-    
+
+    private static final byte[] ewfSignature = new byte[] { 0x45, 0x56, 0x46, 0x09, 0x0D, 0x0A, (byte) 0xFF, 0x00 };
+
+    private static final Set<Long> preOpenedEvidenceIDs = new HashSet<Long>();
+
     public static void preOpenImagesOnSleuth(SleuthkitCase sleuthCase, boolean cacheWarmUpEnabled, int maxThreads) {
-        if (sleuthCase == null) return;
+        if (sleuthCase == null)
+            return;
         LOGGER.info("Pre-opening Images on Sleuthkit"); //$NON-NLS-1$
         try {
             final Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
@@ -44,7 +45,8 @@ public class TouchSleuthkitImages {
                 for (Content c : contents) {
                     long id = c.getDataSource().getId();
                     synchronized (preOpenedEvidenceIDs) {
-                        if (preOpenedEvidenceIDs.contains(id)) continue;
+                        if (preOpenedEvidenceIDs.contains(id))
+                            continue;
                     }
                     List<String> p = imgPaths.get(id);
                     if (p != null) {
@@ -68,7 +70,8 @@ public class TouchSleuthkitImages {
                                     long tWarmUp = System.currentTimeMillis();
                                     String path = null;
                                     synchronized (paths) {
-                                        if (paths.isEmpty()) break;
+                                        if (paths.isEmpty())
+                                            break;
                                         path = paths.removeFirst();
                                     }
                                     File img = new File(path);
@@ -92,14 +95,16 @@ public class TouchSleuthkitImages {
                                                     nextSection <<= 8;
                                                     nextSection |= b1[23 - i] & 0xFF;
                                                 }
-                                                if (nextSection <= 0) break;
+                                                if (nextSection <= 0)
+                                                    break;
                                                 for (int j = 0; j < 16 && offset < nextSection; j++) {
                                                     offset += in.skip(nextSection - offset);
                                                 }
                                                 offset += in.read(b1);
                                             }
                                             tWarmUp = System.currentTimeMillis() - tWarmUp;
-                                            LOGGER.debug("Cache warm up for file " + img.getAbsolutePath() + ", sections = " + sections + ", elapsed ms = " + tWarmUp); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                            LOGGER.debug("Cache warm up for file " + img.getAbsolutePath() //$NON-NLS-1$
+                                                    + ", sections = " + sections + ", elapsed ms = " + tWarmUp); //$NON-NLS-1$ //$NON-NLS-2$
                                             synchronized (paths) {
                                                 totSections.addAndGet(sections);
                                             }
@@ -108,8 +113,10 @@ public class TouchSleuthkitImages {
                                         e.printStackTrace();
                                     } finally {
                                         try {
-                                            if (in != null) in.close();
-                                        } catch (Exception e2) {}
+                                            if (in != null)
+                                                in.close();
+                                        } catch (Exception e2) {
+                                        }
                                     }
                                     if (path != null) {
                                         synchronized (pending) {
@@ -139,7 +146,8 @@ public class TouchSleuthkitImages {
                                             synchronized (pending) {
                                                 s.retainAll(pending);
                                             }
-                                            if (!s.isEmpty()) continue;
+                                            if (!s.isEmpty())
+                                                continue;
                                         }
                                         synchronized (preOpenedEvidenceIDs) {
                                             preOpenedEvidenceIDs.add(id);
@@ -149,7 +157,8 @@ public class TouchSleuthkitImages {
                                         long tSleuthInit = System.currentTimeMillis();
                                         c.read(b, 0, 1);
                                         tSleuthInit = System.currentTimeMillis() - tSleuthInit;
-                                        LOGGER.info("Evidence " + c.getName() + " opened on Sleuth, elapsed time (ms) = " + tSleuthInit); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                        LOGGER.info("Evidence " + c.getName() //$NON-NLS-1$
+                                                + " opened on Sleuth, elapsed time (ms) = " + tSleuthInit); //$NON-NLS-1$ //$NON-NLS-3$
                                     }
                                     Thread.sleep(100);
                                 }
@@ -161,17 +170,21 @@ public class TouchSleuthkitImages {
                     for (int i = 0; i < threads.length; i++) {
                         try {
                             threads[i].join();
-                        } catch (InterruptedException e) {}
+                        } catch (InterruptedException e) {
+                        }
                     }
                     tTotalOpenOnSleuth = System.currentTimeMillis() - tTotalOpenOnSleuth;
-                    LOGGER.info("Pre-open images on Sleuth: cache warm up = enabled, total time (ms) = " + tTotalOpenOnSleuth + ", evidences = " + imgPaths.size() + ", segments = " + totSegments + ", sections = " + totSections.get()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    LOGGER.info("Pre-open images on Sleuth: cache warm up = enabled, total time (ms) = " //$NON-NLS-1$
+                            + tTotalOpenOnSleuth + ", evidences = " + imgPaths.size() + ", segments = " + totSegments //$NON-NLS-1$ //$NON-NLS-2$
+                            + ", sections = " + totSections.get()); //$NON-NLS-1$
                 }
             } else {
                 long tTotalOpenOnSleuth = System.currentTimeMillis();
                 for (Content c : contents) {
                     long id = c.getDataSource().getId();
                     synchronized (preOpenedEvidenceIDs) {
-                        if (preOpenedEvidenceIDs.contains(id)) continue;
+                        if (preOpenedEvidenceIDs.contains(id))
+                            continue;
                     }
                     byte[] b = new byte[1];
                     long tSleuthInit = System.currentTimeMillis();
@@ -181,13 +194,15 @@ public class TouchSleuthkitImages {
                         e.printStackTrace();
                     }
                     tSleuthInit = System.currentTimeMillis() - tSleuthInit;
-                    LOGGER.info("Evidence " + c.getName() + " opened on Sleuth, elapsed time (ms) = " + tSleuthInit); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    LOGGER.info("Evidence " + c.getName() + " opened on Sleuth, elapsed time (ms) = " + tSleuthInit); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                      // //$NON-NLS-3$
                     synchronized (preOpenedEvidenceIDs) {
                         preOpenedEvidenceIDs.add(id);
                     }
                 }
                 tTotalOpenOnSleuth = System.currentTimeMillis() - tTotalOpenOnSleuth;
-                LOGGER.info("Pre-open images on Sleuth: cache warm up = disabled, total time (ms) = " + tTotalOpenOnSleuth + ", evidences = " + imgPaths.size()); //$NON-NLS-1$ //$NON-NLS-2$
+                LOGGER.info("Pre-open images on Sleuth: cache warm up = disabled, total time (ms) = " //$NON-NLS-1$
+                        + tTotalOpenOnSleuth + ", evidences = " + imgPaths.size()); //$NON-NLS-1$
             }
         } catch (Exception e) {
             e.printStackTrace();

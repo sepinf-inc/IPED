@@ -27,73 +27,74 @@ import java.util.List;
  */
 class XMLElement extends ShareazaEntity {
 
-	private final List<XMLAttribute> attributes = new ArrayList<>();
-	private final List<XMLElement> elements = new ArrayList<>();
-	private String name;
-	private String value;
-	
-	public XMLElement() {
-		super("XMLElement"); //$NON-NLS-1$
-	}
+    private final List<XMLAttribute> attributes = new ArrayList<>();
+    private final List<XMLElement> elements = new ArrayList<>();
+    private String name;
+    private String value;
 
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		name = ar.readString();
-		value = ar.readString();
-		int n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			XMLAttribute attr = new XMLAttribute();
-			attr.read(ar);
-			if (attr.getName().length() != 0) {
-				attributes.add(attr);
-			}
-		}
-		n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			XMLElement elem = new XMLElement();
-			elem.read(ar);
-			elements.add(elem);
-		}
-	}
+    public XMLElement() {
+        super("XMLElement"); //$NON-NLS-1$
+    }
 
-	@Override
-	public void write(ShareazaOutputGenerator f) {
-		write(f, false);
-	}
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        name = ar.readString();
+        value = ar.readString();
+        int n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            XMLAttribute attr = new XMLAttribute();
+            attr.read(ar);
+            if (attr.getName().length() != 0) {
+                attributes.add(attr);
+            }
+        }
+        n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            XMLElement elem = new XMLElement();
+            elem.read(ar);
+            elements.add(elem);
+        }
+    }
 
-	private void write(ShareazaOutputGenerator f, boolean inXml) {
-		f.incIdent();
-		if (name != null && name.length() > 0) {
-			if (!inXml) {
-				f.out("XML Data"); //$NON-NLS-1$
-			}
-			StringBuilder strElem = new StringBuilder();
-			strElem.append("<").append(name); //$NON-NLS-1$
-			for (XMLAttribute attr : attributes) {
-				strElem.append(" ").append(attr.getName()).append("=\"").append(attr.getValue()).append("\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			}
-			if ((value == null || value.length() == 0) && elements.isEmpty()) {
-				strElem.append("/>"); //$NON-NLS-1$
-				f.out(strElem.toString());
-			} else {
-				strElem.append(">"); //$NON-NLS-1$
-				f.out(strElem.toString());
-				if (value != null && value.length() > 0) {
-					f.out(value);
-				}
-				if (!elements.isEmpty()) {
-					for (XMLElement el : elements) {
-						el.write(f, true);
-					}
-				}
-				f.out("</" + name + ">");; //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		}
-		f.decIdent();
-	}
+    @Override
+    public void write(ShareazaOutputGenerator f) {
+        write(f, false);
+    }
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {	
-	}
+    private void write(ShareazaOutputGenerator f, boolean inXml) {
+        f.incIdent();
+        if (name != null && name.length() > 0) {
+            if (!inXml) {
+                f.out("XML Data"); //$NON-NLS-1$
+            }
+            StringBuilder strElem = new StringBuilder();
+            strElem.append("<").append(name); //$NON-NLS-1$
+            for (XMLAttribute attr : attributes) {
+                strElem.append(" ").append(attr.getName()).append("=\"").append(attr.getValue()).append("\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            }
+            if ((value == null || value.length() == 0) && elements.isEmpty()) {
+                strElem.append("/>"); //$NON-NLS-1$
+                f.out(strElem.toString());
+            } else {
+                strElem.append(">"); //$NON-NLS-1$
+                f.out(strElem.toString());
+                if (value != null && value.length() > 0) {
+                    f.out(value);
+                }
+                if (!elements.isEmpty()) {
+                    for (XMLElement el : elements) {
+                        el.write(f, true);
+                    }
+                }
+                f.out("</" + name + ">"); //$NON-NLS-1$ //$NON-NLS-2$
+                ;
+            }
+        }
+        f.decIdent();
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+    }
 
 }

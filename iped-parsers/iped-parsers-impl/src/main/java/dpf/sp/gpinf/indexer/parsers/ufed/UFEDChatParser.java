@@ -31,22 +31,22 @@ import iped3.search.ItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
-public class UFEDChatParser extends AbstractParser{
+public class UFEDChatParser extends AbstractParser {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview"); //$NON-NLS-1$
-    
+
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
-    
+
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME);
-    
+
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
     }
@@ -59,71 +59,72 @@ public class UFEDChatParser extends AbstractParser{
     @Override
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        
+
         try {
             ItemSearcher searcher = context.get(ItemSearcher.class);
             ItemBase chat = context.get(ItemBase.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
-            
-            if(chat == null || searcher == null)
+
+            if (chat == null || searcher == null)
                 return;
-            
+
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
             List<ItemBase> msgs = searcher.search(query);
-            
+
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX"); //$NON-NLS-1$
             List<Message> messages = new ArrayList<>();
-            
-            for(ItemBase msg : msgs) {
+
+            for (ItemBase msg : msgs) {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
                 Message m = new Message();
                 m.setData(msg.getMetadata().get(ExtraProperties.MESSAGE_BODY));
                 m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
                 String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
-                if(str != null)
+                if (str != null)
                     try {
                         Date date = df.parse(str);
                         m.setTimeStamp(date);
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                if(!m.isFromMe()) {
+                if (!m.isFromMe()) {
                     m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
                     m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
-                }else {
+                } else {
                     m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
                     m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
                 }
-                
-                if(msg.hasChildren()) {
+
+                if (msg.hasChildren()) {
                     query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
                     List<ItemBase> attachs = searcher.search(query);
-                    if(attachs.size() != 0) {
+                    if (attachs.size() != 0) {
                         ItemBase attach = attachs.get(0);
                         m.setMediaHash(attach.getHash(), false);
                         m.setMediaName(attach.getName());
                         m.setMediaUrl(attach.getMetadata().get(META_PREFIX + "URL")); //$NON-NLS-1$
                         m.setMediaCaption(attach.getMetadata().get(META_PREFIX + "Title")); //$NON-NLS-1$
                         m.setThumbData(attach.getThumb());
-                        if(attach.isDeleted())
+                        if (attach.isDeleted())
                             m.setDeleted(true);
-                        if(attach.getLength() != null)
+                        if (attach.getLength() != null)
                             m.setMediaSize(attach.getLength());
-                        if(attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
+                        if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
                             m.setMediaMime(attach.getMediaType().toString());
                         else
                             m.setMediaMime(attach.getMetadata().get(META_PREFIX + "ContentType")); //$NON-NLS-1$
-                        if(attachs.size() > 1)
-                            System.out.println("multiple_attachs: " + msg.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id")); //$NON-NLS-1$ //$NON-NLS-2$
+                        if (attachs.size() > 1)
+                            System.out.println("multiple_attachs: " //$NON-NLS-1$
+                                    + msg.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id")); //$NON-NLS-1$
                     }
                 }
-                
+
                 messages.add(m);
             }
-            
+
             Collections.sort(messages, new MessageComparator());
-            
+
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
@@ -133,36 +134,36 @@ public class UFEDChatParser extends AbstractParser{
                     Metadata chatMetadata = new Metadata();
                     int nextMsg = reportGenerator.getNextMsgNum();
                     storeLinkedHashes(messages.subList(firstMsg, nextMsg), chatMetadata);
-                    
+
                     firstMsg = nextMsg;
                     byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
-                    
-                    for(String meta : chat.getMetadata().names()) {
-                        if(meta.contains(ExtraProperties.UFED_META_PREFIX))
-                            for(String val : chat.getMetadata().getValues(meta))
+
+                    for (String meta : chat.getMetadata().names()) {
+                        if (meta.contains(ExtraProperties.UFED_META_PREFIX))
+                            for (String val : chat.getMetadata().getValues(meta))
                                 chatMetadata.add(meta, val);
                     }
-                    
+
                     String chatName = chat.getName();
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, UFED_CHAT_PREVIEW_MIME.toString());
-                    
+
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                     bytes = nextBytes;
                 }
             }
-        
-        }catch(Exception e){
+
+        } catch (Exception e) {
             e.printStackTrace();
             throw e;
-            
+
         }
-        
+
     }
-    
+
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
         for (Message m : messages) {
             if (m.getMediaHash() != null) {
@@ -172,22 +173,22 @@ public class UFEDChatParser extends AbstractParser{
             }
         }
     }
-    
-    private class MessageComparator implements Comparator<Message>{
+
+    private class MessageComparator implements Comparator<Message> {
 
         @Override
         public int compare(Message o1, Message o2) {
-            if(o1.getTimeStamp() == null) {
-                if(o2.getTimeStamp() == null)
+            if (o1.getTimeStamp() == null) {
+                if (o2.getTimeStamp() == null)
                     return 0;
                 else
                     return -1;
-            }else if(o2.getTimeStamp() == null)
+            } else if (o2.getTimeStamp() == null)
                 return 1;
             else
                 return o1.getTimeStamp().compareTo(o2.getTimeStamp());
         }
-        
+
     }
 
 }

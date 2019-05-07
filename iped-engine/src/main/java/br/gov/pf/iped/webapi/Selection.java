@@ -23,48 +23,50 @@ import iped3.search.IPEDSearcher;
 import iped3.search.MultiMarcadores;
 import iped3.search.MultiSearchResult;
 
-@Api(value="Selection")
+@Api(value = "Selection")
 @Path("selection")
 public class Selection {
-    
-	@ApiOperation(value="List selected documents")
+
+    @ApiOperation(value = "List selected documents")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public SourceToIDsJSON get() throws Exception{
-        
+    public SourceToIDsJSON get() throws Exception {
+
         IPEDSearcher searcher = new IPEDSearcherImpl(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarSelecionados(result);
-        
+
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
+            docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
         }
-        
+
         return new SourceToIDsJSON(docs);
     }
-    
-	@ApiOperation(value="Add documents to selection")
+
+    @ApiOperation(value = "Add documents to selection")
     @PUT
     @Path("add")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response add(@ApiParam(required=true) DocIDJSON[] docs){
+    public Response add(@ApiParam(required = true) DocIDJSON[] docs) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        for (DocIDJSON d: docs) {
-            mm.setSelected(true, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
+        for (DocIDJSON d : docs) {
+            mm.setSelected(true, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()),
+                    Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();
     }
-    
-	@ApiOperation(value="Remove documents from selection")
+
+    @ApiOperation(value = "Remove documents from selection")
     @PUT
     @Path("remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response remove(@ApiParam(required=true) DocIDJSON[] docs){
+    public Response remove(@ApiParam(required = true) DocIDJSON[] docs) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        for (DocIDJSON d: docs) {
-            mm.setSelected(false, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()), Sources.multiSource);
+        for (DocIDJSON d : docs) {
+            mm.setSelected(false, new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()),
+                    Sources.multiSource);
         }
         mm.saveState();
         return Response.ok().build();

@@ -11,6 +11,6 @@ package iped3.process;
  */
 public interface TaskInstaller {
 
-  void installProcessingTasks(Worker worker) throws Exception;
-  
+    void installProcessingTasks(Worker worker) throws Exception;
+
 }

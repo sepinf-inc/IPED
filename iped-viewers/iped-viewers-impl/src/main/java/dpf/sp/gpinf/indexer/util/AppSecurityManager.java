@@ -23,41 +23,40 @@ import java.security.Permission;
 
 public class AppSecurityManager extends SecurityManager {
 
-  SecurityManager manager;
-  Permission socketPerm = new SocketPermission("localhost:8100", "connect, resolve"); //$NON-NLS-1$ //$NON-NLS-2$
-  Permission socketPerm2 = new SocketPermission("[0:0:0:0:0:0:0:1]:8100", "connect,resolve"); //$NON-NLS-1$ //$NON-NLS-2$
-  String javaFXString = "accessClassInPackage.com.sun.javafx"; //$NON-NLS-1$
+    SecurityManager manager;
+    Permission socketPerm = new SocketPermission("localhost:8100", "connect, resolve"); //$NON-NLS-1$ //$NON-NLS-2$
+    Permission socketPerm2 = new SocketPermission("[0:0:0:0:0:0:0:1]:8100", "connect,resolve"); //$NON-NLS-1$ //$NON-NLS-2$
+    String javaFXString = "accessClassInPackage.com.sun.javafx"; //$NON-NLS-1$
 
-  public AppSecurityManager() {
-    super();
-    manager = System.getSecurityManager();
-  }
-
-  @Override
-  public void checkPermission(Permission perm) {
-    checkPermission(perm, null);
-
-  }
-
-  @Override
-  public void checkPermission(Permission perm, Object context) {
-    if (perm instanceof SocketPermission) {
-      if (socketPerm.implies(perm)) {
-        return;
-      } else if (socketPerm2.implies(perm)) {
-        return;
-      } else {
-        throw new SecurityException("Internet Access blocked!"); //$NON-NLS-1$
-      }
-    } else {
-      return;
+    public AppSecurityManager() {
+        super();
+        manager = System.getSecurityManager();
     }
 
-    /*if(context == null)
-     manager.checkPermission(perm);
-     else
-     manager.checkPermission(perm, context);
-     */
-  }
+    @Override
+    public void checkPermission(Permission perm) {
+        checkPermission(perm, null);
+
+    }
+
+    @Override
+    public void checkPermission(Permission perm, Object context) {
+        if (perm instanceof SocketPermission) {
+            if (socketPerm.implies(perm)) {
+                return;
+            } else if (socketPerm2.implies(perm)) {
+                return;
+            } else {
+                throw new SecurityException("Internet Access blocked!"); //$NON-NLS-1$
+            }
+        } else {
+            return;
+        }
+
+        /*
+         * if(context == null) manager.checkPermission(perm); else
+         * manager.checkPermission(perm, context);
+         */
+    }
 
 }

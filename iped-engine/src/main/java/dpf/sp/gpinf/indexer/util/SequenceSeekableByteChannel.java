@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 
-public class SequenceSeekableByteChannel implements SeekableByteChannel{
-    
+public class SequenceSeekableByteChannel implements SeekableByteChannel {
+
     private SeekableByteChannel[] channels;
     private long pos = 0;
     private int channel = 0;
     private boolean closed = false;
-    
+
     public SequenceSeekableByteChannel(SeekableByteChannel... channels) {
         this.channels = channels;
     }
@@ -22,7 +22,7 @@ public class SequenceSeekableByteChannel implements SeekableByteChannel{
 
     @Override
     public void close() throws IOException {
-        for(SeekableByteChannel c : channels)
+        for (SeekableByteChannel c : channels)
             c.close();
         closed = true;
     }
@@ -30,16 +30,16 @@ public class SequenceSeekableByteChannel implements SeekableByteChannel{
     @Override
     public int read(ByteBuffer dst) throws IOException {
         int read = channels[channel].read(dst);
-        if(read == -1) {
-            if(channel == channels.length - 1)
+        if (read == -1) {
+            if (channel == channels.length - 1)
                 return -1;
             else {
                 channel++;
                 return 0;
             }
-        }else
+        } else
             pos += read;
-        
+
         return read;
     }
 
@@ -58,7 +58,7 @@ public class SequenceSeekableByteChannel implements SeekableByteChannel{
         pos = newPosition;
         long prevSize = 0;
         channel = 0;
-        while((prevSize += channels[channel].size()) <= pos)
+        while ((prevSize += channels[channel].size()) <= pos)
             channel++;
         prevSize -= channels[channel].size();
         channels[channel].position(newPosition - prevSize);
@@ -68,7 +68,7 @@ public class SequenceSeekableByteChannel implements SeekableByteChannel{
     @Override
     public long size() throws IOException {
         long total = 0;
-        for(SeekableByteChannel c : channels)
+        for (SeekableByteChannel c : channels)
             total += c.size();
         return total;
     }

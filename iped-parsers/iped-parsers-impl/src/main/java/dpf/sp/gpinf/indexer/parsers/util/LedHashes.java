@@ -5,7 +5,7 @@ import java.util.HashMap;
 import iped3.HashValue;
 
 public class LedHashes {
-	
-	public static HashMap<String, HashValue[]> hashMap = null;
+
+    public static HashMap<String, HashValue[]> hashMap = null;
 
 }

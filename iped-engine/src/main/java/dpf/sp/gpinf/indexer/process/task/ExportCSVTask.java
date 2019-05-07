@@ -37,178 +37,178 @@ import iped3.Item;
  */
 public class ExportCSVTask extends AbstractTask {
 
-  private static int MAX_MEM_SIZE = 1000000;
-  private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
+    private static int MAX_MEM_SIZE = 1000000;
+    private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
 
-  public static boolean exportFileProps = false;
-  public static volatile boolean headerWritten = false;
+    public static boolean exportFileProps = false;
+    public static volatile boolean headerWritten = false;
 
-  private StringBuilder list = new StringBuilder();
+    private StringBuilder list = new StringBuilder();
 
-  /**
-   * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser listados no arquivo
-   * CSV.
-   *
-   * @return true
-   */
-  @Override
-  protected boolean processIgnoredItem() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return exportFileProps;
-  }
-  
-  @Override
-  protected void process(Item evidence) throws IOException {
-
-    if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
-      return;
+    /**
+     * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser
+     * listados no arquivo CSV.
+     *
+     * @return true
+     */
+    @Override
+    protected boolean processIgnoredItem() {
+        return true;
     }
 
-    String value = evidence.getName();
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = evidence.getFileToIndex();
-    if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
-      value = "=HIPERLINK(\"\"" + value + Messages.getString("ExportCSVTask.Open"); //$NON-NLS-1$ //$NON-NLS-2$
-    } else {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    Long length = evidence.getLength();
-    if (length == null) {
-      value = ""; //$NON-NLS-1$
-    } else {
-      value = length.toString();
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = evidence.getExt();
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = Util.concatStrings(evidence.getLabels());
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = evidence.getHash();
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = Boolean.toString(evidence.isDeleted());
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = Boolean.toString(evidence.isCarved());
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    Date date = evidence.getAccessDate();
-    if (date == null) {
-      value = ""; //$NON-NLS-1$
-    } else {
-      value = date.toString();
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    date = evidence.getModDate();
-    if (date == null) {
-      value = ""; //$NON-NLS-1$
-    } else {
-      value = date.toString();
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    date = evidence.getCreationDate();
-    if (date == null) {
-      value = ""; //$NON-NLS-1$
-    } else {
-      value = date.toString();
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    value = evidence.getPath();
-    if (value == null) {
-      value = ""; //$NON-NLS-1$
-    }
-    list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    list.append("\r\n"); //$NON-NLS-1$
-
-    if (list.length() > MAX_MEM_SIZE) {
-      flush();
+    @Override
+    public boolean isEnabled() {
+        return exportFileProps;
     }
 
-  }
-  
-  private String escape(String value){
-	  StringBuilder str = new StringBuilder(); 
-	  for(char c : value.trim().toCharArray())
-		  if(c >= '\u0020' && !(c >= '\u007F' && c <= '\u009F'))
-			  str.append(c);
-	  
-	  return str.toString().replace("\"", "\"\""); //$NON-NLS-1$ //$NON-NLS-2$
-  }
+    @Override
+    protected void process(Item evidence) throws IOException {
 
-  public void flush() throws IOException {
-    flush(list, output);
-    list = new StringBuilder();
-  }
+        if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
+            return;
+        }
 
-  private static synchronized void flush(StringBuilder list, File output) throws IOException {
-	FileOutputStream fos =  new FileOutputStream(output, true);
-    OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8"); //$NON-NLS-1$
-    if (!headerWritten) {
-      byte[] utf8bom = {(byte)0xEF, (byte)0xBB, (byte)0xBF};
-      fos.write(utf8bom);
-      writer.write(Messages.getString("ExportCSVTask.CsvColNames")); //$NON-NLS-1$
-      headerWritten = true;
+        String value = evidence.getName();
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = evidence.getFileToIndex();
+        if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
+            value = "=HIPERLINK(\"\"" + value + Messages.getString("ExportCSVTask.Open"); //$NON-NLS-1$ //$NON-NLS-2$
+        } else {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        Long length = evidence.getLength();
+        if (length == null) {
+            value = ""; //$NON-NLS-1$
+        } else {
+            value = length.toString();
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = evidence.getExt();
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = Util.concatStrings(evidence.getLabels());
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = evidence.getHash();
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = Boolean.toString(evidence.isDeleted());
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = Boolean.toString(evidence.isCarved());
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        Date date = evidence.getAccessDate();
+        if (date == null) {
+            value = ""; //$NON-NLS-1$
+        } else {
+            value = date.toString();
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        date = evidence.getModDate();
+        if (date == null) {
+            value = ""; //$NON-NLS-1$
+        } else {
+            value = date.toString();
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        date = evidence.getCreationDate();
+        if (date == null) {
+            value = ""; //$NON-NLS-1$
+        } else {
+            value = date.toString();
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        value = evidence.getPath();
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        list.append("\r\n"); //$NON-NLS-1$
+
+        if (list.length() > MAX_MEM_SIZE) {
+            flush();
+        }
+
     }
-    writer.write(list.toString());
-    writer.close();
-  }
 
-  public void finish() throws IOException {
-    if (exportFileProps) {
-      flush();
-    }
-  }
+    private String escape(String value) {
+        StringBuilder str = new StringBuilder();
+        for (char c : value.trim().toCharArray())
+            if (c >= '\u0020' && !(c >= '\u007F' && c <= '\u009F'))
+                str.append(c);
 
-  @Override
-  public void init(Properties confProps, File confDir) throws Exception {
-
-    this.output = new File(output.getParentFile(), CSV_NAME);
-    if (output.exists() && !IndexFiles.getInstance().appendIndex) {
-        Files.delete(output.toPath());
-    }
-      
-    String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
-    if (value != null) {
-      value = value.trim();
-    }
-    if (value != null && !value.isEmpty()) {
-      exportFileProps = Boolean.valueOf(value);
+        return str.toString().replace("\"", "\"\""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    headerWritten = false;
-    
-  }
+    public void flush() throws IOException {
+        flush(list, output);
+        list = new StringBuilder();
+    }
+
+    private static synchronized void flush(StringBuilder list, File output) throws IOException {
+        FileOutputStream fos = new FileOutputStream(output, true);
+        OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8"); //$NON-NLS-1$
+        if (!headerWritten) {
+            byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+            fos.write(utf8bom);
+            writer.write(Messages.getString("ExportCSVTask.CsvColNames")); //$NON-NLS-1$
+            headerWritten = true;
+        }
+        writer.write(list.toString());
+        writer.close();
+    }
+
+    public void finish() throws IOException {
+        if (exportFileProps) {
+            flush();
+        }
+    }
+
+    @Override
+    public void init(Properties confProps, File confDir) throws Exception {
+
+        this.output = new File(output.getParentFile(), CSV_NAME);
+        if (output.exists() && !IndexFiles.getInstance().appendIndex) {
+            Files.delete(output.toPath());
+        }
+
+        String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
+        if (value != null) {
+            value = value.trim();
+        }
+        if (value != null && !value.isEmpty()) {
+            exportFileProps = Boolean.valueOf(value);
+        }
+
+        headerWritten = false;
+
+    }
 
 }

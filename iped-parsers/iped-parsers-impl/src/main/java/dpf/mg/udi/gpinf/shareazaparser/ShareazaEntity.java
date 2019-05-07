@@ -24,25 +24,25 @@ import java.io.IOException;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 abstract class ShareazaEntity {
-	
-	private final String entityName;
-	
-	protected ShareazaEntity(String entityName) {
-		this.entityName = entityName;
-	}
 
-	public void read(MFCParser ar) throws IOException {
-	}
+    private final String entityName;
 
-	public void read(MFCParser ar, int version) throws IOException {
-	}
+    protected ShareazaEntity(String entityName) {
+        this.entityName = entityName;
+    }
 
-	public void write(ShareazaOutputGenerator f) {
-		f.out(entityName);
-		f.incIdent();
-		writeImpl(f);
-		f.decIdent();
-	}
-	
-	protected abstract void writeImpl(ShareazaOutputGenerator f); 
+    public void read(MFCParser ar) throws IOException {
+    }
+
+    public void read(MFCParser ar, int version) throws IOException {
+    }
+
+    public void write(ShareazaOutputGenerator f) {
+        f.out(entityName);
+        f.incIdent();
+        writeImpl(f);
+        f.decIdent();
+    }
+
+    protected abstract void writeImpl(ShareazaOutputGenerator f);
 }

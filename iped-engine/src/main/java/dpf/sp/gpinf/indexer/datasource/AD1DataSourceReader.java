@@ -15,7 +15,7 @@ import sef.mg.laud.ad1extractor.AD1Extractor;
 import sef.mg.laud.ad1extractor.FileHeader;
 
 public class AD1DataSourceReader extends DataSourceReader {
-    
+
     AD1InputStreamFactory inputStreamFactory;
     Item rootItem;
 
@@ -30,40 +30,40 @@ public class AD1DataSourceReader extends DataSourceReader {
 
     @Override
     public int read(File datasource) throws Exception {
-        
+
         rootItem = addRootItem(datasource);
-        
-        try (AD1Extractor ad1 = new AD1Extractor(datasource)){
+
+        try (AD1Extractor ad1 = new AD1Extractor(datasource)) {
             if (ad1.isEncrypted())
                 throw new IPEDException("Encrypted AD1 file!");
-            
+
             inputStreamFactory = new AD1InputStreamFactory(datasource.toPath());
-            
+
             FileHeader rootHeader = ad1.getRootHeader();
-            
-            if(rootHeader.isEncrypted())
+
+            if (rootHeader.isEncrypted())
                 throw new IPEDException("Encrypted AD1 file!");
-            
+
             createAndAddItemRecursive(ad1, rootHeader, rootItem);
-            
+
         }
-        
+
         return 0;
     }
-    
+
     private Item addRootItem(File root) throws InterruptedException {
-        
-        if(listOnly) {
+
+        if (listOnly) {
             caseData.incDiscoveredEvidences(1);
             return null;
         }
-        
+
         String evidenceName = getEvidenceName(root);
         if (evidenceName == null)
             evidenceName = root.getName();
         dataSource = new DataSourceImpl(root);
         dataSource.setName(evidenceName);
-        
+
         Item rootItem = new ItemImpl();
         rootItem.setRoot(true);
         rootItem.setDataSource(dataSource);
@@ -73,17 +73,18 @@ public class AD1DataSourceReader extends DataSourceReader {
         rootItem.setLength(root.length());
         rootItem.setSumVolume(false);
         rootItem.setHash(""); //$NON-NLS-1$
-        
+
         caseData.addItem(rootItem);
-        
+
         return rootItem;
     }
-    
-    private void createAndAddItem(AD1Extractor ad1, FileHeader header, Item parent) throws IOException, InterruptedException{
-        
+
+    private void createAndAddItem(AD1Extractor ad1, FileHeader header, Item parent)
+            throws IOException, InterruptedException {
+
         Item item = new ItemImpl();
-        
-        if(!listOnly) {
+
+        if (!listOnly) {
             item.setDataSource(dataSource);
             item.setParent(parent);
             item.setIsDir(header.isDirectory());
@@ -96,54 +97,54 @@ public class AD1DataSourceReader extends DataSourceReader {
             item.setRecordDate(header.getRTime());
             item.setDeleted(header.isDeleted());
             item.setHasChildren(header.hasChildren());
-            
+
             item.setInputStreamFactory(inputStreamFactory);
             item.setIdInDataSource(Long.toString(header.object_address));
-            
+
             caseData.addItem(item);
-            
-        }else {
+
+        } else {
             caseData.incDiscoveredEvidences(1);
             caseData.incDiscoveredVolume(header.getFileSize());
-        }            
-        
+        }
+
         FileHeader child = header.getChildHeader();
-        if(child != null)
+        if (child != null)
             createAndAddItemRecursive(ad1, child, item);
-        
-        
+
     }
-    
-    private void createAndAddItemRecursive(AD1Extractor ad1, FileHeader header, Item parent) throws IOException, InterruptedException{
-        
+
+    private void createAndAddItemRecursive(AD1Extractor ad1, FileHeader header, Item parent)
+            throws IOException, InterruptedException {
+
         createAndAddItem(ad1, header, parent);
-        
-        while((header = header.getNextHeader()) != null)
+
+        while ((header = header.getNextHeader()) != null)
             createAndAddItem(ad1, header, parent);
     }
-    
-    public static class AD1InputStreamFactory extends SeekableInputStreamFactory{
-        
+
+    public static class AD1InputStreamFactory extends SeekableInputStreamFactory {
+
         AD1Extractor ad1;
 
         public AD1InputStreamFactory(Path dataSource) {
             super(dataSource);
         }
-        
+
         private synchronized void init() throws IOException {
-            if(ad1 == null)
+            if (ad1 == null)
                 ad1 = new AD1Extractor(dataSource.toFile());
         }
 
         @Override
         public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-            if(ad1 == null)
+            if (ad1 == null)
                 init();
-            
+
             FileHeader fh = ad1.lerObjeto(Long.parseLong(identifier), null);
             return ad1.getSeekableInputStream(fh);
         }
-        
+
     }
 
 }

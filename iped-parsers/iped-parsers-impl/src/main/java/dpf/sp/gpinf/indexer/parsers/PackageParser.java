@@ -67,13 +67,13 @@ import iped3.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 /**
- * Parser for various packaging formats. Package entries will be written to
- * the XHTML event stream as &lt;div class="package-entry"&gt; elements that
- * contain the (optional) entry name as a &lt;h1&gt; element and the full
- * structured body content of the parsed entry.
+ * Parser for various packaging formats. Package entries will be written to the
+ * XHTML event stream as &lt;div class="package-entry"&gt; elements that contain
+ * the (optional) entry name as a &lt;h1&gt; element and the full structured
+ * body content of the parsed entry.
  * 
- * @author Nassif (better handling of encrypted zips and processing of
- * XPS and generic OOXML)
+ * @author Nassif (better handling of encrypted zips and processing of XPS and
+ *         generic OOXML)
  */
 public class PackageParser extends AbstractParser {
 
@@ -90,9 +90,8 @@ public class PackageParser extends AbstractParser {
     private static final MediaType ARJ = MediaType.application("x-arj"); //$NON-NLS-1$
     private static final MediaType OOXML = MediaType.application("x-tika-ooxml"); //$NON-NLS-1$
 
-
-    private static final Set<MediaType> SUPPORTED_TYPES =
-            MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ, ARJ, OOXML);
+    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ, ARJ,
+            OOXML);
 
     static MediaType getMediaType(ArchiveInputStream stream) {
         if (stream instanceof JarArchiveInputStream) {
@@ -124,17 +123,15 @@ public class PackageParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-    public void parse(
-            InputStream stream, ContentHandler handler,
-            Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-       
+
         // Ensure that the stream supports the mark feature
         if (!stream.markSupported()) {
             stream = new BufferedInputStream(stream);
         }
         stream.mark(10000000);
-        
+
         TemporaryResources tmp = new TemporaryResources();
         ArchiveInputStream ais = null;
         try {
@@ -143,27 +140,27 @@ public class PackageParser extends AbstractParser {
             // any associated resources, but the underlying document stream
             // should not be closed
             ais = factory.createArchiveInputStream(new CloseShieldInputStream(stream));
-            
+
         } catch (StreamingNotSupportedException sne) {
             // Most archive formats work on streams, but a few need files
             if (sne.getFormat().equals(ArchiveStreamFactory.SEVEN_Z)) {
                 // Rework as a file, and wrap
                 stream.reset();
                 TikaInputStream tstream = TikaInputStream.get(stream, tmp);
-                
+
                 // Pending a fix for COMPRESS-269, this bit is a little nasty
                 try {
-                	ais = new SevenZWrapper(new SevenZFile(tstream.getFile()));
+                    ais = new SevenZWrapper(new SevenZFile(tstream.getFile()));
                 } catch (PasswordRequiredException e) {
-                	throw new EncryptedDocumentException(e);
+                    throw new EncryptedDocumentException(e);
                 }
-                
+
             } else {
-            	tmp.close();
+                tmp.close();
                 throw new TikaException("Unknown non-streaming format " + sne.getFormat(), sne); //$NON-NLS-1$
             }
         } catch (ArchiveException e) {
-        	tmp.close();
+            tmp.close();
             throw new TikaException("Unable to unpack document stream", e); //$NON-NLS-1$
         }
 
@@ -173,34 +170,33 @@ public class PackageParser extends AbstractParser {
         }
 
         // Use the delegate parser to parse the contained document
-        EmbeddedDocumentExtractor extractor = context.get(
-                EmbeddedDocumentExtractor.class,
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
-        
+
         String nameKey = metadata.get(Metadata.RESOURCE_NAME_KEY);
-        boolean isCarved = nameKey != null ? nameKey.startsWith("Carved"): false; //$NON-NLS-1$
+        boolean isCarved = nameKey != null ? nameKey.startsWith("Carved") : false; //$NON-NLS-1$
         BooleanWrapper encrypted = new BooleanWrapper();
         try {
             ArchiveEntry entry = ais.getNextEntry();
             HashSet<String> parentMap = new HashSet<>();
-            while (entry != null){
-            	String name  = getEntryName(entry, isCarved);
+            while (entry != null) {
+                String name = getEntryName(entry, isCarved);
                 String parent = getParent(name, parentMap, extractor, context, xhtml);
-                if(!entry.isDirectory())
-                	parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
-                else{
-                    if(!parentMap.contains(name)){
-                    	parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
-                    	parentMap.add(name);
+                if (!entry.isDirectory())
+                    parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
+                else {
+                    if (!parentMap.contains(name)) {
+                        parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
+                        parentMap.add(name);
                     }
                 }
                 entry = ais.getNextEntry();
-                
-                if(Thread.currentThread().isInterrupted())
-            		throw new TikaException("Parsing Interrupted"); //$NON-NLS-1$
+
+                if (Thread.currentThread().isInterrupted())
+                    throw new TikaException("Parsing Interrupted"); //$NON-NLS-1$
             }
         } catch (UnsupportedZipFeatureException zfe) {
             // If it's an encrypted document of unknown password, report as such
@@ -210,110 +206,112 @@ public class PackageParser extends AbstractParser {
             if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
                 stream.reset();
                 new SevenZipParser().parse(stream, handler, metadata, context);
-            }else
+            } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
-            
+
         } catch (PasswordRequiredException pre) {
             throw new EncryptedDocumentException(pre);
-            
-        }catch(IOException e){
-            if(e.getMessage()!= null && e.getMessage().contains("Unexpected record signature")){ //$NON-NLS-1$
+
+        } catch (IOException e) {
+            if (e.getMessage() != null && e.getMessage().contains("Unexpected record signature")) { //$NON-NLS-1$
                 metadata.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING, e.toString());
-            }else
+            } else
                 throw e;
-            
-        }finally {
+
+        } finally {
             IOUtils.closeQuietly(ais);
             tmp.close();
             xhtml.endDocument();
-            
-            if(encrypted.bool)
+
+            if (encrypted.bool)
                 throw new EncryptedDocumentException();
         }
     }
-    
-    private String getEntryName(ArchiveEntry entry) throws TikaException, UnsupportedEncodingException{
+
+    private String getEntryName(ArchiveEntry entry) throws TikaException, UnsupportedEncodingException {
         return getEntryName(entry, false);
     }
-    
-    private String getEntryName(ArchiveEntry entry, boolean isCarved) throws TikaException, UnsupportedEncodingException{
-    	String name  = entry.getName();
-    	if(name != null){
-    		if(name.endsWith("/")) //$NON-NLS-1$
-    			name = name.substring(0, name.length() - 1);
-    		if(isCarved){
-    		    int MAX_LEN = 1024;
-                if(name.length() > MAX_LEN)
+
+    private String getEntryName(ArchiveEntry entry, boolean isCarved)
+            throws TikaException, UnsupportedEncodingException {
+        String name = entry.getName();
+        if (name != null) {
+            if (name.endsWith("/")) //$NON-NLS-1$
+                name = name.substring(0, name.length() - 1);
+            if (isCarved) {
+                int MAX_LEN = 1024;
+                if (name.length() > MAX_LEN)
                     throw new TikaException("Zip entry name too long"); //$NON-NLS-1$
-                
+
                 byte[] bytes = name.getBytes("windows-1252"); //$NON-NLS-1$
-                for(byte b : bytes)
-                    if(b >= 0 && b < 0x20 && b != 0x09)
+                for (byte b : bytes)
+                    if (b >= 0 && b < 0x20 && b != 0x09)
                         throw new TikaException("Invalid char in zip entry"); //$NON-NLS-1$
-                
-    		}
-    	}
+
+            }
+        }
         return name;
     }
-    
-    private String getParent(String path, HashSet<String> parentMap, EmbeddedDocumentExtractor extractor, ParseContext context, XHTMLContentHandler xhtml) throws SAXException, IOException{
+
+    private String getParent(String path, HashSet<String> parentMap, EmbeddedDocumentExtractor extractor,
+            ParseContext context, XHTMLContentHandler xhtml) throws SAXException, IOException {
         String parentPath = Util.getParentPath(path);
-        if(parentPath == null)
+        if (parentPath == null)
             return null;
-        if(!parentMap.contains(parentPath)){
+        if (!parentMap.contains(parentPath)) {
             String grandParent = getParent(parentPath, parentMap, extractor, context, xhtml);
             createParent(parentPath, grandParent, extractor, xhtml);
             parentMap.add(parentPath);
         }
         return parentPath;
     }
-    
-	private void createParent(String name, String parent, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml) throws SAXException, IOException{
-		Metadata entrydata = new Metadata();
-		entrydata.set(Metadata.RESOURCE_NAME_KEY, name);
-		entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
-		entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name);
-		entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
-		extractor.parseEmbedded(new ByteArrayInputStream(new byte[0]), xhtml, entrydata, true);
+
+    private void createParent(String name, String parent, EmbeddedDocumentExtractor extractor,
+            XHTMLContentHandler xhtml) throws SAXException, IOException {
+        Metadata entrydata = new Metadata();
+        entrydata.set(Metadata.RESOURCE_NAME_KEY, name);
+        entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
+        entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name);
+        entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
+        extractor.parseEmbedded(new ByteArrayInputStream(new byte[0]), xhtml, entrydata, true);
     }
-    
-    private class BooleanWrapper{
+
+    private class BooleanWrapper {
         boolean bool = false;
     }
 
-    private void parseEntry(String parent, ParseContext context,
-            ArchiveInputStream archive, ArchiveEntry entry, BooleanWrapper entryEncrypted,
-            EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml)
+    private void parseEntry(String parent, ParseContext context, ArchiveInputStream archive, ArchiveEntry entry,
+            BooleanWrapper entryEncrypted, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml)
             throws SAXException, IOException, TikaException {
-    	String name  = getEntryName(entry);
-    	Metadata entrydata = new Metadata();
+        String name = getEntryName(entry);
+        Metadata entrydata = new Metadata();
         entrydata.set(TikaCoreProperties.MODIFIED, entry.getLastModifiedDate());
-        if(entry.getSize() != -1) {
+        if (entry.getSize() != -1) {
             entrydata.set(Metadata.CONTENT_LENGTH, Long.toString(entry.getSize()));
         }
         if (name != null && name.length() > 0) {
             entrydata.set(Metadata.RESOURCE_NAME_KEY, name);
             entrydata.set(Metadata.EMBEDDED_RELATIONSHIP_ID, name);
-            entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name); //$NON-NLS-1$
+            entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, name); // $NON-NLS-1$
         }
         if (entry instanceof ZipArchiveEntry) {
             ZipArchiveEntry zae = (ZipArchiveEntry) entry;
-            if(!archive.canReadEntryData(entry)) {
-                if(zae.getGeneralPurposeBit().usesEncryption())
+            if (!archive.canReadEntryData(entry)) {
+                if (zae.getGeneralPurposeBit().usesEncryption())
                     entryEncrypted.bool = true;
             }
-            for(ZipExtraField zef : zae.getExtraFields()) {
-                if(zef instanceof X000A_NTFS) {
-                    entrydata.set(ExtraProperties.ACCESSED, ((X000A_NTFS)zef).getAccessJavaTime());
-                    entrydata.set(TikaCoreProperties.CREATED, ((X000A_NTFS)zef).getCreateJavaTime());
+            for (ZipExtraField zef : zae.getExtraFields()) {
+                if (zef instanceof X000A_NTFS) {
+                    entrydata.set(ExtraProperties.ACCESSED, ((X000A_NTFS) zef).getAccessJavaTime());
+                    entrydata.set(TikaCoreProperties.CREATED, ((X000A_NTFS) zef).getCreateJavaTime());
                 }
-                if(zef instanceof X5455_ExtendedTimestamp) {
-                    entrydata.set(ExtraProperties.ACCESSED, ((X5455_ExtendedTimestamp)zef).getAccessJavaTime());
-                    entrydata.set(TikaCoreProperties.CREATED, ((X5455_ExtendedTimestamp)zef).getCreateJavaTime()); 
+                if (zef instanceof X5455_ExtendedTimestamp) {
+                    entrydata.set(ExtraProperties.ACCESSED, ((X5455_ExtendedTimestamp) zef).getAccessJavaTime());
+                    entrydata.set(TikaCoreProperties.CREATED, ((X5455_ExtendedTimestamp) zef).getCreateJavaTime());
                 }
             }
         }
-        entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent); //$NON-NLS-1$
+        entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent); // $NON-NLS-1$
         if (entry.isDirectory())
             entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
         if (extractor.shouldParseEmbedded(entrydata)) {
@@ -328,22 +326,25 @@ public class PackageParser extends AbstractParser {
             }
         }
     }
-    
- // Pending a fix for COMPRESS-269, we have to wrap ourselves
+
+    // Pending a fix for COMPRESS-269, we have to wrap ourselves
     private static class SevenZWrapper extends ArchiveInputStream {
         private SevenZFile file;
+
         private SevenZWrapper(SevenZFile file) {
             this.file = file;
         }
-        
+
         @Override
         public int read() throws IOException {
             return file.read();
         }
+
         @Override
         public int read(byte[] b) throws IOException {
             return file.read(b);
         }
+
         @Override
         public int read(byte[] b, int off, int len) throws IOException {
             return file.read(b, off, len);
@@ -353,7 +354,7 @@ public class PackageParser extends AbstractParser {
         public ArchiveEntry getNextEntry() throws IOException {
             return file.getNextEntry();
         }
-        
+
         @Override
         public void close() throws IOException {
             file.close();

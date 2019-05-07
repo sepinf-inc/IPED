@@ -11,18 +11,18 @@ package macee.descriptor;
  */
 public interface ReportFragment {
 
-  int compareTo(Descriptor other);
+    int compareTo(Descriptor other);
 
-  String getContent();
+    String getContent();
 
-  int getOrder();
+    int getOrder();
 
-  String getParsedContent();
+    String getParsedContent();
 
-  boolean isParsed();
+    boolean isParsed();
 
-  void setOrder(int order);
+    void setOrder(int order);
 
-  void setParsedContent(String parsedContent);
-  
+    void setParsedContent(String parsedContent);
+
 }

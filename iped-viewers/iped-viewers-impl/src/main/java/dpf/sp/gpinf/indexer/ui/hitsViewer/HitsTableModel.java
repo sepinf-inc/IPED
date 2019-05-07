@@ -27,58 +27,58 @@ import javax.swing.table.AbstractTableModel;
 
 public class HitsTableModel extends AbstractTableModel {
 
-  private static final long serialVersionUID = 1L;
-  private AppSearchParams appSearchParams;
+    private static final long serialVersionUID = 1L;
+    private AppSearchParams appSearchParams;
 
-  private String[] columnNames = {"", Messages.getString("HitsTableModel.ContentHits")}; //$NON-NLS-1$ //$NON-NLS-2$
-  
-  public HitsTableModel(AppSearchParams params) {
-    this.appSearchParams = params;
-  }
+    private String[] columnNames = { "", Messages.getString("HitsTableModel.ContentHits") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-  @Override
-  public int getColumnCount() {
-    return columnNames.length;
-  }
-
-  @Override
-  public int getRowCount() {
-
-    if (appSearchParams.textViewer != null && appSearchParams.textViewer.textParser != null) {
-      return appSearchParams.textViewer.textParser.getSortedHits().size();
+    public HitsTableModel(AppSearchParams params) {
+        this.appSearchParams = params;
     }
 
-    return 0;
-  }
-
-  @Override
-  public String getColumnName(int col) {
-    return columnNames[col];
-  }
-
-  @Override
-  public Object getValueAt(int row, int col) {
-    try {
-      if (col == 0) {
-        return row + 1;
-      } else {
-        long hitOff = appSearchParams.textViewer.textParser.getHits().get(row);
-        int hitLen = appSearchParams.textViewer.textParser.getSortedHits().get(hitOff)[0];
-
-        ByteBuffer data = ByteBuffer.allocate(hitLen);
-        int nread;
-        do {
-          nread = appSearchParams.textViewer.textParser.getParsedFile().read(data, hitOff);
-          hitOff += nread;
-        } while (nread != -1 && data.hasRemaining());
-
-        data.flip();
-        return "<html><body>" + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + "</body></html>"; //$NON-NLS-1$ //$NON-NLS-2$
-      }
-    } catch (Exception e) {
-      // e.printStackTrace();
-      return ""; //$NON-NLS-1$
+    @Override
+    public int getColumnCount() {
+        return columnNames.length;
     }
 
-  }
+    @Override
+    public int getRowCount() {
+
+        if (appSearchParams.textViewer != null && appSearchParams.textViewer.textParser != null) {
+            return appSearchParams.textViewer.textParser.getSortedHits().size();
+        }
+
+        return 0;
+    }
+
+    @Override
+    public String getColumnName(int col) {
+        return columnNames[col];
+    }
+
+    @Override
+    public Object getValueAt(int row, int col) {
+        try {
+            if (col == 0) {
+                return row + 1;
+            } else {
+                long hitOff = appSearchParams.textViewer.textParser.getHits().get(row);
+                int hitLen = appSearchParams.textViewer.textParser.getSortedHits().get(hitOff)[0];
+
+                ByteBuffer data = ByteBuffer.allocate(hitLen);
+                int nread;
+                do {
+                    nread = appSearchParams.textViewer.textParser.getParsedFile().read(data, hitOff);
+                    hitOff += nread;
+                } while (nread != -1 && data.hasRemaining());
+
+                data.flip();
+                return "<html><body>" + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + "</body></html>"; //$NON-NLS-1$ //$NON-NLS-2$
+            }
+        } catch (Exception e) {
+            // e.printStackTrace();
+            return ""; //$NON-NLS-1$
+        }
+
+    }
 }

@@ -31,44 +31,44 @@ import iped3.search.ItemSearcher;
  */
 class Library extends ShareazaEntity {
 
-	/*private String time;*/
-	private int version;
-	private final LibraryDictionary dictionary = new LibraryDictionary();
-	private final LibraryMaps maps = new LibraryMaps();
-	private final LibraryFolders folders = new LibraryFolders();
-	private final LibraryHistory history = new LibraryHistory();
-	
-	public Library() {
-		super("LIBRARY"); //$NON-NLS-1$
-	}
-	
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		/*time =*/ar.readLong();
-		version = ar.readInt();
-		dictionary.read(ar, version);
-		maps.read(ar, version);
-		folders.read(ar, version);
-		history.read(ar, version);
-		maps.readExtra(ar, version);
-	}
+    /* private String time; */
+    private int version;
+    private final LibraryDictionary dictionary = new LibraryDictionary();
+    private final LibraryMaps maps = new LibraryMaps();
+    private final LibraryFolders folders = new LibraryFolders();
+    private final LibraryHistory history = new LibraryHistory();
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Version: " + version); //$NON-NLS-1$
-		f.out("Time: ##TODO: decode FILETIME struct"); //$NON-NLS-1$
-		folders.write(f);
-		history.write(f);
-		maps.write(f);
-		dictionary.write(f);
-	}
-	
-	public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
-		folders.printTable(html, searcher);
-	}
-	
-	public List<LibraryFolder> getLibraryFolders(){
-		return folders.getLibraryFolders();
-	}
+    public Library() {
+        super("LIBRARY"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        /* time = */ar.readLong();
+        version = ar.readInt();
+        dictionary.read(ar, version);
+        maps.read(ar, version);
+        folders.read(ar, version);
+        history.read(ar, version);
+        maps.readExtra(ar, version);
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Version: " + version); //$NON-NLS-1$
+        f.out("Time: ##TODO: decode FILETIME struct"); //$NON-NLS-1$
+        folders.write(f);
+        history.write(f);
+        maps.write(f);
+        dictionary.write(f);
+    }
+
+    public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
+        folders.printTable(html, searcher);
+    }
+
+    public List<LibraryFolder> getLibraryFolders() {
+        return folders.getLibraryFolders();
+    }
 
 }

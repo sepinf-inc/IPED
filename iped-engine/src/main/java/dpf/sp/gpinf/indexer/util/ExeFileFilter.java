@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.util;
 import java.io.File;
 import java.io.FileFilter;
 
-public class ExeFileFilter implements FileFilter{
+public class ExeFileFilter implements FileFilter {
 
     @Override
     public boolean accept(File pathname) {

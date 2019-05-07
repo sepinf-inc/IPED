@@ -5,15 +5,14 @@ public class Signature {
     public int[] seqEndPos;
     SignatureType signatureType;
     String sigString;
-    
-    public SignatureType getSignatureType() {
-		return signatureType;
-	}
 
-	CarverType carverType = null;
+    public SignatureType getSignatureType() {
+        return signatureType;
+    }
+
+    CarverType carverType = null;
     int length;
-    
-    
+
     public Signature(CarverType carverType, String sigString, SignatureType sigType) {
         this.carverType = carverType;
         this.sigString = sigString;
@@ -40,12 +39,11 @@ public class Signature {
         HEADER, FOOTER, ESCAPEFOOTER, LENGTHREF, CONTROL;
     }
 
-	public String getSigString() {
-		return sigString;
-	}
+    public String getSigString() {
+        return sigString;
+    }
 
-	public void setSigString(String sigString) {
-		this.sigString = sigString;
-	}
+    public void setSigString(String sigString) {
+        this.sigString = sigString;
+    }
 }
-

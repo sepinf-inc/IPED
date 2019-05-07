@@ -35,172 +35,175 @@ import iped3.desktop.util.Messages;
 
 public class ProgressDialog implements ActionListener, Runnable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private static long DEFAULT_MILLIS_TO_POPUP = 500;
-	
-	private long millisToPopup;
-	private volatile float scale = 0;
-	private volatile JLabel msg;
-	private String note = Messages.getString("ProgressDialog.Searching"); //$NON-NLS-1$
-	private volatile JProgressBar progressBar;
-	private JButton button;
-	private Component parent;
-	private JDialog dialog;
-	private boolean indeterminate;
-	private Dialog.ModalityType modal;
-	private Object lock = this;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private static long DEFAULT_MILLIS_TO_POPUP = 500;
 
-	private volatile boolean canceled = false, closed = false;
+    private long millisToPopup;
+    private volatile float scale = 0;
+    private volatile JLabel msg;
+    private String note = Messages.getString("ProgressDialog.Searching"); //$NON-NLS-1$
+    private volatile JProgressBar progressBar;
+    private JButton button;
+    private Component parent;
+    private JDialog dialog;
+    private boolean indeterminate;
+    private Dialog.ModalityType modal;
+    private Object lock = this;
 
-	private CancelableWorker task;
-	
-	public void setTask(CancelableWorker task) {
-		this.task = task;
-	}
+    private volatile boolean canceled = false, closed = false;
 
-	public ProgressDialog(Component parent, CancelableWorker task) {
-		this(parent, task, false);
-	}
+    private CancelableWorker task;
 
-	public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate) {
-		this(parent, task, indeterminate, DEFAULT_MILLIS_TO_POPUP, Dialog.ModalityType.MODELESS);
-	}
+    public void setTask(CancelableWorker task) {
+        this.task = task;
+    }
 
-	public void setIndeterminate(boolean value) {
-		this.indeterminate = value;
-		if(progressBar != null)
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					progressBar.setIndeterminate(indeterminate);
-				}
-			});
-	}
+    public ProgressDialog(Component parent, CancelableWorker task) {
+        this(parent, task, false);
+    }
 
-	public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate, long millisToPopup, Dialog.ModalityType modal) {
-		this.parent = parent;
-		this.task = task;
-		this.millisToPopup = millisToPopup;
-		this.indeterminate = indeterminate;
-		this.modal = modal;
-		
-		if(millisToPopup == 0)
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					createDialog();
-				}
-			});
-		else
-			new Thread(this).start();
-	}
-	
-	public synchronized void setVisible(){
-		if(dialog == null)
-			createDialog();
-	}
-	
-	private void createDialog(){
-		Window window = null;
-		if(parent != null) window = SwingUtilities.windowForComponent(parent); 
-		dialog = new JDialog(window, modal);
-		dialog.setAlwaysOnTop(true);
-		dialog.setBounds(0, 0, 260, 140);
-		dialog.setTitle(Messages.getString("ProgressDialog.Progress")); //$NON-NLS-1$
-		
-		msg = new JLabel(note);
-		progressBar = new JProgressBar();
-		progressBar.setMaximum(100);
-		button = new JButton(Messages.getString("ProgressDialog.Cancel")); //$NON-NLS-1$
+    public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate) {
+        this(parent, task, indeterminate, DEFAULT_MILLIS_TO_POPUP, Dialog.ModalityType.MODELESS);
+    }
 
-		msg.setBounds(20, 10, 200, 20);
-		progressBar.setBounds(20, 30, 200, 25);
-		button.setBounds(140, 60, 80, 30);
+    public void setIndeterminate(boolean value) {
+        this.indeterminate = value;
+        if (progressBar != null)
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    progressBar.setIndeterminate(indeterminate);
+                }
+            });
+    }
 
-		dialog.getContentPane().add(msg);
-		dialog.getContentPane().add(progressBar);
-		dialog.getContentPane().add(button);
-		dialog.getContentPane().add(new JLabel());
-		button.addActionListener(this);
+    public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate, long millisToPopup,
+            Dialog.ModalityType modal) {
+        this.parent = parent;
+        this.task = task;
+        this.millisToPopup = millisToPopup;
+        this.indeterminate = indeterminate;
+        this.modal = modal;
 
-		if(modal.equals(ModalityType.MODELESS))
-			dialog.setFocusableWindowState(false);
-		dialog.setLocationRelativeTo(parent);
-		dialog.setVisible(true);
-		dialog.setLocationRelativeTo(parent);
-		
-		progressBar.setIndeterminate(indeterminate);
-		if(indeterminate)
-			progressBar.setValue(100);
-	}
+        if (millisToPopup == 0)
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    createDialog();
+                }
+            });
+        else
+            new Thread(this).start();
+    }
 
-	public void setNote(final String note) {
-		this.note = note;
-		if(msg != null)
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					msg.setText(note);
-				}
-			});
-	}
+    public synchronized void setVisible() {
+        if (dialog == null)
+            createDialog();
+    }
 
-	public void setProgress(final long progress) {
-		if(progressBar != null && (progress * scale - progressBar.getValue())  > 0)
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					progressBar.setValue((int) (progress * scale));
-				}
-			});
-	}
+    private void createDialog() {
+        Window window = null;
+        if (parent != null)
+            window = SwingUtilities.windowForComponent(parent);
+        dialog = new JDialog(window, modal);
+        dialog.setAlwaysOnTop(true);
+        dialog.setBounds(0, 0, 260, 140);
+        dialog.setTitle(Messages.getString("ProgressDialog.Progress")); //$NON-NLS-1$
 
-	public void setMaximum(final long max) {
-		scale = 100f / max;
-	}
+        msg = new JLabel(note);
+        progressBar = new JProgressBar();
+        progressBar.setMaximum(100);
+        button = new JButton(Messages.getString("ProgressDialog.Cancel")); //$NON-NLS-1$
 
-	public boolean isCanceled() {
-		return canceled;
-	}
+        msg.setBounds(20, 10, 200, 20);
+        progressBar.setBounds(20, 30, 200, 25);
+        button.setBounds(140, 60, 80, 30);
 
-	public void close() {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				synchronized (lock) {
-					closed = true;
-					if(dialog != null){
-						dialog.dispose();
-					}
-				}
-			}
-		});
-	}
+        dialog.getContentPane().add(msg);
+        dialog.getContentPane().add(progressBar);
+        dialog.getContentPane().add(button);
+        dialog.getContentPane().add(new JLabel());
+        button.addActionListener(this);
 
-	@Override
-	public void actionPerformed(ActionEvent evt) {
-		if (evt.getSource() == button) {
-			canceled = true;
-			if(task != null) task.doCancel(true);
-			this.close();
-		}
-	}
+        if (modal.equals(ModalityType.MODELESS))
+            dialog.setFocusableWindowState(false);
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
+        dialog.setLocationRelativeTo(parent);
 
-	@Override
-	public void run() {
-		try {
-			Thread.sleep(millisToPopup);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        progressBar.setIndeterminate(indeterminate);
+        if (indeterminate)
+            progressBar.setValue(100);
+    }
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				synchronized (lock) {
-					if (!closed && dialog == null) {
-						createDialog();
-					}
-				}
-			}
-		});
+    public void setNote(final String note) {
+        this.note = note;
+        if (msg != null)
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    msg.setText(note);
+                }
+            });
+    }
 
-	}
+    public void setProgress(final long progress) {
+        if (progressBar != null && (progress * scale - progressBar.getValue()) > 0)
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    progressBar.setValue((int) (progress * scale));
+                }
+            });
+    }
+
+    public void setMaximum(final long max) {
+        scale = 100f / max;
+    }
+
+    public boolean isCanceled() {
+        return canceled;
+    }
+
+    public void close() {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                synchronized (lock) {
+                    closed = true;
+                    if (dialog != null) {
+                        dialog.dispose();
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent evt) {
+        if (evt.getSource() == button) {
+            canceled = true;
+            if (task != null)
+                task.doCancel(true);
+            this.close();
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(millisToPopup);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                synchronized (lock) {
+                    if (!closed && dialog == null) {
+                        createDialog();
+                    }
+                }
+            }
+        });
+
+    }
 }

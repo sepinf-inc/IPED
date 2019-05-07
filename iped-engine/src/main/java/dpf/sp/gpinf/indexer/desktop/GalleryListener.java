@@ -29,132 +29,132 @@ import javax.swing.event.ListSelectionListener;
 
 import iped3.ItemId;
 
-
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
-  private GalleryCellEditor cellEditor;
+    private GalleryCellEditor cellEditor;
 
-  @Override
-  public void valueChanged(ListSelectionEvent e) {
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
 
-    if (!ResultTableListener.syncingSelectedItems && !e.getValueIsAdjusting()) {
-      ResultTableListener.syncingSelectedItems = true;  
-      App.get().resultsTable.clearSelection();
-      App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
-      int[] selRows = App.get().gallery.getSelectedCells();
-      int start = 0;
-      while (start < selRows.length) {
-        int i = start + 1;
-        while (i < selRows.length && selRows[i] - selRows[i - 1] == 1) {
-          i++;
+        if (!ResultTableListener.syncingSelectedItems && !e.getValueIsAdjusting()) {
+            ResultTableListener.syncingSelectedItems = true;
+            App.get().resultsTable.clearSelection();
+            App.get().resultsTable.getSelectionModel().setValueIsAdjusting(true);
+            int[] selRows = App.get().gallery.getSelectedCells();
+            int start = 0;
+            while (start < selRows.length) {
+                int i = start + 1;
+                while (i < selRows.length && selRows[i] - selRows[i - 1] == 1) {
+                    i++;
+                }
+                App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
+                start = i;
+            }
+            App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
+            ResultTableListener.syncingSelectedItems = false;
         }
-        App.get().resultsTable.addRowSelectionInterval(selRows[start], selRows[i - 1]);
-        start = i;
-      }
-      App.get().resultsTable.getSelectionModel().setValueIsAdjusting(false);
-      ResultTableListener.syncingSelectedItems = false;
-    }
-
-  }
-
-  @Override
-  public void mouseClicked(MouseEvent arg0) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mouseEntered(MouseEvent arg0) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mouseExited(MouseEvent arg0) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void mousePressed(MouseEvent evt) {
-    if (evt.isPopupTrigger()) {
-      App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
 
     }
 
-  }
-
-  @Override
-  public void mouseReleased(MouseEvent evt) {
-
-    if (evt.getClickCount() == 2) {
-    	int modelIdx = App.get().resultsTable.convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-    	ItemId item = App.get().ipedResult.getItem(modelIdx);
-        int docId = App.get().appCase.getLuceneId(item);
-    	ExternalFileOpen.open(docId);
-
-    } else if (evt.isPopupTrigger()) {
-      App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+    @Override
+    public void mouseClicked(MouseEvent arg0) {
+        // TODO Auto-generated method stub
 
     }
 
-  }
+    @Override
+    public void mouseEntered(MouseEvent arg0) {
+        // TODO Auto-generated method stub
 
-  private boolean shiftDown = false, ctrlDown = false;
-
-  @Override
-  public void keyPressed(KeyEvent evt) {
-
-    if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-      cellEditor.stopCellEditing();
-      int col = App.get().resultsTable.convertColumnIndexToView(1);
-      int firstRow = App.get().resultsTable.getSelectedRow();
-      boolean value = true;
-      if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
-        value = false;
-      }
-
-      MarcadoresController.get().setMultiSetting(true);
-
-      int[] selectedRows = App.get().resultsTable.getSelectedRows();
-      for (int i = 0; i < selectedRows.length; i++) {
-    	  if(i == selectedRows.length - 1)
-    		  MarcadoresController.get().setMultiSetting(false);
-    	  App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-      }
-
-    } else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-      shiftDown = true;
-
-    } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-      ctrlDown = true;
     }
 
-  }
+    @Override
+    public void mouseExited(MouseEvent arg0) {
+        // TODO Auto-generated method stub
 
-  @Override
-  public void keyReleased(KeyEvent evt) {
-
-    if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-      shiftDown = false;
-
-    } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-      ctrlDown = false;
     }
 
-  }
+    @Override
+    public void mousePressed(MouseEvent evt) {
+        if (evt.isPopupTrigger()) {
+            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
 
-  @Override
-  public void keyTyped(KeyEvent arg0) {
-    // TODO Auto-generated method stub
+        }
 
-  }
+    }
 
-  public void setCellEditor(GalleryCellEditor cellEditor) {
-    this.cellEditor = cellEditor;
-  }
+    @Override
+    public void mouseReleased(MouseEvent evt) {
 
-  public GalleryCellEditor getCellEditor() {
-    return cellEditor;
-  }
+        if (evt.getClickCount() == 2) {
+            int modelIdx = App.get().resultsTable
+                    .convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
+            ItemId item = App.get().ipedResult.getItem(modelIdx);
+            int docId = App.get().appCase.getLuceneId(item);
+            ExternalFileOpen.open(docId);
+
+        } else if (evt.isPopupTrigger()) {
+            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+
+        }
+
+    }
+
+    private boolean shiftDown = false, ctrlDown = false;
+
+    @Override
+    public void keyPressed(KeyEvent evt) {
+
+        if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
+            cellEditor.stopCellEditing();
+            int col = App.get().resultsTable.convertColumnIndexToView(1);
+            int firstRow = App.get().resultsTable.getSelectedRow();
+            boolean value = true;
+            if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
+                value = false;
+            }
+
+            MarcadoresController.get().setMultiSetting(true);
+
+            int[] selectedRows = App.get().resultsTable.getSelectedRows();
+            for (int i = 0; i < selectedRows.length; i++) {
+                if (i == selectedRows.length - 1)
+                    MarcadoresController.get().setMultiSetting(false);
+                App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+            }
+
+        } else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
+            shiftDown = true;
+
+        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
+            ctrlDown = true;
+        }
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent evt) {
+
+        if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
+            shiftDown = false;
+
+        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
+            ctrlDown = false;
+        }
+
+    }
+
+    @Override
+    public void keyTyped(KeyEvent arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void setCellEditor(GalleryCellEditor cellEditor) {
+        this.cellEditor = cellEditor;
+    }
+
+    public GalleryCellEditor getCellEditor() {
+        return cellEditor;
+    }
 }

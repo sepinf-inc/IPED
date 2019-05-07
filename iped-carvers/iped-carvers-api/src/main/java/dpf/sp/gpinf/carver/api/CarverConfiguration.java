@@ -27,16 +27,16 @@ public interface CarverConfiguration {
 
     /* Returns the populated state machine tree */
     public AhoCorasick getPopulatedTree();
-    
+
     /* Returns the populated state machine tree */
     public HashMap<CarverType, Carver> getRegisteredCarvers();
 
     /* initializes the configuration with the parameters in the Properties object */
     public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException;
-    
+
     /* */
     public Carver createCarverFromJSName(String scriptName);
-    
+
     public boolean isToIgnoreCorrupted();
 
 }

@@ -25,80 +25,79 @@ import java.io.IOException;
  */
 class QuerySearch extends ShareazaEntity {
 
-	private String guid;
-	private String sSearch;
-	private String sha1;
-	private String tiger;
-	private String ed2k;
-	private String bth;
-	private String md5;
-	private String uri;
-	private final XMLElement xml = new XMLElement();
-	private boolean wantURL = false;
-	private boolean wantDN = false;
-	private boolean wantXML = false;
-	private boolean wantCOM = false;
-	private boolean wantPFS = false;
-	private long minSize = 0;
-	private long maxSize = 0;
-	
-	public QuerySearch() {
-		super("QUERY SEARCH"); //$NON-NLS-1$
-	}
-	
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		int version = ar.readInt();
-		if (version < 4) {
-			throw new IOException("Unsupported Version"); //$NON-NLS-1$
-		}
-		guid = Util.encodeGUID(ar.readBytes(16));
-		sSearch = ar.readString();
-		sha1 = ar.readHash(20);
-		tiger = ar.readHash(24);
-		ed2k = ar.readHash(16);
-		bth = ar.readHash(20, "base32"); //$NON-NLS-1$
-		if (version >= 7) {
-			md5 = ar.readHash(16);
-		}
-		uri = ar.readString();
-		if (uri.length() > 0) {
-			xml.read(ar);
-		}
-		
-		if (version >= 5) {
-			wantURL = ar.readBool();
-			wantDN = ar.readBool();
-			wantXML = ar.readBool();
-			wantCOM = ar.readBool();
-			wantPFS = ar.readBool();
-		}
-		
-		if (version >= 8) {
-			minSize = ar.readLong();
-			maxSize = ar.readLong();
-		}
-	}
+    private String guid;
+    private String sSearch;
+    private String sha1;
+    private String tiger;
+    private String ed2k;
+    private String bth;
+    private String md5;
+    private String uri;
+    private final XMLElement xml = new XMLElement();
+    private boolean wantURL = false;
+    private boolean wantDN = false;
+    private boolean wantXML = false;
+    private boolean wantCOM = false;
+    private boolean wantPFS = false;
+    private long minSize = 0;
+    private long maxSize = 0;
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("GUID: " + guid); //$NON-NLS-1$
-		f.out("Search: " + sSearch); //$NON-NLS-1$
-		f.out("SHA1: " + sha1); //$NON-NLS-1$
-		f.out("Tiger: " + tiger); //$NON-NLS-1$
-		f.out("ED2K: " + ed2k); //$NON-NLS-1$
-		f.out("BTH: " + bth); //$NON-NLS-1$
-		f.out("MD5: " + md5); //$NON-NLS-1$
-		f.out("URI: " + uri); //$NON-NLS-1$
-		xml.write(f);
-		f.out("Want URL: " + wantURL); //$NON-NLS-1$
-		f.out("Want DN: " + wantDN); //$NON-NLS-1$
-		f.out("Want XML: " + wantXML); //$NON-NLS-1$
-		f.out("Want COM: " + wantCOM); //$NON-NLS-1$
-		f.out("Want PFS: " + wantPFS); //$NON-NLS-1$
-		f.out("Min Size: " + minSize); //$NON-NLS-1$
-		f.out("Max Size: " + maxSize); //$NON-NLS-1$
-	}
-	
+    public QuerySearch() {
+        super("QUERY SEARCH"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        int version = ar.readInt();
+        if (version < 4) {
+            throw new IOException("Unsupported Version"); //$NON-NLS-1$
+        }
+        guid = Util.encodeGUID(ar.readBytes(16));
+        sSearch = ar.readString();
+        sha1 = ar.readHash(20);
+        tiger = ar.readHash(24);
+        ed2k = ar.readHash(16);
+        bth = ar.readHash(20, "base32"); //$NON-NLS-1$
+        if (version >= 7) {
+            md5 = ar.readHash(16);
+        }
+        uri = ar.readString();
+        if (uri.length() > 0) {
+            xml.read(ar);
+        }
+
+        if (version >= 5) {
+            wantURL = ar.readBool();
+            wantDN = ar.readBool();
+            wantXML = ar.readBool();
+            wantCOM = ar.readBool();
+            wantPFS = ar.readBool();
+        }
+
+        if (version >= 8) {
+            minSize = ar.readLong();
+            maxSize = ar.readLong();
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("GUID: " + guid); //$NON-NLS-1$
+        f.out("Search: " + sSearch); //$NON-NLS-1$
+        f.out("SHA1: " + sha1); //$NON-NLS-1$
+        f.out("Tiger: " + tiger); //$NON-NLS-1$
+        f.out("ED2K: " + ed2k); //$NON-NLS-1$
+        f.out("BTH: " + bth); //$NON-NLS-1$
+        f.out("MD5: " + md5); //$NON-NLS-1$
+        f.out("URI: " + uri); //$NON-NLS-1$
+        xml.write(f);
+        f.out("Want URL: " + wantURL); //$NON-NLS-1$
+        f.out("Want DN: " + wantDN); //$NON-NLS-1$
+        f.out("Want XML: " + wantXML); //$NON-NLS-1$
+        f.out("Want COM: " + wantCOM); //$NON-NLS-1$
+        f.out("Want PFS: " + wantPFS); //$NON-NLS-1$
+        f.out("Min Size: " + minSize); //$NON-NLS-1$
+        f.out("Max Size: " + maxSize); //$NON-NLS-1$
+    }
 
 }

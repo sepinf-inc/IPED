@@ -35,13 +35,13 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
     private transient DataInputStream input;
 
     private transient DataOutputStream output;
-    
+
     private File file;
-    
+
     private transient TikaInputStream tis;
-    
+
     public TikaInputStream getTikaInputStream() {
-        if(file != null && tis == null) {
+        if (file != null && tis == null) {
             try {
                 tis = TikaInputStream.get(file);
             } catch (FileNotFoundException e) {
@@ -53,11 +53,11 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
 
     public InputStreamProxy2(int resource, InputStream is) {
         this.resource = resource;
-        
-        if(is instanceof TikaInputStream)
+
+        if (is instanceof TikaInputStream)
             try {
-                file = ((TikaInputStream)is).getFile();
-                
+                file = ((TikaInputStream) is).getFile();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -70,11 +70,11 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
 
     @Override
     public int read() throws IOException {
-        
-        if(tis != null) {
+
+        if (tis != null) {
             return tis.read();
         }
-        
+
         output.writeByte(ForkServer2.RESOURCE);
         output.writeByte(resource);
         output.writeInt(1);
@@ -89,11 +89,11 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        
-        if(tis != null) {
+
+        if (tis != null) {
             return tis.read(b, off, len);
         }
-        
+
         output.writeByte(ForkServer2.RESOURCE);
         output.writeByte(resource);
         output.writeInt(len);
@@ -104,11 +104,11 @@ class InputStreamProxy2 extends InputStream implements ForkProxy {
         }
         return n;
     }
-    
+
     @Override
     public void close() throws IOException {
         super.close();
-        if(tis != null) {
+        if (tis != null) {
             tis.close();
         }
     }

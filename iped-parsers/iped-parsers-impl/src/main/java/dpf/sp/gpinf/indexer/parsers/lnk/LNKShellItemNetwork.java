@@ -1,63 +1,63 @@
 package dpf.sp.gpinf.indexer.parsers.lnk;
 
 public class LNKShellItemNetwork {
-	private int typeClass;
-	private byte flags;
-	
-	private String Location, Description, Comments;
+    private int typeClass;
+    private byte flags;
 
-	public int getTypeClass() {
-		return typeClass;
-	}
+    private String Location, Description, Comments;
 
-	public void setTypeClass(int typeClass) {
-		this.typeClass = typeClass;
-	}
+    public int getTypeClass() {
+        return typeClass;
+    }
 
-	public byte getFlags() {
-		return flags;
-	}
+    public void setTypeClass(int typeClass) {
+        this.typeClass = typeClass;
+    }
 
-	public void setFlags(byte flags) {
-		this.flags = flags;
-	}
+    public byte getFlags() {
+        return flags;
+    }
 
-	public String getLocation() {
-		return Location;
-	}
+    public void setFlags(byte flags) {
+        this.flags = flags;
+    }
 
-	public void setLocation(String location) {
-		Location = location;
-	}
+    public String getLocation() {
+        return Location;
+    }
 
-	public String getDescription() {
-		return Description;
-	}
-	
-	public void setDescription(String description) {
-		Description = description;
-	}
+    public void setLocation(String location) {
+        Location = location;
+    }
 
-	public String getComments() {
-		return Comments;
-	}
+    public String getDescription() {
+        return Description;
+    }
 
-	public void setComments(String comments) {
-		Comments = comments;
-	}
+    public void setDescription(String description) {
+        Description = description;
+    }
 
-	public String getTypeStr() {
-		if ((typeClass & 0Xf) == 0X01)
-			return "Domain/Workgroup name"; //$NON-NLS-1$
-		else if ((typeClass & 0Xf) == 0X02)
-			return "Server UNC path"; //$NON-NLS-1$
-		else if ((typeClass & 0Xf) == 0X03)
-			return "Share UNC path"; //$NON-NLS-1$
-		else if ((typeClass & 0Xf) == 0X06)
-			return "Microsoft Windows Network"; //$NON-NLS-1$
-		else if ((typeClass & 0Xf) == 0X07)
-			return "Entire Network"; //$NON-NLS-1$
-		else 
-			return "Unknown"; //$NON-NLS-1$
-	}
+    public String getComments() {
+        return Comments;
+    }
+
+    public void setComments(String comments) {
+        Comments = comments;
+    }
+
+    public String getTypeStr() {
+        if ((typeClass & 0Xf) == 0X01)
+            return "Domain/Workgroup name"; //$NON-NLS-1$
+        else if ((typeClass & 0Xf) == 0X02)
+            return "Server UNC path"; //$NON-NLS-1$
+        else if ((typeClass & 0Xf) == 0X03)
+            return "Share UNC path"; //$NON-NLS-1$
+        else if ((typeClass & 0Xf) == 0X06)
+            return "Microsoft Windows Network"; //$NON-NLS-1$
+        else if ((typeClass & 0Xf) == 0X07)
+            return "Entire Network"; //$NON-NLS-1$
+        else
+            return "Unknown"; //$NON-NLS-1$
+    }
 }

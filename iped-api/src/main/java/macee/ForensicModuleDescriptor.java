@@ -5,10 +5,9 @@ import java.util.Map;
 import macee.descriptor.Descriptor;
 
 /**
- * Um descritor para o módulo. Pode ser armazenado e carregado em JSON/XML.
- * Se associa ao registro de módulos e ferramentas do portal da MACEE
- * que deve ser usado para verificar atualizações bem como fornecer documentação
- * e suporte.
+ * Um descritor para o módulo. Pode ser armazenado e carregado em JSON/XML. Se
+ * associa ao registro de módulos e ferramentas do portal da MACEE que deve ser
+ * usado para verificar atualizações bem como fornecer documentação e suporte.
  * 
  */
 public interface ForensicModuleDescriptor extends Descriptor {

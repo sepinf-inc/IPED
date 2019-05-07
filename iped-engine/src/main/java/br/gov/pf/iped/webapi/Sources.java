@@ -36,125 +36,125 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import iped3.IPEDSource;
 
-@Api(value="Sources")
+@Api(value = "Sources")
 @Path("sources")
 public class Sources {
-	public static IPEDMultiSource multiSource = null;
-	public static Map <Integer, String> sourceIntToString;
-	public static Map <String, Integer> sourceStringToInt;
-	public static Map <String, String> sourcePathToStringID;
-	
-	public static void init(String urlToAskSources) throws IOException, ParseException{
-		sourceIntToString = new HashMap<Integer, String>();
-		sourceStringToInt = new HashMap <String, Integer>();
-		sourcePathToStringID = new HashMap <String, String>();
-		
-	    boolean confInited = false;
-		List<IPEDSource> sources = new ArrayList<IPEDSource>(); 
-		JSONArray arr = askSources(urlToAskSources);
-		for (Object object : arr) {
-			JSONObject jsonobj = (JSONObject)object;
-			String id = (String)jsonobj.get("id");
-			String path = (String)jsonobj.get("path");
-			
-			sourcePathToStringID.put(path,id);
-			
-			if(!confInited) {
-			    Configuration.getInstance().loadConfigurables(path + "/indexador", true); //$NON-NLS-1$
-		        confInited = true;
-			}
-			
-			IPEDSource source = new IPEDSourceImpl(new File(path));
-			sources.add(source);
-		}
+    public static IPEDMultiSource multiSource = null;
+    public static Map<Integer, String> sourceIntToString;
+    public static Map<String, Integer> sourceStringToInt;
+    public static Map<String, String> sourcePathToStringID;
 
-		multiSource = new IPEDMultiSource(sources);
-		// filling maps using path, to avoid relying on provided order 
-		for (int i = 0; i < multiSource.getAtomicSources().size(); i++) {
-			IPEDSource source = multiSource.getAtomicSourceBySourceId(i);
-			String path = source.getCaseDir().toString();
-			String id = sourcePathToStringID.get(path);
-			if (sourceStringToInt.containsKey(id)) {
-				throw new RuntimeException("duplicated id: " + id);
-			}
-			sourceStringToInt.put(id, i);
-			sourceIntToString.put(i, id);
-		}
-	}
-	
-	public static IPEDSource getSource(String sourceID) {
-		int id = sourceStringToInt.get(sourceID);
-		return multiSource.getAtomicSourceBySourceId(id);
-	}
+    public static void init(String urlToAskSources) throws IOException, ParseException {
+        sourceIntToString = new HashMap<Integer, String>();
+        sourceStringToInt = new HashMap<String, Integer>();
+        sourcePathToStringID = new HashMap<String, String>();
 
-	@ApiOperation(value="List sources")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException{
-		List<SourceJSON> data = new ArrayList<SourceJSON>();
-		for (IPEDSource source : multiSource.getAtomicSources()) {
-			int id = source.getSourceId();
-			String sourceID = sourceIntToString.get(id);
-			data.add(getone(sourceID));
-		}
-		return new DataListJSON<SourceJSON>(data);
-	}
+        boolean confInited = false;
+        List<IPEDSource> sources = new ArrayList<IPEDSource>();
+        JSONArray arr = askSources(urlToAskSources);
+        for (Object object : arr) {
+            JSONObject jsonobj = (JSONObject) object;
+            String id = (String) jsonobj.get("id");
+            String path = (String) jsonobj.get("path");
 
-	@ApiOperation(value="Add source")
-	@POST
-	@Produces(MediaType.APPLICATION_JSON)
-	public synchronized static Response addSource(@ApiParam(required=true) SourceJSON sourcejson){
-		String id = sourcejson.getId();
-		String path = sourcejson.getPath();
-		if (sourceStringToInt.containsKey(id)) {
-			throw new RuntimeException("duplicated id: " + id);
-		}
-		sourcePathToStringID.put(path, id);
-		
-		List<IPEDSourceImpl> sources = multiSource.getAtomicSources();
-		int last = sources.size();
-		sources.add(new IPEDSourceImpl(new File(path)));
-		if (last+1 != sources.size()) {
-			throw new RuntimeException("concurrency error adding source");
-		}
-		multiSource.init();
-		IPEDSource source = multiSource.getAtomicSourceBySourceId(last);
-		String realpath = source.getCaseDir().toString();
-		if (!path.equals(realpath)) {
-			throw new RuntimeException("error adding source; expected " + path +" got " + realpath);
-		}
-		sourceStringToInt.put(id, last);
-		sourceIntToString.put(last, id);
+            sourcePathToStringID.put(path, id);
 
-		return Response.ok().build();
-	}
+            if (!confInited) {
+                Configuration.getInstance().loadConfigurables(path + "/indexador", true); //$NON-NLS-1$
+                confInited = true;
+            }
 
-	@ApiOperation(value="Get source's properties")
-	@GET
-	@Path("{sourceID}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public static SourceJSON getone(@PathParam("sourceID") String sourceID) throws IOException, TskCoreException{
-		SourceJSON result = new SourceJSON();
-		IPEDSource source = getSource(sourceID);
-		result.setId(sourceID);
-		result.setPath(source.getCaseDir().toString());
-		return result;
-	}
-	
-	private static JSONArray askSources(String urlToAskSources) throws MalformedURLException, IOException, ParseException{
-		InputStream in;
-		JSONArray result = new JSONArray();
-		if ((new File(urlToAskSources)).exists()){
-			in = new FileInputStream(urlToAskSources);
-		}else{
-			in = (new URL(urlToAskSources)).openConnection().getInputStream();
-		}
-		try {
-			result = (JSONArray)JSONValue.parseWithException(new InputStreamReader(in));
-		}finally{
-			in.close();
-		}
-		return result;
-	}
+            IPEDSource source = new IPEDSourceImpl(new File(path));
+            sources.add(source);
+        }
+
+        multiSource = new IPEDMultiSource(sources);
+        // filling maps using path, to avoid relying on provided order
+        for (int i = 0; i < multiSource.getAtomicSources().size(); i++) {
+            IPEDSource source = multiSource.getAtomicSourceBySourceId(i);
+            String path = source.getCaseDir().toString();
+            String id = sourcePathToStringID.get(path);
+            if (sourceStringToInt.containsKey(id)) {
+                throw new RuntimeException("duplicated id: " + id);
+            }
+            sourceStringToInt.put(id, i);
+            sourceIntToString.put(i, id);
+        }
+    }
+
+    public static IPEDSource getSource(String sourceID) {
+        int id = sourceStringToInt.get(sourceID);
+        return multiSource.getAtomicSourceBySourceId(id);
+    }
+
+    @ApiOperation(value = "List sources")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException {
+        List<SourceJSON> data = new ArrayList<SourceJSON>();
+        for (IPEDSource source : multiSource.getAtomicSources()) {
+            int id = source.getSourceId();
+            String sourceID = sourceIntToString.get(id);
+            data.add(getone(sourceID));
+        }
+        return new DataListJSON<SourceJSON>(data);
+    }
+
+    @ApiOperation(value = "Add source")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public synchronized static Response addSource(@ApiParam(required = true) SourceJSON sourcejson) {
+        String id = sourcejson.getId();
+        String path = sourcejson.getPath();
+        if (sourceStringToInt.containsKey(id)) {
+            throw new RuntimeException("duplicated id: " + id);
+        }
+        sourcePathToStringID.put(path, id);
+
+        List<IPEDSourceImpl> sources = multiSource.getAtomicSources();
+        int last = sources.size();
+        sources.add(new IPEDSourceImpl(new File(path)));
+        if (last + 1 != sources.size()) {
+            throw new RuntimeException("concurrency error adding source");
+        }
+        multiSource.init();
+        IPEDSource source = multiSource.getAtomicSourceBySourceId(last);
+        String realpath = source.getCaseDir().toString();
+        if (!path.equals(realpath)) {
+            throw new RuntimeException("error adding source; expected " + path + " got " + realpath);
+        }
+        sourceStringToInt.put(id, last);
+        sourceIntToString.put(last, id);
+
+        return Response.ok().build();
+    }
+
+    @ApiOperation(value = "Get source's properties")
+    @GET
+    @Path("{sourceID}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public static SourceJSON getone(@PathParam("sourceID") String sourceID) throws IOException, TskCoreException {
+        SourceJSON result = new SourceJSON();
+        IPEDSource source = getSource(sourceID);
+        result.setId(sourceID);
+        result.setPath(source.getCaseDir().toString());
+        return result;
+    }
+
+    private static JSONArray askSources(String urlToAskSources)
+            throws MalformedURLException, IOException, ParseException {
+        InputStream in;
+        JSONArray result = new JSONArray();
+        if ((new File(urlToAskSources)).exists()) {
+            in = new FileInputStream(urlToAskSources);
+        } else {
+            in = (new URL(urlToAskSources)).openConnection().getInputStream();
+        }
+        try {
+            result = (JSONArray) JSONValue.parseWithException(new InputStreamReader(in));
+        } finally {
+            in.close();
+        }
+        return result;
+    }
 }
-

@@ -1,12 +1,14 @@
 package macee.core;
 
 /**
- * A module is an owner of multiple components that is associated with an application (@link App).
+ * A module is an owner of multiple components that is associated with an
+ * application (@link App).
  * 
- * COMENTÁRIO: antes havia um vínculo explícito para os componentes, mas sou mais favorável
- * a definição via anotações.
+ * COMENTÁRIO: antes havia um vínculo explícito para os componentes, mas sou
+ * mais favorável a definição via anotações.
  *
- * @param <A> the type of App associated with the module
+ * @param <A>
+ *            the type of App associated with the module
  * @author Bruno W. P. Hoelz
  */
 public interface Module<A extends App> extends Lifecycle {

@@ -11,18 +11,18 @@ import br.gov.pf.iped.webapi.json.DataListJSON;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
-@Api(value="Categories")
+@Api(value = "Categories")
 @Path("categories")
 public class Categories {
-    
-	@ApiOperation(value="List categories")
+
+    @ApiOperation(value = "List categories")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DataListJSON<String> get() throws Exception{
-        
-    	List<String> categories = Sources.multiSource.getCategories();
-    	DataListJSON<String> result = new DataListJSON<String>(categories);
+    public DataListJSON<String> get() throws Exception {
+
+        List<String> categories = Sources.multiSource.getCategories();
+        DataListJSON<String> result = new DataListJSON<String>(categories);
 
         return result;
-    }   
+    }
 }

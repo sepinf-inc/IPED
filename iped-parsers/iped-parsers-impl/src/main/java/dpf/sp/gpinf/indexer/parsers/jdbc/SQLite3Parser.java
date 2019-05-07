@@ -1,4 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers.jdbc;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -31,16 +32,17 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 /**
- * This is the main class for parsing SQLite3 files.  When {@link #parse} is called,
- * this creates a new {@link org.apache.tika.parser.jdbc.SQLite3DBParser}.
+ * This is the main class for parsing SQLite3 files. When {@link #parse} is
+ * called, this creates a new
+ * {@link org.apache.tika.parser.jdbc.SQLite3DBParser}.
  * <p>
- * Given potential conflicts of native libraries in web servers, users will
- * need to add org.xerial's sqlite-jdbc jar to the class path for this parser
- * to work.  For development and testing, this jar is specified in tika-parsers'
+ * Given potential conflicts of native libraries in web servers, users will need
+ * to add org.xerial's sqlite-jdbc jar to the class path for this parser to
+ * work. For development and testing, this jar is specified in tika-parsers'
  * pom.xml, but it is currently set to "provided."
  * <p>
- * Note that this family of jdbc parsers is designed to treat each CLOB and each BLOB
- * as embedded documents.
+ * Note that this family of jdbc parsers is designed to treat each CLOB and each
+ * BLOB as embedded documents.
  *
  */
 public class SQLite3Parser extends AbstractParser {
@@ -54,7 +56,7 @@ public class SQLite3Parser extends AbstractParser {
     /**
      * Checks to see if class is available for org.sqlite.JDBC.
      * <p>
-     * If not, this class will return an EMPTY_SET for  getSupportedTypes()
+     * If not, this class will return an EMPTY_SET for getSupportedTypes()
      */
     public SQLite3Parser() {
         Set<MediaType> tmp;
@@ -73,15 +75,16 @@ public class SQLite3Parser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
         SQLite3DBParser p = new SQLite3DBParser();
         p.parse(stream, handler, metadata, context);
     }
-    
+
     public static Properties getConnectionProperties() {
-    	Properties prop = new Properties();
-		prop.setProperty(SQLiteConfig.Pragma.JOURNAL_MODE.pragmaName, SQLiteConfig.JournalMode.DELETE.name());
-		//prop.setProperty(SQLiteConfig.Pragma.OPEN_MODE.pragmaName, "1");
-		return prop;
+        Properties prop = new Properties();
+        prop.setProperty(SQLiteConfig.Pragma.JOURNAL_MODE.pragmaName, SQLiteConfig.JournalMode.DELETE.name());
+        // prop.setProperty(SQLiteConfig.Pragma.OPEN_MODE.pragmaName, "1");
+        return prop;
     }
 }

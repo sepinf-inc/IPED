@@ -37,76 +37,73 @@ import javax.swing.SortOrder;
 
 /**
  * An implementation of <code>RowSorter</code> that provides sorting and
- * filtering around a grid-based data model.
- * Beyond creating and installing a <code>RowSorter</code>, you very rarely
- * need to interact with one directly.  Refer to
- * {@link javax.swing.table.TableRowSorter TableRowSorter} for a concrete
- * implementation of <code>RowSorter</code> for <code>JTable</code>.
+ * filtering around a grid-based data model. Beyond creating and installing a
+ * <code>RowSorter</code>, you very rarely need to interact with one directly.
+ * Refer to {@link javax.swing.table.TableRowSorter TableRowSorter} for a
+ * concrete implementation of <code>RowSorter</code> for <code>JTable</code>.
  * <p>
- * Sorting is done based on the current <code>SortKey</code>s, in order.
- * If two objects are equal (the <code>Comparator</code> for the
- * column returns 0) the next <code>SortKey</code> is used.  If no
- * <code>SortKey</code>s remain or the order is <code>UNSORTED</code>, then
- * the order of the rows in the model is used.
+ * Sorting is done based on the current <code>SortKey</code>s, in order. If two
+ * objects are equal (the <code>Comparator</code> for the column returns 0) the
+ * next <code>SortKey</code> is used. If no <code>SortKey</code>s remain or the
+ * order is <code>UNSORTED</code>, then the order of the rows in the model is
+ * used.
  * <p>
- * Sorting of each column is done by way of a <code>Comparator</code>
- * that you can specify using the <code>setComparator</code> method.
- * If a <code>Comparator</code> has not been specified, the
- * <code>Comparator</code> returned by
- * <code>Collator.getInstance()</code> is used on the results of
- * calling <code>toString</code> on the underlying objects.  The
- * <code>Comparator</code> is never passed <code>null</code>.  A
+ * Sorting of each column is done by way of a <code>Comparator</code> that you
+ * can specify using the <code>setComparator</code> method. If a
+ * <code>Comparator</code> has not been specified, the <code>Comparator</code>
+ * returned by <code>Collator.getInstance()</code> is used on the results of
+ * calling <code>toString</code> on the underlying objects. The
+ * <code>Comparator</code> is never passed <code>null</code>. A
  * <code>null</code> value is treated as occurring before a
- * non-<code>null</code> value, and two <code>null</code> values are
- * considered equal.
+ * non-<code>null</code> value, and two <code>null</code> values are considered
+ * equal.
  * <p>
- * If you specify a <code>Comparator</code> that casts its argument to
- * a type other than that provided by the model, a
- * <code>ClassCastException</code> will be thrown when the data is sorted.
+ * If you specify a <code>Comparator</code> that casts its argument to a type
+ * other than that provided by the model, a <code>ClassCastException</code> will
+ * be thrown when the data is sorted.
  * <p>
- * In addition to sorting, <code>DefaultRowSorter</code> provides the
- * ability to filter rows.  Filtering is done by way of a
- * <code>RowFilter</code> that is specified using the
- * <code>setRowFilter</code> method.  If no filter has been specified all
- * rows are included.
+ * In addition to sorting, <code>DefaultRowSorter</code> provides the ability to
+ * filter rows. Filtering is done by way of a <code>RowFilter</code> that is
+ * specified using the <code>setRowFilter</code> method. If no filter has been
+ * specified all rows are included.
  * <p>
- * By default, rows are in unsorted order (the same as the model) and
- * every column is sortable. The default <code>Comparator</code>s are
- * documented in the subclasses (for example, {@link
- * javax.swing.table.TableRowSorter TableRowSorter}).
- * <p>
- * If the underlying model structure changes (the
- * <code>modelStructureChanged</code> method is invoked) the following
- * are reset to their default values: <code>Comparator</code>s by
- * column, current sort order, and whether each column is sortable. To
- * find the default <code>Comparator</code>s, see the concrete
- * implementation (for example, {@link
- * javax.swing.table.TableRowSorter TableRowSorter}).  The default
- * sort order is unsorted (the same as the model), and columns are
- * sortable by default.
+ * By default, rows are in unsorted order (the same as the model) and every
+ * column is sortable. The default <code>Comparator</code>s are documented in
+ * the subclasses (for example, {@link javax.swing.table.TableRowSorter
+ * TableRowSorter}).
  * <p>
  * If the underlying model structure changes (the
- * <code>modelStructureChanged</code> method is invoked) the following
- * are reset to their default values: <code>Comparator</code>s by column,
- * current sort order and whether a column is sortable.
+ * <code>modelStructureChanged</code> method is invoked) the following are reset
+ * to their default values: <code>Comparator</code>s by column, current sort
+ * order, and whether each column is sortable. To find the default
+ * <code>Comparator</code>s, see the concrete implementation (for example,
+ * {@link javax.swing.table.TableRowSorter TableRowSorter}). The default sort
+ * order is unsorted (the same as the model), and columns are sortable by
+ * default.
  * <p>
- * <code>DefaultRowSorter</code> is an abstract class.  Concrete
- * subclasses must provide access to the underlying data by invoking
- * {@code setModelWrapper}. The {@code setModelWrapper} method
- * <b>must</b> be invoked soon after the constructor is
- * called, ideally from within the subclass's constructor.
+ * If the underlying model structure changes (the
+ * <code>modelStructureChanged</code> method is invoked) the following are reset
+ * to their default values: <code>Comparator</code>s by column, current sort
+ * order and whether a column is sortable.
+ * <p>
+ * <code>DefaultRowSorter</code> is an abstract class. Concrete subclasses must
+ * provide access to the underlying data by invoking {@code setModelWrapper}.
+ * The {@code setModelWrapper} method <b>must</b> be invoked soon after the
+ * constructor is called, ideally from within the subclass's constructor.
  * Undefined behavior will result if you use a {@code
  * DefaultRowSorter} without specifying a {@code ModelWrapper}.
  * <p>
- * <code>DefaultRowSorter</code> has two formal type parameters.  The
- * first type parameter corresponds to the class of the model, for example
- * <code>DefaultTableModel</code>.  The second type parameter
- * corresponds to the class of the identifier passed to the
- * <code>RowFilter</code>.  Refer to <code>TableRowSorter</code> and
- * <code>RowFilter</code> for more details on the type parameters.
+ * <code>DefaultRowSorter</code> has two formal type parameters. The first type
+ * parameter corresponds to the class of the model, for example
+ * <code>DefaultTableModel</code>. The second type parameter corresponds to the
+ * class of the identifier passed to the <code>RowFilter</code>. Refer to
+ * <code>TableRowSorter</code> and <code>RowFilter</code> for more details on
+ * the type parameters.
  *
- * @param <M> the type of the model
- * @param <I> the type of the identifier passed to the <code>RowFilter</code>
+ * @param <M>
+ *            the type of the model
+ * @param <I>
+ *            the type of the identifier passed to the <code>RowFilter</code>
  * @see javax.swing.table.TableRowSorter
  * @see javax.swing.table.DefaultTableModel
  * @see java.text.Collator
@@ -151,11 +148,11 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * Developer supplied Filter.
      */
-    private RowFilter<? super M,? super I> filter;
+    private RowFilter<? super M, ? super I> filter;
 
     /**
-     * Value passed to the filter.  The same instance is passed to the
-     * filter for different rows.
+     * Value passed to the filter. The same instance is passed to the filter for
+     * different rows.
      */
     private FilterEntry filterEntry;
 
@@ -165,13 +162,13 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     private List<SortKey> sortKeys;
 
     /**
-     * Whether or not to use getStringValueAt.  This is indexed by column.
+     * Whether or not to use getStringValueAt. This is indexed by column.
      */
     private boolean[] useToString;
 
     /**
-     * Indicates the contents are sorted.  This is used if
-     * getSortsOnUpdates is false and an update event is received.
+     * Indicates the contents are sorted. This is used if getSortsOnUpdates is false
+     * and an update event is received.
      */
     private boolean sorted;
 
@@ -183,14 +180,13 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * Provides access to the data we're sorting/filtering.
      */
-    private ModelWrapper<M,I> modelWrapper;
+    private ModelWrapper<M, I> modelWrapper;
 
     /**
-     * Size of the model. This is used to enforce error checking within
-     * the table changed notification methods (such as rowsInserted).
+     * Size of the model. This is used to enforce error checking within the table
+     * changed notification methods (such as rowsInserted).
      */
     private int modelRowCount;
-
 
     /**
      * Creates an empty <code>DefaultRowSorter</code>.
@@ -201,20 +197,19 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets the model wrapper providing the data that is being sorted and
-     * filtered.
+     * Sets the model wrapper providing the data that is being sorted and filtered.
      *
-     * @param modelWrapper the model wrapper responsible for providing the
-     *         data that gets sorted and filtered
-     * @throws IllegalArgumentException if {@code modelWrapper} is
-     *         {@code null}
+     * @param modelWrapper
+     *            the model wrapper responsible for providing the data that gets
+     *            sorted and filtered
+     * @throws IllegalArgumentException
+     *             if {@code modelWrapper} is {@code null}
      */
-    protected final void setModelWrapper(ModelWrapper<M,I> modelWrapper) {
+    protected final void setModelWrapper(ModelWrapper<M, I> modelWrapper) {
         if (modelWrapper == null) {
-            throw new IllegalArgumentException(
-                "modelWrapper most be non-null");
+            throw new IllegalArgumentException("modelWrapper most be non-null");
         }
-        ModelWrapper<M,I> last = this.modelWrapper;
+        ModelWrapper<M, I> last = this.modelWrapper;
         this.modelWrapper = modelWrapper;
         if (last != null) {
             modelStructureChanged();
@@ -229,10 +224,10 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
      * Returns the model wrapper providing the data that is being sorted and
      * filtered.
      *
-     * @return the model wrapper responsible for providing the data that
-     *         gets sorted and filtered
+     * @return the model wrapper responsible for providing the data that gets sorted
+     *         and filtered
      */
-    protected final ModelWrapper<M,I> getModelWrapper() {
+    protected final ModelWrapper<M, I> getModelWrapper() {
         return modelWrapper;
     }
 
@@ -246,17 +241,18 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets whether or not the specified column is sortable.  The specified
-     * value is only checked when <code>toggleSortOrder</code> is invoked.
-     * It is still possible to sort on a column that has been marked as
-     * unsortable by directly setting the sort keys.  The default is
-     * true.
+     * Sets whether or not the specified column is sortable. The specified value is
+     * only checked when <code>toggleSortOrder</code> is invoked. It is still
+     * possible to sort on a column that has been marked as unsortable by directly
+     * setting the sort keys. The default is true.
      *
-     * @param column the column to enable or disable sorting on, in terms
-     *        of the underlying model
-     * @param sortable whether or not the specified column is sortable
-     * @throws IndexOutOfBoundsException if <code>column</code> is outside
-     *         the range of the model
+     * @param column
+     *            the column to enable or disable sorting on, in terms of the
+     *            underlying model
+     * @param sortable
+     *            whether or not the specified column is sortable
+     * @throws IndexOutOfBoundsException
+     *             if <code>column</code> is outside the range of the model
      * @see #toggleSortOrder
      * @see #setSortKeys
      */
@@ -274,11 +270,11 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * Returns true if the specified column is sortable; otherwise, false.
      *
-     * @param column the column to check sorting for, in terms of the
-     *        underlying model
+     * @param column
+     *            the column to check sorting for, in terms of the underlying model
      * @return true if the column is sortable
-     * @throws IndexOutOfBoundsException if column is outside
-     *         the range of the underlying model
+     * @throws IndexOutOfBoundsException
+     *             if column is outside the range of the underlying model
      */
     public boolean isSortable(int column) {
         checkColumn(column);
@@ -286,32 +282,29 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets the sort keys. This creates a copy of the supplied
-     * {@code List}; subsequent changes to the supplied
-     * {@code List} do not effect this {@code DefaultRowSorter}.
-     * If the sort keys have changed this triggers a sort.
+     * Sets the sort keys. This creates a copy of the supplied {@code List};
+     * subsequent changes to the supplied {@code List} do not effect this
+     * {@code DefaultRowSorter}. If the sort keys have changed this triggers a sort.
      *
-     * @param sortKeys the new <code>SortKeys</code>; <code>null</code>
-     *        is a shorthand for specifying an empty list,
-     *        indicating that the view should be unsorted
-     * @throws IllegalArgumentException if any of the values in
-     *         <code>sortKeys</code> are null or have a column index outside
-     *         the range of the model
+     * @param sortKeys
+     *            the new <code>SortKeys</code>; <code>null</code> is a shorthand
+     *            for specifying an empty list, indicating that the view should be
+     *            unsorted
+     * @throws IllegalArgumentException
+     *             if any of the values in <code>sortKeys</code> are null or have a
+     *             column index outside the range of the model
      */
     public void setSortKeys(List<? extends SortKey> sortKeys) {
         List<SortKey> old = this.sortKeys;
         if (sortKeys != null && sortKeys.size() > 0) {
             int max = getModelWrapper().getColumnCount();
             for (SortKey key : sortKeys) {
-                if (key == null || key.getColumn() < 0 ||
-                        key.getColumn() >= max) {
+                if (key == null || key.getColumn() < 0 || key.getColumn() >= max) {
                     throw new IllegalArgumentException("Invalid SortKey");
                 }
             }
-            this.sortKeys = Collections.unmodifiableList(
-                    new ArrayList<SortKey>(sortKeys));
-        }
-        else {
+            this.sortKeys = Collections.unmodifiableList(new ArrayList<SortKey>(sortKeys));
+        } else {
             this.sortKeys = Collections.emptyList();
         }
         if (!this.sortKeys.equals(old)) {
@@ -327,10 +320,10 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Returns the current sort keys.  This returns an unmodifiable
-     * {@code non-null List}. If you need to change the sort keys,
-     * make a copy of the returned {@code List}, mutate the copy
-     * and invoke {@code setSortKeys} with the new list.
+     * Returns the current sort keys. This returns an unmodifiable
+     * {@code non-null List}. If you need to change the sort keys, make a copy of
+     * the returned {@code List}, mutate the copy and invoke {@code setSortKeys}
+     * with the new list.
      *
      * @return the current sort order
      */
@@ -339,32 +332,30 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets the maximum number of sort keys.  The number of sort keys
-     * determines how equal values are resolved when sorting.  For
-     * example, assume a table row sorter is created and
-     * <code>setMaxSortKeys(2)</code> is invoked on it. The user
-     * clicks the header for column 1, causing the table rows to be
-     * sorted based on the items in column 1.  Next, the user clicks
-     * the header for column 2, causing the table to be sorted based
-     * on the items in column 2; if any items in column 2 are equal,
-     * then those particular rows are ordered based on the items in
-     * column 1. In this case, we say that the rows are primarily
-     * sorted on column 2, and secondarily on column 1.  If the user
-     * then clicks the header for column 3, then the items are
-     * primarily sorted on column 3 and secondarily sorted on column
-     * 2.  Because the maximum number of sort keys has been set to 2
-     * with <code>setMaxSortKeys</code>, column 1 no longer has an
+     * Sets the maximum number of sort keys. The number of sort keys determines how
+     * equal values are resolved when sorting. For example, assume a table row
+     * sorter is created and <code>setMaxSortKeys(2)</code> is invoked on it. The
+     * user clicks the header for column 1, causing the table rows to be sorted
+     * based on the items in column 1. Next, the user clicks the header for column
+     * 2, causing the table to be sorted based on the items in column 2; if any
+     * items in column 2 are equal, then those particular rows are ordered based on
+     * the items in column 1. In this case, we say that the rows are primarily
+     * sorted on column 2, and secondarily on column 1. If the user then clicks the
+     * header for column 3, then the items are primarily sorted on column 3 and
+     * secondarily sorted on column 2. Because the maximum number of sort keys has
+     * been set to 2 with <code>setMaxSortKeys</code>, column 1 no longer has an
      * effect on the order.
      * <p>
-     * The maximum number of sort keys is enforced by
-     * <code>toggleSortOrder</code>.  You can specify more sort
-     * keys by invoking <code>setSortKeys</code> directly and they will
-     * all be honored.  However if <code>toggleSortOrder</code> is subsequently
-     * invoked the maximum number of sort keys will be enforced.
-     * The default value is 3.
+     * The maximum number of sort keys is enforced by <code>toggleSortOrder</code>.
+     * You can specify more sort keys by invoking <code>setSortKeys</code> directly
+     * and they will all be honored. However if <code>toggleSortOrder</code> is
+     * subsequently invoked the maximum number of sort keys will be enforced. The
+     * default value is 3.
      *
-     * @param max the maximum number of sort keys
-     * @throws IllegalArgumentException if <code>max</code> &lt; 1
+     * @param max
+     *            the maximum number of sort keys
+     * @throws IllegalArgumentException
+     *             if <code>max</code> &lt; 1
      */
     public void setMaxSortKeys(int max) {
         if (max < 1) {
@@ -383,21 +374,21 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * If true, specifies that a sort should happen when the underlying
-     * model is updated (<code>rowsUpdated</code> is invoked).  For
-     * example, if this is true and the user edits an entry the
-     * location of that item in the view may change.  The default is
-     * false.
+     * If true, specifies that a sort should happen when the underlying model is
+     * updated (<code>rowsUpdated</code> is invoked). For example, if this is true
+     * and the user edits an entry the location of that item in the view may change.
+     * The default is false.
      *
-     * @param sortsOnUpdates whether or not to sort on update events
+     * @param sortsOnUpdates
+     *            whether or not to sort on update events
      */
     public void setSortsOnUpdates(boolean sortsOnUpdates) {
         this.sortsOnUpdates = sortsOnUpdates;
     }
 
     /**
-     * Returns true if  a sort should happen when the underlying
-     * model is updated; otherwise, returns false.
+     * Returns true if a sort should happen when the underlying model is updated;
+     * otherwise, returns false.
      *
      * @return whether or not to sort when the model is updated
      */
@@ -406,48 +397,48 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets the filter that determines which rows, if any, should be
-     * hidden from the view.  The filter is applied before sorting.  A value
-     * of <code>null</code> indicates all values from the model should be
-     * included.
+     * Sets the filter that determines which rows, if any, should be hidden from the
+     * view. The filter is applied before sorting. A value of <code>null</code>
+     * indicates all values from the model should be included.
      * <p>
      * <code>RowFilter</code>'s <code>include</code> method is passed an
-     * <code>Entry</code> that wraps the underlying model.  The number
-     * of columns in the <code>Entry</code> corresponds to the
-     * number of columns in the <code>ModelWrapper</code>.  The identifier
-     * comes from the <code>ModelWrapper</code> as well.
+     * <code>Entry</code> that wraps the underlying model. The number of columns in
+     * the <code>Entry</code> corresponds to the number of columns in the
+     * <code>ModelWrapper</code>. The identifier comes from the
+     * <code>ModelWrapper</code> as well.
      * <p>
      * This method triggers a sort.
      *
-     * @param filter the filter used to determine what entries should be
-     *        included
+     * @param filter
+     *            the filter used to determine what entries should be included
      */
-    public void setRowFilter(RowFilter<? super M,? super I> filter) {
+    public void setRowFilter(RowFilter<? super M, ? super I> filter) {
         this.filter = filter;
         sort();
     }
 
     /**
-     * Returns the filter that determines which rows, if any, should
-     * be hidden from view.
+     * Returns the filter that determines which rows, if any, should be hidden from
+     * view.
      *
      * @return the filter
      */
-    public RowFilter<? super M,? super I> getRowFilter() {
+    public RowFilter<? super M, ? super I> getRowFilter() {
         return filter;
     }
 
     /**
-     * Reverses the sort order from ascending to descending (or
-     * descending to ascending) if the specified column is already the
-     * primary sorted column; otherwise, makes the specified column
-     * the primary sorted column, with an ascending sort order.  If
-     * the specified column is not sortable, this method has no
-     * effect.
+     * Reverses the sort order from ascending to descending (or descending to
+     * ascending) if the specified column is already the primary sorted column;
+     * otherwise, makes the specified column the primary sorted column, with an
+     * ascending sort order. If the specified column is not sortable, this method
+     * has no effect.
      *
-     * @param column index of the column to make the primary sorted column,
-     *        in terms of the underlying model
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @param column
+     *            index of the column to make the primary sorted column, in terms of
+     *            the underlying model
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      * @see #setSortable(int,boolean)
      * @see #setMaxSortKeys(int)
      */
@@ -466,12 +457,10 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
                 // Key doesn't exist
                 sortKey = new SortKey(column, SortOrder.ASCENDING);
                 keys.add(0, sortKey);
-            }
-            else if (sortIndex == 0) {
+            } else if (sortIndex == 0) {
                 // It's the primary sorting key, toggle it
                 keys.set(0, toggle(keys.get(0)));
-            }
-            else {
+            } else {
                 // It's not the first, but was sorted on, remove old
                 // entry, insert as first with ascending.
                 keys.remove(sortIndex);
@@ -494,7 +483,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public int convertRowIndexToView(int index) {
         if (modelToView == null) {
@@ -509,7 +499,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public int convertRowIndexToModel(int index) {
         if (viewToModel == null) {
@@ -524,13 +515,12 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     private boolean isUnsorted() {
         List<? extends SortKey> keys = getSortKeys();
         int keySize = keys.size();
-        return (keySize == 0 || keys.get(0).getSortOrder() ==
-                SortOrder.UNSORTED);
+        return (keySize == 0 || keys.get(0).getSortOrder() == SortOrder.UNSORTED);
     }
 
     /**
-     * Sorts the existing filtered data.  This should only be used if
-     * the filter hasn't changed.
+     * Sorts the existing filtered data. This should only be used if the filter
+     * hasn't changed.
      */
     private void sortExistingData() {
         int[] lastViewToModel = getViewToModelAsInts(viewToModel);
@@ -553,7 +543,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             }
         } else {
             // sort the data
-            //patch
+            // patch
             Arrays.parallelSort(viewToModel);
 
             // Update the modelToView array
@@ -563,10 +553,10 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sorts and filters the rows in the view based on the sort keys
-     * of the columns currently being sorted and the filter, if any,
-     * associated with this sorter.  An empty <code>sortKeys</code> list
-     * indicates that the view should unsorted, the same as the model.
+     * Sorts and filters the rows in the view based on the sort keys of the columns
+     * currently being sorted and the filter, if any, associated with this sorter.
+     * An empty <code>sortKeys</code> list indicates that the view should unsorted,
+     * the same as the model.
      *
      * @see #setRowFilter
      * @see #setSortKeys
@@ -584,31 +574,27 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
                     // sorted -> unsorted
                     viewToModel = null;
                     modelToView = null;
-                }
-                else {
+                } else {
                     // unsorted -> unsorted
                     // No need to do anything.
                     return;
                 }
-            }
-            else {
+            } else {
                 // There is filter, reset mappings
                 initializeFilteredMapping();
             }
-        }
-        else {
+        } else {
             cacheSortKeys(getSortKeys());
 
             if (getRowFilter() != null) {
                 initializeFilteredMapping();
-            }
-            else {
+            } else {
                 createModelToView(getModelWrapper().getRowCount());
                 createViewToModel(getModelWrapper().getRowCount());
             }
 
             // sort them
-            //patch
+            // patch
             Arrays.parallelSort(viewToModel);
 
             // Update the modelToView array
@@ -631,8 +617,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Resets the viewToModel and modelToView mappings based on
-     * the current Filter.
+     * Resets the viewToModel and modelToView mappings based on the current Filter.
      */
     private void initializeFilteredMapping() {
         int rowCount = getModelWrapper().getRowCount();
@@ -644,8 +629,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         for (i = 0; i < rowCount; i++) {
             if (include(i)) {
                 modelToView[i] = i - excludedCount;
-            }
-            else {
+            } else {
                 modelToView[i] = -1;
                 excludedCount++;
             }
@@ -679,11 +663,9 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             if (viewToModel.length != rowCount) {
                 Row[] oldViewToModel = viewToModel;
                 viewToModel = new Row[rowCount];
-                System.arraycopy(oldViewToModel, 0, viewToModel,
-                                 0, recreateFrom);
+                System.arraycopy(oldViewToModel, 0, viewToModel, 0, recreateFrom);
             }
-        }
-        else {
+        } else {
             viewToModel = new Row[rowCount];
         }
         int i;
@@ -708,25 +690,25 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Returns whether or not to convert the value to a string before
-     * doing comparisons when sorting.  If true
-     * <code>ModelWrapper.getStringValueAt</code> will be used, otherwise
-     * <code>ModelWrapper.getValueAt</code> will be used.  It is up to
-     * subclasses, such as <code>TableRowSorter</code>, to honor this value
+     * Returns whether or not to convert the value to a string before doing
+     * comparisons when sorting. If true <code>ModelWrapper.getStringValueAt</code>
+     * will be used, otherwise <code>ModelWrapper.getValueAt</code> will be used. It
+     * is up to subclasses, such as <code>TableRowSorter</code>, to honor this value
      * in their <code>ModelWrapper</code> implementation.
      *
-     * @param column the index of the column to test, in terms of the
-     *        underlying model
-     * @throws IndexOutOfBoundsException if <code>column</code> is not valid
+     * @param column
+     *            the index of the column to test, in terms of the underlying model
+     * @throws IndexOutOfBoundsException
+     *             if <code>column</code> is not valid
      */
     protected boolean useToString(int column) {
         return (getComparator(column) == null);
     }
 
     /**
-     * Refreshes the modelToView mapping from that of viewToModel.
-     * If <code>unsetFirst</code> is true, all indices in modelToView are
-     * first set to -1.
+     * Refreshes the modelToView mapping from that of viewToModel. If
+     * <code>unsetFirst</code> is true, all indices in modelToView are first set to
+     * -1.
      */
     private void setModelToViewFromViewToModel(boolean unsetFirst) {
         int i;
@@ -752,15 +734,18 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Sets the <code>Comparator</code> to use when sorting the specified
-     * column.  This does not trigger a sort.  If you want to sort after
-     * setting the comparator you need to explicitly invoke <code>sort</code>.
+     * Sets the <code>Comparator</code> to use when sorting the specified column.
+     * This does not trigger a sort. If you want to sort after setting the
+     * comparator you need to explicitly invoke <code>sort</code>.
      *
-     * @param column the index of the column the <code>Comparator</code> is
-     *        to be used for, in terms of the underlying model
-     * @param comparator the <code>Comparator</code> to use
-     * @throws IndexOutOfBoundsException if <code>column</code> is outside
-     *         the range of the underlying model
+     * @param column
+     *            the index of the column the <code>Comparator</code> is to be used
+     *            for, in terms of the underlying model
+     * @param comparator
+     *            the <code>Comparator</code> to use
+     * @throws IndexOutOfBoundsException
+     *             if <code>column</code> is outside the range of the underlying
+     *             model
      */
     public void setComparator(int column, Comparator<?> comparator) {
         checkColumn(column);
@@ -771,15 +756,16 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     /**
-     * Returns the <code>Comparator</code> for the specified
-     * column.  This will return <code>null</code> if a <code>Comparator</code>
-     * has not been specified for the column.
+     * Returns the <code>Comparator</code> for the specified column. This will
+     * return <code>null</code> if a <code>Comparator</code> has not been specified
+     * for the column.
      *
-     * @param column the column to fetch the <code>Comparator</code> for, in
-     *        terms of the underlying model
+     * @param column
+     *            the column to fetch the <code>Comparator</code> for, in terms of
+     *            the underlying model
      * @return the <code>Comparator</code> for the specified column
-     * @throws IndexOutOfBoundsException if column is outside
-     *         the range of the underlying model
+     * @throws IndexOutOfBoundsException
+     *             if column is outside the range of the underlying model
      */
     public Comparator<?> getComparator(int column) {
         checkColumn(column);
@@ -789,7 +775,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         return null;
     }
 
-    // Returns the Comparator to use during sorting.  Where as
+    // Returns the Comparator to use during sorting. Where as
     // getComparator() may return null, this will never return null.
     private Comparator getComparator0(int column) {
         Comparator comparator = getComparator(column);
@@ -801,7 +787,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         return Collator.getInstance();
     }
 
-    private RowFilter.Entry<M,I> getFilterEntry(int modelIndex) {
+    private RowFilter.Entry<M, I> getFilterEntry(int modelIndex) {
         if (filterEntry == null) {
             filterEntry = new FilterEntry();
         }
@@ -860,7 +846,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public void rowsInserted(int firstRow, int endRow) {
         checkAgainstModel(firstRow, endRow);
@@ -877,7 +864,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public void rowsDeleted(int firstRow, int endRow) {
         checkAgainstModel(firstRow, endRow);
@@ -893,7 +881,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public void rowsUpdated(int firstRow, int endRow) {
         checkAgainstModel(firstRow, endRow);
@@ -904,8 +893,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             if (shouldOptimizeChange(firstRow, endRow)) {
                 rowsUpdated0(firstRow, endRow);
             }
-        }
-        else {
+        } else {
             sorted = false;
         }
     }
@@ -913,7 +901,8 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * {@inheritDoc}
      *
-     * @throws IndexOutOfBoundsException {@inheritDoc}
+     * @throws IndexOutOfBoundsException
+     *             {@inheritDoc}
      */
     public void rowsUpdated(int firstRow, int endRow, int column) {
         checkColumn(column);
@@ -921,8 +910,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     }
 
     private void checkAgainstModel(int firstRow, int endRow) {
-        if (firstRow > endRow || firstRow < 0 || endRow < 0 ||
-                firstRow > modelRowCount) {
+        if (firstRow > endRow || firstRow < 0 || endRow < 0 || firstRow > modelRowCount) {
             throw new IndexOutOfBoundsException("Invalid range");
         }
     }
@@ -994,8 +982,10 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
     /**
      * Insets new set of entries.
      *
-     * @param toAdd the Rows to add, sorted
-     * @param current the array to insert the items into
+     * @param toAdd
+     *            the Rows to add, sorted
+     * @param current
+     *            the array to insert the items into
      */
     private void insertInOrder(List<Row> toAdd, Row[] current) {
         int last = 0;
@@ -1006,19 +996,17 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             if (index < 0) {
                 index = -1 - index;
             }
-            System.arraycopy(current, last,
-                             viewToModel, last + i, index - last);
+            System.arraycopy(current, last, viewToModel, last + i, index - last);
             viewToModel[index + i] = toAdd.get(i);
             last = index;
         }
-        System.arraycopy(current, last, viewToModel, last + max,
-                         current.length - last);
+        System.arraycopy(current, last, viewToModel, last + max, current.length - last);
     }
 
     /**
      * Returns true if we should try and optimize the processing of the
-     * <code>TableModelEvent</code>.  If this returns false, assume the
-     * event was dealt with and no further processing needs to happen.
+     * <code>TableModelEvent</code>. If this returns false, assume the event was
+     * dealt with and no further processing needs to happen.
      */
     private boolean shouldOptimizeChange(int firstRow, int lastRow) {
         if (!isTransformed()) {
@@ -1098,20 +1086,17 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
         // Then patch up the viewToModel array
         if (removedFromView > 0) {
-            Row[] newViewToModel = new Row[viewToModel.length -
-                                           removedFromView];
+            Row[] newViewToModel = new Row[viewToModel.length - removedFromView];
             int newIndex = 0;
             int last = 0;
             for (i = 0; i < viewToModel.length; i++) {
                 if (viewToModel[i] == null) {
-                    System.arraycopy(viewToModel, last,
-                                     newViewToModel, newIndex, i - last);
+                    System.arraycopy(viewToModel, last, newViewToModel, newIndex, i - last);
                     newIndex += (i - last);
                     last = i + 1;
                 }
             }
-            System.arraycopy(viewToModel, last,
-                    newViewToModel, newIndex, viewToModel.length - last);
+            System.arraycopy(viewToModel, last, newViewToModel, newIndex, viewToModel.length - last);
             viewToModel = newViewToModel;
         }
 
@@ -1141,7 +1126,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
             }
 
             // Sort the update rows
-            //patch
+            // patch
             Arrays.parallelSort(updated);
 
             // Build the intermediary array: the array of
@@ -1159,8 +1144,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // Update modelToView
             setModelToViewFromViewToModel(false);
-        }
-        else {
+        } else {
             // Sorting & filtering.
 
             // Remove the effected rows, adding them to updated and setting
@@ -1177,14 +1161,12 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
                         updated.add(new Row(this, i));
                         newlyVisible++;
                     }
-                }
-                else {
+                } else {
                     // This row was visible, make sure it should still be
                     // visible.
                     if (!include(i)) {
                         newlyHidden++;
-                    }
-                    else {
+                    } else {
                         updated.add(viewToModel[modelToView[i]]);
                     }
                     modelToView[i] = -2;
@@ -1208,8 +1190,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
             // Recreate viewToModel, if necessary
             if (newlyVisible != newlyHidden) {
-                viewToModel = new Row[viewToModel.length + newlyVisible -
-                                      newlyHidden];
+                viewToModel = new Row[viewToModel.length + newlyVisible - newlyHidden];
             }
 
             // Rebuild the new viewToModel array
@@ -1224,35 +1205,33 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
 
     private void checkColumn(int column) {
         if (column < 0 || column >= getModelWrapper().getColumnCount()) {
-            throw new IndexOutOfBoundsException(
-                    "column beyond range of TableModel");
+            throw new IndexOutOfBoundsException("column beyond range of TableModel");
         }
     }
 
-
     /**
-     * <code>DefaultRowSorter.ModelWrapper</code> is responsible for providing
-     * the data that gets sorted by <code>DefaultRowSorter</code>.  You
-     * normally do not interact directly with <code>ModelWrapper</code>.
-     * Subclasses of <code>DefaultRowSorter</code> provide an
-     * implementation of <code>ModelWrapper</code> wrapping another model.
-     * For example,
-     * <code>TableRowSorter</code> provides a <code>ModelWrapper</code> that
-     * wraps a <code>TableModel</code>.
+     * <code>DefaultRowSorter.ModelWrapper</code> is responsible for providing the
+     * data that gets sorted by <code>DefaultRowSorter</code>. You normally do not
+     * interact directly with <code>ModelWrapper</code>. Subclasses of
+     * <code>DefaultRowSorter</code> provide an implementation of
+     * <code>ModelWrapper</code> wrapping another model. For example,
+     * <code>TableRowSorter</code> provides a <code>ModelWrapper</code> that wraps a
+     * <code>TableModel</code>.
      * <p>
      * <code>ModelWrapper</code> makes a distinction between values as
-     * <code>Object</code>s and <code>String</code>s.  This allows
-     * implementations to provide a custom string
-     * converter to be used instead of invoking <code>toString</code> on the
-     * object.
+     * <code>Object</code>s and <code>String</code>s. This allows implementations to
+     * provide a custom string converter to be used instead of invoking
+     * <code>toString</code> on the object.
      *
-     * @param <M> the type of the underlying model
-     * @param <I> the identifier supplied to the filter
+     * @param <M>
+     *            the type of the underlying model
+     * @param <I>
+     *            the identifier supplied to the filter
      * @since 1.6
      * @see RowFilter
      * @see RowFilter.Entry
      */
-    protected abstract static class ModelWrapper<M,I> {
+    protected abstract static class ModelWrapper<M, I> {
         /**
          * Creates a new <code>ModelWrapper</code>.
          */
@@ -1260,8 +1239,7 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         }
 
         /**
-         * Returns the underlying model that this <code>Model</code> is
-         * wrapping.
+         * Returns the underlying model that this <code>Model</code> is wrapping.
          *
          * @return the underlying model
          */
@@ -1284,26 +1262,29 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         /**
          * Returns the value at the specified index.
          *
-         * @param row the row index
-         * @param column the column index
+         * @param row
+         *            the row index
+         * @param column
+         *            the column index
          * @return the value at the specified index
-         * @throws IndexOutOfBoundsException if the indices are outside
-         *         the range of the model
+         * @throws IndexOutOfBoundsException
+         *             if the indices are outside the range of the model
          */
         public abstract Object getValueAt(int row, int column);
 
         /**
-         * Returns the value as a <code>String</code> at the specified
-         * index.  This implementation uses <code>toString</code> on
-         * the result from <code>getValueAt</code> (making sure
-         * to return an empty string for null values).  Subclasses that
-         * override this method should never return null.
+         * Returns the value as a <code>String</code> at the specified index. This
+         * implementation uses <code>toString</code> on the result from
+         * <code>getValueAt</code> (making sure to return an empty string for null
+         * values). Subclasses that override this method should never return null.
          *
-         * @param row the row index
-         * @param column the column index
+         * @param row
+         *            the row index
+         * @param column
+         *            the column index
          * @return the value at the specified index as a <code>String</code>
-         * @throws IndexOutOfBoundsException if the indices are outside
-         *         the range of the model
+         * @throws IndexOutOfBoundsException
+         *             if the indices are outside the range of the model
          */
         public String getStringValueAt(int row, int column) {
             Object o = getValueAt(row, column);
@@ -1318,27 +1299,25 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         }
 
         /**
-         * Returns the identifier for the specified row.  The return value
-         * of this is used as the identifier for the
-         * <code>RowFilter.Entry</code> that is passed to the
-         * <code>RowFilter</code>.
+         * Returns the identifier for the specified row. The return value of this is
+         * used as the identifier for the <code>RowFilter.Entry</code> that is passed to
+         * the <code>RowFilter</code>.
          *
-         * @param row the row to return the identifier for, in terms of
-         *            the underlying model
+         * @param row
+         *            the row to return the identifier for, in terms of the underlying
+         *            model
          * @return the identifier
          * @see RowFilter.Entry#getIdentifier
          */
         public abstract I getIdentifier(int row);
     }
 
-
     /**
      * RowFilter.Entry implementation that delegates to the ModelWrapper.
-     * getFilterEntry(int) creates the single instance of this that is
-     * passed to the Filter.  Only call getFilterEntry(int) to get
-     * the instance.
+     * getFilterEntry(int) creates the single instance of this that is passed to the
+     * Filter. Only call getFilterEntry(int) to get the instance.
      */
-    private class FilterEntry extends RowFilter.Entry<M,I> {
+    private class FilterEntry extends RowFilter.Entry<M, I> {
         /**
          * The index into the model, set in getFilterEntry
          */
@@ -1365,10 +1344,9 @@ public abstract class ParallelRowSorter<M, I> extends RowSorter<M> {
         }
     }
 
-
     /**
-     * Row is used to handle the actual sorting by way of Comparable.  It
-     * will use the sortKeys to do the actual comparison.
+     * Row is used to handle the actual sorting by way of Comparable. It will use
+     * the sortKeys to do the actual comparison.
      */
     // NOTE: this class is static so that it can be placed in an array
     private static class Row implements Comparable<Row> {

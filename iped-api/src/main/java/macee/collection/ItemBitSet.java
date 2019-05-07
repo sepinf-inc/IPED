@@ -8,8 +8,8 @@ import java.util.stream.StreamSupport;
 /**
  * Um bitset implementado por T.
  * 
- * COMENTÁRIO (Werneck): remover o parâmetro <T> e diferenciar 
- * as implementações concretas. Não dar acesso ao BitSet subjacente (getBitSet).
+ * COMENTÁRIO (Werneck): remover o parâmetro <T> e diferenciar as implementações
+ * concretas. Não dar acesso ao BitSet subjacente (getBitSet).
  */
 public interface ItemBitSet<T> extends Serializable {
 

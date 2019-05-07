@@ -9,7 +9,8 @@ import javax.ws.rs.core.Response;
 
 @Path("")
 public class Root {
-	@GET
-	public static Response root() throws URISyntaxException{
-		return Response.temporaryRedirect(new URI("./swagger.json")).build();
-	}}
+    @GET
+    public static Response root() throws URISyntaxException {
+        return Response.temporaryRedirect(new URI("./swagger.json")).build();
+    }
+}

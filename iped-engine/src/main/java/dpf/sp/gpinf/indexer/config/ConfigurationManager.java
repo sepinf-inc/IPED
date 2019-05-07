@@ -13,89 +13,89 @@ import iped3.configuration.ConfigurationDirectory;
 import macee.core.Configurable;
 import macee.core.ObjectManager;
 
-public class ConfigurationManager implements ObjectManager<Configurable>{
-	static ConfigurationManager singleton = null;
+public class ConfigurationManager implements ObjectManager<Configurable> {
+    static ConfigurationManager singleton = null;
 
-	static public ConfigurationManager getInstance() {
-		return singleton;
-	}
+    static public ConfigurationManager getInstance() {
+        return singleton;
+    }
 
-	ConfigurationDirectory directory;
-	HashMap<Configurable, Boolean> loadedConfigurables = new LinkedHashMap<Configurable, Boolean>(); 
+    ConfigurationDirectory directory;
+    HashMap<Configurable, Boolean> loadedConfigurables = new LinkedHashMap<Configurable, Boolean>();
 
-	public ConfigurationManager(ConfigurationDirectory directory) {
-		this.directory = directory;
-		ConfigurationManager.singleton=this;
-	}
+    public ConfigurationManager(ConfigurationDirectory directory) {
+        this.directory = directory;
+        ConfigurationManager.singleton = this;
+    }
 
-	final HashMap<Object, Configurable> configurations = new HashMap<Object, Configurable>();
+    final HashMap<Object, Configurable> configurations = new HashMap<Object, Configurable>();
 
-	public void addObject(Configurable config) {
-		loadedConfigurables.put(config, false);
-	}
+    public void addObject(Configurable config) {
+        loadedConfigurables.put(config, false);
+    }
 
-	public void loadConfigs() throws IOException {
-		for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-			Configurable configurable = iterator.next();
-			if(loadedConfigurables.get(configurable)==false) {
-				List<Path> resources = directory.lookUpResource(configurable);
+    public void loadConfigs() throws IOException {
+        for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
+            Configurable configurable = iterator.next();
+            if (loadedConfigurables.get(configurable) == false) {
+                List<Path> resources = directory.lookUpResource(configurable);
 
-				configurable.processConfigs(resources);
-				loadedConfigurables.put(configurable, new Boolean(true));
-			}
-		}
-	}
-	
-	public void loadConfigs(boolean forceReload) throws IOException {
-		for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-			Configurable configurable = iterator.next();
+                configurable.processConfigs(resources);
+                loadedConfigurables.put(configurable, new Boolean(true));
+            }
+        }
+    }
 
-			List<Path> resources = directory.lookUpResource(configurable);
+    public void loadConfigs(boolean forceReload) throws IOException {
+        for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
+            Configurable configurable = iterator.next();
 
-			configurable.processConfigs(resources);
-		}
-	}
-	
-	public ConfigurationDirectory getConfigurationDirectory() {
-		return directory;
-	}
+            List<Path> resources = directory.lookUpResource(configurable);
 
-	@Override
-	public Set<Configurable> findObjects(Class<? extends Configurable> clazz) {
-		Set<Configurable> result = new HashSet<Configurable>();
+            configurable.processConfigs(resources);
+        }
+    }
 
-		for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-			Configurable configurable = iterator.next();
-			if(configurable.getClass().equals(clazz)) {
-				result.add(configurable);
-			}
-		}
+    public ConfigurationDirectory getConfigurationDirectory() {
+        return directory;
+    }
 
-		return result;
-	}
+    @Override
+    public Set<Configurable> findObjects(Class<? extends Configurable> clazz) {
+        Set<Configurable> result = new HashSet<Configurable>();
 
-	@Override
-	public Set<Configurable> findObjects(String className) {
-		Set<Configurable> result = new HashSet<Configurable>();
+        for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
+            Configurable configurable = iterator.next();
+            if (configurable.getClass().equals(clazz)) {
+                result.add(configurable);
+            }
+        }
 
-		for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
-			Configurable configurable = iterator.next();
-			if(configurable.getClass().getName().equals(className)) {
-				result.add(configurable);
-			}
-		}
+        return result;
+    }
 
-		return result;
-	}
+    @Override
+    public Set<Configurable> findObjects(String className) {
+        Set<Configurable> result = new HashSet<Configurable>();
 
-	@Override
-	public Set<Configurable> getObjects() {
-		return loadedConfigurables.keySet();
-	}
+        for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
+            Configurable configurable = iterator.next();
+            if (configurable.getClass().getName().equals(className)) {
+                result.add(configurable);
+            }
+        }
 
-	@Override
-	public void removeObject(Configurable aObject) {
-		loadedConfigurables.remove(aObject);		
-	}
+        return result;
+    }
+
+    @Override
+    public Set<Configurable> getObjects() {
+        return loadedConfigurables.keySet();
+    }
+
+    @Override
+    public void removeObject(Configurable aObject) {
+        loadedConfigurables.remove(aObject);
+    }
 
 }

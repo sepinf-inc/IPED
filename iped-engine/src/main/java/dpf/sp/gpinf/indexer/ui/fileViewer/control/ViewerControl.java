@@ -40,161 +40,165 @@ import org.slf4j.LoggerFactory;
  */
 public class ViewerControl implements IViewerControl {
 
-  private static ViewerControl instance;
+    private static ViewerControl instance;
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ViewerControl.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ViewerControl.class);
 
-  private LibreOfficeViewer officeViewer = null;
+    private LibreOfficeViewer officeViewer = null;
 
-  private ViewerControl() {
-  }
-
-  public static ViewerControl getInstance() {
-    if (instance == null) {
-      instance = new ViewerControl();
+    private ViewerControl() {
     }
 
-    return instance;
-  }
+    public static ViewerControl getInstance() {
+        if (instance == null) {
+            instance = new ViewerControl();
+        }
 
-  @Override
-  public void createViewers(final AppSearchParams params,
-      final IFileProcessor exibirAjuda) {
+        return instance;
+    }
 
-    Thread process = new Thread() {
+    @Override
+    public void createViewers(final AppSearchParams params, final IFileProcessor exibirAjuda) {
 
-      @Override
-      public void run() {
-        final boolean javaFX = new JarLoader().loadJavaFX();
+        Thread process = new Thread() {
 
-        final ViewersRepository viewersRepository = new ViewersRepository();
-
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
             @Override
             public void run() {
+                final boolean javaFX = new JarLoader().loadJavaFX();
 
-              params.compositeViewer.addViewer(new HexViewer());
-              params.textViewer = new TextViewer(params);
-              params.compositeViewer.addViewer(params.textViewer);
-              params.compositeViewer.addViewer(new MetadataViewer());
-              params.compositeViewer.addViewer(viewersRepository);
+                final ViewersRepository viewersRepository = new ViewersRepository();
 
-              viewersRepository.addViewer(new ImageViewer());
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
 
-              if (javaFX) {
-                viewersRepository.addViewer(new HtmlViewer());
-                viewersRepository.addViewer(new EmailViewer());
-                viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
-                viewersRepository.addViewer(new TikaHtmlViewer());
-                //multiViewer.addViewer(new VideoViewer());
-              } else {
-                viewersRepository.addViewer(new NoJavaFXViewer());
-              }
+                            params.compositeViewer.addViewer(new HexViewer());
+                            params.textViewer = new TextViewer(params);
+                            params.compositeViewer.addViewer(params.textViewer);
+                            params.compositeViewer.addViewer(new MetadataViewer());
+                            params.compositeViewer.addViewer(viewersRepository);
 
-              viewersRepository.addViewer(new IcePDFViewer());
-              viewersRepository.addViewer(new TiffViewer());
+                            viewersRepository.addViewer(new ImageViewer());
+
+                            if (javaFX) {
+                                viewersRepository.addViewer(new HtmlViewer());
+                                viewersRepository.addViewer(new EmailViewer());
+                                viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
+                                viewersRepository.addViewer(new TikaHtmlViewer());
+                                // multiViewer.addViewer(new VideoViewer());
+                            } else {
+                                viewersRepository.addViewer(new NoJavaFXViewer());
+                            }
+
+                            viewersRepository.addViewer(new IcePDFViewer());
+                            viewersRepository.addViewer(new TiffViewer());
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                params.compositeViewer.initViewers();
+
+                LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+                final String pathLO = loFinder.getLOPath();
+
+                if (pathLO != null) {
+                    try {
+                        SwingUtilities.invokeAndWait(new Runnable() {
+                            @Override
+                            public void run() {
+                                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
+                                viewersRepository.addViewer(officeViewer);
+                            }
+                        });
+                        officeViewer.init();
+
+                    } catch (NotSupported32BitPlatformExcepion e) {
+                        JOptionPane.showMessageDialog(null,
+                                Messages.getString("ViewerControl.OfficeViewerUnSupported")); //$NON-NLS-1$
+                        viewersRepository.removeViewer(officeViewer);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                exibirAjuda.execute();
+
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        params.dialogBar.setVisible(false);
+                    }
+                });
+
             }
-          });
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+        };
 
-        params.compositeViewer.initViewers();
+        process.start();
 
-        LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
-        final String pathLO = loFinder.getLOPath();
-        
-        if (pathLO != null) {
-          try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
-                viewersRepository.addViewer(officeViewer);
-              }
-            });
-            officeViewer.init();
-          
-          } catch (NotSupported32BitPlatformExcepion e) {
-              JOptionPane.showMessageDialog(null, Messages.getString("ViewerControl.OfficeViewerUnSupported")); //$NON-NLS-1$
-              viewersRepository.removeViewer(officeViewer);
-              
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        }
-        
-        exibirAjuda.execute();
-
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            params.dialogBar.setVisible(false);
-          }
-        });
-
-      }
-    };
-
-    process.start();
-
-  }
-
-  @Override
-  public void restartLibreOffice() {
-    if (officeViewer != null) {
-      Thread process = new Thread() {
-        @Override
-        public void run() {
-          officeViewer.restartLO();
-          officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
-        }
-      };
-
-      process.start();
     }
-  }
 
-  @Override
-  public void releaseLibreOfficeFocus() {
-    if (officeViewer != null) {
-      officeViewer.releaseFocus();
+    @Override
+    public void restartLibreOffice() {
+        if (officeViewer != null) {
+            Thread process = new Thread() {
+                @Override
+                public void run() {
+                    officeViewer.restartLO();
+                    officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
+                }
+            };
+
+            process.start();
+        }
     }
-  }
-  
-  @Override
-  public void restartLibreOfficeFrame() {
-      if (officeViewer != null) {
-          Thread process = new Thread() {
-            @Override
-            public void run() {
-              officeViewer.constructLOFrame();
-              officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
-            }
-          };
-          process.start();
-      }
-  }
 
-  @Override
-  public void addViewer(Viewer viewer) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
-  }
+    @Override
+    public void releaseLibreOfficeFocus() {
+        if (officeViewer != null) {
+            officeViewer.releaseFocus();
+        }
+    }
 
-  @Override
-  public void initViewers() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
-  }
+    @Override
+    public void restartLibreOfficeFrame() {
+        if (officeViewer != null) {
+            Thread process = new Thread() {
+                @Override
+                public void run() {
+                    officeViewer.constructLOFrame();
+                    officeViewer.loadFile(new FileContentSource(officeViewer.lastFile));
+                }
+            };
+            process.start();
+        }
+    }
 
-  @Override
-  public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
-  }
+    @Override
+    public void addViewer(Viewer viewer) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
+                                                                       // methods, choose Tools | Templates.
+    }
 
-  @Override
-  public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates. //$NON-NLS-1$
-  }
+    @Override
+    public void initViewers() {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
+                                                                       // methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
+                                                                       // methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms) {
+        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
+                                                                       // methods, choose Tools | Templates.
+    }
 
 }

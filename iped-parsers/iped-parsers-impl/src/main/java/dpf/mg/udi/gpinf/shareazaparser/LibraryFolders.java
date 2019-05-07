@@ -32,42 +32,42 @@ import iped3.search.ItemSearcher;
  */
 class LibraryFolders extends ShareazaEntity {
 
-	private final List<LibraryFolder> folders = new ArrayList<>();
-	private final AlbumFolder albumRoot = new AlbumFolder();
-	
-	public LibraryFolders() {
-		super("LIBRARY FOLDERS"); //$NON-NLS-1$
-	}
-	
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		int n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			LibraryFolder folder = new LibraryFolder(null);
-			folder.read(ar, version);
-			folders.add(folder);
-		}
-		if (version >= 6) {
-			albumRoot.read(ar, version);
-		}
-	}
+    private final List<LibraryFolder> folders = new ArrayList<>();
+    private final AlbumFolder albumRoot = new AlbumFolder();
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		for (LibraryFolder folder : folders) {
-			folder.write(f);
-		}
-		albumRoot.write(f);
-	}
-	
-	public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
-		for (LibraryFolder folder : folders) {
-			folder.printTable(html, searcher);
-		}
-	}
-	
-	public List<LibraryFolder> getLibraryFolders(){
-		return folders;
-	}
+    public LibraryFolders() {
+        super("LIBRARY FOLDERS"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        int n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            LibraryFolder folder = new LibraryFolder(null);
+            folder.read(ar, version);
+            folders.add(folder);
+        }
+        if (version >= 6) {
+            albumRoot.read(ar, version);
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        for (LibraryFolder folder : folders) {
+            folder.write(f);
+        }
+        albumRoot.write(f);
+    }
+
+    public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
+        for (LibraryFolder folder : folders) {
+            folder.printTable(html, searcher);
+        }
+    }
+
+    public List<LibraryFolder> getLibraryFolders() {
+        return folders;
+    }
 
 }

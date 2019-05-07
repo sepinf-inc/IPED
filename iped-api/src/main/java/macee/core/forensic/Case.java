@@ -16,7 +16,8 @@ public interface Case extends ObjectRef {
 
     String OBJECT_REF_TYPE = "CASE";
 
-    @Override default String getRefType() {
+    @Override
+    default String getRefType() {
         return OBJECT_REF_TYPE;
     }
 
@@ -36,14 +37,16 @@ public interface Case extends ObjectRef {
     /**
      * Adds an evidence item to the case.
      *
-     * @param item the evidence item to add.
+     * @param item
+     *            the evidence item to add.
      */
     void addEvidenceItem(UUID item);
 
     /**
      * Removes an evidence item from the case.
      *
-     * @param item the item to remove.
+     * @param item
+     *            the item to remove.
      */
     void removeEvidenceItem(UUID item);
 }

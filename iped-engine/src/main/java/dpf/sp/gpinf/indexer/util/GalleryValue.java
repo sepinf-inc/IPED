@@ -26,16 +26,16 @@ import iped3.ItemId;
 
 public class GalleryValue {
 
-  public String name;
-  public ImageIcon icon;
-  public ItemId id;
-  public int originalW = Integer.MAX_VALUE;
-  public int originalH = Integer.MAX_VALUE;
-  public BufferedImage image;
+    public String name;
+    public ImageIcon icon;
+    public ItemId id;
+    public int originalW = Integer.MAX_VALUE;
+    public int originalH = Integer.MAX_VALUE;
+    public BufferedImage image;
 
-  public GalleryValue(String name, ImageIcon icon, ItemId id) {
-    this.name = name;
-    this.icon = icon;
-    this.id = id;
-  }
+    public GalleryValue(String name, ImageIcon icon, ItemId id) {
+        this.name = name;
+        this.icon = icon;
+        this.id = id;
+    }
 }

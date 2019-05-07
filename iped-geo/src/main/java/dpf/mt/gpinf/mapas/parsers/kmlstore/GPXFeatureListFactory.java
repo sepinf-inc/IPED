@@ -26,27 +26,29 @@ import dpf.mt.gpinf.mapas.parsers.GeofileParser;
 
 public class GPXFeatureListFactory implements FeatureListFactory {
 
-	@Override
-	public boolean canParse(String mimeType) {
-		return GeofileParser.GPX_MIME.toString().equals(mimeType);
-	}
+    @Override
+    public boolean canParse(String mimeType) {
+        return GeofileParser.GPX_MIME.toString().equals(mimeType);
+    }
 
-	@Override
-	public List<Object> parseFeatureList(File file) throws IOException {
-		try{
-			TemporaryResources tmp = new TemporaryResources();
-			File srcFile = tmp.createTemporaryFile();
-			xslTransform(file, srcFile, GeofileParser.class.getResourceAsStream("gpxtokml.xsl"));
+    @Override
+    public List<Object> parseFeatureList(File file) throws IOException {
+        try {
+            TemporaryResources tmp = new TemporaryResources();
+            File srcFile = tmp.createTemporaryFile();
+            xslTransform(file, srcFile, GeofileParser.class.getResourceAsStream("gpxtokml.xsl"));
 
-			return KMLParser.parse(srcFile);
-		}catch(Exception e){
-			throw new IOException(e);
-		}
-	}
+            return KMLParser.parse(srcFile);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
 
-	public static void xslTransform(File srcFile, File destFile, InputStream xslStream) throws ParserConfigurationException, FileNotFoundException, SAXException, IOException, TransformerException{
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder = factory.newDocumentBuilder();
+    public static void xslTransform(File srcFile, File destFile, InputStream xslStream)
+            throws ParserConfigurationException, FileNotFoundException, SAXException, IOException,
+            TransformerException {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
         Document document = builder.parse(new FileInputStream(srcFile));
         TransformerFactory tFactory = TransformerFactory.newInstance();
         StreamSource stylesource = new StreamSource(xslStream);
@@ -54,6 +56,6 @@ public class GPXFeatureListFactory implements FeatureListFactory {
         DOMSource source = new DOMSource(document);
         StreamResult result = new StreamResult(destFile);
         transformer.transform(source, result);
-	}
+    }
 
 }

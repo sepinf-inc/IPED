@@ -2,18 +2,18 @@ package macee.descriptor;
 
 public interface DataSourceDescriptor extends Descriptor {
 
-  String getCaseId();
+    String getCaseId();
 
-  String[] getEvidenceItems();
+    String[] getEvidenceItems();
 
-  String getPath();
+    String getPath();
 
-  boolean isEnabled();
+    boolean isEnabled();
 
-  void setCaseId(String caseId);
+    void setCaseId(String caseId);
 
-  void setEvidenceItems(String[] evidenceId);
+    void setEvidenceItems(String[] evidenceId);
 
-  void setPath(String path);
+    void setPath(String path);
 
 }

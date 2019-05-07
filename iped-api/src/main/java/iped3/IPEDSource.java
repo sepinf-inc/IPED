@@ -26,71 +26,71 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public interface IPEDSource extends Closeable {
 
-  String INDEX_DIR = "index"; //$NON-NLS-1$
-  String MODULE_DIR = "indexador"; //$NON-NLS-1$
-  String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
+    String INDEX_DIR = "index"; //$NON-NLS-1$
+    String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
 
-  void checkImagePaths() throws IPEDException, TskCoreException;
+    void checkImagePaths() throws IPEDException, TskCoreException;
 
-  @Override
-  void close();
+    @Override
+    void close();
 
-  Analyzer getAnalyzer();
+    Analyzer getAnalyzer();
 
-  AtomicReader getAtomicReader();
+    AtomicReader getAtomicReader();
 
-  File getCaseDir();
+    File getCaseDir();
 
-  List<String> getCategories();
+    List<String> getCategories();
 
-  Set<String> getExtraAttributes();
+    Set<String> getExtraAttributes();
 
-  int getId(int luceneId);
+    int getId(int luceneId);
 
-  File getIndex();
+    File getIndex();
 
-  Item getItemByID(int id);
+    Item getItemByID(int id);
 
-  Item getItemByLuceneID(int docID);
+    Item getItemByLuceneID(int docID);
 
-  Set<String> getKeywords();
+    Set<String> getKeywords();
 
-  int getLastId();
+    int getLastId();
 
-  int getLuceneId(ItemId itemId);
+    int getLuceneId(ItemId itemId);
 
-  int getLuceneId(int id);
+    int getLuceneId(int id);
 
-  Marcadores getMarcadores();
+    Marcadores getMarcadores();
 
-  File getModuleDir();
+    File getModuleDir();
 
-  MultiMarcadores getMultiMarcadores();
+    MultiMarcadores getMultiMarcadores();
 
-  IndexReader getReader();
+    IndexReader getReader();
 
-  IndexSearcher getSearcher();
+    IndexSearcher getSearcher();
 
-  SleuthkitCase getSleuthCase();
+    SleuthkitCase getSleuthCase();
 
-  int getSourceId();
+    int getSourceId();
 
-  long getTextSize(int id);
+    long getTextSize(int id);
 
-  int getTotalItens();
+    int getTotalItens();
 
-  VersionsMap getViewToRawMap();
+    VersionsMap getViewToRawMap();
 
-  boolean isFTKReport();
+    boolean isFTKReport();
 
-  void populateLuceneIdToIdMap() throws IOException;
+    void populateLuceneIdToIdMap() throws IOException;
 
-  void reopen() throws IOException;
+    void reopen() throws IOException;
 
-  /**
-   * Substitui caminhos absolutos para imagens por relativos
-   *
-   */
-  void updateImagePathsToRelative();
+    /**
+     * Substitui caminhos absolutos para imagens por relativos
+     *
+     */
+    void updateImagePathsToRelative();
 
 }

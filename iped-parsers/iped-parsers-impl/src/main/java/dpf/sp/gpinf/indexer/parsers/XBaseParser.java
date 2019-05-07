@@ -47,67 +47,69 @@ import com.linuxense.javadbf.DBFReader;
  */
 public class XBaseParser extends AbstractParser {
 
-	private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-dbf")); //$NON-NLS-1$
-	public static final String DBF_MIME_TYPE = "application/x-dbf"; //$NON-NLS-1$
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-dbf")); //$NON-NLS-1$
+    public static final String DBF_MIME_TYPE = "application/x-dbf"; //$NON-NLS-1$
 
-	private static final long serialVersionUID = 5305942120263605439L;
+    private static final long serialVersionUID = 5305942120263605439L;
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
 
-		return SUPPORTED_TYPES;
-	}
+        return SUPPORTED_TYPES;
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-		XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-		xhtml.startDocument();
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
 
-		DBFReader reader = new DBFReader(stream);
+        DBFReader reader = new DBFReader(stream);
 
-		for (int i = 0; i < reader.getFieldCount(); i++)
-			xhtml.characters(reader.getField(i).getName() + "\t"); //$NON-NLS-1$
+        for (int i = 0; i < reader.getFieldCount(); i++)
+            xhtml.characters(reader.getField(i).getName() + "\t"); //$NON-NLS-1$
 
-		xhtml.characters("\r\n"); //$NON-NLS-1$
+        xhtml.characters("\r\n"); //$NON-NLS-1$
 
-		DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
+        DateFormat df = DateFormat.getDateInstance(DateFormat.MEDIUM);
 
-		Object[] rowObjects;
-		while ((rowObjects = reader.nextRecord()) != null) {
-			for (int i = 0; i < rowObjects.length; i++) {
-				if (rowObjects[i] != null)
-					if (Date.class.isInstance(rowObjects[i]))
-						xhtml.characters(df.format(rowObjects[i]) + "\t"); //$NON-NLS-1$
-					else
-						xhtml.characters(rowObjects[i].toString().trim() + "\t"); //$NON-NLS-1$
-				else
-					xhtml.characters("\t"); //$NON-NLS-1$
-			}
-			xhtml.characters("\r\n"); //$NON-NLS-1$
-		}
+        Object[] rowObjects;
+        while ((rowObjects = reader.nextRecord()) != null) {
+            for (int i = 0; i < rowObjects.length; i++) {
+                if (rowObjects[i] != null)
+                    if (Date.class.isInstance(rowObjects[i]))
+                        xhtml.characters(df.format(rowObjects[i]) + "\t"); //$NON-NLS-1$
+                    else
+                        xhtml.characters(rowObjects[i].toString().trim() + "\t"); //$NON-NLS-1$
+                else
+                    xhtml.characters("\t"); //$NON-NLS-1$
+            }
+            xhtml.characters("\r\n"); //$NON-NLS-1$
+        }
 
-		xhtml.endDocument();
+        xhtml.endDocument();
 
-	}
+    }
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		try {
-			String filepath = "E:/dbfs/x 238459.DBF"; //$NON-NLS-1$
-			InputStream input = new FileInputStream(filepath);
-			XBaseParser parser = new XBaseParser();
-			ParseContext context = new ParseContext();
-			BodyContentHandler handler = new BodyContentHandler(new BufferedWriter(new FileWriter("E:/dbfs/saida.txt"))); //$NON-NLS-1$
-			Metadata metadata = new Metadata();
-			context.set(Parser.class, parser);
+        try {
+            String filepath = "E:/dbfs/x 238459.DBF"; //$NON-NLS-1$
+            InputStream input = new FileInputStream(filepath);
+            XBaseParser parser = new XBaseParser();
+            ParseContext context = new ParseContext();
+            BodyContentHandler handler = new BodyContentHandler(
+                    new BufferedWriter(new FileWriter("E:/dbfs/saida.txt"))); //$NON-NLS-1$
+            Metadata metadata = new Metadata();
+            context.set(Parser.class, parser);
 
-			parser.parse(input, handler, metadata, context);
+            parser.parse(input, handler, metadata, context);
 
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
 
-	}
+    }
 
 }

@@ -24,105 +24,105 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 public class ImageViewer extends Viewer {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
 
-  private ImageViewPanel imagePanel;
+    private ImageViewPanel imagePanel;
 
-  private GraphicsMagicConverter graphicsMagicConverter;
+    private GraphicsMagicConverter graphicsMagicConverter;
 
-  public ImageViewer() {
-    super(new GridLayout());
-    imagePanel = new ImageViewPanel();
-    this.getPanel().add(imagePanel);
+    public ImageViewer() {
+        super(new GridLayout());
+        imagePanel = new ImageViewPanel();
+        this.getPanel().add(imagePanel);
 
-  }
+    }
 
-  @Override
-  public String getName() {
-    return "Imagem"; //$NON-NLS-1$
-  }
+    @Override
+    public String getName() {
+        return "Imagem"; //$NON-NLS-1$
+    }
 
-  @Override
-  public boolean isSupportedType(String contentType) {
-    return contentType.startsWith("image");  //$NON-NLS-1$
-  }
+    @Override
+    public boolean isSupportedType(String contentType) {
+        return contentType.startsWith("image"); //$NON-NLS-1$
+    }
 
-  @Override
-  public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    @Override
+    public void loadFile(StreamSource content, Set<String> highlightTerms) {
 
-    BufferedImage image = null;
-    if (content != null) {
-      InputStream in = null;
-      try {
-        in = new BufferedInputStream(content.getStream());
-        image = ImageUtil.getSubSampledImage(in, 2000, 2000);
+        BufferedImage image = null;
+        if (content != null) {
+            InputStream in = null;
+            try {
+                in = new BufferedInputStream(content.getStream());
+                image = ImageUtil.getSubSampledImage(in, 2000, 2000);
 
-        if (image == null) {
-          IOUtil.closeQuietly(in);
-          in = new BufferedInputStream(content.getStream());
-          image = ImageUtil.getThumb(in);
-        }
-        if (image == null) {
-          IOUtil.closeQuietly(in);
-          in = new BufferedInputStream(content.getStream());
-          image = graphicsMagicConverter.getImage(in, 1000);
-        }
-        
-        if (image != null) {
-            IOUtil.closeQuietly(in);
-            in = new BufferedInputStream(content.getStream());
-            int orientation = ImageUtil.getOrientation(in);
-            if (orientation > 0) {
-                image = ImageUtil.rotate(image, orientation);
+                if (image == null) {
+                    IOUtil.closeQuietly(in);
+                    in = new BufferedInputStream(content.getStream());
+                    image = ImageUtil.getThumb(in);
+                }
+                if (image == null) {
+                    IOUtil.closeQuietly(in);
+                    in = new BufferedInputStream(content.getStream());
+                    image = graphicsMagicConverter.getImage(in, 1000);
+                }
+
+                if (image != null) {
+                    IOUtil.closeQuietly(in);
+                    in = new BufferedInputStream(content.getStream());
+                    int orientation = ImageUtil.getOrientation(in);
+                    if (orientation > 0) {
+                        image = ImageUtil.rotate(image, orientation);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            } finally {
+                IOUtil.closeQuietly(in);
             }
         }
-      } catch (IOException e) {
-        e.printStackTrace();
 
-      } finally {
-        IOUtil.closeQuietly(in);
-      }
+        final BufferedImage img = image;
+
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                imagePanel.setImage(img);
+            }
+        });
+
     }
 
-    final BufferedImage img = image;
-
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        imagePanel.setImage(img);
-      }
-    });
-
-  }
-
-  @Override
-  public void init() {
-    graphicsMagicConverter = new GraphicsMagicConverter();
-  }
-
-  @Override
-  public void copyScreen(Component comp) {
-    BufferedImage image = imagePanel.getImage();
-
-    TransferableImage trans = new TransferableImage(image);
-    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-    clipboard.setContents(trans, trans);
-  }
-
-  @Override
-  public void dispose() {
-    try {
-      graphicsMagicConverter.close();
-    } catch (IOException e) {
-      LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+    @Override
+    public void init() {
+        graphicsMagicConverter = new GraphicsMagicConverter();
     }
 
-  }
+    @Override
+    public void copyScreen(Component comp) {
+        BufferedImage image = imagePanel.getImage();
 
-  @Override
-  public void scrollToNextHit(boolean forward) {
-    // TODO Auto-generated method stub
+        TransferableImage trans = new TransferableImage(image);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(trans, trans);
+    }
 
-  }
+    @Override
+    public void dispose() {
+        try {
+            graphicsMagicConverter.close();
+        } catch (IOException e) {
+            LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+        }
+
+    }
+
+    @Override
+    public void scrollToNextHit(boolean forward) {
+        // TODO Auto-generated method stub
+
+    }
 
 }

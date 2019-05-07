@@ -29,17 +29,16 @@ class InputStreamResource2 implements ForkResource {
         this.stream = stream;
     }
 
-    public Throwable process(DataInputStream input, DataOutputStream output)
-            throws IOException {
-        
+    public Throwable process(DataInputStream input, DataOutputStream output) throws IOException {
+
         int n = input.readInt();
         byte[] buffer = new byte[n];
         int m;
         try {
             m = stream.read(buffer);
         } catch (IOException e) {
-            //returning causes deadlock
-            //return e;
+            // returning causes deadlock
+            // return e;
             e.printStackTrace();
             m = -1;
         }

@@ -18,72 +18,73 @@ import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import iped3.Item;
 import iped3.io.SeekableInputStream;
 
-public class DERCarver extends AbstractCarver{
+public class DERCarver extends AbstractCarver {
 
-	public DERCarver() throws DecoderException{
-		carverTypes = new CarverType[1];
+    public DERCarver() throws DecoderException {
+        carverTypes = new CarverType[1];
 
-		carverTypes[0] = new CarverType();
-		carverTypes[0].addHeader("\\30\\82??\\30\\82");
-		carverTypes[0].addHeader("\\30\\83???\\30\\83");
-		carverTypes[0].setMimeType(MediaType.parse("application/pkix-cert"));
-		carverTypes[0].setMaxLength(100000);
-		carverTypes[0].setMinLength(1000);
-		carverTypes[0].setName("DER");
-		carverTypes[0].setCarverClass(this.getClass().getName());
-	}
-	
-	@Override
-	public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
-	  try(SeekableInputStream is = parentEvidence.getStream()){
-		  is.seek(header.getOffset()+1);
-		  byte lenlenb[] = new byte[1];
-		  is.read(lenlenb);
-		  int lenlen = lenlenb[0] & 0x7F;
-		  byte lenb[] = new byte[lenlen];
-		  is.read(lenb);
+        carverTypes[0] = new CarverType();
+        carverTypes[0].addHeader("\\30\\82??\\30\\82");
+        carverTypes[0].addHeader("\\30\\83???\\30\\83");
+        carverTypes[0].setMimeType(MediaType.parse("application/pkix-cert"));
+        carverTypes[0].setMaxLength(100000);
+        carverTypes[0].setMinLength(1000);
+        carverTypes[0].setName("DER");
+        carverTypes[0].setCarverClass(this.getClass().getName());
+    }
 
-		  long len = 0;
-		  long valor = 0;
-		  for (int j = 0; j < lenlen; j++) {
-		   	valor = ((long) lenb[j] & 0xff);
-		   	valor = (long) (valor << (8 * (lenlen-j-1)));
-		   	len |= valor;
-	      }
+    @Override
+    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+        try (SeekableInputStream is = parentEvidence.getStream()) {
+            is.seek(header.getOffset() + 1);
+            byte lenlenb[] = new byte[1];
+            is.read(lenlenb);
+            int lenlen = lenlenb[0] & 0x7F;
+            byte lenb[] = new byte[lenlen];
+            is.read(lenb);
 
-		  return len+4;// soma o tamanho do cabeçalho
-	  }
-	}
+            long len = 0;
+            long valor = 0;
+            for (int j = 0; j < lenlen; j++) {
+                valor = ((long) lenb[j] & 0xff);
+                valor = (long) (valor << (8 * (lenlen - j - 1)));
+                len |= valor;
+            }
 
-	@Override
-	public Object validateCarvedObject(Item parentEvidence, Hit header, long length) throws InvalidCarvedObjectException{
-		Certificate cert = null;
+            return len + 4;// soma o tamanho do cabeçalho
+        }
+    }
 
-		try(SeekableInputStream is = parentEvidence.getStream()){
-			byte []buf = new byte[(int) length];
-			is.seek(header.getOffset());
-			is.read(buf);
-	    	cert = parse(buf); //tenta interpretar o certificado com o tamanho do cabecalho incluso
-	    }catch(Exception e){
-	    	throw new InvalidCarvedObjectException(e);
-	    }
+    @Override
+    public Object validateCarvedObject(Item parentEvidence, Hit header, long length)
+            throws InvalidCarvedObjectException {
+        Certificate cert = null;
 
-	    return cert;
-	}
-	
-	public Certificate parse(byte[] buff) throws IOException{
-		try{
-			CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        try (SeekableInputStream is = parentEvidence.getStream()) {
+            byte[] buf = new byte[(int) length];
+            is.seek(header.getOffset());
+            is.read(buf);
+            cert = parse(buf); // tenta interpretar o certificado com o tamanho do cabecalho incluso
+        } catch (Exception e) {
+            throw new InvalidCarvedObjectException(e);
+        }
 
-			X509Certificate cert = null;
+        return cert;
+    }
 
-			InputStream certStream = new ByteArrayInputStream(buff);
-			cert = (X509Certificate) cf.generateCertificate(certStream);
-			
-			return cert;
-		}catch(CertificateException e){
-			throw new IOException(e);
-		}
-	}
+    public Certificate parse(byte[] buff) throws IOException {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+
+            X509Certificate cert = null;
+
+            InputStream certStream = new ByteArrayInputStream(buff);
+            cert = (X509Certificate) cf.generateCertificate(certStream);
+
+            return cert;
+        } catch (CertificateException e) {
+            throw new IOException(e);
+        }
+    }
 
 }

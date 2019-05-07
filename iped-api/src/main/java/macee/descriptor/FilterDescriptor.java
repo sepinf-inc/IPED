@@ -4,8 +4,8 @@ import macee.filter.Filter;
 
 public interface FilterDescriptor extends Descriptor {
 
-  Filter getFilter();
+    Filter getFilter();
 
-  void setFilter(Filter filter);
+    void setFilter(Filter filter);
 
 }

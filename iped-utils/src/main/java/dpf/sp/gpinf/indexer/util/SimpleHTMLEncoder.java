@@ -21,69 +21,69 @@ package dpf.sp.gpinf.indexer.util;
  * 
  */
 public class SimpleHTMLEncoder {
-	
-	public SimpleHTMLEncoder() {
-	}
 
-	public String encodeText(String originalText) {
-		return htmlEncode(originalText);
-	}
+    public SimpleHTMLEncoder() {
+    }
 
-	public final static String htmlDecode(String html) {
-		if (html == null || html.length() == 0)
-			return ""; //$NON-NLS-1$
+    public String encodeText(String originalText) {
+        return htmlEncode(originalText);
+    }
 
-		String result = html.replaceAll("&quot;", "\""); //$NON-NLS-1$ //$NON-NLS-2$
-		result = result.replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
-		result = result.replaceAll("&lt;", "<"); //$NON-NLS-1$ //$NON-NLS-2$
-		result = result.replaceAll("&gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$
-		result = result.replaceAll("&#39;", "'"); //$NON-NLS-1$ //$NON-NLS-2$
+    public final static String htmlDecode(String html) {
+        if (html == null || html.length() == 0)
+            return ""; //$NON-NLS-1$
 
-		return result;
+        String result = html.replaceAll("&quot;", "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&lt;", "<"); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&#39;", "'"); //$NON-NLS-1$ //$NON-NLS-2$
 
-	}
+        return result;
 
-	/**
-	 * Encode string into HTML
-	 */
-	public final static String htmlEncode(String plainText) {
-		if (plainText == null || plainText.length() == 0) {
-			return ""; //$NON-NLS-1$
-		}
+    }
 
-		StringBuilder result = new StringBuilder(plainText.length());
+    /**
+     * Encode string into HTML
+     */
+    public final static String htmlEncode(String plainText) {
+        if (plainText == null || plainText.length() == 0) {
+            return ""; //$NON-NLS-1$
+        }
 
-		for (int index = 0; index < plainText.length(); index++) {
-			
-			char ch = plainText.charAt(index);
+        StringBuilder result = new StringBuilder(plainText.length());
 
-			switch (ch) {
-			case '"':
-				result.append("&quot;"); //$NON-NLS-1$
-				break;
-				
-			case '\'':
-				result.append("&#39;"); //$NON-NLS-1$
-				break;
+        for (int index = 0; index < plainText.length(); index++) {
 
-			case '&':
-				result.append("&amp;"); //$NON-NLS-1$
-				break;
+            char ch = plainText.charAt(index);
 
-			case '<':
-				result.append("&lt;"); //$NON-NLS-1$
-				break;
+            switch (ch) {
+                case '"':
+                    result.append("&quot;"); //$NON-NLS-1$
+                    break;
 
-			case '>':
-				result.append("&gt;"); //$NON-NLS-1$
-				break;
+                case '\'':
+                    result.append("&#39;"); //$NON-NLS-1$
+                    break;
 
-			default:
-				result.append(ch);
+                case '&':
+                    result.append("&amp;"); //$NON-NLS-1$
+                    break;
 
-			}
-		}
+                case '<':
+                    result.append("&lt;"); //$NON-NLS-1$
+                    break;
 
-		return result.toString();
-	}
+                case '>':
+                    result.append("&gt;"); //$NON-NLS-1$
+                    break;
+
+                default:
+                    result.append(ch);
+
+            }
+        }
+
+        return result.toString();
+    }
 }

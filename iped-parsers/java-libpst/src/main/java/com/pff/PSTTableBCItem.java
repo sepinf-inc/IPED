@@ -40,8 +40,8 @@ package com.pff;
  */
 class PSTTableBCItem extends PSTTableItem {
 
-	@Override
-	public String toString() {
-		return "Table Item: " + super.toString() + "\n";
-	}
+    @Override
+    public String toString() {
+        return "Table Item: " + super.toString() + "\n";
+    }
 }

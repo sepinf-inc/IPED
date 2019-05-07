@@ -50,7 +50,7 @@ public class RegistryParser extends AbstractParser {
     private static String[] cmd;
     private static String TOOL_NAME = "rip"; //$NON-NLS-1$
     private static boolean tested = false;
-    private static String[] regNames = {"sam","software","system","security","ntuser","usrclass"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+    private static String[] regNames = { "sam", "software", "system", "security", "ntuser", "usrclass" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
     private static Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
 
     private RawStringParser rawParser = new RawStringParser();
@@ -60,52 +60,56 @@ public class RegistryParser extends AbstractParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        
-        if(SUPPORTED_TYPES != null)
+
+        if (SUPPORTED_TYPES != null)
             return SUPPORTED_TYPES;
-           
+
         synchronized (this.getClass()) {
-          if(!tested) {
-			try{
-                cmd = new String[] {TOOL_PATH + TOOL_NAME};
-					if (!System.getProperty("os.name").toLowerCase().startsWith("windows")) //$NON-NLS-1$ //$NON-NLS-2$
-						cmd = new String[]{"perl", "-I", ".", TOOL_NAME + ".pl"}; //$NON-NLS-1$ //$NON-NLS-2$
+            if (!tested) {
+                try {
+                    cmd = new String[] { TOOL_PATH + TOOL_NAME };
+                    if (!System.getProperty("os.name").toLowerCase().startsWith("windows")) //$NON-NLS-1$ //$NON-NLS-2$
+                        cmd = new String[] { "perl", "-I", ".", TOOL_NAME + ".pl" }; //$NON-NLS-1$ //$NON-NLS-2$
 
-                ProcessBuilder pb = new ProcessBuilder(cmd);
-                File dir = new File(TOOL_PATH);
-                if(dir.exists()) pb.directory(dir);
-                Process p = pb.start();
-                p.waitFor();
-					if(p.exitValue() != 0)
-						throw new Exception("Rip exit value = " + p.exitValue());
-					
-				SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-windows-registry")); //$NON-NLS-1$
+                    ProcessBuilder pb = new ProcessBuilder(cmd);
+                    File dir = new File(TOOL_PATH);
+                    if (dir.exists())
+                        pb.directory(dir);
+                    Process p = pb.start();
+                    p.waitFor();
+                    if (p.exitValue() != 0)
+                        throw new Exception("Rip exit value = " + p.exitValue());
 
-            } catch (Exception e) {
+                    SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-windows-registry")); //$NON-NLS-1$
+
+                } catch (Exception e) {
                     StringBuilder sb = new StringBuilder();
-                    for(String s : cmd) sb.append(s).append(" ");
+                    for (String s : cmd)
+                        sb.append(s).append(" ");
                     String msg = "Error testing rip (RegRipper): registry reports will NOT be created." //$NON-NLS-1$
-					        + " Command line: " + sb.toString() //$NON-NLS-1$
-							+ " Check if perl module 'Parse::Win32Registry' is installed."; //$NON-NLS-1$
-                    //are we in analysis app?
-                    if(System.getProperty("iped.javaVersionChecked") != null)
+                            + " Command line: " + sb.toString() //$NON-NLS-1$
+                            + " Check if perl module 'Parse::Win32Registry' is installed."; //$NON-NLS-1$
+                    // are we in analysis app?
+                    if (System.getProperty("iped.javaVersionChecked") != null)
                         LOGGER.warn(msg);
                     else
                         LOGGER.error(msg);
-                    
+
                     SUPPORTED_TYPES = Collections.EMPTY_SET;
+                }
+                tested = true;
             }
-			tested = true;
-		  }
         }
 
         return SUPPORTED_TYPES;
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -120,7 +124,7 @@ public class RegistryParser extends AbstractParser {
             for (String regName : regNames)
                 if (filename.toLowerCase().startsWith(regName)) {
                     tempFile = tis.getFile();
-                    String[] params = new String[] {"-f",regName,"-r",tempFile.getAbsolutePath()}; //$NON-NLS-1$ //$NON-NLS-2$
+                    String[] params = new String[] { "-f", regName, "-r", tempFile.getAbsolutePath() }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     finalCmd = new String[cmd.length + params.length];
                     for (int i = 0; i < cmd.length; i++)
@@ -129,7 +133,7 @@ public class RegistryParser extends AbstractParser {
                         finalCmd[cmd.length + i] = params[i];
                 }
 
-            //indexa strings brutas
+            // indexa strings brutas
             rawParser.parse(tis, handler, metadata, context);
 
             if (finalCmd != null) {
@@ -145,7 +149,7 @@ public class RegistryParser extends AbstractParser {
                     ContainerVolatile msg = new ContainerVolatile();
                     Thread thread = readStream(p.getInputStream(), os, msg);
                     waitFor(p, xhtml, msg);
-                    //p.waitFor();
+                    // p.waitFor();
                     thread.join();
 
                 } catch (InterruptedException e) {
@@ -162,10 +166,10 @@ public class RegistryParser extends AbstractParser {
 
                 File htmlFile = getHtml(outFile, tmp);
 
-				if (extractor.shouldParseEmbedded(reportMetadata))
-					try (InputStream is = new FileInputStream(htmlFile)){
-                    extractor.parseEmbedded(is, xhtml, reportMetadata, true);
-                }
+                if (extractor.shouldParseEmbedded(reportMetadata))
+                    try (InputStream is = new FileInputStream(htmlFile)) {
+                        extractor.parseEmbedded(is, xhtml, reportMetadata, true);
+                    }
             }
 
         } catch (Exception e) {
@@ -181,9 +185,7 @@ public class RegistryParser extends AbstractParser {
 
     private File getHtml(File file, TemporaryResources tmp) throws IOException {
         File html = tmp.createTemporaryFile();
-		try(
-				OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(html), charset);
-		){
+        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(html), charset);) {
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
             writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -191,8 +193,8 @@ public class RegistryParser extends AbstractParser {
             writer.write("<body>"); //$NON-NLS-1$
             writer.write("<pre>"); //$NON-NLS-1$
 
-			String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
-			content = adjustDateFormat(content);
+            String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
+            content = adjustDateFormat(content);
             writer.write(SimpleHTMLEncoder.htmlEncode(content.trim()));
 
             writer.write("</pre>"); //$NON-NLS-1$
@@ -205,10 +207,20 @@ public class RegistryParser extends AbstractParser {
 
     private static String adjustDateFormat(String content) {
         final char[] dateFormat = "Aaa Aaa nN nN:NN:NN NNNN".toCharArray(); //$NON-NLS-1$
-        final String[] srcWDay = new String[] {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-        final String[] tgtWDay = new String[] {Messages.getString("RegistryParser.Sun"),Messages.getString("RegistryParser.Mon"),Messages.getString("RegistryParser.Tue"),Messages.getString("RegistryParser.Wed"),Messages.getString("RegistryParser.Thu"),Messages.getString("RegistryParser.Fri"),Messages.getString("RegistryParser.Sat")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-        final String[] srcMonth = new String[] {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$
-        final String[] tgtMonth = new String[] {Messages.getString("RegistryParser.Jan"),Messages.getString("RegistryParser.Feb"),Messages.getString("RegistryParser.Mar"),Messages.getString("RegistryParser.Apr"),Messages.getString("RegistryParser.May"),Messages.getString("RegistryParser.Jun"),Messages.getString("RegistryParser.Jul"),Messages.getString("RegistryParser.Aug"),Messages.getString("RegistryParser.Sep"),Messages.getString("RegistryParser.Oct"),Messages.getString("RegistryParser.Nov"),Messages.getString("RegistryParser.Dec")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$
+        final String[] srcWDay = new String[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        final String[] tgtWDay = new String[] { Messages.getString("RegistryParser.Sun"), //$NON-NLS-1$
+                Messages.getString("RegistryParser.Mon"), Messages.getString("RegistryParser.Tue"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Wed"), Messages.getString("RegistryParser.Thu"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Fri"), Messages.getString("RegistryParser.Sat") }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] srcMonth = new String[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
+                "Nov", "Dec" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] tgtMonth = new String[] { Messages.getString("RegistryParser.Jan"), //$NON-NLS-1$
+                Messages.getString("RegistryParser.Feb"), Messages.getString("RegistryParser.Mar"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Apr"), Messages.getString("RegistryParser.May"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Jun"), Messages.getString("RegistryParser.Jul"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Aug"), Messages.getString("RegistryParser.Sep"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Oct"), Messages.getString("RegistryParser.Nov"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("RegistryParser.Dec") }; //$NON-NLS-1$
 
         char[] c = content.toCharArray();
         boolean changed = false;
@@ -218,13 +230,17 @@ public class RegistryParser extends AbstractParser {
                 char a = c[i + j];
                 char b = dateFormat[j];
                 if (b == 'A') {
-                    if (!Character.isUpperCase(a)) continue NEXT;
+                    if (!Character.isUpperCase(a))
+                        continue NEXT;
                 } else if (b == 'a') {
-                    if (!Character.isLowerCase(a)) continue NEXT;
+                    if (!Character.isLowerCase(a))
+                        continue NEXT;
                 } else if (b == 'N') {
-                    if (!Character.isDigit(a)) continue NEXT;
+                    if (!Character.isDigit(a))
+                        continue NEXT;
                 } else if (b == 'n') {
-                    if (!Character.isDigit(a) && a != ' ') continue NEXT;
+                    if (!Character.isDigit(a) && a != ' ')
+                        continue NEXT;
                 } else if (a != b) {
                     continue NEXT;
                 }
@@ -237,7 +253,8 @@ public class RegistryParser extends AbstractParser {
                     break;
                 }
             }
-            if (outWDay == null) continue NEXT;
+            if (outWDay == null)
+                continue NEXT;
             String inMonth = new String(c, i + 4, 3);
             String outMonth = null;
             for (int k = 0; k < srcMonth.length; k++) {
@@ -246,7 +263,8 @@ public class RegistryParser extends AbstractParser {
                     break;
                 }
             }
-            if (outMonth == null) continue NEXT;
+            if (outMonth == null)
+                continue NEXT;
             changed = true;
             sb.delete(0, sb.length());
             sb.append(outWDay).append(' ');
@@ -255,8 +273,10 @@ public class RegistryParser extends AbstractParser {
             sb.append(c, i + 20, 4).append(' ');
             sb.append(c, i + 11, 8);
             sb.getChars(0, sb.length(), c, i);
-            if (c[i + 4] == ' ') c[i + 4] = '0';
-            if (c[i + 16] == ' ') c[i + 16] = '0';
+            if (c[i + 4] == ' ')
+                c[i + 4] = '0';
+            if (c[i + 16] == ' ')
+                c[i + 16] = '0';
             i += dateFormat.length - 1;
         }
         return changed ? new String(c) : content;
@@ -270,11 +290,14 @@ public class RegistryParser extends AbstractParser {
                 int read = 0;
                 while (read != -1)
                     try {
-                        if (os != null) os.write(out, 0, read);
-                        if (msg != null) msg.progress = true;
+                        if (os != null)
+                            os.write(out, 0, read);
+                        if (msg != null)
+                            msg.progress = true;
                         read = stream.read(out);
 
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
             }
         };
         t.start();
@@ -288,13 +311,15 @@ public class RegistryParser extends AbstractParser {
             try {
                 p.exitValue();
                 break;
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
 
-			if(msg.progress == true && handler != null)
-				try {
-                handler.characters(" ".toCharArray(), 0, 1); //$NON-NLS-1$
-                //System.out.println("progress");
-            } catch (SAXException e) {}
+            if (msg.progress == true && handler != null)
+                try {
+                    handler.characters(" ".toCharArray(), 0, 1); //$NON-NLS-1$
+                    // System.out.println("progress");
+                } catch (SAXException e) {
+                }
 
             msg.progress = false;
 

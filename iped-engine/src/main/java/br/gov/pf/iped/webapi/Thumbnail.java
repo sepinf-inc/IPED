@@ -20,17 +20,15 @@ import io.swagger.annotations.ApiOperation;
 import iped3.IPEDSource;
 import iped3.Item;
 
-@Api(value="Documents")
+@Api(value = "Documents")
 @Path("sources/{sourceID}/docs/{id}/thumb")
 public class Thumbnail {
 
-	@ApiOperation(value="Get document's thumbnail")
+    @ApiOperation(value = "Get document's thumbnail")
     @GET
     @Produces("image/jpg")
-    public StreamingOutput content(
-            @PathParam("sourceID") String sourceID,
-            @PathParam("id") int id)
-                    throws TskCoreException, IOException, URISyntaxException{
+    public StreamingOutput content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
+            throws TskCoreException, IOException, URISyntaxException {
 
         IPEDSource source = Sources.getSource(sourceID);
         Item item = source.getItemByID(id);
@@ -39,6 +37,7 @@ public class Thumbnail {
             @Override
             public void write(OutputStream arg0) throws IOException, WebApplicationException {
                 IOUtils.copy(new ByteArrayInputStream(thumb), arg0);
-            }};
+            }
+        };
     }
 }

@@ -3,7 +3,8 @@ package macee.core.util;
 /**
  * Interface for objects with an unique identifier.
  *
- * @param <T> Type of identifier.
+ * @param <T>
+ *            Type of identifier.
  * @author Bruno Hoelz
  */
 public interface Identity<T> {

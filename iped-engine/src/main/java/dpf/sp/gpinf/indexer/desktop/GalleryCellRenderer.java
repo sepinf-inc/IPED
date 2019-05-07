@@ -37,72 +37,73 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 public class GalleryCellRenderer implements TableCellRenderer {
 
-  JPanel top = new JPanel(), panel = new JPanel();
-  // JLayeredPane panel = new JLayeredPane();
-  JLabel label = new JLabel(), cLabel = new JLabel();
-  JCheckBox check = new JCheckBox();
-  Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
-  Border border = BorderFactory.createLineBorder(new Color(200, 200, 200), 1, false);
-  public static int labelH;
+    JPanel top = new JPanel(), panel = new JPanel();
+    // JLayeredPane panel = new JLayeredPane();
+    JLabel label = new JLabel(), cLabel = new JLabel();
+    JCheckBox check = new JCheckBox();
+    Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
+    Border border = BorderFactory.createLineBorder(new Color(200, 200, 200), 1, false);
+    public static int labelH;
 
-  public GalleryCellRenderer() {
-    super();
-    panel.setLayout(new BorderLayout());
-    top.setLayout(new BorderLayout());
-    top.add(check, BorderLayout.LINE_START);
-    top.add(cLabel, BorderLayout.CENTER);
-    panel.add(top, BorderLayout.NORTH);
-    panel.add(label, BorderLayout.CENTER);
+    public GalleryCellRenderer() {
+        super();
+        panel.setLayout(new BorderLayout());
+        top.setLayout(new BorderLayout());
+        top.add(check, BorderLayout.LINE_START);
+        top.add(cLabel, BorderLayout.CENTER);
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(label, BorderLayout.CENTER);
 
-    // Layered Code
-		/*
-     * panel.add(label, new Integer(0)); panel.add(check, new Integer(1));
-     * label.setBounds(0,0, 100,100); check.setBounds(0, 0, 20, 20);
-     */
-    label.setHorizontalAlignment(JLabel.CENTER);
-  }
-
-  @Override
-  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-
-    GalleryValue cellValue = (GalleryValue) value;
-    if (cellValue.id == null) {
-      return new JPanel();
+        // Layered Code
+        /*
+         * panel.add(label, new Integer(0)); panel.add(check, new Integer(1));
+         * label.setBounds(0,0, 100,100); check.setBounds(0, 0, 20, 20);
+         */
+        label.setHorizontalAlignment(JLabel.CENTER);
     }
 
-    check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
-    cLabel.setText(cellValue.name);
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int col) {
 
-    if (cellValue.icon == null && cellValue.image == null) {
-      label.setText("..."); //$NON-NLS-1$
-      label.setIcon(null);
-    } else {
-      label.setText(null);
-      if (cellValue.image != null) {
-        int labelW = table.getWidth() / table.getColumnCount() - 2;
-        labelH = label.getHeight();
-        BufferedImage image = cellValue.image;
-        int w = Math.min(cellValue.originalW, labelW);
-        int h = Math.min(cellValue.originalH, labelH);
-        image = ImageUtil.resizeImage(image, w, h);
+        GalleryValue cellValue = (GalleryValue) value;
+        if (cellValue.id == null) {
+            return new JPanel();
+        }
 
-        label.setIcon(new ImageIcon(image));
-      } else {
-        label.setIcon(cellValue.icon);
-      }
+        check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
+        cLabel.setText(cellValue.name);
+
+        if (cellValue.icon == null && cellValue.image == null) {
+            label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else {
+            label.setText(null);
+            if (cellValue.image != null) {
+                int labelW = table.getWidth() / table.getColumnCount() - 2;
+                labelH = label.getHeight();
+                BufferedImage image = cellValue.image;
+                int w = Math.min(cellValue.originalW, labelW);
+                int h = Math.min(cellValue.originalH, labelH);
+                image = ImageUtil.resizeImage(image, w, h);
+
+                label.setIcon(new ImageIcon(image));
+            } else {
+                label.setIcon(cellValue.icon);
+            }
+        }
+
+        if (isSelected) {
+            panel.setBackground(new Color(180, 200, 230));
+            panel.setBorder(selBorder);
+            top.setBackground(new Color(180, 200, 230));
+        } else {
+            panel.setBackground(Color.WHITE);
+            panel.setBorder(border);
+            top.setBackground(Color.WHITE);
+        }
+
+        return panel;
     }
-
-    if (isSelected) {
-      panel.setBackground(new Color(180, 200, 230));
-      panel.setBorder(selBorder);
-      top.setBackground(new Color(180, 200, 230));
-    } else {
-      panel.setBackground(Color.WHITE);
-      panel.setBorder(border);
-      top.setBackground(Color.WHITE);
-    }
-
-    return panel;
-  }
 
 }

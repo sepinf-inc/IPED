@@ -29,24 +29,24 @@ import org.apache.lucene.util.Version;
  */
 public class CategoryTokenizer extends CharTokenizer {
 
-  public static final char SEPARATOR = 0x00;
+    public static final char SEPARATOR = 0x00;
 
-  public CategoryTokenizer(Version matchVersion, Reader input) {
-    super(matchVersion, input);
-  }
-
-  @Override
-  protected boolean isTokenChar(int c) {
-    if (c == SEPARATOR) {
-      return false;
-    } else {
-      return true;
+    public CategoryTokenizer(Version matchVersion, Reader input) {
+        super(matchVersion, input);
     }
-  }
 
-  @Override
-  protected int normalize(int c) {
-    return Character.toLowerCase(c);
-  }
+    @Override
+    protected boolean isTokenChar(int c) {
+        if (c == SEPARATOR) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    protected int normalize(int c) {
+        return Character.toLowerCase(c);
+    }
 
 }

@@ -9,16 +9,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class JarLoader {
-    
-   private static Logger LOGGER = LoggerFactory.getLogger(JarLoader.class);
-   
-   private static volatile Boolean javaFXPresent = null;
 
-   @Deprecated
-   public boolean loadJavaFX() {
-	    if(javaFXPresent != null)
-	        return javaFXPresent;
-	    
+    private static Logger LOGGER = LoggerFactory.getLogger(JarLoader.class);
+
+    private static volatile Boolean javaFXPresent = null;
+
+    @Deprecated
+    public boolean loadJavaFX() {
+        if (javaFXPresent != null)
+            return javaFXPresent;
+
         javaFXPresent = false;
         String javaVersion = System.getProperty("java.version"); //$NON-NLS-1$
         if (javaVersion.compareTo("1.8") >= 0) //$NON-NLS-1$
@@ -38,7 +38,7 @@ public class JarLoader {
         return javaFXPresent;
     }
 
-	@Deprecated
+    @Deprecated
     public boolean loadJar(File file) {
         if (!file.exists()) {
             return false;
@@ -47,10 +47,10 @@ public class JarLoader {
             URL jarUrl = file.toURI().toURL();
             ClassLoader sysloader = ClassLoader.getSystemClassLoader();
             Class<?> sysclass = URLClassLoader.class;
-            Class<?>[] parameters = new Class[]{URL.class};
+            Class<?>[] parameters = new Class[] { URL.class };
             Method method = sysclass.getDeclaredMethod("addURL", parameters); //$NON-NLS-1$
             method.setAccessible(true);
-            method.invoke(sysloader, new Object[]{jarUrl});
+            method.invoke(sysloader, new Object[] { jarUrl });
             LOGGER.info(jarUrl.toString() + " loaded"); //$NON-NLS-1$
             return true;
         } catch (Exception e) {

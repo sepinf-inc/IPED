@@ -6,21 +6,20 @@ import iped3.io.StreamSource;
 
 import java.util.Set;
 
-
 public class TextViewer extends ATextViewer {
-  
-  public TextViewer(AppSearchParams params) {
-    super(params);
-  }
 
-  @Override
-  public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
-
-    if (content == null) {
-      loadFile(content, null);
-    } else {
-      textParser = new TextParser(appSearchParams, content, contentType, tmp);
-      textParser.execute();
+    public TextViewer(AppSearchParams params) {
+        super(params);
     }
-  }
+
+    @Override
+    public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+
+        if (content == null) {
+            loadFile(content, null);
+        } else {
+            textParser = new TextParser(appSearchParams, content, contentType, tmp);
+            textParser.execute();
+        }
+    }
 }

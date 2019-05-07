@@ -46,7 +46,8 @@ class SQLite3DBParser extends AbstractDBParser {
 
     /**
      *
-     * @param context context
+     * @param context
+     *            context
      * @return null (always)
      */
     @Override
@@ -64,10 +65,10 @@ class SQLite3DBParser extends AbstractDBParser {
         } catch (ClassNotFoundException e) {
             throw new IOExceptionWithCause(e);
         }
-        try{
+        try {
             SQLiteConfig config = new SQLiteConfig();
 
-            //good habit, but effectively meaningless here
+            // good habit, but effectively meaningless here
             config.setReadOnly(true);
             connection = config.createConnection(connectionString);
 
@@ -80,7 +81,7 @@ class SQLite3DBParser extends AbstractDBParser {
     @Override
     protected String getConnectionString(InputStream is, Metadata metadata, ParseContext context) throws IOException {
         File dbFile = TikaInputStream.get(is).getFile();
-        return "jdbc:sqlite:"+dbFile.getAbsolutePath(); //$NON-NLS-1$
+        return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
 
     @Override
@@ -89,8 +90,8 @@ class SQLite3DBParser extends AbstractDBParser {
     }
 
     @Override
-    protected List<String> getTableNames(Connection connection, Metadata metadata,
-                                         ParseContext context) throws SQLException {
+    protected List<String> getTableNames(Connection connection, Metadata metadata, ParseContext context)
+            throws SQLException {
         List<String> tableNames = new LinkedList<String>();
 
         Statement st = null;

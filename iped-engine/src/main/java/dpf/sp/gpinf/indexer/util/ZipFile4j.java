@@ -22,8 +22,8 @@ import net.lingala.zip4j.util.Zip4jUtil;
  * @author Nassif
  *
  */
-public class ZipFile4j extends ZipFile{
-    
+public class ZipFile4j extends ZipFile {
+
     private ZipModel zipModel;
     private HashMap<String, FileHeader> headersMap = new HashMap<>();
     private String file;
@@ -34,15 +34,15 @@ public class ZipFile4j extends ZipFile{
         super(zipFile);
         this.file = zipFile.getPath();
         this.mode = InternalZipConstants.MODE_UNZIP;
-        
-        for(Object header : this.getFileHeaders())
-            headersMap.put(((FileHeader)header).getFileName(), (FileHeader)header);
+
+        for (Object header : this.getFileHeaders())
+            headersMap.put(((FileHeader) header).getFileName(), (FileHeader) header);
     }
-    
+
     public FileHeader getFileHeader(String fileName) throws ZipException {
         return headersMap.get(fileName);
     }
-    
+
     public List getFileHeaders() throws ZipException {
         readZipInfo();
         if (zipModel == null || zipModel.getCentralDirectory() == null) {
@@ -50,39 +50,39 @@ public class ZipFile4j extends ZipFile{
         }
         return zipModel.getCentralDirectory().getFileHeaders();
     }
-    
+
     public ZipInputStream getInputStream(FileHeader fileHeader) throws ZipException {
         if (fileHeader == null) {
             throw new ZipException("FileHeader is null, cannot get InputStream");
         }
-        
+
         if (zipModel == null) {
             throw new ZipException("zip model is null, cannot get inputstream");
         }
-        
+
         Unzip unzip = new Unzip(zipModel);
         return unzip.getInputStream(fileHeader);
     }
-    
+
     private void readZipInfo() throws ZipException {
-        
+
         if (!Zip4jUtil.checkFileExists(file)) {
             throw new ZipException("zip file does not exist");
         }
-        
+
         if (!Zip4jUtil.checkFileReadAccess(this.file)) {
             throw new ZipException("no read access for the input zip file");
         }
-        
+
         if (this.mode != InternalZipConstants.MODE_UNZIP) {
             throw new ZipException("Invalid mode");
         }
-        
+
         RandomAccessFile raf = null;
         try {
-            if (zipModel == null) {    
+            if (zipModel == null) {
                 raf = new RandomAccessFile(new File(file), InternalZipConstants.READ_MODE);
-                
+
                 Zip4jFastHeaderReader headerReader = new Zip4jFastHeaderReader(raf);
                 zipModel = headerReader.readAllHeaders(fileNameCharset);
                 if (zipModel != null) {
@@ -91,13 +91,13 @@ public class ZipFile4j extends ZipFile{
             }
         } catch (FileNotFoundException e) {
             throw new ZipException(e);
-            
+
         } finally {
             if (raf != null) {
                 try {
                     raf.close();
                 } catch (IOException e) {
-                    //ignore
+                    // ignore
                 }
             }
         }

@@ -28,16 +28,16 @@ import org.xml.sax.SAXException;
 
 class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
 
-    public static final int START_DOCUMENT         =  1;
-    public static final int END_DOCUMENT           =  2;
-    public static final int START_PREFIX_MAPPING   =  3;
-    public static final int END_PREFIX_MAPPING     =  4;
-    public static final int START_ELEMENT          =  5;
-    public static final int END_ELEMENT            =  6;
-    public static final int CHARACTERS             =  7;
-    public static final int IGNORABLE_WHITESPACE   =  8;
-    public static final int PROCESSING_INSTRUCTION =  9;
-    public static final int SKIPPED_ENTITY         = 10;
+    public static final int START_DOCUMENT = 1;
+    public static final int END_DOCUMENT = 2;
+    public static final int START_PREFIX_MAPPING = 3;
+    public static final int END_PREFIX_MAPPING = 4;
+    public static final int START_ELEMENT = 5;
+    public static final int END_ELEMENT = 6;
+    public static final int CHARACTERS = 7;
+    public static final int IGNORABLE_WHITESPACE = 8;
+    public static final int PROCESSING_INSTRUCTION = 9;
+    public static final int SKIPPED_ENTITY = 10;
 
     /** Serial version UID */
     private static final long serialVersionUID = 737511106054617524L;
@@ -68,7 +68,7 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
         try {
             if (string != null) {
                 output.writeBoolean(true);
-                //output.writeUTF(string);
+                // output.writeUTF(string);
                 writeString(string);
             } else {
                 output.writeBoolean(false);
@@ -77,31 +77,29 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
             throw new SAXException("Unexpected fork proxy problem", e);
         }
     }
-    
-    //protection against UTFDataFormatException when large strings are written
+
+    // protection against UTFDataFormatException when large strings are written
     private void writeString(String string) throws IOException {
         int max = 65535 / 3;
-        int frags = (int) Math.ceil((double)string.length() / max);
+        int frags = (int) Math.ceil((double) string.length() / max);
         output.writeInt(frags);
         int i = 0;
-        while(i < frags) {
-            int end = (i < frags - 1) ? (i+1) * max : string.length();
+        while (i < frags) {
+            int end = (i < frags - 1) ? (i + 1) * max : string.length();
             output.writeUTF(string.substring(i * max, end));
             i++;
         }
     }
 
-    private void sendCharacters(char[] ch, int start, int length)
-            throws SAXException {
+    private void sendCharacters(char[] ch, int start, int length) throws SAXException {
         try {
             /*
-            output.writeInt(length);
-            for (int i = 0; i < length; i++) {
-                output.writeChar(ch[start + i]);
-            }*/
-            
+             * output.writeInt(length); for (int i = 0; i < length; i++) {
+             * output.writeChar(ch[start + i]); }
+             */
+
             writeString(new String(ch, start, length));
-            
+
         } catch (IOException e) {
             throw new SAXException("Unexpected fork proxy problem", e);
         }
@@ -129,8 +127,7 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
         doneSending();
     }
 
-    public void startPrefixMapping(String prefix, String uri)
-            throws SAXException {
+    public void startPrefixMapping(String prefix, String uri) throws SAXException {
         sendRequest(START_PREFIX_MAPPING);
         sendString(prefix);
         sendString(uri);
@@ -143,9 +140,7 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
         doneSending();
     }
 
-    public void startElement(
-            String uri, String localName, String qName, Attributes atts)
-            throws SAXException {
+    public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
         sendRequest(START_ELEMENT);
         sendString(uri);
         sendString(localName);
@@ -169,8 +164,7 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
         doneSending();
     }
 
-    public void endElement(String uri, String localName, String qName)
-            throws SAXException {
+    public void endElement(String uri, String localName, String qName) throws SAXException {
         sendRequest(END_ELEMENT);
         sendString(uri);
         sendString(localName);
@@ -178,22 +172,19 @@ class ContentHandlerProxy2 implements ContentHandler, ForkProxy {
         doneSending();
     }
 
-    public void characters(char[] ch, int start, int length)
-            throws SAXException {
+    public void characters(char[] ch, int start, int length) throws SAXException {
         sendRequest(CHARACTERS);
         sendCharacters(ch, start, length);
         doneSending();
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length)
-            throws SAXException {
+    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
         sendRequest(IGNORABLE_WHITESPACE);
         sendCharacters(ch, start, length);
         doneSending();
     }
 
-    public void processingInstruction(String target, String data)
-            throws SAXException {
+    public void processingInstruction(String target, String data) throws SAXException {
         sendRequest(PROCESSING_INSTRUCTION);
         sendString(target);
         sendString(data);
