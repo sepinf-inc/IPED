@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.util;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,35 +12,31 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class UNOLibFinder {
-    
-    public static void addUNOJars(String path, List<File> jars) throws URISyntaxException{
-        
+
+    public static void addUNOJars(String path, List<File> jars) throws URISyntaxException {
+
         ArrayList<URL> urls = new ArrayList<>();
-        
+
         callUnoinfo(path, urls);
-        
-        //add path to officebean jar
+
+        // add path to officebean jar
         addUrl(urls, new String(path + "/program/classes/officebean.jar"));
-        
-        for(URL url : urls)
+
+        for (URL url : urls)
             jars.add(new File(url.toURI()));
     }
-    
+
     private static void callUnoinfo(String path, ArrayList<URL> urls) {
         Process p;
         try {
-            p = Runtime.getRuntime().exec(
-                new String[] {
-                    new File( new File(path, "program"),
-                              "unoinfo").getPath(), "java" });
+            p = Runtime.getRuntime()
+                    .exec(new String[] { new File(new File(path, "program"), "unoinfo").getPath(), "java" });
         } catch (IOException e) {
-            System.err.println(
-                UNOLibFinder.class.getName() + "::getCustomLoader: exec" +
-                " unoinfo: " + e);
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: exec" + " unoinfo: " + e);
             return;
         }
-        //FIXME: perhaps remove this one & the whole Drain class entirely
-        //we're not doing anything w/ content of stderr anyway
+        // FIXME: perhaps remove this one & the whole Drain class entirely
+        // we're not doing anything w/ content of stderr anyway
         new Drain(p.getErrorStream()).start();
         int code;
         byte[] buf = new byte[1000];
@@ -53,8 +48,7 @@ public class UNOLibFinder {
                 if (n == buf.length) {
                     if (n > Integer.MAX_VALUE / 2) {
                         System.err.println(
-                            UNOLibFinder.class.getName() + "::getCustomLoader:" +
-                            " too much unoinfo output");
+                                UNOLibFinder.class.getName() + "::getCustomLoader:" + " too much unoinfo output");
                         return;
                     }
                     byte[] buf2 = new byte[2 * n];
@@ -68,9 +62,7 @@ public class UNOLibFinder {
                 n += k;
             }
         } catch (IOException e) {
-            System.err.println(
-                UNOLibFinder.class.getName() + "::getCustomLoader: reading" +
-                " unoinfo output: " + e);
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: reading" + " unoinfo output: " + e);
             return;
         }
         int ev;
@@ -78,15 +70,11 @@ public class UNOLibFinder {
             ev = p.waitFor();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.err.println(
-                UNOLibFinder.class.getName() + "::getCustomLoader: waiting for" +
-                " unoinfo: " + e);
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: waiting for" + " unoinfo: " + e);
             return;
         }
         if (ev != 0) {
-            System.err.println(
-                UNOLibFinder.class.getName() + "::getCustomLoader: unoinfo"
-                + " exit value " + ev);
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: unoinfo" + " exit value " + ev);
             return;
         }
         String s;
@@ -97,37 +85,33 @@ public class UNOLibFinder {
                 s = new String(buf, "UTF-16LE");
             } catch (UnsupportedEncodingException e) {
                 System.err.println(
-                    UNOLibFinder.class.getName() + "::getCustomLoader:" +
-                    " transforming unoinfo output: " + e);
+                        UNOLibFinder.class.getName() + "::getCustomLoader:" + " transforming unoinfo output: " + e);
                 return;
             }
         } else {
-            System.err.println(
-                UNOLibFinder.class.getName() + "::getCustomLoader: bad unoinfo"
-                + " output");
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: bad unoinfo" + " output");
             return;
         }
         addUrls(urls, s, "\0");
     }
-    
+
     private static void addUrls(ArrayList<URL> urls, String data, String delimiter) {
-        StringTokenizer tokens = new StringTokenizer( data, delimiter );
-        while ( tokens.hasMoreTokens() ) {
-            addUrl( urls, tokens.nextToken() );
+        StringTokenizer tokens = new StringTokenizer(data, delimiter);
+        while (tokens.hasMoreTokens()) {
+            addUrl(urls, tokens.nextToken());
         }
     }
 
     private static void addUrl(ArrayList<URL> urls, String singlePath) {
         try {
-            urls.add( new File( singlePath).toURI().toURL() );
-        } catch ( MalformedURLException e ) {
+            urls.add(new File(singlePath).toURI().toURL());
+        } catch (MalformedURLException e) {
             // don't add this class path entry to the list of class loader
             // URLs
-            System.err.println( UNOLibFinder.class.getName() +
-                "::getCustomLoader: bad pathname: " + e );
+            System.err.println(UNOLibFinder.class.getName() + "::getCustomLoader: bad pathname: " + e);
         }
     }
-    
+
     private static final class Drain extends Thread {
         public Drain(InputStream stream) {
             super("unoinfo stderr drain");
@@ -137,8 +121,10 @@ public class UNOLibFinder {
         @Override
         public void run() {
             try {
-                while (stream.read() != -1) {}
-            } catch (IOException e) { /* ignored */ }
+                while (stream.read() != -1) {
+                }
+            } catch (IOException e) {
+                /* ignored */ }
         }
 
         private final InputStream stream;

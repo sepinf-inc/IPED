@@ -27,32 +27,32 @@ import java.util.List;
  */
 class SearchWnd extends ShareazaEntity {
 
-	private final List<ManagedSearch> managedSearches = new ArrayList<>();
-	private final BaseMatchSearch baseMatchSearch = new BaseMatchSearch();
-	
-	public SearchWnd() {
-		super("SEARCH WINDOW"); //$NON-NLS-1$
-	}
+    private final List<ManagedSearch> managedSearches = new ArrayList<>();
+    private final BaseMatchSearch baseMatchSearch = new BaseMatchSearch();
 
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		/*int version =*/ ar.readInt();
+    public SearchWnd() {
+        super("SEARCH WINDOW"); //$NON-NLS-1$
+    }
 
-		int n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			ManagedSearch search = new ManagedSearch();
-			search.read(ar);
-			managedSearches.add(search);
-		}
-		baseMatchSearch.read(ar);
-	}
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        /* int version = */ ar.readInt();
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		for (ManagedSearch search : managedSearches) {
-			search.write(f);
-		}
-		baseMatchSearch.write(f);
-	}
+        int n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            ManagedSearch search = new ManagedSearch();
+            search.read(ar);
+            managedSearches.add(search);
+        }
+        baseMatchSearch.read(ar);
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        for (ManagedSearch search : managedSearches) {
+            search.write(f);
+        }
+        baseMatchSearch.write(f);
+    }
 
 }

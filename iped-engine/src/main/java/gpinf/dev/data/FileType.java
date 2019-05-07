@@ -7,5 +7,5 @@ package gpinf.dev.data;
  */
 public enum FileType {
 
-  MS_OFFICE_WORD_DOCUMENT,;
+    MS_OFFICE_WORD_DOCUMENT,;
 }

@@ -12,12 +12,12 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value,
-            boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        
-        if(App.get().appCase != null) {
-            String comment = App.get().appCase.getMultiMarcadores().getLabelComment((String)value);
-            if(comment != null && !comment.trim().isEmpty())
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf,
+            int row, boolean hasFocus) {
+
+        if (App.get().appCase != null) {
+            String comment = App.get().appCase.getMultiMarcadores().getLabelComment((String) value);
+            if (comment != null && !comment.trim().isEmpty())
                 setToolTipText(comment.trim());
             else
                 setToolTipText(null);

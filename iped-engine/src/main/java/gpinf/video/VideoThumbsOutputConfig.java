@@ -21,77 +21,77 @@ import java.io.File;
  * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * Classe de armazenamento de dados de configuração de formatos de saída do processo de geração de
- * imagens com cenas extraídas de vídeos.
+ * Classe de armazenamento de dados de configuração de formatos de saída do
+ * processo de geração de imagens com cenas extraídas de vídeos.
  *
  * @author Wladimir Leite
  */
 public class VideoThumbsOutputConfig {
 
-  private File outFile;
-  private int thumbWidth, rows, columns, border;
+    private File outFile;
+    private int thumbWidth, rows, columns, border;
 
-  public VideoThumbsOutputConfig(File outFile, int thumbWidth, int columns, int rows, int border) {
-    this.outFile = outFile;
-    this.thumbWidth = thumbWidth;
-    this.rows = rows;
-    this.columns = columns;
-    this.border = border;
-  }
+    public VideoThumbsOutputConfig(File outFile, int thumbWidth, int columns, int rows, int border) {
+        this.outFile = outFile;
+        this.thumbWidth = thumbWidth;
+        this.rows = rows;
+        this.columns = columns;
+        this.border = border;
+    }
 
-  public int getBorder() {
-    return border;
-  }
+    public int getBorder() {
+        return border;
+    }
 
-  public int getThumbWidth() {
-    return thumbWidth;
-  }
+    public int getThumbWidth() {
+        return thumbWidth;
+    }
 
-  public File getOutFile() {
-    return outFile;
-  }
+    public File getOutFile() {
+        return outFile;
+    }
 
-  public int getRows() {
-    return rows;
-  }
+    public int getRows() {
+        return rows;
+    }
 
-  public int getColumns() {
-    return columns;
-  }
+    public int getColumns() {
+        return columns;
+    }
 
-  public void setOutFile(File outFile) {
-    this.outFile = outFile;
-  }
+    public void setOutFile(File outFile) {
+        this.outFile = outFile;
+    }
 
-  public void setThumbWidth(int thumbWidth) {
-    this.thumbWidth = thumbWidth;
-  }
+    public void setThumbWidth(int thumbWidth) {
+        this.thumbWidth = thumbWidth;
+    }
 
-  public void setRows(int rows) {
-    this.rows = rows;
-  }
+    public void setRows(int rows) {
+        this.rows = rows;
+    }
 
-  public void setColumns(int columns) {
-    this.columns = columns;
-  }
+    public void setColumns(int columns) {
+        this.columns = columns;
+    }
 
-  public void setBorder(int border) {
-    this.border = border;
-  }
+    public void setBorder(int border) {
+        this.border = border;
+    }
 
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("VideoThumbsOutputConfig [imageFile="); //$NON-NLS-1$
-    builder.append(outFile);
-    builder.append(", thumbWidth="); //$NON-NLS-1$
-    builder.append(thumbWidth);
-    builder.append(", rows="); //$NON-NLS-1$
-    builder.append(rows);
-    builder.append(", columns="); //$NON-NLS-1$
-    builder.append(columns);
-    builder.append(", border="); //$NON-NLS-1$
-    builder.append(border);
-    builder.append("]"); //$NON-NLS-1$
-    return builder.toString();
-  }
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("VideoThumbsOutputConfig [imageFile="); //$NON-NLS-1$
+        builder.append(outFile);
+        builder.append(", thumbWidth="); //$NON-NLS-1$
+        builder.append(thumbWidth);
+        builder.append(", rows="); //$NON-NLS-1$
+        builder.append(rows);
+        builder.append(", columns="); //$NON-NLS-1$
+        builder.append(columns);
+        builder.append(", border="); //$NON-NLS-1$
+        builder.append(border);
+        builder.append("]"); //$NON-NLS-1$
+        return builder.toString();
+    }
 }

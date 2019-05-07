@@ -13,16 +13,16 @@ import java.util.Map;
  */
 public interface QueryDescriptor extends Descriptor {
 
-  Map<String, String> getParams();
+    Map<String, String> getParams();
 
-  String getQueryType();
+    String getQueryType();
 
-  String getText();
+    String getText();
 
-  void setParams(Map<String, String> params);
+    void setParams(Map<String, String> params);
 
-  void setQueryType(String type);
+    void setQueryType(String type);
 
-  void setText(String text);
-  
+    void setText(String text);
+
 }

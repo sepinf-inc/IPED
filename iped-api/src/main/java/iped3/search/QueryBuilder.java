@@ -17,10 +17,10 @@ import org.apache.lucene.search.Query;
  */
 public interface QueryBuilder {
 
-  Query getQuery(String texto) throws ParseException, QueryNodeException;
+    Query getQuery(String texto) throws ParseException, QueryNodeException;
 
-  Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException;
+    Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException;
 
-  Set<String> getQueryStrings(String queryText);
-  
+    Set<String> getQueryStrings(String queryText);
+
 }

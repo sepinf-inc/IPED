@@ -19,14 +19,14 @@ import org.xml.sax.SAXException;
 import iped3.util.ExtraProperties;
 
 public class FLVParserWrapper extends AbstractParser {
-    
+
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     private FLVParser parser = new FLVParser();
-    
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return parser.getSupportedTypes(context);
@@ -35,31 +35,31 @@ public class FLVParserWrapper extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        
+
         Set<String> prevKeys = new HashSet<String>();
         Collections.addAll(prevKeys, metadata.names());
-        
+
         Exception e = null;
-        try{
+        try {
             parser.parse(stream, handler, metadata, context);
-            
-        }catch(TikaException | IOException e1){
+
+        } catch (TikaException | IOException e1) {
             e = e1;
-            
-        }finally{
+
+        } finally {
             String[] keys = metadata.names();
-            for(String key : keys){
-                if(prevKeys.contains(key))
+            for (String key : keys) {
+                if (prevKeys.contains(key))
                     continue;
                 String[] values = metadata.getValues(key);
                 metadata.remove(key);
-                for(String val : values)
+                for (String val : values)
                     metadata.add(ExtraProperties.VIDEO_META_PREFIX + key, val);
             }
-            if(e != null)
+            if (e != null)
                 metadata.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING, e.toString());
         }
-        
+
     }
 
 }

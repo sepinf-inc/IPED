@@ -12,76 +12,77 @@ import org.apache.lucene.search.Scorer;
 import iped3.search.LuceneSearchResult;
 
 /**
- * Fast collector that do not compute scores, for cases with dozens of millions of items
+ * Fast collector that do not compute scores, for cases with dozens of millions
+ * of items
  * 
  * @author Nassif
  *
  */
-public class NoScoringCollector extends Collector{
-	
-	private int docBase = 0;
-	private int totalHits = 0;
-	private BitSet bits;
-	
-	private volatile boolean canceled = false;
-	
-	public NoScoringCollector(int capacity){
-		bits = new BitSet(capacity);
-	}
-	
-	public void cancel(){
-		canceled = true;
-	}
+public class NoScoringCollector extends Collector {
 
-	@Override
-	public void setScorer(Scorer scorer) throws IOException {
-	}
+    private int docBase = 0;
+    private int totalHits = 0;
+    private BitSet bits;
 
-	@Override
-	public void collect(int doc) throws IOException {
-		if(canceled)
-			throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
-		
-		totalHits++;
-		bits.set(doc + docBase);
-	}
+    private volatile boolean canceled = false;
 
-	@Override
-	public void setNextReader(AtomicReaderContext context) throws IOException {
-		docBase = context.docBase;
-	}
+    public NoScoringCollector(int capacity) {
+        bits = new BitSet(capacity);
+    }
 
-	@Override
-	public boolean acceptsDocsOutOfOrder() {
-		return true;
-	}
-	
-	public int getTotalHits(){
-		return this.totalHits;
-	}
-	
-	public LuceneSearchResult getSearchResults1(){
-		LuceneSearchResult results = new LuceneSearchResult(totalHits);
-		int[] docs = results.getLuceneIds();
-		int idx = 0;
-		for(int i = 0; i < bits.length(); i++)
-			if(bits.get(i))
-				docs[idx++] = i;
-		
-		return results;
-	}
-	
-	public LuceneSearchResult getSearchResults(){
-		LuceneSearchResult results = new LuceneSearchResult(totalHits);
-		int[] docs = results.getLuceneIds();
-		int idx = 0;
-		long[] array = bits.toLongArray();
-		for(int i = 0; i < array.length; i++)
-			for(int j = 0; j < Long.SIZE; j++)
-			if((array[i] & (1L << j)) != 0)
-				docs[idx++] = (i << 6) | j;
-		
-		return results;
-	}
+    public void cancel() {
+        canceled = true;
+    }
+
+    @Override
+    public void setScorer(Scorer scorer) throws IOException {
+    }
+
+    @Override
+    public void collect(int doc) throws IOException {
+        if (canceled)
+            throw new InterruptedIOException("Search canceled!"); //$NON-NLS-1$
+
+        totalHits++;
+        bits.set(doc + docBase);
+    }
+
+    @Override
+    public void setNextReader(AtomicReaderContext context) throws IOException {
+        docBase = context.docBase;
+    }
+
+    @Override
+    public boolean acceptsDocsOutOfOrder() {
+        return true;
+    }
+
+    public int getTotalHits() {
+        return this.totalHits;
+    }
+
+    public LuceneSearchResult getSearchResults1() {
+        LuceneSearchResult results = new LuceneSearchResult(totalHits);
+        int[] docs = results.getLuceneIds();
+        int idx = 0;
+        for (int i = 0; i < bits.length(); i++)
+            if (bits.get(i))
+                docs[idx++] = i;
+
+        return results;
+    }
+
+    public LuceneSearchResult getSearchResults() {
+        LuceneSearchResult results = new LuceneSearchResult(totalHits);
+        int[] docs = results.getLuceneIds();
+        int idx = 0;
+        long[] array = bits.toLongArray();
+        for (int i = 0; i < array.length; i++)
+            for (int j = 0; j < Long.SIZE; j++)
+                if ((array[i] & (1L << j)) != 0)
+                    docs[idx++] = (i << 6) | j;
+
+        return results;
+    }
 
 }

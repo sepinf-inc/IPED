@@ -15,46 +15,45 @@ import iped3.search.IPEDSearcher;
 import iped3.search.ItemSearcher;
 import iped3.search.SearchResult;
 
-public class ItemSearcherImpl implements ItemSearcher{
-	
-	File caseFolder;
-	IndexWriter iw;
-	IPEDSourceImpl iSource;
-	
-	public ItemSearcherImpl(File caseFolder, IndexWriter iw){
-		this.caseFolder = caseFolder;
-		this.iw = iw;
-	}
+public class ItemSearcherImpl implements ItemSearcher {
 
-	@Override
-	public List<ItemBase> search(String luceneQuery) {
-		
-		List<ItemBase> items = new ArrayList<ItemBase>();
-		try {
-			if(iSource == null)
-				iSource = new IPEDSourceImpl(caseFolder, iw);
-			
-			IPEDSearcherImpl searcher = new IPEDSearcherImpl(iSource, luceneQuery);
-			searcher.setTreeQuery(true);
-			searcher.setNoScoring(true);
-			SearchResult result = searcher.search();
-			
-			for(int i = 0; i < result.getLength();i ++){
-				int id = result.getId(i);
-				items.add(iSource.getItemByID(id));
-			}
-			
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return items;
-	}
+    File caseFolder;
+    IndexWriter iw;
+    IPEDSourceImpl iSource;
+
+    public ItemSearcherImpl(File caseFolder, IndexWriter iw) {
+        this.caseFolder = caseFolder;
+        this.iw = iw;
+    }
+
+    @Override
+    public List<ItemBase> search(String luceneQuery) {
+
+        List<ItemBase> items = new ArrayList<ItemBase>();
+        try {
+            if (iSource == null)
+                iSource = new IPEDSourceImpl(caseFolder, iw);
+
+            IPEDSearcherImpl searcher = new IPEDSearcherImpl(iSource, luceneQuery);
+            searcher.setTreeQuery(true);
+            searcher.setNoScoring(true);
+            SearchResult result = searcher.search();
+
+            for (int i = 0; i < result.getLength(); i++) {
+                int id = result.getId(i);
+                items.add(iSource.getItemByID(id));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return items;
+    }
 
     @Override
     public void close() throws IOException {
-        if(iSource != null)
+        if (iSource != null)
             iSource.close();
     }
 
@@ -62,5 +61,5 @@ public class ItemSearcherImpl implements ItemSearcher{
     public String escapeQuery(String string) {
         return QueryParserUtil.escape(string);
     }
-	
+
 }

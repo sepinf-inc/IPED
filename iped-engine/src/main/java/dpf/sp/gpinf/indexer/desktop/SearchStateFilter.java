@@ -27,26 +27,26 @@ import dpf.sp.gpinf.indexer.search.MarcadoresImpl;
 
 public class SearchStateFilter extends FileFilter implements Serializable {
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-  @Override
-  public boolean accept(File f) {
-    if (f.isDirectory()) {
-      return true;
+    @Override
+    public boolean accept(File f) {
+        if (f.isDirectory()) {
+            return true;
+        }
+        if (f.getName().endsWith(MarcadoresImpl.EXT)) {
+            return true;
+        }
+
+        return false;
     }
-    if (f.getName().endsWith(MarcadoresImpl.EXT)) {
-      return true;
+
+    @Override
+    public String getDescription() {
+        return Messages.getString("SearchStateFilter.BookmarksFile"); //$NON-NLS-1$
     }
-
-    return false;
-  }
-
-  @Override
-  public String getDescription() {
-    return Messages.getString("SearchStateFilter.BookmarksFile"); //$NON-NLS-1$
-  }
 
 }

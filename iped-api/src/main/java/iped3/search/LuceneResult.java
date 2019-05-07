@@ -13,28 +13,28 @@ import org.apache.lucene.search.ScoreDoc;
  */
 public interface LuceneResult {
 
-  LuceneSearchResult add(LuceneSearchResult items);
+    LuceneSearchResult add(LuceneSearchResult items);
 
-  LuceneSearchResult addResults(ScoreDoc[] scoreDocs);
+    LuceneSearchResult addResults(ScoreDoc[] scoreDocs);
 
-  void clearResults();
+    void clearResults();
 
-  LuceneSearchResult clone();
+    LuceneSearchResult clone();
 
-  int getLength();
+    int getLength();
 
-  int[] getLuceneIds();
+    int[] getLuceneIds();
 
-  float[] getScores();
+    float[] getScores();
 
-  LuceneSearchResult intersect(LuceneSearchResult items);
+    LuceneSearchResult intersect(LuceneSearchResult items);
 
-  /**
-   * Interseção mais eficiente
-   *
-   * @param items
-   * @return
-   */
-  LuceneSearchResult intersect2(LuceneSearchResult items);
-  
+    /**
+     * Interseção mais eficiente
+     *
+     * @param items
+     * @return
+     */
+    LuceneSearchResult intersect2(LuceneSearchResult items);
+
 }

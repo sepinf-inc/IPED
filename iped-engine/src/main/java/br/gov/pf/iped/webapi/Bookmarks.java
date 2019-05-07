@@ -28,81 +28,78 @@ import iped3.ItemId;
 import iped3.search.MultiMarcadores;
 import iped3.search.MultiSearchResult;
 
-
-@Api(value="Bookmarks")
+@Api(value = "Bookmarks")
 @Path("bookmarks")
 public class Bookmarks {
-  
-	@ApiOperation(value="List bookmarks")
+
+    @ApiOperation(value = "List bookmarks")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DataListJSON<String> getAll(){
+    public DataListJSON<String> getAll() {
         Set<String> bookmarks = Sources.multiSource.getMultiMarcadores().getLabelMap();
-        String[]IDs = bookmarks.toArray(new String[0]);
+        String[] IDs = bookmarks.toArray(new String[0]);
         return new DataListJSON<String>(IDs);
     }
-    
-	@ApiOperation(value="List bookmark documents")
+
+    @ApiOperation(value = "List bookmark documents")
     @GET
     @Path("{bookmark}")
     @Produces(MediaType.APPLICATION_JSON)
-    public SourceToIDsJSON get(@PathParam("bookmark") String bookmark) throws Exception{
-        
-	    IPEDSearcherImpl searcher = new IPEDSearcherImpl(Sources.multiSource, "");
+    public SourceToIDsJSON get(@PathParam("bookmark") String bookmark) throws Exception {
+
+        IPEDSearcherImpl searcher = new IPEDSearcherImpl(Sources.multiSource, "");
         MultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
-        
+
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (ItemId id : result.getIterator()) {
-        	docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
+            docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
         }
-        
+
         return new SourceToIDsJSON(docs);
     }
-    
-	@ApiOperation(value="Add documents to bookmark")
+
+    @ApiOperation(value = "Add documents to bookmark")
     @PUT
     @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response insertLabel(@PathParam("bookmark") String bookmark, 
-    		@ApiParam(required=true) DocIDJSON[] docs){
+    public Response insertLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
-        for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+        for (DocIDJSON d : docs) {
+            itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.addLabel(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
-    
-	@ApiOperation(value="Remove documents from bookmark")
+
+    @ApiOperation(value = "Remove documents from bookmark")
     @PUT
     @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response removeLabel(@PathParam("bookmark") String bookmark, 
-    		@ApiParam(required=true) DocIDJSON[] docs){
+    public Response removeLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
         MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         List<ItemId> itemIds = new ArrayList<>();
-        for (DocIDJSON d: docs) {
-        	itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+        for (DocIDJSON d : docs) {
+            itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.removeLabel(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
-    
-	@ApiOperation(value="Create bookmark")
+
+    @ApiOperation(value = "Create bookmark")
     @POST
     @Path("{bookmark}")
     public Response addLabel(@PathParam("bookmark") String bookmark) {
-    	MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-    	mm.newLabel(bookmark);
-    	mm.saveState();
-    	return Response.ok().build();
-    }  
-    
-	@ApiOperation(value="Delete bookmark")
+        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        mm.newLabel(bookmark);
+        mm.saveState();
+        return Response.ok().build();
+    }
+
+    @ApiOperation(value = "Delete bookmark")
     @DELETE
     @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
@@ -111,8 +108,8 @@ public class Bookmarks {
         mm.saveState();
         return Response.ok().build();
     }
-    
-	@ApiOperation(value="Rename bookmark")
+
+    @ApiOperation(value = "Rename bookmark")
     @PUT
     @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
@@ -121,5 +118,5 @@ public class Bookmarks {
         mm.saveState();
         return Response.ok().build();
     }
-    
+
 }

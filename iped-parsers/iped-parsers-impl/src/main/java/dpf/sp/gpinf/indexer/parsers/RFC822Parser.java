@@ -73,427 +73,424 @@ import iped3.util.ExtraProperties;
  * Uses apache-mime4j to parse emails. Each part is treated with the
  * corresponding parser and displayed within elements.
  * <p>
- * A MimeEntityConfig object can be passed in the parsing context to
- * better control the parsing process.
+ * A MimeEntityConfig object can be passed in the parsing context to better
+ * control the parsing process.
  * 
  * @author jnioche@digitalpebble.com
  * @author Nassif (better attachment handling and name decoding)
  */
 public class RFC822Parser extends AbstractParser {
 
-	/** Serial version UID */
-	private static final long serialVersionUID = -5504243905998074168L;
+    /** Serial version UID */
+    private static final long serialVersionUID = -5504243905998074168L;
 
-	private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
-	
-	private HtmlParser htmlParser = new HtmlParser();
-	private RawStringParser txtParser = new RawStringParser();
+    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
-	private static Set<MediaType> getTypes() {
-		HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
-		supportedTypes.add(MediaType.parse("message/rfc822")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.parse("message/x-emlx")); //$NON-NLS-1$
-		return supportedTypes;
-	}
+    private HtmlParser htmlParser = new HtmlParser();
+    private RawStringParser txtParser = new RawStringParser();
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		return SUPPORTED_TYPES;
-	}
+    private static Set<MediaType> getTypes() {
+        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+        supportedTypes.add(MediaType.parse("message/rfc822")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.parse("message/x-emlx")); //$NON-NLS-1$
+        return supportedTypes;
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
-		// Get the mime4j configuration, or use a default one
-	    MimeConfig config = new MimeConfig.Builder()
-                .setMaxLineLen(100000)
-                .setMaxHeaderLen(100000)
-                .build();
-		config = context.get(MimeConfig.class, config);
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return SUPPORTED_TYPES;
+    }
 
-		MimeStreamParser parser = new MimeStreamParser(config);
-		XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        // Get the mime4j configuration, or use a default one
+        MimeConfig config = new MimeConfig.Builder().setMaxLineLen(100000).setMaxHeaderLen(100000).build();
+        config = context.get(MimeConfig.class, config);
 
-		MailContentHandler mch = new MailContentHandler(parser, xhtml, metadata, context, config.isStrictParsing());
+        MimeStreamParser parser = new MimeStreamParser(config);
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
-		parser.setContentHandler(mch);
-		parser.setContentDecoding(true);
+        MailContentHandler mch = new MailContentHandler(parser, xhtml, metadata, context, config.isStrictParsing());
 
-		TaggedInputStream tagged = TaggedInputStream.get(stream);
-		try {
-			parser.parse(tagged);
+        parser.setContentHandler(mch);
+        parser.setContentDecoding(true);
 
-		} catch (IOException e) {
-			tagged.throwIfCauseOf(e);
-			throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
+        TaggedInputStream tagged = TaggedInputStream.get(stream);
+        try {
+            parser.parse(tagged);
 
-		} catch (MimeException e) {
-			// Unwrap the exception in case it was not thrown by mime4j
-			Throwable cause = e.getCause();
-			if (cause instanceof TikaException) {
-				throw (TikaException) cause;
-			} else if (cause instanceof SAXException) {
-				throw (SAXException) cause;
-			} else {
-				throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
-			}
-		}
-	}
+        } catch (IOException e) {
+            tagged.throwIfCauseOf(e);
+            throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
 
-	/**
-	 * Bridge between mime4j's content handler and the generic Sax content
-	 * handler used by Tika. See
-	 * http://james.apache.org/mime4j/apidocs/org/apache
-	 * /james/mime4j/parser/ContentHandler.html
-	 */
-	class MailContentHandler implements org.apache.james.mime4j.parser.ContentHandler {
+        } catch (MimeException e) {
+            // Unwrap the exception in case it was not thrown by mime4j
+            Throwable cause = e.getCause();
+            if (cause instanceof TikaException) {
+                throw (TikaException) cause;
+            } else if (cause instanceof SAXException) {
+                throw (SAXException) cause;
+            } else {
+                throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
+            }
+        }
+    }
 
-		private boolean strictParsing = false;
+    /**
+     * Bridge between mime4j's content handler and the generic Sax content handler
+     * used by Tika. See http://james.apache.org/mime4j/apidocs/org/apache
+     * /james/mime4j/parser/ContentHandler.html
+     */
+    class MailContentHandler implements org.apache.james.mime4j.parser.ContentHandler {
 
-		private XHTMLContentHandler handler;
-		private ParseContext context;
-		private Metadata metadata, submd;
-		private String attachName;
-		private boolean inPart = false, textBody, htmlBody;
-		private ParsingEmbeddedDocumentExtractor embeddedParser;
-		private MimeStreamParser parser;
+        private boolean strictParsing = false;
 
-		MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context, boolean strictParsing) {
-			this.parser = parser;
-			this.handler = xhtml;
-			this.context = context;
-			this.metadata = metadata;
-			this.strictParsing = strictParsing;
-			this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
-		}
+        private XHTMLContentHandler handler;
+        private ParseContext context;
+        private Metadata metadata, submd;
+        private String attachName;
+        private boolean inPart = false, textBody, htmlBody;
+        private ParsingEmbeddedDocumentExtractor embeddedParser;
+        private MimeStreamParser parser;
 
-		@Override
-		public void body(BodyDescriptor body, InputStream is) throws MimeException, IOException {
-			// retorna parser para modo recursivo
-			parser.setRecurse();
+        MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context,
+                boolean strictParsing) {
+            this.parser = parser;
+            this.handler = xhtml;
+            this.context = context;
+            this.metadata = metadata;
+            this.strictParsing = strictParsing;
+            this.embeddedParser = new ParsingEmbeddedDocumentExtractor(context);
+        }
 
-			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, embeddedParser);
+        @Override
+        public void body(BodyDescriptor body, InputStream is) throws MimeException, IOException {
+            // retorna parser para modo recursivo
+            parser.setRecurse();
 
-			// use a different metadata object
-			// in order to specify the mime type of the
-			// sub part without damaging the main metadata
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, embeddedParser);
 
-			submd.set(HttpHeaders.CONTENT_TYPE, body.getMimeType());
-			submd.set(HttpHeaders.CONTENT_ENCODING, body.getCharset());
+            // use a different metadata object
+            // in order to specify the mime type of the
+            // sub part without damaging the main metadata
 
-			boolean isAttach = false;
-			String type = body.getMimeType();
-			if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
-				if (textBody || htmlBody || attachName != null)
-					isAttach = true;
-				else
-					textBody = true;
+            submd.set(HttpHeaders.CONTENT_TYPE, body.getMimeType());
+            submd.set(HttpHeaders.CONTENT_ENCODING, body.getCharset());
 
-			} else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
-				if (htmlBody || attachName != null)
-					isAttach = true;
-				else
-					htmlBody = true;
+            boolean isAttach = false;
+            String type = body.getMimeType();
+            if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
+                if (textBody || htmlBody || attachName != null)
+                    isAttach = true;
+                else
+                    textBody = true;
 
-			} else
-				isAttach = true;
+            } else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
+                if (htmlBody || attachName != null)
+                    isAttach = true;
+                else
+                    htmlBody = true;
 
-			try {
-				if (isAttach) {
-					if (extractor.shouldParseEmbedded(submd))
-						extractor.parseEmbedded(is, handler, submd, true);
-				} else{
-					if(metadata.get(ExtraProperties.MESSAGE_BODY) == null){
-						BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
-						bis.mark(1024 * 1024);
-						String msg = Util.getContentPreview(bis, type.equalsIgnoreCase("text/html")); //$NON-NLS-1$
-						metadata.set(ExtraProperties.MESSAGE_BODY, msg);
-						bis.reset();
-						is = bis;
-					}
-					embeddedParser.parseEmbedded(is, handler, submd, false);
-				}
-					
+            } else
+                isAttach = true;
 
-			} catch (SAXException e) {
-				throw new MimeException(e);
-			}
+            try {
+                if (isAttach) {
+                    if (extractor.shouldParseEmbedded(submd))
+                        extractor.parseEmbedded(is, handler, submd, true);
+                } else {
+                    if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
+                        BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
+                        bis.mark(1024 * 1024);
+                        String msg = Util.getContentPreview(bis, type.equalsIgnoreCase("text/html")); //$NON-NLS-1$
+                        metadata.set(ExtraProperties.MESSAGE_BODY, msg);
+                        bis.reset();
+                        is = bis;
+                    }
+                    embeddedParser.parseEmbedded(is, handler, submd, false);
+                }
 
-		}
+            } catch (SAXException e) {
+                throw new MimeException(e);
+            }
 
-		/**
-		 * Header for the whole message or its parts
-		 * 
-		 * @see http 
-		 *      ://james.apache.org/mime4j/apidocs/org/apache/james/mime4j/parser
-		 *      / Field.html
-		 **/
-		@Override
-		public void field(Field field) throws MimeException {
+        }
 
-			Metadata metadata;
-			// inPart indicates whether these metadata correspond to the
-			// whole message or its parts
-			if (!inPart)
-				metadata = this.metadata;
-			else
-				metadata = submd;
+        /**
+         * Header for the whole message or its parts
+         * 
+         * @see http ://james.apache.org/mime4j/apidocs/org/apache/james/mime4j/parser /
+         *      Field.html
+         **/
+        @Override
+        public void field(Field field) throws MimeException {
 
-			try {
-				String fieldname = field.getName();
-				ParsedField parsedField = LenientFieldParser.getParser().parse(field, DecodeMonitor.SILENT);
-				if (fieldname.equalsIgnoreCase("From")) { //$NON-NLS-1$
-					MailboxListField fromField = (MailboxListField) parsedField;
-					MailboxList mailboxList = fromField.getMailboxList();
-					if (fromField.isValidField() && mailboxList != null) {
-						for (int i = 0; i < mailboxList.size(); i++) {
-							String from = decodeIfUtf8(getDisplayString(mailboxList.get(i)));
-							metadata.add(Message.MESSAGE_FROM, from);
-							metadata.add(TikaCoreProperties.CREATOR, from);
-						}
-					} else {
-						String from = stripOutFieldPrefix(field, "From:"); //$NON-NLS-1$
-						if (from.startsWith("<")) { //$NON-NLS-1$
-							from = from.substring(1);
-						}
-						if (from.endsWith(">")) { //$NON-NLS-1$
-							from = from.substring(0, from.length() - 1);
-						}
-						from = decodeIfUtf8(from);
-						metadata.add(Message.MESSAGE_FROM, from);
-						metadata.add(TikaCoreProperties.CREATOR, from);
-					}
-				} else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
-					String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-					//metadata.set(TikaCoreProperties.TITLE, subject);
-					metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
-					
-				} else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
-					processAddressList(metadata, parsedField, "To:", Message.MESSAGE_TO); //$NON-NLS-1$
-				} else if (fieldname.equalsIgnoreCase("CC")) { //$NON-NLS-1$
-					processAddressList(metadata, parsedField, "Cc:", Message.MESSAGE_CC); //$NON-NLS-1$
-				} else if (fieldname.equalsIgnoreCase("BCC")) { //$NON-NLS-1$
-					processAddressList(metadata, parsedField, "Bcc:", Message.MESSAGE_BCC); //$NON-NLS-1$
-				} else if (fieldname.equalsIgnoreCase("Date")) { //$NON-NLS-1$
-					DateTimeField dateField = (DateTimeField) parsedField;
-					if(metadata.get(ExtraProperties.MESSAGE_DATE) == null)
-					  metadata.set(ExtraProperties.MESSAGE_DATE, dateField.getDate());
-				}
+            Metadata metadata;
+            // inPart indicates whether these metadata correspond to the
+            // whole message or its parts
+            if (!inPart)
+                metadata = this.metadata;
+            else
+                metadata = submd;
 
-				if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
-					ContentTypeField ctField = (ContentTypeField) parsedField;
-					attachName = ctField.getParameter("name"); //$NON-NLS-1$
+            try {
+                String fieldname = field.getName();
+                ParsedField parsedField = LenientFieldParser.getParser().parse(field, DecodeMonitor.SILENT);
+                if (fieldname.equalsIgnoreCase("From")) { //$NON-NLS-1$
+                    MailboxListField fromField = (MailboxListField) parsedField;
+                    MailboxList mailboxList = fromField.getMailboxList();
+                    if (fromField.isValidField() && mailboxList != null) {
+                        for (int i = 0; i < mailboxList.size(); i++) {
+                            String from = decodeIfUtf8(getDisplayString(mailboxList.get(i)));
+                            metadata.add(Message.MESSAGE_FROM, from);
+                            metadata.add(TikaCoreProperties.CREATOR, from);
+                        }
+                    } else {
+                        String from = stripOutFieldPrefix(field, "From:"); //$NON-NLS-1$
+                        if (from.startsWith("<")) { //$NON-NLS-1$
+                            from = from.substring(1);
+                        }
+                        if (from.endsWith(">")) { //$NON-NLS-1$
+                            from = from.substring(0, from.length() - 1);
+                        }
+                        from = decodeIfUtf8(from);
+                        metadata.add(Message.MESSAGE_FROM, from);
+                        metadata.add(TikaCoreProperties.CREATOR, from);
+                    }
+                } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
+                    String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
+                    // metadata.set(TikaCoreProperties.TITLE, subject);
+                    metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
-					if (attachName == null)
-						attachName = getRFC2231Value("name", ctField.getParameters()); //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
+                    processAddressList(metadata, parsedField, "To:", Message.MESSAGE_TO); //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("CC")) { //$NON-NLS-1$
+                    processAddressList(metadata, parsedField, "Cc:", Message.MESSAGE_CC); //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("BCC")) { //$NON-NLS-1$
+                    processAddressList(metadata, parsedField, "Bcc:", Message.MESSAGE_BCC); //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("Date")) { //$NON-NLS-1$
+                    DateTimeField dateField = (DateTimeField) parsedField;
+                    if (metadata.get(ExtraProperties.MESSAGE_DATE) == null)
+                        metadata.set(ExtraProperties.MESSAGE_DATE, dateField.getDate());
+                }
 
-					if (ctField.isMimeType("message/rfc822")) { //$NON-NLS-1$
-						// configura parser para não interpretar emails anexos
-						parser.setFlat();
-						if (attachName == null)
-							attachName = Messages.getString("RFC822Parser.AttachedEmail"); //$NON-NLS-1$
+                if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
+                    ContentTypeField ctField = (ContentTypeField) parsedField;
+                    attachName = ctField.getParameter("name"); //$NON-NLS-1$
 
-					}
+                    if (attachName == null)
+                        attachName = getRFC2231Value("name", ctField.getParameters()); //$NON-NLS-1$
 
-				} else if (fieldname.equalsIgnoreCase("Content-Disposition")) { //$NON-NLS-1$
-					ContentDispositionField ctField = (ContentDispositionField) parsedField;
-					if (ctField.isAttachment() || ctField.isInline()) {
-						String attachName = ctField.getFilename();
-						if (attachName == null)
-							attachName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
-						if (attachName == null)
-							attachName = Messages.getString("RFC822Parser.UnNamed"); //$NON-NLS-1$
-						if (this.attachName == null)
-							this.attachName = attachName;
+                    if (ctField.isMimeType("message/rfc822")) { //$NON-NLS-1$
+                        // configura parser para não interpretar emails anexos
+                        parser.setFlat();
+                        if (attachName == null)
+                            attachName = Messages.getString("RFC822Parser.AttachedEmail"); //$NON-NLS-1$
 
-					}
-				}
+                    }
 
-			} catch (RuntimeException me) {
-				if (strictParsing) {
-					throw me;
-				}
-			}
-		}
+                } else if (fieldname.equalsIgnoreCase("Content-Disposition")) { //$NON-NLS-1$
+                    ContentDispositionField ctField = (ContentDispositionField) parsedField;
+                    if (ctField.isAttachment() || ctField.isInline()) {
+                        String attachName = ctField.getFilename();
+                        if (attachName == null)
+                            attachName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
+                        if (attachName == null)
+                            attachName = Messages.getString("RFC822Parser.UnNamed"); //$NON-NLS-1$
+                        if (this.attachName == null)
+                            this.attachName = attachName;
 
-		private String decodeIfUtf8(String value) {
-			boolean isUtf8 = false;
-			int idx = value.indexOf('Ã');
-			if (idx > -1 && idx < value.length() - 1) {
-				int c_ = value.codePointAt(idx + 1);
-				if (c_ >= 0x0080 && c_ <= 0x00BC)
-					isUtf8 = true;
-			}
-			if (isUtf8) {
-				try {
-					byte[] buf16 = value.getBytes("UTF-16LE"); //$NON-NLS-1$
-					byte[] buf8 = new byte[buf16.length / 2];
-					for (int i = 0; i < buf8.length; i++)
-						buf8[i] = buf16[i * 2];
-					value = new String(buf8, "UTF-8"); //$NON-NLS-1$
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
+                    }
+                }
 
-			}
+            } catch (RuntimeException me) {
+                if (strictParsing) {
+                    throw me;
+                }
+            }
+        }
 
-			return value;
-		}
+        private String decodeIfUtf8(String value) {
+            boolean isUtf8 = false;
+            int idx = value.indexOf('Ã');
+            if (idx > -1 && idx < value.length() - 1) {
+                int c_ = value.codePointAt(idx + 1);
+                if (c_ >= 0x0080 && c_ <= 0x00BC)
+                    isUtf8 = true;
+            }
+            if (isUtf8) {
+                try {
+                    byte[] buf16 = value.getBytes("UTF-16LE"); //$NON-NLS-1$
+                    byte[] buf8 = new byte[buf16.length / 2];
+                    for (int i = 0; i < buf8.length; i++)
+                        buf8[i] = buf16[i * 2];
+                    value = new String(buf8, "UTF-8"); //$NON-NLS-1$
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
 
-		private String getRFC2231Value(String paramName, Map<String, String> params) {
-			TreeMap<Integer, String> paramFrags = new TreeMap<Integer, String>();
-			String charset = "windows-1252"; //$NON-NLS-1$
-			String[] keys = params.keySet().toArray(new String[0]);
-			Arrays.sort(keys);
-			for (String key : keys)
-				if (key.startsWith(paramName + "*")) { //$NON-NLS-1$
-					String value = params.get(key);
-					if (key.indexOf("*") == key.length() - 1) { //$NON-NLS-1$
-						charset = value.substring(0, value.indexOf("'")); //$NON-NLS-1$
-						value = value.substring(value.lastIndexOf("'") + 1); //$NON-NLS-1$
-						paramFrags.put(0, decodeRFC2231Bytes(value, charset));
-						break;
-					} else {
-						int frag = Integer.valueOf(key.split("\\*")[1]); //$NON-NLS-1$
-						if (frag == 0 && key.endsWith("*")) { //$NON-NLS-1$
-							charset = value.substring(0, value.indexOf("'")); //$NON-NLS-1$
-							value = value.substring(value.lastIndexOf("'") + 1); //$NON-NLS-1$
-						}
-						if (key.endsWith("*")) //$NON-NLS-1$
-							paramFrags.put(frag, decodeRFC2231Bytes(value, charset));
-						else
-							paramFrags.put(frag, value);
-					}
+            }
 
-				}
-			if (paramFrags.size() == 0)
-				return null;
+            return value;
+        }
 
-			String value = ""; //$NON-NLS-1$
-			for (String frag : paramFrags.values())
-				value += frag;
+        private String getRFC2231Value(String paramName, Map<String, String> params) {
+            TreeMap<Integer, String> paramFrags = new TreeMap<Integer, String>();
+            String charset = "windows-1252"; //$NON-NLS-1$
+            String[] keys = params.keySet().toArray(new String[0]);
+            Arrays.sort(keys);
+            for (String key : keys)
+                if (key.startsWith(paramName + "*")) { //$NON-NLS-1$
+                    String value = params.get(key);
+                    if (key.indexOf("*") == key.length() - 1) { //$NON-NLS-1$
+                        charset = value.substring(0, value.indexOf("'")); //$NON-NLS-1$
+                        value = value.substring(value.lastIndexOf("'") + 1); //$NON-NLS-1$
+                        paramFrags.put(0, decodeRFC2231Bytes(value, charset));
+                        break;
+                    } else {
+                        int frag = Integer.valueOf(key.split("\\*")[1]); //$NON-NLS-1$
+                        if (frag == 0 && key.endsWith("*")) { //$NON-NLS-1$
+                            charset = value.substring(0, value.indexOf("'")); //$NON-NLS-1$
+                            value = value.substring(value.lastIndexOf("'") + 1); //$NON-NLS-1$
+                        }
+                        if (key.endsWith("*")) //$NON-NLS-1$
+                            paramFrags.put(frag, decodeRFC2231Bytes(value, charset));
+                        else
+                            paramFrags.put(frag, value);
+                    }
 
-			return value;
+                }
+            if (paramFrags.size() == 0)
+                return null;
 
-		}
+            String value = ""; //$NON-NLS-1$
+            for (String frag : paramFrags.values())
+                value += frag;
 
-		private String decodeRFC2231Bytes(String value, final String charset) {
-			byte[] b = new byte[value.length()];
-			int i, bi;
-			for (i = 0, bi = 0; i < value.length(); i++) {
-				char c = value.charAt(i);
-				if (c == '%') {
-					String hex = value.substring(i + 1, i + 3);
-					c = (char) Integer.parseInt(hex, 16);
-					i += 2;
-				}
-				b[bi++] = (byte) c;
-			}
-			return new String(b, 0, bi, CharsetUtil.lookup(charset));
-		}
+            return value;
 
-		private void processAddressList(Metadata metadata, ParsedField field, String addressListType, String metadataField) throws MimeException {
-			AddressListField toField = (AddressListField) field;
-			if (toField.isValidField()) {
-				AddressList addressList = toField.getAddressList();
-				for (int i = 0; i < addressList.size(); ++i) {
-					metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
-				}
-			} else {
-				String to = stripOutFieldPrefix(field, addressListType);
-				for (String eachTo : to.split(",")) { //$NON-NLS-1$
-					metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
-				}
-			}
-		}
+        }
 
-		private String getDisplayString(Address address) {
-			if (address instanceof Mailbox) {
-				Mailbox mailbox = (Mailbox) address;
-				String name = mailbox.getName();
-				if (name != null && name.length() > 0) {
-					name = DecoderUtil.decodeEncodedWords(name, DecodeMonitor.SILENT);
-					return name + " <" + mailbox.getAddress() + ">"; //$NON-NLS-1$ //$NON-NLS-2$
-				} else {
-					// return mailbox.getAddress();
-					return DecoderUtil.decodeEncodedWords(mailbox.getAddress(), DecodeMonitor.SILENT);
-				}
-			} else {
-				return address.toString();
-			}
-		}
+        private String decodeRFC2231Bytes(String value, final String charset) {
+            byte[] b = new byte[value.length()];
+            int i, bi;
+            for (i = 0, bi = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (c == '%') {
+                    String hex = value.substring(i + 1, i + 3);
+                    c = (char) Integer.parseInt(hex, 16);
+                    i += 2;
+                }
+                b[bi++] = (byte) c;
+            }
+            return new String(b, 0, bi, CharsetUtil.lookup(charset));
+        }
 
-		@Override
-		public void preamble(InputStream is) throws MimeException, IOException {
-		}
+        private void processAddressList(Metadata metadata, ParsedField field, String addressListType,
+                String metadataField) throws MimeException {
+            AddressListField toField = (AddressListField) field;
+            if (toField.isValidField()) {
+                AddressList addressList = toField.getAddressList();
+                for (int i = 0; i < addressList.size(); ++i) {
+                    metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
+                }
+            } else {
+                String to = stripOutFieldPrefix(field, addressListType);
+                for (String eachTo : to.split(",")) { //$NON-NLS-1$
+                    metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
+                }
+            }
+        }
 
-		@Override
-		public void raw(InputStream is) throws MimeException, IOException {
-		}
+        private String getDisplayString(Address address) {
+            if (address instanceof Mailbox) {
+                Mailbox mailbox = (Mailbox) address;
+                String name = mailbox.getName();
+                if (name != null && name.length() > 0) {
+                    name = DecoderUtil.decodeEncodedWords(name, DecodeMonitor.SILENT);
+                    return name + " <" + mailbox.getAddress() + ">"; //$NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    // return mailbox.getAddress();
+                    return DecoderUtil.decodeEncodedWords(mailbox.getAddress(), DecodeMonitor.SILENT);
+                }
+            } else {
+                return address.toString();
+            }
+        }
 
-		@Override
-		public void startBodyPart() throws MimeException {
-		}
+        @Override
+        public void preamble(InputStream is) throws MimeException, IOException {
+        }
 
-		@Override
-		public void endBodyPart() throws MimeException {
+        @Override
+        public void raw(InputStream is) throws MimeException, IOException {
+        }
 
-		}
+        @Override
+        public void startBodyPart() throws MimeException {
+        }
 
-		@Override
-		public void endHeader() throws MimeException {
-			if (attachName != null) {
-				attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
-				submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
-			}
-		}
+        @Override
+        public void endBodyPart() throws MimeException {
 
-		@Override
-		public void startMessage() throws MimeException {
-			try {
-				handler.startDocument();
-			} catch (SAXException e) {
-				throw new MimeException(e);
-			}
-		}
+        }
 
-		@Override
-		public void endMessage() throws MimeException {
-			try {
-				handler.endDocument();
-			} catch (SAXException e) {
-				throw new MimeException(e);
-			}
-		}
+        @Override
+        public void endHeader() throws MimeException {
+            if (attachName != null) {
+                attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
+                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
+            }
+        }
 
-		@Override
-		public void endMultipart() throws MimeException {
-			inPart = false;
-		}
+        @Override
+        public void startMessage() throws MimeException {
+            try {
+                handler.startDocument();
+            } catch (SAXException e) {
+                throw new MimeException(e);
+            }
+        }
 
-		@Override
-		public void epilogue(InputStream is) throws MimeException, IOException {
-		}
+        @Override
+        public void endMessage() throws MimeException {
+            try {
+                handler.endDocument();
+            } catch (SAXException e) {
+                throw new MimeException(e);
+            }
+        }
 
-		@Override
-		public void startHeader() throws MimeException {
-			submd = new Metadata();
-			attachName = null;
-		}
+        @Override
+        public void endMultipart() throws MimeException {
+            inPart = false;
+        }
 
-		@Override
-		public void startMultipart(BodyDescriptor descr) throws MimeException {
-			inPart = true;
-		}
+        @Override
+        public void epilogue(InputStream is) throws MimeException, IOException {
+        }
 
-		private String stripOutFieldPrefix(Field field, String fieldname) {
-			String temp = field.getRaw().toString();
-			int loc = fieldname.length();
-			while (temp.charAt(loc) == ' ') {
-				loc++;
-			}
-			return temp.substring(loc);
-		}
+        @Override
+        public void startHeader() throws MimeException {
+            submd = new Metadata();
+            attachName = null;
+        }
 
-	}
+        @Override
+        public void startMultipart(BodyDescriptor descr) throws MimeException {
+            inPart = true;
+        }
+
+        private String stripOutFieldPrefix(Field field, String fieldname) {
+            String temp = field.getRaw().toString();
+            int loc = fieldname.length();
+            while (temp.charAt(loc) == ' ') {
+                loc++;
+            }
+            return temp.substring(loc);
+        }
+
+    }
 
 }

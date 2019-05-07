@@ -8,9 +8,12 @@ import java.awt.FileDialog;
  */
 
 public interface GUIProvider {
-	
-	FileDialog createFileDialog(String title, int mode);
-	ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup, Dialog.ModalityType modal);
-	ColumnsManager getColumnsManager();
+
+    FileDialog createFileDialog(String title, int mode);
+
+    ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
+            Dialog.ModalityType modal);
+
+    ColumnsManager getColumnsManager();
 
 }

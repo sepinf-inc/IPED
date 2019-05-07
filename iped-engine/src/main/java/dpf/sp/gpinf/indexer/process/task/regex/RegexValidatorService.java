@@ -5,12 +5,12 @@ import java.util.List;
 
 public interface RegexValidatorService {
 
-  void init(File confDir);
+    void init(File confDir);
 
-  boolean validate(String regexName, String hit);
+    boolean validate(String regexName, String hit);
 
-  String format(String regexName, String hit);
+    String format(String regexName, String hit);
 
-  List<String> getRegexNames();
+    List<String> getRegexNames();
 
 }

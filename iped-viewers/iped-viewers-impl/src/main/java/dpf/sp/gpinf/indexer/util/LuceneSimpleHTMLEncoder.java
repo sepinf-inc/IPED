@@ -22,73 +22,73 @@ import org.apache.lucene.search.highlight.Encoder;
 
 public class LuceneSimpleHTMLEncoder implements Encoder {
 
-  public LuceneSimpleHTMLEncoder() {
-  }
-
-  @Override
-  public String encodeText(String originalText) {
-    return htmlEncode(originalText);
-  }
-
-  public final static String htmlDecode(String html) {
-    if (html == null || html.length() == 0) {
-      return ""; //$NON-NLS-1$
+    public LuceneSimpleHTMLEncoder() {
     }
 
-    String result = html.replaceAll("&quot;", "\""); //$NON-NLS-1$ //$NON-NLS-2$
-    result = result.replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
-    result = result.replaceAll("&lt;", "<"); //$NON-NLS-1$ //$NON-NLS-2$
-    result = result.replaceAll("&gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$
-
-    return result;
-
-  }
-
-  /**
-   * Encode string into HTML
-   */
-  public final static String htmlEncode(String plainText) {
-    if (plainText == null || plainText.length() == 0) {
-      return ""; //$NON-NLS-1$
+    @Override
+    public String encodeText(String originalText) {
+        return htmlEncode(originalText);
     }
 
-    StringBuilder result = new StringBuilder(plainText.length());
-
-    char[] chars = new char[plainText.length()];
-    plainText.getChars(0, chars.length, chars, 0);
-
-    for (int index = 0; index < plainText.length(); index++) {
-      // char ch = plainText.charAt(index);
-      char ch = chars[index];
-
-      switch (ch) {
-        case '"':
-          result.append("&quot;"); //$NON-NLS-1$
-          break;
-
-        case '&':
-          result.append("&amp;"); //$NON-NLS-1$
-          break;
-
-        case '<':
-          result.append("&lt;"); //$NON-NLS-1$
-          break;
-
-        case '>':
-          result.append("&gt;"); //$NON-NLS-1$
-          break;
-
-        default: // if (ch < 128)
-        {
-          result.append(ch);
+    public final static String htmlDecode(String html) {
+        if (html == null || html.length() == 0) {
+            return ""; //$NON-NLS-1$
         }
-        /*
-         * else { result.append("&#").append((int)ch).append(";"); }
-         */
 
-      }
+        String result = html.replaceAll("&quot;", "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&lt;", "<"); //$NON-NLS-1$ //$NON-NLS-2$
+        result = result.replaceAll("&gt;", ">"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        return result;
+
     }
 
-    return result.toString();
-  }
+    /**
+     * Encode string into HTML
+     */
+    public final static String htmlEncode(String plainText) {
+        if (plainText == null || plainText.length() == 0) {
+            return ""; //$NON-NLS-1$
+        }
+
+        StringBuilder result = new StringBuilder(plainText.length());
+
+        char[] chars = new char[plainText.length()];
+        plainText.getChars(0, chars.length, chars, 0);
+
+        for (int index = 0; index < plainText.length(); index++) {
+            // char ch = plainText.charAt(index);
+            char ch = chars[index];
+
+            switch (ch) {
+                case '"':
+                    result.append("&quot;"); //$NON-NLS-1$
+                    break;
+
+                case '&':
+                    result.append("&amp;"); //$NON-NLS-1$
+                    break;
+
+                case '<':
+                    result.append("&lt;"); //$NON-NLS-1$
+                    break;
+
+                case '>':
+                    result.append("&gt;"); //$NON-NLS-1$
+                    break;
+
+                default: // if (ch < 128)
+                {
+                    result.append(ch);
+                }
+                /*
+                 * else { result.append("&#").append((int)ch).append(";"); }
+                 */
+
+            }
+        }
+
+        return result.toString();
+    }
 }

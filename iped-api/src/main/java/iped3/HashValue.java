@@ -13,6 +13,6 @@ import java.io.Serializable;
  */
 public interface HashValue extends Comparable<HashValue>, Serializable {
 
-  byte[] getBytes();
-  
+    byte[] getBytes();
+
 }

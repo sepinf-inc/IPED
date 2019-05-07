@@ -7,5 +7,5 @@ package gpinf.util;
  */
 public enum ZoomMode {
 
-  FIT_WIDTH, FIT_PAGE, FIT_HEIGHT, ZOOM_ACTUAL;
+    FIT_WIDTH, FIT_PAGE, FIT_HEIGHT, ZOOM_ACTUAL;
 }

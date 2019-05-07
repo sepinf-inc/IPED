@@ -14,94 +14,94 @@ import javax.swing.tree.TreePath;
 
 public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener {
 
-  public HashSet<String> selection = new HashSet<String>();
-  private volatile boolean updatingSelection = false;
-  private long collapsed = 0;
+    public HashSet<String> selection = new HashSet<String>();
+    private volatile boolean updatingSelection = false;
+    private long collapsed = 0;
 
-  @Override
-  public void valueChanged(TreeSelectionEvent evt) {
+    @Override
+    public void valueChanged(TreeSelectionEvent evt) {
 
-    if (updatingSelection) {
-      return;
+        if (updatingSelection) {
+            return;
+        }
+
+        if (System.currentTimeMillis() - collapsed < 500) {
+            if (evt.getPath().getLastPathComponent().equals(BookmarksTreeModel.ROOT)) {
+                updateModelAndSelection();
+            }
+            return;
+        }
+
+        for (TreePath path : evt.getPaths()) {
+            if (selection.contains(path.getLastPathComponent())) {
+                selection.remove(path.getLastPathComponent());
+            } else {
+                selection.add((String) path.getLastPathComponent());
+            }
+        }
+
+        App.get().appletListener.updateFileListing();
+
+        if (selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty()) {
+            App.get().setBookmarksDefaultColor(true);
+        } else {
+            App.get().setBookmarksDefaultColor(false);
+        }
+
     }
 
-    if (System.currentTimeMillis() - collapsed < 500) {
-      if (evt.getPath().getLastPathComponent().equals(BookmarksTreeModel.ROOT)) {
-        updateModelAndSelection();
-      }
-      return;
+    public void updateModelAndSelection() {
+
+        updatingSelection = true;
+        Set<String> labelSet = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).labels;
+
+        if (labelSet != null && !selection.isEmpty()) {
+
+            HashSet<String> tempSel = (HashSet<String>) selection.clone();
+            selection.clear();
+            if (tempSel.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
+                selection.add(BookmarksTreeModel.NO_BOOKMARKS);
+            }
+
+            for (String path : tempSel) {
+                if (App.get().appCase.getMultiMarcadores().getLabelMap().contains(path)) {
+                    selection.add(path);
+                }
+            }
+
+            ArrayList<TreePath> selectedPaths = new ArrayList<TreePath>();
+            for (String name : selection) {
+                String[] path = { BookmarksTreeModel.ROOT, name };
+                selectedPaths.add(new TreePath(path));
+            }
+
+            boolean rootCollapsed = App.get().bookmarksTree.isCollapsed(0);
+            App.get().bookmarksTree.setModel(new BookmarksTreeModel());
+            if (rootCollapsed) {
+                App.get().bookmarksTree.collapseRow(0);
+            }
+
+            App.get().bookmarksTree.setSelectionPaths(selectedPaths.toArray(new TreePath[0]));
+
+        } else {
+            boolean rootCollapsed = App.get().bookmarksTree.isCollapsed(0);
+            App.get().bookmarksTree.setModel(new BookmarksTreeModel());
+            if (rootCollapsed) {
+                App.get().bookmarksTree.collapseRow(0);
+            }
+        }
+        updatingSelection = false;
     }
 
-    for (TreePath path : evt.getPaths()) {
-      if (selection.contains(path.getLastPathComponent())) {
-        selection.remove(path.getLastPathComponent());
-      } else {
-        selection.add((String) path.getLastPathComponent());
-      }
+    @Override
+    public void treeExpanded(TreeExpansionEvent event) {
+
     }
 
-    App.get().appletListener.updateFileListing();
+    @Override
+    public void treeCollapsed(TreeExpansionEvent event) {
+        collapsed = System.currentTimeMillis();
 
-    if (selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty()) {
-      App.get().setBookmarksDefaultColor(true);
-    } else {
-      App.get().setBookmarksDefaultColor(false);
     }
-
-  }
-
-  public void updateModelAndSelection() {
-
-    updatingSelection = true;
-    Set<String> labelSet = ((BookmarksTreeModel) App.get().bookmarksTree.getModel()).labels;
-
-    if (labelSet != null && !selection.isEmpty()) {
-
-      HashSet<String> tempSel = (HashSet<String>) selection.clone();
-      selection.clear();
-      if (tempSel.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
-        selection.add(BookmarksTreeModel.NO_BOOKMARKS);
-      }
-
-      for (String path : tempSel) {
-          if (App.get().appCase.getMultiMarcadores().getLabelMap().contains(path)) {
-        	  selection.add(path);
-          }
-      }
-
-      ArrayList<TreePath> selectedPaths = new ArrayList<TreePath>();
-      for (String name : selection) {
-        String[] path = {BookmarksTreeModel.ROOT, name};
-        selectedPaths.add(new TreePath(path));
-      }
-
-      boolean rootCollapsed = App.get().bookmarksTree.isCollapsed(0);
-      App.get().bookmarksTree.setModel(new BookmarksTreeModel());
-      if (rootCollapsed) {
-        App.get().bookmarksTree.collapseRow(0);
-      }
-
-      App.get().bookmarksTree.setSelectionPaths(selectedPaths.toArray(new TreePath[0]));
-
-    } else {
-      boolean rootCollapsed = App.get().bookmarksTree.isCollapsed(0);
-      App.get().bookmarksTree.setModel(new BookmarksTreeModel());
-      if (rootCollapsed) {
-        App.get().bookmarksTree.collapseRow(0);
-      }
-    }
-    updatingSelection = false;
-  }
-
-  @Override
-  public void treeExpanded(TreeExpansionEvent event) {
-
-  }
-
-  @Override
-  public void treeCollapsed(TreeExpansionEvent event) {
-    collapsed = System.currentTimeMillis();
-
-  }
 
 }

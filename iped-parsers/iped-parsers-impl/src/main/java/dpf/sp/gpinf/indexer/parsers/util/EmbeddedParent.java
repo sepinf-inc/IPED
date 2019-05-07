@@ -4,7 +4,7 @@ package dpf.sp.gpinf.indexer.parsers.util;
 public class EmbeddedParent {
 
     Object obj;
-    
+
     public Object getObj() {
         return obj;
     }
@@ -13,7 +13,7 @@ public class EmbeddedParent {
         this.obj = obj;
     }
 
-    public EmbeddedParent(Object o){
+    public EmbeddedParent(Object o) {
         obj = o;
     }
 }

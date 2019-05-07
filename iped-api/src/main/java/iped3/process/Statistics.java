@@ -11,46 +11,46 @@ package iped3.process;
  */
 public interface Statistics {
 
-  void addVolume(long volume);
+    void addVolume(long volume);
 
-  int getActiveProcessed();
+    int getActiveProcessed();
 
-  int getCorruptCarveIgnored();
+    int getCorruptCarveIgnored();
 
-  int getIgnored();
+    int getIgnored();
 
-  int getIoErrors();
+    int getIoErrors();
 
-  int getLastId();
+    int getLastId();
 
-  int getProcessed();
+    int getProcessed();
 
-  int getSplits();
+    int getSplits();
 
-  int getTimeouts();
+    int getTimeouts();
 
-  long getVolume();
+    long getVolume();
 
-  void incActiveProcessed();
+    void incActiveProcessed();
 
-  void incCorruptCarveIgnored();
+    void incCorruptCarveIgnored();
 
-  void incIgnored();
+    void incIgnored();
 
-  void incIoErrors();
+    void incIoErrors();
 
-  void incProcessed();
+    void incProcessed();
 
-  void incSplits();
+    void incSplits();
 
-  void incTimeouts();
+    void incTimeouts();
 
-  void logarEstatisticas(Manager manager) throws Exception;
+    void logarEstatisticas(Manager manager) throws Exception;
 
-  void printSystemInfo() throws Exception;
+    void printSystemInfo() throws Exception;
 
-  void setLastId(int id);
+    void setLastId(int id);
 
-  void updateLastId(int id);
-  
+    void updateLastId(int id);
+
 }

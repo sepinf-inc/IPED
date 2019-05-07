@@ -30,50 +30,50 @@ import java.util.Map;
  */
 public class ShareazaOutputGenerator {
 
-	private final ByteArrayOutputStream bout;
-	private final PrintWriter writer;
-	private int ident = 0;
-	private final Map<Integer, String> identMap = new HashMap<>();
+    private final ByteArrayOutputStream bout;
+    private final PrintWriter writer;
+    private int ident = 0;
+    private final Map<Integer, String> identMap = new HashMap<>();
 
-	public ShareazaOutputGenerator() throws UnsupportedEncodingException {
-		bout = new ByteArrayOutputStream();
-		writer = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
-	}
+    public ShareazaOutputGenerator() throws UnsupportedEncodingException {
+        bout = new ByteArrayOutputStream();
+        writer = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+    }
 
-	public void incIdent() {
-		ident++;
-	}
+    public void incIdent() {
+        ident++;
+    }
 
-	public void decIdent() {
-		ident--;
-	}
+    public void decIdent() {
+        ident--;
+    }
 
-	public void out(String text) {
-		writer.println(getIdentString() + text);
-	}
+    public void out(String text) {
+        writer.println(getIdentString() + text);
+    }
 
-	public void out(String fmt, Object... text) {
-		out(String.format(fmt, text));
-	}
+    public void out(String fmt, Object... text) {
+        out(String.format(fmt, text));
+    }
 
-	public byte[] getBytes() {
-		writer.flush();
-		return bout.toByteArray();
-	}
+    public byte[] getBytes() {
+        writer.flush();
+        return bout.toByteArray();
+    }
 
-	private String getIdentString() {
-		String ret = identMap.get(ident);
+    private String getIdentString() {
+        String ret = identMap.get(ident);
 
-		if (ret == null) {
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < ident; i++) {
-				builder.append("  "); //$NON-NLS-1$
-			}
-			ret = builder.toString();
-			identMap.put(ident, ret);
-		}
+        if (ret == null) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < ident; i++) {
+                builder.append("  "); //$NON-NLS-1$
+            }
+            ret = builder.toString();
+            identMap.put(ident, ret);
+        }
 
-		return ret;
-	}
+        return ret;
+    }
 
 }

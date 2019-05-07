@@ -35,23 +35,24 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
  */
 public class AppAnalyzer {
 
-  public static Analyzer get() {
-    Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
-    analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
-    analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
-    analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
-    
-    StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
-    AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-    defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
-    defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
-    defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
-    return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
-  }
+    public static Analyzer get() {
+        Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
+        analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
+        analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
+
+        StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
+                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
+        defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
+        defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
+        return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
+    }
 
 }

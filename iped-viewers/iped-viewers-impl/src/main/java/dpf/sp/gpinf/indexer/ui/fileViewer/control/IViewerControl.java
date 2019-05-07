@@ -8,70 +8,70 @@ import iped3.io.StreamSource;
 import java.util.Set;
 
 /**
- * Interface com as funcionalidades da interface gráfica de visualização de dados.
+ * Interface com as funcionalidades da interface gráfica de visualização de
+ * dados.
  *
  * @author Marcelo Silva
  */
-public interface IViewerControl { 
+public interface IViewerControl {
 
-  /**
-   * Inicializa todos os visualizadores de arquivos disponíveis antigo 'addViewers da classe
-   * CompositeViewerHelper'
-   *
-   * @param params Conjunto de parâmetros do aplicativo principal de pesquisa
-   * @param exibirAjuda Componente que acessa o arquivo de ajuda do visualizador
-   */
-  public void createViewers(final AppSearchParams params,
-      final IFileProcessor exibirAjuda);
+    /**
+     * Inicializa todos os visualizadores de arquivos disponíveis antigo 'addViewers
+     * da classe CompositeViewerHelper'
+     *
+     * @param params
+     *            Conjunto de parâmetros do aplicativo principal de pesquisa
+     * @param exibirAjuda
+     *            Componente que acessa o arquivo de ajuda do visualizador
+     */
+    public void createViewers(final AppSearchParams params, final IFileProcessor exibirAjuda);
 
-  /**
-   * Reinicializa o processo LibreOffice.
-   */
-  public void restartLibreOffice();
-  
-  /**
-   * Reinicializa a janela do LibreOffice. Método recomendado de ser utilizado após uma atualização
-   * de layout
-   */
-  public void restartLibreOfficeFrame();
+    /**
+     * Reinicializa o processo LibreOffice.
+     */
+    public void restartLibreOffice();
 
-  /**
-   * Libera o focus da biblioteca LibreOffice.
-   */
-  public void releaseLibreOfficeFocus();
+    /**
+     * Reinicializa a janela do LibreOffice. Método recomendado de ser utilizado
+     * após uma atualização de layout
+     */
+    public void restartLibreOfficeFrame();
 
-  /**
-   * Adicionar um visualizador específico na interface gráfica
-   *
-   * @param viewer
-   */
-  public void addViewer(Viewer viewer);
+    /**
+     * Libera o focus da biblioteca LibreOffice.
+     */
+    public void releaseLibreOfficeFocus();
 
-  /**
-   * Inicializa todos os visualizadores de arquivos disponíveis
-   */
-  public void initViewers();
+    /**
+     * Adicionar um visualizador específico na interface gráfica
+     *
+     * @param viewer
+     */
+    public void addViewer(Viewer viewer);
 
-  /**
-   * Carrega os dados do arquivo no visualizador específico, incluindo o destaque do texto
-   * selecionado
-   *
-   * @param file
-   * @param viewFile
-   * @param contentType
-   * @param highlightTerms
-   */
-  public void loadFile(StreamSource file,
-      StreamSource viewFile, String contentType,
-      Set<String> highlightTerms);
+    /**
+     * Inicializa todos os visualizadores de arquivos disponíveis
+     */
+    public void initViewers();
 
-  /**
-   * Carrega os dados do arquivo no visualizador específico, incluindo o destaque do texto
-   * selecionado
-   *
-   * @param file
-   * @param contentType
-   * @param highlightTerms
-   */
-  public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms);
+    /**
+     * Carrega os dados do arquivo no visualizador específico, incluindo o destaque
+     * do texto selecionado
+     *
+     * @param file
+     * @param viewFile
+     * @param contentType
+     * @param highlightTerms
+     */
+    public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms);
+
+    /**
+     * Carrega os dados do arquivo no visualizador específico, incluindo o destaque
+     * do texto selecionado
+     *
+     * @param file
+     * @param contentType
+     * @param highlightTerms
+     */
+    public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms);
 }

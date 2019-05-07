@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 
 public class FromFarthestHeaderCarver extends DefaultCarver {
-    
+
     public FromFarthestHeaderCarver() {
         maxWaitingHeaders = 100000;
     }
@@ -35,7 +35,7 @@ public class FromFarthestHeaderCarver extends DefaultCarver {
         }
 
         Hit header = farthestHeaderOcurrence;
-        if(header!=null) {
+        if (header != null) {
             long len = footer.getOffset() + footer.getSignature().getLength() - header.getOffset();
             CarverType typeCarved = header.getSignature().getCarverType();
 
@@ -49,8 +49,8 @@ public class FromFarthestHeaderCarver extends DefaultCarver {
             }
 
             return carveFromHeader(parentEvidence, header, len);
-        }else {
-        	return null;
+        } else {
+            return null;
         }
     }
 }

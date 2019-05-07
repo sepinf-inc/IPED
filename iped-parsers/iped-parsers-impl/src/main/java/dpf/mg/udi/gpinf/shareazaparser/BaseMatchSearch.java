@@ -25,23 +25,23 @@ import java.io.IOException;
  */
 class BaseMatchSearch extends ShareazaEntity {
 
-	private String schema;
-	private final MatchList matchList = new MatchList();
-	
-	public BaseMatchSearch() {
-		super("BASE MATCH SEARCH"); //$NON-NLS-1$
-	}
+    private String schema;
+    private final MatchList matchList = new MatchList();
 
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		schema = ar.readString();
-		matchList.read(ar);
-	}
+    public BaseMatchSearch() {
+        super("BASE MATCH SEARCH"); //$NON-NLS-1$
+    }
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Schema: " + schema); //$NON-NLS-1$
-		matchList.write(f);
-	}
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        schema = ar.readString();
+        matchList.read(ar);
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Schema: " + schema); //$NON-NLS-1$
+        matchList.write(f);
+    }
 
 }

@@ -22,173 +22,177 @@ import org.w3c.dom.NodeList;
 public class RegistryKeyParserManager {
     ScriptEngine engine;
     Invocable inv;
-	
-	//singleton
-	private static RegistryKeyParserManager registroKeyParserManager = new RegistryKeyParserManager();
 
-	private RegistryKeyParserManager(){
-		loadConfigPath();
-	}
-	
-	private void loadConfigPath() {
-		File dir;
-		try {
-			String configPath = System.getProperty("iped.configPath");
+    // singleton
+    private static RegistryKeyParserManager registroKeyParserManager = new RegistryKeyParserManager();
 
-			dir = new File( configPath+"/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
+    private RegistryKeyParserManager() {
+        loadConfigPath();
+    }
 
-			File[] files = dir.listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith(".xml");
-				}
-			});
-			for (int i = 0; i < files.length; i++) {
-				loadConfigFile(files[i]);
-			}
+    private void loadConfigPath() {
+        File dir;
+        try {
+            String configPath = System.getProperty("iped.configPath");
 
-			loadJSFiles(dir);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+            dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
 
-	private void loadJSFiles(File dir) {
-		File[] files = dir.listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.endsWith(".js");
-			}
-		});
+            File[] files = dir.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String name) {
+                    return name.endsWith(".xml");
+                }
+            });
+            for (int i = 0; i < files.length; i++) {
+                loadConfigFile(files[i]);
+            }
+
+            loadJSFiles(dir);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadJSFiles(File dir) {
+        File[] files = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".js");
+            }
+        });
         ScriptEngineManager manager = new ScriptEngineManager();
         this.engine = manager.getEngineByExtension("js"); // $NON-NLS-1$
-		for (int i = 0; i < files.length; i++) {
-	        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(files[i]), "UTF-8")) {
-	            engine.eval(reader);
-	        } catch (IOException | ScriptException e) {
-				e.printStackTrace();
-	        }
-		}
+        for (int i = 0; i < files.length; i++) {
+            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(files[i]), "UTF-8")) {
+                engine.eval(reader);
+            } catch (IOException | ScriptException e) {
+                e.printStackTrace();
+            }
+        }
         this.inv = (Invocable) engine;
-	}
-	
-	private void loadConfigFile(File f){
-		try{
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+    }
 
-			dbf.setNamespaceAware(false);
+    private void loadConfigFile(File f) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 
-			DocumentBuilder docBuilder = dbf.newDocumentBuilder();
+            dbf.setNamespaceAware(false);
 
-			Document doc = docBuilder.parse(f);
-			
-			Element root = doc.getDocumentElement();
-			
-			NodeList parsersEls = root.getElementsByTagName("registryKeyParsers");
-			for(int i=0; i<parsersEls.getLength(); i++){
-				Element parsersEl = (Element) parsersEls.item(i);
-				NodeList parserEls = parsersEl.getElementsByTagName("registryKeyParser"); 
-				for(int j=0; j<parserEls.getLength(); j++){
-					Element parserEl = (Element) parserEls.item(j);
-					String className = parserEl.getAttribute("class");
-					
-					Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(className);
-					RegistryKeyParser rkp = (RegistryKeyParser) classe.newInstance();
-					NodeList patternsEl = parserEl.getElementsByTagName("key");
-					for(int k=0; k<patternsEl.getLength(); k++){
-						Element patternEl = (Element) patternsEl.item(k);
-						String pattern = patternEl.getAttribute("name");
-						if(pattern.endsWith("/")){
-							pattern = pattern.substring(0, pattern.length()-1);
-						}
-						addRegistryKeyParser(pattern, rkp);
+            DocumentBuilder docBuilder = dbf.newDocumentBuilder();
 
-						NodeList decodersEls = patternEl.getElementsByTagName("decoder");
-						for(int l=0; l<decodersEls.getLength(); l++){
-							Element decoderEl = (Element) decodersEls.item(l);
-							String function = decoderEl.getAttribute("function");
-							String valueNameDecoder = decoderEl.getAttribute("decodeValueName");
-							if("yes".equals(valueNameDecoder)) {
-								rkp.addValueNameDecoderFunction(pattern,function);
-							}else {								
-								NodeList includeEls = decoderEl.getElementsByTagName("include");
-								if(includeEls.getLength()==0) {
-									rkp.decodeAllValueDataDecoderFunction(pattern,function);
-								} else {
-									for(int m=0; m<includeEls.getLength(); m++){
-										Element includeEl = (Element) includeEls.item(m);
-										String valueName = includeEl.getAttribute("valueName");
-										rkp.addValueDataDecoderFunction(pattern,valueName,function);
-									}								
-								}
-							}
-						}
-					}
-				}
-			}
-		}catch(Exception e){
-			e.printStackTrace(System.out);
-		}
-	}
+            Document doc = docBuilder.parse(f);
 
-	public static RegistryKeyParserManager getRegistryKeyParserManager(){
-		return registroKeyParserManager;
-	}
+            Element root = doc.getDocumentElement();
 
-	private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
-	private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser(); 
+            NodeList parsersEls = root.getElementsByTagName("registryKeyParsers");
+            for (int i = 0; i < parsersEls.getLength(); i++) {
+                Element parsersEl = (Element) parsersEls.item(i);
+                NodeList parserEls = parsersEl.getElementsByTagName("registryKeyParser");
+                for (int j = 0; j < parserEls.getLength(); j++) {
+                    Element parserEl = (Element) parserEls.item(j);
+                    String className = parserEl.getAttribute("class");
 
-	public RegistryKeyParser getDefaultRegistryKeyParser(){
-		return defaultRegistryKeyParser;
-	}
+                    Class<?> classe = Thread.currentThread().getContextClassLoader().loadClass(className);
+                    RegistryKeyParser rkp = (RegistryKeyParser) classe.newInstance();
+                    NodeList patternsEl = parserEl.getElementsByTagName("key");
+                    for (int k = 0; k < patternsEl.getLength(); k++) {
+                        Element patternEl = (Element) patternsEl.item(k);
+                        String pattern = patternEl.getAttribute("name");
+                        if (pattern.endsWith("/")) {
+                            pattern = pattern.substring(0, pattern.length() - 1);
+                        }
+                        addRegistryKeyParser(pattern, rkp);
 
-	public RegistryKeyParser getRegistryKeyParser(String keyPath){
-		RegistryKeyParser result = null;
+                        NodeList decodersEls = patternEl.getElementsByTagName("decoder");
+                        for (int l = 0; l < decodersEls.getLength(); l++) {
+                            Element decoderEl = (Element) decodersEls.item(l);
+                            String function = decoderEl.getAttribute("function");
+                            String valueNameDecoder = decoderEl.getAttribute("decodeValueName");
+                            if ("yes".equals(valueNameDecoder)) {
+                                rkp.addValueNameDecoderFunction(pattern, function);
+                            } else {
+                                NodeList includeEls = decoderEl.getElementsByTagName("include");
+                                if (includeEls.getLength() == 0) {
+                                    rkp.decodeAllValueDataDecoderFunction(pattern, function);
+                                } else {
+                                    for (int m = 0; m < includeEls.getLength(); m++) {
+                                        Element includeEl = (Element) includeEls.item(m);
+                                        String valueName = includeEl.getAttribute("valueName");
+                                        rkp.addValueDataDecoderFunction(pattern, valueName, function);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
+    }
 
-		result = map.getPatternMatch(keyPath);
+    public static RegistryKeyParserManager getRegistryKeyParserManager() {
+        return registroKeyParserManager;
+    }
 
-		return result;
-	}
+    private KeyPathPatternMap<RegistryKeyParser> map = new KeyPathPatternMap<RegistryKeyParser>();
+    private RegistryKeyParser defaultRegistryKeyParser = new HtmlKeyParser();
 
-	public boolean hasChildRegistered(String keyPath){		
-		Set<String> collection = map.keySet();
-		for (Iterator<String> iterator = collection.iterator(); iterator.hasNext();) {
-			String value = iterator.next();
-			if(matchesStart(keyPath, value)){
-				return true;
-			}
-		}
-		return false;
-	}
+    public RegistryKeyParser getDefaultRegistryKeyParser() {
+        return defaultRegistryKeyParser;
+    }
 
-	static public boolean matchesStart(String test, String pattern){
-		
-		if(pattern.startsWith(test)) return true;
-		
-		String patternSubts = pattern;
-		int wildIndex = patternSubts.indexOf("*");
-		while(wildIndex>=0){
-			if(wildIndex>test.length()) break;
-			String meio = test.substring(wildIndex);
-			int slashIndex = meio.indexOf("/");
-			if(slashIndex>=0){
-				meio = meio.substring(0, slashIndex);
-				patternSubts = patternSubts.substring(0,patternSubts.indexOf("*"))+meio+patternSubts.substring(patternSubts.indexOf("*")+1);
-			}else{
-				patternSubts = patternSubts.substring(0,patternSubts.indexOf("*"))+meio+patternSubts.substring(patternSubts.indexOf("*")+1);				
-			}
-			wildIndex = patternSubts.indexOf("*");
-		}
-		
-		return patternSubts.startsWith(test);
-	}
+    public RegistryKeyParser getRegistryKeyParser(String keyPath) {
+        RegistryKeyParser result = null;
 
-	public void addRegistryKeyParser(String keypath, RegistryKeyParser p){
-		map.put(keypath, p);
-	}
+        result = map.getPatternMatch(keyPath);
 
-	public Invocable getInv() {
-		return inv;
-	}	
+        return result;
+    }
+
+    public boolean hasChildRegistered(String keyPath) {
+        Set<String> collection = map.keySet();
+        for (Iterator<String> iterator = collection.iterator(); iterator.hasNext();) {
+            String value = iterator.next();
+            if (matchesStart(keyPath, value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static public boolean matchesStart(String test, String pattern) {
+
+        if (pattern.startsWith(test))
+            return true;
+
+        String patternSubts = pattern;
+        int wildIndex = patternSubts.indexOf("*");
+        while (wildIndex >= 0) {
+            if (wildIndex > test.length())
+                break;
+            String meio = test.substring(wildIndex);
+            int slashIndex = meio.indexOf("/");
+            if (slashIndex >= 0) {
+                meio = meio.substring(0, slashIndex);
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
+                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+            } else {
+                patternSubts = patternSubts.substring(0, patternSubts.indexOf("*")) + meio
+                        + patternSubts.substring(patternSubts.indexOf("*") + 1);
+            }
+            wildIndex = patternSubts.indexOf("*");
+        }
+
+        return patternSubts.startsWith(test);
+    }
+
+    public void addRegistryKeyParser(String keypath, RegistryKeyParser p) {
+        map.put(keypath, p);
+    }
+
+    public Invocable getInv() {
+        return inv;
+    }
 
 }

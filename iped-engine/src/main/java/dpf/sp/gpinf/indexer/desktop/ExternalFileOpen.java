@@ -11,49 +11,50 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.Item;
 
 public class ExternalFileOpen {
-	
-	private static Logger LOGGER = LoggerFactory.getLogger(ExternalFileOpen.class);
-	
-	public static void open(final int luceneId){
-		new Thread() {
-	        public void run() {
-	            Item item = App.get().appCase.getItemByLuceneID(luceneId);
+
+    private static Logger LOGGER = LoggerFactory.getLogger(ExternalFileOpen.class);
+
+    public static void open(final int luceneId) {
+        new Thread() {
+            public void run() {
+                Item item = App.get().appCase.getItemByLuceneID(luceneId);
                 try {
                     File file = item.getTempFile();
-                    file.setReadOnly();   
+                    file.setReadOnly();
                     LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
                     open(file);
-                    
+
                 } catch (IOException e) {
                     e.printStackTrace();
-                    
-                }catch(IPEDException e) {
+
+                } catch (IPEDException e) {
                     CopiarArquivos.salvarArquivo(luceneId);
                 }
-	        }
-	      }.start();
-	}
-	
-	public static void open(File file) {
-        try {  
-          if (file != null) {
-            Desktop.getDesktop().open(file.getCanonicalFile());
-          }
+            }
+        }.start();
+    }
 
-        } catch (Exception e) {
-          // e.printStackTrace();
-          try {
-            if (System.getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-              Runtime.getRuntime().exec(new String[]{"rundll32", "SHELL32.DLL,ShellExec_RunDLL", "\"" + file.getCanonicalFile() + "\""}); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-            } else {
-              Runtime.getRuntime().exec(new String[]{"xdg-open", file.toURI().toURL().toString()}); //$NON-NLS-1$
+    public static void open(File file) {
+        try {
+            if (file != null) {
+                Desktop.getDesktop().open(file.getCanonicalFile());
             }
 
-          } catch (IOException e2) {
-            e2.printStackTrace();
-            throw new IPEDException(e2);
-          }
+        } catch (Exception e) {
+            // e.printStackTrace();
+            try {
+                if (System.getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    Runtime.getRuntime().exec(new String[] { "rundll32", "SHELL32.DLL,ShellExec_RunDLL", //$NON-NLS-1$ //$NON-NLS-2$
+                            "\"" + file.getCanonicalFile() + "\"" }); //$NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                    Runtime.getRuntime().exec(new String[] { "xdg-open", file.toURI().toURL().toString() }); //$NON-NLS-1$
+                }
+
+            } catch (IOException e2) {
+                e2.printStackTrace();
+                throw new IPEDException(e2);
+            }
         }
-	}
+    }
 
 }

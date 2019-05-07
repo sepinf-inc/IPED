@@ -34,45 +34,47 @@ import iped3.ItemId;
 
 public class TableCellRenderer extends DefaultTableCellRenderer {
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-  private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
-  private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
-  private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
+    private static Icon folderIcon = UIManager.getIcon("FileView.directoryIcon"); //$NON-NLS-1$
+    private static Icon fileIcon = UIManager.getIcon("FileView.fileIcon"); //$NON-NLS-1$
+    private static Icon diskIcon = UIManager.getIcon("FileView.hardDriveIcon"); //$NON-NLS-1$
 
-  @Override
-  public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+            int row, int column) {
 
-    DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        DefaultTableCellRenderer result = (DefaultTableCellRenderer) super.getTableCellRendererComponent(table, value,
+                isSelected, hasFocus, row, column);
 
-    int idx = table.convertRowIndexToModel(row);
-    int col = table.convertColumnIndexToModel(column);
+        int idx = table.convertRowIndexToModel(row);
+        int col = table.convertColumnIndexToModel(column);
 
-    if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
-      try {
-    	ItemId item = ((SearchResultTableModel)table.getModel()).getSearchResult().getItem(idx);
-    	int docId = App.get().appCase.getLuceneId(item);
-        Document doc = App.get().appCase.getSearcher().doc(docId);
-        if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
-          result.setIcon(folderIcon);
-        } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
-          result.setIcon(diskIcon);
+        if (table.getModel().getColumnName(col).equalsIgnoreCase(IndexItem.NAME)) {
+            try {
+                ItemId item = ((SearchResultTableModel) table.getModel()).getSearchResult().getItem(idx);
+                int docId = App.get().appCase.getLuceneId(item);
+                Document doc = App.get().appCase.getSearcher().doc(docId);
+                if (Boolean.valueOf(doc.get(IndexItem.ISDIR))) {
+                    result.setIcon(folderIcon);
+                } else if (Boolean.valueOf(doc.get(IndexItem.ISROOT))) {
+                    result.setIcon(diskIcon);
+                } else {
+                    result.setIcon(fileIcon);
+                }
+
+            } catch (IOException e) {
+                result.setIcon(null);
+            }
+
         } else {
-          result.setIcon(fileIcon);
+            result.setIcon(null);
         }
 
-      } catch (IOException e) {
-        result.setIcon(null);
-      }
-
-    } else {
-      result.setIcon(null);
+        return result;
     }
-
-    return result;
-  }
 
 }

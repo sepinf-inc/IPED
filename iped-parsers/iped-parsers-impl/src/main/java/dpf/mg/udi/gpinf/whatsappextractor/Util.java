@@ -34,8 +34,7 @@ public class Util {
                 }
                 if (key != null && unicodeFileMap.containsKey(key)) {
                     str.append("<img src=\"" + ReportGenerator.RSRC_PATH + "images/emoji/unicode/") //$NON-NLS-1$ //$NON-NLS-2$
-                            .append(unicodeFileMap.get(key))
-                            .append(".png\" height=\"20\" width=\"20\"/>"); //$NON-NLS-1$
+                            .append(unicodeFileMap.get(key)).append(".png\" height=\"20\" width=\"20\"/>"); //$NON-NLS-1$
                 } else {
                     str.append(chars[i]).append(chars[i + 1]);
                 }
@@ -62,8 +61,7 @@ public class Util {
 
                     if (key != null && unicodeFileMap.containsKey(key)) {
                         str.append("<img src=\"" + ReportGenerator.RSRC_PATH + "images/emoji/unicode/") //$NON-NLS-1$ //$NON-NLS-2$
-                                .append(unicodeFileMap.get(key))
-                                .append(".png\"  height=\"20\" width=\"20\"/>"); //$NON-NLS-1$
+                                .append(unicodeFileMap.get(key)).append(".png\"  height=\"20\" width=\"20\"/>"); //$NON-NLS-1$
                     } else {
                         if (chars[i] == '\n') {
                             str.append("<br/>"); //$NON-NLS-1$
@@ -93,12 +91,12 @@ public class Util {
 
         return result;
     }
-    
+
     public static String getNameFromId(String id) {
-    	if (id != null && id.contains("@")) { //$NON-NLS-1$
-    		id = id.split("@")[0]; //$NON-NLS-1$
-    	}
-    	return id;
+        if (id != null && id.contains("@")) { //$NON-NLS-1$
+            id = id.split("@")[0]; //$NON-NLS-1$
+        }
+        return id;
     }
 
     private static final char[] printable = ("abcdefghijklmnopqrstuwvxyzABCDEFG" //$NON-NLS-1$

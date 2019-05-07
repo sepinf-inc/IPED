@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.net.NetworkInterface;
 
 /**
- * Keeps information about a network interface, including MAC address and display name.
+ * Keeps information about a network interface, including MAC address and
+ * display name.
  *
  * @author Bruno Hoelz
  */
@@ -26,7 +27,8 @@ public class NetworkInfo implements Serializable {
     /**
      * Set the MAC address of the interface.
      *
-     * @param mac the MAC address.
+     * @param mac
+     *            the MAC address.
      */
     public final void setMacAddress(final String mac) {
         this.macAddress = mac;
@@ -44,7 +46,8 @@ public class NetworkInfo implements Serializable {
     /**
      * Sets the display name of the network interface.
      *
-     * @param name the display name of the network interface.
+     * @param name
+     *            the display name of the network interface.
      */
     public final void setDisplayName(final String name) {
         this.displayName = name;

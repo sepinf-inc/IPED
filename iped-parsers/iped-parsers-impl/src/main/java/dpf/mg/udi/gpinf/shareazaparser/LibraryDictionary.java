@@ -24,23 +24,23 @@ import java.io.IOException;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 class LibraryDictionary extends ShareazaEntity {
-	
-	private long wordsCount;
-	
-	public LibraryDictionary() {
-		super("LIBRARY DICTIONARY"); //$NON-NLS-1$
-	}
 
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		if (version >= 29) {
-			wordsCount = ar.readUInt();
-		}
-	}
+    private long wordsCount;
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Words Count: %d", wordsCount); //$NON-NLS-1$
-	}
-	
+    public LibraryDictionary() {
+        super("LIBRARY DICTIONARY"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        if (version >= 29) {
+            wordsCount = ar.readUInt();
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Words Count: %d", wordsCount); //$NON-NLS-1$
+    }
+
 }

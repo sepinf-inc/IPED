@@ -10,10 +10,11 @@ import java.lang.annotation.Target;
  * ExaminationPhase e outras anotações.
  * 
  * COMENTÁRIO (Werneck): me parece que o nome pode se confundir com sendo
- * específico da fase chamada de Examination. Talvez seja melhor mudar o nome
- * da fase.
+ * específico da fase chamada de Examination. Talvez seja melhor mudar o nome da
+ * fase.
  */
-@Target(ElementType.METHOD) @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface ExaminationMethod {
 
     public String value();

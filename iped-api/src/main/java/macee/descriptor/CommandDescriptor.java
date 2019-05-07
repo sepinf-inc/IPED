@@ -13,26 +13,26 @@ import java.util.Map;
  */
 public interface CommandDescriptor extends Descriptor {
 
-  String commandTemplate();
+    String commandTemplate();
 
-  String getAlias();
+    String getAlias();
 
-  String getAliasOf();
+    String getAliasOf();
 
-  Map<String, Object> getDefaults();
+    Map<String, Object> getDefaults();
 
-  String getNamespace();
+    String getNamespace();
 
-  Map<String, String> getParams();
+    Map<String, String> getParams();
 
-  void setAlias(String alias);
+    void setAlias(String alias);
 
-  void setAliasOf(String aliasOf);
+    void setAliasOf(String aliasOf);
 
-  void setDefaults(Map<String, Object> defaults);
+    void setDefaults(Map<String, Object> defaults);
 
-  void setNamespace(String namespace);
+    void setNamespace(String namespace);
 
-  void setParams(Map<String, String> params);
-  
+    void setParams(Map<String, String> params);
+
 }

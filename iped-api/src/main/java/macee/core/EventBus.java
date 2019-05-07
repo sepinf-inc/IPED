@@ -5,6 +5,7 @@ package macee.core;
  *
  * COMENTÁRIO (Werneck): usado para desvincular a interface da implementação
  * concreta (Guava EventBus ou vert.x EventBus).
+ * 
  * @author WERNECK
  */
 public interface EventBus {

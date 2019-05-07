@@ -56,10 +56,8 @@ public interface CollectionManager {
 
     Collection<CaseItemCollection> getCollectionsForItem(String sourceId, int itemId);
 
-    Collection<CaseItemCollection> getCollectionsForItem(String sourceId, int itemId,
-        DescriptorType type);
+    Collection<CaseItemCollection> getCollectionsForItem(String sourceId, int itemId, DescriptorType type);
 
     // EXPORTAR
-    void export(CaseItemCollection collection, String outputPath, boolean useHashAsName)
-        throws IOException;
+    void export(CaseItemCollection collection, String outputPath, boolean useHashAsName) throws IOException;
 }

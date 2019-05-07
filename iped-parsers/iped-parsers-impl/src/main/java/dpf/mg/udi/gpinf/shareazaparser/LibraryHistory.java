@@ -27,42 +27,42 @@ import java.util.List;
  */
 class LibraryHistory extends ShareazaEntity {
 
-	private final List<LibraryRecent> recentList = new ArrayList<>();
-	private String lastSeededTorrentPath = ""; //$NON-NLS-1$
-	private String lastSeededTorrentName = ""; //$NON-NLS-1$
-	private String lastSeededTorrentTime = ""; //$NON-NLS-1$
-	private String lastSeededTorrentBTH = ""; //$NON-NLS-1$
-	
-	public LibraryHistory() {
-		super("LIBRARY HISTORY"); //$NON-NLS-1$
-	}
-	
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		int n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			LibraryRecent recent = new LibraryRecent();
-			recent.read(ar, version);
-			recentList.add(recent);
-		}
-		if (version > 22) {
-			lastSeededTorrentPath = ar.readString();
-			if (lastSeededTorrentPath.length() > 0) {
-				lastSeededTorrentName = ar.readString();
-				lastSeededTorrentTime = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
-				lastSeededTorrentBTH = ar.readHash(20, "base32"); //$NON-NLS-1$
-			}
-		}
-	}
-	
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Last Seeded Torrent Path: " + lastSeededTorrentPath); //$NON-NLS-1$
-		f.out("Last Seeded Torrent Name: " + lastSeededTorrentName); //$NON-NLS-1$
-		f.out("Last Seeded Torrent Time: " + lastSeededTorrentTime); //$NON-NLS-1$
-		f.out("Last Seeded Torrent BTH: " + lastSeededTorrentBTH); //$NON-NLS-1$
-		for (LibraryRecent recent : recentList) {
-			recent.write(f);
-		}
-	}
+    private final List<LibraryRecent> recentList = new ArrayList<>();
+    private String lastSeededTorrentPath = ""; //$NON-NLS-1$
+    private String lastSeededTorrentName = ""; //$NON-NLS-1$
+    private String lastSeededTorrentTime = ""; //$NON-NLS-1$
+    private String lastSeededTorrentBTH = ""; //$NON-NLS-1$
+
+    public LibraryHistory() {
+        super("LIBRARY HISTORY"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        int n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            LibraryRecent recent = new LibraryRecent();
+            recent.read(ar, version);
+            recentList.add(recent);
+        }
+        if (version > 22) {
+            lastSeededTorrentPath = ar.readString();
+            if (lastSeededTorrentPath.length() > 0) {
+                lastSeededTorrentName = ar.readString();
+                lastSeededTorrentTime = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
+                lastSeededTorrentBTH = ar.readHash(20, "base32"); //$NON-NLS-1$
+            }
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Last Seeded Torrent Path: " + lastSeededTorrentPath); //$NON-NLS-1$
+        f.out("Last Seeded Torrent Name: " + lastSeededTorrentName); //$NON-NLS-1$
+        f.out("Last Seeded Torrent Time: " + lastSeededTorrentTime); //$NON-NLS-1$
+        f.out("Last Seeded Torrent BTH: " + lastSeededTorrentBTH); //$NON-NLS-1$
+        for (LibraryRecent recent : recentList) {
+            recent.write(f);
+        }
+    }
 }

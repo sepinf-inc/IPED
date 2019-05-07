@@ -35,49 +35,49 @@ import iped3.VersionsMap;
  */
 public class VersionsMapImpl implements Serializable, VersionsMap {
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
-  private int[] viewToRaw;
-  private int mappings = 0;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
+    private int[] viewToRaw;
+    private int mappings = 0;
 
-  public VersionsMapImpl(int size) {
-    viewToRaw = new int[size];
-  }
-
-  public void put(int view, int raw) {
-    viewToRaw[view] = raw + 1;
-    viewToRaw[raw] = -view - 1;
-    mappings++;
-  }
-
-  public int getMappings() {
-    return mappings;
-  }
-
-  public boolean isRaw(int doc) {
-    return mappings == 0 || viewToRaw[doc] < 0;
-  }
-
-  public boolean isView(int doc) {
-    return mappings != 0 && viewToRaw[doc] > 0;
-  }
-
-  public Integer getView(int raw) {
-    if (mappings != 0 && viewToRaw[raw] < 0) {
-      return -viewToRaw[raw] - 1;
-    } else {
-      return null;
+    public VersionsMapImpl(int size) {
+        viewToRaw = new int[size];
     }
-  }
 
-  public Integer getRaw(int view) {
-    if (mappings != 0 && viewToRaw[view] > 0) {
-      return viewToRaw[view] - 1;
-    } else {
-      return null;
+    public void put(int view, int raw) {
+        viewToRaw[view] = raw + 1;
+        viewToRaw[raw] = -view - 1;
+        mappings++;
     }
-  }
+
+    public int getMappings() {
+        return mappings;
+    }
+
+    public boolean isRaw(int doc) {
+        return mappings == 0 || viewToRaw[doc] < 0;
+    }
+
+    public boolean isView(int doc) {
+        return mappings != 0 && viewToRaw[doc] > 0;
+    }
+
+    public Integer getView(int raw) {
+        if (mappings != 0 && viewToRaw[raw] < 0) {
+            return -viewToRaw[raw] - 1;
+        } else {
+            return null;
+        }
+    }
+
+    public Integer getRaw(int view) {
+        if (mappings != 0 && viewToRaw[view] > 0) {
+            return viewToRaw[view] - 1;
+        } else {
+            return null;
+        }
+    }
 
 }

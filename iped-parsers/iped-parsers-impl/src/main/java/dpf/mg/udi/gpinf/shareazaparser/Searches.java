@@ -27,26 +27,26 @@ import java.util.List;
  */
 class Searches extends ShareazaEntity {
 
-	private final List<SearchWnd> searchWindows = new ArrayList<>();
-	
-	public Searches() {
-		super("SEARCHES"); //$NON-NLS-1$
-	}
+    private final List<SearchWnd> searchWindows = new ArrayList<>();
 
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		while (ar.readCount() == 1) {
-			SearchWnd searchWnd = new SearchWnd();
-			searchWnd.read(ar);
-			searchWindows.add(searchWnd);
-		}
-	}
+    public Searches() {
+        super("SEARCHES"); //$NON-NLS-1$
+    }
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		for (SearchWnd searchWnd : searchWindows) {
-			searchWnd.write(f);
-		}
-	}
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        while (ar.readCount() == 1) {
+            SearchWnd searchWnd = new SearchWnd();
+            searchWnd.read(ar);
+            searchWindows.add(searchWnd);
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        for (SearchWnd searchWnd : searchWindows) {
+            searchWnd.write(f);
+        }
+    }
 
 }

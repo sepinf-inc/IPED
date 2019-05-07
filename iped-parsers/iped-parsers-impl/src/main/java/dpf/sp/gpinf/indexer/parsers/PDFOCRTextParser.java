@@ -63,199 +63,208 @@ import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
  */
 public class PDFOCRTextParser extends PDFParser {
 
-	private static Logger LOGGER = LoggerFactory.getLogger(PDFOCRTextParser.class);
-	
-	private static AtomicBoolean checked = new AtomicBoolean();
-	
-	public static final String MAX_CHARS_TO_OCR = "pdfparser.maxCharsToOcr"; //$NON-NLS-1$
-	public static final String SORT_PDF_CHARS = "pdfparser.sortPdfChars"; //$NON-NLS-1$
-	public static final String PROCESS_INLINE_IMAGES = "pdfparser.processInlineImages"; //$NON-NLS-1$
+    private static Logger LOGGER = LoggerFactory.getLogger(PDFOCRTextParser.class);
 
-	private int maxCharsToOcr = Integer.valueOf(System.getProperty(MAX_CHARS_TO_OCR, "100")); //$NON-NLS-1$
-	private boolean sortPDFChars = Boolean.valueOf(System.getProperty(SORT_PDF_CHARS, "false")); //$NON-NLS-1$
-	private boolean processEmbeddedImages = Boolean.valueOf(System.getProperty(PROCESS_INLINE_IMAGES, "false")); //$NON-NLS-1$
-	
-	private boolean useIcePDFParsing = false;
-	private int maxMainMemoryBytes = 100000000;
+    private static AtomicBoolean checked = new AtomicBoolean();
 
-	private static final long serialVersionUID = 1L;
-	private static MediaType PDF_TYPE = MediaType.application("pdf"); //$NON-NLS-1$
-	private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PDF_TYPE);
-	private PDFParser SortedPDFParser, PDFParser;
-	private OCRParser ocrParser = new OCRParser();
-	private PDFParserConfig defaultConfig = new PDFParserConfig();
+    public static final String MAX_CHARS_TO_OCR = "pdfparser.maxCharsToOcr"; //$NON-NLS-1$
+    public static final String SORT_PDF_CHARS = "pdfparser.sortPdfChars"; //$NON-NLS-1$
+    public static final String PROCESS_INLINE_IMAGES = "pdfparser.processInlineImages"; //$NON-NLS-1$
 
-	public PDFOCRTextParser() {
-		if (PDFParser == null) {
-			PDFParser = new PDFParser();
-			SortedPDFParser = new PDFParser();
-			SortedPDFParser.setSortByPosition(true);
-		}
-		if(!checked.getAndSet(true)) {
-			Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG2000"); //$NON-NLS-1$
-	        ImageReader reader = null;
-	        while (readers.hasNext()){
-	            reader = readers.next();
-	            if (reader != null && reader.canReadRaster())
-	                break;
-	            else
-	            	reader = null;
-	        }
-	        if (reader == null)
-	        	LOGGER.warn("Plugin JPEG2000 not found, JPX images will not be decoded from PDFs." //$NON-NLS-1$
-	        			+ " You can download it from https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-jpeg2000/1.3.0" //$NON-NLS-1$
-	        			+ " and put it in optional_jar folder."); //$NON-NLS-1$
-		}
-	}
+    private int maxCharsToOcr = Integer.valueOf(System.getProperty(MAX_CHARS_TO_OCR, "100")); //$NON-NLS-1$
+    private boolean sortPDFChars = Boolean.valueOf(System.getProperty(SORT_PDF_CHARS, "false")); //$NON-NLS-1$
+    private boolean processEmbeddedImages = Boolean.valueOf(System.getProperty(PROCESS_INLINE_IMAGES, "false")); //$NON-NLS-1$
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-		return SUPPORTED_TYPES;
-	}
+    private boolean useIcePDFParsing = false;
+    private int maxMainMemoryBytes = 100000000;
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    private static final long serialVersionUID = 1L;
+    private static MediaType PDF_TYPE = MediaType.application("pdf"); //$NON-NLS-1$
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(PDF_TYPE);
+    private PDFParser SortedPDFParser, PDFParser;
+    private OCRParser ocrParser = new OCRParser();
+    private PDFParserConfig defaultConfig = new PDFParserConfig();
 
-		metadata.set(HttpHeaders.CONTENT_TYPE, "application/pdf"); //$NON-NLS-1$
+    public PDFOCRTextParser() {
+        if (PDFParser == null) {
+            PDFParser = new PDFParser();
+            SortedPDFParser = new PDFParser();
+            SortedPDFParser.setSortByPosition(true);
+        }
+        if (!checked.getAndSet(true)) {
+            Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG2000"); //$NON-NLS-1$
+            ImageReader reader = null;
+            while (readers.hasNext()) {
+                reader = readers.next();
+                if (reader != null && reader.canReadRaster())
+                    break;
+                else
+                    reader = null;
+            }
+            if (reader == null)
+                LOGGER.warn("Plugin JPEG2000 not found, JPX images will not be decoded from PDFs." //$NON-NLS-1$
+                        + " You can download it from https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-jpeg2000/1.3.0" //$NON-NLS-1$
+                        + " and put it in optional_jar folder."); //$NON-NLS-1$
+        }
+    }
 
-		handler.startDocument();
-		CharCountContentHandler countHandler = new CharCountContentHandler(handler);
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+        return SUPPORTED_TYPES;
+    }
 
-		TemporaryResources tmp = new TemporaryResources();
-		try {
-			TikaInputStream tis = TikaInputStream.get(stream, tmp);
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-			File file = null;
-			if (ocrParser.isEnabled())
-				file = tis.getFile();
-			
-			int numPages = 0;
-			
-			if(useIcePDFParsing){
-				numPages = icePDFParse(tis, countHandler, metadata);
-				
-			}else{
-				if (sortPDFChars) {
-					file = tis.getFile();
-					try {
-						SortedPDFParser.parse(tis, countHandler, new Metadata(), context);
+        metadata.set(HttpHeaders.CONTENT_TYPE, "application/pdf"); //$NON-NLS-1$
 
-					} finally {
-						tis = TikaInputStream.get(file);
-					}
-				}
-				
-				PDFParserConfig config = context.get(PDFParserConfig.class, defaultConfig);
-				config.setExtractInlineImages(processEmbeddedImages);
-				config.setCatchIntermediateIOExceptions(true);
-				config.setExtractActions(true);
-				config.setExtractAnnotationText(true);
-				config.setExtractBookmarksText(true);
-				config.setMaxMainMemoryBytes(maxMainMemoryBytes);
-				config.setDetectAngles(true);
-				context.set(PDFParserConfig.class, config);
-				
-				try {
-					PDFParser.parse(tis, countHandler, metadata, context);
+        handler.startDocument();
+        CharCountContentHandler countHandler = new CharCountContentHandler(handler);
 
-				} finally {
-					if (sortPDFChars)
-						tis.close();
-				}
-				
-				if (metadata.get("xmpTPg:NPages") != null) //$NON-NLS-1$
-					numPages = Integer.parseInt(metadata.get("xmpTPg:NPages")); //$NON-NLS-1$
-			}
-						
-			if (numPages == 0)
-				if (metadata.get(Metadata.RESOURCE_NAME_KEY).startsWith("Carved")) //$NON-NLS-1$
-					throw new TikaException("PDF document contains zero pages"); //$NON-NLS-1$
-				else
-					numPages = 1;
+        TemporaryResources tmp = new TemporaryResources();
+        try {
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-			int charCount = countHandler.getCharCount();
-			metadata.set(Metadata.CHARACTER_COUNT, charCount);
+            File file = null;
+            if (ocrParser.isEnabled())
+                file = tis.getFile();
 
-			if (ocrParser.isEnabled() && !processEmbeddedImages && charCount / numPages <= maxCharsToOcr) {
-				tis = TikaInputStream.get(file);
-				try {
-					ocrParser.parse(tis, countHandler, metadata, context);
+            int numPages = 0;
 
-				} catch (Exception e) {
-					LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
+            if (useIcePDFParsing) {
+                numPages = icePDFParse(tis, countHandler, metadata);
 
-				} finally {
-					tis.close();
-				}
-				metadata.set(OCRParser.OCR_CHAR_COUNT, (countHandler.getCharCount() - charCount) + ""); //$NON-NLS-1$
-			}
+            } else {
+                if (sortPDFChars) {
+                    file = tis.getFile();
+                    try {
+                        SortedPDFParser.parse(tis, countHandler, new Metadata(), context);
 
-		} finally {
-			tmp.close();
-			handler.endDocument();
-		}
+                    } finally {
+                        tis = TikaInputStream.get(file);
+                    }
+                }
 
-	}
+                PDFParserConfig config = context.get(PDFParserConfig.class, defaultConfig);
+                config.setExtractInlineImages(processEmbeddedImages);
+                config.setCatchIntermediateIOExceptions(true);
+                config.setExtractActions(true);
+                config.setExtractAnnotationText(true);
+                config.setExtractBookmarksText(true);
+                config.setMaxMainMemoryBytes(maxMainMemoryBytes);
+                config.setDetectAngles(true);
+                context.set(PDFParserConfig.class, config);
 
-	/*
-	 * Parsing alternativo utilizando outra biblioteca (IcePDF)
-	 */
-	private int icePDFParse(TikaInputStream tis, ContentHandler handler, Metadata metadata) throws TikaException {
+                try {
+                    PDFParser.parse(tis, countHandler, metadata, context);
 
-		Document iceDoc = null;
-		try {
-			iceDoc = new Document();
-			iceDoc.setFile(tis.getFile().getAbsolutePath());
+                } finally {
+                    if (sortPDFChars)
+                        tis.close();
+                }
 
-			int numPages = iceDoc.getNumberOfPages();
-			for (int i = 0; i < numPages; i++) {
-				try {
-					PageText pageText = iceDoc.getPageText(i);
-					if (pageText != null) {
-						char[] chars = ("\nPage " + i + "\n").toCharArray(); //$NON-NLS-1$ //$NON-NLS-2$
-						handler.characters(chars, 0, chars.length);
-						chars = pageText.toString().toCharArray();
-						handler.characters(chars, 0, chars.length);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+                if (metadata.get("xmpTPg:NPages") != null) //$NON-NLS-1$
+                    numPages = Integer.parseInt(metadata.get("xmpTPg:NPages")); //$NON-NLS-1$
+            }
 
-			try {
-				PInfo info = iceDoc.getInfo();
-				String value = info.getSubject();
-				if (value != null) metadata.add(Metadata.SUBJECT, value);
-				value = info.getTitle();
-				if (value != null) metadata.add(Metadata.TITLE, value);
-				value = info.getAuthor();
-				if (value != null) metadata.add(Metadata.AUTHOR, value);
-				value = info.getCreator();
-				if (value != null) metadata.add(Metadata.CREATOR, value);
-				value = info.getProducer();
-				if (value != null) metadata.add(Metadata.APPLICATION_NAME, value);
-				value = info.getKeywords();
-				if (value != null) metadata.add(Metadata.KEYWORDS, value);
-				PDate date = info.getCreationDate();
-				if (date != null) metadata.add(Metadata.CREATION_DATE, date.toString());
-				date = info.getModDate();
-				if (date != null) metadata.add(Metadata.MODIFIED, date.toString());
+            if (numPages == 0)
+                if (metadata.get(Metadata.RESOURCE_NAME_KEY).startsWith("Carved")) //$NON-NLS-1$
+                    throw new TikaException("PDF document contains zero pages"); //$NON-NLS-1$
+                else
+                    numPages = 1;
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			return numPages;
+            int charCount = countHandler.getCharCount();
+            metadata.set(Metadata.CHARACTER_COUNT, charCount);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new TikaException("IcePDF Exception", e); //$NON-NLS-1$
-			
-		} finally {
-			if(iceDoc != null)
-				iceDoc.dispose();
-		}
+            if (ocrParser.isEnabled() && !processEmbeddedImages && charCount / numPages <= maxCharsToOcr) {
+                tis = TikaInputStream.get(file);
+                try {
+                    ocrParser.parse(tis, countHandler, metadata, context);
 
-	}
+                } catch (Exception e) {
+                    LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
+
+                } finally {
+                    tis.close();
+                }
+                metadata.set(OCRParser.OCR_CHAR_COUNT, (countHandler.getCharCount() - charCount) + ""); //$NON-NLS-1$
+            }
+
+        } finally {
+            tmp.close();
+            handler.endDocument();
+        }
+
+    }
+
+    /*
+     * Parsing alternativo utilizando outra biblioteca (IcePDF)
+     */
+    private int icePDFParse(TikaInputStream tis, ContentHandler handler, Metadata metadata) throws TikaException {
+
+        Document iceDoc = null;
+        try {
+            iceDoc = new Document();
+            iceDoc.setFile(tis.getFile().getAbsolutePath());
+
+            int numPages = iceDoc.getNumberOfPages();
+            for (int i = 0; i < numPages; i++) {
+                try {
+                    PageText pageText = iceDoc.getPageText(i);
+                    if (pageText != null) {
+                        char[] chars = ("\nPage " + i + "\n").toCharArray(); //$NON-NLS-1$ //$NON-NLS-2$
+                        handler.characters(chars, 0, chars.length);
+                        chars = pageText.toString().toCharArray();
+                        handler.characters(chars, 0, chars.length);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                PInfo info = iceDoc.getInfo();
+                String value = info.getSubject();
+                if (value != null)
+                    metadata.add(Metadata.SUBJECT, value);
+                value = info.getTitle();
+                if (value != null)
+                    metadata.add(Metadata.TITLE, value);
+                value = info.getAuthor();
+                if (value != null)
+                    metadata.add(Metadata.AUTHOR, value);
+                value = info.getCreator();
+                if (value != null)
+                    metadata.add(Metadata.CREATOR, value);
+                value = info.getProducer();
+                if (value != null)
+                    metadata.add(Metadata.APPLICATION_NAME, value);
+                value = info.getKeywords();
+                if (value != null)
+                    metadata.add(Metadata.KEYWORDS, value);
+                PDate date = info.getCreationDate();
+                if (date != null)
+                    metadata.add(Metadata.CREATION_DATE, date.toString());
+                date = info.getModDate();
+                if (date != null)
+                    metadata.add(Metadata.MODIFIED, date.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return numPages;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new TikaException("IcePDF Exception", e); //$NON-NLS-1$
+
+        } finally {
+            if (iceDoc != null)
+                iceDoc.dispose();
+        }
+
+    }
 
 }

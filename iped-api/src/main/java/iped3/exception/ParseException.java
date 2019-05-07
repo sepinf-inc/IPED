@@ -10,5 +10,5 @@ package iped3.exception;
  * @author WERNECK
  */
 public class ParseException extends Exception {
-  
+
 }

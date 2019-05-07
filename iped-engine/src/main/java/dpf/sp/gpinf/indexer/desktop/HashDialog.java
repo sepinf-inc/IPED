@@ -8,8 +8,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-public class HashDialog extends JDialog{
-    
+public class HashDialog extends JDialog {
+
     /**
      * 
      */
@@ -18,7 +18,7 @@ public class HashDialog extends JDialog{
     public HashDialog(String hash) {
         this(hash, "");
     }
-    
+
     public HashDialog(String hash, String absolutePath) {
         super();
         this.setModal(true);
@@ -26,7 +26,8 @@ public class HashDialog extends JDialog{
         this.setBounds(0, 0, 600, 150);
         this.setLocationRelativeTo(null);
         JPanel panel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("<html><body>" + Messages.getString("HashDialog.MD5Title")+ ":<br>" + absolutePath + "</body></html>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        JLabel label = new JLabel(
+                "<html><body>" + Messages.getString("HashDialog.MD5Title") + ":<br>" + absolutePath + "</body></html>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         JTextField text = new JTextField(hash.toUpperCase());
         text.setEditable(false);
         text.setHorizontalAlignment(JTextField.CENTER);
@@ -37,5 +38,5 @@ public class HashDialog extends JDialog{
         this.getContentPane().add(panel);
         this.pack();
     }
-    
+
 }

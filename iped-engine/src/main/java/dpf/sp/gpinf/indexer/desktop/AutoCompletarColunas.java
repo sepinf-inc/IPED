@@ -53,21 +53,27 @@ public class AutoCompletarColunas {
                                     for (int i = 0; i < cols.length; i++) {
                                         NEXT: for (int j = 0; j < cols[i].length; j++) {
                                             String col = cols[i][j];
-                                            if ((step == 0 && col.toLowerCase().startsWith(base)) || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
+                                            if ((step == 0 && col.toLowerCase().startsWith(base))
+                                                    || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
                                                 for (int k = 0; k < l.size(); k++) {
-                                                    if (l.get(k).equals(col)) continue NEXT;
+                                                    if (l.get(k).equals(col))
+                                                        continue NEXT;
                                                 }
                                                 l.add(col);
                                             }
                                         }
                                     }
                                 }
-                                if (l.isEmpty()) return;
-                                if (lastIdx == -1) lastIdx = 0;
+                                if (l.isEmpty())
+                                    return;
+                                if (lastIdx == -1)
+                                    lastIdx = 0;
                                 else {
                                     lastIdx += (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0 ? -1 : 1;
-                                    if (lastIdx >= l.size()) lastIdx = 0;
-                                    else if (lastIdx < 0) lastIdx = l.size() - 1;
+                                    if (lastIdx >= l.size())
+                                        lastIdx = 0;
+                                    else if (lastIdx < 0)
+                                        lastIdx = l.size() - 1;
                                 }
                                 editor.setText(editor.getText().substring(0, pos) + addEscape(l.get(lastIdx)) + ":"); //$NON-NLS-1$
                                 editor.setCaretPosition(editor.getText().length());
@@ -85,7 +91,8 @@ public class AutoCompletarColunas {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < s.length(); i++) {
                     char c = s.charAt(i);
-                    if (!Character.isLetterOrDigit(c)) sb.append('\\');
+                    if (!Character.isLetterOrDigit(c))
+                        sb.append('\\');
                     sb.append(c);
                 }
                 return sb.toString();
@@ -95,7 +102,8 @@ public class AutoCompletarColunas {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < s.length(); i++) {
                     char c = s.charAt(i);
-                    if (c == '\\' && i < s.length() - 1) c = s.charAt(++i);
+                    if (c == '\\' && i < s.length() - 1)
+                        c = s.charAt(++i);
                     sb.append(c);
                 }
                 return sb.toString();

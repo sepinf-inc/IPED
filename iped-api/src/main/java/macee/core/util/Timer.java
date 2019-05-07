@@ -28,8 +28,8 @@ public interface Timer {
     LocalDateTime getStartTime();
 
     /**
-     * Registers the time when the instance stopped execution. Returns -1, if end time is not
-     * registered.
+     * Registers the time when the instance stopped execution. Returns -1, if end
+     * time is not registered.
      *
      * @return the time the instance stopped execution.
      */

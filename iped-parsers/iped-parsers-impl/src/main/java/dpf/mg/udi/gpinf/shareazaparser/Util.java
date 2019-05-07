@@ -32,70 +32,70 @@ import org.apache.commons.codec.binary.Base64;
  */
 class Util {
 
-	public static String encodeGUID(byte[] bytes) {
-		long u1 = (long) (bytes[7]) << 56 | (long) (bytes[6] & 0xff) << 48 | (long) (bytes[5] & 0xff) << 40
-				| (long) (bytes[4] & 0xff) << 32 | (long) (bytes[3] & 0xff) << 24 | (long) (bytes[2] & 0xff) << 16
-				| (long) (bytes[1] & 0xff) << 8 | (long) (bytes[0] & 0xff);
-		long u2 = (long) (bytes[8]) << 56 | (long) (bytes[9] & 0xff) << 48 | (long) (bytes[10] & 0xff) << 40
-				| (long) (bytes[11] & 0xff) << 32 | (long) (bytes[12] & 0xff) << 24 | (long) (bytes[13] & 0xff) << 16
-				| (long) (bytes[14] & 0xff) << 8 | (long) (bytes[15] & 0xff);
-		UUID uuid = new UUID(u1, u2);
-		return uuid.toString();
-	}
+    public static String encodeGUID(byte[] bytes) {
+        long u1 = (long) (bytes[7]) << 56 | (long) (bytes[6] & 0xff) << 48 | (long) (bytes[5] & 0xff) << 40
+                | (long) (bytes[4] & 0xff) << 32 | (long) (bytes[3] & 0xff) << 24 | (long) (bytes[2] & 0xff) << 16
+                | (long) (bytes[1] & 0xff) << 8 | (long) (bytes[0] & 0xff);
+        long u2 = (long) (bytes[8]) << 56 | (long) (bytes[9] & 0xff) << 48 | (long) (bytes[10] & 0xff) << 40
+                | (long) (bytes[11] & 0xff) << 32 | (long) (bytes[12] & 0xff) << 24 | (long) (bytes[13] & 0xff) << 16
+                | (long) (bytes[14] & 0xff) << 8 | (long) (bytes[15] & 0xff);
+        UUID uuid = new UUID(u1, u2);
+        return uuid.toString();
+    }
 
-	public static String encodeInAddr(byte[] bytes) {
-		return String.format("%d.%d.%d.%d", bytes[0] & 0xff, bytes[1] & 0xff, bytes[2] & 0xff, bytes[3] & 0xff); //$NON-NLS-1$
-	}
+    public static String encodeInAddr(byte[] bytes) {
+        return String.format("%d.%d.%d.%d", bytes[0] & 0xff, bytes[1] & 0xff, bytes[2] & 0xff, bytes[3] & 0xff); //$NON-NLS-1$
+    }
 
-	public static String encodeHex(byte[] bytes) {
-		StringBuilder builder = new StringBuilder(bytes.length * 2);
-		for (byte b : bytes) {
-			builder.append(String.format("%02x", b & 0xff)); //$NON-NLS-1$
-		}
-		return builder.toString();
-	}
+    public static String encodeHex(byte[] bytes) {
+        StringBuilder builder = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            builder.append(String.format("%02x", b & 0xff)); //$NON-NLS-1$
+        }
+        return builder.toString();
+    }
 
-	public static String encodeBase64(byte[] bytes) {
-		Base64 encoder = new Base64();
-		return encoder.encodeToString(bytes);
-	}
+    public static String encodeBase64(byte[] bytes) {
+        Base64 encoder = new Base64();
+        return encoder.encodeToString(bytes);
+    }
 
-	public static String encodeBase32(byte[] bytes) {
-		Base32 encoder = new Base32();
-		return encoder.encodeToString(bytes);
-	}
+    public static String encodeBase32(byte[] bytes) {
+        Base32 encoder = new Base32();
+        return encoder.encodeToString(bytes);
+    }
 
-	public static long convertToEpoch(long timestamp) {
-		return timestamp / 10000L - 11644473600000L;
-	}
+    public static long convertToEpoch(long timestamp) {
+        return timestamp / 10000L - 11644473600000L;
+    }
 
-	public static double convertToCSVTimestamp(long epoch) {
-		return epoch / 86400.0 + 25569.0;
-	}
-	
-	public static String decodeTriState(int state) {
-		switch (state) {
-			case 1:
-				return "False"; //$NON-NLS-1$
-			case 2:
-				return "True"; //$NON-NLS-1$
-			default:
-		}
-		return "Unknown"; //$NON-NLS-1$
-	}
-	
-	// DateFormat nao é thread safe
-    private static final ThreadLocal<DateFormat> threadLocal =
-        new ThreadLocal<DateFormat>() {
-            @Override protected DateFormat initialValue() {
-            	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z"); //$NON-NLS-1$
-                return df;
+    public static double convertToCSVTimestamp(long epoch) {
+        return epoch / 86400.0 + 25569.0;
+    }
+
+    public static String decodeTriState(int state) {
+        switch (state) {
+            case 1:
+                return "False"; //$NON-NLS-1$
+            case 2:
+                return "True"; //$NON-NLS-1$
+            default:
+        }
+        return "Unknown"; //$NON-NLS-1$
+    }
+
+    // DateFormat nao é thread safe
+    private static final ThreadLocal<DateFormat> threadLocal = new ThreadLocal<DateFormat>() {
+        @Override
+        protected DateFormat initialValue() {
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z"); //$NON-NLS-1$
+            return df;
         }
     };
 
-	public static String formatDatetime(long epoch) {
-		Date date = new Date(epoch);
-		return threadLocal.get().format(date);
-	}
+    public static String formatDatetime(long epoch) {
+        Date date = new Date(epoch);
+        return threadLocal.get().format(date);
+    }
 
 }

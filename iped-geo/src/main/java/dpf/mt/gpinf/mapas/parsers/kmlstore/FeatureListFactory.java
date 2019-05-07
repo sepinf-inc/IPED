@@ -8,7 +8,8 @@ import java.util.List;
 
 public interface FeatureListFactory {
 
-	public boolean canParse(String mimeType); 
-	public List<Object> parseFeatureList(File file) throws IOException;
+    public boolean canParse(String mimeType);
+
+    public List<Object> parseFeatureList(File file) throws IOException;
 
 }

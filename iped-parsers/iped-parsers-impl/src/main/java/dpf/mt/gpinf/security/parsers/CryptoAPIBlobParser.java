@@ -21,41 +21,41 @@ import org.xml.sax.SAXException;
 import dpf.mt.gpinf.security.parsers.capi.CapiBlob;
 
 public class CryptoAPIBlobParser extends AbstractParser {
-	
-	public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");
+
+    public static final MediaType CAPI_MIME = MediaType.application("crypto-api-file");
     private static Set<MediaType> SUPPORTED_TYPES = null;
-	public static final String ALIAS = "capi:alias"; //$NON-NLS-1$
-	public static final Property HASPRIVATEKEY = Property.internalBoolean("capi:hasPrivateKey"); //$NON-NLS-1$
-	public static final Property HASPUBLICKEY = Property.internalBoolean("capi:hasPublicKey"); //$NON-NLS-1$
+    public static final String ALIAS = "capi:alias"; //$NON-NLS-1$
+    public static final Property HASPRIVATEKEY = Property.internalBoolean("capi:hasPrivateKey"); //$NON-NLS-1$
+    public static final Property HASPUBLICKEY = Property.internalBoolean("capi:hasPublicKey"); //$NON-NLS-1$
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		if(SUPPORTED_TYPES == null){
-			SUPPORTED_TYPES = new HashSet<MediaType>();
-			SUPPORTED_TYPES.add(CAPI_MIME);
-		}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        if (SUPPORTED_TYPES == null) {
+            SUPPORTED_TYPES = new HashSet<MediaType>();
+            SUPPORTED_TYPES.add(CAPI_MIME);
+        }
 
-		return SUPPORTED_TYPES;
-	}
+        return SUPPORTED_TYPES;
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-			throws IOException, SAXException, TikaException {
-		TemporaryResources tmp = new TemporaryResources();
-		TikaInputStream tis = TikaInputStream.get(stream, tmp);
-		File file = tis.getFile();
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        TemporaryResources tmp = new TemporaryResources();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        File file = tis.getFile();
 
-		try{
-			CapiBlob cb = new CapiBlob(tis);
+        try {
+            CapiBlob cb = new CapiBlob(tis);
 
-			metadata.set(ALIAS, cb.getName());
-			metadata.set(HASPRIVATEKEY, (new Boolean(cb.getExPrivKeyLen()>0)).toString());
-			metadata.set(HASPUBLICKEY, (new Boolean(cb.getExPubKeyLen()>0)).toString());
+            metadata.set(ALIAS, cb.getName());
+            metadata.set(HASPRIVATEKEY, (new Boolean(cb.getExPrivKeyLen() > 0)).toString());
+            metadata.set(HASPUBLICKEY, (new Boolean(cb.getExPubKeyLen() > 0)).toString());
 
-		}catch(Exception e){
-			
-		}
+        } catch (Exception e) {
 
-	}
+        }
+
+    }
 
 }

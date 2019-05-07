@@ -9,8 +9,7 @@ import macee.descriptor.Descriptor;
  * mas é usado para outros propósitos (arquivos ignorados, resultado de busca,
  * linhas temporais, etc.)
  * 
- * InReport: se será incluído no relatório
- * Ignored: se foi ignorado
+ * InReport: se será incluído no relatório Ignored: se foi ignorado
  * 
  * Recommendation é uma indicação da relevância da coleção.
  * 

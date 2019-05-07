@@ -5,23 +5,23 @@ import java.util.Map;
 
 public class SwiftCountry {
 
-  private String countryCode;
-  private Map<String, SwiftCode> codes = new HashMap<>();
+    private String countryCode;
+    private Map<String, SwiftCode> codes = new HashMap<>();
 
-  public SwiftCountry(String countryCode) {
-    this.countryCode = countryCode;
-  }
+    public SwiftCountry(String countryCode) {
+        this.countryCode = countryCode;
+    }
 
-  public String getCountryCode() {
-    return countryCode;
-  }
+    public String getCountryCode() {
+        return countryCode;
+    }
 
-  public void add(SwiftCode swiftCode) {
-    this.codes.put(swiftCode.getCode(), swiftCode);
-  }
+    public void add(SwiftCode swiftCode) {
+        this.codes.put(swiftCode.getCode(), swiftCode);
+    }
 
-  public SwiftCode get(String code) {
-    return this.codes.get(code);
-  }
+    public SwiftCode get(String code) {
+        return this.codes.get(code);
+    }
 
 }

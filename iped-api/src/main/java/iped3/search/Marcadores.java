@@ -22,80 +22,82 @@ import java.util.TreeMap;
  */
 public interface Marcadores extends Serializable {
 
-  void addLabel(List<Integer> ids, int label);
+    void addLabel(List<Integer> ids, int label);
 
-  void addToTypedWords(String texto);
+    void addToTypedWords(String texto);
 
-  void changeLabel(int labelId, String newLabel);
+    void changeLabel(int labelId, String newLabel);
 
-  void clearSelected();
+    void clearSelected();
 
-  void delLabel(int label);
+    void delLabel(int label);
 
-  LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception;
+    LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase)
+            throws Exception;
 
-  LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IPEDSource ipedCase) throws Exception;
+    LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IPEDSource ipedCase) throws Exception;
 
-  LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase) throws Exception;
+    LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames, IPEDSource ipedCase)
+            throws Exception;
 
-  LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IPEDSource ipedCase);
+    LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IPEDSource ipedCase);
 
-  File getIndexDir();
+    File getIndexDir();
 
-  byte[] getLabelBits(int[] labelids);
+    byte[] getLabelBits(int[] labelids);
 
-  int getLabelId(String labelName);
+    int getLabelId(String labelName);
 
-  ArrayList<Integer> getLabelIds(int id);
+    ArrayList<Integer> getLabelIds(int id);
 
-  Map<Integer, String> getLabelMap();
+    Map<Integer, String> getLabelMap();
 
-  String getLabelName(int labelId);
+    String getLabelName(int labelId);
 
-  public List<String> getLabelList(int itemId);
+    public List<String> getLabelList(int itemId);
 
-  int getLastId();
+    int getLastId();
 
-  int getTotalItens();
+    int getTotalItens();
 
-  int getTotalSelected();
+    int getTotalSelected();
 
-  LinkedHashSet<String> getTypedWords();
+    LinkedHashSet<String> getTypedWords();
 
-  boolean hasLabel(int id);
+    boolean hasLabel(int id);
 
-  boolean hasLabel(int id, byte[] labelbits);
+    boolean hasLabel(int id, byte[] labelbits);
 
-  boolean hasLabel(int id, int label);
+    boolean hasLabel(int id, int label);
 
-  boolean isSelected(int id);
+    boolean isSelected(int id);
 
-  void loadState();
+    void loadState();
 
-  void loadState(File file) throws IOException, ClassNotFoundException;
+    void loadState(File file) throws IOException, ClassNotFoundException;
 
-  int newLabel(String labelName);
+    int newLabel(String labelName);
 
-  void removeLabel(List<Integer> ids, int label);
+    void removeLabel(List<Integer> ids, int label);
 
-  void saveState();
+    void saveState();
 
-  void saveState(File file) throws IOException;
+    void saveState(File file) throws IOException;
 
-  void selectAll();
+    void selectAll();
 
-  void setSelected(boolean value, int id, IPEDSource ipedCase);
+    void setSelected(boolean value, int id, IPEDSource ipedCase);
 
-  void updateCookie();
-  
-  void setLabelComment(int labelId, String comment);
-  
-  String getLabelComment(int labelId);
-  
-  void setInReport(int labelId, boolean inReport);
-  
-  boolean isInReport(int labelId);
+    void updateCookie();
 
-  LuceneSearchResult filterInReport(LuceneSearchResult luceneSearch, IPEDSource ipedCase) throws Exception;
-  
+    void setLabelComment(int labelId, String comment);
+
+    String getLabelComment(int labelId);
+
+    void setInReport(int labelId, boolean inReport);
+
+    boolean isInReport(int labelId);
+
+    LuceneSearchResult filterInReport(LuceneSearchResult luceneSearch, IPEDSource ipedCase) throws Exception;
+
 }

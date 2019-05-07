@@ -20,32 +20,32 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 public class OutlookDBXParser extends AbstractParser {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(OutlookDBXParser.class);
-    
+
     private static final AtomicBoolean logged = new AtomicBoolean();
-    
+
     public static final String DBX_PARSER_IMPL_SYS_PROP = "dbxParserImpl"; //$NON-NLS-1$
-    
+
     private static final String DEFAULT_DBX_PARSER_IMPL = "dpf.sp.gpinf.indexer.parsers.OutlookDBXParserImpl"; //$NON-NLS-1$
-    
+
     private Parser parserImpl;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        
-        try{
+
+        try {
             String implName = System.getProperty(DBX_PARSER_IMPL_SYS_PROP, DEFAULT_DBX_PARSER_IMPL);
-            parserImpl = (Parser)Class.forName(implName).newInstance();
+            parserImpl = (Parser) Class.forName(implName).newInstance();
             return parserImpl.getSupportedTypes(context);
-            
-        }catch(Throwable e){
-            if(!logged.getAndSet(true)) {
+
+        } catch (Throwable e) {
+            if (!logged.getAndSet(true)) {
                 String msg = "DBX parser not found, DBX mailboxes will NOT be expanded."; //$NON-NLS-1$
-                //are we in analysis app?
-                if(System.getProperty("iped.javaVersionChecked") != null)
+                // are we in analysis app?
+                if (System.getProperty("iped.javaVersionChecked") != null)
                     LOGGER.warn(msg);
                 else
                     LOGGER.error(msg);
@@ -57,21 +57,22 @@ public class OutlookDBXParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
         EmbeddedDocumentExtractorDecorator eded = new EmbeddedDocumentExtractorDecorator(extractor);
-        
+
         context.set(EmbeddedDocumentExtractor.class, eded);
         parserImpl.parse(stream, handler, metadata, context);
         context.set(EmbeddedDocumentExtractor.class, extractor);
-        
+
     }
-    
-    private class EmbeddedDocumentExtractorDecorator implements EmbeddedDocumentExtractor{
-        
+
+    private class EmbeddedDocumentExtractorDecorator implements EmbeddedDocumentExtractor {
+
         private EmbeddedDocumentExtractor extractor;
-        
-        public EmbeddedDocumentExtractorDecorator(EmbeddedDocumentExtractor extractor){
+
+        public EmbeddedDocumentExtractorDecorator(EmbeddedDocumentExtractor extractor) {
             this.extractor = extractor;
         }
 
@@ -83,14 +84,14 @@ public class OutlookDBXParser extends AbstractParser {
         @Override
         public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
                 throws SAXException, IOException {
-            
-            if(metadata.get(Metadata.CONTENT_TYPE).equals("message/rfc822")) //$NON-NLS-1$
+
+            if (metadata.get(Metadata.CONTENT_TYPE).equals("message/rfc822")) //$NON-NLS-1$
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "message/rfc822"); //$NON-NLS-1$
-            
+
             extractor.parseEmbedded(stream, handler, metadata, outputHtml);
-            
+
         }
-        
+
     }
 
 }

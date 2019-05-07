@@ -28,46 +28,45 @@ import io.swagger.annotations.ApiOperation;
 import iped3.IPEDSource;
 import iped3.Item;
 
-@Api(value="Documents")
+@Api(value = "Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
 public class Text {
-    
-	@ApiOperation(value="Get document's content converted as text")
-    @GET
-    @Produces(MediaType.TEXT_PLAIN+"; charset=UTF-8")
-	public static StreamingOutput content(
-			@PathParam("sourceID") String sourceID, 
-			@PathParam("id") int id) throws Exception{
 
-    	IPEDSource source = Sources.getSource(sourceID);
-    	final Item item = source.getItemByID(id);
-    	final IndexerDefaultParser parser = new IndexerDefaultParser();
-		final ParseContext context = getTikaContext(item, parser, source.getModuleDir());
-    	final Metadata metadata = new Metadata();
-        
-    	ParsingTask.fillMetadata(item, metadata);
+    @ApiOperation(value = "Get document's content converted as text")
+    @GET
+    @Produces(MediaType.TEXT_PLAIN + "; charset=UTF-8")
+    public static StreamingOutput content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
+            throws Exception {
+
+        IPEDSource source = Sources.getSource(sourceID);
+        final Item item = source.getItemByID(id);
+        final IndexerDefaultParser parser = new IndexerDefaultParser();
+        final ParseContext context = getTikaContext(item, parser, source.getModuleDir());
+        final Metadata metadata = new Metadata();
+
+        ParsingTask.fillMetadata(item, metadata);
         parser.setPrintMetadata(false);
-		
-    	return new StreamingOutput() {
+
+        return new StreamingOutput() {
             @Override
-			public void write(OutputStream arg0) throws IOException, WebApplicationException {
-        		ContentHandler handler = new ToTextContentHandler(arg0, "UTF-8");
-				try (TikaInputStream is = item.getTikaStream()){
-					parser.parse(is, handler, metadata, context);
-				} catch (Exception e) {
-					throw new WebApplicationException(e);
-				}
-			}
-		};
+            public void write(OutputStream arg0) throws IOException, WebApplicationException {
+                ContentHandler handler = new ToTextContentHandler(arg0, "UTF-8");
+                try (TikaInputStream is = item.getTikaStream()) {
+                    parser.parse(is, handler, metadata, context);
+                } catch (Exception e) {
+                    throw new WebApplicationException(e);
+                }
+            }
+        };
     }
-    
+
     public static ParseContext getTikaContext(Item item, Parser parser, File moduleDir) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-        ParseContext context = expander.getTikaContext(); 
+        ParseContext context = expander.getTikaContext();
         expander.setExtractEmbedded(false);
         context.set(OCROutputFolder.class, new OCROutputFolder(moduleDir));
         return context;
-      }
+    }
 
 }

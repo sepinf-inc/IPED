@@ -15,33 +15,32 @@ import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import iped3.Item;
 
-
 public abstract class AbstractCarver implements Carver {
     protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
     protected CarverType[] carverTypes = null;
-    
+
     protected ArrayDeque<Hit> headersWaitingFooters = new ArrayDeque<>();
-    
+
     protected int maxWaitingHeaders = 1000;
-    
+
     // que subclasses a altere.
     Object validCarvedObject;
     private ArrayList<CarvedItemListener> carvedItemListeners = new ArrayList<CarvedItemListener>();
-    
+
     Hit lastEscapeFooter;
     boolean ignoreCorrupted;
-    
-    private static final String CARVEDBY_METADATA_NAME = "CarvedBy"; 
-    private static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); 
+
+    private static final String CARVEDBY_METADATA_NAME = "CarvedBy";
+    private static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset");
 
     // carveia do cabeçalho a partir da informação de tamanho retornada pelo método
     // getLengthFromHit
     public Item carveFromLengthRef(Item parentEvidence, Hit header, Hit lengthRef) throws IOException {
-        
+
         headersWaitingFooters.pollLast();
-        
+
         long len = getLengthFromHit(parentEvidence, lengthRef);
-        if(len <= 0) {
+        if (len <= 0) {
             return null;
         }
 
@@ -54,14 +53,15 @@ public abstract class AbstractCarver implements Carver {
         }
         return carveFromHeader(parentEvidence, header, len);
     }
-    
-    // carveia do cabeçalho a partir da informação de tamanho do cabeçalho retornada pelo método
+
+    // carveia do cabeçalho a partir da informação de tamanho do cabeçalho retornada
+    // pelo método
     // getLengthFromHit
     @Override
     public Item carveFromHeader(Item parentEvidence, Hit header) throws IOException {
 
         long len = getLengthFromHit(parentEvidence, header);
-        if(len <= 0) {
+        if (len <= 0) {
             return null;
         }
 
@@ -82,7 +82,7 @@ public abstract class AbstractCarver implements Carver {
 
             String name = carvedNamePrefix + header.getOffset();
             offsetFile.setName(name);
-            offsetFile.setPath(parentEvidence.getPath()+">>"+name);
+            offsetFile.setPath(parentEvidence.getPath() + ">>" + name);
 
             offsetFile.setLength(len);
             offsetFile.setSumVolume(false);
@@ -91,11 +91,11 @@ public abstract class AbstractCarver implements Carver {
 
             long prevOff = parentEvidence.getFileOffset();
             offsetFile.setFileOffset(prevOff == -1 ? header.getOffset() : prevOff + header.getOffset());
-            
+
             offsetFile.getMetadata().add(CARVEDBY_METADATA_NAME, this.getClass().getName());
             offsetFile.getMetadata().add(CARVEDOFFSET_METADATA_NAME, Long.toString(offsetFile.getFileOffset()));
 
-            for (Iterator<CarvedItemListener> iterator = carvedItemListeners.iterator(); iterator.hasNext(); ) {
+            for (Iterator<CarvedItemListener> iterator = carvedItemListeners.iterator(); iterator.hasNext();) {
                 CarvedItemListener carvedItemListener = iterator.next();
                 carvedItemListener.processCarvedItem(parentEvidence, offsetFile, header.getOffset());
             }
@@ -111,8 +111,8 @@ public abstract class AbstractCarver implements Carver {
     @Override
     public Item carveFromFooter(Item parentEvidence, Hit footer) throws IOException {
         Hit header = headersWaitingFooters.pollLast();
-        
-        if(header!=null) {
+
+        if (header != null) {
             long len = footer.getOffset() + footer.getSignature().getLength() - header.getOffset();
             CarverType typeCarved = header.getSignature().getCarverType();
 
@@ -127,7 +127,7 @@ public abstract class AbstractCarver implements Carver {
 
             return carveFromHeader(parentEvidence, header, len);
         }
-        
+
         return null;
     }
 
@@ -155,36 +155,36 @@ public abstract class AbstractCarver implements Carver {
     public CarverType[] getCarverTypes() {
         return carverTypes;
     }
-    
+
     protected void clearOldHeaders(Item parentEvidence) {
-        while(headersWaitingFooters.size() > maxWaitingHeaders) {
+        while (headersWaitingFooters.size() > maxWaitingHeaders) {
             headersWaitingFooters.pollFirst();
         }
     }
 
     @Override
     public void notifyHit(Item parentEvidence, Hit hit) throws IOException {
-        
+
         // se é um cabeçalho de um carvertype sem footer
         if (hit.getSignature().isHeader() && !hit.getSignature().getCarverType().hasFooter()) {
-            if(!hit.getSignature().getCarverType().hasLengthRef()) {
-                // carveia a partir da informação de tamanho 
+            if (!hit.getSignature().getCarverType().hasLengthRef()) {
+                // carveia a partir da informação de tamanho
                 Item e = carveFromHeader(parentEvidence, hit);
-            }else {
-                //adiciona header para ser processado depois
+            } else {
+                // adiciona header para ser processado depois
                 headersWaitingFooters.addLast(hit);
             }
         }
-        
-        if(hit.getSignature().getSignatureType()==SignatureType.LENGTHREF) {
+
+        if (hit.getSignature().getSignatureType() == SignatureType.LENGTHREF) {
             Hit header = headersWaitingFooters.peekLast();
             // se já foi encontrado um header anterior
             if (header != null) {
-                // carveia a partir da informação de tamanho 
+                // carveia a partir da informação de tamanho
                 Item e = carveFromLengthRef(parentEvidence, header, hit);
             }
         }
-        
+
         // se é um cabeçalho de um carvertype que tem footer
         if (hit.getSignature().isHeader() && hit.getSignature().getCarverType().hasFooter()) {
             // empilha
@@ -193,19 +193,20 @@ public abstract class AbstractCarver implements Carver {
             // ou carvear até tamanho maximo ou até o inicio do header seguinte (o que for
             // menor)?
         }
-        
+
         if (hit.getSignature().isFooter()) {
-            //test if current footer matches a previous found escapeFooter
-            if(lastEscapeFooter == null || lastEscapeFooter.getOffset() + lastEscapeFooter.getSignature().getLength() != hit.getOffset() + hit.getSignature().getLength()) {
+            // test if current footer matches a previous found escapeFooter
+            if (lastEscapeFooter == null || lastEscapeFooter.getOffset()
+                    + lastEscapeFooter.getSignature().getLength() != hit.getOffset() + hit.getSignature().getLength()) {
                 carveFromFooter(parentEvidence, hit);
             }
         }
         if (hit.getSignature().getSignatureType().equals(SignatureType.ESCAPEFOOTER)) {
             lastEscapeFooter = hit;
-        }else {
+        } else {
             lastEscapeFooter = null;
         }
-        
+
         clearOldHeaders(parentEvidence);
     }
 
@@ -223,7 +224,7 @@ public abstract class AbstractCarver implements Carver {
     public void removeCarvedItemListener(CarvedItemListener carvedItemListener) {
         carvedItemListeners.remove(carvedItemListener);
     }
-    
+
     @Override
     public void setIgnoreCorrupted(boolean ignore) {
         ignoreCorrupted = ignore;

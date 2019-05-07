@@ -11,20 +11,20 @@ import java.io.Serializable;
  */
 public interface DataSourceResult extends Serializable {
 
-  String getDataSource();
+    String getDataSource();
 
-  String getItems();
+    String getItems();
 
-  int getLimit();
+    int getLimit();
 
-  int getOffset();
+    int getOffset();
 
-  void setDataSource(String dataSource);
+    void setDataSource(String dataSource);
 
-  void setItems(String items);
+    void setItems(String items);
 
-  void setLimit(int limit);
+    void setLimit(int limit);
 
-  void setOffset(int offset);
-  
+    void setOffset(int offset);
+
 }

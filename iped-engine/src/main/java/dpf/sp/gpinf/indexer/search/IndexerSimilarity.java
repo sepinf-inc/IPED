@@ -23,37 +23,37 @@ import org.apache.lucene.search.similarities.DefaultSimilarity;
 
 public class IndexerSimilarity extends DefaultSimilarity {
 
-  /*
-   * @Override public float coord(int arg0, int arg1) { // TODO Auto-generated
-   * method stub return 1.0f; }
-   */
+    /*
+     * @Override public float coord(int arg0, int arg1) { // TODO Auto-generated
+     * method stub return 1.0f; }
+     */
 
-  /*
-   * @Override public float idf(long arg0, long arg1) { // TODO Auto-generated
-   * method stub return 1.0f; }
-   */
-  @Override
-  public float lengthNorm(FieldInvertState state) {
-    return state.getBoost();
-  }
+    /*
+     * @Override public float idf(long arg0, long arg1) { // TODO Auto-generated
+     * method stub return 1.0f; }
+     */
+    @Override
+    public float lengthNorm(FieldInvertState state) {
+        return state.getBoost();
+    }
 
-  @Override
-  public float queryNorm(float arg0) {
-    return 1.0f;
-  }
+    @Override
+    public float queryNorm(float arg0) {
+        return 1.0f;
+    }
 
-  /*
-   * @Override public float scorePayload(int arg0, int arg1, int arg2,
-   * BytesRef arg3) { // TODO Auto-generated method stub return 1.0f; }
-   */
+    /*
+     * @Override public float scorePayload(int arg0, int arg1, int arg2, BytesRef
+     * arg3) { // TODO Auto-generated method stub return 1.0f; }
+     */
 
-  /*
-   * @Override public float sloppyFreq(int arg0) { // TODO Auto-generated
-   * method stub return 1.0f; }
-   */
+    /*
+     * @Override public float sloppyFreq(int arg0) { // TODO Auto-generated method
+     * stub return 1.0f; }
+     */
 
-  /*
-   * @Override public float tf(float freq) { // TODO Auto-generated method
-   * stub return freq*freq; }
-   */
+    /*
+     * @Override public float tf(float freq) { // TODO Auto-generated method stub
+     * return freq*freq; }
+     */
 }

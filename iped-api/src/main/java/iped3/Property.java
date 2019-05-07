@@ -13,24 +13,24 @@ import java.io.Serializable;
  */
 public interface Property extends Serializable {
 
-  /**
-   * Obtém nome da propriedade.
-   *
-   * @return nome da propriedade
-   */
-  String getName();
+    /**
+     * Obtém nome da propriedade.
+     *
+     * @return nome da propriedade
+     */
+    String getName();
 
-  /**
-   * Obtém valor da propriedade.
-   *
-   * @return valor correspondente da propriedade
-   */
-  String getValue();
+    /**
+     * Obtém valor da propriedade.
+     *
+     * @return valor correspondente da propriedade
+     */
+    String getValue();
 
-  /**
-   * Retorna representação em texto da propriedade.
-   */
-  @Override
-  String toString();
-  
+    /**
+     * Retorna representação em texto da propriedade.
+     */
+    @Override
+    String toString();
+
 }

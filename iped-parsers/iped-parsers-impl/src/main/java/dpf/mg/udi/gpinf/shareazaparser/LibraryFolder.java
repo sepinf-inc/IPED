@@ -32,91 +32,91 @@ import iped3.search.ItemSearcher;
  */
 class LibraryFolder extends ShareazaEntity {
 
-	private final List<LibraryFolder> folders = new ArrayList<>();
-	private final List<LibraryFile> files = new ArrayList<>();
-	private long nFiles = 0;
-	private long nVolume = 0;
-	private String path;
-	private String shared;
-	private boolean expanded;
-	private final LibraryFolder parentFolder;
-	
-	public LibraryFolder(LibraryFolder parentFolder) {
-		super("LIBRARY FOLDER"); //$NON-NLS-1$
-		this.parentFolder = parentFolder;
-	}
-	
-	public String getInheritedShared() {
-		String resp = shared;
-		if (resp.equals("Unknown") && parentFolder != null) { //$NON-NLS-1$
-			resp = parentFolder.getInheritedShared();
-		}
-		return resp;
-	}
+    private final List<LibraryFolder> folders = new ArrayList<>();
+    private final List<LibraryFile> files = new ArrayList<>();
+    private long nFiles = 0;
+    private long nVolume = 0;
+    private String path;
+    private String shared;
+    private boolean expanded;
+    private final LibraryFolder parentFolder;
 
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		path = ar.readString();
-		if (version >= 5) {
-			shared = Util.decodeTriState(ar.readInt());
-		} else {
-			if (ar.readByte() == 0) {
-				shared = "False"; //$NON-NLS-1$
-			} else {
-				shared = "Unknown"; //$NON-NLS-1$
-			}
-		}
-		if (version >= 3) {
-			expanded = ar.readBool();
-		}
-		int n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			LibraryFolder folder = new LibraryFolder(this);
-			folder.read(ar, version);
-			folders.add(folder);
-			nFiles += folder.nFiles;
-			nVolume += folder.nVolume;
-		}
-		n = ar.readCount();
-		for (int i = 0; i < n; i++) {
-			LibraryFile file = new LibraryFile(this);
-			file.read(ar, version);
-			files.add(file);
-			nFiles ++;
-			nVolume += file.getSize();
-		}
-	}
+    public LibraryFolder(LibraryFolder parentFolder) {
+        super("LIBRARY FOLDER"); //$NON-NLS-1$
+        this.parentFolder = parentFolder;
+    }
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("Files: " + nFiles); //$NON-NLS-1$
-		f.out("Volume: " + nVolume); //$NON-NLS-1$
-		f.out("Path: " + path); //$NON-NLS-1$
-		f.out("Shared: " + getInheritedShared()); //$NON-NLS-1$
-		f.out("Expanded: " + expanded); //$NON-NLS-1$
-		for (LibraryFolder folder : folders) {
-			folder.write(f);
-		}
-		for (LibraryFile file : files) {
-			file.write(f);
-		}
-	}
-	
-	public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
-		for (LibraryFolder folder: folders) {
-			folder.printTable(html, searcher);
-		}
-		for (LibraryFile file: files) {
-			file.printTableRow(html, path, searcher);
-		}
-	}
-	
-	public List<LibraryFolder> getLibraryFolders(){
-		return folders;
-	}
-	
-	public List<LibraryFile> getLibraryFiles(){
-		return files;
-	}
+    public String getInheritedShared() {
+        String resp = shared;
+        if (resp.equals("Unknown") && parentFolder != null) { //$NON-NLS-1$
+            resp = parentFolder.getInheritedShared();
+        }
+        return resp;
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        path = ar.readString();
+        if (version >= 5) {
+            shared = Util.decodeTriState(ar.readInt());
+        } else {
+            if (ar.readByte() == 0) {
+                shared = "False"; //$NON-NLS-1$
+            } else {
+                shared = "Unknown"; //$NON-NLS-1$
+            }
+        }
+        if (version >= 3) {
+            expanded = ar.readBool();
+        }
+        int n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            LibraryFolder folder = new LibraryFolder(this);
+            folder.read(ar, version);
+            folders.add(folder);
+            nFiles += folder.nFiles;
+            nVolume += folder.nVolume;
+        }
+        n = ar.readCount();
+        for (int i = 0; i < n; i++) {
+            LibraryFile file = new LibraryFile(this);
+            file.read(ar, version);
+            files.add(file);
+            nFiles++;
+            nVolume += file.getSize();
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("Files: " + nFiles); //$NON-NLS-1$
+        f.out("Volume: " + nVolume); //$NON-NLS-1$
+        f.out("Path: " + path); //$NON-NLS-1$
+        f.out("Shared: " + getInheritedShared()); //$NON-NLS-1$
+        f.out("Expanded: " + expanded); //$NON-NLS-1$
+        for (LibraryFolder folder : folders) {
+            folder.write(f);
+        }
+        for (LibraryFile file : files) {
+            file.write(f);
+        }
+    }
+
+    public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
+        for (LibraryFolder folder : folders) {
+            folder.printTable(html, searcher);
+        }
+        for (LibraryFile file : files) {
+            file.printTableRow(html, path, searcher);
+        }
+    }
+
+    public List<LibraryFolder> getLibraryFolders() {
+        return folders;
+    }
+
+    public List<LibraryFile> getLibraryFiles() {
+        return files;
+    }
 
 }

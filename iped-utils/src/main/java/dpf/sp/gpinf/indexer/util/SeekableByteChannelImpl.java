@@ -6,12 +6,12 @@ import java.nio.channels.SeekableByteChannel;
 
 import iped3.io.SeekableInputStream;
 
-public class SeekableByteChannelImpl implements SeekableByteChannel{
-    
+public class SeekableByteChannelImpl implements SeekableByteChannel {
+
     private SeekableInputStream sis;
     private boolean closed = false;
-    
-    public SeekableByteChannelImpl(SeekableInputStream sis){
+
+    public SeekableByteChannelImpl(SeekableInputStream sis) {
         this.sis = sis;
     }
 
@@ -30,7 +30,7 @@ public class SeekableByteChannelImpl implements SeekableByteChannel{
     public int read(ByteBuffer dst) throws IOException {
         byte[] buf = new byte[dst.remaining()];
         int read = sis.read(buf);
-        if(read == -1)
+        if (read == -1)
             return -1;
         dst.put(buf, 0, read);
         return read;

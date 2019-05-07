@@ -43,40 +43,41 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
-    //private int CLUSTER_SIZE = 1;
+    // private int CLUSTER_SIZE = 1;
     private ConfigurationDirectory localConfig;
     File confDir;
-    
+
     /* initializes with the parameters */
     @Override
-	public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
-		this.localConfig = localConfig;
+    public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
+        this.localConfig = localConfig;
 
-		File confFile = new File(props.getProperty("XML_CONFIG_FILE"));
-		Path confDir = Paths.get(props.getProperty("XML_CONFIG_DIR"));
-		try {
-	        loadXMLConfigFile(confFile);
-	        loadXMLConfigDir(confDir);
-		}catch(Exception e) {
-			throw new CarverConfigurationException(e);
-		}
-	}
+        File confFile = new File(props.getProperty("XML_CONFIG_FILE"));
+        Path confDir = Paths.get(props.getProperty("XML_CONFIG_DIR"));
+        try {
+            loadXMLConfigFile(confFile);
+            loadXMLConfigDir(confDir);
+        } catch (Exception e) {
+            throw new CarverConfigurationException(e);
+        }
+    }
 
-	/* carrega as configurações a partir de arquivos XML em um diretório */
+    /* carrega as configurações a partir de arquivos XML em um diretório */
     public void loadXMLConfigDir(Path baseDir) throws Exception {
-    	List<Path> xmlpaths = localConfig.lookUpResource(new Predicate<Path>() {
-			public boolean test(Path path) {
-				if(path.getFileName()!=null) {
-					return path.getFileName().toString().endsWith(".xml") && path.getFileName().toString().startsWith("carver-");
-				}
-				return false;
-			}
-		});
+        List<Path> xmlpaths = localConfig.lookUpResource(new Predicate<Path>() {
+            public boolean test(Path path) {
+                if (path.getFileName() != null) {
+                    return path.getFileName().toString().endsWith(".xml")
+                            && path.getFileName().toString().startsWith("carver-");
+                }
+                return false;
+            }
+        });
 
-    	for (Iterator iterator = xmlpaths.iterator(); iterator.hasNext();) {
-			Path path = (Path) iterator.next();
+        for (Iterator iterator = xmlpaths.iterator(); iterator.hasNext();) {
+            Path path = (Path) iterator.next();
             loadXMLConfigFile(path.toFile());
-		}
+        }
 
     }
 
@@ -118,7 +119,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                     TYPES_TO_NOT_PROCESS.add(type.trim());
                 }
             }
-            
+
             NodeList ignoreCorruptedEls = root.getElementsByTagName("ignoreCorrupted");
             ignoreCorrupted = Boolean.valueOf(ignoreCorruptedEls.item(0).getTextContent().trim());
 
@@ -151,13 +152,15 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                             if (footerSignatureEl != null) {
                                 ct.addFooter(footerSignatureEl.getTextContent().trim());
                             } else {
-                                ct.addSignature(new Signature(ct, footerSignatureEl.getTextContent().trim(), SignatureType.FOOTER));// em branco
+                                ct.addSignature(new Signature(ct, footerSignatureEl.getTextContent().trim(),
+                                        SignatureType.FOOTER));// em branco
                             }
                         }
                         for (int l = 0; l < escapeFooterSignatureEls.getLength(); l++) {
                             Element escapeFooterSignatureEl = (Element) escapeFooterSignatureEls.item(l);
                             if (escapeFooterSignatureEl != null) {
-                                ct.addSignature(escapeFooterSignatureEl.getTextContent().trim(), SignatureType.ESCAPEFOOTER);
+                                ct.addSignature(escapeFooterSignatureEl.getTextContent().trim(),
+                                        SignatureType.ESCAPEFOOTER);
                             }
                         }
                         for (int l = 0; l < lengthRefSignatureEls.getLength(); l++) {
@@ -174,14 +177,14 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                         }
                         TYPES_TO_CARVE.add(ct.getMimeType());
                         carverTypesArray.add(ct);
-                    }else {
+                    } else {
                         Class<?> classe = this.getClass().getClassLoader().loadClass(carverClass.getTextContent());
-                        Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();                        
+                        Carver cv = (Carver) classe.getDeclaredConstructor().newInstance();
                         CarverType[] cts = cv.getCarverTypes();
                         for (int k = 0; k < cts.length; k++) {
-                        	configCarverType(cts[k], carverTypeEl, CARVE_DIR_INDIVIDUAIS);
+                            configCarverType(cts[k], carverTypeEl, CARVE_DIR_INDIVIDUAIS);
                             carverTypesArray.add(cts[k]);
-						}
+                        }
                     }
 
                 }
@@ -242,7 +245,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
             }
         }
         TYPES_TO_CARVE.add(ct.getMimeType());
-	}
+    }
 
     /* Verify if a mediaType is configured to be processed */
     public boolean isToProcess(MediaType mediaType) {
@@ -278,7 +281,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     synchronized public void configTask(File confDir, CarvedItemListener carvedItemListener)
             throws CarverConfigurationException {
         try {
-        	this.confDir = confDir;
+            this.confDir = confDir;
 
             CarverType[] carverTypes = carverTypesArray.toArray(new CarverType[0]);
 
@@ -289,7 +292,7 @@ public class XMLCarverConfiguration implements CarverConfiguration {
                     ArrayList<Signature> sigs = ct.getSignatures();
                     for (int j = 0; j < sigs.size(); j++) {
                         Signature sig = sigs.get(j);
-                        if(sig.seqs!=null) {
+                        if (sig.seqs != null) {
                             for (int k = 0; k < sig.seqs.length; k++) {
                                 Object[] out = new Object[2];
                                 out[0] = sig;
@@ -311,24 +314,24 @@ public class XMLCarverConfiguration implements CarverConfiguration {
         return tree;
     }
 
-	@Override
-	public Carver createCarverFromJSName(String scriptName) {
+    @Override
+    public Carver createCarverFromJSName(String scriptName) {
         File file = new File(confDir, scriptName);
         try {
-			return (Carver) new JSCarver(file);
-		} catch (Exception e) {
-			return null;
-		}
-	}
+            return (Carver) new JSCarver(file);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-	@Override
-	public HashMap<CarverType, Carver> getRegisteredCarvers() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	public boolean isToIgnoreCorrupted() {
-	    return this.ignoreCorrupted;
-	}
+    @Override
+    public HashMap<CarverType, Carver> getRegisteredCarvers() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public boolean isToIgnoreCorrupted() {
+        return this.ignoreCorrupted;
+    }
 
 }

@@ -7,7 +7,9 @@ import java.lang.annotation.*;
  * Ver AttributeParam para um exemplo.
  * 
  */
-@Documented @Retention(RetentionPolicy.RUNTIME) @Target(ElementType.PARAMETER)
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
 public @interface ItemTextParam {
 
 }

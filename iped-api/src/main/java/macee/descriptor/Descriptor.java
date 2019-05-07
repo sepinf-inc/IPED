@@ -29,7 +29,7 @@ public interface Descriptor extends ObjectRef, Serializable, Comparable<Descript
 
     String toJson();
 
-  @Override
+    @Override
     default String guid() {
         return getId().toString();
     }

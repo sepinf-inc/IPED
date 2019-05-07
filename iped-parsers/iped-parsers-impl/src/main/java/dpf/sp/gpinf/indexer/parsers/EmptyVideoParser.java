@@ -39,52 +39,54 @@ import org.xml.sax.SAXException;
  */
 public class EmptyVideoParser extends AbstractParser {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
+    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
-	private static Set<MediaType> getTypes() {
-		HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
-		for (MediaType type : MediaTypeRegistry.getDefaultRegistry().getTypes()) {
-			type = type.getBaseType();
-			String typeStr = type.toString();
-			if (	typeStr.equals("application/vnd.rn-realmedia") //$NON-NLS-1$
-			        || (typeStr.startsWith("video")  //$NON-NLS-1$
-					&& !type.equals(MediaType.video("x-flv"))) //$NON-NLS-1$
-				/*	&& !type.equals(MediaType.video("3gpp"))
-					&& !type.equals(MediaType.video("3gpp2"))
-					&& !type.equals(MediaType.video("mp4"))
-					&& !type.equals(MediaType.video("x-m4v"))
-					&& !type.equals(MediaType.video("quicktime"))
-				*/)
-				
-				supportedTypes.add(type);
+    private static Set<MediaType> getTypes() {
+        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+        for (MediaType type : MediaTypeRegistry.getDefaultRegistry().getTypes()) {
+            type = type.getBaseType();
+            String typeStr = type.toString();
+            if (typeStr.equals("application/vnd.rn-realmedia") //$NON-NLS-1$
+                    || (typeStr.startsWith("video") //$NON-NLS-1$
+                            && !type.equals(MediaType.video("x-flv"))) //$NON-NLS-1$
+            /*
+             * && !type.equals(MediaType.video("3gpp")) &&
+             * !type.equals(MediaType.video("3gpp2")) &&
+             * !type.equals(MediaType.video("mp4")) &&
+             * !type.equals(MediaType.video("x-m4v")) &&
+             * !type.equals(MediaType.video("quicktime"))
+             */)
 
-		}
-		return supportedTypes;
-	}
+                supportedTypes.add(type);
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+        }
+        return supportedTypes;
+    }
 
-		return SUPPORTED_TYPES;
-	}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext arg0) {
 
-	// Teste
-	public static void main(String[] args) {
-		EmptyVideoParser parser = new EmptyVideoParser();
-		Set<MediaType> types = parser.getSupportedTypes(null);
-		for (MediaType type : types)
-			System.out.println(type.getBaseType());
-	}
+        return SUPPORTED_TYPES;
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    // Teste
+    public static void main(String[] args) {
+        EmptyVideoParser parser = new EmptyVideoParser();
+        Set<MediaType> types = parser.getSupportedTypes(null);
+        for (MediaType type : types)
+            System.out.println(type.getBaseType());
+    }
 
-		XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-		xhtml.startDocument();
-		xhtml.endDocument();
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-	}
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+        xhtml.endDocument();
+
+    }
 
 }

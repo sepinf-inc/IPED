@@ -38,47 +38,49 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 /**
- * Parser customizado para arquivos XML. Usa um parser menos restrito que o parser 
- * padrão do Tika e tb executa o parser de strings para indexar elementos e atributos.
+ * Parser customizado para arquivos XML. Usa um parser menos restrito que o
+ * parser padrão do Tika e tb executa o parser de strings para indexar elementos
+ * e atributos.
  * 
  * @author Nassif
  *
  */
 public class XMLParser extends AbstractParser {
 
-	private static final long serialVersionUID = 1L;
-	private org.apache.tika.parser.xml.XMLParser xmlParser = new org.apache.tika.parser.xml.XMLParser();
-	private HtmlParser htmlParser = new HtmlParser();
-	private RawStringParser rawParser = new RawStringParser();
+    private static final long serialVersionUID = 1L;
+    private org.apache.tika.parser.xml.XMLParser xmlParser = new org.apache.tika.parser.xml.XMLParser();
+    private HtmlParser htmlParser = new HtmlParser();
+    private RawStringParser rawParser = new RawStringParser();
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		return xmlParser.getSupportedTypes(context);
-	}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return xmlParser.getSupportedTypes(context);
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-		TemporaryResources tmp = new TemporaryResources();
-		try {
-			TikaInputStream tis = TikaInputStream.get(stream, tmp);
-			File file = tis.getFile();
+        TemporaryResources tmp = new TemporaryResources();
+        try {
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            File file = tis.getFile();
 
-			context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
-			TextContentHandler textHandler = new TextContentHandler(handler, true);
-			htmlParser.parse(tis, textHandler, metadata, context);
-			
-			tis = TikaInputStream.get(file);
-			try {
-				rawParser.parse(tis, handler, metadata, context);
-			} finally {
-				tis.close();
-			}
+            context.set(HtmlMapper.class, IdentityHtmlMapper.INSTANCE);
+            TextContentHandler textHandler = new TextContentHandler(handler, true);
+            htmlParser.parse(tis, textHandler, metadata, context);
 
-		} finally {
-			tmp.dispose();
-		}
+            tis = TikaInputStream.get(file);
+            try {
+                rawParser.parse(tis, handler, metadata, context);
+            } finally {
+                tis.close();
+            }
 
-	}
+        } finally {
+            tmp.dispose();
+        }
+
+    }
 
 }

@@ -25,109 +25,45 @@ import java.io.Reader;
 public class ProcessUtil {
 
     @Deprecated
-	public static int getPidWin(int port) {
-		String[] command = { "netstat", "-on" }; //$NON-NLS-1$ //$NON-NLS-2$
-		try {
-			Process netstat = Runtime.getRuntime().exec(command);
+    public static int getPidWin(int port) {
+        String[] command = { "netstat", "-on" }; //$NON-NLS-1$ //$NON-NLS-2$
+        try {
+            Process netstat = Runtime.getRuntime().exec(command);
 
-			StringBuilder conectionList = new StringBuilder();
-			Reader reader = new InputStreamReader(netstat.getInputStream());
-			char[] buffer = new char[1024];
-			for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
-				conectionList.append(buffer, 0, n);
-			reader.close();
-			String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
-			int portIdx = 10000;
-			String pid = null;
-			for (String conection : conections) {
-				int idx = conection.indexOf(":" + port); //$NON-NLS-1$
-				if (idx == -1 || idx > portIdx)
-					continue;
-				String state = "ESTABLISHED"; //$NON-NLS-1$
-				int stateIdx = conection.indexOf(state);
-				if (stateIdx == -1)
-					continue;
-				portIdx = idx;
-				idx = stateIdx + state.length();
-				pid = conection.substring(idx).trim();
-			}
-			if (pid != null)
-				return Integer.valueOf(pid);
+            StringBuilder conectionList = new StringBuilder();
+            Reader reader = new InputStreamReader(netstat.getInputStream());
+            char[] buffer = new char[1024];
+            for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
+                conectionList.append(buffer, 0, n);
+            reader.close();
+            String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
+            int portIdx = 10000;
+            String pid = null;
+            for (String conection : conections) {
+                int idx = conection.indexOf(":" + port); //$NON-NLS-1$
+                if (idx == -1 || idx > portIdx)
+                    continue;
+                String state = "ESTABLISHED"; //$NON-NLS-1$
+                int stateIdx = conection.indexOf(state);
+                if (stateIdx == -1)
+                    continue;
+                portIdx = idx;
+                idx = stateIdx + state.length();
+                pid = conection.substring(idx).trim();
+            }
+            if (pid != null)
+                return Integer.valueOf(pid);
 
-		} catch (Exception e) {
-		}
+        } catch (Exception e) {
+        }
 
-		return 0;
+        return 0;
 
-	}
+    }
 
-	@Deprecated
-	public static int getPidLinux(int port) {
-		String[] command = { "netstat", "-anp" }; //$NON-NLS-1$ //$NON-NLS-2$
-		try {
-			Process netstat = Runtime.getRuntime().exec(command);
-
-			StringBuilder conectionList = new StringBuilder();
-			Reader reader = new InputStreamReader(netstat.getInputStream());
-			char[] buffer = new char[1024];
-			for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
-				conectionList.append(buffer, 0, n);
-			reader.close();
-			String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
-			String pid = null;
-			for (String conection : conections) {
-				if (conection.contains(":" + port) && conection.contains("/soffice.bin")) { //$NON-NLS-1$ //$NON-NLS-2$
-					int idx = conection.indexOf("/soffice.bin"); //$NON-NLS-1$
-					int idx2 = idx;
-					while (Character.isDigit(conection.charAt(--idx2)))
-						;
-					pid = conection.substring(idx2 + 1, idx);
-				}
-			}
-			if (pid != null)
-				return Integer.valueOf(pid);
-
-		} catch (Exception e) {
-		}
-
-		return 0;
-	}
-
-	@Deprecated
-	public static int getPid(int port) {
-		if (System.getProperty("os.name").startsWith("Windows")) //$NON-NLS-1$ //$NON-NLS-2$
-			return getPidWin(port);
-		else
-			return getPidLinux(port);
-	}
-
-	@Deprecated
-	public static void killProcess(int port) {
-
-		int pid = getPid(port);
-		if (pid == 0)
-			return;
-
-		String[] command = { "taskkill", "/F", "/T", "/PID", Integer.toString(pid) }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		if (System.getProperty("os.name").startsWith("Linux")) { //$NON-NLS-1$ //$NON-NLS-2$
-			String[] cmd = { "kill", "-9", Integer.toString(pid) }; //$NON-NLS-1$ //$NON-NLS-2$
-			command = cmd;
-		}
-
-		try {
-			Process killer = Runtime.getRuntime().exec(command);
-			int result = killer.waitFor();
-			System.out.println("Killed pid " + pid + " exitValue: " + result); //$NON-NLS-1$ //$NON-NLS-2$
-
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private static int getPidWin(String name, String arg) {
-        String[] command = { "wmic", "process", "where", "caption=\""+name+"\"", "get", "name,commandline,processid" }; //$NON-NLS-1$ //$NON-NLS-2$
+    @Deprecated
+    public static int getPidLinux(int port) {
+        String[] command = { "netstat", "-anp" }; //$NON-NLS-1$ //$NON-NLS-2$
         try {
             Process netstat = Runtime.getRuntime().exec(command);
 
@@ -140,7 +76,72 @@ public class ProcessUtil {
             String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
             String pid = null;
             for (String conection : conections) {
-                if(conection.contains(name) && conection.contains(arg)) {
+                if (conection.contains(":" + port) && conection.contains("/soffice.bin")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    int idx = conection.indexOf("/soffice.bin"); //$NON-NLS-1$
+                    int idx2 = idx;
+                    while (Character.isDigit(conection.charAt(--idx2)))
+                        ;
+                    pid = conection.substring(idx2 + 1, idx);
+                }
+            }
+            if (pid != null)
+                return Integer.valueOf(pid);
+
+        } catch (Exception e) {
+        }
+
+        return 0;
+    }
+
+    @Deprecated
+    public static int getPid(int port) {
+        if (System.getProperty("os.name").startsWith("Windows")) //$NON-NLS-1$ //$NON-NLS-2$
+            return getPidWin(port);
+        else
+            return getPidLinux(port);
+    }
+
+    @Deprecated
+    public static void killProcess(int port) {
+
+        int pid = getPid(port);
+        if (pid == 0)
+            return;
+
+        String[] command = { "taskkill", "/F", "/T", "/PID", Integer.toString(pid) }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        if (System.getProperty("os.name").startsWith("Linux")) { //$NON-NLS-1$ //$NON-NLS-2$
+            String[] cmd = { "kill", "-9", Integer.toString(pid) }; //$NON-NLS-1$ //$NON-NLS-2$
+            command = cmd;
+        }
+
+        try {
+            Process killer = Runtime.getRuntime().exec(command);
+            int result = killer.waitFor();
+            System.out.println("Killed pid " + pid + " exitValue: " + result); //$NON-NLS-1$ //$NON-NLS-2$
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static int getPidWin(String name, String arg) {
+        String[] command = { "wmic", "process", "where", "caption=\"" + name + "\"", "get", //$NON-NLS-1$ //$NON-NLS-2$
+                "name,commandline,processid" };
+        try {
+            Process netstat = Runtime.getRuntime().exec(command);
+
+            StringBuilder conectionList = new StringBuilder();
+            Reader reader = new InputStreamReader(netstat.getInputStream());
+            char[] buffer = new char[1024];
+            for (int n = reader.read(buffer); n != -1; n = reader.read(buffer))
+                conectionList.append(buffer, 0, n);
+            reader.close();
+            String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
+            String pid = null;
+            for (String conection : conections) {
+                if (conection.contains(name) && conection.contains(arg)) {
                     String[] strs = conection.trim().split(" ");
                     pid = strs[strs.length - 1];
                     return Integer.valueOf(pid);
@@ -154,7 +155,7 @@ public class ProcessUtil {
 
     }
 
-	private static int getPidLinux(String name, String arg) {
+    private static int getPidLinux(String name, String arg) {
         String[] command = { "ps", "ax" }; //$NON-NLS-1$ //$NON-NLS-2$
         try {
             Process netstat = Runtime.getRuntime().exec(command);
@@ -168,7 +169,7 @@ public class ProcessUtil {
             String[] conections = conectionList.toString().split("\n"); //$NON-NLS-1$
             String pid = null;
             for (String conection : conections) {
-                if(conection.contains(name) && conection.contains(arg)) {
+                if (conection.contains(name) && conection.contains(arg)) {
                     String[] strs = conection.trim().split(" ");
                     pid = strs[0];
                     return Integer.valueOf(pid);

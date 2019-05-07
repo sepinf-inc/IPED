@@ -21,151 +21,155 @@ import java.util.Arrays;
  */
 public final class Utils {
 
-	public static final int ALIGN_LEFT = 10;
-	public static final int ALIGN_RIGHT = 12;
+    public static final int ALIGN_LEFT = 10;
+    public static final int ALIGN_RIGHT = 12;
 
-	private Utils() {
-	}
+    private Utils() {
+    }
 
-	public static int readLittleEndianInt(DataInput in) throws IOException {
+    public static int readLittleEndianInt(DataInput in) throws IOException {
 
-		int bigEndian = 0;
-		for (int shiftBy = 0; shiftBy < 32; shiftBy += 8) {
+        int bigEndian = 0;
+        for (int shiftBy = 0; shiftBy < 32; shiftBy += 8) {
 
-			bigEndian |= (in.readUnsignedByte() & 0xff) << shiftBy;
-		}
+            bigEndian |= (in.readUnsignedByte() & 0xff) << shiftBy;
+        }
 
-		return bigEndian;
-	}
+        return bigEndian;
+    }
 
-	public static short readLittleEndianShort(DataInput in) throws IOException {
+    public static short readLittleEndianShort(DataInput in) throws IOException {
 
-		int low = in.readUnsignedByte() & 0xff;
-		int high = in.readUnsignedByte();
+        int low = in.readUnsignedByte() & 0xff;
+        int high = in.readUnsignedByte();
 
-		return (short) (high << 8 | low);
-	}
+        return (short) (high << 8 | low);
+    }
 
-	public static byte[] trimLeftSpaces(byte[] arr) {
+    public static byte[] trimLeftSpaces(byte[] arr) {
 
-		StringBuffer t_sb = new StringBuffer(arr.length);
+        StringBuffer t_sb = new StringBuffer(arr.length);
 
-		for (int i = 0; i < arr.length; i++) {
+        for (int i = 0; i < arr.length; i++) {
 
-			if (arr[i] != ' ') {
+            if (arr[i] != ' ') {
 
-				t_sb.append((char) arr[i]);
-			}
-		}
+                t_sb.append((char) arr[i]);
+            }
+        }
 
-		return t_sb.toString().getBytes();
-	}
+        return t_sb.toString().getBytes();
+    }
 
-	public static short littleEndian(short value) {
+    public static short littleEndian(short value) {
 
-		short num1 = value;
-		short mask = (short) 0xff;
+        short num1 = value;
+        short mask = (short) 0xff;
 
-		short num2 = (short) (num1 & mask);
-		num2 <<= 8;
-		mask <<= 8;
+        short num2 = (short) (num1 & mask);
+        num2 <<= 8;
+        mask <<= 8;
 
-		num2 |= (num1 & mask) >> 8;
+        num2 |= (num1 & mask) >> 8;
 
-		return num2;
-	}
+        return num2;
+    }
 
-	public static int littleEndian(int value) {
+    public static int littleEndian(int value) {
 
-		int num1 = value;
-		int mask = 0xff;
-		int num2 = 0x00;
+        int num1 = value;
+        int mask = 0xff;
+        int num2 = 0x00;
 
-		num2 |= num1 & mask;
+        num2 |= num1 & mask;
 
-		for (int i = 1; i < 4; i++) {
+        for (int i = 1; i < 4; i++) {
 
-			num2 <<= 8;
-			mask <<= 8;
-			num2 |= (num1 & mask) >> (8 * i);
-		}
+            num2 <<= 8;
+            mask <<= 8;
+            num2 |= (num1 & mask) >> (8 * i);
+        }
 
-		return num2;
-	}
+        return num2;
+    }
 
-	public static byte[] textPadding(String text, String characterSetName, int length) throws java.io.UnsupportedEncodingException {
+    public static byte[] textPadding(String text, String characterSetName, int length)
+            throws java.io.UnsupportedEncodingException {
 
-		return textPadding(text, characterSetName, length, Utils.ALIGN_LEFT);
-	}
+        return textPadding(text, characterSetName, length, Utils.ALIGN_LEFT);
+    }
 
-	public static byte[] textPadding(String text, String characterSetName, int length, int alignment) throws java.io.UnsupportedEncodingException {
+    public static byte[] textPadding(String text, String characterSetName, int length, int alignment)
+            throws java.io.UnsupportedEncodingException {
 
-		return textPadding(text, characterSetName, length, alignment, (byte) ' ');
-	}
+        return textPadding(text, characterSetName, length, alignment, (byte) ' ');
+    }
 
-	public static byte[] textPadding(String text, String characterSetName, int length, int alignment, byte paddingByte) throws java.io.UnsupportedEncodingException {
+    public static byte[] textPadding(String text, String characterSetName, int length, int alignment, byte paddingByte)
+            throws java.io.UnsupportedEncodingException {
 
-		if (text.length() >= length) {
+        if (text.length() >= length) {
 
-			return text.substring(0, length).getBytes(characterSetName);
-		}
+            return text.substring(0, length).getBytes(characterSetName);
+        }
 
-		byte byte_array[] = new byte[length];
-		Arrays.fill(byte_array, paddingByte);
+        byte byte_array[] = new byte[length];
+        Arrays.fill(byte_array, paddingByte);
 
-		switch (alignment) {
+        switch (alignment) {
 
-		case ALIGN_LEFT:
-			System.arraycopy(text.getBytes(characterSetName), 0, byte_array, 0, text.length());
-			break;
+            case ALIGN_LEFT:
+                System.arraycopy(text.getBytes(characterSetName), 0, byte_array, 0, text.length());
+                break;
 
-		case ALIGN_RIGHT:
-			int t_offset = length - text.length();
-			System.arraycopy(text.getBytes(characterSetName), 0, byte_array, t_offset, text.length());
-			break;
-		}
+            case ALIGN_RIGHT:
+                int t_offset = length - text.length();
+                System.arraycopy(text.getBytes(characterSetName), 0, byte_array, t_offset, text.length());
+                break;
+        }
 
-		return byte_array;
-	}
+        return byte_array;
+    }
 
-	public static byte[] doubleFormating(Double doubleNum, String characterSetName, int fieldLength, int sizeDecimalPart) throws java.io.UnsupportedEncodingException {
+    public static byte[] doubleFormating(Double doubleNum, String characterSetName, int fieldLength,
+            int sizeDecimalPart) throws java.io.UnsupportedEncodingException {
 
-		int sizeWholePart = fieldLength - (sizeDecimalPart > 0 ? (sizeDecimalPart + 1) : 0);
+        int sizeWholePart = fieldLength - (sizeDecimalPart > 0 ? (sizeDecimalPart + 1) : 0);
 
-		StringBuffer format = new StringBuffer(fieldLength);
+        StringBuffer format = new StringBuffer(fieldLength);
 
-		for (int i = 0; i < sizeWholePart; i++) {
+        for (int i = 0; i < sizeWholePart; i++) {
 
-			format.append("#");
-		}
+            format.append("#");
+        }
 
-		if (sizeDecimalPart > 0) {
+        if (sizeDecimalPart > 0) {
 
-			format.append(".");
+            format.append(".");
 
-			for (int i = 0; i < sizeDecimalPart; i++) {
+            for (int i = 0; i < sizeDecimalPart; i++) {
 
-				format.append("0");
-			}
-		}
+                format.append("0");
+            }
+        }
 
-		DecimalFormat df = new DecimalFormat(format.toString());
+        DecimalFormat df = new DecimalFormat(format.toString());
 
-		return textPadding(df.format(doubleNum.doubleValue()).toString(), characterSetName, fieldLength, ALIGN_RIGHT);
-	}
+        return textPadding(df.format(doubleNum.doubleValue()).toString(), characterSetName, fieldLength, ALIGN_RIGHT);
+    }
 
-	public static boolean contains(byte[] arr, byte value) {
+    public static boolean contains(byte[] arr, byte value) {
 
-		boolean found = false;
-		for (int i = 0; i < arr.length; i++) {
+        boolean found = false;
+        for (int i = 0; i < arr.length; i++) {
 
-			if (arr[i] == value) {
+            if (arr[i] == value) {
 
-				found = true;
-				break;
-			}
-		}
+                found = true;
+                break;
+            }
+        }
 
-		return found;
-	}
+        return found;
+    }
 }

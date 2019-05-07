@@ -13,10 +13,10 @@ import java.io.Serializable;
  */
 public interface DescriptorType extends Comparable<DescriptorType>, Serializable {
 
-  String getDescriptorClass();
+    String getDescriptorClass();
 
-  String getLabel();
+    String getLabel();
 
-  boolean isUserCreated();
-  
+    boolean isUserCreated();
+
 }

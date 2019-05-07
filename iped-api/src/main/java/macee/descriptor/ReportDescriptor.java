@@ -8,17 +8,16 @@ import macee.components.Reporter;
 
 public interface ReportDescriptor extends Reporter {
 
-  void addFragmentToSection(String reportPath, ReportFragment value);
+    void addFragmentToSection(String reportPath, ReportFragment value);
 
-  Multimap<String, ReportFragment> getFragments();
+    Multimap<String, ReportFragment> getFragments();
 
-  Collection<ReportFragment> getFragments(String reportPath);
+    Collection<ReportFragment> getFragments(String reportPath);
 
-  Map<String, CaseItemCollection> getReportStructure();
+    Map<String, CaseItemCollection> getReportStructure();
 
-  CaseItemCollection getSectionContent(String reportPath);
+    CaseItemCollection getSectionContent(String reportPath);
 
-  Collection<CaseItemCollection> getSectionContents();
+    Collection<CaseItemCollection> getSectionContents();
 
-    
 }

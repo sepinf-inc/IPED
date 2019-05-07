@@ -9,33 +9,33 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 
 public class SwiftCodeRegexValidatorService extends BasicAbstractRegexValidatorService {
 
-  protected static final Pattern NON_WORD = Pattern.compile("\\W");
+    protected static final Pattern NON_WORD = Pattern.compile("\\W");
 
-  private static final String REGEX_NAME = "SWIFT";
+    private static final String REGEX_NAME = "SWIFT";
 
-  private SwiftCodeService service = new SwiftCodeService();
+    private SwiftCodeService service = new SwiftCodeService();
 
-  @Override
-  public void init(File confDir) {
-    // Nothing to do.
-  }
+    @Override
+    public void init(File confDir) {
+        // Nothing to do.
+    }
 
-  @Override
-  public boolean validate(String code) {
-    SwiftCode swiftCode = service.getSwiftCode(code);
-    return swiftCode != null;
-  }
+    @Override
+    public boolean validate(String code) {
+        SwiftCode swiftCode = service.getSwiftCode(code);
+        return swiftCode != null;
+    }
 
-  @Override
-  public List<String> getRegexNames() {
-    return Arrays.asList(REGEX_NAME);
-  }
+    @Override
+    public List<String> getRegexNames() {
+        return Arrays.asList(REGEX_NAME);
+    }
 
-  @Override
-  public String format(String hit) {
-    hit = NON_WORD.matcher(hit).replaceAll("");
-    hit = hit.toUpperCase();
-    return hit;
-  }
+    @Override
+    public String format(String hit) {
+        hit = NON_WORD.matcher(hit).replaceAll("");
+        hit = hit.toUpperCase();
+        return hit;
+    }
 
 }

@@ -23,28 +23,34 @@ public class SimpleItemRef implements ItemRef {
         return new SimpleItemRef(item.getId(), item.getDataSourceId(), item.getCaseId());
     }
 
-    @Override public int getId() {
+    @Override
+    public int getId() {
         return id;
     }
 
-    @Override public String getSourceId() {
+    @Override
+    public String getSourceId() {
         return sourceId;
     }
 
-    @Override public String getCaseId() {
+    @Override
+    public String getCaseId() {
         return caseId;
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         return caseId + '/' + sourceId + "/" + id;
     }
 
-    @Override public int compareTo(ItemRef other) {
+    @Override
+    public int compareTo(ItemRef other) {
         return Comparator.comparing(ItemRef::getCaseId).thenComparing(ItemRef::getSourceId)
-            .thenComparingInt(ItemRef::getId).compare(this, other);
+                .thenComparingInt(ItemRef::getId).compare(this, other);
     }
 
-    @Override public int hashCode() {
+    @Override
+    public int hashCode() {
         int hash = 3;
         hash = 19 * hash + this.id;
         hash = 19 * hash + Objects.hashCode(this.sourceId);
@@ -52,7 +58,8 @@ public class SimpleItemRef implements ItemRef {
         return hash;
     }
 
-    @Override public boolean equals(Object obj) {
+    @Override
+    public boolean equals(Object obj) {
         if (this == obj) {
             return true;
         }

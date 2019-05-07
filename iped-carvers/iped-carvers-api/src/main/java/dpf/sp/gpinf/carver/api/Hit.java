@@ -22,7 +22,8 @@ public class Hit {
     public boolean equals(Object obj) {
         if (obj instanceof Hit) {
             Hit hit = (Hit) obj;
-            return (hit.off == this.off) && (this.sig.getCarverType().getName().equals(hit.getSignature().getCarverType().getName()));
+            return (hit.off == this.off)
+                    && (this.sig.getCarverType().getName().equals(hit.getSignature().getCarverType().getName()));
         } else {
             return false;
         }
@@ -33,4 +34,3 @@ public class Hit {
         return super.toString() + "--Offset:" + this.off;
     }
 }
-

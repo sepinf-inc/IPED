@@ -58,6 +58,7 @@ import dpf.sp.gpinf.indexer.util.HashValueImpl;
 /**
  * Parser para arquivos known.met do e-Mule, que armazena arquivos conhecidos,
  * com dados de compartilhamento e transmissão.
+ * 
  * @author Wladimir
  */
 public class KnownMetParser extends AbstractParser {
@@ -65,19 +66,18 @@ public class KnownMetParser extends AbstractParser {
 
     public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
-    
-    private static final String[] header = new String[] {
-    		Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
-    		Messages.getString("KnownMetParser.Name"), //$NON-NLS-1$
-    		Messages.getString("KnownMetParser.Hash"), //$NON-NLS-1$
-    		Messages.getString("KnownMetParser.LastModDate"), //$NON-NLS-1$
-    		Messages.getString("KnownMetParser.LastPubDate"), //$NON-NLS-1$
-    		Messages.getString("KnownMetParser.LastShareDate"), //$NON-NLS-1$
+
+    private static final String[] header = new String[] { Messages.getString("KnownMetParser.Seq"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.Name"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.Hash"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.LastModDate"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.LastPubDate"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.LastShareDate"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Size"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.Requests"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.AcceptedRequests"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.BytesSent"), //$NON-NLS-1$
-            Messages.getString("KnownMetParser.TempFile")}; //$NON-NLS-1$
+            Messages.getString("KnownMetParser.TempFile") }; //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -85,7 +85,8 @@ public class KnownMetParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
         final DecimalFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
@@ -94,10 +95,12 @@ public class KnownMetParser extends AbstractParser {
         metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
 
         List<KnownMetEntry> l = gpinf.emule.KnownMetParser.parseToList(stream);
-        if (l == null) return;
+        if (l == null)
+            return;
         metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(l.size()));
-        if (l.isEmpty()) return;
-        
+        if (l.isEmpty())
+            return;
+
         ItemSearcher searcher = context.get(ItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -105,9 +108,9 @@ public class KnownMetParser extends AbstractParser {
 
         xhtml.startElement("style"); //$NON-NLS-1$
         xhtml.characters(
-                ".dt {display: table; border-collapse: collapse; font-family: Arial, sans-serif; width: 1600px; } "  //$NON-NLS-1$
+                ".dt {display: table; border-collapse: collapse; font-family: Arial, sans-serif; width: 1600px; } " //$NON-NLS-1$
                         + ".rh { display: table-row; font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
-                        + ".ra { display: table-row; vertical-align: middle; } "  //$NON-NLS-1$
+                        + ".ra { display: table-row; vertical-align: middle; } " //$NON-NLS-1$
                         + ".rb { display: table-row; background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
                         + ".rr { display: table-row; background-color:#E77770; vertical-align: middle; } " //$NON-NLS-1$
                         + ".s { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 80px; } " //$NON-NLS-1$
@@ -127,7 +130,7 @@ public class KnownMetParser extends AbstractParser {
         long bytTrf = 0;
         int kffHit = 0;
         int[] align = new int[header.length];
-        String[] tdClass = new String[] {"a","b","c","h","e","s"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+        String[] tdClass = new String[] { "a", "b", "c", "h", "e", "s" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
         for (int i = -1; i <= l.size(); i++) {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
@@ -154,17 +157,19 @@ public class KnownMetParser extends AbstractParser {
                 trClass = "rh"; //$NON-NLS-1$
                 align[7] = align[8] = align[9] = 2;
             } else {
-                if (i % 2 == 0) trClass = "ra"; //$NON-NLS-1$
-                else trClass = "rb"; //$NON-NLS-1$
+                if (i % 2 == 0)
+                    trClass = "ra"; //$NON-NLS-1$
+                else
+                    trClass = "rb"; //$NON-NLS-1$
                 e = l.get(i);
                 cells.add(String.valueOf(cont++));
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 HashValue hashVal = new HashValueImpl(hash);
-                if(LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("edonkey"), hashVal) >= 0){ //$NON-NLS-1$
-                	kffHit++;
-                	trClass = "rr"; //$NON-NLS-1$
+                if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("edonkey"), hashVal) >= 0) { //$NON-NLS-1$
+                    kffHit++;
+                    trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getLastModified() == null ? " " : df.format(e.getLastModified())); //$NON-NLS-1$
@@ -187,52 +192,55 @@ public class KnownMetParser extends AbstractParser {
             xhtml.startElement("div", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
             for (int j = 0; j < cells.size(); j++) {
                 xhtml.startElement("div", "class", tdClass[align[j]]); //$NON-NLS-1$ //$NON-NLS-2$
-                if (i < 0 || i >= l.size()) xhtml.startElement("b"); //$NON-NLS-1$
-                if(j != 1 || e == null)
-                	xhtml.characters(cells.get(j));
+                if (i < 0 || i >= l.size())
+                    xhtml.startElement("b"); //$NON-NLS-1$
+                if (j != 1 || e == null)
+                    xhtml.characters(cells.get(j));
                 else
-                	printNameWithLink(xhtml, searcher, e.getName(), "edonkey", e.getHash()); //$NON-NLS-1$
-                
-                if (i < 0 || i >= l.size()) xhtml.endElement("b"); //$NON-NLS-1$
+                    printNameWithLink(xhtml, searcher, e.getName(), "edonkey", e.getHash()); //$NON-NLS-1$
+
+                if (i < 0 || i >= l.size())
+                    xhtml.endElement("b"); //$NON-NLS-1$
                 xhtml.endElement("div"); //$NON-NLS-1$
             }
             xhtml.endElement("div"); //$NON-NLS-1$
             xhtml.newline();
         }
-        
-        if(LedHashes.hashMap != null)
-        	metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
-        
+
+        if (LedHashes.hashMap != null)
+            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
+
         xhtml.endElement("div"); //$NON-NLS-1$
         xhtml.endDocument();
     }
-    
-    public static void printNameWithLink(XHTMLContentHandler xhtml, ItemSearcher searcher, String name, String hashAlgo, String p2pHash) throws SAXException{
-    	if(searcher == null){
-    		xhtml.characters(name);
-    		return;
-    	}
-    	List<ItemBase> items = searcher.search(hashAlgo + ":" + p2pHash); //$NON-NLS-1$
-    	if(items.isEmpty()){
-    		xhtml.characters(name);
-    		return;
-    	}
-    	ItemBase item = items.get(0);
-    	String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()),  //$NON-NLS-1$
-    			item.getHash(), item.getExt());
-    	
-    	AttributesImpl attributes = new AttributesImpl();
+
+    public static void printNameWithLink(XHTMLContentHandler xhtml, ItemSearcher searcher, String name, String hashAlgo,
+            String p2pHash) throws SAXException {
+        if (searcher == null) {
+            xhtml.characters(name);
+            return;
+        }
+        List<ItemBase> items = searcher.search(hashAlgo + ":" + p2pHash); //$NON-NLS-1$
+        if (items.isEmpty()) {
+            xhtml.characters(name);
+            return;
+        }
+        ItemBase item = items.get(0);
+        String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
+                item.getHash(), item.getExt());
+
+        AttributesImpl attributes = new AttributesImpl();
         attributes.addAttribute("", "onclick", "onclick", "CDATA", "app.open(\"" + hashAlgo + ":" + p2pHash + "\")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
         attributes.addAttribute("", "href", "href", "CDATA", hashPath); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-    	xhtml.startElement("a", attributes); //$NON-NLS-1$
-    	xhtml.characters(name);
-    	xhtml.endElement("a"); //$NON-NLS-1$
+        xhtml.startElement("a", attributes); //$NON-NLS-1$
+        xhtml.characters(name);
+        xhtml.endElement("a"); //$NON-NLS-1$
     }
-    
-    private static String getPathFromHash(File baseDir, String hash, String ext){
-    	if(hash == null || hash.length() < 2)
-    		return ""; //$NON-NLS-1$
-    	StringBuilder path = new StringBuilder();
+
+    private static String getPathFromHash(File baseDir, String hash, String ext) {
+        if (hash == null || hash.length() < 2)
+            return ""; //$NON-NLS-1$
+        StringBuilder path = new StringBuilder();
         hash = hash.toUpperCase();
         path.append(hash.charAt(0)).append('/');
         path.append(hash.charAt(1)).append('/');

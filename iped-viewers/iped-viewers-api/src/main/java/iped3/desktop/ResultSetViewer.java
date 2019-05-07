@@ -11,21 +11,21 @@ import iped3.search.MultiSearchResultProvider;
  */
 
 public interface ResultSetViewer {
-	
-	public void init(JTable resultsTable, MultiSearchResultProvider resultsProvider, GUIProvider guiProvider);
-	
-	public void setDockableContainer(DefaultSingleCDockable dockable);
-	
-	public String getTitle();
-	
-	public String getID();
-	
-	public JScrollPane getPanel();
-	
-	public void redraw();
-	
-	public void updateSelection();
-	
-	public GUIProvider getGUIProvider();
-	
+
+    public void init(JTable resultsTable, MultiSearchResultProvider resultsProvider, GUIProvider guiProvider);
+
+    public void setDockableContainer(DefaultSingleCDockable dockable);
+
+    public String getTitle();
+
+    public String getID();
+
+    public JScrollPane getPanel();
+
+    public void redraw();
+
+    public void updateSelection();
+
+    public GUIProvider getGUIProvider();
+
 }

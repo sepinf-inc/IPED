@@ -25,29 +25,29 @@ import java.io.IOException;
  */
 class XMLAttribute extends ShareazaEntity {
 
-	private String name;
-	private String value;
-	
-	public XMLAttribute() {
-		super("XMLAttribute"); //$NON-NLS-1$
-	}
+    private String name;
+    private String value;
 
-	public String getName() {
-		return name;
-	}
+    public XMLAttribute() {
+        super("XMLAttribute"); //$NON-NLS-1$
+    }
 
-	public String getValue() {
-		return value;
-	}
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public void read(MFCParser ar) throws IOException {
-		name = ar.readString();
-		value = ar.readString();
-	}
+    public String getValue() {
+        return value;
+    }
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {		
-	}
+    @Override
+    public void read(MFCParser ar) throws IOException {
+        name = ar.readString();
+        value = ar.readString();
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+    }
 
 }

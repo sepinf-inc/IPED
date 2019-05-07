@@ -6,7 +6,7 @@ package iped3.desktop;
  */
 
 public interface ColumnsManager {
-	
-	public String[] getLoadedCols();
+
+    public String[] getLoadedCols();
 
 }

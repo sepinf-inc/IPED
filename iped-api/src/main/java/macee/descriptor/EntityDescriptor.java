@@ -14,24 +14,24 @@ import java.util.Map;
  */
 public interface EntityDescriptor extends Descriptor {
 
-  Map<String, String> getContext();
+    Map<String, String> getContext();
 
-  String getIconName();
+    String getIconName();
 
-  String getParentClass();
+    String getParentClass();
 
-  List<String> getPredicates();
+    List<String> getPredicates();
 
-  String getRdfType();
+    String getRdfType();
 
-  void setContext(Map<String, String> context);
+    void setContext(Map<String, String> context);
 
-  void setIconName(String iconName);
+    void setIconName(String iconName);
 
-  void setParentClass(String parentClass);
+    void setParentClass(String parentClass);
 
-  void setPredicates(List<String> predicates);
+    void setPredicates(List<String> predicates);
 
-  void setRdfType(String type);
-  
+    void setRdfType(String type);
+
 }

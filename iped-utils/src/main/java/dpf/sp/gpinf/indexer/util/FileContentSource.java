@@ -7,27 +7,27 @@ import java.nio.channels.SeekableByteChannel;
 import iped3.io.SeekableInputStream;
 import iped3.io.StreamSource;
 
-public class FileContentSource implements StreamSource{
-	
-	private File file;
-	
-	public FileContentSource(File file){
-		this.file = file;
-	}
+public class FileContentSource implements StreamSource {
 
-	@Override
-	public SeekableInputStream getStream() throws IOException {
-		return new SeekableFileInputStream(file);
-	}
+    private File file;
 
-	@Override
-	public SeekableByteChannel getSeekableByteChannel() throws IOException {
-		return new SeekableByteChannelImpl(getStream());
-	}
+    public FileContentSource(File file) {
+        this.file = file;
+    }
 
-	@Override
-	public File getFile() {
-		return file;
-	}
-	
+    @Override
+    public SeekableInputStream getStream() throws IOException {
+        return new SeekableFileInputStream(file);
+    }
+
+    @Override
+    public SeekableByteChannel getSeekableByteChannel() throws IOException {
+        return new SeekableByteChannelImpl(getStream());
+    }
+
+    @Override
+    public File getFile() {
+        return file;
+    }
+
 }

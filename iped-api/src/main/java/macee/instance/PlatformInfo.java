@@ -35,7 +35,8 @@ public interface PlatformInfo extends Serializable {
     /**
      * Sets the last update to the resource information.
      *
-     * @param lastUpdate the last update to the resource information to set.
+     * @param lastUpdate
+     *            the last update to the resource information to set.
      */
     void setLastUpdate(ZonedDateTime lastUpdate);
 

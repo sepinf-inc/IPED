@@ -8,7 +8,9 @@ import java.util.function.Predicate;
 import macee.core.Configurable;
 
 public interface ConfigurationDirectory {
-	public List<Path> getResourceLookupFolders();	
-	public List<Path> lookUpResource(Predicate<Path> predicate) throws IOException;
-	public List<Path> lookUpResource(Configurable configurable) throws IOException;
+    public List<Path> getResourceLookupFolders();
+
+    public List<Path> lookUpResource(Predicate<Path> predicate) throws IOException;
+
+    public List<Path> lookUpResource(Configurable configurable) throws IOException;
 }

@@ -6,7 +6,8 @@ public interface ProtectedDataSource extends DataSource {
 
     void lock();
 
-    @Override default boolean isProtected() {
+    @Override
+    default boolean isProtected() {
         return true;
     }
 }

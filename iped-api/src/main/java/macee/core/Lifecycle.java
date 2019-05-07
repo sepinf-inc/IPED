@@ -13,14 +13,16 @@ public interface Lifecycle {
     /**
      * Method for setting up the component before execution.
      *
-     * @throws SetupException if an error occurs during the setup of the component.
+     * @throws SetupException
+     *             if an error occurs during the setup of the component.
      */
     void setup() throws SetupException;
 
     /**
      * Method for shutting down the component.
      *
-     * @throws ShutdownException if an error occurs during component shutdown.
+     * @throws ShutdownException
+     *             if an error occurs during component shutdown.
      */
     void shutdown() throws ShutdownException;
 

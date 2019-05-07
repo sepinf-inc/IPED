@@ -9,7 +9,7 @@ import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class EmptyEmbeddedDocumentExtractor implements EmbeddedDocumentExtractor, Serializable{
+public class EmptyEmbeddedDocumentExtractor implements EmbeddedDocumentExtractor, Serializable {
 
     /**
      * 
@@ -26,5 +26,5 @@ public class EmptyEmbeddedDocumentExtractor implements EmbeddedDocumentExtractor
     public boolean shouldParseEmbedded(Metadata arg0) {
         return false;
     }
-      
-  }
+
+}

@@ -56,8 +56,9 @@ class ForkServer2 implements Runnable {
     public static final byte INIT_LOADER_PARSER = 7;
     public static final byte INIT_PARSER_FACTORY_FACTORY_LOADER = 8;
 
-    //milliseconds to sleep before checking to see if there has been any reading/writing
-    //If no reading or writing in this time, shutdown the server.
+    // milliseconds to sleep before checking to see if there has been any
+    // reading/writing
+    // If no reading or writing in this time, shutdown the server.
     private long serverPulseMillis = 5000;
     private long serverParserTimeoutMillis = 60000;
     private long serverWaitTimeoutMillis = 60000;
@@ -65,13 +66,15 @@ class ForkServer2 implements Runnable {
     private Object[] lock = new Object[0];
 
     /**
-     * Starts a forked server process using the standard input and output
-     * streams for communication with the parent process. Any attempts by
-     * stray code to read from standard input or write to standard output
-     * is redirected to avoid interfering with the communication channel.
+     * Starts a forked server process using the standard input and output streams
+     * for communication with the parent process. Any attempts by stray code to read
+     * from standard input or write to standard output is redirected to avoid
+     * interfering with the communication channel.
      * 
-     * @param args command line arguments, ignored
-     * @throws Exception if the server could not be started
+     * @param args
+     *            command line arguments, ignored
+     * @throws Exception
+     *             if the server could not be started
      */
     public static void main(String[] args) throws Exception {
         long serverPulseMillis = Long.parseLong(args[0]);
@@ -80,8 +83,8 @@ class ForkServer2 implements Runnable {
 
         URL.setURLStreamHandlerFactory(new MemoryURLStreamHandlerFactory());
 
-        ForkServer2 server = new ForkServer2(System.in, System.out,
-                serverPulseMillis, serverParseTimeoutMillis, serverWaitTimeoutMillis);
+        ForkServer2 server = new ForkServer2(System.in, System.out, serverPulseMillis, serverParseTimeoutMillis,
+                serverWaitTimeoutMillis);
         System.setIn(new ByteArrayInputStream(new byte[0]));
         System.setOut(System.err);
 
@@ -101,8 +104,8 @@ class ForkServer2 implements Runnable {
 
     private volatile boolean active = true;
 
-    //can't be class Parser because then you'd
-    //have to include that in bootstrap jar (legacy mode)
+    // can't be class Parser because then you'd
+    // have to include that in bootstrap jar (legacy mode)
     private Object parser;
     private ClassLoader classLoader;
 
@@ -111,20 +114,20 @@ class ForkServer2 implements Runnable {
     private Thread parsingThread;
 
     /**
-     * Sets up a forked server instance using the given stdin/out
-     * communication channel.
+     * Sets up a forked server instance using the given stdin/out communication
+     * channel.
      *
-     * @param input input stream for reading from the parent process
-     * @param output output stream for writing to the parent process
-     * @throws IOException if the server instance could not be created
+     * @param input
+     *            input stream for reading from the parent process
+     * @param output
+     *            output stream for writing to the parent process
+     * @throws IOException
+     *             if the server instance could not be created
      */
-    public ForkServer2(InputStream input, OutputStream output,
-                      long serverPulseMillis, long serverParserTimeoutMillis, long serverWaitTimeoutMillis)
-            throws IOException {
-        this.input =
-            new DataInputStream(input);
-        this.output =
-            new DataOutputStream(output);
+    public ForkServer2(InputStream input, OutputStream output, long serverPulseMillis, long serverParserTimeoutMillis,
+            long serverWaitTimeoutMillis) throws IOException {
+        this.input = new DataInputStream(input);
+        this.output = new DataOutputStream(output);
         this.serverPulseMillis = serverPulseMillis;
         this.serverParserTimeoutMillis = serverParserTimeoutMillis;
         this.serverWaitTimeoutMillis = serverWaitTimeoutMillis;
@@ -136,7 +139,7 @@ class ForkServer2 implements Runnable {
         try {
             while (true) {
                 synchronized (lock) {
-                    long elapsed = System.currentTimeMillis()-since;
+                    long elapsed = System.currentTimeMillis() - since;
                     if (parsing && elapsed > serverParserTimeoutMillis) {
                         parsingThread.interrupt();
                         parsingThread.join(5000);
@@ -152,7 +155,7 @@ class ForkServer2 implements Runnable {
     }
 
     public void processRequests() {
-        //initialize
+        // initialize
         try {
             initializeParserAndLoader();
         } catch (Throwable t) {
@@ -167,7 +170,7 @@ class ForkServer2 implements Runnable {
             }
             return;
         }
-        //main loop
+        // main loop
         try {
             while (true) {
                 int request = input.read();
@@ -191,8 +194,7 @@ class ForkServer2 implements Runnable {
         System.err.flush();
     }
 
-    private void initializeParserAndLoader() throws IOException, ClassNotFoundException,
-            TikaException, SAXException {
+    private void initializeParserAndLoader() throws IOException, ClassNotFoundException, TikaException, SAXException {
         output.writeByte(READY);
         output.flush();
 
@@ -201,12 +203,11 @@ class ForkServer2 implements Runnable {
             throw new TikaException("eof! pipe closed?!");
         }
 
-        Object firstObject = readObject(
-                ForkServer2.class.getClassLoader());
+        Object firstObject = readObject(ForkServer2.class.getClassLoader());
         switch (configIndex) {
             case INIT_PARSER_FACTORY_FACTORY:
                 if (firstObject instanceof ParserFactoryFactory) {
-                    //the user has submitted a parser factory, but no class loader
+                    // the user has submitted a parser factory, but no class loader
                     classLoader = ForkServer2.class.getClassLoader();
                     ParserFactory parserFactory = ((ParserFactoryFactory) firstObject).build();
                     parser = parserFactory.build();
@@ -218,7 +219,7 @@ class ForkServer2 implements Runnable {
                 if (firstObject instanceof ClassLoader) {
                     classLoader = (ClassLoader) firstObject;
                     Thread.currentThread().setContextClassLoader(classLoader);
-                    //parser from parent process
+                    // parser from parent process
                     parser = readObject(classLoader);
                 } else {
                     throw new IllegalArgumentException("Expecting ClassLoader followed by a Parser");
@@ -226,7 +227,7 @@ class ForkServer2 implements Runnable {
                 break;
             case INIT_PARSER_FACTORY_FACTORY_LOADER:
                 if (firstObject instanceof ParserFactoryFactory) {
-                    //the user has submitted a parser factory and a class loader
+                    // the user has submitted a parser factory and a class loader
                     ParserFactory parserFactory = ((ParserFactoryFactory) firstObject).build();
                     parser = parserFactory.build();
                     classLoader = (ClassLoader) readObject(ForkServer2.class.getClassLoader());
@@ -247,12 +248,11 @@ class ForkServer2 implements Runnable {
         }
         try {
             Method method = getMethod(object, input.readUTF());
-            Object[] args =
-                    new Object[method.getParameterTypes().length];
+            Object[] args = new Object[method.getParameterTypes().length];
             for (int i = 0; i < args.length; i++) {
                 args[i] = readObject(loader);
-                if(args[i] instanceof ParseContext)
-                    updateParsingTimeout((ParseContext)args[i]);
+                if (args[i] instanceof ParseContext)
+                    updateParsingTimeout((ParseContext) args[i]);
             }
             try {
                 method.invoke(object, args);
@@ -293,30 +293,32 @@ class ForkServer2 implements Runnable {
         }
         return null;
     }
-    
+
     private void updateParsingTimeout(ParseContext context) {
         ParsingTimeout parsingTimeout = context.get(ParsingTimeout.class);
-        if(parsingTimeout != null) {
+        if (parsingTimeout != null) {
             synchronized (lock) {
                 this.serverParserTimeoutMillis = parsingTimeout.getTimeoutMillis();
-                //try to interrupt itself and exit before being destroyed by client,
-                //so child processes will be destroyed and closed
+                // try to interrupt itself and exit before being destroyed by client,
+                // so child processes will be destroyed and closed
                 this.serverParserTimeoutMillis -= 3000;
             }
         }
     }
 
     /**
-     * Deserializes an object from the given stream. The serialized object
-     * is expected to be preceded by a size integer, that is used for reading
-     * the entire serialization into a memory before deserializing it.
+     * Deserializes an object from the given stream. The serialized object is
+     * expected to be preceded by a size integer, that is used for reading the
+     * entire serialization into a memory before deserializing it.
      *
-     * @param loader class loader to be used for loading referenced classes
-     * @throws IOException if the object could not be deserialized
-     * @throws ClassNotFoundException if a referenced class is not found
+     * @param loader
+     *            class loader to be used for loading referenced classes
+     * @throws IOException
+     *             if the object could not be deserialized
+     * @throws ClassNotFoundException
+     *             if a referenced class is not found
      */
-    private Object readObject(ClassLoader loader)
-            throws IOException, ClassNotFoundException {
+    private Object readObject(ClassLoader loader) throws IOException, ClassNotFoundException {
         Object object = ForkObjectInputStream.readObject(input, loader);
         if (object instanceof ForkProxy) {
             ((ForkProxy) object).init(input, output);

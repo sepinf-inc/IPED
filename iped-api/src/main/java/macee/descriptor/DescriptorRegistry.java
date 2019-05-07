@@ -14,20 +14,20 @@ import java.util.List;
  */
 public interface DescriptorRegistry<T extends Descriptor> extends List<T> {
 
-  @Override
-  boolean add(T e);
+    @Override
+    boolean add(T e);
 
-  T byGuid(String guid);
+    T byGuid(String guid);
 
-  T byName(String name);
+    T byName(String name);
 
-  DescriptorRegistry loadFromFile(String filename) throws IOException;
+    DescriptorRegistry loadFromFile(String filename) throws IOException;
 
-  @Override
-  boolean remove(Object o);
+    @Override
+    boolean remove(Object o);
 
-  void saveSingleDescriptor(T obj, String file) throws IOException;
+    void saveSingleDescriptor(T obj, String file) throws IOException;
 
-  void sort();
-  
+    void sort();
+
 }

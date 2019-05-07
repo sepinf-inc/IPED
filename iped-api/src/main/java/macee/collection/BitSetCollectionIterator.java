@@ -15,7 +15,8 @@ public class BitSetCollectionIterator implements Iterator<Integer> {
         });
     }
 
-    @Override public boolean hasNext() {
+    @Override
+    public boolean hasNext() {
         if (currentIterator.hasNext()) {
             return true;
         } else {
@@ -27,7 +28,8 @@ public class BitSetCollectionIterator implements Iterator<Integer> {
         return currentIterator.hasNext();
     }
 
-    @Override public Integer next() {
+    @Override
+    public Integer next() {
         return currentIterator.next();
     }
 }

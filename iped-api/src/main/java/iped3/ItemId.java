@@ -11,8 +11,8 @@ package iped3;
  */
 public interface ItemId extends Comparable<ItemId> {
 
-  int getId();
+    int getId();
 
-  int getSourceId();
-  
+    int getSourceId();
+
 }

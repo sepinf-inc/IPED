@@ -11,9 +11,9 @@ package dpf.mg.udi.gpinf.whatsappextractor;
  */
 public class WAExtractorException extends Exception {
     public WAExtractorException() {
-        
+
     }
-    
+
     public WAExtractorException(Exception source) {
         super(source);
     }

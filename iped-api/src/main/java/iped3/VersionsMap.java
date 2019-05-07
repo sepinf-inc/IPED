@@ -11,16 +11,16 @@ package iped3;
  */
 public interface VersionsMap {
 
-  int getMappings();
+    int getMappings();
 
-  Integer getRaw(int view);
+    Integer getRaw(int view);
 
-  Integer getView(int raw);
+    Integer getView(int raw);
 
-  boolean isRaw(int doc);
+    boolean isRaw(int doc);
 
-  boolean isView(int doc);
+    boolean isView(int doc);
 
-  void put(int view, int raw);
-  
+    void put(int view, int raw);
+
 }

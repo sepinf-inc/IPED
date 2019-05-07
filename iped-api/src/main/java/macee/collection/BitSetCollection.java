@@ -8,17 +8,20 @@ import java.util.Set;
 /**
  * Uma coleção apoiada por vários bitsets. Cada bitset possui um nome único.
  * 
- * IMPORTANTE: Essa interface não exige que os bitsets sejam independentes. Por exemplo,
- * os bitsets podem estar relacionados entre si e um item marcado em um bitset
- * pode ter que ser desmarcado em outro. Por outro lado, se são independentes, 
- * o item 10 marcado em um bitset não tem relação com o item 10 de outro.
+ * IMPORTANTE: Essa interface não exige que os bitsets sejam independentes. Por
+ * exemplo, os bitsets podem estar relacionados entre si e um item marcado em um
+ * bitset pode ter que ser desmarcado em outro. Por outro lado, se são
+ * independentes, o item 10 marcado em um bitset não tem relação com o item 10
+ * de outro.
  * 
- * IMPORTANTE: bitsets dependentes podem usar operações de stream (zip, flatMap, etc.).
+ * IMPORTANTE: bitsets dependentes podem usar operações de stream (zip, flatMap,
+ * etc.).
  * 
- * COMENTÁRIO: a atualização de timestamp e versão pode ser colocada em outra interface.
+ * COMENTÁRIO: a atualização de timestamp e versão pode ser colocada em outra
+ * interface.
  * 
- * IMPORTANTE: se possível estender Collection do Java, por questões
- * semânticas ou pelo menos Iterable.
+ * IMPORTANTE: se possível estender Collection do Java, por questões semânticas
+ * ou pelo menos Iterable.
  */
 public interface BitSetCollection extends Serializable {
 

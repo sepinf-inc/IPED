@@ -52,6 +52,7 @@ import dpf.sp.gpinf.indexer.util.HashValueImpl;
 
 /**
  * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.
+ * 
  * @author Wladimir
  */
 public class AresParser extends AbstractParser {
@@ -59,15 +60,22 @@ public class AresParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-ares-galaxy")); //$NON-NLS-1$
     public static final String ARES_MIME_TYPE = "application/x-ares-galaxy"; //$NON-NLS-1$
-    private static final String[] header = new String[] {Messages.getString("AresParser.Seq"),Messages.getString("AresParser.Title"),Messages.getString("AresParser.Path"),Messages.getString("AresParser.HashSha1"),Messages.getString("AresParser.FileDate"),Messages.getString("AresParser.Size"),Messages.getString("AresParser.Shared"),Messages.getString("AresParser.Corrupted"),Messages.getString("AresParser.Artist"),Messages.getString("AresParser.Album"),Messages.getString("AresParser.Category"),Messages.getString("AresParser.URL"),Messages.getString("AresParser.Comments")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$ //$NON-NLS-13$
-    
+    private static final String[] header = new String[] { Messages.getString("AresParser.Seq"), //$NON-NLS-1$
+            Messages.getString("AresParser.Title"), Messages.getString("AresParser.Path"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.HashSha1"), Messages.getString("AresParser.FileDate"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.Size"), Messages.getString("AresParser.Shared"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.Corrupted"), Messages.getString("AresParser.Artist"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.Album"), Messages.getString("AresParser.Category"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments") }; //$NON-NLS-1$ //$NON-NLS-2$
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
     }
 
     @Override
-    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
         final DecimalFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("AresParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
@@ -76,10 +84,12 @@ public class AresParser extends AbstractParser {
         metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
 
         List<AresEntry> l = gpinf.ares.AresParser.parseToList(stream);
-        if (l == null) return;
+        if (l == null)
+            return;
         metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(l.size()));
-        if (l.isEmpty()) return;
-        
+        if (l.isEmpty())
+            return;
+
         ItemSearcher searcher = context.get(ItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -87,9 +97,9 @@ public class AresParser extends AbstractParser {
 
         xhtml.startElement("style"); //$NON-NLS-1$
         xhtml.characters(
-                ".dt {display: table; border-collapse: collapse; font-family: Arial, sans-serif; width: 2200px; } "  //$NON-NLS-1$
+                ".dt {display: table; border-collapse: collapse; font-family: Arial, sans-serif; width: 2200px; } " //$NON-NLS-1$
                         + ".rh { display: table-row; font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
-                        + ".ra { display: table-row; vertical-align: middle; } "  //$NON-NLS-1$
+                        + ".ra { display: table-row; vertical-align: middle; } " //$NON-NLS-1$
                         + ".rb { display: table-row; background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
                         + ".rr { display: table-row; background-color:#E77770; vertical-align: middle; } " //$NON-NLS-1$
                         + ".s { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 80px; } " //$NON-NLS-1$
@@ -111,24 +121,36 @@ public class AresParser extends AbstractParser {
         for (int i = 1; i < header.length; i++) {
             boolean found = false;
             for (AresEntry e : l) {
-                if (i == 1 && isUsed(e.getTitle())) found = true;
-                if (i == 2 && isUsed(e.getPath())) found = true;
-                if (i == 3 && isUsed(e.getHash())) found = true;
-                if (i == 4 && e.getDate() != null) found = true;
-                if (i == 5 && e.getFileSize() != 0) found = true;
-                if (i == 8 && isUsed(e.getArtist())) found = true;
-                if (i == 9 && isUsed(e.getAlbum())) found = true;
-                if (i == 10 && isUsed(e.getCategory())) found = true;
-                if (i == 11 && isUsed(e.getUrl())) found = true;
-                if (i == 12 && isUsed(e.getComment())) found = true;
-                if (found) break;
+                if (i == 1 && isUsed(e.getTitle()))
+                    found = true;
+                if (i == 2 && isUsed(e.getPath()))
+                    found = true;
+                if (i == 3 && isUsed(e.getHash()))
+                    found = true;
+                if (i == 4 && e.getDate() != null)
+                    found = true;
+                if (i == 5 && e.getFileSize() != 0)
+                    found = true;
+                if (i == 8 && isUsed(e.getArtist()))
+                    found = true;
+                if (i == 9 && isUsed(e.getAlbum()))
+                    found = true;
+                if (i == 10 && isUsed(e.getCategory()))
+                    found = true;
+                if (i == 11 && isUsed(e.getUrl()))
+                    found = true;
+                if (i == 12 && isUsed(e.getComment()))
+                    found = true;
+                if (found)
+                    break;
             }
-            if (found) present[i] = true;
+            if (found)
+                present[i] = true;
         }
 
         int kffHit = 0;
         int[] align = new int[header.length];
-        String[] tdClass = new String[] {"a","b","c","h","e","s","z"}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        String[] tdClass = new String[] { "a", "b", "c", "h", "e", "s", "z" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
         for (int i = -1; i < l.size(); i++) {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
@@ -140,19 +162,21 @@ public class AresParser extends AbstractParser {
                 trClass = "rh"; //$NON-NLS-1$
                 align[0] = 5;
             } else {
-                if (i % 2 == 0) trClass = "ra"; //$NON-NLS-1$
-                else trClass = "rb"; //$NON-NLS-1$
+                if (i % 2 == 0)
+                    trClass = "ra"; //$NON-NLS-1$
+                else
+                    trClass = "rb"; //$NON-NLS-1$
                 e = l.get(i);
                 cells.add(String.valueOf(cont++));
                 cells.add(e.getTitle());
                 cells.add(e.getPath());
                 String hash = e.getHash();
-                if(e.isShared())
-                	metadata.add(ExtraProperties.SHARED_HASHES, hash);
+                if (e.isShared())
+                    metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 HashValue hashVal = new HashValueImpl(hash);
-                if(LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), hashVal) >= 0){ //$NON-NLS-1$
-                	kffHit++;
-                	trClass = "rr"; //$NON-NLS-1$
+                if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), hashVal) >= 0) { //$NON-NLS-1$
+                    kffHit++;
+                    trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getDate() == null ? "-" : df.format(e.getDate())); //$NON-NLS-1$
@@ -176,25 +200,28 @@ public class AresParser extends AbstractParser {
             for (int j = 0; j < cells.size(); j++) {
                 if (present[j]) {
                     xhtml.startElement("div", "class", tdClass[align[j]]); //$NON-NLS-1$ //$NON-NLS-2$
-                    if (i < 0 || i >= l.size()) xhtml.startElement("b"); //$NON-NLS-1$
+                    if (i < 0 || i >= l.size())
+                        xhtml.startElement("b"); //$NON-NLS-1$
                     String s = cells.get(j);
-                    if (s == null || s.isEmpty()) s = " "; //$NON-NLS-1$
-                    if(j != 1 || e == null)
-                    	xhtml.characters(s);
+                    if (s == null || s.isEmpty())
+                        s = " "; //$NON-NLS-1$
+                    if (j != 1 || e == null)
+                        xhtml.characters(s);
                     else
-                    	KnownMetParser.printNameWithLink(xhtml, searcher, s, "sha-1", e.getHash()); //$NON-NLS-1$
-                    
-                    if (i < 0 || i >= l.size()) xhtml.endElement("b"); //$NON-NLS-1$
+                        KnownMetParser.printNameWithLink(xhtml, searcher, s, "sha-1", e.getHash()); //$NON-NLS-1$
+
+                    if (i < 0 || i >= l.size())
+                        xhtml.endElement("b"); //$NON-NLS-1$
                     xhtml.endElement("div"); //$NON-NLS-1$
                 }
             }
             xhtml.endElement("div"); //$NON-NLS-1$
             xhtml.newline();
         }
-        
-        if(LedHashes.hashMap != null)
-        	metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
-        
+
+        if (LedHashes.hashMap != null)
+            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
+
         xhtml.endElement("div"); //$NON-NLS-1$
         xhtml.endDocument();
     }

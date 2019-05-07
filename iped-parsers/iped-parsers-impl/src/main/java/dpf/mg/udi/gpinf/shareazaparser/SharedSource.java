@@ -24,28 +24,28 @@ import java.io.IOException;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 class SharedSource extends ShareazaEntity {
-	
-	private String url;
-	private String time;
-	
-	public SharedSource() {
-		super("SHARED SOURCE"); //$NON-NLS-1$
-	}
 
-	@Override
-	public void read(MFCParser ar, int version) throws IOException {
-		url = ar.readString();
-		if (version >= 10) {
-			time = Util.formatDatetime(Util.convertToEpoch(ar.readLong()));
-		} else {
-			time = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
-		}
-	}
+    private String url;
+    private String time;
 
-	@Override
-	protected void writeImpl(ShareazaOutputGenerator f) {
-		f.out("URL: " + url); //$NON-NLS-1$
-		f.out("Time: " + time); //$NON-NLS-1$
-	}
-	
+    public SharedSource() {
+        super("SHARED SOURCE"); //$NON-NLS-1$
+    }
+
+    @Override
+    public void read(MFCParser ar, int version) throws IOException {
+        url = ar.readString();
+        if (version >= 10) {
+            time = Util.formatDatetime(Util.convertToEpoch(ar.readLong()));
+        } else {
+            time = Util.formatDatetime(Util.convertToEpoch(ar.readUInt()));
+        }
+    }
+
+    @Override
+    protected void writeImpl(ShareazaOutputGenerator f) {
+        f.out("URL: " + url); //$NON-NLS-1$
+        f.out("Time: " + time); //$NON-NLS-1$
+    }
+
 }

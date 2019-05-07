@@ -20,99 +20,100 @@ import iped3.search.MultiSearchResultProvider;
  */
 
 public class AppMapaPanel extends JPanel {
-	MultiSearchResultProvider resultsProvider;
-	GUIProvider guiProvider;
-	AbstractMapaCanvas browserCanvas;
-    boolean mapaDesatualizado = true; //variável para registrar se os dados a serem apresentados pelo mapa precisa renderização 
+    MultiSearchResultProvider resultsProvider;
+    GUIProvider guiProvider;
+    AbstractMapaCanvas browserCanvas;
+    boolean mapaDesatualizado = true; // variável para registrar se os dados a serem apresentados pelo mapa precisa
+                                      // renderização
     KMLResult kmlResult;
     JTable resultsTable;
 
-	public AppMapaPanel(MultiSearchResultProvider resultsProvider, GUIProvider guiProvider){
-		this.resultsProvider = resultsProvider;
-		this.guiProvider = guiProvider;
-	    this.setLayout(new BorderLayout());
+    public AppMapaPanel(MultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
+        this.resultsProvider = resultsProvider;
+        this.guiProvider = guiProvider;
+        this.setLayout(new BorderLayout());
 
-	    init();
-	}
+        init();
+    }
 
-	public void init(){
-	    browserCanvas = new MapaCanvasWebkit();
-	    browserCanvas.addSaveKmlFunction(new Runnable() {
-			public void run() {
-				KMLResult kml = new KMLResult(resultsProvider, guiProvider);
-				kml.saveKML();
-			}
-		});
+    public void init() {
+        browserCanvas = new MapaCanvasWebkit();
+        browserCanvas.addSaveKmlFunction(new Runnable() {
+            public void run() {
+                KMLResult kml = new KMLResult(resultsProvider, guiProvider);
+                kml.saveKML();
+            }
+        });
 
-	    browserCanvas.setMapSelectionListener(new AppMapaSelectionListener(this));
-	    browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener(this));
-	    browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener(this));
+        browserCanvas.setMapSelectionListener(new AppMapaSelectionListener(this));
+        browserCanvas.setMarkerEventListener(new AppMapMarkerEventListener(this));
+        browserCanvas.setMarkerCheckBoxListener(new AppMarkerCheckBoxListener(this));
 
-	    this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
-	}
+        this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
+    }
 
-	public void redesenhaMapa(){
-		    if(mapaDesatualizado && (resultsProvider.getResults().getLength()>0)){
-		    	//se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
-				if(!browserCanvas.isConnected()){
-					this.setVisible(true);
+    public void redesenhaMapa() {
+        if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
+            // se todo o modelo estiver desatualizado, gera novo KML e recarrega todo o mapa
+            if (!browserCanvas.isConnected()) {
+                this.setVisible(true);
 
-					browserCanvas.connect();
+                browserCanvas.connect();
 
-					//força a rederização do Mapa (resolvendo o bug da primeira renderização 
-					for (Component c : getComponents()) {
-						c.repaint();
-					}
-					repaint();
-				}
+                // força a rederização do Mapa (resolvendo o bug da primeira renderização
+                for (Component c : getComponents()) {
+                    c.repaint();
+                }
+                repaint();
+            }
 
-			    String kml = ""; //$NON-NLS-1$
-			    try {
-			        kmlResult = new KMLResult(resultsProvider, guiProvider);
-			    	kml = kmlResult.getResultsKML();
-			    	browserCanvas.setKML(kml);
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}finally {
-					mapaDesatualizado = false;
-				}
-			}else{
-				browserCanvas.redesenha();
-			}
-	  }
-	
-	public void redesenha() {
-	    browserCanvas.redesenha();
-	    mapaDesatualizado = false;
-	}
+            String kml = ""; //$NON-NLS-1$
+            try {
+                kmlResult = new KMLResult(resultsProvider, guiProvider);
+                kml = kmlResult.getResultsKML();
+                browserCanvas.setKML(kml);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            } finally {
+                mapaDesatualizado = false;
+            }
+        } else {
+            browserCanvas.redesenha();
+        }
+    }
 
-	public boolean isMapaDesatualizado() {
-		return mapaDesatualizado;
-	}
+    public void redesenha() {
+        browserCanvas.redesenha();
+        mapaDesatualizado = false;
+    }
 
-	public void setMapaDesatualizado(boolean mapaDesatualizado) {
-		this.mapaDesatualizado = mapaDesatualizado;
-	}
-	
-	public void selecionaMarcador(ItemId item, boolean b){
-	    
-	    if(kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
-	        List<Integer> subitems = kmlResult.getGPSItems().get(item);
-	        if(subitems == null) {
-	            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
-	            browserCanvas.selecionaMarcador(gid, b);
-	        }else {
-	            for(Integer subitem : subitems) {
-	                String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
-	                browserCanvas.selecionaMarcador(gid, b);
-	            }
-	        }
-	        
-	    }
-	}
+    public boolean isMapaDesatualizado() {
+        return mapaDesatualizado;
+    }
 
-	public MultiSearchResultProvider getResultsProvider() {
-		return resultsProvider;
-	}
-	
+    public void setMapaDesatualizado(boolean mapaDesatualizado) {
+        this.mapaDesatualizado = mapaDesatualizado;
+    }
+
+    public void selecionaMarcador(ItemId item, boolean b) {
+
+        if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
+            List<Integer> subitems = kmlResult.getGPSItems().get(item);
+            if (subitems == null) {
+                String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                browserCanvas.selecionaMarcador(gid, b);
+            } else {
+                for (Integer subitem : subitems) {
+                    String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
+                    browserCanvas.selecionaMarcador(gid, b);
+                }
+            }
+
+        }
+    }
+
+    public MultiSearchResultProvider getResultsProvider() {
+        return resultsProvider;
+    }
+
 }

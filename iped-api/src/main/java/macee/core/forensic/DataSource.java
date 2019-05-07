@@ -15,7 +15,8 @@ public interface DataSource extends ObjectRef {
 
     String OBJECT_REF_TYPE = "DATA_SOURCE";
 
-    @Override default String getRefType() {
+    @Override
+    default String getRefType() {
         return OBJECT_REF_TYPE;
     }
 

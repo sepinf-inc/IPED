@@ -14,9 +14,9 @@ public class CarverType {
     String carverClass = null;
     String carverScript = null;
     MediaType mimeType;
-    //public Signature[] sigs = new Signature[2];
+    // public Signature[] sigs = new Signature[2];
     boolean bigendian;
-    int sizePos=-1, sizeBytes;
+    int sizePos = -1, sizeBytes;
     ArrayList<Signature> signatures = new ArrayList<Signature>();
     private Long minLength = null, maxLength = null;
     boolean hasFooter = false;
@@ -25,12 +25,12 @@ public class CarverType {
     public CarverType() {
 
     }
-    
+
     @Override
     public boolean equals(Object o) {
-        return o instanceof CarverType && ((CarverType)o).name.equals(name);
+        return o instanceof CarverType && ((CarverType) o).name.equals(name);
     }
-    
+
     @Override
     public int hashCode() {
         return name.hashCode();
@@ -42,14 +42,14 @@ public class CarverType {
             if (str.charAt(i) != '\\') {
                 sigArray.add((byte) str.charAt(i));
             } else {
-                char[] hex = {str.charAt(i + 1), str.charAt(i + 2)};
+                char[] hex = { str.charAt(i + 1), str.charAt(i + 2) };
                 byte[] hexByte = Hex.decodeHex(hex);
                 sigArray.add(hexByte[0]);
                 i += 2;
             }
         }
 
-        //divide assinaturas com coringas em várias sem coringa
+        // divide assinaturas com coringas em várias sem coringa
         Signature sig = new Signature(this, str, sigType);
         int i = 0;
         ArrayList<byte[]> seqs = new ArrayList<byte[]>();
@@ -68,11 +68,11 @@ public class CarverType {
                 }
 
                 seqs.add(array);
-            	if(i + 1 == sigArray.size() && b != '?') {
-                    seqEnd.add(i+1);
-            	}else {
+                if (i + 1 == sigArray.size() && b != '?') {
+                    seqEnd.add(i + 1);
+                } else {
                     seqEnd.add(i);
-            	}
+                }
                 seq = new ArrayList<Byte>();
             }
             i++;
@@ -96,16 +96,16 @@ public class CarverType {
 
     public void addFooter(String sigString) throws DecoderException {
         this.signatures.add(decodeSig(sigString, SignatureType.FOOTER));
-    	hasFooter=true;
+        hasFooter = true;
     }
 
     public void addSignature(String sigString, SignatureType sigType) throws DecoderException {
         this.signatures.add(decodeSig(sigString, sigType));
-        if(sigType.equals(SignatureType.FOOTER)) {
-        	hasFooter=true;
+        if (sigType.equals(SignatureType.FOOTER)) {
+            hasFooter = true;
         }
-        if(sigType.equals(SignatureType.LENGTHREF)) {
-        	hasLengthRef=true;
+        if (sigType.equals(SignatureType.LENGTHREF)) {
+            hasLengthRef = true;
         }
     }
 

@@ -14,12 +14,12 @@ import java.util.Iterator;
  */
 public interface MultiSearchResult {
 
-  ItemId getItem(int i);
+    ItemId getItem(int i);
 
-  Iterable<ItemId> getIterator();
+    Iterable<ItemId> getIterator();
 
-  int getLength();
+    int getLength();
 
-  float getScore(int i);
-  
+    float getScore(int i);
+
 }

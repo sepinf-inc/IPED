@@ -45,81 +45,82 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
 
 /**
- * Parser para imagens. Extrair metadados via parsers padrão e extrair
- * texto via OCR, caso habilitado.
+ * Parser para imagens. Extrair metadados via parsers padrão e extrair texto via
+ * OCR, caso habilitado.
  * 
  * @author Nassif
  *
  */
 public class ImageOCRMetadataParser extends AbstractParser {
-	private static Logger LOGGER = LoggerFactory.getLogger(ImageOCRMetadataParser.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ImageOCRMetadataParser.class);
 
-	private static final long serialVersionUID = 1L;
-	private final ImageParser imageParser = new ImageParser();
-	private final JpegParser jpegParser = new JpegParser();
-	private final TiffParser tiffParser = new TiffParser();
-	private final OCRParser ocrParser = new OCRParser();
-	private final Set<MediaType> SUPPORTED_TYPES = getTypes();
+    private static final long serialVersionUID = 1L;
+    private final ImageParser imageParser = new ImageParser();
+    private final JpegParser jpegParser = new JpegParser();
+    private final TiffParser tiffParser = new TiffParser();
+    private final OCRParser ocrParser = new OCRParser();
+    private final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
-	private static Set<MediaType> getTypes() {
-		HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
-		supportedTypes.add(MediaType.image("png")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("jpeg")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("tiff")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("bmp")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("gif")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("jp2")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("jpx")); //$NON-NLS-1$
-		supportedTypes.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
-		return supportedTypes;
-	}
+    private static Set<MediaType> getTypes() {
+        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+        supportedTypes.add(MediaType.image("png")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("jpeg")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("tiff")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("bmp")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("gif")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("jp2")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("jpx")); //$NON-NLS-1$
+        supportedTypes.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
+        return supportedTypes;
+    }
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		return SUPPORTED_TYPES;
-	}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return SUPPORTED_TYPES;
+    }
 
-	private Parser getMetadataParser(Metadata metadata, ParseContext context) {
-		MediaType type = MediaType.parse(metadata.get(HttpHeaders.CONTENT_TYPE));
-		if (imageParser.getSupportedTypes(context).contains(type))
-			return imageParser;
-		else if (jpegParser.getSupportedTypes(context).contains(type))
-			return jpegParser;
-		else if (tiffParser.getSupportedTypes(context).contains(type))
-			return tiffParser;
-		else
-			return new EmptyParser();
-	}
+    private Parser getMetadataParser(Metadata metadata, ParseContext context) {
+        MediaType type = MediaType.parse(metadata.get(HttpHeaders.CONTENT_TYPE));
+        if (imageParser.getSupportedTypes(context).contains(type))
+            return imageParser;
+        else if (jpegParser.getSupportedTypes(context).contains(type))
+            return jpegParser;
+        else if (tiffParser.getSupportedTypes(context).contains(type))
+            return tiffParser;
+        else
+            return new EmptyParser();
+    }
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-		handler.startDocument();
-		CharCountContentHandler countHandler = new CharCountContentHandler(handler);
-		TemporaryResources tmp = new TemporaryResources();
-		TikaInputStream tis = TikaInputStream.get(stream, tmp);
-		try {
-			if (ocrParser.isEnabled()) {
-				File file = tis.getFile();
-				try {
-					ocrParser.parse(tis, countHandler, metadata, context);
+        handler.startDocument();
+        CharCountContentHandler countHandler = new CharCountContentHandler(handler);
+        TemporaryResources tmp = new TemporaryResources();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        try {
+            if (ocrParser.isEnabled()) {
+                File file = tis.getFile();
+                try {
+                    ocrParser.parse(tis, countHandler, metadata, context);
 
-				} catch (IOException | SAXException | TikaException e) {
-					LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
-				}
-				tis = TikaInputStream.get(file);
-				metadata.set(OCRParser.OCR_CHAR_COUNT, countHandler.getCharCount() + ""); //$NON-NLS-1$
-			}
+                } catch (IOException | SAXException | TikaException e) {
+                    LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
+                }
+                tis = TikaInputStream.get(file);
+                metadata.set(OCRParser.OCR_CHAR_COUNT, countHandler.getCharCount() + ""); //$NON-NLS-1$
+            }
 
-			getMetadataParser(metadata, context).parse(tis, countHandler, metadata, context);
+            getMetadataParser(metadata, context).parse(tis, countHandler, metadata, context);
 
-		} finally {
-			if (ocrParser.isEnabled())
-				tis.close();
-			tmp.close();
-			handler.endDocument();
-		}
+        } finally {
+            if (ocrParser.isEnabled())
+                tis.close();
+            tmp.close();
+            handler.endDocument();
+        }
 
-	}
+    }
 
 }

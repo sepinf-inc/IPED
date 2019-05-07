@@ -14,8 +14,8 @@ import java.util.Map;
  * COMENTÁRIO (Werneck): a instanciação de CaseItem deve ser leve e não incluir
  * dependências. Por isso, alguns métodos como getExtractedText() tem que ser
  * lazy (rodar apenas quando forem chamados) ou serem fornecidos por um serviço
- * externo com apoio de um cache
- * (ex.: caseManager.getExtractedTextForItem(ItemRef ref))
+ * externo com apoio de um cache (ex.:
+ * caseManager.getExtractedTextForItem(ItemRef ref))
  * 
  * @author werneck.bwph
  */

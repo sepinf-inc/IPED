@@ -11,12 +11,12 @@ package iped3.exception;
  */
 public class IPEDException extends Exception {
 
-	public IPEDException(Throwable e) {
-		super(e);
-	}
+    public IPEDException(Throwable e) {
+        super(e);
+    }
 
-	public IPEDException(String string) {
-		super(string);
-	}
+    public IPEDException(String string) {
+        super(string);
+    }
 
 }

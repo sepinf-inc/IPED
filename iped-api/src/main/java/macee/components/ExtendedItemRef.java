@@ -30,8 +30,7 @@ public class ExtendedItemRef extends SimpleItemRef implements ItemRef {
         if (item == null) {
             return null;
         }
-        return new ExtendedItemRef(item.getId(), item.getName(), item.getDataSourceId(),
-            item.getCaseId());
+        return new ExtendedItemRef(item.getId(), item.getName(), item.getDataSourceId(), item.getCaseId());
     }
 
     public String getName() {

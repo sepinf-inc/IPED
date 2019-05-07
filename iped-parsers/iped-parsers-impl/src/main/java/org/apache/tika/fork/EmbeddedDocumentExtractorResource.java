@@ -10,11 +10,11 @@ import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class EmbeddedDocumentExtractorResource implements ForkResource{
-    
+public class EmbeddedDocumentExtractorResource implements ForkResource {
+
     private EmbeddedDocumentExtractor extractor;
     private ContentHandler handler;
-    
+
     public EmbeddedDocumentExtractorResource(EmbeddedDocumentExtractor extractor, ContentHandler handler) {
         this.extractor = extractor;
         this.handler = handler;
@@ -22,27 +22,27 @@ public class EmbeddedDocumentExtractorResource implements ForkResource{
 
     @Override
     public Throwable process(DataInputStream input, DataOutputStream output) throws IOException {
-        
-        //int type = input.readUnsignedByte();
-        
+
+        // int type = input.readUnsignedByte();
+
         try {
-            InputStream is = (InputStream)readObject(input, output);
-            Metadata metadata = (Metadata)readObject(input, output);
-            
+            InputStream is = (InputStream) readObject(input, output);
+            Metadata metadata = (Metadata) readObject(input, output);
+
             extractor.parseEmbedded(is, handler, metadata, true);
             output.write(ForkServer2.DONE);
-            
+
         } catch (Exception e) {
             output.write(ForkServer2.ERROR);
             e.printStackTrace();
             return e;
-        }finally {
+        } finally {
             output.flush();
         }
-        
+
         return null;
     }
-    
+
     private Object readObject(DataInputStream input, DataOutputStream output)
             throws IOException, ClassNotFoundException {
         Object object = ForkObjectInputStream.readObject(input, this.getClass().getClassLoader());

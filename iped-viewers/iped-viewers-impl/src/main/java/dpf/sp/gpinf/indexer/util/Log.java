@@ -28,25 +28,25 @@ import org.slf4j.LoggerFactory;
  */
 public class Log {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(Log.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Log.class);
 
-  public static void error(String source, String msg) {
-    LOGGER.error("[{}]\t{}", source, msg); //$NON-NLS-1$
-  }
+    public static void error(String source, String msg) {
+        LOGGER.error("[{}]\t{}", source, msg); //$NON-NLS-1$
+    }
 
-  public static void debug(String source, Throwable t) {
-    LOGGER.debug("[" + source + "]\t{}", t); //$NON-NLS-1$ //$NON-NLS-2$
-  }
+    public static void debug(String source, Throwable t) {
+        LOGGER.debug("[" + source + "]\t{}", t); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 
-  public static void warning(String source, String msg) {
-    LOGGER.warn("[{}]\t{}", source, msg); //$NON-NLS-1$
-  }
+    public static void warning(String source, String msg) {
+        LOGGER.warn("[{}]\t{}", source, msg); //$NON-NLS-1$
+    }
 
-  public static void alert(String source, String msg) {
-    LOGGER.warn("[{}]\t{}", source, msg); //$NON-NLS-1$
-  }
+    public static void alert(String source, String msg) {
+        LOGGER.warn("[{}]\t{}", source, msg); //$NON-NLS-1$
+    }
 
-  public static void info(String source, String msg) {
-    LOGGER.info("[{}]\t{}", source, msg); //$NON-NLS-1$
-  }
+    public static void info(String source, String msg) {
+        LOGGER.info("[{}]\t{}", source, msg); //$NON-NLS-1$
+    }
 }

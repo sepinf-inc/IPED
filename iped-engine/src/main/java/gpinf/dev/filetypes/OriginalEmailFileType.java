@@ -8,20 +8,20 @@ import iped3.Item;
 
 public class OriginalEmailFileType extends EvidenceFileTypeImpl {
 
-  /**
-   *
-   */
-  private static final long serialVersionUID = 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-  @Override
-  public String getLongDescr() {
-    return Messages.getString("OriginalEmailFileType.ParentEmail"); //$NON-NLS-1$
-  }
+    @Override
+    public String getLongDescr() {
+        return Messages.getString("OriginalEmailFileType.ParentEmail"); //$NON-NLS-1$
+    }
 
-  @Override
-  public void processFiles(File baseDir, List<Item> items) {
-    // TODO Auto-generated method stub
+    @Override
+    public void processFiles(File baseDir, List<Item> items) {
+        // TODO Auto-generated method stub
 
-  }
+    }
 
 }

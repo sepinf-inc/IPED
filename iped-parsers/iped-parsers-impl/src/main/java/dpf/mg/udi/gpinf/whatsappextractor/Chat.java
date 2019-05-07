@@ -15,7 +15,7 @@ public class Chat {
     private String title = null;
     private boolean groupChat = false;
 
-	public Chat(WAContact remote) {
+    public Chat(WAContact remote) {
         this.remote = remote;
     }
 
@@ -25,12 +25,13 @@ public class Chat {
     public long getId() {
         return id;
     }
-    
+
     /**
-     * @param id the id to set
+     * @param id
+     *            the id to set
      */
     public void setId(long id) {
-    	this.id = id;
+        this.id = id;
     }
 
     /**
@@ -41,7 +42,8 @@ public class Chat {
     }
 
     /**
-     * @param subject the subject to set
+     * @param subject
+     *            the subject to set
      */
     public void setSubject(String subject) {
         this.subject = subject;
@@ -59,7 +61,8 @@ public class Chat {
     }
 
     /**
-     * @param messages the messages to set
+     * @param messages
+     *            the messages to set
      */
     public void setMessages(List<Message> messages) {
         this.messages = messages;
@@ -68,10 +71,10 @@ public class Chat {
     public boolean isGroupChat() {
         return groupChat;
     }
-    
+
     public void setGroupChat(boolean groupChat) {
-		this.groupChat = groupChat;
-	}
+        this.groupChat = groupChat;
+    }
 
     public String getTitle() {
         if (title == null) {
@@ -83,15 +86,15 @@ public class Chat {
                 }
             } else {
                 title = "WhatsApp Chat - "; //$NON-NLS-1$
-                if(remote != null && !remote.getName().trim().equals(getPrintId()))
-                	title += remote.getName() + " - "; //$NON-NLS-1$
+                if (remote != null && !remote.getName().trim().equals(getPrintId()))
+                    title += remote.getName() + " - "; //$NON-NLS-1$
                 title += getPrintId();
             }
         }
         return title;
     }
 
-	public WAContact getRemote() {
-		return remote;
-	}
+    public WAContact getRemote() {
+        return remote;
+    }
 }

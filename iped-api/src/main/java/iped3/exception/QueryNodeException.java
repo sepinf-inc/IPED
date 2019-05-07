@@ -10,9 +10,9 @@ package iped3.exception;
  * @author WERNECK
  */
 public class QueryNodeException extends Exception {
-	
-	public QueryNodeException(Exception cause) {
-		super(cause);
-	}
-  
+
+    public QueryNodeException(Exception cause) {
+        super(cause);
+    }
+
 }

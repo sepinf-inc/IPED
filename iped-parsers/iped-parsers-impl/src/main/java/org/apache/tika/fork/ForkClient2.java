@@ -69,29 +69,36 @@ class ForkClient2 {
     private final DataOutputStream output;
 
     private final DataInputStream input;
-    
+
     private final InputStream error;
 
-    //this is used for debugging/smoke testing
+    // this is used for debugging/smoke testing
     private final int id = CLIENT_COUNTER.incrementAndGet();
 
     private volatile int filesProcessed = 0;
 
     public ForkClient2(Path tikaDir, Path pluginDir, ParserFactoryFactory parserFactoryFactory, List<String> java,
-                      TimeoutLimits timeoutLimits) throws IOException, TikaException {
+            TimeoutLimits timeoutLimits) throws IOException, TikaException {
         this(tikaDir, pluginDir, parserFactoryFactory, null, java, timeoutLimits);
     }
+
     /**
      *
-     * @param tikaDir directory containing jars from which to start the child server and load the Parser
-     * @param parserFactoryFactory factory to send to child process to build parser upon arrival
-     * @param classLoader class loader to use for non-parser resource (content-handler, etc.)
-     * @param java java commandline to use for the commandline server
+     * @param tikaDir
+     *            directory containing jars from which to start the child server and
+     *            load the Parser
+     * @param parserFactoryFactory
+     *            factory to send to child process to build parser upon arrival
+     * @param classLoader
+     *            class loader to use for non-parser resource (content-handler,
+     *            etc.)
+     * @param java
+     *            java commandline to use for the commandline server
      * @throws IOException
      * @throws TikaException
      */
     public ForkClient2(Path tikaDir, Path pluginDir, ParserFactoryFactory parserFactoryFactory, ClassLoader classLoader,
-                      List<String> java, TimeoutLimits timeoutLimits) throws IOException, TikaException {
+            List<String> java, TimeoutLimits timeoutLimits) throws IOException, TikaException {
         jar = null;
         loader = this.getClass().getClassLoader();
         boolean ok = false;
@@ -105,7 +112,7 @@ class ForkClient2 {
         } else {
             dirString += "/";
         }
-        if(pluginDir != null) {
+        if (pluginDir != null) {
             dirString += SystemUtils.IS_OS_WINDOWS ? ";" : ":";
             dirString += pluginDir.toAbsolutePath().toString();
             dirString += "/*";
@@ -117,7 +124,7 @@ class ForkClient2 {
         command.add(Long.toString(timeoutLimits.getParseTimeoutMS()));
         command.add(Long.toString(timeoutLimits.getWaitTimeoutMS()));
         builder.command(command);
-        //builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        // builder.redirectError(ProcessBuilder.Redirect.INHERIT);
         try {
             this.process = builder.start();
 
@@ -149,7 +156,6 @@ class ForkClient2 {
         }
     }
 
-
     public ForkClient2(ClassLoader loader, Object object, List<String> java, TimeoutLimits timeoutLimits)
             throws IOException, TikaException {
         boolean ok = false;
@@ -166,7 +172,7 @@ class ForkClient2 {
             command.add(Long.toString(timeoutLimits.getParseTimeoutMS()));
             command.add(Long.toString(timeoutLimits.getWaitTimeoutMS()));
             builder.command(command);
-            //builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+            // builder.redirectError(ProcessBuilder.Redirect.INHERIT);
             this.process = builder.start();
 
             this.output = new DataOutputStream(process.getOutputStream());
@@ -188,17 +194,17 @@ class ForkClient2 {
             }
         }
     }
-    
+
     private void consumeErrorStream() {
         Thread t = new Thread("ErrorStreamConsumer") {
             public void run() {
                 int i = 0;
                 byte[] buffer = new byte[8 * 1024];
-                while(i != -1) {
+                while (i != -1) {
                     try {
                         System.err.write(buffer, 0, i);
                         i = error.read(buffer);
-                        
+
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -214,12 +220,12 @@ class ForkClient2 {
             int type = input.read();
             if ((byte) type == ForkServer2.READY) {
                 return;
-            } else if ((byte)type == ForkServer2.FAILED_TO_START) {
+            } else if ((byte) type == ForkServer2.FAILED_TO_START) {
                 throw new IOException("Server had a catastrophic initialization failure");
             } else if (type == -1) {
                 throw new IOException("EOF while waiting for start beacon");
             } else {
-                throw new IOException("Unexpected byte while waiting for start beacon: "+type);
+                throw new IOException("Unexpected byte while waiting for start beacon: " + type);
             }
         }
     }
@@ -242,12 +248,12 @@ class ForkClient2 {
             return false;
         }
     }
-    
+
     private static ExecutorService executor = Executors.newCachedThreadPool();
-    
+
     public Throwable callInBackground(final String method, final Object... args)
             throws IOException, TikaException, InterruptedException {
-        
+
         Future<Throwable> future = executor.submit(new Callable<Throwable>() {
             @Override
             public Throwable call() throws Exception {
@@ -256,7 +262,7 @@ class ForkClient2 {
         });
         try {
             return future.get();
-            
+
         } catch (ExecutionException e) {
             Throwable exception = e.getCause();
             if (exception instanceof IOException) {
@@ -266,53 +272,53 @@ class ForkClient2 {
             } else
                 throw new RuntimeException("Unexpected error in fork client", exception);
         }
-        
+
     }
-    
-    public Throwable clientCall(String method, Object... args)
-            throws IOException, TikaException {
-        
+
+    public Throwable clientCall(String method, Object... args) throws IOException, TikaException {
+
         filesProcessed++;
         List<ForkResource> r = new ArrayList<>(resources);
         output.writeByte(ForkServer2.CALL);
         output.writeUTF(method);
         for (int i = 0; i < args.length; i++) {
-            if(args[i] instanceof Metadata)
-                metadata = (Metadata)args[i];
+            if (args[i] instanceof Metadata)
+                metadata = (Metadata) args[i];
         }
         for (int i = 0; i < args.length; i++) {
             sendObject(args[i], r);
         }
         return waitForResponse(r);
     }
-    
 
     public int getFilesProcessed() {
         return filesProcessed;
     }
-    
+
     private ContentHandler prevHandler;
     private Metadata metadata;
 
     /**
-     * Serializes the object first into an in-memory buffer and then
-     * writes it to the output stream with a preceding size integer.
+     * Serializes the object first into an in-memory buffer and then writes it to
+     * the output stream with a preceding size integer.
      *
-     * @param object object to be serialized
-     * @param resources list of fork resources, used when adding proxies
-     * @throws IOException if the object could not be serialized
+     * @param object
+     *            object to be serialized
+     * @param resources
+     *            list of fork resources, used when adding proxies
+     * @throws IOException
+     *             if the object could not be serialized
      */
-    private void sendObject(Object object, List<ForkResource> resources)
-            throws IOException, TikaException {
+    private void sendObject(Object object, List<ForkResource> resources) throws IOException, TikaException {
         int n = resources.size();
         if (object instanceof InputStream) {
             resources.add(new InputStreamResource2((InputStream) object));
             object = new InputStreamProxy2(n, (InputStream) object);
         } else if (object instanceof RecursiveParserWrapperHandler) {
             resources.add(new RecursiveMetadataContentHandlerResource((RecursiveParserWrapperHandler) object));
-            object = new RecursiveMetadataContentHandlerProxy(n, ((RecursiveParserWrapperHandler)object).getContentHandlerFactory());
-        } else if (object instanceof ContentHandler
-                && ! (object instanceof AbstractRecursiveParserWrapperHandler)) {
+            object = new RecursiveMetadataContentHandlerProxy(n,
+                    ((RecursiveParserWrapperHandler) object).getContentHandlerFactory());
+        } else if (object instanceof ContentHandler && !(object instanceof AbstractRecursiveParserWrapperHandler)) {
             prevHandler = (ContentHandler) object;
             object = new TeeContentHandler((ContentHandler) object, new UniqueMetadataContentHandler(metadata));
             resources.add(new ContentHandlerResource2((ContentHandler) object));
@@ -322,25 +328,24 @@ class ForkClient2 {
             object = new ClassLoaderProxy(n);
         } else if (object instanceof ParseContext) {
             ParseContextProxy contextProxy = new ParseContextProxy();
-            contextProxy.set(OCROutputFolder.class, ((ParseContext)object).get(OCROutputFolder.class));
-            contextProxy.set(ItemInfo.class, ((ParseContext)object).get(ItemInfo.class));
-            contextProxy.set(ParsingTimeout.class, ((ParseContext)object).get(ParsingTimeout.class));
-            EmbeddedDocumentExtractor extractor = ((ParseContext)object).get(EmbeddedDocumentExtractor.class);
-            if(extractor != null && !(extractor instanceof Serializable)) {
+            contextProxy.set(OCROutputFolder.class, ((ParseContext) object).get(OCROutputFolder.class));
+            contextProxy.set(ItemInfo.class, ((ParseContext) object).get(ItemInfo.class));
+            contextProxy.set(ParsingTimeout.class, ((ParseContext) object).get(ParsingTimeout.class));
+            EmbeddedDocumentExtractor extractor = ((ParseContext) object).get(EmbeddedDocumentExtractor.class);
+            if (extractor != null && !(extractor instanceof Serializable)) {
                 resources.add(new EmbeddedDocumentExtractorResource(extractor, prevHandler));
                 contextProxy.set(EmbeddedDocumentExtractor.class, new EmbeddedDocumentExtractorProxy(n));
-            }else
+            } else
                 contextProxy.set(EmbeddedDocumentExtractor.class, extractor);
             object = contextProxy;
         }
 
         try {
             ForkObjectInputStream.sendObject(object, output);
-        } catch(NotSerializableException nse) {
-           // Build a more friendly error message for this
-           throw new TikaException(
-                 "Unable to serialize " + object.getClass().getSimpleName() +
-                 " to pass to the Forked Parser", nse);
+        } catch (NotSerializableException nse) {
+            // Build a more friendly error message for this
+            throw new TikaException(
+                    "Unable to serialize " + object.getClass().getSimpleName() + " to pass to the Forked Parser", nse);
         }
 
         waitForResponse(resources);
@@ -352,15 +357,15 @@ class ForkClient2 {
                 output.close();
             }
             if (input != null) {
-                //closing the inputStream sometimes hangs with some processes
-                //input.close();
+                // closing the inputStream sometimes hangs with some processes
+                // input.close();
             }
         } catch (IOException ignore) {
         }
         if (process != null) {
             process.destroyForcibly();
             try {
-                //TIKA-1933
+                // TIKA-1933
                 process.waitFor(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
 
@@ -371,25 +376,20 @@ class ForkClient2 {
         }
     }
 
-    private Throwable waitForResponse(List<ForkResource> resources)
-            throws IOException, TikaException {
+    private Throwable waitForResponse(List<ForkResource> resources) throws IOException, TikaException {
         output.flush();
         while (true) {
             int type = input.read();
             if (type == -1) {
-                throw new IOException(
-                        "Lost connection to a forked server process");
+                throw new IOException("Lost connection to a forked server process");
             } else if (type == ForkServer2.RESOURCE) {
-                ForkResource resource =
-                    resources.get(input.readUnsignedByte());
+                ForkResource resource = resources.get(input.readUnsignedByte());
                 resource.process(input, output);
             } else if ((byte) type == ForkServer2.ERROR) {
                 try {
-                    return (Throwable) ForkObjectInputStream.readObject(
-                            input, loader);
+                    return (Throwable) ForkObjectInputStream.readObject(input, loader);
                 } catch (ClassNotFoundException e) {
-                    throw new TikaException(
-                            "Unable to deserialize an exception", e);
+                    throw new TikaException("Unable to deserialize an exception", e);
                 }
             } else {
                 return null;
@@ -398,11 +398,12 @@ class ForkClient2 {
     }
 
     /**
-     * Creates a temporary jar file that can be used to bootstrap the forked
-     * server process. Remember to remove the file when no longer used.
+     * Creates a temporary jar file that can be used to bootstrap the forked server
+     * process. Remember to remove the file when no longer used.
      *
      * @return the created jar file
-     * @throws IOException if the bootstrap archive could not be created
+     * @throws IOException
+     *             if the bootstrap archive could not be created
      */
     private static File createBootstrapJar() throws IOException {
         File file = File.createTempFile("apache-tika-fork-", ".jar");
@@ -419,12 +420,14 @@ class ForkClient2 {
     }
 
     /**
-     * Fills in the jar file used to bootstrap the forked server process.
-     * All the required <code>.class</code> files and a manifest with a
+     * Fills in the jar file used to bootstrap the forked server process. All the
+     * required <code>.class</code> files and a manifest with a
      * <code>Main-Class</code> entry are written into the archive.
      *
-     * @param file file to hold the bootstrap archive
-     * @throws IOException if the bootstrap archive could not be created
+     * @param file
+     *            file to hold the bootstrap archive
+     * @throws IOException
+     *             if the bootstrap archive could not be created
      */
     private static void fillBootstrapJar(File file) throws IOException {
         try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(file))) {
@@ -432,14 +435,9 @@ class ForkClient2 {
             jar.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
             jar.write(manifest.getBytes(UTF_8));
 
-            Class<?>[] bootstrap = {
-                    ForkServer2.class, ForkObjectInputStream.class,
-                    ForkProxy.class, ClassLoaderProxy.class,
-                    MemoryURLConnection.class,
-                    MemoryURLStreamHandler.class,
-                    MemoryURLStreamHandlerFactory.class,
-                    MemoryURLStreamRecord.class, TikaException.class
-            };
+            Class<?>[] bootstrap = { ForkServer2.class, ForkObjectInputStream.class, ForkProxy.class,
+                    ClassLoaderProxy.class, MemoryURLConnection.class, MemoryURLStreamHandler.class,
+                    MemoryURLStreamHandlerFactory.class, MemoryURLStreamRecord.class, TikaException.class };
             ClassLoader loader = ForkServer2.class.getClassLoader();
             for (Class<?> klass : bootstrap) {
                 String path = klass.getName().replace('.', '/') + ".class";
