@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
@@ -105,7 +105,7 @@ public class Worker extends Thread {
         for (AbstractTask task : tasks) {
             if (this.getName().equals(workerNamePrefix + 0)) {
                 LOGGER.info("Starting " + task.getName()); //$NON-NLS-1$
-                IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
             task.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$

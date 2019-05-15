@@ -26,7 +26,6 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IPEDSource;
 import iped3.exception.ParseException;
@@ -113,7 +112,7 @@ public class QueryBuilderImpl implements QueryBuilder {
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
 
-        if (texto.trim().isEmpty() || texto.equals(App.SEARCH_TOOL_TIP))
+        if (texto.trim().isEmpty())
             return new MatchAllDocsQuery();
 
         else {

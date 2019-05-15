@@ -33,9 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.CaseData;
@@ -77,7 +77,7 @@ public class FTK3ReportReader extends DataSourceReader {
         if (!listOnly) {
             String caseName = getFTK3CaseName(report);
 
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("FTK3ReportReader.LoadDatabaseProps")); //$NON-NLS-1$
             LOGGER.info("Loading properties from database..."); //$NON-NLS-1$
 

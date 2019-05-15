@@ -326,7 +326,7 @@ public class MenuListener implements ActionListener {
                         .parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
                 ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
 
-                Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent);
+                Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent, App.get().appCase);
                 App.get().appletListener.updateFileListing(query);
             }
 

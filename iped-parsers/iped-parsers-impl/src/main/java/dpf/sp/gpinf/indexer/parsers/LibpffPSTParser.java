@@ -315,7 +315,7 @@ public class LibpffPSTParser extends AbstractParser {
             for (String attach : attachNames) {
                 preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
             }
-            metadata.set(OutlookPSTParser.HAS_ATTACHS, "true"); //$NON-NLS-1$
+            metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
         }
 
         preview.append("<hr>"); //$NON-NLS-1$
@@ -502,7 +502,7 @@ public class LibpffPSTParser extends AbstractParser {
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
             metadata.set(Metadata.RESOURCE_NAME_KEY, name);
-            metadata.set(OutlookPSTParser.PST_ATTACH, "true"); //$NON-NLS-1$
+            metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
             if (deleted)
                 metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$
 

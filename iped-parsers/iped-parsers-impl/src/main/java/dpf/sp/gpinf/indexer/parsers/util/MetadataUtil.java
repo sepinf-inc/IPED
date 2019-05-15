@@ -59,8 +59,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.LINKED_ITEMS);
         generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
         generalKeys.add(ExtraProperties.WKFF_HITS);
-        generalKeys.add(OutlookPSTParser.PST_ATTACH);
-        generalKeys.add(OutlookPSTParser.HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.PST_ATTACH);
+        generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
         generalKeys.add(TIKA_PARSER_USED);

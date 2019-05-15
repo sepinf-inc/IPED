@@ -60,13 +60,13 @@ import javax.imageio.ImageIO;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
@@ -379,7 +379,7 @@ public class HTMLReportTask extends AbstractTask {
                 return;
             }
 
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("HTMLReportTask.MakingHtmlReport")); //$NON-NLS-1$
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.

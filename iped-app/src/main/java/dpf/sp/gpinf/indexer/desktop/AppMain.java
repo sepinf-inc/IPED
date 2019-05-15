@@ -168,7 +168,7 @@ public class AppMain {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
                 logConfiguration.configureLogParameters(nolog, finalLoader);
 
-                Logger LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+                Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
                 if (!fromCustomLoader)
                     LOGGER.info(Versao.APP_NAME);
             }

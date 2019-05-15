@@ -40,7 +40,7 @@ import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.CmdLineArgsImpl;
 import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
@@ -336,7 +336,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
                 cmd.add("--nopstattachs"); //$NON-NLS-1$
 
             if (noLinkedItems.isSelected())
-                cmd.add(CmdLineArgs.noLinkedItemsOption); // $NON-NLS-1$
+                cmd.add(CmdLineArgsImpl.noLinkedItemsOption); // $NON-NLS-1$
 
             if (append.isSelected())
                 cmd.add("--append"); //$NON-NLS-1$

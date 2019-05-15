@@ -465,6 +465,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
                 }
             }
         }
+
         if (e.getSource().equals(openApp)) {
             if (!App.get().isVisible()) {
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.IncompleteTreeWarn")); //$NON-NLS-1$
@@ -472,6 +473,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
             } else
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.AlreadyOpen")); //$NON-NLS-1$
         }
+
     }
 
 }

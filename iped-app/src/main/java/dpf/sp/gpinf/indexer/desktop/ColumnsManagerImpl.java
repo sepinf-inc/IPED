@@ -102,9 +102,7 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
             ExtraProperties.LINKED_ITEMS };
 
-    public static final String[] email = { ExtraProperties.MESSAGE_SUBJECT, ExtraProperties.MESSAGE_DATE.getName(),
-            ExtraProperties.MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,
-            Message.MESSAGE_BCC, OutlookPSTParser.PST_ATTACH, OutlookPSTParser.HAS_ATTACHS };
+    public static final String[] email = ExtraProperties.EMAIL_PROPS;
 
     private static ColumnsManagerImpl instance;
 
@@ -152,6 +150,7 @@ public class ColumnsManagerImpl implements ActionListener, Serializable, Columns
         textFieldNameFilter.setForeground(Color.gray);
     }
 
+    @Override
     public String[] getLoadedCols() {
         String[] cols = loadedFields.toArray(new String[0]);
         return cols;

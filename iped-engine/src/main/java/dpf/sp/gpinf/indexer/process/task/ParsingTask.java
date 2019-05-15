@@ -464,7 +464,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 subItem.setHasChildren(true);
             }
 
-            if (metadata.get(OutlookPSTParser.HAS_ATTACHS) != null)
+            if (metadata.get(ExtraProperties.PST_EMAIL_HAS_ATTACHS) != null)
                 subItem.setHasChildren(true);
 
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)

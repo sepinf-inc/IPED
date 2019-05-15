@@ -32,6 +32,9 @@ import javax.swing.SwingWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
@@ -55,12 +58,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     private static Logger LOGGER = null;
-    /**
-     * command line parameters
-     */
-    public boolean fromCmdLine = false;
-    public boolean appendIndex = false;
-
+    
     String rootPath, configPath;
     boolean nogui = false;
     boolean nologfile = false;
@@ -71,7 +69,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     File logFile;
     LogConfiguration logConfiguration;
 
-    private CmdLineArgs cmdLineParams;
+    private CmdLineArgsImpl cmdLineParams;
 
     private ProgressFrame progressFrame;
 
@@ -118,9 +116,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     public IndexFiles(String[] args) {
         super();
         lastInstance = this;
-        cmdLineParams = new CmdLineArgs();
+        cmdLineParams = new CmdLineArgsImpl();
         cmdLineParams.takeArgs(args);
-        this.fromCmdLine = true;
     }
 
     /**
@@ -195,6 +192,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     @Override
     protected Boolean doInBackground() {
         try {
+            WorkerProvider.setInstance(this);
             manager = new Manager(dataSource, output, palavrasChave);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();

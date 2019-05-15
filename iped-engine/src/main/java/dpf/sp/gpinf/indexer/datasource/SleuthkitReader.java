@@ -57,12 +57,12 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -273,7 +273,7 @@ public class SleuthkitReader extends DataSourceReader {
                     sleuthCase = SleuthkitCase.openCase(dbPath);
 
                 } else {
-                    IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                             Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
                     LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
                     sleuthCase = SleuthkitCase.newCase(dbPath);
@@ -296,7 +296,7 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
             } else {
-                IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("SleuthkitReader.WaitDecode") + image.getAbsolutePath()); //$NON-NLS-1$
                 LOGGER.info("Decoding image {}", image.getAbsolutePath()); //$NON-NLS-1$
 
@@ -480,7 +480,7 @@ public class SleuthkitReader extends DataSourceReader {
     private void readItensInOffsetOrder(long start, long last) throws Exception {
 
         if (!fastmode && !listOnly) {
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("SleuthkitReader.SortingByOffset") + start + " - " + last); //$NON-NLS-1$ //$NON-NLS-2$
             LOGGER.info("Sorting by sector offset: id " + start + " to " + last); //$NON-NLS-1$ //$NON-NLS-2$
         }

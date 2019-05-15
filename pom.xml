@@ -15,7 +15,7 @@
         <module>iped-ahocorasick</module>
         <module>iped-geo</module>
         <module>iped-engine</module>
-        <!--module>iped-desktop</module-->
+        <module>iped-app</module>
     </modules>
     
     <properties>
@@ -65,13 +65,13 @@
 		<repository>
 			<id>archiva.internal</id>
 			<name>Internal Release Repository</name>
-			<url>http://10.61.242.12:8081/repository/internal/</url>
+			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/internal/</url>
 		</repository>
 		<snapshotRepository>
 			<id>archiva.snapshots</id>
 			<name>Internal Snapshot Repository</name>
 			<layout>default</layout>
-			<url>http://10.61.242.12:8081/repository/snapshots/</url>
+			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
     

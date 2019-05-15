@@ -82,8 +82,6 @@ public class OutlookPSTParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(OutlookPSTParser.class);
     private static final long serialVersionUID = 5552796814190294332L;
-    public static final String HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
-    public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
     public static final String OUTLOOK_MSG_MIME = "message/outlook-pst"; //$NON-NLS-1$
 
     public static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("vnd.ms-outlook-pst")); //$NON-NLS-1$
@@ -368,7 +366,7 @@ public class OutlookPSTParser extends AbstractParser {
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
 
             if (email.hasAttachments())
-                metadata.set(HAS_ATTACHS, "true"); //$NON-NLS-1$
+                metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
 
             Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
             StringBuilder preview = new StringBuilder();
@@ -530,7 +528,7 @@ public class OutlookPSTParser extends AbstractParser {
                     // attach.getLastModificationTime());
                     // metadata.set(ExtraProperties.EMBEDDED_PATH, path);
                     metadata.set(Metadata.CONTENT_TYPE, attach.getMimeTag());
-                    metadata.set(PST_ATTACH, "true"); //$NON-NLS-1$
+                    metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
 
                     metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, parent + "_attach" + x);
                     metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
