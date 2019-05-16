@@ -60,8 +60,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     private static Logger LOGGER = null;
     
     String rootPath, configPath;
-    boolean nogui = false;
-    boolean nologfile = false;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -237,7 +235,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      * Instancia listener de progresso, executa o processamento e aguarda.
      */
     public boolean executar() {
-        if (!nogui) {
+        if (!cmdLineParams.isNogui()) {
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     progressFrame = new ProgressFrame(lastInstance);
@@ -282,7 +280,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         try {
             indexador.setConfigPath();
             indexador.logConfiguration = new LogConfiguration(indexador, logPath);
-            indexador.logConfiguration.configureLogParameters(indexador.nologfile, fromCustomLoader);
+            indexador.logConfiguration.configureLogParameters(indexador.cmdLineParams.isNologfile(), fromCustomLoader);
 
             LOGGER = LoggerFactory.getLogger(IndexFiles.class);
             if (!fromCustomLoader)
@@ -299,7 +297,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
                 // currently with --nogui, user can not open analysis app, so no need to load
                 // libreoffice jars
-                if (!indexador.nogui) {
+                if (!indexador.cmdLineParams.isNogui()) {
                     System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                             new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(indexador.rootPath));

@@ -348,10 +348,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             IndexFiles.getInstance().logFile = this.logFile;
         }
 
-        IndexFiles.getInstance().nogui = this.nogui;
-        IndexFiles.getInstance().nologfile = this.nologfile;
-        System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
-
         if (outputDir != null && reportDir != null) {
             throw new ParameterException("Option -o can not be used with FTK reports!"); //$NON-NLS-1$
         }
@@ -381,7 +377,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
 
         System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
-        System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$ //$NON-NLS-2$
+        System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$
+        System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 
     }
 
