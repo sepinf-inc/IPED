@@ -129,7 +129,6 @@ public class SleuthkitReader extends DataSourceReader {
                 || name.endsWith(".aff") //$NON-NLS-1$
                 || name.endsWith(".l01") //$NON-NLS-1$
                 || name.endsWith(".dd") //$NON-NLS-1$
-                || name.endsWith(".dmg") //$NON-NLS-1$
                 || name.endsWith(".vmdk") //$NON-NLS-1$
                 || name.endsWith(".vhd") //$NON-NLS-1$
                 || isPhysicalDrive(file) || (isISO9660 = isISO9660(file)) || name.equals(DB_NAME);
