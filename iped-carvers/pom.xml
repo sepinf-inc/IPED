@@ -14,6 +14,7 @@
     <packaging>pom</packaging>
 
     <modules>
+		<module>iped-ahocorasick</module>
         <module>iped-carvers-api</module>
         <module>iped-carvers-impl</module>
     </modules>
