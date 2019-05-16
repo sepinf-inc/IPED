@@ -77,7 +77,8 @@ import iped3.sleuthkit.SleuthKitItem;
 public class SleuthkitReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
-
+    
+    public static final String MIN_TSK_VER = "4.6.5"; 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -216,16 +217,18 @@ public class SleuthkitReader extends DataSourceReader {
         String[] str = out.toString().split(" "); //$NON-NLS-1$
         String tskVer = str[str.length - 1].trim();
         LOGGER.info("Sleuthkit version " + tskVer + " detected."); //$NON-NLS-1$ //$NON-NLS-2$
-
-        if (tskVer.compareTo("4.6.0") < 0) //$NON-NLS-1$
-            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version 4.6.0"); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (tskVer.compareTo("4.6.1") >= 0) //$NON-NLS-1$
-            LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        if (out.toString().contains("iped-patch")) { //$NON-NLS-1$
+        
+        String patchSufix = "-iped-patch";
+        if (tskVer.contains(patchSufix)) { //$NON-NLS-1$
             isTskPatched = true;
+            tskVer = tskVer.substring(0, tskVer.indexOf(patchSufix));
         } else
             LOGGER.error("It is highly recommended to apply the iped patch (in sources folder) on sleuthkit!"); //$NON-NLS-1$
+
+        if (tskVer.compareTo(MIN_TSK_VER) < 0) //$NON-NLS-1$
+            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
+        else if (tskVer.compareTo(MIN_TSK_VER) > 0) //$NON-NLS-1$
+            LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
     }
