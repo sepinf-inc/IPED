@@ -57,12 +57,12 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -77,7 +77,8 @@ import iped3.sleuthkit.SleuthKitItem;
 public class SleuthkitReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
-
+    
+    public static final String MIN_TSK_VER = "4.6.5"; 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -129,7 +130,6 @@ public class SleuthkitReader extends DataSourceReader {
                 || name.endsWith(".aff") //$NON-NLS-1$
                 || name.endsWith(".l01") //$NON-NLS-1$
                 || name.endsWith(".dd") //$NON-NLS-1$
-                || name.endsWith(".dmg") //$NON-NLS-1$
                 || name.endsWith(".vmdk") //$NON-NLS-1$
                 || name.endsWith(".vhd") //$NON-NLS-1$
                 || isPhysicalDrive(file) || (isISO9660 = isISO9660(file)) || name.equals(DB_NAME);
@@ -217,16 +217,18 @@ public class SleuthkitReader extends DataSourceReader {
         String[] str = out.toString().split(" "); //$NON-NLS-1$
         String tskVer = str[str.length - 1].trim();
         LOGGER.info("Sleuthkit version " + tskVer + " detected."); //$NON-NLS-1$ //$NON-NLS-2$
-
-        if (tskVer.compareTo("4.6.0") < 0) //$NON-NLS-1$
-            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version 4.6.0"); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (tskVer.compareTo("4.6.1") >= 0) //$NON-NLS-1$
-            LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        if (out.toString().contains("iped-patch")) { //$NON-NLS-1$
+        
+        String patchSufix = "-iped-patch";
+        if (tskVer.contains(patchSufix)) { //$NON-NLS-1$
             isTskPatched = true;
+            tskVer = tskVer.substring(0, tskVer.indexOf(patchSufix));
         } else
             LOGGER.error("It is highly recommended to apply the iped patch (in sources folder) on sleuthkit!"); //$NON-NLS-1$
+
+        if (tskVer.compareTo(MIN_TSK_VER) < 0) //$NON-NLS-1$
+            throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
+        else if (tskVer.compareTo(MIN_TSK_VER) > 0) //$NON-NLS-1$
+            LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
     }
@@ -273,7 +275,7 @@ public class SleuthkitReader extends DataSourceReader {
                     sleuthCase = SleuthkitCase.openCase(dbPath);
 
                 } else {
-                    IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                             Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
                     LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
                     sleuthCase = SleuthkitCase.newCase(dbPath);
@@ -296,7 +298,7 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
             } else {
-                IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("SleuthkitReader.WaitDecode") + image.getAbsolutePath()); //$NON-NLS-1$
                 LOGGER.info("Decoding image {}", image.getAbsolutePath()); //$NON-NLS-1$
 
@@ -480,7 +482,7 @@ public class SleuthkitReader extends DataSourceReader {
     private void readItensInOffsetOrder(long start, long last) throws Exception {
 
         if (!fastmode && !listOnly) {
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("SleuthkitReader.SortingByOffset") + start + " - " + last); //$NON-NLS-1$ //$NON-NLS-2$
             LOGGER.info("Sorting by sector offset: id " + start + " to " + last); //$NON-NLS-1$ //$NON-NLS-2$
         }

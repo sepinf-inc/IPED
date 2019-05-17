@@ -28,8 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
 import gpinf.dev.data.ItemImpl;
 import iped3.CaseData;
@@ -95,7 +95,7 @@ public class ItemProducer extends Thread {
                 }
 
                 if (listOnly) {
-                    IndexFiles.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
                             Messages.getString("ItemProducer.Adding") + source.getAbsolutePath() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
                     LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
                 }
@@ -117,7 +117,7 @@ public class ItemProducer extends Thread {
                 // caseData.addEvidenceFile(evidence);
 
             } else {
-                IndexFiles.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
+                WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
                         (int) (caseData.getDiscoveredVolume() / 1000000));
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
             }

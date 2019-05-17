@@ -19,12 +19,12 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import iped3.CaseData;
 
 /**
@@ -189,7 +189,7 @@ public class Statistics {
             LOGGER.info("Processed {} item previews instead of original ones.", caseData.getAlternativeFiles()); //$NON-NLS-1$
         }
 
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
+        IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir));
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
         reader.close();
 
@@ -258,7 +258,7 @@ public class Statistics {
                     + Messages.getString("Statistics.LowMemory.2") + Messages.getString("Statistics.LowMemory.3") //$NON-NLS-1$ //$NON-NLS-2$
                     + Messages.getString("Statistics.LowMemory.4") + Messages.getString("Statistics.LowMemory.5") //$NON-NLS-1$ //$NON-NLS-2$
                     + Messages.getString("Statistics.LowMemory.6"); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(App.get(), memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
+            JOptionPane.showMessageDialog(null, memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
                     JOptionPane.WARNING_MESSAGE);
             throw new Exception(memoryAlert);
         }

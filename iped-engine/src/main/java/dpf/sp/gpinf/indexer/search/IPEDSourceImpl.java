@@ -66,6 +66,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
@@ -311,7 +312,7 @@ public class IPEDSourceImpl implements Closeable, IPEDSource {
         LOGGER.info("Opening index " + index.getAbsolutePath()); //$NON-NLS-1$
 
         if (iw == null) {
-            Directory directory = FSDirectory.open(index);
+            Directory directory = ConfiguredFSDirectory.open(index);
             reader = DirectoryReader.open(directory);
         } else {
             reader = DirectoryReader.open(iw, true);

@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.desktop.ColumnsManagerImpl;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -532,7 +531,7 @@ public class IPEDReader extends DataSourceReader {
 
             // armazena metadados de emails, necessário para emails de PST
             if (OutlookPSTParser.OUTLOOK_MSG_MIME.equals(mimetype))
-                for (String key : ColumnsManagerImpl.email) {
+                for (String key : ExtraProperties.EMAIL_PROPS) {
                     for (String val : doc.getValues(key))
                         evidence.getMetadata().add(key, val);
                 }

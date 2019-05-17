@@ -498,6 +498,13 @@ public class UfedXmlReader extends DataSourceReader {
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
             XmlNode currentNode = nodeSeq.remove(nodeSeq.size() - 1);
+            
+            for(XmlNode node : nodeSeq) {
+                if(node.element.equals("entityBookmarks")) { //$NON-NLS-1$
+                    //currently there is no support for bookmarks
+                    return;
+                }
+            }
 
             if (listOnly)
                 return;

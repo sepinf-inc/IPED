@@ -1,5 +1,6 @@
 package iped3.util;
 
+import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 
 /**
@@ -24,6 +25,10 @@ public class ExtraProperties {
     public static final Property MESSAGE_DATE = Property.internalDate(MESSAGE_PREFIX + "Date"); //$NON-NLS-1$
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
+    
+    public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
+    
+    public static final String PST_EMAIL_HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
 
     public static final String WKFF_HITS = "ledKffHits"; //$NON-NLS-1$
 
@@ -54,4 +59,8 @@ public class ExtraProperties {
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
     public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    
+    public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
+            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,
+            Message.MESSAGE_BCC, PST_ATTACH, PST_EMAIL_HAS_ATTACHS};
 }

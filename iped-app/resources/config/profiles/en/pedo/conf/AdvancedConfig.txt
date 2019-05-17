@@ -1,0 +1,163 @@
+﻿########################################################################
+# Advanced Processing Settings
+########################################################################
+
+# PARSERS CAN BE ENABLED/DISABLED IN conf/ParserConfig.xml
+
+# If set to 'true', uses auxiliary processes to read the images. Consequently, if Sleuthkit crashes, only
+# the auxiliary process is killed and restarted. The auxiliary processes 
+# may double the memory usage. I/O and CPU demand will also increase.
+robustImageReading = false
+
+# Use external processes to parse files, isolating infinite loops and OutOfMemoryErrors while parsing.
+# Uses more memory and it is a bit slower because more processes are started and communicated with.
+enableExternalParsing = false
+
+# Maximum number of external parsing processes. 'auto' uses the number of logical CPU cores.
+# You may decrease this, because rarely all Workers are parsing files at the same time,
+# EXCEPT if OCR is enabled, when file parsing becomes the processing bottleneck.
+numExternalParsers = auto
+
+# Max heap memory for EACH external parser. Low values can cause parsing errors because of insufficient memory.
+externalParsingMaxMem = 512M
+
+# Configure internal or external (eg ufed) parsers for phone data with more than one parser.
+# Possible values: internal, external, all
+phoneParsersToUse = internal
+
+# Forces index merging into a single segment, reducing its size and optimizing the search from optical media.
+# This merging is costly and unnecessary if the index is accessed from a hard disk.
+forceMerge = false
+
+# Minimum timeout (seconds) while parsing files. To this baseline will be added the result of timeOutPerMB * file size in MB (see next parameter).
+# After the timeout, the file's raw strings will be indexed.
+timeOut = 180
+
+# Timeout (seconds) for each Megabyte of the file being parsed.
+# Total_Timeout = timeOut + timeOutPerMB * <file_size_in_MB>
+timeOutPerMB = 2
+
+# Copies LibreOffice.zip (100 MB) to the output folder, allowing the visualization of dozens of different formats.
+embutirLibreOffice = true
+
+# If true, takes into account the characters' position on the page when reconstructing the extracted text.
+# Needed to properly index rotated PDFs but doubles the processing time of PDFs.
+sortPDFChars = false
+
+# Perform test for randomness before indexing binary items and unknown file types.
+# Makes indexing faster and reduces index size, specially when indexing unallocated space.
+# May cause loss of hits surrounded by "random" content.
+entropyTest = true
+
+# Minimum size of raw strings extracted from unknown files for indexing.
+minRawStringSize = 4
+
+# Define additional characters to be indexed in addition to letters and numbers, i.e. these characters will no longer be treated as separators.
+# Separate the characters with a blank space
+extraCharsToIndex =
+
+# Converts text to lowercase before indexing, making the search case-insensitive.
+# Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
+convertCharsToLowerCase = true
+
+# Do not index words with characters not in Latin-1 charset, like chinese, cyrillic, arabic...
+# Default is false.
+filterNonLatinChars = false
+
+# Removes accents and converts characters to their equivalent ascii char.
+convertCharsToAscii = true
+
+# Ignores HFS + hard links pointing to items already processed. The hard links are added to the case,
+# but their content is not processed (indexed, expanded, carved, etc).
+# Optimizes HFS + image processing containing thousands of hard links (such as Time Machine volumes).
+ignoreHardLinks = true
+
+# Set this option to ignore orphaned files bigger than a certain size.
+# In rare cases, Sleuthkit can incorrectly recover thousands of giant orphaned files, 
+# which may render processing unfeasible.
+#minOrphanSizeToIgnore = 102400000
+
+# Size in bytes of the unallocated space segments. In cases where the carving of videos is important,
+# it may be useful to increase this value to minimize the loss of items that cross segment boundaries.
+unallocatedFragSize = 10737418240
+
+# Files larger than this value (in bytes) will be split before having their strings indexed. Large items without a specific parser 
+# are broken into 10 MB segments before being indexed, making it easier to highlight hits and to export 
+# segments containing hits belonging to big files, such as pagefiles, vss, etc.
+minItemSizeToFragment = 104857600
+
+# Size (bytes) of the text segments extracted from items before indexing. Includes all items,
+# not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
+textSplitSize = 10000000
+
+# Uses NIOFSDirectory instead of MMAPDirectory to open index (https://lucene.apache.org/core/4_9_0/core/org/apache/lucene/store/FSDirectory.html)
+# It is a bit slower, but prevents JVM crashes when reading index through network shares. 
+useNIOFSDirectory = false
+
+########################################################################
+# OCR Settings
+########################################################################
+
+# Optionally, use the parameter -ocr "bookmark_name" to restrict the OCR to a particular bookmark (can be used multiple times)
+# Dictionary language to be used for OCR. Portuguese (por) and English (eng) are included. May be used in tandem: por+eng
+OCRLanguage = por
+
+# Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
+pageSegMode = 1
+
+# Minimum file size (bytes) to submit to OCR
+minFileSize2OCR = 10000
+
+# Maximum file size (bytes) to submit to OCR
+maxFileSize2OCR = 100000000
+
+# Resolution (dpi) for PDF to image conversion. Increase if the document's fonts are small
+pdfToImgResolution = 250
+
+# Maximum characters of text per page a PDF can contain to be submitted to OCR
+maxPDFTextSize2OCR = 100
+
+# Library for converting PDFs to image before OCR.
+# Possible Values: pdfbox or icepdf (usually faster)
+pdfToImgLib = icepdf
+
+# Performs the conversion of PDFs to image in another process, isolating OutOfMemoryErrors
+# and CPU usage by unfinished threads. More stable, but makes the OCR slower.
+externalPdfToImgConv = true
+
+# Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
+externalConvMaxMem = 512M
+
+# Processes images embedded in PDFs. Must be enabled to extract images from PDFs if they are expanded.
+# If enabled, the OCR is applied over embedded images instead of the images generated by the rendering of each page.
+# Sometimes the images are fragmented in PDFs, resulting in cut words or lines. In this case this option can be detrimental to the OCR.
+# Also, with this option the OCR of jbig2 images in PDFs doesn't work because Tesseract does not support this format. 
+processImagesInPDFs = true
+
+########################################################################
+# Search Settings 
+########################################################################
+
+# Number of threads used to search the index. Can speed up searches on large indexes.
+# High values can degrade the search if the index is on a slow disk.
+searchThreads = 1
+
+# Número máximo de backups do estado da análise (marcadores, seleções, histórico de busca)
+# Os backups são salvos na pasta do caso em indexador/bkp
+maxBackups = 10
+
+# Intervalo (em segundos) entre a realização dos backups
+backupInterval = 60
+
+# Automatically manage visible columns
+autoManageCols = false
+
+# Open all disk images on program start up. By default, open each image only when it is accessed. 
+preOpenImagesOnSleuth = false
+
+# If preOpenImages is enabled, this enables a disk image cache warm up.
+# It should improve opening of segmented E01 images stored on local area networks.
+openImagesCacheWarmUpEnabled = false
+
+# Maximum number of threads used for image cache warm up.
+openImagesCacheWarmUpThreads = 256

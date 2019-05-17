@@ -26,9 +26,10 @@ import java.nio.file.Files;
 import java.util.Date;
 import java.util.Properties;
 
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.Item;
 
@@ -195,7 +196,7 @@ public class ExportCSVTask extends AbstractTask {
     public void init(Properties confProps, File confDir) throws Exception {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
-        if (output.exists() && !IndexFiles.getInstance().appendIndex) {
+        if (output.exists() && !Boolean.valueOf(System.getProperty(LocalConfig.SYS_PROP_APPEND))) {
             Files.delete(output.toPath());
         }
 

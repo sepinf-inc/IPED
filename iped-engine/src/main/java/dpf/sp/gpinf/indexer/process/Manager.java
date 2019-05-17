@@ -44,13 +44,14 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -179,7 +181,8 @@ public class Manager {
 
         prepararReport();
 
-        if (IndexFiles.getInstance().appendIndex) {
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (args.isAppendIndex()) {
             loadExistingData();
         }
 
@@ -263,7 +266,7 @@ public class Manager {
 
     private void loadExistingData() throws Exception {
 
-        IndexReader reader = IndexReader.open(FSDirectory.open(finalIndexDir));
+        IndexReader reader = IndexReader.open(ConfiguredFSDirectory.open(finalIndexDir));
         stats.previousIndexedFiles = reader.numDocs();
         reader.close();
 
@@ -301,10 +304,10 @@ public class Manager {
     }
 
     private void iniciarIndexacao() throws Exception {
-        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
-
-        writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
+        
+        writer = new IndexWriter(ConfiguredFSDirectory.open(indexDir), getIndexWriterConfig());
 
         LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
                 .iterator().next();
@@ -319,7 +322,7 @@ public class Manager {
             workers[k].start();
         }
 
-        IndexFiles.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
+        WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
     }
 
     private void monitorarIndexacao() throws Exception {
@@ -327,7 +330,7 @@ public class Manager {
         boolean someWorkerAlive = true;
 
         while (someWorkerAlive) {
-            if (IndexFiles.getInstance().isCancelled()) {
+            if (WorkerProvider.getInstance().isCancelled()) {
                 exception = new IPEDException("Processing canceled!"); //$NON-NLS-1$
             }
 
@@ -339,12 +342,12 @@ public class Manager {
 
             String currentDir = contador.currentDirectory();
             if (contador.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
-                IndexFiles.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
+                WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            IndexFiles.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
-            IndexFiles.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
-            IndexFiles.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
+            WorkerProvider.getInstance().firePropertyChange("discovered", 0, caseData.getDiscoveredEvidences()); //$NON-NLS-1$
+            WorkerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
+            WorkerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
 
             someWorkerAlive = false;
             for (int k = 0; k < workers.length; k++) {
@@ -394,7 +397,7 @@ public class Manager {
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
         if (advancedConfig.isForceMerge()) {
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
             try {
                 writer.forceMerge(1);
@@ -404,13 +407,13 @@ public class Manager {
 
         }
 
-        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.ClosingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.ClosingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Closing Index..."); //$NON-NLS-1$
         writer.close();
         writer = null;
 
         if (!indexDir.getCanonicalPath().equalsIgnoreCase(finalIndexDir.getCanonicalPath())) {
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CopyingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Moving Index..."); //$NON-NLS-1$
             try {
                 Files.move(indexDir.toPath(), finalIndexDir.toPath());
@@ -451,7 +454,7 @@ public class Manager {
 
         try {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                     Messages.getString("Manager.FilteringKeywords")); //$NON-NLS-1$
             ArrayList<String> palavras = Util.loadKeywords(output.getAbsolutePath() + "/palavras-chave.txt", //$NON-NLS-1$
                     Charset.defaultCharset().name());
@@ -490,7 +493,7 @@ public class Manager {
         VersionsMapImpl viewToRaw = new VersionsMapImpl(0);
 
         if (FTK3ReportReader.wasExecuted) {
-            IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
 
             IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
@@ -512,7 +515,7 @@ public class Manager {
             alternatives = null;
             ipedCase.close();
 
-            IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
+            IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
             Bits liveDocs = MultiFields.getLiveDocs(reader);
             viewToRaw = new VersionsMapImpl(stats.getLastId() + 1);
 
@@ -550,7 +553,7 @@ public class Manager {
             return;
         }
 
-        IndexFiles.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
         try (IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile())) {
@@ -567,7 +570,7 @@ public class Manager {
                 }
             }
 
-            writer = new IndexWriter(FSDirectory.open(finalIndexDir), getIndexWriterConfig());
+            writer = new IndexWriter(ConfiguredFSDirectory.open(finalIndexDir), getIndexWriterConfig());
 
             BooleanQuery query;
             int startId = 0, interval = 1000, endId = interval;
@@ -598,12 +601,13 @@ public class Manager {
     }
 
     private void prepararReport() throws Exception {
-        if (output.exists() && !IndexFiles.getInstance().appendIndex) {
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (output.exists() && !args.isAppendIndex()) {
             throw new IOException("Directory already exists: " + output.getAbsolutePath()); //$NON-NLS-1$
         }
 
         File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
-        if (export.exists() && !IndexFiles.getInstance().appendIndex) {
+        if (export.exists() && !args.isAppendIndex()) {
             throw new IOException("Directory already exists: " + export.getAbsolutePath()); //$NON-NLS-1$
         }
 
@@ -611,7 +615,7 @@ public class Manager {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
 
-        if (!IndexFiles.getInstance().appendIndex) {
+        if (!args.isAppendIndex()) {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 

@@ -16,11 +16,14 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ConstantsViewer;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
+    
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
+    
+    public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -110,8 +113,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
             outputOnSSD = Boolean.valueOf(value);
         }
 
-        if (outputOnSSD || !indexTempOnSSD
-                || (IndexFiles.getInstance() != null && IndexFiles.getInstance().appendIndex))
+        if (outputOnSSD || !indexTempOnSSD || Boolean.valueOf(System.getProperty(SYS_PROP_APPEND)))
             indexTemp = null;
     }
 

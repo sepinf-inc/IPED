@@ -12,9 +12,9 @@
         <module>iped-parsers</module>
         <module>iped-viewers</module>
         <module>iped-carvers</module>
-        <module>iped-ahocorasick</module>
         <module>iped-geo</module>
         <module>iped-engine</module>
+        <module>iped-app</module>
     </modules>
     
     <properties>
@@ -31,7 +31,7 @@
         <!--dependencies-->
         <tika.version>1.20</tika.version>
         <lucene.version>4.9.0</lucene.version>
-        <sleuthkit.version>4.6.0-p01</sleuthkit.version>
+        <sleuthkit.version>4.6.5-p01</sleuthkit.version>
         <libreoffice.version>5.1.4</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.3</log4j.version>
@@ -45,12 +45,12 @@
         <repository>
             <id>internal</id>
             <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
+            <url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/internal/</url>
         </repository>
         <repository>
             <id>snapshots</id>
             <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
+            <url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/snapshots/</url>
         </repository>
         <repository>
             <id>central</id>
@@ -64,13 +64,13 @@
 		<repository>
 			<id>archiva.internal</id>
 			<name>Internal Release Repository</name>
-			<url>http://10.61.242.12:8081/repository/internal/</url>
+			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/internal/</url>
 		</repository>
 		<snapshotRepository>
 			<id>archiva.snapshots</id>
 			<name>Internal Snapshot Repository</name>
 			<layout>default</layout>
-			<url>http://10.61.242.12:8081/repository/snapshots/</url>
+			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
     

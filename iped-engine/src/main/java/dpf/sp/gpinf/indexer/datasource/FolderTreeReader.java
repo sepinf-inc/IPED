@@ -40,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class FolderTreeReader extends DataSourceReader {
@@ -50,7 +50,6 @@ public class FolderTreeReader extends DataSourceReader {
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
 
     private File rootFile;
-    private String category;
     private String evidenceName;
     private CmdLineArgs args;
 
@@ -69,11 +68,6 @@ public class FolderTreeReader extends DataSourceReader {
         }
         dataSource = new DataSourceImpl(file);
         dataSource.setName(evidenceName);
-
-        if (!listOnly && !IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
-            category = file.getName();
-            caseData.addBookmark(new FileGroupImpl(category, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
-        }
 
         new FolderVisitor().walk(file);
 
@@ -107,9 +101,6 @@ public class FolderTreeReader extends DataSourceReader {
             item.setPath(path1);
 
             // evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
-            if (!IndexFiles.getInstance().fromCmdLine && caseData.containsReport()) {
-                item.addCategory(category);
-            }
 
             if (args.isAddowner())
                 try {

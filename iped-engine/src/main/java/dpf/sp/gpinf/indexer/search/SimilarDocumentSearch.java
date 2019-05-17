@@ -13,24 +13,24 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 
-import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.IPEDSource;
 import iped3.ItemId;
 
 public class SimilarDocumentSearch {
 
     private static final CharArraySet stopSet = getStopWords();
 
-    public Query getQueryForSimilarDocs(ItemId item, int matchPercent) {
+    public Query getQueryForSimilarDocs(ItemId item, int matchPercent, IPEDSource appCase) {
 
-        int docId = App.get().appCase.getLuceneId(item);
+        int docId = appCase.getLuceneId(item);
 
-        MoreLikeThis mlt = new MoreLikeThis(App.get().appCase.getReader());
+        MoreLikeThis mlt = new MoreLikeThis(appCase.getReader());
         String[] fields = { IndexItem.CONTENT };
 
         mlt.setMaxQueryTerms(50);
         mlt.setFieldNames(fields);
-        mlt.setAnalyzer(App.get().appCase.getAnalyzer());
+        mlt.setAnalyzer(appCase.getAnalyzer());
         mlt.setBoost(true);
         mlt.setMinDocFreq(2);
         mlt.setMaxDocFreqPct(10);

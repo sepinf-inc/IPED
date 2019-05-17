@@ -34,6 +34,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean preOpenImagesOnSleuth = false;
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
+    boolean useNIOFSDirectory = false;
 
     private static int textSplitSize = 100000000;
     private static int textOverlapSize = 10000;
@@ -230,6 +231,15 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty()) {
             openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
         }
+        
+        value = properties.getProperty("useNIOFSDirectory"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            useNIOFSDirectory = Boolean.valueOf(value.trim());
+        }
+    }
+    
+    public boolean isUseNIOFSDirectory() {
+        return useNIOFSDirectory;
     }
 
     public long getUnallocatedFragSize() {
