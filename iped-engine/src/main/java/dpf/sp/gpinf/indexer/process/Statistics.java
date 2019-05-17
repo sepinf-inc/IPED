@@ -24,6 +24,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import iped3.CaseData;
 
 /**
@@ -188,7 +189,7 @@ public class Statistics {
             LOGGER.info("Processed {} item previews instead of original ones.", caseData.getAlternativeFiles()); //$NON-NLS-1$
         }
 
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexDir));
+        IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir));
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
         reader.close();
 

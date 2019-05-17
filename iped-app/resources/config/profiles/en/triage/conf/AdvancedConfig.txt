@@ -97,6 +97,10 @@ minItemSizeToFragment = 104857600
 # not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
 textSplitSize = 10000000
 
+# Uses NIOFSDirectory instead of MMAPDirectory to open index (https://lucene.apache.org/core/4_9_0/core/org/apache/lucene/store/FSDirectory.html)
+# It is a bit slower, but prevents JVM crashes when reading index through network shares. 
+useNIOFSDirectory = false
+
 ########################################################################
 # OCR Settings
 ########################################################################

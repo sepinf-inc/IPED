@@ -10,6 +10,7 @@ import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import iped3.Item;
 import iped3.HashValue;
@@ -67,7 +68,7 @@ public class DuplicateTask extends AbstractTask {
 
             File indexDir = new File(worker.output, "index"); //$NON-NLS-1$
             if (indexDir.exists() && indexDir.list().length > 5) {
-                IndexReader reader = IndexReader.open(FSDirectory.open(indexDir));
+                IndexReader reader = IndexReader.open(ConfiguredFSDirectory.open(indexDir));
                 for (int i = 0; i < reader.maxDoc(); i++) {
                     Document doc = reader.document(i);
                     String hash = doc.get(IndexItem.HASH);

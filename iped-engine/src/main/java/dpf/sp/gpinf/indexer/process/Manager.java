@@ -44,6 +44,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
 import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -264,7 +266,7 @@ public class Manager {
 
     private void loadExistingData() throws Exception {
 
-        IndexReader reader = IndexReader.open(FSDirectory.open(finalIndexDir));
+        IndexReader reader = IndexReader.open(ConfiguredFSDirectory.open(finalIndexDir));
         stats.previousIndexedFiles = reader.numDocs();
         reader.close();
 
@@ -304,8 +306,8 @@ public class Manager {
     private void iniciarIndexacao() throws Exception {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
-
-        writer = new IndexWriter(FSDirectory.open(indexDir), getIndexWriterConfig());
+        
+        writer = new IndexWriter(ConfiguredFSDirectory.open(indexDir), getIndexWriterConfig());
 
         LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
                 .iterator().next();
@@ -513,7 +515,7 @@ public class Manager {
             alternatives = null;
             ipedCase.close();
 
-            IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
+            IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
             Bits liveDocs = MultiFields.getLiveDocs(reader);
             viewToRaw = new VersionsMapImpl(stats.getLastId() + 1);
 
@@ -568,7 +570,7 @@ public class Manager {
                 }
             }
 
-            writer = new IndexWriter(FSDirectory.open(finalIndexDir), getIndexWriterConfig());
+            writer = new IndexWriter(ConfiguredFSDirectory.open(finalIndexDir), getIndexWriterConfig());
 
             BooleanQuery query;
             int startId = 0, interval = 1000, endId = interval;
