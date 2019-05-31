@@ -11,9 +11,9 @@ import org.apache.lucene.store.FSDirectory;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
-import iped3.Item;
-import iped3.HashValue;
+import dpf.sp.gpinf.indexer.util.HashValue;
+import iped3.IItem;
+import iped3.IHashValue;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso
@@ -24,14 +24,14 @@ public class DuplicateTask extends AbstractTask {
 
     public static String HASH_MAP = HashTask.class.getSimpleName() + "HashMap"; //$NON-NLS-1$
 
-    private HashMap<HashValue, HashValue> hashMap;
+    private HashMap<IHashValue, IHashValue> hashMap;
 
     public static boolean ignoreDuplicates = false;
 
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
 
         // Verificação de duplicados
-        HashValue hashValue = evidence.getHashValue();
+        IHashValue hashValue = evidence.getHashValue();
         if (hashValue != null) {
             synchronized (hashMap) {
                 if (!hashMap.containsKey(hashValue)) {
@@ -61,9 +61,9 @@ public class DuplicateTask extends AbstractTask {
             ignoreDuplicates = Boolean.valueOf(value);
         }
 
-        hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(HASH_MAP);
+        hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(HASH_MAP);
         if (hashMap == null) {
-            hashMap = new HashMap<HashValue, HashValue>();
+            hashMap = new HashMap<IHashValue, IHashValue>();
             caseData.putCaseObject(HASH_MAP, hashMap);
 
             File indexDir = new File(worker.output, "index"); //$NON-NLS-1$
@@ -73,7 +73,7 @@ public class DuplicateTask extends AbstractTask {
                     Document doc = reader.document(i);
                     String hash = doc.get(IndexItem.HASH);
                     if (hash != null && !hash.isEmpty()) {
-                        HashValue hValue = new HashValueImpl(hash);
+                        IHashValue hValue = new HashValue(hash);
                         hashMap.put(hValue, hValue);
                     }
 

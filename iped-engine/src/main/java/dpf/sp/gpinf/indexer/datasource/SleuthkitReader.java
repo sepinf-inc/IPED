@@ -67,12 +67,12 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.DataSourceImpl;
-import gpinf.dev.data.ItemImpl;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.CaseData;
-import iped3.Item;
-import iped3.sleuthkit.SleuthKitItem;
+import iped3.ICaseData;
+import iped3.IItem;
+import iped3.sleuthkit.ISleuthKitItem;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -112,7 +112,7 @@ public class SleuthkitReader extends DataSourceReader {
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
 
-    public SleuthkitReader(CaseData caseData, File output, boolean listOnly) {
+    public SleuthkitReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
 
         if (Configuration.getInstance().loaddbPathWin != null)
@@ -263,7 +263,7 @@ public class SleuthkitReader extends DataSourceReader {
         tskParentIds.clear();
 
         deviceName = getEvidenceName(image);
-        dataSource = new DataSourceImpl(image);
+        dataSource = new DataSource(image);
         dataSource.setName(deviceName);
 
         String dbPath = output.getParent() + File.separator + DB_NAME;
@@ -590,7 +590,7 @@ public class SleuthkitReader extends DataSourceReader {
                     while (parentSleuthId >= sleuthIdToId.size()) {
                         sleuthIdToId.add(-1);
                     }
-                    parentId = ItemImpl.getNextId();
+                    parentId = Item.getNextId();
                     sleuthIdToId.set(parentSleuthId, parentId);
                 }
                 while (parentId >= parentIds.size()) {
@@ -635,7 +635,7 @@ public class SleuthkitReader extends DataSourceReader {
             int fragNum = 0;
             for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {
                 long len = offset + fragSize < absFile.getSize() ? fragSize : absFile.getSize() - offset;
-                ItemImpl frag = new ItemImpl();
+                Item frag = new Item();
                 String sufix = ""; //$NON-NLS-1$
                 if (absFile.getSize() > fragSize) {
                     sufix = "-Frag" + fragNum++; //$NON-NLS-1$
@@ -672,7 +672,7 @@ public class SleuthkitReader extends DataSourceReader {
         return absFile.getName().toLowerCase().contains("{3808876b-c176-4e48-b7ae-04046e6cc752}"); //$NON-NLS-1$
     }
 
-    private void setPath(Item evidence, String path) {
+    private void setPath(IItem evidence, String path) {
         if (deviceName != null) {
             path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
@@ -683,7 +683,7 @@ public class SleuthkitReader extends DataSourceReader {
         addItem(absFile, null, false, parent);
     }
 
-    private void addItem(AbstractFile absFile, Item evidence, boolean unalloc, Long parent) throws Exception {
+    private void addItem(AbstractFile absFile, IItem evidence, boolean unalloc, Long parent) throws Exception {
 
         if (absFile.isDir() && (absFile.getName().equals(".") || absFile.getName().equals(".."))) { //$NON-NLS-1$ //$NON-NLS-2$
             return;
@@ -708,7 +708,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         if (evidence == null) {
-            evidence = new ItemImpl();
+            evidence = new Item();
             evidence.setLength(absFile.getSize());
         }
 
@@ -736,9 +736,9 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         evidence.setHasChildren(absFile.hasChildren());
-        if (evidence instanceof SleuthKitItem) {
-            ((SleuthKitItem) evidence).setSleuthFile(absFile);
-            ((SleuthKitItem) evidence).setSleuthId((int) absFile.getId());
+        if (evidence instanceof ISleuthKitItem) {
+            ((ISleuthKitItem) evidence).setSleuthFile(absFile);
+            ((ISleuthKitItem) evidence).setSleuthId((int) absFile.getId());
         }
 
         int sleuthId = (int) (absFile.getId() - firstId);
@@ -810,7 +810,7 @@ public class SleuthkitReader extends DataSourceReader {
                 return;
         }
 
-        ItemImpl evidence = new ItemImpl();
+        Item evidence = new Item();
         evidence.setLength(content.getSize());
         evidence.setSumVolume(false);
 

@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Tarefa de KFF com implementação simples utilizando base local, sem servidor
@@ -231,7 +231,7 @@ public class KFFTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (!isEnabled())
             return;

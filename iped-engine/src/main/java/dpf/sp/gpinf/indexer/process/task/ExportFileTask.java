@@ -40,12 +40,12 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
-import iped3.HashValue;
-import iped3.sleuthkit.SleuthKitItem;
+import iped3.IItem;
+import iped3.IHashValue;
+import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -68,7 +68,7 @@ public class ExportFileTask extends AbstractTask {
 
     private static boolean computeHash = false;
     private File extractDir;
-    private HashMap<HashValue, HashValue> hashMap;
+    private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
 
     public ExportFileTask() {
@@ -119,7 +119,7 @@ public class ExportFileTask extends AbstractTask {
         return categoriesToExtract.size() > 0;
     }
 
-    public static boolean isToBeExtracted(Item evidence) {
+    public static boolean isToBeExtracted(IItem evidence) {
 
         boolean result = false;
         for (String category : evidence.getCategorySet()) {
@@ -132,7 +132,7 @@ public class ExportFileTask extends AbstractTask {
         return result;
     }
 
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
 
         // Exporta arquivo no caso de extração automatica ou no caso de relatório do
         // iped
@@ -141,8 +141,8 @@ public class ExportFileTask extends AbstractTask {
 
             evidence.setToExtract(true);
             if (doNotExport(evidence)) {
-                if (evidence instanceof SleuthKitItem) {
-                    ((SleuthKitItem) evidence).setSleuthId(null);
+                if (evidence instanceof ISleuthKitItem) {
+                    ((ISleuthKitItem) evidence).setSleuthId(null);
                 }
                 evidence.setExportedFile(null);
             } else {
@@ -173,7 +173,7 @@ public class ExportFileTask extends AbstractTask {
 
     }
 
-    private boolean doNotExport(Item evidence) {
+    private boolean doNotExport(IItem evidence) {
         if (noContentLabels == null) {
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             noContentLabels = args.getNocontent();
@@ -199,7 +199,7 @@ public class ExportFileTask extends AbstractTask {
         return true;
     }
 
-    public void extract(Item evidence) {
+    public void extract(IItem evidence) {
         InputStream is = null;
         try {
             is = evidence.getBufferedStream();
@@ -215,7 +215,7 @@ public class ExportFileTask extends AbstractTask {
         }
     }
 
-    private void copyViewFile(Item evidence) {
+    private void copyViewFile(IItem evidence) {
         File viewFile = evidence.getViewFile();
         if (viewFile != null) {
             String viewName = viewFile.getName();
@@ -247,7 +247,7 @@ public class ExportFileTask extends AbstractTask {
         return result;
     }
 
-    public void renameToHash(Item evidence) {
+    public void renameToHash(IItem evidence) {
 
         String hash = evidence.getHash();
         if (hash != null && !hash.isEmpty()) {
@@ -260,8 +260,8 @@ public class ExportFileTask extends AbstractTask {
 
             File hashFile = getHashFile(hash, ext);
 
-            HashValue hashVal = new HashValueImpl(hash);
-            HashValue hashLock;
+            IHashValue hashVal = new HashValue(hash);
+            IHashValue hashLock;
             synchronized (hashMap) {
                 hashLock = hashMap.get(hashVal);
             }
@@ -300,13 +300,13 @@ public class ExportFileTask extends AbstractTask {
 
     }
 
-    private void changeTargetFile(Item evidence, File file) {
+    private void changeTargetFile(IItem evidence, File file) {
         String relativePath = Util.getRelativePath(output, file);
         evidence.setExportedFile(relativePath);
         evidence.setFile(file);
     }
 
-    public void extractFile(InputStream inputStream, Item evidence, Long parentSize) throws IOException {
+    public void extractFile(InputStream inputStream, IItem evidence, Long parentSize) throws IOException {
 
         String hash;
         File outputFile = null;
@@ -331,7 +331,7 @@ public class ExportFileTask extends AbstractTask {
                     Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
         } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
             outputFile = getHashFile(hash, ext);
-            HashValue hashVal = new HashValueImpl(hash);
+            IHashValue hashVal = new HashValue(hash);
             synchronized (hashMap) {
                 hashLock = hashMap.get(hashVal);
             }
@@ -400,7 +400,7 @@ public class ExportFileTask extends AbstractTask {
         itensExtracted = 0;
         subDirCounter = 0;
 
-        hashMap = (HashMap<HashValue, HashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
 
     }
 

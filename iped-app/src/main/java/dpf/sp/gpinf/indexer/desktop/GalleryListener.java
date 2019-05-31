@@ -27,7 +27,7 @@ import java.awt.event.MouseListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -89,7 +89,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
         if (evt.getClickCount() == 2) {
             int modelIdx = App.get().resultsTable
                     .convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-            ItemId item = App.get().ipedResult.getItem(modelIdx);
+            IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
             ExternalFileOpen.open(docId);
 

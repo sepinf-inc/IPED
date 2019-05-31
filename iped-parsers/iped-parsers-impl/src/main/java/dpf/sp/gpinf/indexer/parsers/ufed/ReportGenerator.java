@@ -10,8 +10,8 @@ import java.util.List;
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 /**
@@ -24,13 +24,13 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
-    private ItemSearcher searcher;
+    private IItemSearcher searcher;
     private Object lastChat;
     private int currentMsg = 0;
 
     static final String RSRC_PATH = "../../../../indexador/htm/whatsapp/"; //$NON-NLS-1$
 
-    public ReportGenerator(ItemSearcher searcher) {
+    public ReportGenerator(IItemSearcher searcher) {
         this.searcher = searcher;
     }
 
@@ -38,7 +38,7 @@ public class ReportGenerator {
         return currentMsg;
     }
 
-    public byte[] generateNextChatHtml(ItemBase c, List<Message> msgs) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(IItemBase c, List<Message> msgs) throws UnsupportedEncodingException {
         if (lastChat != c) {
             lastChat = c;
             currentMsg = 0;

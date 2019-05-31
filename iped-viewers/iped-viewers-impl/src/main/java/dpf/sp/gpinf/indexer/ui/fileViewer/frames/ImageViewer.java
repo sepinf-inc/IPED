@@ -17,7 +17,7 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -48,7 +48,7 @@ public class ImageViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
 
         BufferedImage image = null;
         if (content != null) {

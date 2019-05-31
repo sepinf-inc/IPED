@@ -28,8 +28,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
-import iped3.search.ItemSearcher;
+import dpf.sp.gpinf.indexer.util.HashValue;
+import iped3.search.IItemSearcher;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -204,13 +204,13 @@ class LibraryFile extends ShareazaEntity {
         return "True".equals(getInheritedShared()); //$NON-NLS-1$
     }
 
-    public void printTableRow(XHTMLContentHandler html, String path, ItemSearcher searcher) throws SAXException {
+    public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher) throws SAXException {
 
         if (LedHashes.hashMap != null) {
             if ((md5 != null && md5.length() == 32
-                    && Arrays.binarySearch(LedHashes.hashMap.get("md5"), new HashValueImpl(md5)) >= 0) || //$NON-NLS-1$
+                    && Arrays.binarySearch(LedHashes.hashMap.get("md5"), new HashValue(md5)) >= 0) || //$NON-NLS-1$
                     (sha1 != null && sha1.length() == 40
-                            && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), new HashValueImpl(sha1)) >= 0)) { //$NON-NLS-1$
+                            && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), new HashValue(sha1)) >= 0)) { //$NON-NLS-1$
                 html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 kffHit = true;
             } else
@@ -225,7 +225,7 @@ class LibraryFile extends ShareazaEntity {
         html.endElement("tr"); //$NON-NLS-1$
     }
 
-    private void printTd(XHTMLContentHandler html, ItemSearcher searcher, Object... tdtext) throws SAXException {
+    private void printTd(XHTMLContentHandler html, IItemSearcher searcher, Object... tdtext) throws SAXException {
         int col = 0;
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$

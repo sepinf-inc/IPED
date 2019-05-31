@@ -13,15 +13,15 @@ import javax.swing.event.TableModelListener;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import dpf.mt.gpinf.mapas.util.Messages;
-import iped3.ItemId;
+import iped3.IItemId;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.ResultSetViewer;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IMultiSearchResultProvider;
 
 public class MapaViewer implements ResultSetViewer, TableModelListener, ListSelectionListener {
 
     JTable resultsTable;
-    MultiSearchResultProvider resultsProvider;
+    IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     AppMapaPanel mapaPanel;
     JScrollPane mapsScroll;
@@ -34,7 +34,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
     }
 
     @Override
-    public void init(JTable resultsTable, MultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
+    public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsTable = resultsTable;
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
@@ -71,7 +71,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
          */
         if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
             updatingSelection = true;
-            ItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
+            IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
 
             Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
 
@@ -111,7 +111,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
                     boolean selected = lsm.isSelectedIndex(i);
 
                     int rowModel = resultsTable.convertRowIndexToModel(i);
-                    ItemId item = resultsProvider.getResults().getItem(rowModel);
+                    IItemId item = resultsProvider.getResults().getItem(rowModel);
 
                     if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
                         List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);

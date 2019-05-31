@@ -14,6 +14,6 @@ public interface GUIProvider {
     ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
             Dialog.ModalityType modal);
 
-    ColumnsManager getColumnsManager();
+    IColumnsManager getColumnsManager();
 
 }

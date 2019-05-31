@@ -21,7 +21,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 /**
  * Classe base para todas as interfaces gráficas de visualizadores.
@@ -94,15 +94,15 @@ public abstract class Viewer {
     /*
      * Renderiza o arquivo. Valor nulo deve indicar limpeza da visualização
      */
-    public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
         loadFile(content, highlightTerms);
     }
 
-    public void loadFile(StreamSource content) {
+    public void loadFile(IStreamSource content) {
         loadFile(content, null);
     }
 
-    abstract public void loadFile(StreamSource content, Set<String> highlightTerms);
+    abstract public void loadFile(IStreamSource content, Set<String> highlightTerms);
 
     abstract public void scrollToNextHit(boolean forward);
 

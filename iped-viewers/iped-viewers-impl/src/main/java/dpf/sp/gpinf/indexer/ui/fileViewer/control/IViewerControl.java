@@ -3,7 +3,7 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.control;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 import java.util.Set;
 
@@ -63,7 +63,7 @@ public interface IViewerControl {
      * @param contentType
      * @param highlightTerms
      */
-    public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms);
+    public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms);
 
     /**
      * Carrega os dados do arquivo no visualizador específico, incluindo o destaque
@@ -73,5 +73,5 @@ public interface IViewerControl {
      * @param contentType
      * @param highlightTerms
      */
-    public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms);
+    public void loadFile(IStreamSource file, String contentType, Set<String> highlightTerms);
 }

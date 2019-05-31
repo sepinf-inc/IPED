@@ -36,18 +36,18 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
-import iped3.ItemId;
+import iped3.IItem;
+import iped3.IItemId;
 
 public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CopiarArquivos.class);
 
-    ArrayList<ItemId> uniqueIds;
+    ArrayList<IItemId> uniqueIds;
     File dir, subdir;
     ProgressMonitor progressMonitor;
 
-    public CopiarArquivos(File dir, ArrayList<ItemId> uniqueIds) {
+    public CopiarArquivos(File dir, ArrayList<IItemId> uniqueIds) {
         this.dir = dir;
         this.subdir = dir;
         this.uniqueIds = uniqueIds;
@@ -77,7 +77,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
         dir.mkdirs();
 
         int progress = 0, subdirCount = 1;
-        for (ItemId item : uniqueIds) {
+        for (IItemId item : uniqueIds) {
             try {
                 if (progress % 1000 == 0 && progress > 0) {
                     do {
@@ -85,7 +85,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
                     } while (!subdir.mkdir());
                 }
 
-                Item e = App.get().appCase.getItemByItemId(item);
+                IItem e = App.get().appCase.getItemByItemId(item);
                 String dstName = Util.getValidFilename(e.getName());
                 InputStream in = e.getBufferedStream();
 
@@ -139,7 +139,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
     public static void salvarArquivo(int docId) {
         try {
-            ArrayList<ItemId> uniqueDoc = new ArrayList<ItemId>();
+            ArrayList<IItemId> uniqueDoc = new ArrayList<IItemId>();
             uniqueDoc.add(App.get().appCase.getItemId(docId));
 
             JFileChooser fileChooser = new JFileChooser();

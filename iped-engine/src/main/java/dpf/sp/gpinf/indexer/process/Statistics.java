@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
-import iped3.CaseData;
+import iped3.ICaseData;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados,
@@ -39,7 +39,7 @@ public class Statistics {
 
     private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
 
-    CaseData caseData;
+    ICaseData caseData;
     File indexDir;
 
     // EstatÃ­sticas
@@ -55,7 +55,7 @@ public class Statistics {
     int previousIndexedFiles = 0;
     int ioerrors = 0;
 
-    public static Statistics get(CaseData caseData, File indexDir) {
+    public static Statistics get(ICaseData caseData, File indexDir) {
         if (instance == null) {
             instance = new Statistics(caseData, indexDir);
         }
@@ -66,7 +66,7 @@ public class Statistics {
         return instance;
     }
 
-    private Statistics(CaseData caseData, File indexDir) {
+    private Statistics(ICaseData caseData, File indexDir) {
         this.caseData = caseData;
         this.indexDir = indexDir;
     }

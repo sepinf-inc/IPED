@@ -48,11 +48,11 @@ import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ZipFile4j;
-import gpinf.dev.data.DataSourceImpl;
-import gpinf.dev.data.ItemImpl;
-import iped3.CaseData;
-import iped3.Item;
-import iped3.datasource.DataSource;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.IItem;
+import iped3.datasource.IDataSource;
 import iped3.util.ExtraProperties;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
@@ -71,11 +71,11 @@ public class UfedXmlReader extends DataSourceReader {
     File root, ufdrFile;
     ZipFile4j ufdr;
     ZIPInputStreamFactory zisf;
-    Item rootItem;
-    Item decodedFolder;
-    HashMap<String, Item> pathToParent = new HashMap<>();
+    IItem rootItem;
+    IItem decodedFolder;
+    HashMap<String, IItem> pathToParent = new HashMap<>();
 
-    public UfedXmlReader(CaseData caseData, File output, boolean listOnly) {
+    public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
 
@@ -188,10 +188,10 @@ public class UfedXmlReader extends DataSourceReader {
         String evidenceName = getEvidenceName(root);
         if (evidenceName == null)
             evidenceName = root.getName();
-        DataSource evidenceSource = new DataSourceImpl(root);
+        IDataSource evidenceSource = new DataSource(root);
         evidenceSource.setName(evidenceName);
 
-        rootItem = new ItemImpl();
+        rootItem = new Item();
         rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
         rootItem.setPath(evidenceName);
@@ -214,7 +214,7 @@ public class UfedXmlReader extends DataSourceReader {
         if (listOnly)
             return;
 
-        decodedFolder = new ItemImpl();
+        decodedFolder = new Item();
         decodedFolder.setName("_DecodedData"); //$NON-NLS-1$
         decodedFolder.setParent(rootItem);
         decodedFolder.setPath(rootItem.getPath() + "/" + decodedFolder.getName()); //$NON-NLS-1$
@@ -255,12 +255,12 @@ public class UfedXmlReader extends DataSourceReader {
         DateFormat df2 = new SimpleDateFormat(df2Pattern);
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
-        ArrayList<ItemImpl> itemSeq = new ArrayList<>();
+        ArrayList<Item> itemSeq = new ArrayList<>();
 
         HashSet<String> elements = new HashSet<>();
         HashSet<String> types = new HashSet<>();
 
-        HashMap<String, Item> ids = new HashMap<>();
+        HashMap<String, IItem> ids = new HashMap<>();
 
         private class XmlNode {
             String element;
@@ -335,17 +335,17 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
-        private Item getParent(String path) throws SAXException {
+        private IItem getParent(String path) throws SAXException {
             int idx = path.lastIndexOf('/');
             if (idx < 1)
                 return rootItem;
 
             String parentPath = path.substring(0, idx);
-            Item parent = pathToParent.get(parentPath);
+            IItem parent = pathToParent.get(parentPath);
             if (parent != null)
                 return parent;
 
-            parent = new ItemImpl();
+            parent = new Item();
             parent.setName(parentPath.substring(parentPath.lastIndexOf('/') + 1));
             parent.setPath(parentPath);
             parent.setHasChildren(true);
@@ -393,7 +393,7 @@ public class UfedXmlReader extends DataSourceReader {
                     return;
                 }
 
-                ItemImpl item = new ItemImpl();
+                Item item = new Item();
 
                 item.setLength(size);
 
@@ -420,7 +420,7 @@ public class UfedXmlReader extends DataSourceReader {
                         return;
                     }
 
-                    ItemImpl item = new ItemImpl();
+                    Item item = new Item();
 
                     String type = atts.getValue("type"); //$NON-NLS-1$
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -450,8 +450,8 @@ public class UfedXmlReader extends DataSourceReader {
                         return;
                     }
 
-                    ItemImpl item = new ItemImpl();
-                    Item parent = itemSeq.get(itemSeq.size() - 1);
+                    Item item = new Item();
+                    IItem parent = itemSeq.get(itemSeq.size() - 1);
 
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     String prevNameAtt = prevNode.atts.get("name"); //$NON-NLS-1$
@@ -479,7 +479,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
-        private void fillCommonMeta(Item item, Attributes atts) {
+        private void fillCommonMeta(IItem item, Attributes atts) {
             if ("StreetAddress".equals(atts.getValue("type"))) //$NON-NLS-1$ //$NON-NLS-2$
                 return;
             String extractionName = extractionInfoMap.get(atts.getValue("extractionId")); //$NON-NLS-1$
@@ -510,7 +510,7 @@ public class UfedXmlReader extends DataSourceReader {
                 return;
 
             String nameAttr = currentNode.atts.get("name"); //$NON-NLS-1$
-            ItemImpl item = null;
+            Item item = null;
             if (itemSeq.size() > 0)
                 item = itemSeq.get(itemSeq.size() - 1);
 
@@ -595,7 +595,7 @@ public class UfedXmlReader extends DataSourceReader {
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
                     handleAttachment(item);
-                    Item parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                     if (parentItem.getMediaType().toString().contains("email")) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
@@ -634,7 +634,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
-                    Item parentItem = itemSeq.get(itemSeq.size() - 1);
+                    IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                     if ("Party".equals(type)) { //$NON-NLS-1$
                         String role = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Role"); //$NON-NLS-1$
                         String parentNameAttr = parentNode.atts.get("name"); //$NON-NLS-1$
@@ -722,7 +722,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
-        private void setContent(ItemImpl item, String path) {
+        private void setContent(Item item, String path) {
             item.setMediaType(null);
             item.setHash(null);
             item.setInputStreamFactory(null);
@@ -753,7 +753,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
-        private void updateName(Item item, String newName) {
+        private void updateName(IItem item, String newName) {
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
             if (newName.length() > maxNameSize)
@@ -762,7 +762,7 @@ public class UfedXmlReader extends DataSourceReader {
             item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
 
-        private void handleAttachment(ItemImpl item) {
+        private void handleAttachment(Item item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if (name != null)
                 updateName(item, name);
@@ -792,7 +792,7 @@ public class UfedXmlReader extends DataSourceReader {
             return sb.toString();
         }
 
-        private File createEmailPreview(ItemImpl email) {
+        private File createEmailPreview(Item email) {
             File file = new File(output, "view/emails/view-" + email.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
@@ -859,7 +859,7 @@ public class UfedXmlReader extends DataSourceReader {
             return file;
         }
 
-        private File createContactPreview(ItemImpl contact) {
+        private File createContactPreview(Item contact) {
 
             String name = contact.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
             if (name == null)

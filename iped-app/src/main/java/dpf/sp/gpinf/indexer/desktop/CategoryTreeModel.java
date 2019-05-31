@@ -20,7 +20,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 
 public class CategoryTreeModel implements TreeModel {
 
@@ -98,7 +98,7 @@ public class CategoryTreeModel implements TreeModel {
 
             } else {
                 String query = IndexItem.CATEGORY + ":\"" + name + "\""; //$NON-NLS-1$ //$NON-NLS-2$
-                IPEDSearcherImpl searcher = new IPEDSearcherImpl(App.get().appCase, query);
+                IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
                 try {
                     numItems = searcher.multiSearch().getLength();
 

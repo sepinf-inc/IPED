@@ -18,11 +18,11 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.DataSourceImpl;
-import gpinf.dev.data.ItemImpl;
-import gpinf.dev.data.FileGroupImpl;
-import iped3.CaseData;
-import iped3.Item;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import gpinf.dev.data.FileGroup;
+import iped3.ICaseData;
+import iped3.IItem;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class FolderTreeReader extends DataSourceReader {
     private String evidenceName;
     private CmdLineArgs args;
 
-    public FolderTreeReader(CaseData caseData, File output, boolean listOnly) {
+    public FolderTreeReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
 
@@ -66,7 +66,7 @@ public class FolderTreeReader extends DataSourceReader {
         if (evidenceName == null) {
             evidenceName = file.getName();
         }
-        dataSource = new DataSourceImpl(file);
+        dataSource = new DataSource(file);
         dataSource.setName(evidenceName);
 
         new FolderVisitor().walk(file);
@@ -75,7 +75,7 @@ public class FolderTreeReader extends DataSourceReader {
 
     }
 
-    private Item getEvidence(Path path, BasicFileAttributes attr) {
+    private IItem getEvidence(Path path, BasicFileAttributes attr) {
         if (listOnly) {
             caseData.incDiscoveredEvidences(1);
             caseData.incDiscoveredVolume(attr.size());
@@ -83,7 +83,7 @@ public class FolderTreeReader extends DataSourceReader {
 
         } else {
             File file = path.toFile();
-            Item item = new ItemImpl();
+            IItem item = new Item();
             item.setName(file.getName());
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
@@ -131,7 +131,7 @@ public class FolderTreeReader extends DataSourceReader {
                 return FileVisitResult.TERMINATE;
             }
 
-            Item item = getEvidence(path, attr);
+            IItem item = getEvidence(path, attr);
             if (item != null) {
                 if (!parentIds.isEmpty()) {
                     item.setParentId(parentIds.getLast());

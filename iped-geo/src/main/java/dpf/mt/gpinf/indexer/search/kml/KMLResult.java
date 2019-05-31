@@ -16,27 +16,27 @@ import javax.swing.JOptionPane;
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.mt.gpinf.mapas.util.Messages;
-import iped3.ItemId;
+import iped3.IItemId;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.ProgressDialog;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IMultiSearchResultProvider;
 import iped3.util.BasicProps;
 
 public class KMLResult {
     private static FileDialog fDialog;
 
-    protected Map<ItemId, List<Integer>> gpsItems = new HashMap<>();
+    protected Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
     private String kmlResult;
 
     GUIProvider guiProvider;
-    MultiSearchResultProvider app;
+    IMultiSearchResultProvider app;
 
-    public KMLResult(MultiSearchResultProvider app, GUIProvider guiProvider) {
+    public KMLResult(IMultiSearchResultProvider app, GUIProvider guiProvider) {
         this.guiProvider = guiProvider;
         this.app = app;
     }
 
-    public Map<ItemId, List<Integer>> getGPSItems() {
+    public Map<IItemId, List<Integer>> getGPSItems() {
         return gpsItems;
     }
 

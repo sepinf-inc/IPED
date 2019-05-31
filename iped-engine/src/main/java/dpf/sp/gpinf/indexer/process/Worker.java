@@ -33,8 +33,8 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.CaseData;
-import iped3.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 /**
  * Responsável por retirar um item da fila e enviá-lo para cada tarefa de
@@ -70,11 +70,11 @@ public class Worker extends Thread {
     public Manager manager;
     public Statistics stats;
     public File output;
-    public CaseData caseData;
+    public ICaseData caseData;
     public volatile Exception exception;
-    public volatile Item evidence;
+    public volatile IItem evidence;
 
-    public Worker(int k, CaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
+    public Worker(int k, ICaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
         this.caseData = caseData;
         this.writer = writer;
@@ -133,7 +133,7 @@ public class Worker extends Thread {
      *
      * @param evidence
      */
-    private void checkFile(Item evidence) {
+    private void checkFile(IItem evidence) {
         String filePath = evidence.getFileToIndex();
         if (evidence.getFile() == null && !filePath.isEmpty()) {
             File file = Util.getRelativeFile(baseFilePath, filePath);
@@ -149,9 +149,9 @@ public class Worker extends Thread {
      * @param evidence
      *            Item a ser processado
      */
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
 
-        Item prevEvidence = this.evidence;
+        IItem prevEvidence = this.evidence;
         if (!evidence.isQueueEnd()) {
             this.evidence = evidence;
         }
@@ -193,7 +193,7 @@ public class Worker extends Thread {
      * @param evidence
      *            novo item a ser processado.
      */
-    public void processNewItem(Item evidence) {
+    public void processNewItem(IItem evidence) {
         processNewItem(evidence, ProcessTime.AUTO);
     }
 
@@ -201,7 +201,7 @@ public class Worker extends Thread {
         AUTO, NOW, LATER
     }
 
-    public void processNewItem(Item evidence, ProcessTime time) {
+    public void processNewItem(IItem evidence, ProcessTime time) {
         caseData.incDiscoveredEvidences(1);
         // Se a fila está pequena, enfileira
         if (time == ProcessTime.LATER
@@ -231,7 +231,7 @@ public class Worker extends Thread {
                     process(evidence);
 
                 } else {
-                    Item queueEnd = evidence;
+                    IItem queueEnd = evidence;
                     evidence = null;
                     if (manager.numItensBeingProcessed() == 0) {
                         caseData.getItemQueue().addLast(queueEnd);

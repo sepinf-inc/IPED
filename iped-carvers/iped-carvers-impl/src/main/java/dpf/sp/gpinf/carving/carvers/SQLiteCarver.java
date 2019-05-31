@@ -10,7 +10,7 @@ import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
 public class SQLiteCarver extends AbstractCarver {
@@ -26,7 +26,7 @@ public class SQLiteCarver extends AbstractCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         SeekableInputStream is = null;
         try {
             is = parentEvidence.getStream();
@@ -71,7 +71,7 @@ public class SQLiteCarver extends AbstractCarver {
     }
 
     @Override
-    public boolean isValid(Item parentEvidence, Hit headerOffset, long length) {
+    public boolean isValid(IItem parentEvidence, Hit headerOffset, long length) {
         // rules retrieved from "https://www.sqlite.org/fileformat.html"
 
         SeekableInputStream is = null;

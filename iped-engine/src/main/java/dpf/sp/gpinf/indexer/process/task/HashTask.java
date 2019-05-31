@@ -32,9 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Classe para calcular e manipular hashes.
@@ -97,7 +96,7 @@ public class HashTask extends AbstractTask {
 
     }
 
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
 
         if (evidence.isQueueEnd()) {
             return;
@@ -208,7 +207,7 @@ public class HashTask extends AbstractTask {
     }
 
     @Deprecated
-    public static class HashValue extends HashValueImpl {
+    public static class HashValue extends dpf.sp.gpinf.indexer.util.HashValue {
 
         private static final long serialVersionUID = 1L;
 

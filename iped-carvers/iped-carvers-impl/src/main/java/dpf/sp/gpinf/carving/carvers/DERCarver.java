@@ -15,7 +15,7 @@ import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
 public class DERCarver extends AbstractCarver {
@@ -34,7 +34,7 @@ public class DERCarver extends AbstractCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try (SeekableInputStream is = parentEvidence.getStream()) {
             is.seek(header.getOffset() + 1);
             byte lenlenb[] = new byte[1];
@@ -56,7 +56,7 @@ public class DERCarver extends AbstractCarver {
     }
 
     @Override
-    public Object validateCarvedObject(Item parentEvidence, Hit header, long length)
+    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         Certificate cert = null;
 

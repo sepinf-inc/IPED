@@ -5,7 +5,7 @@ import java.util.Set;
 import javax.swing.JLabel;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class NoJavaFXViewer extends Viewer {
 
@@ -38,7 +38,7 @@ public class NoJavaFXViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
     }
 
     @Override

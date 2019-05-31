@@ -51,7 +51,7 @@ import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class GalleryModel extends AbstractTableModel {
 
@@ -63,7 +63,7 @@ public class GalleryModel extends AbstractTableModel {
     private boolean logRendering = false;
     ImageThumbTask imgThumbTask;
 
-    public Map<ItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<ItemId, GalleryValue>());
+    public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
     private int maxCacheSize = 1000;
     private ErrorIcon errorIcon = new ErrorIcon();
     private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
@@ -120,7 +120,7 @@ public class GalleryModel extends AbstractTableModel {
         }
 
         idx = App.get().resultsTable.convertRowIndexToModel(idx);
-        final ItemId id = App.get().ipedResult.getItem(idx);
+        final IItemId id = App.get().ipedResult.getItem(idx);
         final int docId = App.get().appCase.getLuceneId(id);
 
         synchronized (cache) {
@@ -259,7 +259,7 @@ public class GalleryModel extends AbstractTableModel {
                 });
 
                 synchronized (cache) {
-                    Iterator<ItemId> i = cache.keySet().iterator();
+                    Iterator<IItemId> i = cache.keySet().iterator();
                     while (cache.size() > maxCacheSize) {
                         i.next();
                         i.remove();

@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 
 import dpf.sp.gpinf.carving.DefaultCarver;
-import iped3.Item;
+import iped3.IItem;
 import dpf.sp.gpinf.carver.api.Hit;
 
 public class EMLCarver extends DefaultCarver {
     Hit lastFooter = null;
 
     @Override
-    public void notifyHit(Item parentEvidence, Hit hit) throws IOException {
+    public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
         ArrayDeque<Hit> headersWaitingFooters = super.headersWaitingFooters;
         if (hit.getSignature().isHeader()) {
             // se tem um footer encontrado e encontrou um header novo --> carveia
@@ -30,7 +30,7 @@ public class EMLCarver extends DefaultCarver {
         clearOldHeaders(parentEvidence);
     }
 
-    private void carveFromLastFooter(Item parentEvidence) throws IOException {
+    private void carveFromLastFooter(IItem parentEvidence) throws IOException {
         Hit head, firstHead = null;
         while ((head = headersWaitingFooters.peekLast()) != null
                 && lastFooter.getOffset() - head.getOffset() <= head.getSignature().getCarverType().getMaxLength()) {
@@ -38,12 +38,12 @@ public class EMLCarver extends DefaultCarver {
         }
         if (firstHead != null) {
             headersWaitingFooters.addLast(firstHead);
-            Item e = carveFromFooter(parentEvidence, lastFooter);
+            IItem e = carveFromFooter(parentEvidence, lastFooter);
         }
         lastFooter = null;
     }
 
-    public void notifyEnd(Item parentEvidence) throws IOException {
+    public void notifyEnd(IItem parentEvidence) throws IOException {
         if (lastFooter != null) {
             carveFromLastFooter(parentEvidence);
         }

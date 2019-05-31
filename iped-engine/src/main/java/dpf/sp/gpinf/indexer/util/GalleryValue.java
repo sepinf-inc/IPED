@@ -22,18 +22,18 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.ImageIcon;
 
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class GalleryValue {
 
     public String name;
     public ImageIcon icon;
-    public ItemId id;
+    public IItemId id;
     public int originalW = Integer.MAX_VALUE;
     public int originalH = Integer.MAX_VALUE;
     public BufferedImage image;
 
-    public GalleryValue(String name, ImageIcon icon, ItemId id) {
+    public GalleryValue(String name, ImageIcon icon, IItemId id) {
         this.name = name;
         this.icon = icon;
         this.id = id;

@@ -31,7 +31,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
@@ -63,7 +63,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws IOException {
+    protected void process(IItem evidence) throws IOException {
 
         if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
             return;

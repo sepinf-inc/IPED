@@ -17,8 +17,8 @@ import org.apache.tika.metadata.Metadata;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.ItemBase;
-import iped3.io.StreamSource;
+import iped3.io.IItemBase;
+import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -105,7 +105,7 @@ public class MetadataViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(final StreamSource content, final Set<String> terms) {
+    public void loadFile(final IStreamSource content, final Set<String> terms) {
 
         Platform.runLater(new Runnable() {
             @Override
@@ -115,11 +115,11 @@ public class MetadataViewer extends Viewer {
                     WebEngine webEngine = viewer.webEngine;
                     webEngine.load(null);
 
-                    if (!(content instanceof ItemBase))
+                    if (!(content instanceof IItemBase))
                         return;
 
                     viewer.highlightTerms = terms;
-                    String preview = generatePreview((ItemBase) content, htmlViewers.indexOf(viewer));
+                    String preview = generatePreview((IItemBase) content, htmlViewers.indexOf(viewer));
                     try {
                         if (viewer.tmpFile == null) {
                             viewer.tmpFile = File.createTempFile("metadata", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -138,7 +138,7 @@ public class MetadataViewer extends Viewer {
         });
     }
 
-    private String generatePreview(ItemBase item, int tabIndex) {
+    private String generatePreview(IItemBase item, int tabIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
@@ -185,7 +185,7 @@ public class MetadataViewer extends Viewer {
         sb.append("</table>"); //$NON-NLS-1$
     }
 
-    private void fillBasicProps(StringBuilder sb, ItemBase item) {
+    private void fillBasicProps(StringBuilder sb, IItemBase item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
@@ -201,7 +201,7 @@ public class MetadataViewer extends Viewer {
         sb.append("</table>"); //$NON-NLS-1$
     }
 
-    private void fillAdvancedProps(StringBuilder sb, ItemBase item) {
+    private void fillAdvancedProps(StringBuilder sb, IItemBase item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.AdvancedProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.ID, item.getId());

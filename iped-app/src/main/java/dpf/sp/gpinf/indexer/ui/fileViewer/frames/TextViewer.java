@@ -2,7 +2,7 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import dpf.sp.gpinf.indexer.desktop.TextParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 import java.util.Set;
 
@@ -13,7 +13,7 @@ public class TextViewer extends ATextViewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
 
         if (content == null) {
             loadFile(content, null);

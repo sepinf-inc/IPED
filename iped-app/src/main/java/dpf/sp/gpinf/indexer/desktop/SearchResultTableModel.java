@@ -1,9 +1,9 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import iped3.search.MultiSearchResult;
+import iped3.search.IMultiSearchResult;
 
 public interface SearchResultTableModel {
 
-    abstract public MultiSearchResult getSearchResult();
+    abstract public IMultiSearchResult getSearchResult();
 
 }

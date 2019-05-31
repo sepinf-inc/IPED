@@ -26,16 +26,16 @@ import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
-import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
+import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.IItem;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 
 public class MakePreviewTask extends AbstractTask {
 
@@ -107,7 +107,7 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (!enableFileParsing) {
             return;
@@ -144,9 +144,9 @@ public class MakePreviewTask extends AbstractTask {
 
     }
 
-    private void makeHtmlPreview(Item evidence, File outFile, String mediaType) throws Throwable {
+    private void makeHtmlPreview(IItem evidence, File outFile, String mediaType) throws Throwable {
         BufferedOutputStream outStream = null;
-        try (ItemSearcherImpl itemSearcher = new ItemSearcherImpl(output.getParentFile(), worker.writer)) {
+        try (ItemSearcher itemSearcher = new ItemSearcher(output.getParentFile(), worker.writer)) {
             final Metadata metadata = new Metadata();
             ParsingTask.fillMetadata(evidence, metadata);
 
@@ -154,8 +154,8 @@ public class MakePreviewTask extends AbstractTask {
             final TikaInputStream tis = evidence.getTikaStream();
 
             final ParseContext context = new ParseContext();
-            context.set(ItemSearcher.class, itemSearcher);
-            context.set(ItemBase.class, evidence);
+            context.set(IItemSearcher.class, itemSearcher);
+            context.set(IItemBase.class, evidence);
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
             AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()

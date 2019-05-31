@@ -1,6 +1,6 @@
 package dpf.sp.gpinf.carver.api;
 
-import iped3.Item;
+import iped3.IItem;
 
 public interface CarvedItemListener {
 
@@ -16,7 +16,7 @@ public interface CarvedItemListener {
      * @param offset
      *            The offset from the start of the parent evidence from where the
      *            item was carved
-     * @see Item
+     * @see IItem
      */
-    public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long offset);
+    public void processCarvedItem(IItem parentEvidence, IItem carvedEvidence, long offset);
 }

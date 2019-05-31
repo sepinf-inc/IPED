@@ -38,7 +38,7 @@ import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.CaseData;
+import iped3.ICaseData;
 
 public class FTK3ReportReader extends DataSourceReader {
 
@@ -46,7 +46,7 @@ public class FTK3ReportReader extends DataSourceReader {
     public static boolean wasExecuted = false;
     private static Logger LOGGER = LoggerFactory.getLogger(FTK3ReportReader.class);
 
-    public FTK3ReportReader(CaseData caseData, File output, boolean listOnly) {
+    public FTK3ReportReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
 

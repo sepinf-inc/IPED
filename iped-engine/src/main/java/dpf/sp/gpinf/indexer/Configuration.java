@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
+import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.KFFConfig;
@@ -70,7 +70,7 @@ public class Configuration {
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
 
-    ConfigurationDirectoryImpl configDirectory;
+    ConfigurationDirectory configDirectory;
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
@@ -195,7 +195,7 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectoryImpl(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
+        configDirectory = new ConfigurationDirectory(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
 

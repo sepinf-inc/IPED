@@ -32,7 +32,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Log;
 import gpinf.emule.KnownMetEntry;
 import gpinf.emule.KnownMetParser;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.
@@ -129,7 +129,7 @@ public class KnownMetCarveTask extends BaseCarveTask {
         }
     }
 
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || caseData.isIpedReport() || !isAcceptedType(evidence.getMediaType()))
             return;

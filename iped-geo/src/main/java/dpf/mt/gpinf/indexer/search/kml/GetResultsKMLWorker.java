@@ -13,22 +13,22 @@ import dpf.mt.gpinf.mapas.parsers.GeofileParser;
 import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.ItemId;
+import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
-import iped3.search.IPEDSearcher;
-import iped3.search.MultiSearchResult;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IIPEDSearcher;
+import iped3.search.IMultiSearchResult;
+import iped3.search.IMultiSearchResultProvider;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, Integer> {
-    MultiSearchResultProvider app;
+    IMultiSearchResultProvider app;
     String[] colunas;
     ProgressDialog progress;
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     KMLResult kmlResult;
 
-    GetResultsKMLWorker(MultiSearchResultProvider app, KMLResult kmlResult, String[] colunas, ProgressDialog progress) {
+    GetResultsKMLWorker(IMultiSearchResultProvider app, KMLResult kmlResult, String[] colunas, ProgressDialog progress) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;
@@ -71,7 +71,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         kml.append("<Folder>"); //$NON-NLS-1$
         kml.append("<name>" + Messages.getString("KMLResult.Results") + "</name>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        MultiSearchResult results = app.getResults();
+        IMultiSearchResult results = app.getResults();
         Document doc;
 
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); //$NON-NLS-1$
@@ -93,11 +93,11 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         query += "(" + ExtraProperties.LOCATIONS + ":*" + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 
         /* nova query com apenas os itens que possuem georreferenciamento */
-        IPEDSearcher searcher = app.createNewSearch(query);
-        MultiSearchResult multiResult = searcher.multiSearch();
+        IIPEDSearcher searcher = app.createNewSearch(query);
+        IMultiSearchResult multiResult = searcher.multiSearch();
 
         kmlResult.gpsItems = new HashMap<>();
-        for (ItemId item : multiResult.getIterator())
+        for (IItemId item : multiResult.getIterator())
             kmlResult.gpsItems.put(item, null);
 
         for (int row = 0; row < results.getLength(); row++) {
@@ -108,7 +108,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
                     break;
             }
 
-            ItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
+            IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
 
             if (!kmlResult.gpsItems.containsKey(item))
                 continue;
@@ -171,7 +171,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
     }
 
     private void generateLocationKML(StringBuilder tourPlayList, StringBuilder kml, String coluna,
-            org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, ItemId item, String lat,
+            org.apache.lucene.document.Document doc, SimpleDateFormat df, int row, IItemId item, String lat,
             String longit, String alt, int subitem) {
         if (progress != null)
             progress.setNote(Messages.getString("KMLResult.LoadingGPSData") + ": " + (++itemsWithGPS)); //$NON-NLS-1$ //$NON-NLS-2$

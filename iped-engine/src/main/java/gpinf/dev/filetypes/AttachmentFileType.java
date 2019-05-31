@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.Messages;
-import iped3.Item;
+import iped3.IItem;
 
-public class AttachmentFileType extends EvidenceFileTypeImpl {
+public class AttachmentFileType extends EvidenceFileType {
 
     /**
      * Implementação da classe base utilizada para anexos de email.
@@ -21,7 +21,7 @@ public class AttachmentFileType extends EvidenceFileTypeImpl {
     }
 
     @Override
-    public void processFiles(File baseDir, List<Item> items) {
+    public void processFiles(File baseDir, List<IItem> items) {
         // TODO Auto-generated method stub
 
     }

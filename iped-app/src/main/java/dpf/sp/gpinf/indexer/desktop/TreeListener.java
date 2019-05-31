@@ -44,9 +44,9 @@ import org.apache.lucene.search.TermQuery;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import dpf.sp.gpinf.indexer.search.QueryBuilderImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.util.SwingUtil;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -109,7 +109,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
             }
 
             try {
-                treeQuery = new QueryBuilderImpl(App.get().appCase).getQuery(treeQueryStr);
+                treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
             } catch (ParseException | QueryNodeException e) {
                 e.printStackTrace();
             }
@@ -131,7 +131,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
                 if (parentId != null) {
                     String ftkId = doc.get(IndexItem.FTKID);
                     if (ftkId == null) {
-                        IPEDSourceImpl src = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
+                        IPEDSource src = (IPEDSource) App.get().appCase.getAtomicSource(docId);
                         docId = App.get().appCase.getBaseLuceneId(src) + src.getLuceneId(Integer.parseInt(parentId));
                         path.addFirst(((TreeViewModel) App.get().tree.getModel()).new Node(docId));
                     } else {
@@ -140,7 +140,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
                             String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
                             textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 
-                            IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, textQuery);
+                            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
                             task.setTreeQuery(true);
                             result = task.luceneSearch();
 

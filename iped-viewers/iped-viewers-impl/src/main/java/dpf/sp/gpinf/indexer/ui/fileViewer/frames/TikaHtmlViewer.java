@@ -16,7 +16,7 @@ import org.apache.tika.parser.Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 /**
  * Visualizador para versão Html dos arquivos gerados pelos parsers do Tika.
@@ -42,7 +42,7 @@ public class TikaHtmlViewer extends HtmlViewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
 
         if (content != null) {
             try {

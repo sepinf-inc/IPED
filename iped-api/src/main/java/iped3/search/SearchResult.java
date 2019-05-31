@@ -3,7 +3,7 @@ package iped3.search;
 import java.util.ArrayList;
 import java.util.List;
 
-import iped3.IPEDSource;
+import iped3.IIPEDSource;
 
 public class SearchResult {
 
@@ -37,7 +37,7 @@ public class SearchResult {
         return ids;
     }
 
-    public static SearchResult get(IPEDSource iSource, LuceneSearchResult luceneResult) {
+    public static SearchResult get(IIPEDSource iSource, LuceneSearchResult luceneResult) {
         SearchResult result = new SearchResult();
         result.scores = luceneResult.scores;
         result.ids = new int[luceneResult.getLength()];
@@ -49,7 +49,7 @@ public class SearchResult {
         return result;
     }
 
-    public static LuceneSearchResult get(SearchResult ipedResult, IPEDSource iSource) {
+    public static LuceneSearchResult get(SearchResult ipedResult, IIPEDSource iSource) {
         LuceneSearchResult lResult = new LuceneSearchResult(0);
         lResult.length = ipedResult.getLength();
         lResult.scores = ipedResult.scores;

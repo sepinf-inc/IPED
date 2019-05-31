@@ -32,10 +32,10 @@ import java.util.Set;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
-import gpinf.dev.data.DataSourceImpl;
-import gpinf.dev.data.FileGroupImpl;
-import iped3.CaseData;
-import iped3.datasource.DataSource;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.FileGroup;
+import iped3.ICaseData;
+import iped3.datasource.IDataSource;
 
 /*
  * Classe abstrata que representa uma conexão ao banco  de dados do FTK3+.
@@ -64,7 +64,7 @@ public abstract class FTKDatabase {
      */
     javax.sql.DataSource ods;
 
-    DataSource ipedDataSource;
+    IDataSource ipedDataSource;
 
     Connection conn;
     Map<String, String> bookmarksMap;
@@ -182,16 +182,16 @@ public abstract class FTKDatabase {
         return null;
     }
 
-    public void getCaseData(CaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
+    public void getCaseData(ICaseData caseData, File file, String path, Set<Integer> ADList) throws Exception {
 
-        ipedDataSource = new DataSourceImpl(file);
+        ipedDataSource = new DataSource(file);
 
         conn = ods.getConnection();
 
         loadTableSpace();
         bookmarksMap = getBookmarksMap(report);
         for (String bookmark : bookmarksMap.values()) {
-            caseData.addBookmark(new FileGroupImpl(bookmark, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
+            caseData.addBookmark(new FileGroup(bookmark, "", "")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         HashMap<Integer, ArrayList<String>> fileList = new HashMap<Integer, ArrayList<String>>();
@@ -204,7 +204,7 @@ public abstract class FTKDatabase {
 
     }
 
-    private void lerListaDeArquivos(CaseData caseData, String path, File file, Map<Integer, ArrayList<String>> fileList,
+    private void lerListaDeArquivos(ICaseData caseData, String path, File file, Map<Integer, ArrayList<String>> fileList,
             Set<Integer> ADList) throws Exception {
         String[] names = file.list();
         if (names != null) {
@@ -250,7 +250,7 @@ public abstract class FTKDatabase {
 
     abstract protected Map<String, String> getBookmarksMap(File report) throws Exception;
 
-    abstract protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList)
+    abstract protected void addFileListToCaseData(ICaseData caseData, Map<Integer, ArrayList<String>> fileList)
             throws Exception;
 
     abstract protected void loadTableSpace() throws SQLException;

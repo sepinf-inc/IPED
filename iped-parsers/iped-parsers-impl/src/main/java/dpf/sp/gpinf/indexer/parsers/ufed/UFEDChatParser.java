@@ -26,8 +26,8 @@ import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -61,8 +61,8 @@ public class UFEDChatParser extends AbstractParser {
             throws IOException, SAXException, TikaException {
 
         try {
-            ItemSearcher searcher = context.get(ItemSearcher.class);
-            ItemBase chat = context.get(ItemBase.class);
+            IItemSearcher searcher = context.get(IItemSearcher.class);
+            IItemBase chat = context.get(IItemBase.class);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
@@ -70,12 +70,12 @@ public class UFEDChatParser extends AbstractParser {
                 return;
 
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
-            List<ItemBase> msgs = searcher.search(query);
+            List<IItemBase> msgs = searcher.search(query);
 
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX"); //$NON-NLS-1$
             List<Message> messages = new ArrayList<>();
 
-            for (ItemBase msg : msgs) {
+            for (IItemBase msg : msgs) {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
                 Message m = new Message();
                 m.setData(msg.getMetadata().get(ExtraProperties.MESSAGE_BODY));
@@ -98,9 +98,9 @@ public class UFEDChatParser extends AbstractParser {
 
                 if (msg.hasChildren()) {
                     query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
-                    List<ItemBase> attachs = searcher.search(query);
+                    List<IItemBase> attachs = searcher.search(query);
                     if (attachs.size() != 0) {
-                        ItemBase attach = attachs.get(0);
+                        IItemBase attach = attachs.get(0);
                         m.setMediaHash(attach.getHash(), false);
                         m.setMediaName(attach.getName());
                         m.setMediaUrl(attach.getMetadata().get(META_PREFIX + "URL")); //$NON-NLS-1$

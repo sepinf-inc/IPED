@@ -93,27 +93,27 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
-import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
-import iped3.IPEDSource;
+import iped3.IIPEDSource;
 import iped3.desktop.CancelableWorker;
-import iped3.desktop.ColumnsManager;
+import iped3.desktop.IColumnsManager;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
-import iped3.search.IPEDSearcher;
-import iped3.search.MultiSearchResult;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IIPEDSearcher;
+import iped3.search.IMultiSearchResult;
+import iped3.search.IMultiSearchResultProvider;
 
-public class App extends JFrame implements WindowListener, MultiSearchResultProvider, GUIProvider {
+public class App extends JFrame implements WindowListener, IMultiSearchResultProvider, GUIProvider {
     /**
      *
      */
@@ -129,7 +129,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 
     private Manager processingManager;
 
-    MultiSearchResult ipedResult = new MultiSearchResultImpl(new ItemIdImpl[0], new float[0]);
+    IMultiSearchResult ipedResult = new MultiSearchResult(new ItemId[0], new float[0]);
 
     public IPEDMultiSource appCase;
 
@@ -313,7 +313,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
         try {
 
             if (this.resultsTable != null) {
-                ColumnsManagerImpl.getInstance().dispose();
+                ColumnsManager.getInstance().dispose();
             }
             if (compositeViewer != null) {
                 compositeViewer.dispose();
@@ -1057,7 +1057,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
 
     }
 
-    public MultiSearchResult getResults() {
+    public IMultiSearchResult getResults() {
         return ipedResult;
     }
 
@@ -1072,7 +1072,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     @Override
     public String getSortColumn() {
         SortKey ordem = resultsTable.getRowSorter().getSortKeys().get(0);
-        String coluna = ColumnsManagerImpl.getInstance().getLoadedCols()[ordem.getColumn() - 2];
+        String coluna = ColumnsManager.getInstance().getLoadedCols()[ordem.getColumn() - 2];
         return coluna;
     }
 
@@ -1083,13 +1083,13 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     }
 
     @Override
-    public IPEDSearcher createNewSearch(String query) {
-        IPEDSearcher searcher = new IPEDSearcherImpl(appCase, query);
+    public IIPEDSearcher createNewSearch(String query) {
+        IIPEDSearcher searcher = new IPEDSearcher(appCase, query);
         return searcher;
     }
 
     @Override
-    public IPEDSource getIPEDSource() {
+    public IIPEDSource getIPEDSource() {
         return appCase;
     }
 
@@ -1105,7 +1105,7 @@ public class App extends JFrame implements WindowListener, MultiSearchResultProv
     }
 
     @Override
-    public ColumnsManager getColumnsManager() {
-        return ColumnsManagerImpl.getInstance();
+    public IColumnsManager getColumnsManager() {
+        return ColumnsManager.getInstance();
     }
 }

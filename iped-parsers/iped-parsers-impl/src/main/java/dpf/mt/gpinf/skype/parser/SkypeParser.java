@@ -27,8 +27,8 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -69,7 +69,7 @@ public class SkypeParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
         SkypeSqlite sqlite = null;
 
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
         String filePath = ""; //$NON-NLS-1$
         ItemInfo itemInfo = context.get(ItemInfo.class);
@@ -237,7 +237,7 @@ public class SkypeParser extends AbstractParser {
 
     }
 
-    private String getItemQuery(SkypeFileTransfer c, ItemSearcher searcher) {
+    private String getItemQuery(SkypeFileTransfer c, IItemSearcher searcher) {
         String sizeQuery = BasicProps.LENGTH + ":" + c.getFileSize(); //$NON-NLS-1$
         if (c.getFilePath() != null && !c.getFilePath().trim().isEmpty()) {
             String path = c.getFilePath().replace("\\", "/"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -253,8 +253,8 @@ public class SkypeParser extends AbstractParser {
         return sizeQuery + " && " + BasicProps.NAME + ":\"" + name + "\""; //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    private ItemBase getItem(String query, ItemSearcher searcher) {
-        List<ItemBase> items = searcher.search(query);
+    private IItemBase getItem(String query, IItemSearcher searcher) {
+        List<IItemBase> items = searcher.search(query);
         if (items.size() > 0)
             return items.get(0);
         else

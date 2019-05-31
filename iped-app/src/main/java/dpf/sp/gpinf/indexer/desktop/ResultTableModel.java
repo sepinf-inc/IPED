@@ -42,8 +42,8 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ItemId;
-import iped3.search.MultiSearchResult;
+import iped3.IItemId;
+import iped3.search.IMultiSearchResult;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
@@ -77,11 +77,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                         App.get().resultsTable.getColumnModel().getColumn(i).setPreferredWidth(fixedColdWidths[i]);
                     }
 
-                    for (int i = 0; i < ColumnsManagerImpl.getInstance().colState.initialWidths.size(); i++) {
+                    for (int i = 0; i < ColumnsManager.getInstance().colState.initialWidths.size(); i++) {
                         TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i + fixedColdWidths.length);
-                        tc.setPreferredWidth(ColumnsManagerImpl.getInstance().colState.initialWidths.get(i));
+                        tc.setPreferredWidth(ColumnsManager.getInstance().colState.initialWidths.get(i));
 
-                        ColumnsManagerImpl.getInstance().setColumnRenderer(tc);
+                        ColumnsManager.getInstance().setColumnRenderer(tc);
                     }
 
                 }
@@ -100,7 +100,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             cols.add(col);
         }
 
-        fields = ColumnsManagerImpl.getInstance().getLoadedCols();
+        fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
         }
@@ -193,7 +193,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     }
 
     @Override
-    public MultiSearchResult getSearchResult() {
+    public IMultiSearchResult getSearchResult() {
         return App.get().ipedResult;
     }
 
@@ -211,7 +211,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         String value = ""; //$NON-NLS-1$
 
-        ItemId item = App.get().ipedResult.getItem(row);
+        IItemId item = App.get().ipedResult.getItem(row);
         int docId = App.get().appCase.getLuceneId(item);
 
         if (docId != lastDocRead) {

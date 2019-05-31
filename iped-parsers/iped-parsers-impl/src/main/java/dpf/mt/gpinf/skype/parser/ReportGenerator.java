@@ -17,8 +17,8 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 
 /**
  * Classe responsável por gerar a representação HTML dos registros encontrados
@@ -258,7 +258,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateSkypeTransferenciaHtml(SkypeFileTransfer c, ItemSearcher searcher)
+    public byte[] generateSkypeTransferenciaHtml(SkypeFileTransfer c, IItemSearcher searcher)
             throws UnsupportedEncodingException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
@@ -320,15 +320,15 @@ public class ReportGenerator {
         return bout.toByteArray();
     }
 
-    private void insertLinkAndThumb(PrintWriter out, SkypeFileTransfer c, ItemSearcher searcher) {
+    private void insertLinkAndThumb(PrintWriter out, SkypeFileTransfer c, IItemSearcher searcher) {
 
-        ItemBase item = c.getItem();
+        IItemBase item = c.getItem();
         if (item != null) {
             String query = c.getItemQuery();
             out.println("<p>" + Messages.getString("SkypeReport.LikelyFile")); //$NON-NLS-1$ //$NON-NLS-2$
             out.println("<a onclick=\"app.open(" //$NON-NLS-1$
                     + SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"") + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-            List<ItemBase> result = Util.getItems(query, searcher);
+            List<IItemBase> result = Util.getItems(query, searcher);
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));
                 if (!exportPath.isEmpty())

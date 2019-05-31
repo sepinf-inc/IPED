@@ -67,18 +67,18 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
-import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
+import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
-import gpinf.dev.data.ItemImpl;
-import iped3.Item;
-import iped3.io.ItemBase;
-import iped3.io.StreamSource;
-import iped3.search.ItemSearcher;
+import gpinf.dev.data.Item;
+import iped3.IItem;
+import iped3.io.IItemBase;
+import iped3.io.IStreamSource;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -114,7 +114,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
-    private Item evidence;
+    private IItem evidence;
     private ParseContext context;
     private boolean extractEmbedded;
     private volatile ParsingReader reader;
@@ -129,7 +129,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         this.autoParser = new IndexerDefaultParser();
     }
 
-    public ParsingTask(Item evidence, IndexerDefaultParser parser) {
+    public ParsingTask(IItem evidence, IndexerDefaultParser parser) {
         this.evidence = evidence;
         this.autoParser = parser;
     }
@@ -171,10 +171,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         // we have seen very large records in valid docs
         org.apache.poi.util.IOUtils.setByteArrayMaxOverride(-1);
 
-        context.set(StreamSource.class, evidence);
-        context.set(ItemBase.class, evidence);
+        context.set(IStreamSource.class, evidence);
+        context.set(IItemBase.class, evidence);
         if (output != null && worker != null)
-            context.set(ItemSearcher.class, new ItemSearcherImpl(output.getParentFile(), worker.writer));
+            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
 
         extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
         if (extractEmbedded) {
@@ -189,11 +189,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         this.extractEmbedded = extractEmbedded;
     }
 
-    private void fillMetadata(Item evidence) {
+    private void fillMetadata(IItem evidence) {
         fillMetadata(evidence, evidence.getMetadata());
     }
 
-    public static void fillMetadata(Item evidence, Metadata metadata) {
+    public static void fillMetadata(IItem evidence, Metadata metadata) {
         Long len = evidence.getLength();
         if (len != null)
             metadata.set(Metadata.CONTENT_LENGTH, len.toString());
@@ -244,7 +244,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         return subitensDiscovered;
     }
 
-    public void process(Item evidence) throws IOException {
+    public void process(IItem evidence) throws IOException {
 
         if (!enableFileParsing) {
             return;
@@ -264,7 +264,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        if (((ItemImpl) evidence).getTextCache() == null
+        if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < advancedConfig.getMinItemSizeToFragment())
                         || IndexerDefaultParser.isSpecificParser(parser))) {
             try {
@@ -294,11 +294,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             return parser.getClass().getSimpleName();
     }
 
-    public static boolean hasSpecificParser(IndexerDefaultParser autoParser, Item evidence) {
+    public static boolean hasSpecificParser(IndexerDefaultParser autoParser, IItem evidence) {
         return autoParser.hasSpecificParser(evidence.getMetadata());
     }
 
-    private void safeProcess(Item evidence) throws IOException {
+    private void safeProcess(IItem evidence) throws IOException {
 
         this.evidence = evidence;
 
@@ -327,7 +327,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 // break;
             }
 
-            ((ItemImpl) evidence).setParsedTextCache(textCache);
+            ((Item) evidence).setParsedTextCache(textCache);
             evidence.setParsed(true);
             totalText.addAndGet(textCache.getSize());
 
@@ -336,12 +336,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             reader.close();
 
             metadataToExtraAttribute(evidence);
-            IOUtil.closeQuietly(context.get(ItemSearcher.class));
+            IOUtil.closeQuietly(context.get(IItemSearcher.class));
         }
 
     }
 
-    private static final void metadataToExtraAttribute(Item evidence) {
+    private static final void metadataToExtraAttribute(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -413,7 +413,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (parentId != null)
                 parentInfo = idToItemMap.get(parentId);
             if (parentInfo == null && context.get(EmbeddedParent.class) != null)
-                parentInfo = new ParentInfo((Item) context.get(EmbeddedParent.class).getObj());
+                parentInfo = new ParentInfo((IItem) context.get(EmbeddedParent.class).getObj());
             if (parentInfo == null)
                 parentInfo = new ParentInfo(evidence);
 
@@ -424,7 +424,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 subitemPath = parentPath + ">>" + name; //$NON-NLS-1$
             }
 
-            ItemImpl subItem = new ItemImpl();
+            Item subItem = new Item();
             subItem.setPath(subitemPath);
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 

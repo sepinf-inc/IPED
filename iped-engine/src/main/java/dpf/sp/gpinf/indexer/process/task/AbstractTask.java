@@ -14,8 +14,8 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
-import iped3.CaseData;
-import iped3.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving,
@@ -54,7 +54,7 @@ public abstract class AbstractTask {
      * Representa o caso atual. As diferentes instâncias das tarefas podem armazenar
      * objetos compartilhados no mapa objectMap do caso.
      */
-    protected CaseData caseData;
+    protected ICaseData caseData;
 
     /**
      * Próxima tarefa que será executada no pipeline.
@@ -128,7 +128,7 @@ public abstract class AbstractTask {
      * @throws Exception
      *             Caso ocorra erro inesperado.
      */
-    abstract protected void process(Item evidence) throws Exception;
+    abstract protected void process(IItem evidence) throws Exception;
 
     /**
      * Realiza o processamento do item na tarefa e o envia para a próxima tarefa.
@@ -138,7 +138,7 @@ public abstract class AbstractTask {
      * @throws Exception
      *             Caso ocorra erro inesperado.
      */
-    public final void processAndSendToNextTask(Item evidence) throws Exception {
+    public final void processAndSendToNextTask(IItem evidence) throws Exception {
 
         while (worker.state != STATE.RUNNING) {
             synchronized (worker) {
@@ -195,7 +195,7 @@ public abstract class AbstractTask {
      * @throws Exception
      *             Caso ocorra erro inesperado.
      */
-    protected void sendToNextTask(Item evidence) throws Exception {
+    protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
             int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
             if (priority <= caseData.getCurrentQueuePriority())
@@ -216,7 +216,7 @@ public abstract class AbstractTask {
      * @throws Exception
      *             Se ocorrer erro inesperado.
      */
-    private void processMonitorTimeout(Item evidence) throws Exception {
+    private void processMonitorTimeout(IItem evidence) throws Exception {
         try {
             this.process(evidence);
 

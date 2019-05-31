@@ -18,7 +18,7 @@ import org.apache.commons.codec.binary.Hex;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  *
@@ -29,7 +29,7 @@ public class RemoteKFFTask extends AbstractTask {
     private MessageDigest digestMD5_512 = null;
     private MessageDigest digestMD5_64k = null;
     private static final int LIST_SIZE = 1000;
-    private List<Item> listItem = new ArrayList<>();
+    private List<IItem> listItem = new ArrayList<>();
     int count = 0;
     private boolean addedToList = false;
 
@@ -45,7 +45,7 @@ public class RemoteKFFTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
         InputStream in = evidence.getStream();
         try {
             String[] partialHashes = partialMd5Digest(in);
@@ -80,10 +80,10 @@ public class RemoteKFFTask extends AbstractTask {
     }
 
     @Override
-    protected void sendToNextTask(Item evidence) throws Exception {
+    protected void sendToNextTask(IItem evidence) throws Exception {
 
         if ((listItem.size() == LIST_SIZE) || (evidence.isQueueEnd())) {
-            for (Item item : listItem) {
+            for (IItem item : listItem) {
                 // System.out.println(worker.getName() + " Enviando item: " + item.getId());
                 super.sendToNextTask(item);
             }
@@ -123,12 +123,12 @@ public class RemoteKFFTask extends AbstractTask {
         return new String[] { md5_512, md5_64k };
     }
 
-    private void saveListItem(List<Item> listItem) throws Exception {
+    private void saveListItem(List<IItem> listItem) throws Exception {
         File fileTmp;
 
         fileTmp = File.createTempFile("tmp", ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
         PrintWriter out = new PrintWriter(fileTmp);
-        for (Item item : listItem) {
+        for (IItem item : listItem) {
             String partialMD5_512 = (String) item.getExtraAttribute("MD5_512"); //$NON-NLS-1$
             String partialMD5_64k = (String) item.getExtraAttribute("MD5_64K"); //$NON-NLS-1$
             String fullPath = (String) item.getPath();

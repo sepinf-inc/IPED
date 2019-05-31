@@ -11,7 +11,7 @@ import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
 public class MOVCarver extends AbstractCarver {
@@ -77,7 +77,7 @@ public class MOVCarver extends AbstractCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         long atomStart = header.getOffset();
         SeekableInputStream is = null;
         try {

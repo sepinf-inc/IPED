@@ -1,6 +1,6 @@
 package gpinf.dev.filetypes;
 
-import iped3.Item;
+import iped3.IItem;
 
 import java.io.File;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @author Wladimir Leite (GPINF/SP)
  */
-public class GenericFileType extends EvidenceFileTypeImpl {
+public class GenericFileType extends EvidenceFileType {
 
     /**
      * Identificador para serialização.
@@ -56,7 +56,7 @@ public class GenericFileType extends EvidenceFileTypeImpl {
      *            lista de arquivos a ser processada
      */
     @Override
-    public void processFiles(File baseDir, List<Item> items) {
+    public void processFiles(File baseDir, List<IItem> items) {
 
     }
 

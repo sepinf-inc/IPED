@@ -14,14 +14,14 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import iped3.IPEDSource;
-import iped3.ItemId;
+import iped3.IIPEDSource;
+import iped3.IItemId;
 
 public class SimilarDocumentSearch {
 
     private static final CharArraySet stopSet = getStopWords();
 
-    public Query getQueryForSimilarDocs(ItemId item, int matchPercent, IPEDSource appCase) {
+    public Query getQueryForSimilarDocs(IItemId item, int matchPercent, IIPEDSource appCase) {
 
         int docId = appCase.getLuceneId(item);
 

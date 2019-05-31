@@ -31,11 +31,11 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
-import iped3.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import iped3.search.IIPEDSearcher;
 import iped3.search.LuceneSearchResult;
-import iped3.search.MultiSearchResult;
+import iped3.search.IMultiSearchResult;
 
 public class DuplicatesTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -166,7 +166,7 @@ public class DuplicatesTableModel extends AbstractTableModel
         textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         try {
-            IPEDSearcher task = new IPEDSearcherImpl(App.get().appCase, textQuery);
+            IIPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
             results = task.luceneSearch();
 
             final int duplicates = results.getLength();
@@ -191,8 +191,8 @@ public class DuplicatesTableModel extends AbstractTableModel
     }
 
     @Override
-    public MultiSearchResult getSearchResult() {
-        return MultiSearchResultImpl.get(App.get().appCase, results);
+    public IMultiSearchResult getSearchResult() {
+        return MultiSearchResult.get(App.get().appCase, results);
     }
 
 }

@@ -22,7 +22,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
+import iped3.IItem;
 
 public class ImageThumbTask extends AbstractTask {
 
@@ -117,7 +117,7 @@ public class ImageThumbTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHash() == null) {
@@ -164,10 +164,10 @@ public class ImageThumbTask extends AbstractTask {
 
     private class ThumbCreator implements Runnable {
 
-        Item evidence;
+        IItem evidence;
         File thumbFile;
 
-        public ThumbCreator(Item evidence, File thumbFile) {
+        public ThumbCreator(IItem evidence, File thumbFile) {
             this.evidence = evidence;
             this.thumbFile = thumbFile;
         }
@@ -179,7 +179,7 @@ public class ImageThumbTask extends AbstractTask {
 
     }
 
-    private void createImageThumb(Item evidence, File thumbFile) {
+    private void createImageThumb(IItem evidence, File thumbFile) {
 
         File tmp = null;
         try {

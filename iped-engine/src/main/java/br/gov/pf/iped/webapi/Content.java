@@ -19,8 +19,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IPEDSource;
-import iped3.Item;
+import iped3.IIPEDSource;
+import iped3.IItem;
 
 @Api(value = "Documents")
 @Path("sources/{sourceID}/docs/{id}/content")
@@ -32,8 +32,8 @@ public class Content {
     public Response content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
             throws TskCoreException, IOException, URISyntaxException {
 
-        IPEDSource source = Sources.getSource(sourceID);
-        final Item item = source.getItemByID(id);
+        IIPEDSource source = Sources.getSource(sourceID);
+        final IItem item = source.getItemByID(id);
         return Response.status(200).header("Content-Length", String.valueOf(item.getLength()))
                 .header("Content-Disposition", "attachment; filename=\"" + item.getName() + "\"")
                 .entity(new StreamingOutput() {

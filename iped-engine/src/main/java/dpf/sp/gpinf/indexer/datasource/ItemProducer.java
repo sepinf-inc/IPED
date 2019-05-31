@@ -31,8 +31,8 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
-import gpinf.dev.data.ItemImpl;
-import iped3.CaseData;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
 
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do
@@ -45,7 +45,7 @@ public class ItemProducer extends Thread {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
-    private final CaseData caseData;
+    private final ICaseData caseData;
     private final boolean listOnly;
     private List<File> datasources;
     private File output;
@@ -53,7 +53,7 @@ public class ItemProducer extends Thread {
     private DataSourceReader currentReader;
     private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
 
-    public ItemProducer(Manager manager, CaseData caseData, boolean listOnly, List<File> datasources, File output)
+    public ItemProducer(Manager manager, ICaseData caseData, boolean listOnly, List<File> datasources, File output)
             throws Exception {
         this.caseData = caseData;
         this.listOnly = listOnly;
@@ -72,7 +72,7 @@ public class ItemProducer extends Thread {
         };
 
         for (Class<? extends DataSourceReader> srcReader : readerList) {
-            Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(CaseData.class, File.class,
+            Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(ICaseData.class, File.class,
                     boolean.class);
             sourceReaders.add(constr.newInstance(caseData, output, listOnly));
         }
@@ -112,7 +112,7 @@ public class ItemProducer extends Thread {
                 caseData.incAlternativeFiles(alternativeFiles);
             }
             if (!listOnly) {
-                ItemImpl evidence = new ItemImpl();
+                Item evidence = new Item();
                 evidence.setQueueEnd(true);
                 // caseData.addEvidenceFile(evidence);
 

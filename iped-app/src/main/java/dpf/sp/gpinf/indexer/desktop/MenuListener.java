@@ -41,12 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import iped3.Item;
-import iped3.ItemId;
+import iped3.IItem;
+import iped3.IItemId;
 
 public class MenuListener implements ActionListener {
 
@@ -148,9 +148,9 @@ public class MenuListener implements ActionListener {
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
                 File dir = fileChooser.getSelectedFile();
-                ArrayList<ItemId> selectedIds = new ArrayList<ItemId>();
+                ArrayList<IItemId> selectedIds = new ArrayList<IItemId>();
                 for (int row : App.get().resultsTable.getSelectedRows()) {
-                    ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
+                    IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
                     selectedIds.add(item);
                     // exporta versão nao selecionada caso exista
                     /*
@@ -166,7 +166,7 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.copiarSelecionados) {
             ArrayList<Integer> selectedIds = new ArrayList<Integer>();
             for (int row : App.get().resultsTable.getSelectedRows()) {
-                ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
+                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
@@ -184,7 +184,7 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.copiarMarcados) {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
             for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
-                ItemId item = App.get().appCase.getItemId(docId);
+                IItemId item = App.get().appCase.getItemId(docId);
                 if (App.get().appCase.getMultiMarcadores().isSelected(item)
                         && !App.get().appCase.getAtomicSource(docId).getViewToRawMap().isView(item.getId())) {
                     uniqueSelectedIds.add(docId);
@@ -202,11 +202,11 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.exportarMarcados) {
-            ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
-            for (IPEDSourceImpl source : App.get().appCase.getAtomicSources()) {
+            ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
+            for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
                     if (source.getMarcadores().isSelected(id)) {
-                        uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
+                        uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
             }
@@ -218,11 +218,11 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.exportCheckedToZip) {
-            ArrayList<ItemIdImpl> uniqueSelectedIds = new ArrayList<ItemIdImpl>();
-            for (IPEDSourceImpl source : App.get().appCase.getAtomicSources()) {
+            ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
+            for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
                     if (source.getMarcadores().isSelected(id)) {
-                        uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
+                        uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
             }
@@ -301,7 +301,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.gerenciarColunas) {
 
-            ColumnsManagerImpl.getInstance().setVisible();
+            ColumnsManager.getInstance().setVisible();
 
         } else if (e.getSource() == menu.gerenciarFiltros) {
 
@@ -311,7 +311,7 @@ public class MenuListener implements ActionListener {
 
             int selIdx = App.get().resultsTable.getSelectedRow();
             if (selIdx != -1) {
-                ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
                 int docId = App.get().appCase.getLuceneId(item);
                 App.get().treeListener.navigateToParent(docId);
             }
@@ -324,7 +324,7 @@ public class MenuListener implements ActionListener {
             if (selIdx != -1) {
                 int percent = Integer
                         .parseInt(JOptionPane.showInputDialog(Messages.getString("MenuListener.SimilarityLabel"), 70)); //$NON-NLS-1$
-                ItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
 
                 Query query = new SimilarDocumentSearch().getQueryForSimilarDocs(item, percent, App.get().appCase);
                 App.get().appletListener.updateFileListing(query);
@@ -332,8 +332,8 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.openViewfile) {
             int selIdx = App.get().resultsTable.getSelectedRow();
-            ItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
-            Item item = App.get().appCase.getItemByItemId(itemId);
+            IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+            IItem item = App.get().appCase.getItemByItemId(itemId);
             LOGGER.info("Externally Opening preview of " + item.getPath()); //$NON-NLS-1$
             ExternalFileOpen.open(item.getViewFile());
 
@@ -341,13 +341,13 @@ public class MenuListener implements ActionListener {
             new ReportDialog().setVisible();
 
         } else if (e.getSource() == menu.lastColLayout) {
-            ColumnsManagerImpl.getInstance().resetToLastLayout();
+            ColumnsManager.getInstance().resetToLastLayout();
 
         } else if (e.getSource() == menu.saveColLayout) {
-            ColumnsManagerImpl.getInstance().saveColumnsState();
+            ColumnsManager.getInstance().saveColumnsState();
 
         } else if (e.getSource() == menu.resetColLayout) {
-            ColumnsManagerImpl.getInstance().resetToDefaultLayout();
+            ColumnsManager.getInstance().resetToDefaultLayout();
         }
 
     }

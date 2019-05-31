@@ -19,8 +19,8 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import gpinf.ares.AresEntry;
-import iped3.HashValue;
-import iped3.search.ItemSearcher;
+import iped3.IHashValue;
+import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
+import dpf.sp.gpinf.indexer.util.HashValue;
 
 /**
  * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.
@@ -90,7 +90,7 @@ public class AresParser extends AbstractParser {
         if (l.isEmpty())
             return;
 
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -173,7 +173,7 @@ public class AresParser extends AbstractParser {
                 String hash = e.getHash();
                 if (e.isShared())
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                HashValue hashVal = new HashValueImpl(hash);
+                IHashValue hashVal = new HashValue(hash);
                 if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), hashVal) >= 0) { //$NON-NLS-1$
                     kffHit++;
                     trClass = "rr"; //$NON-NLS-1$

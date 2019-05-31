@@ -51,19 +51,19 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import iped3.Item;
+import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class TextParser extends CancelableWorker implements ITextParser {
 
     public static final String TEXT_SIZE = "textSize"; //$NON-NLS-1$
 
     private static TextParser parsingTask;
-    private StreamSource content;
+    private IStreamSource content;
     volatile int id;
-    private Item item;
+    private IItem item;
     private ProgressDialog progressMonitor;
 
     private static Object lock = new Object();
@@ -82,13 +82,13 @@ public class TextParser extends CancelableWorker implements ITextParser {
     // contém offset das quebras de linha do preview
     private ArrayList<Long> viewRows = new ArrayList<Long>();
 
-    public TextParser(AppSearchParams params, StreamSource content, String contentType, TemporaryResources tmp) {
+    public TextParser(AppSearchParams params, IStreamSource content, String contentType, TemporaryResources tmp) {
         try {
             this.appSearchParams = params;
             this.content = content;
             this.tmp = tmp;
-            if (content instanceof Item) {
-                item = (Item) content;
+            if (content instanceof IItem) {
+                item = (IItem) content;
             }
 
             if (parsingTask != null) {
@@ -199,7 +199,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
         return null;
     }
 
-    private ParseContext getTikaContext(Item item) throws Exception {
+    private ParseContext getTikaContext(IItem item) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
         ParseContext context = expander.getTikaContext();

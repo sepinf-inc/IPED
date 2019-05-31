@@ -68,7 +68,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -76,7 +76,7 @@ import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
@@ -394,7 +394,7 @@ public class HTMLReportTask extends AbstractTask {
 
             long t = System.currentTimeMillis();
 
-            try (IPEDSourceImpl ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer)) {
+            try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
                 for (int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
                     String labelName = ipedCase.getMarcadores().getLabelName(labelId);
                     String comments = ipedCase.getMarcadores().getLabelComment(labelId);
@@ -430,7 +430,7 @@ public class HTMLReportTask extends AbstractTask {
      * incluindo nas listas adequadas.
      */
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
         if (!taskEnabled || !caseData.containsReport() || !evidence.isToAddToCase()) {
             return;
         }
@@ -897,7 +897,7 @@ public class HTMLReportTask extends AbstractTask {
         return pathBase.relativize(pathAbsolute).toString().replace('\\', '/');
     }
 
-    private void createImageThumb(Item evidence, File thumbFile) {
+    private void createImageThumb(IItem evidence, File thumbFile) {
         if (!thumbFile.getParentFile().exists()) {
             thumbFile.getParentFile().mkdirs();
         }

@@ -15,8 +15,8 @@ import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
 /**
@@ -29,13 +29,13 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
-    private ItemSearcher searcher;
+    private IItemSearcher searcher;
     private Chat lastChat;
     private int currentMsg = 0;
 
     static final String RSRC_PATH = "../../../../indexador/htm/whatsapp/"; //$NON-NLS-1$
 
-    public ReportGenerator(ItemSearcher searcher) {
+    public ReportGenerator(IItemSearcher searcher) {
         this.searcher = searcher;
     }
 
@@ -234,7 +234,7 @@ public class ReportGenerator {
                 break;
 
             default:
-                List<ItemBase> result = null;
+                List<IItemBase> result = null;
                 String onclick = null;
                 byte[] thumb = null;
                 if (message.isFromMe()) {
@@ -474,7 +474,7 @@ public class ReportGenerator {
         }
     }
 
-    private static void printSourceFileIfExists(ItemBase item, PrintWriter out) {
+    private static void printSourceFileIfExists(IItemBase item, PrintWriter out) {
         if (item.hasFile()) {
             File origFile = item.getFile();
             String path = getRelativePath(origFile);
@@ -496,7 +496,7 @@ public class ReportGenerator {
         return path;
     }
 
-    private static String getReportExportPath(ItemBase item, MessageType type) {
+    private static String getReportExportPath(IItemBase item, MessageType type) {
         String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
         if (item.hasFile() && type == IMAGE_MESSAGE) {
             File origFile = item.getFile();

@@ -41,20 +41,20 @@ import org.slf4j.LoggerFactory;
 import com.google.common.hash.Hashing;
 import com.google.common.hash.HashingOutputStream;
 
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
-import iped3.Item;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.IItem;
 
 public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ExportFilesToZip.class);
 
-    ArrayList<ItemIdImpl> uniqueIds;
+    ArrayList<ItemId> uniqueIds;
     File file, subdir;
     ProgressMonitor progressMonitor;
     HashingOutputStream hos;
     volatile boolean error;
 
-    public ExportFilesToZip(File file, ArrayList<ItemIdImpl> uniqueIds) {
+    public ExportFilesToZip(File file, ArrayList<ItemId> uniqueIds) {
         this.file = file;
         this.uniqueIds = uniqueIds;
 
@@ -79,7 +79,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
             int subdir = 0;
             int progress = 0;
 
-            for (ItemIdImpl item : uniqueIds) {
+            for (ItemId item : uniqueIds) {
                 if (progress % 1000 == 0) {
                     subdir++;
                     ZipArchiveEntry entry = new ZipArchiveEntry(subdir + "/"); //$NON-NLS-1$
@@ -87,7 +87,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
                     zaos.closeArchiveEntry();
                 }
 
-                Item e = App.get().appCase.getItemByItemId(item);
+                IItem e = App.get().appCase.getItemByItemId(item);
                 String dstName = e.getName();
                 // dstName += "." + doc.get(IndexItem.TYPE);
 
@@ -136,7 +136,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         return null;
     }
 
-    public static void fillZipDates(ZipArchiveEntry entry, Item item) {
+    public static void fillZipDates(ZipArchiveEntry entry, IItem item) {
 
         X5455_ExtendedTimestamp extendedDates = new X5455_ExtendedTimestamp();
         X000A_NTFS ntfsDates = new X000A_NTFS();

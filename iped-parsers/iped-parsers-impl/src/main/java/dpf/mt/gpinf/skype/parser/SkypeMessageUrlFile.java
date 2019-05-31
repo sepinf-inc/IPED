@@ -1,6 +1,6 @@
 package dpf.mt.gpinf.skype.parser;
 
-import iped3.io.ItemBase;
+import iped3.io.IItemBase;
 
 /**
  * Classe que representa um arquivo enviado via URL registrado no arquivo
@@ -15,8 +15,8 @@ public class SkypeMessageUrlFile {
     private String localFile;
     private String filename;
     private int size;
-    private ItemBase cacheFile;
-    private ItemBase thumbFile;
+    private IItemBase cacheFile;
+    private IItemBase thumbFile;
     private String uri;
 
     public int getId() {
@@ -51,14 +51,14 @@ public class SkypeMessageUrlFile {
         this.size = size;
     }
 
-    public ItemBase getCacheFile() {
+    public IItemBase getCacheFile() {
         if (cacheFile != null)
             return cacheFile;
         else
             return thumbFile;
     }
 
-    public void setCacheFile(ItemBase cacheFile) {
+    public void setCacheFile(IItemBase cacheFile) {
         this.cacheFile = cacheFile;
     }
 
@@ -70,14 +70,14 @@ public class SkypeMessageUrlFile {
         this.uri = uri;
     }
 
-    public ItemBase getThumbFile() {
+    public IItemBase getThumbFile() {
         if (thumbFile != null)
             return thumbFile;
         else
             return cacheFile;
     }
 
-    public void setThumbFile(ItemBase thumbFile) {
+    public void setThumbFile(IItemBase thumbFile) {
         this.thumbFile = thumbFile;
     }
 

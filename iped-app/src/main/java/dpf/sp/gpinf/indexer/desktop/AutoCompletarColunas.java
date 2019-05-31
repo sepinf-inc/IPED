@@ -46,7 +46,7 @@ public class AutoCompletarColunas {
                         }
                         String base = removeEscape(last.substring(pos)).toLowerCase();
                         if (base.length() > 0) {
-                            String[][] cols = ColumnsManagerImpl.getInstance().fieldGroups;
+                            String[][] cols = ColumnsManager.getInstance().fieldGroups;
                             if (cols != null) {
                                 List<String> l = new ArrayList<String>();
                                 for (int step = 0; step <= 1; step++) {

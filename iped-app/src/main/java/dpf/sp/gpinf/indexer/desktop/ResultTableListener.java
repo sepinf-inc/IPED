@@ -37,9 +37,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -103,7 +103,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
         if (viewIndex != -1) {
             int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
-            ItemId item = App.get().ipedResult.getItem(modelIdx);
+            IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
             if (docId != App.get().getParams().lastSelectedDoc) {
 
@@ -127,7 +127,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (evt.getClickCount() == 2) {
             int modelIdx = App.get().resultsTable
                     .convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-            ItemId item = App.get().ipedResult.getItem(modelIdx);
+            IItemId item = App.get().ipedResult.getItem(modelIdx);
             int docId = App.get().appCase.getLuceneId(item);
             ExternalFileOpen.open(docId);
 

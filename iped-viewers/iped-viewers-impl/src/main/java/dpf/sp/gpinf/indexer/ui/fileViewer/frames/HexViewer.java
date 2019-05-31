@@ -10,7 +10,7 @@ import javax.swing.SwingUtilities;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 
 import gpinf.led.HexViewPanel;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class HexViewer extends Viewer {
 
@@ -44,7 +44,7 @@ public class HexViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(final StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(final IStreamSource content, Set<String> highlightTerms) {
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override

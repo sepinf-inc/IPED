@@ -7,7 +7,7 @@ import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carving.FromFarthestHeaderCarver;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
 /*
@@ -22,7 +22,7 @@ public class ZIPCarver extends FromFarthestHeaderCarver {
     }
 
     @Override
-    public Item carveFromFooter(Item parentEvidence, Hit footer) throws IOException {
+    public IItem carveFromFooter(IItem parentEvidence, Hit footer) throws IOException {
         Hit firstHeaderOcurrence = null;
 
         ArrayDeque<Hit> headersWaitingFooters = super.headersWaitingFooters;
@@ -69,7 +69,7 @@ public class ZIPCarver extends FromFarthestHeaderCarver {
     }
 
     /* method to read size from data descriptor if it exists on the zip file */
-    public int getNumberOfEntries(Item parentEvidence, Hit hit) {
+    public int getNumberOfEntries(IItem parentEvidence, Hit hit) {
         int numberOfEntries = 0;
 
         SeekableInputStream is = null;

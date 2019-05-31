@@ -74,13 +74,13 @@ import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.DataSourceImpl;
-import gpinf.dev.data.ItemImpl;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.Item;
-import iped3.EvidenceFileType;
-import iped3.datasource.DataSource;
-import iped3.sleuthkit.SleuthKitItem;
+import iped3.IItem;
+import iped3.IEvidenceFileType;
+import iped3.datasource.IDataSource;
+import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -192,7 +192,7 @@ public class IndexItem extends BasicProps {
         return new String(output).trim();
     }
 
-    public static Document Document(Item evidence, Reader reader, File output) {
+    public static Document Document(IItem evidence, Reader reader, File output) {
         Document doc = new Document();
 
         doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
@@ -207,8 +207,8 @@ public class IndexItem extends BasicProps {
             doc.add(new NumericDocValuesField(FTKID, intVal));
         }
 
-        if (evidence instanceof SleuthKitItem) {
-            SleuthKitItem sevidence = (SleuthKitItem) evidence;
+        if (evidence instanceof ISleuthKitItem) {
+            ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
             intVal = sevidence.getSleuthId();
             if (intVal != null) {
                 doc.add(new IntField(SLEUTHID, intVal, Field.Store.YES));
@@ -249,7 +249,7 @@ public class IndexItem extends BasicProps {
         doc.add(nameField);
         doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
-        EvidenceFileType fileType = evidence.getType();
+        IEvidenceFileType fileType = evidence.getType();
         if (fileType != null) {
             value = fileType.getLongDescr();
         } else {
@@ -610,10 +610,10 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static Item getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem) {
+    public static IItem getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem) {
 
         try {
-            ItemImpl evidence = new ItemImpl() {
+            Item evidence = new Item() {
                 public File getFile() {
                     try {
                         return getTempFile();
@@ -647,7 +647,7 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.EVIDENCE_UUID);
             if (value != null) {
                 // TODO obter source corretamente
-                DataSource dataSource = new DataSourceImpl();
+                IDataSource dataSource = new DataSource();
                 dataSource.setUUID(value);
                 evidence.setDataSource(dataSource);
             }
@@ -800,7 +800,7 @@ public class IndexItem extends BasicProps {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
-                if (ItemImpl.getAllExtraAttributes().contains(f.name())) {
+                if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
                         continue;
                     Class<?> c = typesMap.get(f.name());
