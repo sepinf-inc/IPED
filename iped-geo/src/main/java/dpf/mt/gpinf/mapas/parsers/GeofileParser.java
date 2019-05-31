@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -53,18 +52,12 @@ public class GeofileParser extends AbstractParser {
     public static final Property LONGITUDE = Property.internalReal("GeoRef:long");
     public static final Property ALTITUDE = Property.internalReal("GeoRef:alt");
 
-    private static Set<MediaType> SUPPORTED_TYPES = null;
+    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(GPX_MIME, KML_MIME);
 
     HashMap<String, EmbeddedParent> parentMap = new HashMap<String, EmbeddedParent>();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        if (SUPPORTED_TYPES == null) {
-            SUPPORTED_TYPES = new HashSet<MediaType>();
-            SUPPORTED_TYPES.add(GPX_MIME);
-            SUPPORTED_TYPES.add(KML_MIME);
-        }
-
         return SUPPORTED_TYPES;
     }
 
