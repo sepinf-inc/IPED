@@ -310,7 +310,7 @@ public class ChromeSqliteParser extends AbstractParser {
             
             for (ChromeVisits h : resumedHistory) {
             	
-xHandler.startElement("tr"); //$NON-NLS-1$
+        		xHandler.startElement("tr"); //$NON-NLS-1$
             	
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Integer.toString(i));
