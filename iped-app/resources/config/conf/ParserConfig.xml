@@ -78,7 +78,9 @@
         
         <parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser"></parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.EdgeWebCacheParser"></parser>
+        
+       	<!-- <parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser> -->
         <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
