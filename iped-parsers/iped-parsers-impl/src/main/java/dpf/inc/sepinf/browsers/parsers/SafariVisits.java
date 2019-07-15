@@ -6,48 +6,65 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class ChromeHistory {
+public class SafariVisits {
 	private long id;
 	private String title = "";
     private String url;
-    private Date visitDate;
-
-	public ChromeHistory(long id, String title, long visitDate, String url) {
+    private long visitCount = 0;
+    private Date lastVisitDate;
+    
+	public SafariVisits(long id, String title, String url, long visitCount, long lastVisitDate) {
 		this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
         	this.title = title;
         }
         this.url = url;
-        this.visitDate = new Date(visitDate);
+        this.visitCount = visitCount;
+        this.lastVisitDate = new Date(lastVisitDate);
 	}
 	public long getId() {
 		return id;
 	}
+
 	public void setId(long id) {
 		this.id = id;
 	}
+
 	public String getTitle() {
 		return title;
 	}
+
 	public void setTitle(String title) {
 		this.title = title;
 	}
+
 	public String getUrl() {
 		return url;
 	}
+
 	public void setUrl(String url) {
 		this.url = url;
 	}
-	public Date getVisitDate() {
-		return visitDate;
+
+	public long getVisitCount() {
+		return visitCount;
 	}
-	public void setVisitDate(long visitDate) {
-		this.visitDate = new Date(visitDate);
+
+	public void setVisitCount(long visitCount) {
+		this.visitCount = visitCount;
 	}
-    
-	public String getVisitDateAsString() {
+
+	public Date getLastVisitDate() {
+		return lastVisitDate;
+	}
+
+	public void setLastVisitDate(long visitDate) {
+		this.lastVisitDate = new Date(visitDate);
+	}
+	
+	public String getLastVisitDateAsString() {
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return format.format(visitDate);
+		return format.format(lastVisitDate);
 	}
 }

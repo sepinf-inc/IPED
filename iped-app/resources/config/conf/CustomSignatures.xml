@@ -121,6 +121,14 @@
     <mime-type type="application/x-edge-history">
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-safari-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-downloads">
+        <sub-class-of type="text/html"/>
+    </mime-type>
    
     <mime-type type="application/x-edge-web-cache">     
         <sub-class-of type="application/x-edb"/>
