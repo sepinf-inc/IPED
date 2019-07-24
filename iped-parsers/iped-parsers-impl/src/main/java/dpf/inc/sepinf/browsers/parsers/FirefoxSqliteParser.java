@@ -10,8 +10,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -30,6 +32,13 @@ import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.openjson.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
@@ -56,6 +65,10 @@ public class FirefoxSqliteParser extends AbstractParser {
 	
 	public static final MediaType MOZ_BOOKMARKS_REG = MediaType.application("x-firefox-bookmarks-registry"); //$NON-NLS-1$
 	
+	public static final MediaType MOZ_DOWNLOADS = MediaType.application("x-firefox-downloads"); //$NON-NLS-1$
+	
+	public static final MediaType MOZ_DOWNLOADS_REG = MediaType.application("x-firefox-downloads-registry"); //$NON-NLS-1$
+	
 	private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MOZ_PLACES);
 	
 	private static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
@@ -74,19 +87,22 @@ public class FirefoxSqliteParser extends AbstractParser {
 		TemporaryResources tmp = new TemporaryResources();
 		File bookmarksFile = tmp.createTemporaryFile();
 		File historyFile = tmp.createTemporaryFile();
+		File downloadFile = tmp.createTemporaryFile();
 
 		try {
 			
 			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 			connection = getConnection(stream, metadata, context);
 			
-			List<FirefoxMozVisits> resumedHistory = getResumedHistory(connection, metadata, context);
-			List<FirefoxMozPlaces> history = getHistory(connection, metadata, context);
-			List<FirefoxMozBookmarks> bookmarks = getBookmarks(connection, metadata, context);
+			List<ResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
+			List<Visit> history = getHistory(connection, metadata, context);
+			List<FirefoxMozBookmark> bookmarks = getBookmarks(connection, metadata, context);
+			List<Download> downloads = getDownloads(connection, metadata, context);
 			
 			
 			if (extractor.shouldParseEmbedded(metadata)) {
 				
+				/* BOOKMARK */
 				try (FileOutputStream tmpBookmarksFile = new FileOutputStream(bookmarksFile)) {
 					
 					ToXMLContentHandler bookmarksHandler = new ToXMLContentHandler(tmpBookmarksFile, "UTF-8"); //$NON-NLS-1$
@@ -104,7 +120,7 @@ public class FirefoxSqliteParser extends AbstractParser {
 				}
 
 				int i = 0;
-				for (FirefoxMozBookmarks b : bookmarks) {
+				for (FirefoxMozBookmark b : bookmarks) {
 					
 					i++;
 					Metadata metadataBookmark = new Metadata();
@@ -120,6 +136,7 @@ public class FirefoxSqliteParser extends AbstractParser {
 					extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
 				}
 				
+				/* HISTORY */
 				try (FileOutputStream tmpHistoryFile = new FileOutputStream(historyFile)) {
 			
 					ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
@@ -137,7 +154,7 @@ public class FirefoxSqliteParser extends AbstractParser {
 				}
 				
 				i = 0;
-				for (FirefoxMozPlaces h : history) {
+				for (Visit h : history) {
 					
 					i++;
 					Metadata metadataHistory = new Metadata();
@@ -151,6 +168,39 @@ public class FirefoxSqliteParser extends AbstractParser {
 					
 					extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
 				}
+				
+				/* DOWNLOAD */
+				try (FileOutputStream tmpDownloadFile = new FileOutputStream(downloadFile)) {
+					
+					ToXMLContentHandler downloadsHandler = new ToXMLContentHandler(tmpDownloadFile, "UTF-8"); //$NON-NLS-1$
+					Metadata downloadsMetadata = new Metadata();
+					downloadsMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_DOWNLOADS.toString());
+					downloadsMetadata.add(Metadata.RESOURCE_NAME_KEY, "Firefox Downloads"); //$NON-NLS-1$
+					downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
+					downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+					
+					parseFirefoxDownloads(stream, downloadsHandler, downloadsMetadata, context, downloads);
+					
+					try (FileInputStream fis = new FileInputStream(downloadFile)) {
+						extractor.parseEmbedded(fis, handler, downloadsMetadata, true);
+					}
+				}
+
+				i = 0;
+				for (Download d : downloads) {
+					
+					i++;
+					Metadata metadataDownload = new Metadata();
+					
+					metadataDownload.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_DOWNLOADS_REG.toString()); 
+					metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Firefox Download Entry " + i); //$NON-NLS-1$
+					metadataDownload.add(TikaCoreProperties.IDENTIFIER, d.getUrlFromDownload());
+					metadataDownload.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, d.getDownloadedLocalPath());
+					metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
+					metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
+					
+					extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
+				}
 			}
 	
 				
@@ -160,9 +210,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 			tmp.close();
 		}
 	}
-	
+
 	private void parseFirefoxBookmarks(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<FirefoxMozBookmarks> bookmarks) 
+			ParseContext context, List<FirefoxMozBookmark> bookmarks) 
 					throws IOException, SAXException, TikaException {
 		
 		XHTMLContentHandler xHandler = null;
@@ -212,7 +262,7 @@ public class FirefoxSqliteParser extends AbstractParser {
             
             int i = 1;
             
-            for (FirefoxMozBookmarks b : bookmarks) {
+            for (FirefoxMozBookmark b : bookmarks) {
             	xHandler.startElement("tr"); //$NON-NLS-1$
             	
                 xHandler.startElement("td"); //$NON-NLS-1$
@@ -257,8 +307,94 @@ public class FirefoxSqliteParser extends AbstractParser {
 	
 	}
 	
+	private void parseFirefoxDownloads(InputStream stream, ContentHandler handler, Metadata metadata,
+			ParseContext context, List<Download> downloads) 
+					throws IOException, SAXException, TikaException {
+		
+		XHTMLContentHandler xHandler = null;
+
+        try {
+        	
+            xHandler = new XHTMLContentHandler(handler, metadata);
+            xHandler.startDocument();
+            
+            xHandler.startElement("head"); //$NON-NLS-1$
+            xHandler.startElement("style"); //$NON-NLS-1$
+            xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
+            xHandler.endElement("style"); //$NON-NLS-1$
+            xHandler.endElement("head"); //$NON-NLS-1$
+            
+            xHandler.startElement("h2 align=center"); //$NON-NLS-1$
+            xHandler.characters("Mozilla Firefox Downloads"); //$NON-NLS-1$
+            xHandler.endElement("h2"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+            
+            xHandler.startElement("table"); //$NON-NLS-1$
+            
+            xHandler.startElement("tr"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters(""); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("PATH"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.endElement("tr"); //$NON-NLS-1$
+            
+            int i = 1;
+            
+            for (Download d : downloads) {
+            	xHandler.startElement("tr"); //$NON-NLS-1$
+            	
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(Integer.toString(i));
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getDownloadedDateAsString());
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getUrlFromDownload());
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getDownloadedLocalPath());
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.endElement("tr"); //$NON-NLS-1$
+
+                i++;
+            }
+            
+            xHandler.endElement("table"); //$NON-NLS-1$           
+            
+            xHandler.endDocument();            
+            
+        } finally{
+        	if(xHandler != null)
+        		xHandler.endDocument();
+        	try {
+                close();
+            } catch (Exception e) {
+                //swallow
+            }
+        }
+	}
+	
 	private void parseFirefoxResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<FirefoxMozVisits> resumedHistory) 
+			ParseContext context, List<ResumedVisit> resumedHistory) 
 					throws IOException, SAXException, TikaException {
 		
 		XHTMLContentHandler xHandler = null;
@@ -308,7 +444,7 @@ public class FirefoxSqliteParser extends AbstractParser {
         	
             int i = 1;
             
-            for (FirefoxMozVisits h : resumedHistory) {
+            for (ResumedVisit h : resumedHistory) {
             	
             	xHandler.startElement("tr"); //$NON-NLS-1$
             	
@@ -379,9 +515,9 @@ public class FirefoxSqliteParser extends AbstractParser {
         return SQLITE_CLASS_NAME;
     }
     
-    protected List<FirefoxMozVisits> getResumedHistory(Connection connection, Metadata metadata,
+    protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<FirefoxMozVisits> resumedHistory = new LinkedList<FirefoxMozVisits>();
+		List<ResumedVisit> resumedHistory = new LinkedList<ResumedVisit>();
 		
 		Statement st = null;
 		try {
@@ -395,7 +531,7 @@ public class FirefoxSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				resumedHistory.add(new FirefoxMozVisits(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
+				resumedHistory.add(new ResumedVisit(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
 			}
 		} finally {
 			if (st != null)
@@ -405,9 +541,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 		
     }
     
-    protected List<FirefoxMozPlaces> getHistory(Connection connection, Metadata metadata,
+    protected List<Visit> getHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<FirefoxMozPlaces> history = new LinkedList<FirefoxMozPlaces>();
+		List<Visit> history = new LinkedList<Visit>();
 		
 		Statement st = null;
 		try {
@@ -420,7 +556,7 @@ public class FirefoxSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				history.add(new FirefoxMozPlaces(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
+				history.add(new Visit(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
 			}
 		} finally {
 			if (st != null)
@@ -429,9 +565,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 		return history;
 	}
     
-    protected List<FirefoxMozBookmarks> getBookmarks(Connection connection, Metadata metadata,
+    protected List<FirefoxMozBookmark> getBookmarks(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<FirefoxMozBookmarks> bookmarks = new LinkedList<FirefoxMozBookmarks>();
+		List<FirefoxMozBookmark> bookmarks = new LinkedList<FirefoxMozBookmark>();
 		
 		Statement st = null;
 		try {
@@ -444,13 +580,47 @@ public class FirefoxSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				bookmarks.add(new FirefoxMozBookmarks(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
+				bookmarks.add(new FirefoxMozBookmark(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
 			}
 		} finally {
 			if (st != null)
 			st.close();
 		}
 		return bookmarks;
+	}
+    
+    private List<Download> getDownloads(Connection connection, Metadata metadata, ParseContext context) 
+    		throws SQLException, JsonParseException, JsonMappingException, IOException {
+    	List<Download> downloads = new LinkedList<Download>();
+		
+    	Statement st = null;
+		try {
+			st = connection.createStatement();
+			// moz_annos save date as Unix epoch time in milliseconds
+			// java Date use epoch time in milliseconds
+			// moz_annos save information from downloaded files
+			String sql = "SELECT moz_places.id, moz_places.url, path.content, attributes.content " //$NON-NLS-1$
+							+ "FROM moz_places " //$NON-NLS-1$
+							+ "INNER JOIN moz_annos AS path " //$NON-NLS-1$
+							+ "ON (moz_places.id = path.place_id AND path.anno_attribute_id = 3) " //$NON-NLS-1$
+							+ "INNER JOIN moz_annos AS attributes " //$NON-NLS-1$
+							+ "ON (moz_places.id = attributes.place_id AND attributes.anno_attribute_id = 4) "; //$NON-NLS-1$
+			ResultSet rs = st.executeQuery(sql);
+		
+			while (rs.next()) {
+				// 1- id, 2- date, 3- url, 4- path
+				long id = rs.getLong(1);
+				String url = rs.getString(2);
+				String path = rs.getString(3);
+				String att = rs.getString(4);
+				long date = Long.parseLong((att.split(","))[1].split(":")[1]);
+				downloads.add(new Download(id, date, url, path));
+			}
+		} finally {
+			if (st != null)
+			st.close();
+		}
+		return downloads;
 	}
     
     protected void close() throws SQLException, IOException {

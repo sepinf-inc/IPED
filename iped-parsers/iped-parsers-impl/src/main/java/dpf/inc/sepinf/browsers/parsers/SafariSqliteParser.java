@@ -38,10 +38,11 @@ import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 /**
- * Parser para histórico do Safari
+ * Parser para histórico do Safari - SQLite3
  *
  * http://2016.padjo.org/tutorials/sqlite-your-browser-history/
  * https://stackoverflow.com/questions/34167003/what-format-is-the-safari-history-db-history-visits-visit-time-in
+ * http://az4n6.blogspot.com/2014/07/safari-and-iphone-internet-history.html
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
  */
@@ -81,8 +82,8 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 			connection = getConnection(stream, metadata, context);
 			
-			List<SafariVisits> resumedHistory = getResumedHistory(connection, metadata, context);
-			List<SafariHistory> history = getHistory(connection, metadata, context);
+			List<SafariResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
+			List<SafariVisit> history = getHistory(connection, metadata, context);
 			
 			if (extractor.shouldParseEmbedded(metadata)) {
 				try (FileOutputStream tmpHistoryFile = new FileOutputStream(historyFile)) {
@@ -103,7 +104,7 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 				
 				int i = 0;
 				
-				for (SafariHistory h : history) {
+				for (SafariVisit h : history) {
 					
 					i++;
 					Metadata metadataHistory = new Metadata();
@@ -127,7 +128,7 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 	}
 	
 	private void parseSafariResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<SafariVisits> resumedHistory) 
+			ParseContext context, List<SafariResumedVisit> resumedHistory) 
 					throws IOException, SAXException, TikaException {
 		
 		XHTMLContentHandler xHandler = null;
@@ -177,7 +178,7 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
         	
             int i = 1;
             
-            for (SafariVisits h : resumedHistory) {
+            for (SafariResumedVisit h : resumedHistory) {
             	
         		xHandler.startElement("tr"); //$NON-NLS-1$
             	
@@ -248,9 +249,9 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
         return SQLITE_CLASS_NAME;
     }
     
-    protected List<SafariVisits> getResumedHistory(Connection connection, Metadata metadata,
+    protected List<SafariResumedVisit> getResumedHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<SafariVisits> resumedHistory = new LinkedList<SafariVisits>();
+		List<SafariResumedVisit> resumedHistory = new LinkedList<SafariResumedVisit>();
 		
 		Statement st = null;
 		try {
@@ -275,7 +276,7 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 //				LOGGER.info("SV1: " + sv1.getLastVisitDateAsString());
 //				LOGGER.info("SV2: " + sv2.getLastVisitDateAsString());
 //				LOGGER.info("SV3: " + sv3.getLastVisitDateAsString());
-				resumedHistory.add(new SafariVisits(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
+				resumedHistory.add(new SafariResumedVisit(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
 			}
 		} finally {
 			if (st != null)
@@ -284,9 +285,9 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 		return resumedHistory;
 	}
     
-    protected List<SafariHistory> getHistory(Connection connection, Metadata metadata,
+    protected List<SafariVisit> getHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<SafariHistory> history = new LinkedList<SafariHistory>();
+		List<SafariVisit> history = new LinkedList<SafariVisit>();
 		
 		Statement st = null;
 		try {
@@ -303,7 +304,7 @@ public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sq
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				history.add(new SafariHistory(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
+				history.add(new SafariVisit(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
 			}
 		} finally {
 			if (st != null)

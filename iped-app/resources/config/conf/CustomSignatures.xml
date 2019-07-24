@@ -97,6 +97,14 @@
         </magic>
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-plist">
+        <_comment>Apple Binary Property List File </_comment>
+        <magic priority="60">
+            <match value="0x62706C697374" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.plist"/>
+    </mime-type>
    
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
@@ -107,6 +115,10 @@
     </mime-type>
 
     <mime-type type="application/x-firefox-bookmarks">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-downloads">
         <sub-class-of type="text/html"/>
     </mime-type>
 
@@ -128,6 +140,13 @@
     
     <mime-type type="application/x-safari-downloads">
         <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-plist">     
+        <sub-class-of type="application/x-plist"/>
+        <glob pattern="History.plist"/>
+        <glob pattern="Downloads.plist"/>
+        <glob pattern="Bookmarks.plist"/>
     </mime-type>
    
     <mime-type type="application/x-edge-web-cache">     

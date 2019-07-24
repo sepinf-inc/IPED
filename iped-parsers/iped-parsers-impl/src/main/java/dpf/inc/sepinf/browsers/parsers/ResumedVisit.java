@@ -6,21 +6,23 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class FirefoxMozPlaces {
+public class ResumedVisit {
 	private long id;
 	private String title = "";
     private String url;
-    private Date visitDate;
-
-	public FirefoxMozPlaces(long id, String title, long visitDate, String url) {
-        this.id = id;
+    private long visitCount = 0;
+    private Date lastVisitDate;
+    
+	public ResumedVisit(long id, String title, String url, long visitCount, long lastVisitDate) {
+		this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
         	this.title = title;
         }
         this.url = url;
-        this.visitDate = new Date(visitDate);
-    }
-	
+        this.visitCount = visitCount;
+        this.lastVisitDate = new Date(lastVisitDate);
+	}
+
 	public long getId() {
 		return id;
 	}
@@ -45,18 +47,25 @@ public class FirefoxMozPlaces {
 		this.url = url;
 	}
 
-	public Date getVisitDate() {
-		return visitDate;
+	public long getVisitCount() {
+		return visitCount;
 	}
 
-	public void setVisitDate(long visitDate) {
-		this.visitDate = new Date(visitDate);
+	public void setVisitCount(long visitCount) {
+		this.visitCount = visitCount;
+	}
+
+	public Date getLastVisitDate() {
+		return lastVisitDate;
+	}
+
+	public void setLastVisitDate(long visitDate) {
+		this.lastVisitDate = new Date(visitDate);
 	}
 	
-	public String getVisitDateAsString() {
+	public String getLastVisitDateAsString() {
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return format.format(visitDate);
+		return format.format(lastVisitDate);
 	}
-
 }

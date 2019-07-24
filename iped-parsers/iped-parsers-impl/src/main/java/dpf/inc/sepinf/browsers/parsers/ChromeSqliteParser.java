@@ -41,6 +41,7 @@ import iped3.util.ExtraProperties;
  *
  * https://www.forensicswiki.org/wiki/Google_Chrome
  * https://www.acquireforensics.com/blog/google-chrome-browser-forensics.html
+ * http://paper.ijcsns.org/07_book/201609/20160919.pdf
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
  */
@@ -87,9 +88,9 @@ public class ChromeSqliteParser extends AbstractParser {
 			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 			connection = getConnection(stream, metadata, context);
 			
-			List<ChromeVisits> resumedHistory = getResumedHistory(connection, metadata, context);
-			List<ChromeHistory> history = getHistory(connection, metadata, context);
-			List<ChromeDownloads> downloads = getDownloads(connection, metadata, context);
+			List<ResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
+			List<Visit> history = getHistory(connection, metadata, context);
+			List<Download> downloads = getDownloads(connection, metadata, context);
 			
 			
 			if (extractor.shouldParseEmbedded(metadata)) {
@@ -112,7 +113,7 @@ public class ChromeSqliteParser extends AbstractParser {
 
 				int i = 0;
 				
-				for (ChromeDownloads d : downloads) {
+				for (Download d : downloads) {
 					
 					i++;
 					Metadata metadataDownload = new Metadata();
@@ -145,7 +146,7 @@ public class ChromeSqliteParser extends AbstractParser {
 				
 				i = 0;
 				
-				for (ChromeHistory h : history) {
+				for (Visit h : history) {
 					
 					i++;
 					Metadata metadataHistory = new Metadata();
@@ -170,7 +171,7 @@ public class ChromeSqliteParser extends AbstractParser {
 	}
 	
 	private void parseChromeDownloads(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<ChromeDownloads> downloads) 
+			ParseContext context, List<Download> downloads) 
 					throws IOException, SAXException, TikaException {
 		
 		XHTMLContentHandler xHandler = null;
@@ -216,7 +217,7 @@ public class ChromeSqliteParser extends AbstractParser {
             
             int i = 1;
             
-            for (ChromeDownloads d : downloads) {
+            for (Download d : downloads) {
             	xHandler.startElement("tr"); //$NON-NLS-1$
             	
                 xHandler.startElement("td"); //$NON-NLS-1$
@@ -252,13 +253,11 @@ public class ChromeSqliteParser extends AbstractParser {
             } catch (Exception e) {
                 //swallow
             }
-        }
-
-	
+        }	
 	}
 	
 	private void parseChromeResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<ChromeVisits> resumedHistory) 
+			ParseContext context, List<ResumedVisit> resumedHistory) 
 					throws IOException, SAXException, TikaException {
 		
 		XHTMLContentHandler xHandler = null;
@@ -308,7 +307,7 @@ public class ChromeSqliteParser extends AbstractParser {
         	
             int i = 1;
             
-            for (ChromeVisits h : resumedHistory) {
+            for (ResumedVisit h : resumedHistory) {
             	
         		xHandler.startElement("tr"); //$NON-NLS-1$
             	
@@ -379,9 +378,9 @@ public class ChromeSqliteParser extends AbstractParser {
         return SQLITE_CLASS_NAME;
     }
     
-    protected List<ChromeVisits> getResumedHistory(Connection connection, Metadata metadata,
+    protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<ChromeVisits> resumedHistory = new LinkedList<ChromeVisits>();
+		List<ResumedVisit> resumedHistory = new LinkedList<ResumedVisit>();
 		
 		Statement st = null;
 		try {
@@ -394,7 +393,7 @@ public class ChromeSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				resumedHistory.add(new ChromeVisits(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
+				resumedHistory.add(new ResumedVisit(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getLong(5)));
 			}
 		} finally {
 			if (st != null)
@@ -403,9 +402,9 @@ public class ChromeSqliteParser extends AbstractParser {
 		return resumedHistory;
 	}
     
-    protected List<ChromeHistory> getHistory(Connection connection, Metadata metadata,
+    protected List<Visit> getHistory(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<ChromeHistory> history = new LinkedList<ChromeHistory>();
+		List<Visit> history = new LinkedList<Visit>();
 		
 		Statement st = null;
 		try {
@@ -418,7 +417,7 @@ public class ChromeSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				history.add(new ChromeHistory(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
+				history.add(new Visit(rs.getLong(1), rs.getString(2), rs.getLong(3), rs.getString(4)));
 			}
 		} finally {
 			if (st != null)
@@ -427,9 +426,9 @@ public class ChromeSqliteParser extends AbstractParser {
 		return history;
 	}
     
-    protected List<ChromeDownloads> getDownloads(Connection connection, Metadata metadata,
+    protected List<Download> getDownloads(Connection connection, Metadata metadata,
             ParseContext context) throws SQLException {
-		List<ChromeDownloads> downloads = new LinkedList<ChromeDownloads>();
+		List<Download> downloads = new LinkedList<Download>();
 		
 		Statement st = null;
 		try {
@@ -441,7 +440,7 @@ public class ChromeSqliteParser extends AbstractParser {
 			ResultSet rs = st.executeQuery(sql);
 		
 			while (rs.next()) {
-				downloads.add(new ChromeDownloads(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)));
+				downloads.add(new Download(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)));
 			}
 		} finally {
 			if (st != null)

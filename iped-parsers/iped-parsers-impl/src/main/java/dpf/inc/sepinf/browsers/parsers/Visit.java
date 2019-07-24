@@ -6,13 +6,13 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class SafariHistory {
+public class Visit {
 	private long id;
 	private String title = "";
     private String url;
     private Date visitDate;
-    
-	public SafariHistory(long id, String title, long visitDate, String url) {
+
+	public Visit(long id, String title, long visitDate, String url) {
 		this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
         	this.title = title;

@@ -4,14 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class FirefoxMozBookmarks {
+public class FirefoxMozBookmark {
 	private long id;
 	private String title;
     private String url;
     private Date dateAdded;
     private Date lastModified;
 
-	public FirefoxMozBookmarks(long id, String title, String url, long dateAdded, long lastModified) {
+	public FirefoxMozBookmark(long id, String title, String url, long dateAdded, long lastModified) {
 		super();
 		this.id = id;
 		this.title = title;

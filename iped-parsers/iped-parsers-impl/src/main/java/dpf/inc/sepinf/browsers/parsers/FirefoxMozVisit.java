@@ -6,14 +6,14 @@ import java.util.TimeZone;
 
 import com.google.common.base.Strings;
 
-public class FirefoxMozVisits {
+public class FirefoxMozVisit {
 	private long id;
 	private String title = "";
     private String url;
     private long visitCount = 0;
     private Date lastVisitDate;
     
-    public FirefoxMozVisits(long id, String title, String url, long visitCount, long lastVisitDate) {
+    public FirefoxMozVisit(long id, String title, String url, long visitCount, long lastVisitDate) {
         this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
         	this.title = title;

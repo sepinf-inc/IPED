@@ -4,19 +4,19 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class ChromeDownloads {
+public class Download {
 	private long id;
 	private String urlFromDownload;
     private String downloadedLocalPath;
     private Date downloadedDate;
     
-	public ChromeDownloads(long id, long downloadedDate, String urlFromDownload, String downloadedLocalPath) {
+	public Download(long id, long downloadedDate, String urlFromDownload, String downloadedLocalPath) {
 		this.id = id;
 		this.urlFromDownload = urlFromDownload;
 		this.downloadedLocalPath = downloadedLocalPath;
 		this.downloadedDate = new Date(downloadedDate);
 	}
-	
+
 	public long getId() {
 		return id;
 	}

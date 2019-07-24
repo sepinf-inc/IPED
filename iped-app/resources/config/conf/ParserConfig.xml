@@ -80,6 +80,7 @@
         <parser class="dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser"></parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.EdgeWebCacheParser"></parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.SafariSqliteParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.SafariPlistParser"></parser>
         
        	<parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
