@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 
@@ -21,6 +23,10 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     private static final MessageDigest digest;
 
+    static Map<Character, Integer> BECH32_CHARSET_MAP = new HashMap<Character, Integer>();
+
+    private static int[] BECH32_GENERATOR = { 0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3 };
+
     static {
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -33,6 +39,11 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
         }
         for (int i = 0; i < ALPHABET.length; i++) {
             INDEXES[ALPHABET[i]] = i;
+        }
+
+        int i = 0;
+        for (char c : "qpzry9x8gf2tvdw0s3jn54khce6mua7l".toCharArray()) {
+            BECH32_CHARSET_MAP.put(c, i++);
         }
     }
 
@@ -52,10 +63,14 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     }
 
     public boolean validateBitcoinAddress(String addr) {
-        try {
-            int addressHeader = getAddressHeader(addr);
-            return (addressHeader == 0 || addressHeader == 5);
-        } catch (Exception x) {
+        if (addr.startsWith("bc1")) {
+            return bech32VerifyChecksum(addr);
+        } else {
+            try {
+                int addressHeader = getAddressHeader(addr);
+                return (addressHeader == 0 || addressHeader == 5);
+            } catch (Exception x) {
+            }
         }
         return false;
     }
@@ -155,6 +170,48 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
         byte[] range = new byte[to - from];
         System.arraycopy(source, from, range, 0, range.length);
         return range;
+    }
+
+    /*
+     * Validacao de enderecos bitcoin que começam com "bc1"
+     */
+
+    private static int bech32Polymod(int[] values) {
+        int chk = 1;
+        int top = 0;
+
+        for (int value : values) {
+            top = chk >>> 25;
+            chk = (chk & 0x1ffffff) << 5 ^ value;
+            for (int i = 0; i < 5; i++) {
+                if (((top >>> i) & 1) != 0) {
+                    chk ^= BECH32_GENERATOR[i];
+                }
+            }
+        }
+
+        return chk;
+    }
+
+    private static int[] bech32ExpandData(String valueString) {
+        char[] value = valueString.toCharArray();
+        int[] data = new int[value.length + 2];
+
+        data[0] = 3;
+        data[1] = 3;
+        data[2] = 0;
+        data[3] = 2;
+        data[4] = 3;
+
+        for (int i = 0; i < value.length - 3; i++) {
+            data[i + 5] = BECH32_CHARSET_MAP.get(value[i + 3]);
+        }
+
+        return data;
+    }
+
+    private static boolean bech32VerifyChecksum(String value) {
+        return bech32Polymod(bech32ExpandData(value)) == 1;
     }
 
 }
