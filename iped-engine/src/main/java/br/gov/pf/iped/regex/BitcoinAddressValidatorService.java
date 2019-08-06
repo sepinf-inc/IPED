@@ -23,7 +23,11 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     private static final MessageDigest digest;
 
-    static Map<Character, Integer> BECH32_CHARSET_MAP = new HashMap<Character, Integer>();
+    private static int[] BECH32_CHARSET_REV = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, 15, -1, 10, 17, 21, 20, 26, 30, 7, 5, -1, -1, -1, -1, -1, -1, -1, 29, -1, 24, 13, 25, 9, 8, 23,
+            -1, 18, 22, 31, 27, 19, -1, 1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1, -1, 29, -1, 24, 13,
+            25, 9, 8, 23, -1, 18, 22, 31, 27, 19, -1, 1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1 };
 
     private static int[] BECH32_GENERATOR = { 0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3 };
 
@@ -39,11 +43,6 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
         }
         for (int i = 0; i < ALPHABET.length; i++) {
             INDEXES[ALPHABET[i]] = i;
-        }
-
-        int i = 0;
-        for (char c : "qpzry9x8gf2tvdw0s3jn54khce6mua7l".toCharArray()) {
-            BECH32_CHARSET_MAP.put(c, i++);
         }
     }
 
@@ -196,17 +195,17 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     private static int[] bech32ExpandData(String valueString) {
         char[] value = valueString.toCharArray();
         int[] data = new int[value.length + 2];
-
+        
         data[0] = 3;
         data[1] = 3;
         data[2] = 0;
         data[3] = 2;
         data[4] = 3;
-
+        
         for (int i = 0; i < value.length - 3; i++) {
-            data[i + 5] = BECH32_CHARSET_MAP.get(value[i + 3]);
+            data[i + 5] = BECH32_CHARSET_REV[(int)value[i+3]];
         }
-
+        
         return data;
     }
 
