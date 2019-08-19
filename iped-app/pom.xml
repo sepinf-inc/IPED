@@ -104,7 +104,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>libpff</artifactId>
-                                    <version>20180714</version>
+                                    <version>20131028</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
