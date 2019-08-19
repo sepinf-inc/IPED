@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 
@@ -195,17 +193,17 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     private static int[] bech32ExpandData(String valueString) {
         char[] value = valueString.toCharArray();
         int[] data = new int[value.length + 2];
-        
+
         data[0] = 3;
         data[1] = 3;
         data[2] = 0;
         data[3] = 2;
         data[4] = 3;
-        
+
         for (int i = 0; i < value.length - 3; i++) {
-            data[i + 5] = BECH32_CHARSET_REV[(int)value[i+3]];
+            data[i + 5] = BECH32_CHARSET_REV[(int) value[i + 3]];
         }
-        
+
         return data;
     }
 
