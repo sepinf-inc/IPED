@@ -67,8 +67,6 @@ public class ChromeSqliteParser extends AbstractParser {
 	private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(CHROME_SQLITE);
 	
 	private static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
-	
-	private Connection connection;
 
 	@Override
 	public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -83,10 +81,9 @@ public class ChromeSqliteParser extends AbstractParser {
 		File downloadsFile = tmp.createTemporaryFile();
 		File historyFile = tmp.createTemporaryFile();
 
-		try {
+		try (Connection connection = getConnection(stream, metadata, context)){
 			
 			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
-			connection = getConnection(stream, metadata, context);
 			
 			List<ResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
 			List<Visit> history = getHistory(connection, metadata, context);
@@ -248,11 +245,6 @@ public class ChromeSqliteParser extends AbstractParser {
         } finally{
         	if(xHandler != null)
         		xHandler.endDocument();
-        	try {
-                close();
-            } catch (Exception e) {
-                //swallow
-            }
         }	
 	}
 	
@@ -343,11 +335,6 @@ public class ChromeSqliteParser extends AbstractParser {
         } finally{
         	if(xHandler != null)
         		xHandler.endDocument();
-        	try {
-                close();
-            } catch (Exception e) {
-                //swallow
-            }
         }
 	}
 	
@@ -448,10 +435,6 @@ public class ChromeSqliteParser extends AbstractParser {
 		}
 		return downloads;
 	}
-    
-    protected void close() throws SQLException, IOException {
-        connection.close();
-    }
     
     public static void main(String[] args) {
 
