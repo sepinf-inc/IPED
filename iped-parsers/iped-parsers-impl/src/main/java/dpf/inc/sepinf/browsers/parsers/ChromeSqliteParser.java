@@ -78,17 +78,17 @@ public class ChromeSqliteParser extends AbstractParser {
 			throws IOException, SAXException, TikaException {
 		
 		TemporaryResources tmp = new TemporaryResources();
+		File dbFile = TikaInputStream.get(stream, tmp).getFile();
 		File downloadsFile = tmp.createTemporaryFile();
 		File historyFile = tmp.createTemporaryFile();
-
-		try (Connection connection = getConnection(stream, metadata, context)){
+		        
+		try (Connection connection = getConnection(dbFile)){
 			
 			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
 			
 			List<ResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
 			List<Visit> history = getHistory(connection, metadata, context);
 			List<Download> downloads = getDownloads(connection, metadata, context);
-			
 			
 			if (extractor.shouldParseEmbedded(metadata)) {
 				
@@ -338,9 +338,8 @@ public class ChromeSqliteParser extends AbstractParser {
         }
 	}
 	
-    protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context) throws IOException, TikaException {
-        String connectionString = getConnectionString(stream, metadata, context);
-
+    protected Connection getConnection(File dbFile) throws IOException, TikaException {
+        String connectionString = getConnectionString(dbFile);
         Connection connection = null;
         try {
             Class.forName(getJDBCClassName());
@@ -355,9 +354,7 @@ public class ChromeSqliteParser extends AbstractParser {
         return connection;
     }
     
-    protected String getConnectionString(InputStream is,
-                                               Metadata metadata, ParseContext parseContext) throws IOException {
-    	File dbFile = TikaInputStream.get(is).getFile();
+    protected String getConnectionString(File dbFile) throws IOException {
         return "jdbc:sqlite:"+dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
     
