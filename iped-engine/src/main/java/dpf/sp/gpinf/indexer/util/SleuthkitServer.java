@@ -82,7 +82,7 @@ public class SleuthkitServer {
             LocalConfig localConfig = new LocalConfig();
             cm.addObject(localConfig);
             cm.loadConfigs();
-            Configuration.getInstance().loadLibs(localConfig.getIndexerTemp());
+            Configuration.getInstance().loadLibsAndToolPaths();
 
             sleuthCase = SleuthkitCase.openCase(dbPath);
 

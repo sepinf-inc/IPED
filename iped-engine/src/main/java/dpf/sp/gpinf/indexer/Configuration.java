@@ -145,7 +145,7 @@ public class Configuration {
         properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
     }
 
-    public void loadLibs(File indexerTemp) throws IOException {
+    public void loadLibsAndToolPaths() throws IOException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
             String arch = "x86"; //$NON-NLS-1$
@@ -206,6 +206,8 @@ public class Configuration {
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
+        
+        loadLibsAndToolPaths();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
                 .equals(CustomURLClassLoader.class.getName())) {
@@ -261,8 +263,6 @@ public class Configuration {
         }
 
         configManager.loadConfigs();
-
-        loadLibs(localConfig.getIndexerTemp());
     }
 
 }
