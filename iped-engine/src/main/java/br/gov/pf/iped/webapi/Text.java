@@ -25,8 +25,8 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IPEDSource;
-import iped3.Item;
+import iped3.IIPEDSource;
+import iped3.IItem;
 
 @Api(value = "Documents")
 @Path("/sources/{sourceID}/docs/{id}/text")
@@ -38,8 +38,8 @@ public class Text {
     public static StreamingOutput content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
             throws Exception {
 
-        IPEDSource source = Sources.getSource(sourceID);
-        final Item item = source.getItemByID(id);
+        IIPEDSource source = Sources.getSource(sourceID);
+        final IItem item = source.getItemByID(id);
         final IndexerDefaultParser parser = new IndexerDefaultParser();
         final ParseContext context = getTikaContext(item, parser, source.getModuleDir());
         final Metadata metadata = new Metadata();
@@ -60,7 +60,7 @@ public class Text {
         };
     }
 
-    public static ParseContext getTikaContext(Item item, Parser parser, File moduleDir) throws Exception {
+    public static ParseContext getTikaContext(IItem item, Parser parser, File moduleDir) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
         ParseContext context = expander.getTikaContext();

@@ -36,10 +36,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import iped3.Item;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped3.IItem;
 import iped3.desktop.CancelableWorker;
-import iped3.sleuthkit.SleuthKitItem;
+import iped3.sleuthkit.ISleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -52,7 +52,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private Document doc;
     private int docId;
     private boolean listRelated;
-    private static volatile Item lastItem;
+    private static volatile IItem lastItem;
 
     public FileProcessor(int docId, boolean listRelated) {
         this.listRelated = listRelated;
@@ -116,8 +116,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         LOGGER.info("Opening " + doc.get(IndexItem.PATH)); //$NON-NLS-1$
 
         // TODO usar nova API e contornar exibição da Ajuda
-        IPEDSourceImpl iCase = (IPEDSourceImpl) App.get().appCase.getAtomicSource(docId);
-        Item item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+        IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
+        IItem item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
 
         long textSize = iCase.getTextSize(item.getId());
         item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
@@ -131,7 +131,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             contentType = item.getMediaType().toString();
         }
 
-        Item viewItem = item;
+        IItem viewItem = item;
 
         if (item.getViewFile() != null) {
             viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
@@ -153,9 +153,9 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         }
     }
 
-    private void waitSleuthkitInit(final Item item) {
-        if (item instanceof SleuthKitItem) {
-            SleuthKitItem sitem = (SleuthKitItem) item;
+    private void waitSleuthkitInit(final IItem item) {
+        if (item instanceof ISleuthKitItem) {
+            ISleuthKitItem sitem = (ISleuthKitItem) item;
             if (sitem.getSleuthFile() == null)
                 return;
         }
@@ -190,7 +190,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         }
     }
 
-    private void disposeItem(final Item itemToDispose) {
+    private void disposeItem(final IItem itemToDispose) {
         if (itemToDispose != null) {
             new Thread() {
                 public void run() {

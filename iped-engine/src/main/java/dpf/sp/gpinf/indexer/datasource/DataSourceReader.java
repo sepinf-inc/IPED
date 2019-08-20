@@ -18,8 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import iped3.CaseData;
-import iped3.datasource.DataSource;
+import iped3.ICaseData;
+import iped3.datasource.IDataSource;
 
 import java.io.File;
 
@@ -38,7 +38,7 @@ public abstract class DataSourceReader {
     /**
      * Objeto com dados do caso
      */
-    CaseData caseData;
+    ICaseData caseData;
 
     /**
      * Indica se os itens serão apenas listados (contados) ou adicionados à fila de
@@ -54,7 +54,7 @@ public abstract class DataSourceReader {
     /**
      * Fonte de dados de origem
      */
-    DataSource dataSource;
+    IDataSource dataSource;
 
     /**
      * Construtor.
@@ -67,7 +67,7 @@ public abstract class DataSourceReader {
      *            Se os itens serão apenas listados(contados) ou adicionados à fila
      *            de processamento
      */
-    public DataSourceReader(CaseData caseData, File output, boolean listOnly) {
+    public DataSourceReader(ICaseData caseData, File output, boolean listOnly) {
         this.caseData = caseData;
         this.listOnly = listOnly;
         this.output = output;

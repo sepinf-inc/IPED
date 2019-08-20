@@ -16,7 +16,7 @@ import org.apache.lucene.index.IndexableField;
 import br.gov.pf.iped.webapi.json.DocPropsJSON;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IPEDSource;
+import iped3.IIPEDSource;
 
 @Api(value = "Documents")
 @Path("sources/{sourceID}/docs")
@@ -28,7 +28,7 @@ public class Docs {
     @Produces(MediaType.APPLICATION_JSON)
     public static DocPropsJSON properties(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
             throws IOException {
-        IPEDSource source = Sources.getSource(sourceID);
+        IIPEDSource source = Sources.getSource(sourceID);
         int luceneID = source.getLuceneId(id);
         Document doc = source.getReader().document(luceneID);
 

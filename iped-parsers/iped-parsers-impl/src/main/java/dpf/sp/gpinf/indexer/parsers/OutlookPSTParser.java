@@ -49,6 +49,8 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.rtf.RTFParser2;
+import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -431,11 +433,25 @@ public class OutlookPSTParser extends AbstractParser {
             preview.append("<hr>"); //$NON-NLS-1$
 
             String bodyHtml = email.getBodyHTML();
-            if (bodyHtml != null && !bodyHtml.isEmpty()) {
+            if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
                 preview.append(bodyHtml);
                 metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(bodyHtml, true));
             } else {
                 String text = email.getBody();
+                if(text == null || text.trim().isEmpty()) {
+                    text = email.getRTFBody();
+                    if(text != null) {
+                        try {
+                            RTFParser2 parser = new RTFParser2();
+                            BodyContentHandler handler = new BodyContentHandler();
+                            parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(), context);
+                            text = handler.toString();
+                            
+                        }catch(Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 if (text != null && !text.trim().isEmpty()) {
                     metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(text, false));
                     text = SimpleHTMLEncoder.htmlEncode(text);

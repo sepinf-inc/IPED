@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class ViewersRepository extends Viewer {
 
@@ -83,12 +83,12 @@ public class ViewersRepository extends Viewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         loadFile(content, null, highlightTerms);
     }
 
     @Override
-    public void loadFile(StreamSource content, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms) {
 
         if (content == null) {
             clear();

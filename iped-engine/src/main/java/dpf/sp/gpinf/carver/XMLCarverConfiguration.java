@@ -20,7 +20,7 @@ import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import dpf.sp.gpinf.carving.DefaultCarver;
 import dpf.sp.gpinf.carving.JSCarver;
 import dpf.sp.gpinf.indexer.util.XMLUtil;
-import iped3.configuration.ConfigurationDirectory;
+import iped3.configuration.IConfigurationDirectory;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,12 +44,12 @@ public class XMLCarverConfiguration implements CarverConfiguration {
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
     // private int CLUSTER_SIZE = 1;
-    private ConfigurationDirectory localConfig;
+    private IConfigurationDirectory localConfig;
     File confDir;
 
     /* initializes with the parameters */
     @Override
-    public void init(ConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
+    public void init(IConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException {
         this.localConfig = localConfig;
 
         File confFile = new File(props.getProperty("XML_CONFIG_FILE"));

@@ -23,11 +23,11 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.process.Worker;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
-import iped3.Item;
-import iped3.HashValue;
+import iped3.IItem;
+import iped3.IHashValue;
 
 /**
  * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser
@@ -42,7 +42,7 @@ public class LedKFFTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(LedKFFTask.class);
     private static Object lock = new Object();
-    private static HashMap<String, HashValue[]> hashArrays;
+    private static HashMap<String, IHashValue[]> hashArrays;
     public static KffItem[] kffItems;
     private static final String taskName = "LED Database Search"; //$NON-NLS-1$
     private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
@@ -105,9 +105,9 @@ public class LedKFFTask extends AbstractTask {
 
             List<KffItem> kffList = new ArrayList<KffItem>();
 
-            List<List<HashValue>> hashList = new ArrayList<List<HashValue>>();
+            List<List<IHashValue>> hashList = new ArrayList<List<IHashValue>>();
             for (int col = 0; col < ledHashOrder.length; col++) {
-                hashList.add(new ArrayList<HashValue>());
+                hashList.add(new ArrayList<IHashValue>());
             }
             Pattern pattern = Pattern.compile(" \\*"); //$NON-NLS-1$
             File[] wkffFiles = wkffDir.listFiles();
@@ -128,26 +128,26 @@ public class LedKFFTask extends AbstractTask {
             }
 
             if (hashArrays == null) {
-                hashArrays = new HashMap<String, HashValue[]>();
+                hashArrays = new HashMap<String, IHashValue[]>();
                 for (File wkffFile : wkffFiles) {
                     BufferedReader reader = new BufferedReader(new FileReader(wkffFile));
                     String line = reader.readLine();
                     while ((line = reader.readLine()) != null) {
                         String[] hashes = pattern.split(line);
                         long length = -1;
-                        HashValue md5 = null;
-                        HashValue md5_64K = null;
+                        IHashValue md5 = null;
+                        IHashValue md5_64K = null;
                         String ext = null;
                         for (int col = 0; col < ledHashOrder.length; col++) {
-                            HashValue hv = null;
+                            IHashValue hv = null;
                             if (ledHashOrder[col] != null) {
-                                hv = new HashValueImpl(hashes[col].trim());
+                                hv = new HashValue(hashes[col].trim());
                                 hashList.get(col).add(hv);
                             }
                             if (col == idxMd5) {
                                 md5 = hv;
                             } else if (col == idxMd5_64K) {
-                                md5_64K = new HashValueImpl(hashes[col].trim());
+                                md5_64K = new HashValue(hashes[col].trim());
                             } else if (col == idxLength) {
                                 length = Long.parseLong(hashes[col]);
                             } else if (col == idxName) {
@@ -164,7 +164,7 @@ public class LedKFFTask extends AbstractTask {
                 }
                 for (int col = 0; col < ledHashOrder.length; col++) {
                     if (ledHashOrder[col] != null) {
-                        hashArrays.put(ledHashOrder[col], hashList.get(col).toArray(new HashValue[0]));
+                        hashArrays.put(ledHashOrder[col], hashList.get(col).toArray(new IHashValue[0]));
                         hashList.get(col).clear();
                         Arrays.sort(hashArrays.get(ledHashOrder[col]));
                     }
@@ -187,11 +187,11 @@ public class LedKFFTask extends AbstractTask {
             write(os, hashArrays.size());
             for (String key : hashArrays.keySet()) {
                 write(os, key);
-                HashValue[] v = hashArrays.get(key);
+                IHashValue[] v = hashArrays.get(key);
                 write(os, v.length);
                 if (v.length > 0) {
                     write(os, v[0].getBytes().length);
-                    for (HashValue h : v) {
+                    for (IHashValue h : v) {
                         os.write(h.getBytes());
                     }
                 }
@@ -233,19 +233,19 @@ public class LedKFFTask extends AbstractTask {
             is = new BufferedInputStream(new FileInputStream(ledWkffCache), 1 << 24);
             String fileKey = readString(is);
             if (fileKey.equals(cacheKey)) {
-                hashArrays = new HashMap<String, HashValue[]>();
+                hashArrays = new HashMap<String, IHashValue[]>();
                 int n = readInt(is);
                 for (int i = 0; i < n; i++) {
                     String key = readString(is);
                     int arrLen = readInt(is);
-                    HashValue[] v = new HashValue[arrLen];
+                    IHashValue[] v = new IHashValue[arrLen];
                     hashArrays.put(key, v);
                     if (arrLen > 0) {
                         int hashLen = readInt(is);
                         for (int j = 0; j < arrLen; j++) {
                             byte[] bytes = new byte[hashLen];
                             is.read(bytes);
-                            v[j] = new HashValueImpl(bytes);
+                            v[j] = new HashValue(bytes);
                         }
                     }
                 }
@@ -258,8 +258,8 @@ public class LedKFFTask extends AbstractTask {
                     byte[] bytes2 = new byte[hashLen2];
                     is.read(bytes1);
                     is.read(bytes2);
-                    kffItems[j] = new KffItem(new HashValueImpl(bytes1), readLong(is), readString(is),
-                            new HashValueImpl(bytes2));
+                    kffItems[j] = new KffItem(new HashValue(bytes1), readLong(is), readString(is),
+                            new HashValue(bytes2));
                 }
             }
         } catch (Exception e) {
@@ -337,7 +337,7 @@ public class LedKFFTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
         if (!taskEnabled) {
             return;
         }
@@ -346,7 +346,7 @@ public class LedKFFTask extends AbstractTask {
             if (ledHashOrder[col] != null) {
                 String hash = (String) evidence.getExtraAttribute(ledHashOrder[col]);
                 if (hash != null) {
-                    if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValueImpl(hash)) >= 0) {
+                    if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
                         evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
                     }
                     break;
@@ -357,18 +357,18 @@ public class LedKFFTask extends AbstractTask {
 }
 
 class KffItem implements Comparable<KffItem> {
-    private final HashValue md5_64K, md5;
+    private final IHashValue md5_64K, md5;
     private final long length;
     private final String ext;
 
-    public KffItem(HashValue md5_64K, long length, String ext, HashValue md5) {
+    public KffItem(IHashValue md5_64K, long length, String ext, IHashValue md5) {
         this.md5_64K = md5_64K;
         this.length = length;
         this.ext = ext;
         this.md5 = md5;
     }
 
-    public HashValue getMD5_64K() {
+    public IHashValue getMD5_64K() {
         return md5_64K;
     }
 
@@ -380,7 +380,7 @@ class KffItem implements Comparable<KffItem> {
         return ext;
     }
 
-    public HashValue getMD5() {
+    public IHashValue getMD5() {
         return md5;
     }
 
@@ -403,7 +403,7 @@ class KffItem implements Comparable<KffItem> {
         return md5_64K.compareTo(o.md5_64K);
     }
 
-    public static KffItem kffSearch(KffItem[] items, HashValue hash) {
+    public static KffItem kffSearch(KffItem[] items, IHashValue hash) {
         int low = 0;
         int high = items.length - 1;
         while (low <= high) {

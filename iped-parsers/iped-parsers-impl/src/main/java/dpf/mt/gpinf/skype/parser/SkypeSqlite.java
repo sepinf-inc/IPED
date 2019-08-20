@@ -19,8 +19,8 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
 /**
@@ -50,7 +50,7 @@ public class SkypeSqlite implements Closeable {
     private Hashtable<Integer, SkypeContact> contacts = null;
     private Hashtable<Integer, SkypeConversation> conversations = null;
 
-    List<ItemBase> cachedMediaList = null;
+    List<IItemBase> cachedMediaList = null;
 
     SkypeAccount account;
 
@@ -60,15 +60,15 @@ public class SkypeSqlite implements Closeable {
         carregaSkypeName();
     }
 
-    public void searchMediaCache(ItemSearcher searcher) {
+    public void searchMediaCache(IItemSearcher searcher) {
         if (baseSkypeFolder == null)
             return;
         baseSkypeFolder = baseSkypeFolder.replace('\\', '/');
         baseSkypeFolder = searcher.escapeQuery(baseSkypeFolder);
 
         String query = BasicProps.PATH + ":\"" + baseSkypeFolder + STORAGE_DB_PATH + "\""; //$NON-NLS-1$//$NON-NLS-2$
-        List<ItemBase> items = searcher.search(query);
-        for (ItemBase item : items)
+        List<IItemBase> items = searcher.search(query);
+        for (IItemBase item : items)
             if (item.getName().equalsIgnoreCase("storage_db.db")) { //$NON-NLS-1$
                 storageDbPath = getTempFile(item);
                 break;
@@ -78,7 +78,7 @@ public class SkypeSqlite implements Closeable {
                                                                                     // searchers for media_cache_v2,
                                                                                     // media_cache_v3, etc
         items = searcher.search(query);
-        for (ItemBase item : items)
+        for (IItemBase item : items)
             if (item.getName().equalsIgnoreCase("cache_db.db")) { //$NON-NLS-1$
                 cacheMediaDbPath = getTempFile(item);
                 break;
@@ -89,7 +89,7 @@ public class SkypeSqlite implements Closeable {
 
     }
 
-    private File getTempFile(ItemBase item) {
+    private File getTempFile(IItemBase item) {
         try (InputStream is = item.getBufferedStream()) {
             Path temp = Files.createTempFile("sqlite-parser", null); //$NON-NLS-1$
             Files.copy(is, temp, StandardCopyOption.REPLACE_EXISTING);
@@ -329,7 +329,7 @@ public class SkypeSqlite implements Closeable {
                 }
 
                 // search thumb
-                for (ItemBase item : cachedMediaList) {
+                for (IItemBase item : cachedMediaList) {
                     String nome = item.getName();
                     if (nome.startsWith("i" + urlFile.getId() + "^") && nome.contains("thumb")) { //$NON-NLS-1$ //$NON-NLS-2$
                         urlFile.setThumbFile(item);
@@ -338,7 +338,7 @@ public class SkypeSqlite implements Closeable {
                 }
 
                 boolean originalFound = false;
-                for (ItemBase item : cachedMediaList) {
+                for (IItemBase item : cachedMediaList) {
                     String nome = item.getName();
                     if (nome.startsWith("i" + urlFile.getId() + "^") && nome.contains("orig")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         urlFile.setCacheFile(item);
@@ -366,7 +366,7 @@ public class SkypeSqlite implements Closeable {
     private SkypeMessageUrlFile getCacheFileFromCacheDb(SkypeMessageUrlFile urlFile) {
         String nome = getFileNameFromCacheDb(urlFile.getUri());
         if (nome != null)
-            for (ItemBase item : cachedMediaList) {
+            for (IItemBase item : cachedMediaList) {
                 if (nome.equals(item.getName())) {
                     urlFile.setCacheFile(item);
                     return urlFile;

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Classe que define dados pertencentes a um Bookmark, que é uma categoria sob a
@@ -39,7 +39,7 @@ public class Bookmark implements Serializable {
     /**
      * Arquivos de evidência associados a este bookmark.
      */
-    private final List<Item> items = new ArrayList<Item>();
+    private final List<IItem> items = new ArrayList<IItem>();
 
     /**
      * @param name
@@ -61,7 +61,7 @@ public class Bookmark implements Serializable {
      * @param item
      *            arquivo a ser adicionado
      */
-    public void addItem(Item item) {
+    public void addItem(IItem item) {
         items.add(item);
     }
 
@@ -70,7 +70,7 @@ public class Bookmark implements Serializable {
      *
      * @return lista não modificável de arquivos.
      */
-    public List<Item> getItems() {
+    public List<IItem> getItems() {
         return Collections.unmodifiableList(items);
     }
 

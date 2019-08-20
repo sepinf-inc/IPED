@@ -23,8 +23,8 @@ import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.ItemImpl;
-import iped3.Item;
+import gpinf.dev.data.Item;
+import iped3.IItem;
 
 public class RegexTask extends AbstractTask {
 
@@ -199,9 +199,9 @@ public class RegexTask extends AbstractTask {
         // TODO Auto-generated method stub
     }
 
-    protected void process(Item item) throws Exception {
+    protected void process(IItem item) throws Exception {
 
-        ItemImpl evidence = (ItemImpl) item;
+        Item evidence = (Item) item;
 
         if (!enabled || evidence.getTextCache() == null)
             return;
@@ -213,7 +213,7 @@ public class RegexTask extends AbstractTask {
     }
 
     @SuppressWarnings("unchecked")
-    private void processRegex(Item evidence, Reader reader) throws IOException {
+    private void processRegex(IItem evidence, Reader reader) throws IOException {
 
         char[] cbuf = new char[1000000];
         int k = 0;

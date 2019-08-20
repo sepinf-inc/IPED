@@ -2,18 +2,18 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.util.List;
 
-import iped3.Item;
-import iped3.datasource.DataSource;
+import iped3.IItem;
+import iped3.datasource.IDataSource;
 
 public class ParentInfo {
 
-    private DataSource dataSource;
+    private IDataSource dataSource;
     private int id;
     private List<Integer> parentIds;
     private String path;
     private boolean isDeleted;
 
-    public ParentInfo(Item item) {
+    public ParentInfo(IItem item) {
         this.dataSource = item.getDataSource();
         this.id = item.getId();
         this.parentIds = item.getParentIds();
@@ -21,7 +21,7 @@ public class ParentInfo {
         this.isDeleted = item.isDeleted();
     }
 
-    public DataSource getDataSource() {
+    public IDataSource getDataSource() {
         return dataSource;
     }
 

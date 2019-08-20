@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.Worker;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do
@@ -50,7 +50,7 @@ public class TempFileTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         Long len = evidence.getLength();
         if (indexTempOnSSD && len != null

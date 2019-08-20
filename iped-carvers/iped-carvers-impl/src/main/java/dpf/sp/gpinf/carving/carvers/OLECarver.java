@@ -6,7 +6,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carving.AbstractCarver;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
@@ -21,7 +21,7 @@ public class OLECarver extends AbstractCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try (SeekableInputStream is = parentEvidence.getStream()) {
             is.seek(header.getOffset());
             byte buf[] = new byte[512];

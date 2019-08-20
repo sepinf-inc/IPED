@@ -37,7 +37,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
@@ -87,11 +87,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().appCase.close();
 
             if (!App.get().isMultiCase) {
-                IPEDSourceImpl singleCase = null;
+                IPEDSource singleCase = null;
                 if (manager == null)
-                    singleCase = new IPEDSourceImpl(App.get().casesPathFile);
+                    singleCase = new IPEDSource(App.get().casesPathFile);
                 else
-                    singleCase = new IPEDSourceImpl(App.get().casesPathFile, manager.getIndexWriter());
+                    singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
                 App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
             } else
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
@@ -164,7 +164,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
         if (updateItems) {
             App.get().appletListener.updateFileListing();
-            ColumnsManagerImpl.getInstance().dispose();
+            ColumnsManager.getInstance().dispose();
             App.get().dialogBar.setVisible(false);
         }
     }

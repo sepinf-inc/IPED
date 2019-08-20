@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
+import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.KFFConfig;
@@ -70,7 +70,7 @@ public class Configuration {
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
 
-    ConfigurationDirectoryImpl configDirectory;
+    ConfigurationDirectory configDirectory;
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
@@ -145,7 +145,7 @@ public class Configuration {
         properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
     }
 
-    public void loadLibs(File indexerTemp) throws IOException {
+    public void loadLibsAndToolPaths() throws IOException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
             String arch = "x86"; //$NON-NLS-1$
@@ -195,7 +195,7 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectoryImpl(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
+        configDirectory = new ConfigurationDirectory(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
 
@@ -206,6 +206,8 @@ public class Configuration {
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
+        
+        loadLibsAndToolPaths();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
                 .equals(CustomURLClassLoader.class.getName())) {
@@ -261,8 +263,6 @@ public class Configuration {
         }
 
         configManager.loadConfigs();
-
-        loadLibs(localConfig.getIndexerTemp());
     }
 
 }

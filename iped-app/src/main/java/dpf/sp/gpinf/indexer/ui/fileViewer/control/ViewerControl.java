@@ -5,7 +5,7 @@ import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewer;
@@ -190,13 +190,13 @@ public class ViewerControl implements IViewerControl {
     }
 
     @Override
-    public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
                                                                        // methods, choose Tools | Templates.
     }
 
     @Override
-    public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource file, String contentType, Set<String> highlightTerms) {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
                                                                        // methods, choose Tools | Templates.
     }

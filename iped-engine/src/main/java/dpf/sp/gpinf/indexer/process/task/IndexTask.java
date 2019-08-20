@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.ItemSearcherImpl;
+import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.CloseFilterReader;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
@@ -42,12 +42,12 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Util;
-import gpinf.dev.data.ItemImpl;
-import iped3.Item;
-import iped3.io.ItemBase;
-import iped3.io.StreamSource;
-import iped3.search.ItemSearcher;
-import iped3.sleuthkit.SleuthKitItem;
+import gpinf.dev.data.Item;
+import iped3.IItem;
+import iped3.io.IItemBase;
+import iped3.io.IStreamSource;
+import iped3.search.IItemSearcher;
+import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a
@@ -86,7 +86,7 @@ public class IndexTask extends BaseCarveTask {
         }
     }
 
-    public void process(Item evidence) throws IOException {
+    public void process(IItem evidence) throws IOException {
         if (evidence.isQueueEnd()) {
             return;
         }
@@ -96,8 +96,8 @@ public class IndexTask extends BaseCarveTask {
         if (!evidence.isToAddToCase()) {
             if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
                 textReader = new StringReader(""); //$NON-NLS-1$
-                if (evidence instanceof SleuthKitItem) {
-                    ((SleuthKitItem) evidence).setSleuthId(null);
+                if (evidence instanceof ISleuthKitItem) {
+                    ((ISleuthKitItem) evidence).setSleuthId(null);
                 }
                 evidence.setExportedFile(null);
                 evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
@@ -115,7 +115,7 @@ public class IndexTask extends BaseCarveTask {
         if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment()
                 && !caseData.isIpedReport()
                 && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
-                && (((evidence instanceof SleuthKitItem) && ((SleuthKitItem) evidence).getSleuthFile() != null)
+                && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
                         || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
 
             int fragNum = 0;
@@ -141,7 +141,7 @@ public class IndexTask extends BaseCarveTask {
                         textReader = new ParsingReader(this.autoParser, tis, metadata, context) {
                             @Override
                             public void close() throws IOException {
-                                IOUtil.closeQuietly(context.get(ItemSearcher.class));
+                                IOUtil.closeQuietly(context.get(IItemSearcher.class));
                                 super.close();
                             }
                         };
@@ -195,14 +195,14 @@ public class IndexTask extends BaseCarveTask {
 
     }
 
-    private Metadata getMetadata(Item evidence) {
+    private Metadata getMetadata(IItem evidence) {
         // new metadata to prevent ConcurrentModificationException while indexing
         Metadata metadata = new Metadata();
         ParsingTask.fillMetadata(evidence, metadata);
         return metadata;
     }
 
-    private ParseContext getTikaContext(Item evidence) {
+    private ParseContext getTikaContext(IItem evidence) {
         ParsingTask pt = new ParsingTask(evidence, this.autoParser);
         pt.setWorker(worker);
         ParseContext context = pt.getTikaContext();
@@ -260,7 +260,7 @@ public class IndexTask extends BaseCarveTask {
                 fileIn.close();
 
                 stats.setLastId(textSizesArray.length - 1);
-                ItemImpl.setStartID(textSizesArray.length);
+                Item.setStartID(textSizesArray.length);
             }
         }
 
@@ -290,7 +290,7 @@ public class IndexTask extends BaseCarveTask {
 
     private void saveExtraAttributes() throws IOException {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
-        Set<String> extraAttr = ItemImpl.getAllExtraAttributes();
+        Set<String> extraAttr = Item.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
     }
 
@@ -299,7 +299,7 @@ public class IndexTask extends BaseCarveTask {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
         if (extraAttributtesFile.exists()) {
             Set<String> extraAttributes = (Set<String>) Util.readObject(extraAttributtesFile.getAbsolutePath());
-            ItemImpl.getAllExtraAttributes().addAll(extraAttributes);
+            Item.getAllExtraAttributes().addAll(extraAttributes);
         }
     }
 

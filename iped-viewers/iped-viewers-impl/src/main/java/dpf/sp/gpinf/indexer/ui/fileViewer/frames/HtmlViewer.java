@@ -19,7 +19,7 @@ import org.w3c.dom.Node;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -94,7 +94,7 @@ public class HtmlViewer extends Viewer {
     File tmpFile;
 
     @Override
-    public void loadFile(final StreamSource content, final Set<String> terms) {
+    public void loadFile(final IStreamSource content, final Set<String> terms) {
 
         if (tmpFile != null) {
             tmpFile.delete();

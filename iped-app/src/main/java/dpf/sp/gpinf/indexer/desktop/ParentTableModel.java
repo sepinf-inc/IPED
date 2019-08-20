@@ -31,10 +31,10 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.lucene.document.Document;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.search.LuceneSearchResult;
-import iped3.search.MultiSearchResult;
+import iped3.search.IMultiSearchResult;
 
 public class ParentTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -112,8 +112,8 @@ public class ParentTableModel extends AbstractTableModel
     }
 
     @Override
-    public MultiSearchResult getSearchResult() {
-        return (MultiSearchResult) MultiSearchResultImpl.get(App.get().appCase, results);
+    public IMultiSearchResult getSearchResult() {
+        return (IMultiSearchResult) MultiSearchResult.get(App.get().appCase, results);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class ParentTableModel extends AbstractTableModel
 
         if (textQuery != null) {
             try {
-                IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, textQuery);
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
                 results = task.luceneSearch();
 
             } catch (Exception e) {

@@ -10,8 +10,8 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
-import iped3.Item;
-import iped3.sleuthkit.SleuthKitItem;
+import iped3.IItem;
+import iped3.sleuthkit.ISleuthKitItem;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
@@ -48,17 +48,17 @@ public class IgnoreHardLinkTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || evidence.getLength() == null || evidence.getLength() == 0 || evidence.isCarved()) {
             return;
         }
 
-        if (!(evidence instanceof SleuthKitItem)) {
+        if (!(evidence instanceof ISleuthKitItem)) {
             return;
         }
 
-        SleuthKitItem sevidence = ((SleuthKitItem) evidence);
+        ISleuthKitItem sevidence = ((ISleuthKitItem) evidence);
         Content content = sevidence.getSleuthFile();
         if (content != null && content instanceof FsContent) {
             FsContent fsContent = (FsContent) content;

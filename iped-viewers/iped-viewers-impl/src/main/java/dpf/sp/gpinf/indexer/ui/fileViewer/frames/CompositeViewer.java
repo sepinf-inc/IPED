@@ -23,7 +23,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class CompositeViewer extends JPanel implements ChangeListener, ActionListener {
 
@@ -38,7 +38,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
     HashSet<Viewer> loadedViewers = new HashSet<Viewer>();
 
     volatile Viewer bestViewer, currentViewer, textViewer;
-    volatile StreamSource file, viewFile;
+    volatile IStreamSource file, viewFile;
     volatile String contentType, viewMediaType;
     Set<String> highlightTerms;
 
@@ -104,7 +104,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
         }
     }
 
-    public void loadFile(StreamSource file, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource file, String contentType, Set<String> highlightTerms) {
         loadFile(file, file, contentType, highlightTerms);
     }
 
@@ -120,7 +120,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
         return contentType;
     }
 
-    public void loadFile(StreamSource file, StreamSource viewFile, String contentType, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
         this.file = file;
         this.viewFile = viewFile;
         this.contentType = contentType;

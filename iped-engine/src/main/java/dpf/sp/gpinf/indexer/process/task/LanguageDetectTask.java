@@ -21,8 +21,8 @@ import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.ItemImpl;
-import iped3.Item;
+import gpinf.dev.data.Item;
+import iped3.IItem;
 
 public class LanguageDetectTask extends AbstractTask {
 
@@ -66,12 +66,12 @@ public class LanguageDetectTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (evidence.getMediaType().equals(MediaType.OCTET_STREAM))
             return;
 
-        if (((ItemImpl) evidence).getTextCache() == null)
+        if (((Item) evidence).getTextCache() == null)
             return;
 
         char[] cbuf = new char[MAX_CHARS];

@@ -35,40 +35,40 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
-import dpf.sp.gpinf.indexer.search.QueryBuilderImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
-import iped3.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
-public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Object> {
+public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
 
     private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
 
-    private static SoftReference<MultiSearchResultImpl> allItemsCache;
-    private static IPEDSourceImpl ipedCase;
+    private static SoftReference<MultiSearchResult> allItemsCache;
+    private static IPEDSource ipedCase;
 
     volatile int numFilters = 0;
     ProgressDialog progressDialog;
 
     String queryText;
     Query query;
-    IPEDSearcherImpl searcher;
+    IPEDSearcher searcher;
 
     public PesquisarIndice(String queryText) {
         this.queryText = queryText;
-        searcher = new IPEDSearcherImpl(App.get().appCase, queryText);
+        searcher = new IPEDSearcher(App.get().appCase, queryText);
     }
 
     public PesquisarIndice(Query query) {
         this.query = query;
-        searcher = new IPEDSearcherImpl(App.get().appCase, query);
+        searcher = new IPEDSearcher(App.get().appCase, query);
     }
 
     public void applyUIQueryFilters() {
@@ -91,7 +91,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
         Query result;
         numFilters = 0;
         if (queryText != null) {
-            result = new QueryBuilderImpl(App.get().appCase).getQuery(queryText);
+            result = new QueryBuilder(App.get().appCase).getQuery(queryText);
             if (!queryText.trim().isEmpty())
                 numFilters++;
         } else {
@@ -104,7 +104,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
             String filter = App.get().filtro.getSelectedItem().toString();
             filter = App.get().filterManager.getFilterExpression(filter);
             BooleanQuery boolQuery = new BooleanQuery();
-            boolQuery.add(new QueryBuilderImpl(App.get().appCase).getQuery(filter), Occur.MUST);
+            boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
             boolQuery.add(result, Occur.MUST);
             result = boolQuery;
             numFilters++;
@@ -136,14 +136,14 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
     }
 
     @Override
-    public MultiSearchResultImpl doInBackground() {
+    public MultiSearchResult doInBackground() {
 
         synchronized (this.getClass()) {
 
             if (this.isCancelled())
                 return null;
 
-            MultiSearchResultImpl result = null;
+            MultiSearchResult result = null;
             try {
                 progressDialog = new ProgressDialog(App.get(), this, true, 0, ModalityType.TOOLKIT_MODAL);
 
@@ -169,7 +169,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
                     filtro = App.get().filtro.getSelectedItem().toString();
 
                 if (filtro.equals(App.FILTRO_SELECTED)) {
-                    result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
+                    result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
                     numFilters++;
                     LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
@@ -184,33 +184,33 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
 
                     if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                         if (bookmarkSelection.size() == 1)
-                            result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                            result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
                                     .filtrarSemMarcadores(result);
                         else {
                             bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-                            result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                            result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
                                     .filtrarSemEComMarcadores(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResultImpl) App.get().appCase.getMultiMarcadores()
+                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
                                 .filtrarMarcadores(result, bookmarkSelection);
 
                 }
 
-                Set<ItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
+                Set<IItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
                 if (itemsWithValuesSelected != null) {
                     numFilters++;
-                    ArrayList<ItemId> filteredItems = new ArrayList<ItemId>();
+                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
                     ArrayList<Float> scores = new ArrayList<Float>();
                     int i = 0;
-                    for (ItemId item : result.getIterator()) {
+                    for (IItemId item : result.getIterator()) {
                         if (itemsWithValuesSelected.contains(item)) {
                             filteredItems.add(item);
                             scores.add(result.getScore(i));
                         }
                         i++;
                     }
-                    result = new MultiSearchResultImpl(filteredItems.toArray(new ItemIdImpl[0]),
+                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
 
@@ -224,7 +224,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
 
             } catch (Throwable e) {
                 e.printStackTrace();
-                return new MultiSearchResultImpl(new ItemIdImpl[0], new float[0]);
+                return new MultiSearchResult(new ItemId[0], new float[0]);
 
             }
 
@@ -234,7 +234,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
     }
 
     private void saveHighlightTerms() throws ParseException, QueryNodeException {
-        Set<String> highlightTerms = new QueryBuilderImpl(App.get().appCase).getQueryStrings(queryText);
+        Set<String> highlightTerms = new QueryBuilder(App.get().appCase).getQueryStrings(queryText);
         highlightTerms.addAll(App.get().metadataPanel.getHighlightTerms());
         // for(String str : highlightTerms)
         // System.out.println("highlightTerm: " + str);
@@ -273,7 +273,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResultImpl, Obj
                     App.get().resultsModel.fireTableDataChanged();
                     App.get().galleryModel.fireTableStructureChanged();
                 }
-                ColumnsManagerImpl.getInstance().updateDinamicCols();
+                ColumnsManager.getInstance().updateDinamicCols();
                 new ResultTotalSizeCounter().countVolume(App.get().ipedResult);
 
             } catch (Exception e) {

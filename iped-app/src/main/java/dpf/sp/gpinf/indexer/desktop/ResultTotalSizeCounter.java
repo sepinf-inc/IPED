@@ -9,15 +9,15 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
-import iped3.ItemId;
-import iped3.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.IItemId;
+import iped3.search.IMultiSearchResult;
 
 public class ResultTotalSizeCounter {
 
     private static volatile Thread lastCounter;
 
-    public void countVolume(final MultiSearchResult result) {
+    public void countVolume(final IMultiSearchResult result) {
 
         if (lastCounter != null)
             lastCounter.interrupt();
@@ -36,7 +36,7 @@ public class ResultTotalSizeCounter {
                 try {
                     AtomicReader atomicReader = App.get().appCase.getAtomicReader();
                     NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.LENGTH);
-                    for (ItemId item : result.getIterator()) {
+                    for (IItemId item : result.getIterator()) {
                         int doc = App.get().appCase.getLuceneId(item);
                         long len = ndv.get(doc);
                         volume += len;

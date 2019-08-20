@@ -19,8 +19,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 
 public class Util {
 
@@ -172,14 +172,14 @@ public class Util {
         t.start();
     }
 
-    public static List<ItemBase> getItems(String query, ItemSearcher searcher) {
+    public static List<IItemBase> getItems(String query, IItemSearcher searcher) {
         if (searcher == null)
             return Collections.emptyList();
-        List<ItemBase> items = searcher.search(query);
+        List<IItemBase> items = searcher.search(query);
         return items;
     }
 
-    public static String getExportPath(ItemBase item) {
+    public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
         String ext = "." + item.getExt(); //$NON-NLS-1$
         return getExportPath(hash, ext);
@@ -191,7 +191,7 @@ public class Util {
         return "../../" + hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ext; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
 
-    public static byte[] getPreview(ItemBase item) {
+    public static byte[] getPreview(IItemBase item) {
         byte[] thumb = null;
         InputStream is = null;
         try {
@@ -209,7 +209,7 @@ public class Util {
         return thumb;
     }
 
-    public static String getThumbPath(ItemBase item) {
+    public static String getThumbPath(IItemBase item) {
         String thumbPath = null;
         String mime = item.getMediaType().toString();
         String hash = item.getHash();

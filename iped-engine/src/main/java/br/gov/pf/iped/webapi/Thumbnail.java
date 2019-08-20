@@ -17,8 +17,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import iped3.IPEDSource;
-import iped3.Item;
+import iped3.IIPEDSource;
+import iped3.IItem;
 
 @Api(value = "Documents")
 @Path("sources/{sourceID}/docs/{id}/thumb")
@@ -30,8 +30,8 @@ public class Thumbnail {
     public StreamingOutput content(@PathParam("sourceID") String sourceID, @PathParam("id") int id)
             throws TskCoreException, IOException, URISyntaxException {
 
-        IPEDSource source = Sources.getSource(sourceID);
-        Item item = source.getItemByID(id);
+        IIPEDSource source = Sources.getSource(sourceID);
+        IItem item = source.getItemByID(id);
         final byte[] thumb = item.getThumb() != null ? item.getThumb() : new byte[0];
         return new StreamingOutput() {
             @Override

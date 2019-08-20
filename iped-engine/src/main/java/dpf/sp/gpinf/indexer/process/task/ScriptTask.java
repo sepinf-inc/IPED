@@ -31,13 +31,13 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import iped3.Item;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped3.IItem;
 
 public class ScriptTask extends AbstractTask {
 
-    private static IPEDSourceImpl ipedCase;
+    private static IPEDSource ipedCase;
     private static int numInstances = 0;
 
     private File scriptFile;
@@ -85,10 +85,10 @@ public class ScriptTask extends AbstractTask {
     public void finish() throws Exception {
 
         if (ipedCase == null)
-            ipedCase = new IPEDSourceImpl(this.output.getParentFile(), worker.writer);
+            ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
 
         try {
-            IPEDSearcherImpl searcher = new IPEDSearcherImpl(ipedCase);
+            IPEDSearcher searcher = new IPEDSearcher(ipedCase);
 
             engine.put("ipedCase", ipedCase); //$NON-NLS-1$
             engine.put("searcher", searcher); //$NON-NLS-1$
@@ -104,7 +104,7 @@ public class ScriptTask extends AbstractTask {
     }
 
     @Override
-    public void process(Item e) throws Exception {
+    public void process(IItem e) throws Exception {
         inv.invokeFunction("process", e); //$NON-NLS-1$
     }
 

@@ -24,7 +24,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ITextParser;
@@ -90,7 +90,7 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
     }
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         if (content == null && textParser != null) {
             textParser.cancel(false);
 
@@ -105,7 +105,7 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
     }
 
     @Override
-    public abstract void loadFile(StreamSource content, String contentType, Set<String> highlightTerms);
+    public abstract void loadFile(IStreamSource content, String contentType, Set<String> highlightTerms);
 
     public class TextViewerModel extends AbstractTableModel {
 

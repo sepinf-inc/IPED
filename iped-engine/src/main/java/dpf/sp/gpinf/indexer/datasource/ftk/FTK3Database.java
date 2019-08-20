@@ -18,10 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.datasource.ftk;
 
-import gpinf.dev.data.ItemImpl;
+import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.CaseData;
-import iped3.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 import java.io.File;
 import java.sql.Connection;
@@ -157,7 +157,7 @@ public class FTK3Database extends FTKDatabase {
     }
 
     @Override
-    protected void addFileListToCaseData(CaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
+    protected void addFileListToCaseData(ICaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
         StringBuffer fileIds = new StringBuffer();
         int i = 1;
         for (Integer ID : fileList.keySet()) {
@@ -183,7 +183,7 @@ public class FTK3Database extends FTKDatabase {
         while (rset.next()) {
             ArrayList<String> paths = fileList.get(rset.getInt("OBJECTID")); //$NON-NLS-1$
             for (String path : paths) {
-                Item item = new ItemImpl();
+                IItem item = new Item();
                 item.setDataSource(ipedDataSource);
                 int ftkId = rset.getInt("OBJECTID"); //$NON-NLS-1$
                 item.setFtkID(ftkId);

@@ -25,7 +25,7 @@ import java.util.List;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.search.ItemSearcher;
+import iped3.search.IItemSearcher;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -60,7 +60,7 @@ class LibraryFolders extends ShareazaEntity {
         albumRoot.write(f);
     }
 
-    public void printTable(XHTMLContentHandler html, ItemSearcher searcher) throws SAXException {
+    public void printTable(XHTMLContentHandler html, IItemSearcher searcher) throws SAXException {
         for (LibraryFolder folder : folders) {
             folder.printTable(html, searcher);
         }

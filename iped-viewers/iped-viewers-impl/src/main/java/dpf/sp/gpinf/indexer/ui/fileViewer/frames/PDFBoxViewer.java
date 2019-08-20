@@ -49,7 +49,7 @@ import org.apache.pdfbox.rendering.PDFRenderer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class PDFBoxViewer extends Viewer {
 
@@ -70,7 +70,7 @@ public class PDFBoxViewer extends Viewer {
     private PDFRenderer pdfRenderer;
 
     volatile private BufferedImage image = null;
-    volatile private StreamSource currentContent;
+    volatile private IStreamSource currentContent;
     volatile private int currentPage = 0;
     volatile private int numPages = 0;
     volatile private double zoomFactor = 1;
@@ -182,7 +182,7 @@ public class PDFBoxViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
 
         currentPage = 1;
         numPages = 0;
@@ -212,7 +212,7 @@ public class PDFBoxViewer extends Viewer {
         is = null;
     }
 
-    private void openContent(final StreamSource content) {
+    private void openContent(final IStreamSource content) {
         executor.submit(new Runnable() {
             @Override
             public void run() {
@@ -240,7 +240,7 @@ public class PDFBoxViewer extends Viewer {
         displayPage(currentContent);
     }
 
-    private void displayPage(final StreamSource content) {
+    private void displayPage(final IStreamSource content) {
 
         imgPanel.scrollRectToVisible(new Rectangle());
         executor.submit(new Runnable() {

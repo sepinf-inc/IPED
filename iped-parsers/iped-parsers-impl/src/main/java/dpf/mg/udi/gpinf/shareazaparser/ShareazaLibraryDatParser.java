@@ -37,7 +37,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import iped3.search.ItemSearcher;
+import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 /**
@@ -70,7 +70,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder folder : library.getLibraryFolders())
             storeSharedHashes(folder, metadata);
 
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();

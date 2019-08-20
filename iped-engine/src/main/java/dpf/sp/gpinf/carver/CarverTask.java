@@ -12,8 +12,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import gpinf.dev.data.ItemImpl;
-import iped3.Item;
+import gpinf.dev.data.Item;
+import iped3.IItem;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
@@ -53,7 +53,7 @@ public class CarverTask extends BaseCarveTask {
 
     private static MediaTypeRegistry registry;
 
-    Item evidence;
+    IItem evidence;
 
     long prevLen = 0;
     int len = 0, k = 0;
@@ -74,7 +74,7 @@ public class CarverTask extends BaseCarveTask {
         return enableCarving;
     }
 
-    public void process(Item evidence) {
+    public void process(IItem evidence) {
         if (!enableCarving) {
             return;
         }
@@ -93,7 +93,7 @@ public class CarverTask extends BaseCarveTask {
         }
     }
 
-    private void safeProcess(Item evidence) {
+    private void safeProcess(IItem evidence) {
 
         this.evidence = evidence;
 
@@ -247,8 +247,8 @@ public class CarverTask extends BaseCarveTask {
     public CarvedItemListener getCarvedItemListener() {
         if (carvedItemListener == null) {
             carvedItemListener = new CarvedItemListener() {
-                public void processCarvedItem(Item parentEvidence, Item carvedEvidence, long off) {
-                    addCarvedEvidence((ItemImpl) parentEvidence, (ItemImpl) carvedEvidence, off);
+                public void processCarvedItem(IItem parentEvidence, IItem carvedEvidence, long off) {
+                    addCarvedEvidence((Item) parentEvidence, (Item) carvedEvidence, off);
                 }
             };
         }

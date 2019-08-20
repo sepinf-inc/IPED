@@ -4,9 +4,9 @@ import java.io.File;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.Messages;
-import iped3.Item;
+import iped3.IItem;
 
-public class OriginalEmailFileType extends EvidenceFileTypeImpl {
+public class OriginalEmailFileType extends EvidenceFileType {
 
     /**
      *
@@ -19,7 +19,7 @@ public class OriginalEmailFileType extends EvidenceFileTypeImpl {
     }
 
     @Override
-    public void processFiles(File baseDir, List<Item> items) {
+    public void processFiles(File baseDir, List<IItem> items) {
         // TODO Auto-generated method stub
 
     }

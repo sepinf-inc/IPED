@@ -53,7 +53,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 /**
  * Parser padrão do Indexador. Como o AutoDetectParser, detecta o tipo do
@@ -182,12 +182,12 @@ public class IndexerDefaultParser extends CompositeParser {
             context.set(Parser.class, this);
 
         ItemInfo itemInfo = context.get(ItemInfo.class);
-        StreamSource evidence = context.get(StreamSource.class);
+        IStreamSource evidence = context.get(IStreamSource.class);
         File file = null;
         if (evidence == null && errorParser != null) {
             file = tis.getFile();
         } else {
-            context.set(StreamSource.class, null);
+            context.set(IStreamSource.class, null);
         }
 
         String filePath = null;

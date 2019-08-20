@@ -3,7 +3,7 @@ package dpf.mt.gpinf.skype.parser;
 import java.util.Date;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped3.io.ItemBase;
+import iped3.io.IItemBase;
 
 /**
  * Representa uma troca de arquivos pelo Skype registrada no main.db
@@ -26,7 +26,7 @@ public class SkypeFileTransfer {
     int bytesTransferred;
     SkypeConversation conversation = null;
     private String itemQuery;
-    private ItemBase item;
+    private IItemBase item;
 
     public int getId() {
         return id;
@@ -149,11 +149,11 @@ public class SkypeFileTransfer {
         this.itemQuery = itemQuery;
     }
 
-    public ItemBase getItem() {
+    public IItemBase getItem() {
         return item;
     }
 
-    public void setItem(ItemBase item) {
+    public void setItem(IItemBase item) {
         this.item = item;
     }
 

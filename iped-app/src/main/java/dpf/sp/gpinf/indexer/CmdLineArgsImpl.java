@@ -18,7 +18,7 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.CaseData;
+import iped3.ICaseData;
 
 /**
  * Classe para leitura dos parâmetros informados via linha de comando.
@@ -277,7 +277,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      * @param caseData
      *            caso atual
      */
-    public void saveIntoCaseData(CaseData caseData) {
+    public void saveIntoCaseData(ICaseData caseData) {
         caseData.putCaseObject(CmdLineArgs.class.getName(), this);
     }
 

@@ -57,11 +57,11 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResultImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
-import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
-import iped3.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.VersionsMap;
+import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
 
 public class GerenciadorMarcadores implements ActionListener, ListSelectionListener {
@@ -195,7 +195,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     /*
      * Lento com mtos itens
      */
-    private void includeDuplicates(ArrayList<ItemId> uniqueSelectedIds) {
+    private void includeDuplicates(ArrayList<IItemId> uniqueSelectedIds) {
 
         ProgressDialog progress = new ProgressDialog(App.get(), null);
         progress.setNote(Messages.getString("BookmarksManager.LoadingHashes")); //$NON-NLS-1$
@@ -204,7 +204,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             BooleanQuery query = new BooleanQuery();
             App app = App.get();
             int i = 0;
-            for (ItemId item : uniqueSelectedIds) {
+            for (IItemId item : uniqueSelectedIds) {
                 if (progress.isCanceled()) {
                     return;
                 }
@@ -223,11 +223,11 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             progress.setTask(task);
             progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
             progress.setIndeterminate(true);
-            MultiSearchResultImpl duplicates = MultiSearchResultImpl.get(app.appCase, task.pesquisar());
+            MultiSearchResult duplicates = MultiSearchResult.get(app.appCase, task.pesquisar());
 
             System.out.println(Messages.getString("BookmarksManager.DuplicatesAdded") + duplicates.getLength()); //$NON-NLS-1$
 
-            for (ItemId item : duplicates.getIterator()) {
+            for (IItemId item : duplicates.getIterator()) {
                 uniqueSelectedIds.add(item);
             }
 
@@ -269,13 +269,13 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
 
             App app = App.get();
-            final ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
+            final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
 
             if (checked.isSelected()) {
-                for (IPEDSourceImpl source : App.get().appCase.getAtomicSources()) {
+                for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                     for (int id = 0; id <= source.getLastId(); id++) {
                         if (source.getMarcadores().isSelected(id)) {
-                            uniqueSelectedIds.add(new ItemIdImpl(source.getSourceId(), id));
+                            uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                         }
                     }
                 }
@@ -283,16 +283,16 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             } else if (highlighted.isSelected()) {
                 for (Integer row : App.get().resultsTable.getSelectedRows()) {
                     int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-                    ItemId id = app.ipedResult.getItem(rowModel);
+                    IItemId id = app.ipedResult.getItem(rowModel);
                     uniqueSelectedIds.add(id);
 
-                    VersionsMapImpl viewMap = (VersionsMapImpl) app.appCase.getAtomicSourceBySourceId(id.getSourceId())
+                    VersionsMap viewMap = (VersionsMap) app.appCase.getAtomicSourceBySourceId(id.getSourceId())
                             .getViewToRawMap();
                     Integer id2 = viewMap.getRaw(id.getId());
                     if (id2 == null)
                         id2 = viewMap.getView(id.getId());
                     if (id2 != null)
-                        uniqueSelectedIds.add(new ItemIdImpl(id.getSourceId(), id2));
+                        uniqueSelectedIds.add(new ItemId(id.getSourceId(), id2));
                 }
             }
 

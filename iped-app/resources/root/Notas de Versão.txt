@@ -1,3 +1,23 @@
+xx/08/2019: IPED-3.16
+- Refactoring do data carving, agora configurável em XML e javascript (PCFs Patrick e Nassif)
+- Melhorias nos carvers de ZIP e EML (PCFs Patrick e Nassif)
+- Novos carvers para DER e VCARD (PCFs Patrick e Pfeifer)
+- Melhorias no WhatsAppParser: suporte a msgs de sistema, localizações (exibidas no mapa), chamadas de áudio e vídeo, melhor linkagem de anexos no iphone (PCF Pfeifer)
+- WebAPI básica para pesquisas em casos remotos, extração de itens, texto e criação de marcadores (PCF Átila)
+- Refactoring do módulo de Regex, permitindo escrever validadores em java ou javascript (APF Filipe Simões)
+- Regex e validador para endereços Bitcoin (PCF Pfeifer)
+- Suporte a APFS (novo parâmetro -p password)
+- Suporte a AD1 versão 4
+- Atualização para sleuthkit-4.6.5
+- Opção useNIOFSDirectory para não mapear o índice em memória, o que eventualmente causava crashes pela rede
+Correções:
+- Erro ao processar relatórios UFED com bookmarks (ignorados por ora)
+- Caracteres de controle inválidos no XML do UFED abortavam processamento
+- Erro ao gerar relatório ao mover caso de máquina
+- Emails de PST com corpo apenas em RTF apareciam em branco
+- Downgrade da libpff p/ 20131028 devido a raros anexos extraídos zerados
+- Erro ao ligar enableExternalParsing qdo PATH continha valores com aspas duplas
+
 29/03/2019: IPED-3.15.6
 - Corrige OutOfMemory ao expandir conteineres gigantes (3.15)
 - Corrige Travamentos raros na detecção de nudez com PNG corrompido

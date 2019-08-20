@@ -7,7 +7,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.MarcadoresImpl;
+import dpf.sp.gpinf.indexer.search.Marcadores;
 
 public class MarcadoresController {
 
@@ -126,8 +126,8 @@ public class MarcadoresController {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            if (!file.getName().endsWith(MarcadoresImpl.EXT))
-                file = new File(file.getPath() + MarcadoresImpl.EXT);
+            if (!file.getName().endsWith(Marcadores.EXT))
+                file = new File(file.getPath() + Marcadores.EXT);
 
             try {
                 App.get().appCase.getMultiMarcadores().saveState(file);

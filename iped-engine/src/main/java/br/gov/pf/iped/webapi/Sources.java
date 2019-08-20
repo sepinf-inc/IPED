@@ -30,11 +30,11 @@ import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.SourceJSON;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped3.IPEDSource;
+import iped3.IIPEDSource;
 
 @Api(value = "Sources")
 @Path("sources")
@@ -50,7 +50,7 @@ public class Sources {
         sourcePathToStringID = new HashMap<String, String>();
 
         boolean confInited = false;
-        List<IPEDSource> sources = new ArrayList<IPEDSource>();
+        List<IIPEDSource> sources = new ArrayList<IIPEDSource>();
         JSONArray arr = askSources(urlToAskSources);
         for (Object object : arr) {
             JSONObject jsonobj = (JSONObject) object;
@@ -64,14 +64,14 @@ public class Sources {
                 confInited = true;
             }
 
-            IPEDSource source = new IPEDSourceImpl(new File(path));
+            IIPEDSource source = new IPEDSource(new File(path));
             sources.add(source);
         }
 
         multiSource = new IPEDMultiSource(sources);
         // filling maps using path, to avoid relying on provided order
         for (int i = 0; i < multiSource.getAtomicSources().size(); i++) {
-            IPEDSource source = multiSource.getAtomicSourceBySourceId(i);
+            IIPEDSource source = multiSource.getAtomicSourceBySourceId(i);
             String path = source.getCaseDir().toString();
             String id = sourcePathToStringID.get(path);
             if (sourceStringToInt.containsKey(id)) {
@@ -82,7 +82,7 @@ public class Sources {
         }
     }
 
-    public static IPEDSource getSource(String sourceID) {
+    public static IIPEDSource getSource(String sourceID) {
         int id = sourceStringToInt.get(sourceID);
         return multiSource.getAtomicSourceBySourceId(id);
     }
@@ -92,7 +92,7 @@ public class Sources {
     @Produces(MediaType.APPLICATION_JSON)
     public static DataListJSON<SourceJSON> listSources() throws TskCoreException, IOException {
         List<SourceJSON> data = new ArrayList<SourceJSON>();
-        for (IPEDSource source : multiSource.getAtomicSources()) {
+        for (IIPEDSource source : multiSource.getAtomicSources()) {
             int id = source.getSourceId();
             String sourceID = sourceIntToString.get(id);
             data.add(getone(sourceID));
@@ -111,14 +111,14 @@ public class Sources {
         }
         sourcePathToStringID.put(path, id);
 
-        List<IPEDSourceImpl> sources = multiSource.getAtomicSources();
+        List<IPEDSource> sources = multiSource.getAtomicSources();
         int last = sources.size();
-        sources.add(new IPEDSourceImpl(new File(path)));
+        sources.add(new IPEDSource(new File(path)));
         if (last + 1 != sources.size()) {
             throw new RuntimeException("concurrency error adding source");
         }
         multiSource.init();
-        IPEDSource source = multiSource.getAtomicSourceBySourceId(last);
+        IIPEDSource source = multiSource.getAtomicSourceBySourceId(last);
         String realpath = source.getCaseDir().toString();
         if (!path.equals(realpath)) {
             throw new RuntimeException("error adding source; expected " + path + " got " + realpath);
@@ -135,7 +135,7 @@ public class Sources {
     @Produces(MediaType.APPLICATION_JSON)
     public static SourceJSON getone(@PathParam("sourceID") String sourceID) throws IOException, TskCoreException {
         SourceJSON result = new SourceJSON();
-        IPEDSource source = getSource(sourceID);
+        IIPEDSource source = getSource(sourceID);
         result.setId(sourceID);
         result.setPath(source.getCaseDir().toString());
         return result;

@@ -13,7 +13,7 @@ import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
-import iped3.Item;
+import iped3.IItem;
 
 public abstract class AbstractCarver implements Carver {
     protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
@@ -35,7 +35,7 @@ public abstract class AbstractCarver implements Carver {
 
     // carveia do cabeçalho a partir da informação de tamanho retornada pelo método
     // getLengthFromHit
-    public Item carveFromLengthRef(Item parentEvidence, Hit header, Hit lengthRef) throws IOException {
+    public IItem carveFromLengthRef(IItem parentEvidence, Hit header, Hit lengthRef) throws IOException {
 
         headersWaitingFooters.pollLast();
 
@@ -58,7 +58,7 @@ public abstract class AbstractCarver implements Carver {
     // pelo método
     // getLengthFromHit
     @Override
-    public Item carveFromHeader(Item parentEvidence, Hit header) throws IOException {
+    public IItem carveFromHeader(IItem parentEvidence, Hit header) throws IOException {
 
         long len = getLengthFromHit(parentEvidence, header);
         if (len <= 0) {
@@ -75,10 +75,10 @@ public abstract class AbstractCarver implements Carver {
         return carveFromHeader(parentEvidence, header, len);
     }
 
-    public Item carveFromHeader(Item parentEvidence, Hit header, long len) throws IOException {
+    public IItem carveFromHeader(IItem parentEvidence, Hit header, long len) throws IOException {
         // verifica a validade dos bytes carveados
         if (!ignoreCorrupted || isValid(parentEvidence, header, len)) {
-            Item offsetFile = parentEvidence.createChildItem();
+            IItem offsetFile = parentEvidence.createChildItem();
 
             String name = carvedNamePrefix + header.getOffset();
             offsetFile.setName(name);
@@ -109,7 +109,7 @@ public abstract class AbstractCarver implements Carver {
     // carveia do rodapé iniciando pelo último cabeçalho encontrado de tamanho
     // retornada pelo método getLengthFromHeader
     @Override
-    public Item carveFromFooter(Item parentEvidence, Hit footer) throws IOException {
+    public IItem carveFromFooter(IItem parentEvidence, Hit footer) throws IOException {
         Hit header = headersWaitingFooters.pollLast();
 
         if (header != null) {
@@ -131,7 +131,7 @@ public abstract class AbstractCarver implements Carver {
         return null;
     }
 
-    public boolean isValid(Item parentEvidence, Hit headerOffset, long length) {
+    public boolean isValid(IItem parentEvidence, Hit headerOffset, long length) {
         try {
             // tenta parsear o conteudo
             Object o = validateCarvedObject(parentEvidence, headerOffset, length);
@@ -145,7 +145,7 @@ public abstract class AbstractCarver implements Carver {
         return true;
     }
 
-    public Object validateCarvedObject(Item parentEvidence, Hit header, long length)
+    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         // não faz qualquer parse, retornando nenhum objeto parseado.
         return null;
@@ -156,20 +156,20 @@ public abstract class AbstractCarver implements Carver {
         return carverTypes;
     }
 
-    protected void clearOldHeaders(Item parentEvidence) {
+    protected void clearOldHeaders(IItem parentEvidence) {
         while (headersWaitingFooters.size() > maxWaitingHeaders) {
             headersWaitingFooters.pollFirst();
         }
     }
 
     @Override
-    public void notifyHit(Item parentEvidence, Hit hit) throws IOException {
+    public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
 
         // se é um cabeçalho de um carvertype sem footer
         if (hit.getSignature().isHeader() && !hit.getSignature().getCarverType().hasFooter()) {
             if (!hit.getSignature().getCarverType().hasLengthRef()) {
                 // carveia a partir da informação de tamanho
-                Item e = carveFromHeader(parentEvidence, hit);
+                IItem e = carveFromHeader(parentEvidence, hit);
             } else {
                 // adiciona header para ser processado depois
                 headersWaitingFooters.addLast(hit);
@@ -181,7 +181,7 @@ public abstract class AbstractCarver implements Carver {
             // se já foi encontrado um header anterior
             if (header != null) {
                 // carveia a partir da informação de tamanho
-                Item e = carveFromLengthRef(parentEvidence, header, hit);
+                IItem e = carveFromLengthRef(parentEvidence, header, hit);
             }
         }
 
@@ -211,7 +211,7 @@ public abstract class AbstractCarver implements Carver {
     }
 
     @Override
-    public void notifyEnd(Item parentEvidence) throws IOException {
+    public void notifyEnd(IItem parentEvidence) throws IOException {
         headersWaitingFooters.clear();
     }
 

@@ -56,7 +56,7 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationDirectoryImpl;
+import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -64,8 +64,8 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.IPEDSourceImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
@@ -73,11 +73,11 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMapImpl;
-import gpinf.dev.data.CaseDataImpl;
-import gpinf.dev.data.ItemImpl;
-import iped3.CaseData;
-import iped3.configuration.ConfigurationDirectory;
+import dpf.sp.gpinf.indexer.util.VersionsMap;
+import gpinf.dev.data.CaseData;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.configuration.IConfigurationDirectory;
 import iped3.search.LuceneSearchResult;
 
 /**
@@ -113,9 +113,9 @@ public class Manager {
     private static Logger LOGGER = LoggerFactory.getLogger(Manager.class);
     private static Manager instance;
 
-    private CaseData caseData;
+    private ICaseData caseData;
 
-    public CaseData getCaseData() {
+    public ICaseData getCaseData() {
         return caseData;
     }
 
@@ -145,9 +145,9 @@ public class Manager {
         this.output = output;
         this.palavrasChave = palavras;
 
-        this.caseData = new CaseDataImpl(QUEUE_SIZE);
+        this.caseData = new CaseData(QUEUE_SIZE);
 
-        ItemImpl.setStartID(0);
+        Item.setStartID(0);
 
         finalIndexDir = new File(output, "index"); //$NON-NLS-1$
 
@@ -437,7 +437,7 @@ public class Manager {
     private void updateImagePaths() {
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.isPortable()) { // $NON-NLS-1$
-            IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
+            IPEDSource ipedCase = new IPEDSource(output.getParentFile());
             ipedCase.updateImagePathsToRelative();
             ipedCase.close();
         }
@@ -460,7 +460,7 @@ public class Manager {
                     Charset.defaultCharset().name());
 
             if (palavras.size() != 0) {
-                IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
+                IPEDSource ipedCase = new IPEDSource(output.getParentFile());
                 ArrayList<String> palavrasFinais = new ArrayList<String>();
                 for (String palavra : palavras) {
                     if (Thread.interrupted()) {
@@ -468,7 +468,7 @@ public class Manager {
                         throw new InterruptedException("Processing canceled!"); //$NON-NLS-1$
                     }
 
-                    IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, palavra);
+                    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
                     if (pesquisa.searchAll().getLength() > 0) {
                         palavrasFinais.add(palavra);
                     }
@@ -490,15 +490,15 @@ public class Manager {
 
     private void saveViewToOriginalFileMap() throws Exception {
 
-        VersionsMapImpl viewToRaw = new VersionsMapImpl(0);
+        VersionsMap viewToRaw = new VersionsMap(0);
 
         if (FTK3ReportReader.wasExecuted) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
 
-            IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile());
+            IPEDSource ipedCase = new IPEDSource(output.getParentFile());
             String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))"; //$NON-NLS-1$
-            IPEDSearcherImpl pesquisa = new IPEDSearcherImpl(ipedCase, query);
+            IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
             LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
 
             HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
@@ -517,7 +517,7 @@ public class Manager {
 
             IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
             Bits liveDocs = MultiFields.getLiveDocs(reader);
-            viewToRaw = new VersionsMapImpl(stats.getLastId() + 1);
+            viewToRaw = new VersionsMap(stats.getLastId() + 1);
 
             for (int i = 0; i < reader.maxDoc(); i++) {
                 if (liveDocs != null && !liveDocs.get(i)) {
@@ -556,8 +556,8 @@ public class Manager {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
-        try (IPEDSourceImpl ipedCase = new IPEDSourceImpl(output.getParentFile())) {
-            IPEDSearcherImpl searchAll = new IPEDSearcherImpl(ipedCase, new MatchAllDocsQuery());
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
+            IPEDSearcher searchAll = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
             LuceneSearchResult result = searchAll.searchAll();
 
             boolean[] doNotDelete = new boolean[stats.getLastId() + 1];

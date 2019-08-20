@@ -19,9 +19,9 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import gpinf.emule.KnownMetEntry;
-import iped3.HashValue;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.IHashValue;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 import java.io.File;
@@ -53,7 +53,7 @@ import org.xml.sax.helpers.AttributesImpl;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.HashValueImpl;
+import dpf.sp.gpinf.indexer.util.HashValue;
 
 /**
  * Parser para arquivos known.met do e-Mule, que armazena arquivos conhecidos,
@@ -101,7 +101,7 @@ public class KnownMetParser extends AbstractParser {
         if (l.isEmpty())
             return;
 
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -166,7 +166,7 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                HashValue hashVal = new HashValueImpl(hash);
+                IHashValue hashVal = new HashValue(hash);
                 if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("edonkey"), hashVal) >= 0) { //$NON-NLS-1$
                     kffHit++;
                     trClass = "rr"; //$NON-NLS-1$
@@ -214,18 +214,18 @@ public class KnownMetParser extends AbstractParser {
         xhtml.endDocument();
     }
 
-    public static void printNameWithLink(XHTMLContentHandler xhtml, ItemSearcher searcher, String name, String hashAlgo,
+    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemSearcher searcher, String name, String hashAlgo,
             String p2pHash) throws SAXException {
         if (searcher == null) {
             xhtml.characters(name);
             return;
         }
-        List<ItemBase> items = searcher.search(hashAlgo + ":" + p2pHash); //$NON-NLS-1$
+        List<IItemBase> items = searcher.search(hashAlgo + ":" + p2pHash); //$NON-NLS-1$
         if (items.isEmpty()) {
             xhtml.characters(name);
             return;
         }
-        ItemBase item = items.get(0);
+        IItemBase item = items.get(0);
         String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
                 item.getHash(), item.getExt());
 

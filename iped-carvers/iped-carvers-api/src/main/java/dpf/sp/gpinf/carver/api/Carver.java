@@ -2,23 +2,23 @@ package dpf.sp.gpinf.carver.api;
 
 import java.io.IOException;
 
-import iped3.Item;
+import iped3.IItem;
 
 public interface Carver {
 
-    public void notifyHit(Item parentEvidence, Hit hit) throws IOException;
+    public void notifyHit(IItem parentEvidence, Hit hit) throws IOException;
 
-    public void notifyEnd(Item parentEvidence) throws IOException;
+    public void notifyEnd(IItem parentEvidence) throws IOException;
 
     // Métodos principais
     // faz um carve a partir do hit do cabecalho
-    public Item carveFromHeader(Item parentEvidence, Hit header) throws IOException;
+    public IItem carveFromHeader(IItem parentEvidence, Hit header) throws IOException;
 
     // faz um carve a partir do hit do cabecalho e do footer
-    public Item carveFromFooter(Item parentEvidence, Hit footer) throws IOException;
+    public IItem carveFromFooter(IItem parentEvidence, Hit footer) throws IOException;
 
     // descobre o tamanho a partir do cabecalho
-    public long getLengthFromHit(Item parentEvidence, Hit headerOffset) throws IOException;
+    public long getLengthFromHit(IItem parentEvidence, Hit headerOffset) throws IOException;
 
     // retorna carver types típicos para a classe sendo implementada
     public CarverType[] getCarverTypes();

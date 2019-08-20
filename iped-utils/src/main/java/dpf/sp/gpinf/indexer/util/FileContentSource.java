@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 
 import iped3.io.SeekableInputStream;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
-public class FileContentSource implements StreamSource {
+public class FileContentSource implements IStreamSource {
 
     private File file;
 

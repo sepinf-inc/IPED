@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.Item;
+import iped3.IItem;
 
 import java.io.File;
 import java.util.Properties;
@@ -26,7 +26,7 @@ public class SetTypeTask extends AbstractTask {
     }
 
     @Override
-    public void process(Item evidence) throws Exception {
+    public void process(IItem evidence) throws Exception {
 
         if (evidence.getType() == null) {
             String ext = getExtBySig(evidence);
@@ -42,7 +42,7 @@ public class SetTypeTask extends AbstractTask {
 
     }
 
-    public String getExtBySig(Item evidence) {
+    public String getExtBySig(IItem evidence) {
 
         String ext = ""; //$NON-NLS-1$
         String ext1 = "." + evidence.getExt(); //$NON-NLS-1$

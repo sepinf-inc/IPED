@@ -20,7 +20,7 @@ import org.icepdf.ri.util.PropertiesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class IcePDFViewer extends Viewer {
 
@@ -114,7 +114,7 @@ public class IcePDFViewer extends Viewer {
     }
 
     @Override
-    public void loadFile(final StreamSource content, final Set<String> highlightTerms) {
+    public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
 
         pdfController.closeDocument();
 

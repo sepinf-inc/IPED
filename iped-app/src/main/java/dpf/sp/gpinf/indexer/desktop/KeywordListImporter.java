@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -41,7 +41,7 @@ public class KeywordListImporter extends CancelableWorker {
             }
 
             try {
-                IPEDSearcherImpl task = new IPEDSearcherImpl(App.get().appCase, keyword);
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, keyword);
                 if (task.searchAll().getLength() > 0) {
                     result.add(keyword);
                 }

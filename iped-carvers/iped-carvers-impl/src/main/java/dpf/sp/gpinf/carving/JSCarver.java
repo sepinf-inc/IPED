@@ -3,7 +3,7 @@ package dpf.sp.gpinf.carving;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
-import iped3.Item;
+import iped3.IItem;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -29,7 +29,7 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         try {
             Double l = (Double) inv.invokeFunction("getLengthFromHeader", parentEvidence, header);
             return l.longValue();
@@ -45,7 +45,7 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public Object validateCarvedObject(Item parentEvidence, Hit header, long length)
+    public Object validateCarvedObject(IItem parentEvidence, Hit header, long length)
             throws InvalidCarvedObjectException {
         try {
             Certificate cert = (Certificate) inv.invokeFunction("validateCarvedObject", parentEvidence, header, length);
@@ -60,9 +60,9 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public Item carveFromHeader(Item parentEvidence, Hit header) throws IOException {
+    public IItem carveFromHeader(IItem parentEvidence, Hit header) throws IOException {
         try {
-            Item e = (Item) inv.invokeFunction("carveFromHeader", parentEvidence, header);
+            IItem e = (IItem) inv.invokeFunction("carveFromHeader", parentEvidence, header);
             return e;
         } catch (ScriptException e) {
             throw new IOException(e);
@@ -73,9 +73,9 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public Item carveFromFooter(Item parentEvidence, Hit footer) throws IOException {
+    public IItem carveFromFooter(IItem parentEvidence, Hit footer) throws IOException {
         try {
-            Item e = (Item) inv.invokeFunction("carveFromFooter", parentEvidence, footer);
+            IItem e = (IItem) inv.invokeFunction("carveFromFooter", parentEvidence, footer);
             return e;
         } catch (ScriptException e) {
             throw new IOException(e);
@@ -97,7 +97,7 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public void notifyHit(Item parentEvidence, Hit hit) throws IOException {
+    public void notifyHit(IItem parentEvidence, Hit hit) throws IOException {
         try {
             inv.invokeFunction("notifyHit", parentEvidence, hit);
         } catch (ScriptException e) {
@@ -108,7 +108,7 @@ public class JSCarver extends DefaultCarver {
     }
 
     @Override
-    public void notifyEnd(Item parentEvidence) throws IOException {
+    public void notifyEnd(IItem parentEvidence) throws IOException {
         try {
             inv.invokeFunction("notifyEnd", parentEvidence);
         } catch (ScriptException e) {

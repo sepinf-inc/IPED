@@ -75,7 +75,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
 
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class LibreOfficeViewer extends Viewer {
 
@@ -285,12 +285,12 @@ public class LibreOfficeViewer extends Viewer {
     private File blankDoc;
 
     @Override
-    public void loadFile(StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         loadFile(content, "", highlightTerms); //$NON-NLS-1$
     }
 
     @Override
-    public void loadFile(final StreamSource content, final String contentType, final Set<String> highlightTerms) {
+    public void loadFile(final IStreamSource content, final String contentType, final Set<String> highlightTerms) {
 
         final File file = content != null ? content.getFile() : null;
         lastFile = file;

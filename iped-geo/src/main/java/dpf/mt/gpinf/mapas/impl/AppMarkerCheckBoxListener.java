@@ -4,8 +4,8 @@ import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
-import iped3.ItemId;
-import iped3.search.MultiSearchResult;
+import iped3.IItemId;
+import iped3.search.IMultiSearchResult;
 
 public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
     AppMapaPanel mapaPanel;
@@ -23,9 +23,9 @@ public class AppMarkerCheckBoxListener implements MarkerCheckBoxListener {
         // procura pela posição correspondente na tabela do item clicado no mapa
         int pos = 0;
         mid = GetResultsKMLWorker.getBaseGID(mid);
-        MultiSearchResult results = mapaPanel.getResultsProvider().getResults();
+        IMultiSearchResult results = mapaPanel.getResultsProvider().getResults();
         for (int i = 0; i < results.getLength(); i++) {
-            ItemId item = results.getItem(i);
+            IItemId item = results.getItem(i);
             String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
             if (mid.equals(gid)) {
                 pos = i;

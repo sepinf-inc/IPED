@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import iped3.configuration.ConfigurationDirectory;
+import iped3.configuration.IConfigurationDirectory;
 import macee.core.Configurable;
 import macee.core.ObjectManager;
 
@@ -20,10 +20,10 @@ public class ConfigurationManager implements ObjectManager<Configurable> {
         return singleton;
     }
 
-    ConfigurationDirectory directory;
+    IConfigurationDirectory directory;
     HashMap<Configurable, Boolean> loadedConfigurables = new LinkedHashMap<Configurable, Boolean>();
 
-    public ConfigurationManager(ConfigurationDirectory directory) {
+    public ConfigurationManager(IConfigurationDirectory directory) {
         this.directory = directory;
         ConfigurationManager.singleton = this;
     }
@@ -56,7 +56,7 @@ public class ConfigurationManager implements ObjectManager<Configurable> {
         }
     }
 
-    public ConfigurationDirectory getConfigurationDirectory() {
+    public IConfigurationDirectory getConfigurationDirectory() {
         return directory;
     }
 

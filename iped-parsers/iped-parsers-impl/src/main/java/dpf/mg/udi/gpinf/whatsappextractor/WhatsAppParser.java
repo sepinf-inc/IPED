@@ -48,8 +48,8 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import iped3.io.ItemBase;
-import iped3.search.ItemSearcher;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -115,7 +115,7 @@ public class WhatsAppParser extends AbstractParser {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {
@@ -171,7 +171,7 @@ public class WhatsAppParser extends AbstractParser {
 
     }
 
-    private void storeLinkedHashes(List<Message> messages, Metadata metadata, ItemSearcher searcher) {
+    private void storeLinkedHashes(List<Message> messages, Metadata metadata, IItemSearcher searcher) {
         for (Message m : messages) {
             if (m.getMediaHash() != null) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
@@ -203,9 +203,9 @@ public class WhatsAppParser extends AbstractParser {
         }
     }
 
-    private void getAvatar(ItemSearcher searcher, WAContact contact) {
+    private void getAvatar(IItemSearcher searcher, WAContact contact) {
         if (searcher != null && contact.getAvatar() == null) {
-            List<ItemBase> result = searcher
+            List<IItemBase> result = searcher
                     .search(BasicProps.NAME + ":\"" + escape(searcher, contact.getFullId()) + ".j\""); //$NON-NLS-1$ //$NON-NLS-2$
             if (result.isEmpty()) {
                 if (contact.getAvatarPath() != null) {
@@ -252,24 +252,24 @@ public class WhatsAppParser extends AbstractParser {
         }
     }
 
-    private String escape(ItemSearcher searcher, String string) {
+    private String escape(IItemSearcher searcher, String string) {
         if (searcher != null)
             return searcher.escapeQuery(string);
         else
             return string;
     }
 
-    private List<ItemBase> filterGroupAvatars(List<ItemBase> avatars) {
-        ArrayList<ItemBase> result = new ArrayList<ItemBase>();
-        for (ItemBase item : avatars)
+    private List<IItemBase> filterGroupAvatars(List<IItemBase> avatars) {
+        ArrayList<IItemBase> result = new ArrayList<IItemBase>();
+        for (IItemBase item : avatars)
             if (item.getName().split("-").length < 3) //$NON-NLS-1$
                 result.add(item);
         return result;
     }
 
-    private class AvatarComparator implements Comparator<ItemBase> {
+    private class AvatarComparator implements Comparator<IItemBase> {
         @Override
-        public int compare(ItemBase o1, ItemBase o2) {
+        public int compare(IItemBase o1, IItemBase o2) {
             return o2.getName().compareTo(o1.getName());
         }
     }
@@ -279,7 +279,7 @@ public class WhatsAppParser extends AbstractParser {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
-        ItemSearcher searcher = context.get(ItemSearcher.class);
+        IItemSearcher searcher = context.get(IItemSearcher.class);
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {

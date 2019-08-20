@@ -36,7 +36,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
@@ -87,7 +87,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
                     if (!field.equals(ResultTableModel.BOOKMARK_COL)) {
                         values = doc.getValues(fields.get(col));
                     } else {
-                        ItemId item = App.get().appCase.getItemId(docId);
+                        IItemId item = App.get().appCase.getItemId(docId);
                         values[0] = Util.concatStrings(App.get().appCase.getMultiMarcadores().getLabelList(item));
                     }
                     if (values.length > 0 && values[0] == null)

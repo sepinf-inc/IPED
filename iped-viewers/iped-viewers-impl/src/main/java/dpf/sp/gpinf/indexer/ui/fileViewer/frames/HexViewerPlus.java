@@ -50,7 +50,7 @@ import org.exbin.utils.binary_data.ByteArrayEditableData;
 import org.exbin.utils.binary_data.OutOfBoundsException;
 
 import iped3.io.SeekableInputStream;
-import iped3.io.StreamSource;
+import iped3.io.IStreamSource;
 
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
@@ -380,7 +380,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     }
 
     @Override
-    public void loadFile(final StreamSource content, Set<String> highlightTerms) {
+    public void loadFile(final IStreamSource content, Set<String> highlightTerms) {
 
         boolean high = false;
 

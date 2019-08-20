@@ -10,7 +10,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
-import iped3.Item;
+import iped3.IItem;
 
 public class EntropyTask extends AbstractTask {
 
@@ -38,7 +38,7 @@ public class EntropyTask extends AbstractTask {
     }
 
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
 
         if (!isEnabled())
             return;

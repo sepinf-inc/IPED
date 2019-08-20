@@ -4,7 +4,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IMultiSearchResultProvider;
 
 /*
  * Defines a viewer for a set of results controlled by a MultiSearchResultProvider
@@ -12,7 +12,7 @@ import iped3.search.MultiSearchResultProvider;
 
 public interface ResultSetViewer {
 
-    public void init(JTable resultsTable, MultiSearchResultProvider resultsProvider, GUIProvider guiProvider);
+    public void init(JTable resultsTable, IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider);
 
     public void setDockableContainer(DefaultSingleCDockable dockable);
 

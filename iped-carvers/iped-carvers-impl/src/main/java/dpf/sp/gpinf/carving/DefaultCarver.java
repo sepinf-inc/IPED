@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.carving;
 
 import dpf.sp.gpinf.carver.api.Hit;
-import iped3.Item;
+import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
 import java.io.IOException;
@@ -12,12 +12,12 @@ public class DefaultCarver extends AbstractCarver {
     }
 
     @Override
-    public long getLengthFromHit(Item parentEvidence, Hit header) throws IOException {
+    public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         return getDefaultLengthFromHeader(parentEvidence, header);
     }
 
     // mÃ©todo padrÃ£o caso nÃ£o haja um script definido
-    public long getDefaultLengthFromHeader(Item parentEvidence, Hit header) throws IOException {
+    public long getDefaultLengthFromHeader(IItem parentEvidence, Hit header) throws IOException {
         // se nao tiver a informacao de posicao da informacao de tamanho considera o
         // tamanho maximo como o tamanho do item
         if (header.getSignature().getCarverType().getSizePos() == -1) {

@@ -11,16 +11,16 @@ import javax.swing.JTable;
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.webkit.MapaCanvasWebkit;
-import iped3.ItemId;
+import iped3.IItemId;
 import iped3.desktop.GUIProvider;
-import iped3.search.MultiSearchResultProvider;
+import iped3.search.IMultiSearchResultProvider;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
 public class AppMapaPanel extends JPanel {
-    MultiSearchResultProvider resultsProvider;
+    IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     AbstractMapaCanvas browserCanvas;
     boolean mapaDesatualizado = true; // variável para registrar se os dados a serem apresentados pelo mapa precisa
@@ -28,7 +28,7 @@ public class AppMapaPanel extends JPanel {
     KMLResult kmlResult;
     JTable resultsTable;
 
-    public AppMapaPanel(MultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
+    public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
         this.guiProvider = guiProvider;
         this.setLayout(new BorderLayout());
@@ -95,7 +95,7 @@ public class AppMapaPanel extends JPanel {
         this.mapaDesatualizado = mapaDesatualizado;
     }
 
-    public void selecionaMarcador(ItemId item, boolean b) {
+    public void selecionaMarcador(IItemId item, boolean b) {
 
         if (kmlResult != null && kmlResult.getGPSItems().containsKey(item)) {
             List<Integer> subitems = kmlResult.getGPSItems().get(item);
@@ -112,7 +112,7 @@ public class AppMapaPanel extends JPanel {
         }
     }
 
-    public MultiSearchResultProvider getResultsProvider() {
+    public IMultiSearchResultProvider getResultsProvider() {
         return resultsProvider;
     }
 

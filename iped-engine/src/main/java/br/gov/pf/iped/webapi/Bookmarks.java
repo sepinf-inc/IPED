@@ -19,14 +19,14 @@ import javax.ws.rs.core.Response;
 import br.gov.pf.iped.webapi.json.DataListJSON;
 import br.gov.pf.iped.webapi.json.DocIDJSON;
 import br.gov.pf.iped.webapi.json.SourceToIDsJSON;
-import dpf.sp.gpinf.indexer.search.IPEDSearcherImpl;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import iped3.ItemId;
-import iped3.search.MultiMarcadores;
-import iped3.search.MultiSearchResult;
+import iped3.IItemId;
+import iped3.search.IMultiMarcadores;
+import iped3.search.IMultiSearchResult;
 
 @Api(value = "Bookmarks")
 @Path("bookmarks")
@@ -47,12 +47,12 @@ public class Bookmarks {
     @Produces(MediaType.APPLICATION_JSON)
     public SourceToIDsJSON get(@PathParam("bookmark") String bookmark) throws Exception {
 
-        IPEDSearcherImpl searcher = new IPEDSearcherImpl(Sources.multiSource, "");
-        MultiSearchResult result = searcher.multiSearch();
+        IPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
+        IMultiSearchResult result = searcher.multiSearch();
         result = Sources.multiSource.getMultiMarcadores().filtrarMarcadores(result, Collections.singleton(bookmark));
 
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
-        for (ItemId id : result.getIterator()) {
+        for (IItemId id : result.getIterator()) {
             docs.add(new DocIDJSON(Sources.sourceIntToString.get(id.getSourceId()), id.getId()));
         }
 
@@ -64,10 +64,10 @@ public class Bookmarks {
     @Path("{bookmark}/add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response insertLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = new ArrayList<>();
+        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        List<IItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d : docs) {
-            itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+            itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.addLabel(itemIds, bookmark);
         mm.saveState();
@@ -79,10 +79,10 @@ public class Bookmarks {
     @Path("{bookmark}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response removeLabel(@PathParam("bookmark") String bookmark, @ApiParam(required = true) DocIDJSON[] docs) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
-        List<ItemId> itemIds = new ArrayList<>();
+        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        List<IItemId> itemIds = new ArrayList<>();
         for (DocIDJSON d : docs) {
-            itemIds.add(new ItemIdImpl(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
+            itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.removeLabel(itemIds, bookmark);
         mm.saveState();
@@ -93,7 +93,7 @@ public class Bookmarks {
     @POST
     @Path("{bookmark}")
     public Response addLabel(@PathParam("bookmark") String bookmark) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.newLabel(bookmark);
         mm.saveState();
         return Response.ok().build();
@@ -103,7 +103,7 @@ public class Bookmarks {
     @DELETE
     @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.delLabel(bookmark);
         mm.saveState();
         return Response.ok().build();
@@ -113,7 +113,7 @@ public class Bookmarks {
     @PUT
     @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
-        MultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         mm.changeLabel(oldLabel, newLabel);
         mm.saveState();
         return Response.ok().build();

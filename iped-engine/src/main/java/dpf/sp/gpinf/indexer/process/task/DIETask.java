@@ -43,7 +43,7 @@ import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
-import iped3.Item;
+import iped3.IItem;
 
 /**
  * Tarefa de Detecção de Imagens Explícitas (DIE).
@@ -205,7 +205,7 @@ public class DIETask extends AbstractTask {
      * arquivo é imagem. Depois chama método de detecção.
      */
     @Override
-    protected void process(Item evidence) throws Exception {
+    protected void process(IItem evidence) throws Exception {
         // Verifica se está habilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHash() == null) {
@@ -263,7 +263,7 @@ public class DIETask extends AbstractTask {
      * Obtém a imagem do arquivo. Se tiver miniatura utiliza, senão pega versão
      * redimensionada.
      */
-    private BufferedImage getBufferedImage(Item evidence) {
+    private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
             if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$

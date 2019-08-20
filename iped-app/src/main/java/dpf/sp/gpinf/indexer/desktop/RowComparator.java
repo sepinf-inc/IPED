@@ -34,9 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemIdImpl;
+import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ItemId;
+import iped3.IItemId;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -186,8 +186,8 @@ public class RowComparator implements Comparator<Integer> {
         if (scoreCol)
             return (int) (app.ipedResult.getScore(a) - app.ipedResult.getScore(b));
 
-        ItemId itemA = app.ipedResult.getItem(a);
-        ItemId itemB = app.ipedResult.getItem(b);
+        IItemId itemA = app.ipedResult.getItem(a);
+        IItemId itemB = app.ipedResult.getItem(b);
 
         a = app.appCase.getLuceneId(itemA);
         b = app.appCase.getLuceneId(itemB);

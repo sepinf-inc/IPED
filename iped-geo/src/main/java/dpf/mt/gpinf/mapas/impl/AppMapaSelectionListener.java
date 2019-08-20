@@ -6,7 +6,7 @@ import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.mapas.MapSelectionListener;
-import iped3.ItemId;
+import iped3.IItemId;
 import iped3.util.BasicProps;
 
 public class AppMapaSelectionListener implements MapSelectionListener {
@@ -31,7 +31,7 @@ public class AppMapaSelectionListener implements MapSelectionListener {
         Arrays.sort(mids);
 
         for (int i = 0; i < mapaPanel.getResultsProvider().getResults().getLength(); i++) {
-            ItemId item = mapaPanel.getResultsProvider().getResults().getItem(i);
+            IItemId item = mapaPanel.getResultsProvider().getResults().getItem(i);
             String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
 
             if (Arrays.binarySearch(mids, gid) >= 0) {
