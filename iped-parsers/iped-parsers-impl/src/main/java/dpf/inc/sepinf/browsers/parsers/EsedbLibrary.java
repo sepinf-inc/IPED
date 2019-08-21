@@ -14,10 +14,6 @@ public interface EsedbLibrary extends Library {
 //            Native.load((Platform.isWindows() ? "esedb" : "esedb"),
 //                    EsedbLibrary.class);
 
-    EsedbLibrary INSTANCE = (EsedbLibrary)
-            Native.load((Platform.isWindows() ? "esedb" : "esedb"),
-                    EsedbLibrary.class);
-
     /* Returns the library version
      * const char * libesedb_get_version(void);
      */
