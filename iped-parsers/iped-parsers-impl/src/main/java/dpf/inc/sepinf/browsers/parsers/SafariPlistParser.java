@@ -13,7 +13,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -81,7 +80,6 @@ public class SafariPlistParser extends AbstractParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             String evidenceFile = ((ItemInfo) context.get(ItemInfo.class)).getPath();
 
             if (extractor.shouldParseEmbedded(metadata)) {
