@@ -64,8 +64,6 @@ public class SafariSqliteParser extends AbstractParser {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariSqliteParser.class);
 
-    private Connection connection;
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -77,11 +75,11 @@ public class SafariSqliteParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         File historyFile = tmp.createTemporaryFile();
+        File dbFile = TikaInputStream.get(stream, tmp).getFile();
 
-        try {
+        try (Connection connection = getConnection(dbFile)){
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
-            connection = getConnection(stream, metadata, context);
 
             List<SafariResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
             List<SafariVisit> history = getHistory(connection, metadata, context);
@@ -215,18 +213,11 @@ public class SafariSqliteParser extends AbstractParser {
         } finally {
             if (xHandler != null)
                 xHandler.endDocument();
-            try {
-                close();
-            } catch (Exception e) {
-                // swallow
-            }
         }
     }
 
-    protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context)
-            throws IOException, TikaException {
-        String connectionString = getConnectionString(stream, metadata, context);
-
+    protected Connection getConnection(File dbFile) throws IOException, TikaException {
+        String connectionString = getConnectionString(dbFile);
         Connection connection = null;
         try {
             Class.forName(getJDBCClassName());
@@ -241,9 +232,7 @@ public class SafariSqliteParser extends AbstractParser {
         return connection;
     }
 
-    protected String getConnectionString(InputStream is, Metadata metadata, ParseContext parseContext)
-            throws IOException {
-        File dbFile = TikaInputStream.get(is).getFile();
+    protected String getConnectionString(File dbFile) throws IOException {
         return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
 
@@ -323,10 +312,6 @@ public class SafariSqliteParser extends AbstractParser {
                 st.close();
         }
         return history;
-    }
-
-    protected void close() throws SQLException, IOException {
-        connection.close();
     }
 
 }
