@@ -45,250 +45,257 @@ import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class EdgeWebCacheParser extends AbstractParser {
-	
-	/**
+
+    /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
     public static final MediaType EDGE_WEB_CACHE = MediaType.application("x-edge-web-cache"); //$NON-NLS-1$
-	
-	public static final MediaType EDGE_HISTORY = MediaType.application("x-edge-history"); //$NON-NLS-1$
-	
-	public static final MediaType EDGE_HISTORY_REG = MediaType.application("x-edge-history-registry"); //$NON-NLS-1$
-	
-	private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(EDGE_WEB_CACHE);
-	
-	private static Logger LOGGER = LoggerFactory.getLogger(EdgeWebCacheParser.class);
-	
-	private static EsedbLibrary esedbLibrary;
-	
-	static {
-	    if(Platform.isWindows()) {
-	        String osArch = System.getProperty("os.arch");
-	        String arch = osArch.equals("amd64") || osArch.equals("x86_64") ? "x64" : "x86";
-	        
-	        try(InputStream is = EdgeWebCacheParser.class.getResourceAsStream("/nativelibs/libesedb/" + arch + "/libesedb.dll")){
-	            File file = new File(System.getProperty("java.io.tmpdir") + "/libesedb.dll");
-	            Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-	            System.load(file.getAbsolutePath());
-	            
-	        }catch(Throwable e) {
-	            LOGGER.error("Libesedb dll not loaded properly. " + EdgeWebCacheParser.class.getSimpleName() + " will be disabled.");
-	            LOGGER.debug("", e);
-	            SUPPORTED_TYPES = Collections.EMPTY_SET;
-	        }
-        }
-	    if(!SUPPORTED_TYPES.isEmpty())
-    	    try {
-                esedbLibrary = (EsedbLibrary) Native.load("esedb",EsedbLibrary.class);
-                
-            }catch(Throwable e) {
-                LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName() + " will be disabled.");
+
+    public static final MediaType EDGE_HISTORY = MediaType.application("x-edge-history"); //$NON-NLS-1$
+
+    public static final MediaType EDGE_HISTORY_REG = MediaType.application("x-edge-history-registry"); //$NON-NLS-1$
+
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(EDGE_WEB_CACHE);
+
+    private static Logger LOGGER = LoggerFactory.getLogger(EdgeWebCacheParser.class);
+
+    private static EsedbLibrary esedbLibrary;
+
+    static {
+        if (Platform.isWindows()) {
+            String osArch = System.getProperty("os.arch");
+            String arch = osArch.equals("amd64") || osArch.equals("x86_64") ? "x64" : "x86";
+
+            try (InputStream is = EdgeWebCacheParser.class
+                    .getResourceAsStream("/nativelibs/libesedb/" + arch + "/libesedb.dll")) {
+                File file = new File(System.getProperty("java.io.tmpdir") + "/libesedb.dll");
+                Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.load(file.getAbsolutePath());
+
+            } catch (Throwable e) {
+                LOGGER.error("Libesedb dll not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
+                        + " will be disabled.");
                 LOGGER.debug("", e);
                 SUPPORTED_TYPES = Collections.EMPTY_SET;
             }
-	}
-	
-	private void printError(String function, int result, PointerByReference errorPointer) {
-		LOGGER.error("Function: " + function); //$NON-NLS-1$
-		LOGGER.error("Function result number: " + result);
-		LOGGER.error("Error value: " + errorPointer.getValue().getString(0));
-        esedbLibrary.libesedb_error_free(errorPointer);   
+        }
+        if (!SUPPORTED_TYPES.isEmpty())
+            try {
+                esedbLibrary = (EsedbLibrary) Native.load("esedb", EsedbLibrary.class);
+
+            } catch (Throwable e) {
+                LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
+                        + " will be disabled.");
+                LOGGER.debug("", e);
+                SUPPORTED_TYPES = Collections.EMPTY_SET;
+            }
     }
-	
-	private String convertLDAPTimeToString(long nanoseconds) {
-        /* Convert LDAP Timestamp to human readable date
+
+    private void printError(String function, int result, PointerByReference errorPointer) {
+        LOGGER.error("Function: " + function); //$NON-NLS-1$
+        LOGGER.error("Function result number: " + result);
+        LOGGER.error("Error value: " + errorPointer.getValue().getString(0));
+        esedbLibrary.libesedb_error_free(errorPointer);
+    }
+
+    private String convertLDAPTimeToString(long nanoseconds) {
+        /*
+         * Convert LDAP Timestamp to human readable date
          * https://www.epochconverter.com/ldap
-         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.html
+         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.
+         * html
          */
         long mills = (nanoseconds / 10000000);
         long unix = (((1970 - 1601) * 365) - 3 + Math.round((1970 - 1601) / 4)) * 86400L;
         long timeStamp = mills - unix;
         Date date = new Date(timeStamp * 1000L); // *1000 is to convert seconds to milliseconds
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"); // the format of your date
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // give a timezone reference for formating (see comment at the bottom
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // give a timezone reference for formating (see comment at the
+                                                      // bottom
         String formattedDate = sdf.format(date);
         return formattedDate;
     }
-	
-	static long convertLDAPTime(long nanoseconds) {
-        /* Convert LDAP Timestamp to epoch time in milliseconds
+
+    static long convertLDAPTime(long nanoseconds) {
+        /*
+         * Convert LDAP Timestamp to epoch time in milliseconds
          * https://www.epochconverter.com/ldap
-         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.html
+         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.
+         * html
          */
         long mills = (nanoseconds / 10000000);
         long unix = (((1970 - 1601) * 365) - 3 + Math.round((1970 - 1601) / 4)) * 86400L;
         long timeStamp = (mills - unix) * 1000L;
-        
+
         return timeStamp;
     }
-	
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		return SUPPORTED_TYPES;
-	}
 
-	@Override
-	public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-			throws IOException, SAXException, TikaException {
-		
-		TemporaryResources tmp = new TemporaryResources();
-		File webcacheFile = tmp.createTemporaryFile();
-		File evidenceFile = null;
-		
-		try {
-					
-			EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return SUPPORTED_TYPES;
+    }
 
+    @Override
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-			if (extractor.shouldParseEmbedded(metadata)) {
-				
-	            TikaInputStream tis = TikaInputStream.get(stream, tmp);
-	            evidenceFile = tis.getFile();
-	
-	            String filePath = evidenceFile.getAbsolutePath();
-	            
-	            List<EdgeContainer> history = getHistory(filePath);
-//	            List<EdgeVisit> history = getHistory(filePath);
-	            
-	            int virtualId = 1;
-	            
-	            int i = 0;
-	            
-	            for (EdgeContainer ec : history) {
-	            
-		            try (FileOutputStream tmpHistoryFile = new FileOutputStream(webcacheFile)) {
-		    			
-						ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
-						Metadata historyMetadata = new Metadata();
-						historyMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, EDGE_HISTORY.toString());
-						historyMetadata.add(Metadata.RESOURCE_NAME_KEY, ec.getTableName()); //$NON-NLS-1$
-						historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
-						historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
-						
-						parseEdgeHistory(stream, historyHandler, historyMetadata, context, ec.getEntries());
-						
-						try (FileInputStream fis = new FileInputStream(webcacheFile)) {
-							extractor.parseEmbedded(fis, handler, historyMetadata, true);
-						}
-					}
-					
-					for (EdgeVisit ev : ec.getEntries()) {
-						
-						i++;
-						Metadata metadataHistory = new Metadata();
-						
-						metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, EDGE_HISTORY_REG.toString()); 
-						metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Edge History Entry " + i); //$NON-NLS-1$
-						metadataHistory.set(TikaCoreProperties.CREATED, ev.getCreationDate());
-						metadataHistory.set(TikaCoreProperties.MODIFIED, ev.getModifiedDate());
-						metadataHistory.set(ExtraProperties.ACCESSED, ev.getAccessedDate());
-						metadataHistory.add(TikaCoreProperties.IDENTIFIER, ev.getUrl());
-						metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
-						
-						extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
-					}
-	            }
-			}
-		} catch (EdgeWebCacheException e) {
-			LOGGER.error(e.getMessage());
-		} finally {
-			tmp.close();
-		}
-	}
-	
-	private void parseEdgeHistory(InputStream stream, ContentHandler handler, Metadata metadata,
-			ParseContext context, List<EdgeVisit> edgeHistory) 
-					throws IOException, SAXException, TikaException {
-		
-		XHTMLContentHandler xHandler = null;
-		
-//		edgeHistory.sort(Comparator.reverseOrder());
+        TemporaryResources tmp = new TemporaryResources();
+        File webcacheFile = tmp.createTemporaryFile();
+        File evidenceFile = null;
 
         try {
-        	
+
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+
+            if (extractor.shouldParseEmbedded(metadata)) {
+
+                TikaInputStream tis = TikaInputStream.get(stream, tmp);
+                evidenceFile = tis.getFile();
+
+                String filePath = evidenceFile.getAbsolutePath();
+
+                List<EdgeContainer> history = getHistory(filePath);
+                // List<EdgeVisit> history = getHistory(filePath);
+
+                int virtualId = 1;
+
+                int i = 0;
+
+                for (EdgeContainer ec : history) {
+
+                    try (FileOutputStream tmpHistoryFile = new FileOutputStream(webcacheFile)) {
+
+                        ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
+                        Metadata historyMetadata = new Metadata();
+                        historyMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, EDGE_HISTORY.toString());
+                        historyMetadata.add(Metadata.RESOURCE_NAME_KEY, ec.getTableName()); // $NON-NLS-1$
+                        historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
+                        historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+
+                        parseEdgeHistory(stream, historyHandler, historyMetadata, context, ec.getEntries());
+
+                        try (FileInputStream fis = new FileInputStream(webcacheFile)) {
+                            extractor.parseEmbedded(fis, handler, historyMetadata, true);
+                        }
+                    }
+
+                    for (EdgeVisit ev : ec.getEntries()) {
+
+                        i++;
+                        Metadata metadataHistory = new Metadata();
+
+                        metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, EDGE_HISTORY_REG.toString());
+                        metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Edge History Entry " + i); //$NON-NLS-1$
+                        metadataHistory.set(TikaCoreProperties.CREATED, ev.getCreationDate());
+                        metadataHistory.set(TikaCoreProperties.MODIFIED, ev.getModifiedDate());
+                        metadataHistory.set(ExtraProperties.ACCESSED, ev.getAccessedDate());
+                        metadataHistory.add(TikaCoreProperties.IDENTIFIER, ev.getUrl());
+                        metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
+
+                        extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
+                    }
+                }
+            }
+        } catch (EdgeWebCacheException e) {
+            LOGGER.error(e.getMessage());
+        } finally {
+            tmp.close();
+        }
+    }
+
+    private void parseEdgeHistory(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
+            List<EdgeVisit> edgeHistory) throws IOException, SAXException, TikaException {
+
+        XHTMLContentHandler xHandler = null;
+
+        // edgeHistory.sort(Comparator.reverseOrder());
+
+        try {
+
             xHandler = new XHTMLContentHandler(handler, metadata);
             xHandler.startDocument();
-            
+
             xHandler.startElement("head"); //$NON-NLS-1$
             xHandler.startElement("style"); //$NON-NLS-1$
             xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
-            
+
             xHandler.startElement("h2 align=center"); //$NON-NLS-1$
             xHandler.characters("Edge Visited Sites History"); //$NON-NLS-1$
             xHandler.endElement("h2"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
-            
+
             xHandler.startElement("table"); //$NON-NLS-1$
-            
+
             xHandler.startElement("tr"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters(""); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-                        
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("VISIT COUNT"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("LAST VISIT DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
-        	
+
             int i = 1;
-            
+
             for (EdgeVisit e : edgeHistory) {
-            	
-        		xHandler.startElement("tr"); //$NON-NLS-1$
-            	
+
+                xHandler.startElement("tr"); //$NON-NLS-1$
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Integer.toString(i));
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Long.toString(e.getAccessCount()));
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(e.getAccessedDateAsString());
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(e.getUrl());
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.endElement("tr"); //$NON-NLS-1$
 
                 i++;
             }
-            
-            xHandler.endElement("table"); //$NON-NLS-1$           
-            
-            xHandler.endDocument();            
-            
-        } finally{
-        	if(xHandler != null)
-        		xHandler.endDocument();
+
+            xHandler.endElement("table"); //$NON-NLS-1$
+
+            xHandler.endDocument();
+
+        } finally {
+            if (xHandler != null)
+                xHandler.endDocument();
         }
-	}
-	
-	protected List<EdgeContainer> getHistory(String filePath) throws EdgeWebCacheException {
-		List<EdgeContainer> history = new LinkedList<EdgeContainer>();
-		
-		try {
-			LOGGER.info("Libesedb library version: " + esedbLibrary.libesedb_get_version());
-            
-//            String table = "";
+    }
+
+    protected List<EdgeContainer> getHistory(String filePath) throws EdgeWebCacheException {
+        List<EdgeContainer> history = new LinkedList<EdgeContainer>();
+
+        try {
+            LOGGER.info("Libesedb library version: " + esedbLibrary.libesedb_get_version());
+
+            // String table = "";
             int contagemAbertura = 0;
             int contagemFechamentos = 0;
             /*
@@ -296,38 +303,19 @@ public class EdgeWebCacheParser extends AbstractParser {
              */
 
             PointerByReference filePointerReference = new PointerByReference();
-//            PointerByReference columnPointerReference = new PointerByReference();
+            // PointerByReference columnPointerReference = new PointerByReference();
             PointerByReference errorPointer = new PointerByReference();
             IntByReference numberOfTables = new IntByReference();
-//            int numColumns;
+            // int numColumns;
             int numTables;
 
-            /* Table Container_n columns names
-             * 0 - EntryId
-             * 1 - ContainerId
-             * 2 - CacheId
-             * 3 - UrlHash
-             * 4 - SecureDirectory
-             * 5 - FileSize
-             * 6 - Type
-             * 7 - Flags
-             * 8 - AccessCount
-             * 9 - SyncTime
-             * 10- CreationTime
-             * 11- ExpiryTime
-             * 12 - ModifiedTime
-             * 13 - AccessedTime
-             * 14 - PostCheckTime
-             * 15 - SyncCount
-             * 16 - ExemptionDelta
-             * 17 - Url
-             * 18 - Filename
-             * 19 - FileExtension
-             * 20 - RequestHeaders
-             * 21 - ResponseHeaders
-             * 22 - RedirectUrl
-             * 23 - Group
-             * 24 - ExtraData
+            /*
+             * Table Container_n columns names 0 - EntryId 1 - ContainerId 2 - CacheId 3 -
+             * UrlHash 4 - SecureDirectory 5 - FileSize 6 - Type 7 - Flags 8 - AccessCount 9
+             * - SyncTime 10- CreationTime 11- ExpiryTime 12 - ModifiedTime 13 -
+             * AccessedTime 14 - PostCheckTime 15 - SyncCount 16 - ExemptionDelta 17 - Url
+             * 18 - Filename 19 - FileExtension 20 - RequestHeaders 21 - ResponseHeaders 22
+             * - RedirectUrl 23 - Group 24 - ExtraData
              */
 
             int accessFlags = 1;
@@ -337,25 +325,31 @@ public class EdgeWebCacheParser extends AbstractParser {
             LOGGER.info("File: " + filePath);
 
             result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
-            if (result < 0) printError("File Initialize", result, errorPointer);
+            if (result < 0)
+                printError("File Initialize", result, errorPointer);
 
             result = esedbLibrary.libesedb_check_file_signature(filePath, errorPointer);
-            if (result < 0) printError("Check File Signature", result, errorPointer);
+            if (result < 0)
+                printError("Check File Signature", result, errorPointer);
             if (result == 0) {
-            	LOGGER.error("File does not contains an ESEDB");
-            	throw new EdgeWebCacheException("File does not contains an ESEDB");
+                LOGGER.error("File does not contains an ESEDB");
+                throw new EdgeWebCacheException("File does not contains an ESEDB");
             }
 
-            result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags, errorPointer);
-            if (result < 0) printError("File Open", result, errorPointer);
+            result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
+                    errorPointer);
+            if (result < 0)
+                printError("File Open", result, errorPointer);
             contagemAbertura++;
 
-            result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(), numberOfTables, errorPointer);
-            if (result < 0) printError("File Get Number of Tables", result, errorPointer);
+            result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(), numberOfTables,
+                    errorPointer);
+            if (result < 0)
+                printError("File Get Number of Tables", result, errorPointer);
             numTables = numberOfTables.getValue();
 
             LOGGER.info("Number of tables: " + numTables);
-            
+
             for (int tables = 0; tables < numTables; tables++) {
 
                 /*
@@ -370,33 +364,43 @@ public class EdgeWebCacheParser extends AbstractParser {
                 LongByReference numberOfRecords = new LongByReference();
 
                 IntByReference columnType = new IntByReference();
-//                IntByReference columnName = new IntByReference();
-//                IntByReference columnNameSize = new IntByReference();
+                // IntByReference columnName = new IntByReference();
+                // IntByReference columnNameSize = new IntByReference();
 
                 long numRecords;
 
-                result = esedbLibrary.libesedb_file_get_table(filePointerReference.getValue(), tables, tablePointerReference, errorPointer);
-                if (result < 0) printError("File Get Table", result, errorPointer);
+                result = esedbLibrary.libesedb_file_get_table(filePointerReference.getValue(), tables,
+                        tablePointerReference, errorPointer);
+                if (result < 0)
+                    printError("File Get Table", result, errorPointer);
                 contagemAbertura++;
 
-                result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointerReference.getValue(), tableNameSize, errorPointer);
-                if (result < 0) printError("Table Get UTF8 Name Size", result, errorPointer);
+                result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointerReference.getValue(), tableNameSize,
+                        errorPointer);
+                if (result < 0)
+                    printError("Table Get UTF8 Name Size", result, errorPointer);
 
-                result = esedbLibrary.libesedb_table_get_utf8_name(tablePointerReference.getValue(), tableName, tableNameSize.getValue(), errorPointer);
-                if (result < 0) printError("Table Get UTF8 Name", result, errorPointer);
+                result = esedbLibrary.libesedb_table_get_utf8_name(tablePointerReference.getValue(), tableName,
+                        tableNameSize.getValue(), errorPointer);
+                if (result < 0)
+                    printError("Table Get UTF8 Name", result, errorPointer);
                 String tableNameString = tableName.getString(0);
 
-                result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerReference.getValue(), numberOfColumns, columnFlags, errorPointer);
-                if (result < 0) printError("Table Get Number of Columns", result, errorPointer);
+                result = esedbLibrary.libesedb_table_get_number_of_columns(tablePointerReference.getValue(),
+                        numberOfColumns, columnFlags, errorPointer);
+                if (result < 0)
+                    printError("Table Get Number of Columns", result, errorPointer);
 
-                result = esedbLibrary.libesedb_table_get_number_of_records(tablePointerReference.getValue(), numberOfRecords, errorPointer);
-                if (result < 0) printError("Table Get Number of Records", result, errorPointer);
+                result = esedbLibrary.libesedb_table_get_number_of_records(tablePointerReference.getValue(),
+                        numberOfRecords, errorPointer);
+                if (result < 0)
+                    printError("Table Get Number of Records", result, errorPointer);
                 numRecords = numberOfRecords.getValue();
 
                 /* Get table that begins with 'Container_' */
                 if (tableNameString.contains("Container_")) {
-                	
-                	EdgeContainer ec = new EdgeContainer(tableNameString); 
+
+                    EdgeContainer ec = new EdgeContainer(tableNameString);
 
                     for (int i = 0; i < numRecords; i++) {
 
@@ -426,40 +430,33 @@ public class EdgeWebCacheParser extends AbstractParser {
                         String url = "";
                         String file = "";
 
-                        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i, recordPointerReference, errorPointer);
-                        if (result < 0) printError("Table Get Record", result, errorPointer);
+                        result = esedbLibrary.libesedb_table_get_record(tablePointerReference.getValue(), i,
+                                recordPointerReference, errorPointer);
+                        if (result < 0)
+                            printError("Table Get Record", result, errorPointer);
                         contagemAbertura++;
 
-                        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerReference.getValue(), recordNumberOfValues, errorPointer);
-                        if (result < 0) printError("Record Get Number of Values", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_number_of_values(recordPointerReference.getValue(),
+                                recordNumberOfValues, errorPointer);
+                        if (result < 0)
+                            printError("Record Get Number of Values", result, errorPointer);
 
                         /*
                          * The column types
                          *
-                         *   enum LIBESEDB_COLUMN_TYPES
-                         *   {
-                         *       LIBESEDB_COLUMN_TYPE_NULL			= 0,
-                         *       LIBESEDB_COLUMN_TYPE_BOOLEAN			= 1,
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_8BIT_UNSIGNED	= 2,
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_16BIT_SIGNED	= 3,
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_32BIT_SIGNED	= 4,
-                         *       LIBESEDB_COLUMN_TYPE_CURRENCY			= 5,
-                         *       LIBESEDB_COLUMN_TYPE_FLOAT_32BIT		= 6,
-                         *       LIBESEDB_COLUMN_TYPE_DOUBLE_64BIT		= 7,
-                         *       LIBESEDB_COLUMN_TYPE_DATE_TIME			= 8,
-                         *       LIBESEDB_COLUMN_TYPE_BINARY_DATA		= 9,
-                         *       LIBESEDB_COLUMN_TYPE_TEXT			= 10,
-                         *       LIBESEDB_COLUMN_TYPE_LARGE_BINARY_DATA		= 11,
-                         *       === Url, Filename ===
-                         *       LIBESEDB_COLUMN_TYPE_LARGE_TEXT			= 12,
-                         *       LIBESEDB_COLUMN_TYPE_SUPER_LARGE_VALUE		= 13,
-                         *       === AccessCount ===
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_32BIT_UNSIGNED	= 14,
-                         *       === EntryId, FileSize, CreationTime, ModifiedTime, AccessedTime ===
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_64BIT_SIGNED	= 15,
-                         *       LIBESEDB_COLUMN_TYPE_GUID			= 16,
-                         *       LIBESEDB_COLUMN_TYPE_INTEGER_16BIT_UNSIGNED	= 17
-                         *   };
+                         * enum LIBESEDB_COLUMN_TYPES { LIBESEDB_COLUMN_TYPE_NULL = 0,
+                         * LIBESEDB_COLUMN_TYPE_BOOLEAN = 1, LIBESEDB_COLUMN_TYPE_INTEGER_8BIT_UNSIGNED
+                         * = 2, LIBESEDB_COLUMN_TYPE_INTEGER_16BIT_SIGNED = 3,
+                         * LIBESEDB_COLUMN_TYPE_INTEGER_32BIT_SIGNED = 4, LIBESEDB_COLUMN_TYPE_CURRENCY
+                         * = 5, LIBESEDB_COLUMN_TYPE_FLOAT_32BIT = 6, LIBESEDB_COLUMN_TYPE_DOUBLE_64BIT
+                         * = 7, LIBESEDB_COLUMN_TYPE_DATE_TIME = 8, LIBESEDB_COLUMN_TYPE_BINARY_DATA =
+                         * 9, LIBESEDB_COLUMN_TYPE_TEXT = 10, LIBESEDB_COLUMN_TYPE_LARGE_BINARY_DATA =
+                         * 11, === Url, Filename === LIBESEDB_COLUMN_TYPE_LARGE_TEXT = 12,
+                         * LIBESEDB_COLUMN_TYPE_SUPER_LARGE_VALUE = 13, === AccessCount ===
+                         * LIBESEDB_COLUMN_TYPE_INTEGER_32BIT_UNSIGNED = 14, === EntryId, FileSize,
+                         * CreationTime, ModifiedTime, AccessedTime ===
+                         * LIBESEDB_COLUMN_TYPE_INTEGER_64BIT_SIGNED = 15, LIBESEDB_COLUMN_TYPE_GUID =
+                         * 16, LIBESEDB_COLUMN_TYPE_INTEGER_16BIT_UNSIGNED = 17 };
                          */
 
                         /*
@@ -467,94 +464,128 @@ public class EdgeWebCacheParser extends AbstractParser {
                          */
 
                         /* Integer 64bit signed */
-                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 0, recordValueData, errorPointer);
-                        if (result < 0) printError("Record Get EntryId Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 0,
+                                recordValueData, errorPointer);
+                        if (result < 0)
+                            printError("Record Get EntryId Data", result, errorPointer);
                         entryId = recordValueData.getValue();
                         /* Integer 64bit signed */
-                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 5, recordValueData, errorPointer);
-                        if (result < 0) printError("Record Get FileSize Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 5,
+                                recordValueData, errorPointer);
+                        if (result < 0)
+                            printError("Record Get FileSize Data", result, errorPointer);
                         fileSize = recordValueData.getValue();
                         /* Integer 32bit unsigned */
-                        result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), 8, recordValueData32, errorPointer);
-                        if (result < 0) printError("Record Get AccessCount Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_32bit(recordPointerReference.getValue(), 8,
+                                recordValueData32, errorPointer);
+                        if (result < 0)
+                            printError("Record Get AccessCount Data", result, errorPointer);
                         accessCount = recordValueData32.getValue();
 
-                        /* LDAP Timestamp
-                         * The 18-digit Active Directory timestamps, also named 'Windows NT time format' and 'Win32 FILETIME or SYSTEMTIME'.
-                         * These are used in Microsoft Active Directory for pwdLastSet, accountExpires, LastLogon, LastLogonTimestamp and LastPwdSet.
-                         * The timestamp is the number of 100-nanoseconds intervals (1 nanosecond = one billionth of a second) since Jan 1, 1601 UTC.
+                        /*
+                         * LDAP Timestamp The 18-digit Active Directory timestamps, also named 'Windows
+                         * NT time format' and 'Win32 FILETIME or SYSTEMTIME'. These are used in
+                         * Microsoft Active Directory for pwdLastSet, accountExpires, LastLogon,
+                         * LastLogonTimestamp and LastPwdSet. The timestamp is the number of
+                         * 100-nanoseconds intervals (1 nanosecond = one billionth of a second) since
+                         * Jan 1, 1601 UTC.
                          */
                         /* Integer 64bit signed */
-                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 10, recordValueData, errorPointer);
-                        if (result < 0) printError("Record Get CreationTime Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 10,
+                                recordValueData, errorPointer);
+                        if (result < 0)
+                            printError("Record Get CreationTime Data", result, errorPointer);
                         creation = convertLDAPTime(recordValueData.getValue());
                         /* Integer 64bit signed */
-                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 12, recordValueData, errorPointer);
-                        if (result < 0) printError("Record Get ModifiedTime Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 12,
+                                recordValueData, errorPointer);
+                        if (result < 0)
+                            printError("Record Get ModifiedTime Data", result, errorPointer);
                         modified = convertLDAPTime(recordValueData.getValue());
                         /* Integer 64bit signed */
-                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 13, recordValueData, errorPointer);
-                        if (result < 0) printError("Record Get AccessedTime Data", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 13,
+                                recordValueData, errorPointer);
+                        if (result < 0)
+                            printError("Record Get AccessedTime Data", result, errorPointer);
                         accessed = convertLDAPTime(recordValueData.getValue());
 
                         /* Large Text */
-                        result = esedbLibrary.libesedb_record_get_column_type(recordPointerReference.getValue(), 17, columnType, errorPointer);
-                        if (result < 0) printError("Record Get Column Type", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_column_type(recordPointerReference.getValue(), 17,
+                                columnType, errorPointer);
+                        if (result < 0)
+                            printError("Record Get Column Type", result, errorPointer);
 
-                        result = esedbLibrary.libesedb_record_get_value_data_flags(recordPointerReference.getValue(), 17, valueDataFlags, errorPointer);
-                        if (result < 0) printError("Record Get Value Data Flags", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_data_flags(recordPointerReference.getValue(),
+                                17, valueDataFlags, errorPointer);
+                        if (result < 0)
+                            printError("Record Get Value Data Flags", result, errorPointer);
 
                         if (valueDataFlags.getValue() == 1) {
-                            result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), 17, recordValueDataSize, errorPointer);
-                            if (result < 0) printError("Record Get URL UTF8 String Size", result, errorPointer);
+                            result = esedbLibrary.libesedb_record_get_value_utf8_string_size(
+                                    recordPointerReference.getValue(), 17, recordValueDataSize, errorPointer);
+                            if (result < 0)
+                                printError("Record Get URL UTF8 String Size", result, errorPointer);
 
                             if ((recordValueDataSize.getValue() > 0) && (result == 1)) {
-                                result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), 17, recordValueDataUrl, recordValueDataSize.getValue(), errorPointer);
-                                if (result < 0) printError("Record Get URL UTF8 String", result, errorPointer);
+                                result = esedbLibrary.libesedb_record_get_value_utf8_string(
+                                        recordPointerReference.getValue(), 17, recordValueDataUrl,
+                                        recordValueDataSize.getValue(), errorPointer);
+                                if (result < 0)
+                                    printError("Record Get URL UTF8 String", result, errorPointer);
                                 url = recordValueDataUrl.getString(0);
                             }
                         }
                         /* Large Text */
-                        result = esedbLibrary.libesedb_record_get_value_utf8_string_size(recordPointerReference.getValue(), 18, recordValueDataSize, errorPointer);
-                        if (result < 0) printError("Record Get FileName UTF8 String Size", result, errorPointer);
+                        result = esedbLibrary.libesedb_record_get_value_utf8_string_size(
+                                recordPointerReference.getValue(), 18, recordValueDataSize, errorPointer);
+                        if (result < 0)
+                            printError("Record Get FileName UTF8 String Size", result, errorPointer);
                         if ((recordValueDataSize.getValue() > 0) && (result == 1)) {
-                            result = esedbLibrary.libesedb_record_get_value_utf8_string(recordPointerReference.getValue(), 18, recordValueDataFilename, recordValueDataSize.getValue(), errorPointer);
-                            if (result < 0) printError("Record Get FileName UTF8 String", result, errorPointer);
+                            result = esedbLibrary.libesedb_record_get_value_utf8_string(
+                                    recordPointerReference.getValue(), 18, recordValueDataFilename,
+                                    recordValueDataSize.getValue(), errorPointer);
+                            if (result < 0)
+                                printError("Record Get FileName UTF8 String", result, errorPointer);
                             file = recordValueDataFilename.getString(0);
                         }
 
                         /* Save visit entry */
-                        ec.addEntry(new EdgeVisit(entryId, fileSize, accessCount, creation, modified, accessed, file, url));
+                        ec.addEntry(
+                                new EdgeVisit(entryId, fileSize, accessCount, creation, modified, accessed, file, url));
 
                         result = esedbLibrary.libesedb_record_free(recordPointerReference, errorPointer);
-                        if (result < 0) printError("Record Free", result, errorPointer);
+                        if (result < 0)
+                            printError("Record Free", result, errorPointer);
                         contagemFechamentos++;
                     }
-                    
+
                     /* Save table entries */
                     history.add(ec);
-                    
+
                 }
 
                 result = esedbLibrary.libesedb_table_free(tablePointerReference, errorPointer);
-                if (result < 0) printError("Table Free", result, errorPointer);
+                if (result < 0)
+                    printError("Table Free", result, errorPointer);
                 contagemFechamentos++;
 
             }
-            
+
             result = esedbLibrary.libesedb_file_close(filePointerReference.getValue(), errorPointer);
-            if (result < 0) printError("File Close", result, errorPointer);
+            if (result < 0)
+                printError("File Close", result, errorPointer);
 
             result = esedbLibrary.libesedb_file_free(filePointerReference, errorPointer);
-            if (result < 0) printError("File Free", result, errorPointer);
+            if (result < 0)
+                printError("File Free", result, errorPointer);
             contagemFechamentos++;
 
             LOGGER.info("Opens: " + contagemAbertura);
             LOGGER.info("Closes: " + contagemFechamentos);
-            
-		} finally {
-			
-		}
-		return history;
-	}
+
+        } finally {
+
+        }
+        return history;
+    }
 }

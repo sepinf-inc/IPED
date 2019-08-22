@@ -7,56 +7,56 @@ import java.util.TimeZone;
 import com.google.common.base.Strings;
 
 public class FirefoxMozPlace {
-	private long id;
-	private String title = "";
+    private long id;
+    private String title = "";
     private String url;
     private Date visitDate;
 
-	public FirefoxMozPlace(long id, String title, long visitDate, String url) {
+    public FirefoxMozPlace(long id, String title, long visitDate, String url) {
         this.id = id;
         if (!Strings.isNullOrEmpty(title)) {
-        	this.title = title;
+            this.title = title;
         }
         this.url = url;
         this.visitDate = new Date(visitDate);
     }
-	
-	public long getId() {
-		return id;
-	}
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    public long getId() {
+        return id;
+    }
 
-	public String getTitle() {
-		return title;
-	}
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    public String getTitle() {
+        return title;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public Date getVisitDate() {
-		return visitDate;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public void setVisitDate(long visitDate) {
-		this.visitDate = new Date(visitDate);
-	}
-	
-	public String getVisitDateAsString() {
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-		format.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return format.format(visitDate);
-	}
+    public Date getVisitDate() {
+        return visitDate;
+    }
+
+    public void setVisitDate(long visitDate) {
+        this.visitDate = new Date(visitDate);
+    }
+
+    public String getVisitDateAsString() {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format.format(visitDate);
+    }
 
 }
