@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -17,13 +16,11 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToXMLContentHandler;
@@ -45,7 +42,7 @@ import iped3.util.ExtraProperties;
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
  */
-public class ChromeSqliteParser extends AbstractParser {
+public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
     // Visited sites
     // SELECT datetime(((visits.visit_time/1000000)-11644473600), "unixepoch"),
@@ -60,6 +57,11 @@ public class ChromeSqliteParser extends AbstractParser {
     // downloads.total_bytes FROM downloads, downloads_url_chains WHERE downloads.id
     // = downloads_url_chains.id;
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final MediaType CHROME_SQLITE = MediaType.application("x-chrome-sqlite"); //$NON-NLS-1$
 
     public static final MediaType CHROME_HISTORY = MediaType.application("x-chrome-history"); //$NON-NLS-1$
@@ -71,8 +73,6 @@ public class ChromeSqliteParser extends AbstractParser {
     public static final MediaType CHROME_DOWNLOADS_REG = MediaType.application("x-chrome-downloads-registry"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(CHROME_SQLITE);
-
-    private static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -118,6 +118,9 @@ public class ChromeSqliteParser extends AbstractParser {
                 int i = 0;
 
                 for (Download d : downloads) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataDownload = new Metadata();
@@ -151,6 +154,9 @@ public class ChromeSqliteParser extends AbstractParser {
                 i = 0;
 
                 for (Visit h : history) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataHistory = new Metadata();
@@ -340,30 +346,6 @@ public class ChromeSqliteParser extends AbstractParser {
             if (xHandler != null)
                 xHandler.endDocument();
         }
-    }
-
-    protected Connection getConnection(File dbFile) throws IOException, TikaException {
-        String connectionString = getConnectionString(dbFile);
-        Connection connection = null;
-        try {
-            Class.forName(getJDBCClassName());
-        } catch (ClassNotFoundException e) {
-            throw new TikaException(e.getMessage());
-        }
-        try {
-            connection = DriverManager.getConnection(connectionString);
-        } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
-        }
-        return connection;
-    }
-
-    protected String getConnectionString(File dbFile) throws IOException {
-        return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
-    }
-
-    protected String getJDBCClassName() {
-        return SQLITE_CLASS_NAME;
     }
 
     protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)

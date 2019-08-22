@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -62,6 +63,13 @@ public class EdgeWebCacheParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(EdgeWebCacheParser.class);
 
     private static EsedbLibrary esedbLibrary;
+    
+    protected boolean extractEntries = true;
+    
+    @Field
+    public void setExtractEntries(boolean extractEntries) {
+        this.extractEntries = extractEntries;
+    }
 
     static {
         if (Platform.isWindows()) {
@@ -183,6 +191,9 @@ public class EdgeWebCacheParser extends AbstractParser {
                     }
 
                     for (EdgeVisit ev : ec.getEntries()) {
+                        
+                        if(!extractEntries)
+                            break;
 
                         i++;
                         Metadata metadataHistory = new Metadata();

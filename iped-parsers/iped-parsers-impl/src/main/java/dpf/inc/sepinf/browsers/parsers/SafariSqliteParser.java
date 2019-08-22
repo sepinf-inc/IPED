@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -17,13 +16,11 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -46,7 +43,12 @@ import iped3.util.ExtraProperties;
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
  */
-public class SafariSqliteParser extends AbstractParser {
+public class SafariSqliteParser extends AbstractSqliteBrowserParser {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     public static final MediaType SAFARI_SQLITE = MediaType.application("x-safari-sqlite"); //$NON-NLS-1$
 
@@ -59,8 +61,6 @@ public class SafariSqliteParser extends AbstractParser {
     public static final MediaType SAFARI_DOWNLOADS_REG = MediaType.application("x-safari-downloads-registry"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(SAFARI_SQLITE);
-
-    private static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariSqliteParser.class);
 
@@ -104,6 +104,9 @@ public class SafariSqliteParser extends AbstractParser {
                 int i = 0;
 
                 for (SafariVisit h : history) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataHistory = new Metadata();
@@ -214,30 +217,6 @@ public class SafariSqliteParser extends AbstractParser {
             if (xHandler != null)
                 xHandler.endDocument();
         }
-    }
-
-    protected Connection getConnection(File dbFile) throws IOException, TikaException {
-        String connectionString = getConnectionString(dbFile);
-        Connection connection = null;
-        try {
-            Class.forName(getJDBCClassName());
-        } catch (ClassNotFoundException e) {
-            throw new TikaException(e.getMessage());
-        }
-        try {
-            connection = DriverManager.getConnection(connectionString);
-        } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
-        }
-        return connection;
-    }
-
-    protected String getConnectionString(File dbFile) throws IOException {
-        return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
-    }
-
-    protected String getJDBCClassName() {
-        return SQLITE_CLASS_NAME;
     }
 
     protected List<SafariResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)

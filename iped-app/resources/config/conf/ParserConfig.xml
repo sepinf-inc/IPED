@@ -76,7 +76,11 @@
         <parser class="org.gagravarr.tika.OggParser"></parser>
         <parser class="org.gagravarr.tika.VorbisParser"></parser>
         
-        <parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser">
+        	<params>
+				<param name="extractEntries" type="bool">true</param>
+			</params>
+        </parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser"></parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.EdgeWebCacheParser"></parser>
         <parser class="dpf.inc.sepinf.browsers.parsers.SafariSqliteParser"></parser>

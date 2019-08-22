@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -48,6 +49,11 @@ import iped3.util.ExtraProperties;
  */
 public class SafariPlistParser extends AbstractParser {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final MediaType SAFARI_PLIST = MediaType.application("x-safari-plist"); //$NON-NLS-1$
 
     public static final MediaType SAFARI_HISTORY = MediaType.application("x-safari-history"); //$NON-NLS-1$
@@ -61,6 +67,13 @@ public class SafariPlistParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(SAFARI_PLIST);
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariPlistParser.class);
+    
+    protected boolean extractEntries = true;
+    
+    @Field
+    public void setExtractEntries(boolean extractEntries) {
+        this.extractEntries = extractEntries;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -109,6 +122,9 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (SafariResumedVisit v : resumedHistory) {
+                        
+                        if(!extractEntries)
+                            break;
 
                         i++;
                         Metadata metadataHistory = new Metadata();
@@ -148,6 +164,9 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (SafariDownload d : downloads) {
+                        
+                        if(!extractEntries)
+                            break;
 
                         i++;
                         Metadata metadataDownload = new Metadata();
@@ -187,6 +206,9 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (SafariBookmark b : bookmarks) {
+                        
+                        if(!extractEntries)
+                            break;
 
                         i++;
                         Metadata metadataBookmark = new Metadata();

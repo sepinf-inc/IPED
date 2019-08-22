@@ -53,7 +53,12 @@ import iped3.util.ExtraProperties;
  * 
  * @author Paulo César Herrmann Wanner <herrmann.pchw@dpf.gov.br>
  */
-public class FirefoxSqliteParser extends AbstractParser {
+public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     public static final MediaType MOZ_PLACES = MediaType.application("x-firefox-places"); //$NON-NLS-1$
 
@@ -70,8 +75,6 @@ public class FirefoxSqliteParser extends AbstractParser {
     public static final MediaType MOZ_DOWNLOADS_REG = MediaType.application("x-firefox-downloads-registry"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MOZ_PLACES);
-
-    private static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -119,6 +122,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 
                 int i = 0;
                 for (FirefoxMozBookmark b : bookmarks) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataBookmark = new Metadata();
@@ -153,6 +159,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 
                 i = 0;
                 for (Visit h : history) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataHistory = new Metadata();
@@ -186,6 +195,9 @@ public class FirefoxSqliteParser extends AbstractParser {
 
                 i = 0;
                 for (Download d : downloads) {
+                    
+                    if(!extractEntries)
+                        break;
 
                     i++;
                     Metadata metadataDownload = new Metadata();
@@ -464,30 +476,6 @@ public class FirefoxSqliteParser extends AbstractParser {
             if (xHandler != null)
                 xHandler.endDocument();
         }
-    }
-    
-    protected Connection getConnection(File dbFile) throws IOException, TikaException {
-        String connectionString = getConnectionString(dbFile);
-        Connection connection = null;
-        try {
-            Class.forName(getJDBCClassName());
-        } catch (ClassNotFoundException e) {
-            throw new TikaException(e.getMessage());
-        }
-        try {
-            connection = DriverManager.getConnection(connectionString);
-        } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
-        }
-        return connection;
-    }
-
-    protected String getConnectionString(File dbFile) throws IOException {
-        return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
-    }
-
-    protected String getJDBCClassName() {
-        return SQLITE_CLASS_NAME;
     }
 
     protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
