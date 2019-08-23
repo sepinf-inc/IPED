@@ -12,7 +12,9 @@ Documentos PDF = application/pdf
 
 Documentos HTML = text/html; application/xhtml+xml; application/vnd.wap.xhtml+xml; application/x-asp; text/asp; text/aspdotnet
 
-Arquivos XML = application/xml; application/rdf+xml; application/rss+xml; application/vnd.google-earth.kml+xml
+Arquivos XML = application/xml; application/rdf+xml; application/rss+xml
+
+Arquivos de Georeferenciamento = application/vnd.google-earth.kml+xml; application/gpx
 
 Documentos de Texto = application/vnd.ms-wordml; application/x-tika-ooxml-protected-docx; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;
 
@@ -34,7 +36,7 @@ Bases de dados = application/x-edb; application/x-edb-table; application/irpf; a
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli; application/zstd; application/deflate64; image/x-emf-compressed 
 
-Contatos = text/x-vcard; application/x-vcard-html; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact
+Contatos = text/x-vcard; application/x-vcard-html; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact;
 
 Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview
 
@@ -58,7 +60,11 @@ Outros Arquivos = application/octet-stream; application/x-nls
 
 Peer-to-peer = application/x-p2p
 
-Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-ufed-visitedpage
+Histórico de Internet = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-firefox-places; application/x-firefox-history; application/x-firefox-downloads; application/x-chrome-sqlite; application/x-chrome-history; application/x-chrome-downloads; application/x-edge-web-cache; application/x-edge-history; application/x-safari-sqlite; application/x-safari-history; application/x-safari-plist; application/x-safari-downloads; 
+
+Registros de Histórico de Internet = application/x-ufed-visitedpage; application/x-firefox-history-registry; application/x-firefox-downloads-registry; application/x-chrome-history-registry; application/x-chrome-downloads-registry; application/x-edge-history-registry; application/x-safari-downloads-registry; application/x-safari-history-registry;
+
+Favoritos Web = application/x-ufed-html-bookmarks; application/x-ufed-webbookmark; application/x-firefox-bookmarks; application/x-firefox-bookmarks-registry;
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
@@ -89,8 +95,6 @@ Logs = application/x-ufed-html-logs; application/x-ufed-logentry
 Usuários = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user
 
 Pesquisas = application/x-ufed-html-searches; application/x-ufed-searcheditem
-
-Favoritos Web = application/x-ufed-html-bookmarks; application/x-ufed-webbookmark
 
 Anotações = application/x-ufed-html-notes; application/x-ufed-note
 

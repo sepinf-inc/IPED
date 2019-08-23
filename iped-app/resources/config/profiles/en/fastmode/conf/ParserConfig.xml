@@ -75,7 +75,18 @@
         <parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
         <parser class="org.gagravarr.tika.VorbisParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser>
+        
+        <parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser">
+        	<params>
+				<param name="extractEntries" type="bool">true</param>
+			</params>
+        </parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.EdgeWebCacheParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.SafariSqliteParser"></parser>
+        <parser class="dpf.inc.sepinf.browsers.parsers.SafariPlistParser"></parser>
+        
+       	<parser class="dpf.sp.gpinf.indexer.parsers.EDBParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
@@ -125,6 +136,7 @@
             <mime>application/irpf</mime>
             <mime>application/x-nls</mime>
         </parser>
+        <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
 	
     </parsers>
 
