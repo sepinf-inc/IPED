@@ -67,12 +67,15 @@ public class TaskInstaller {
         return tasks;
     }
 
-    private ScriptTask getScriptTask(String name) {
+    private AbstractTask getScriptTask(String name) {
         File script = new File(scriptDir, name);
         if (!script.exists())
             throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
-
-        return new ScriptTask(script);
+        
+        if(name.endsWith(".py"))
+            return new PythonTask(script);
+        else
+            return new ScriptTask(script);
     }
 
 }
