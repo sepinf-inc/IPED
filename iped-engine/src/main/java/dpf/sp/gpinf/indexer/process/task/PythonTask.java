@@ -9,6 +9,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
+import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask{
     
@@ -42,7 +43,7 @@ public class PythonTask extends AbstractTask{
     }
     
     private Jep getNewJep() throws JepException {
-        Jep jep = new Jep();
+        Jep jep = new SharedInterpreter();
         jep.setInteractive(false);
         
         jep.set("caseData", this.caseData); //$NON-NLS-1$
