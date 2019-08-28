@@ -1,8 +1,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -12,6 +14,8 @@ import jep.JepException;
 import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask{
+    
+    private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
     
     private static boolean finished;
     private static String scriptName;
@@ -46,10 +50,15 @@ public class PythonTask extends AbstractTask{
         Jep jep = new SharedInterpreter();
         jep.setInteractive(false);
         
+        jep.eval("from jep import redirect_streams");
+        jep.eval("redirect_streams.setup()");
+        jep.eval(null); // flush
+        
         jep.set("caseData", this.caseData); //$NON-NLS-1$
         jep.set("moduleDir", this.output); //$NON-NLS-1$
         jep.set("worker", this.worker); //$NON-NLS-1$
         jep.set("stats", this.stats); //$NON-NLS-1$
+        jep.set("logger", LOGGER); //$NON-NLS-1$
         
         jep.runScript(scriptFile.getAbsolutePath());
         
@@ -69,6 +78,8 @@ public class PythonTask extends AbstractTask{
     public void init(Properties confParams, File confDir) throws Exception {
         this.confParams = confParams;
         this.confDir = confDir;
+        try(Jep jep = getNewJep()){
+        }
     }
 
     @Override
@@ -98,7 +109,13 @@ public class PythonTask extends AbstractTask{
         if(jep == null)
             jep = getNewJep();
         
-        jep.invoke("process", item); //$NON-NLS-1$
+        try {
+            jep.invoke("process", item); //$NON-NLS-1$
+            
+        }catch(JepException e) {
+            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString());
+            LOGGER.debug("", e);
+        }
     }
 
 }
