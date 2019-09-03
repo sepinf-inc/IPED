@@ -399,6 +399,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-nsfw-model</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>yahoo</groupId>
+    								<artifactId>nsfw-keras</artifactId>
+    								<version>1.0.0</version>
+                                    <type>h5</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-nativeview</id>
                         <phase>package</phase>
                         <goals>
