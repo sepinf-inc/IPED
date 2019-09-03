@@ -51,12 +51,12 @@
         <repository>
             <id>internal</id>
             <name>Archiva SEPINF - Internal</name>
-            <url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/internal/</url>
+            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/internal/</url>
         </repository>
         <repository>
             <id>snapshots</id>
             <name>Archiva SEPINF - Snapshot</name>
-            <url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/snapshots/</url>
+            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/snapshots/</url>
         </repository>
     </repositories>
     
@@ -64,13 +64,13 @@
 		<repository>
 			<id>archiva.internal</id>
 			<name>Internal Release Repository</name>
-			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/internal/</url>
+			<url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/internal/</url>
 		</repository>
 		<snapshotRepository>
 			<id>archiva.snapshots</id>
 			<name>Internal Snapshot Repository</name>
 			<layout>default</layout>
-			<url>http://sepinf-dev.ditec.dpf.gov.br:8081/repository/snapshots/</url>
+			<url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
     
