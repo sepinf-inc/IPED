@@ -1,0 +1,22 @@
+<registryparserconfig>
+
+<registryKeyParsers>
+
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+		<key name="ROOT/Software/Ares">
+			<decoder type="REG_SZ" function="hexDatatostring">
+				<include valueName="General.Language"/>
+				<include valueName="PrivateMessage.AwayMessage"/>
+			</decoder>
+		</key>
+	</registryKeyParser>
+
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+		<key name="ROOT/Software/Ares/Search.History/*">
+			<decoder type="REG_SZ" function="hextostring" decodeValueName="yes"/>
+		</key>
+	</registryKeyParser>
+
+</registryKeyParsers>
+
+</registryparserconfig>

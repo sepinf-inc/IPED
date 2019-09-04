@@ -1,0 +1,83 @@
+<registryparserconfig>
+
+<registryKeyParsers>
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.HtmlKeyParser">
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/ProfileList/*"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/NetworkCards"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/Winlogon"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/NetworkList/Signatures/Unmanaged/*"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/NetworkList/Signatures/Managed/*"/>
+		<key name="ROOT/Microsoft/Windows NT/CurrentVersion/NetworkList/Profiles/*"/>
+
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/Run"/>
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/App Paths/*"/>
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/Authentication/LogonUI"/>
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/Internet Settings"/>
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/Internet Settings/ProxyServer"/>
+		<key name="ROOT/Microsoft/Windows/CurrentVersion/Uninstall/*"/>
+
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Run"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/App Paths/*"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Uninstall/*"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/UnreadMail/*"/>
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/WordWheelQuery"/>
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/Streams"/>
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/MapNetwork Drive MRU"/>
+        <key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Explorer/TypedPaths"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Internet Settings"/>
+		<key name="ROOT/Software/Microsoft/Windows/CurrentVersion/Internet Settings/ProxyServer"/>
+        <key name="ROOT/Software/Microsoft/Windows/ShellNoRoam/MUICache"/>
+        <key name="ROOT/Software/Microsoft/Windows/Shell/Bags/1/Desktop"/>
+		<key name="ROOT/Software/Microsoft/Internet Explorer/TypedURLs"/>
+		<key name="ROOT/Software/Microsoft/Office/*/*/File MRU"/>
+		<key name="ROOT/Software/Microsoft/Office/*/*/Place MRU"/>
+		<key name="ROOT/Software/Microsoft/Office/Common/UserInfo"/>
+        <key name="ROOT/Software/Microsoft/Windows Messaging Subsystem/Profiles/*/*"/>
+        <key name="ROOT/Software/Microsoft/Conferencing/UI/CallMRU"/>
+        <key name="ROOT/Software/Microsoft/MSNMessenger/PerPassportSettings/*/UsertileUrl/"/>
+        <key name="ROOT/Software/MPC-HC/MPC-HC/Recent File List"/>
+        <key name="ROOT/Network/*"/>
+        <key name="ROOT/Printers/Defaults/*"/>
+        
+        <key name="ROOT/Microsoft/SkyDrive"/>
+        <key name="ROOT/Software/Microsoft/SkyDrive"/>
+        
+        <key name="ROOT/Software/Microsoft/MediaPlayer/Player/RecentFileList"/>
+		
+		<key name="ROOT/Software/Shareaza/Shareaza/Search"/>
+        <key name="ROOT/Software/Shareaza/Shareaza/Downloads/CompletePath"/>
+        <key name="ROOT/Software/Shareaza/Shareaza/Downloads/IncompletePath"/>
+        <key name="ROOT/Software/Shareaza/Shareaza/Community/ServeFiles"/>
+		
+        <key name="ROOT/Software/ShalSoft/GigaTribe/SessionUsername"/>
+        <key name="ROOT/Software/ShalSoft/GigaTribe/*"/>
+        <key name="ROOT/Software/ShalSoft/GigaTribe/*/Sharings"/>
+        <key name="ROOT/Software/ShalSoft/GigaTribe/WOpenNetwork/users/"/>
+
+		<key name="ROOT/Software/Microsoft/MediaPlayer/Player/RecentFileList"/>
+		<key name="ROOT/Software/Microsoft/Windows Live Contacts/Me"/>
+		<key name="ROOT/Software/Microsoft/Windows Live Contacts/Database"/>
+
+		<key name="ROOT/Software/Nico Mak Computing/WinZip/filemenu">
+			<description>Recently opened files using Winzip.</description>
+		</key>
+		
+		<key name="ROOT/ControSet001/Control/TimeZoneInformation"/>
+		<key name="ROOT/ControlSet001/Services/Tcpip/Parameters/Interfaces/*"/>
+		<key name="ROOT/ControlSet001/Services/Tcpip/Parameters/Adapters/*"/>
+		<key name="ROOT/ControlSet001/Services/W32Time/Parameters"/>
+		<key name="ROOT/ControlSet001/Enum/USBSTOR/*/*"/>
+		<key name="ROOT/ControlSet001/Enum/STORAGE/Volume/*"/>
+		<key name="ROOT/ControlSet001/Control/ComputerName/ComputerName"/>
+		<key name="ROOT/ControlSet001/Services/lanmanserver/Shares/Security"/>
+		<key name="ROOT/MountedDevices/*"/>
+		
+		<key name="ROOT/Domains/Account/Users/*"/>
+		
+	</registryKeyParser>
+
+</registryKeyParsers>
+
+</registryparserconfig>

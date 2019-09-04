@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright 2011-2014, Patrick Dalla Bernardina
+ 
+ This file is part of IPED-GEO.
+
+ IPED-GEO is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ IPED is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with IPED.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<mime-info>
+
+    <mime-type type="application/gpx">
+	    <root-XML localName="gpx"/>
+	    <root-XML localName="gpx" namespaceURI="http://www.topografix.com/GPX/1/1"/>
+    	<glob pattern="*.gpx"/>
+
+	    <sub-class-of type="application/xml"/>
+    </mime-type>
+   
+</mime-info>
