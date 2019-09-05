@@ -71,6 +71,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
     public static final MediaType CHROME_DOWNLOADS = MediaType.application("x-chrome-downloads"); //$NON-NLS-1$
 
     public static final MediaType CHROME_DOWNLOADS_REG = MediaType.application("x-chrome-downloads-registry"); //$NON-NLS-1$
+    
+    public static final MediaType CHROME_SEARCHES = MediaType.application("x-chrome-searches"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(CHROME_SQLITE);
 
@@ -87,6 +89,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         File dbFile = TikaInputStream.get(stream, tmp).getFile();
         File downloadsFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
+        File searchFile = tmp.createTemporaryFile();
 
         try (Connection connection = getConnection(dbFile)) {
 
@@ -96,6 +99,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             List<ResumedVisit> resumedHistory = getResumedHistory(connection, metadata, context);
             List<Visit> history = getHistory(connection, metadata, context);
             List<Download> downloads = getDownloads(connection, metadata, context);
+            List<Search> searches = getSearchTerms(connection, metadata, context);
 
             if (extractor.shouldParseEmbedded(metadata)) {
 
@@ -169,6 +173,22 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
+                }
+                
+                try (FileOutputStream tmpSearchesFile = new FileOutputStream(searchFile)) {
+
+                    ToXMLContentHandler searchesHandler = new ToXMLContentHandler(tmpSearchesFile, "UTF-8"); //$NON-NLS-1$
+                    Metadata searchesMetadata = new Metadata();
+                    searchesMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHROME_SEARCHES.toString());
+                    searchesMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome Searches"); //$NON-NLS-1$
+                    searchesMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
+                    searchesMetadata.set(BasicProps.HASCHILD, "false"); //$NON-NLS-1$
+
+                    parseChromeSearches(stream, searchesHandler, searchesMetadata, context, searches);
+
+                    try (FileInputStream fis = new FileInputStream(searchFile)) {
+                        extractor.parseEmbedded(fis, handler, searchesMetadata, true);
+                    }
                 }
             }
 
@@ -347,6 +367,95 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endDocument();
         }
     }
+    
+    private void parseChromeSearches(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context, List<Search> searches) throws IOException, SAXException, TikaException {
+
+        XHTMLContentHandler xHandler = null;
+
+        try {
+
+            xHandler = new XHTMLContentHandler(handler, metadata);
+            xHandler.startDocument();
+
+            xHandler.startElement("head"); //$NON-NLS-1$
+            xHandler.startElement("style"); //$NON-NLS-1$
+            xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
+            xHandler.endElement("style"); //$NON-NLS-1$
+            xHandler.endElement("head"); //$NON-NLS-1$
+
+            xHandler.startElement("h2 align=center"); //$NON-NLS-1$
+            xHandler.characters("Chrome Searches Terms"); //$NON-NLS-1$
+            xHandler.endElement("h2"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+
+            xHandler.startElement("table"); //$NON-NLS-1$
+
+            xHandler.startElement("tr"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters(""); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("LAST SEARCH DATE (UTC)"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("SEARCH TERMS"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("TITLE"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.endElement("tr"); //$NON-NLS-1$
+
+            int i = 1;
+
+            for (Search s : searches) {
+                xHandler.startElement("tr"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(Integer.toString(i));
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(s.getLastVisitDateAsString());
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(s.getTerms());
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(s.getTitle());
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(s.getUrl());
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.endElement("tr"); //$NON-NLS-1$
+
+                i++;
+            }
+
+            xHandler.endElement("table"); //$NON-NLS-1$
+
+            xHandler.endDocument();
+
+        } finally {
+            if (xHandler != null)
+                xHandler.endDocument();
+        }
+    }
+
 
     protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
@@ -421,6 +530,32 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 st.close();
         }
         return downloads;
+    }
+    
+    protected List<Search> getSearchTerms(Connection connection, Metadata metadata, ParseContext context)
+            throws SQLException {
+        List<Search> searches = new LinkedList<Search>();
+
+        Statement st = null;
+        try {
+            st = connection.createStatement();
+            // The chrome visits.visit_time is in (the number of) microseconds since January
+            // 1, 1601 UTC
+            // java Date use epoch time in milliseconds
+            String sql = "SELECT urls.id, ((urls.last_visit_time/1000)-11644473600000), term, urls.title, urls.url " //$NON-NLS-1$
+                    + "FROM urls, keyword_search_terms " //$NON-NLS-1$
+                    + "WHERE urls.id = keyword_search_terms.url_id " //$NON-NLS-1$
+                    + "ORDER BY urls.last_visit_time DESC;"; //$NON-NLS-1$
+            ResultSet rs = st.executeQuery(sql);
+
+            while (rs.next()) {
+                searches.add(new Search(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getString(5)));
+            }
+        } finally {
+            if (st != null)
+                st.close();
+        }
+        return searches;
     }
 
     public static void main(String[] args) {

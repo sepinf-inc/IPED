@@ -130,6 +130,10 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
+    <mime-type type="application/x-chrome-searches">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
     <mime-type type="application/x-edge-history">
         <sub-class-of type="text/html"/>
     </mime-type>
