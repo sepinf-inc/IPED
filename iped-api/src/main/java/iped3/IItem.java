@@ -521,6 +521,8 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
+    
+    void setThumb(byte[] thumb);
 
     /**
      * @return returns the created evidenceFile.
