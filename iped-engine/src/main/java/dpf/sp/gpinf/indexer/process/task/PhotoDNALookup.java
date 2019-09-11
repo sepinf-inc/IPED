@@ -74,15 +74,21 @@ public class PhotoDNALookup extends AbstractTask{
             return;
         
         byte[] photodna = getBytes(hashStr);
+        int min_dist = Integer.MAX_VALUE;
+        byte[] nearestNeighbor = null;
         for(byte[] hash : photoDNAHashSet) {
-            int dist = photoDNAComparator.compare(hash, photodna); 
+            int dist = photoDNAComparator.compare(hash, photodna);
+            if(dist < min_dist) {
+                min_dist = dist;
+                nearestNeighbor = hash;
+            }
             if(dist <= MAX_DISTANCE) {
                 evidence.setExtraAttribute(PHOTO_DNA_KFF_HIT, "true");
-                evidence.setExtraAttribute(PHOTO_DNA_KFF_DIST, dist);
-                evidence.setExtraAttribute(PHOTO_DNA_KFF_HASH, new String(Hex.encodeHex(hash, false)));
                 break;
             }
         }
+        evidence.setExtraAttribute(PHOTO_DNA_KFF_DIST, min_dist);
+        evidence.setExtraAttribute(PHOTO_DNA_KFF_HASH, new String(Hex.encodeHex(nearestNeighbor, false)));
                 
     }
     
