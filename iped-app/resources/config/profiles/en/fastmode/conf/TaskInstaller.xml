@@ -33,7 +33,7 @@
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.CarveTask"></task>
+    <task class="dpf.sp.gpinf.carver.CarverTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.EntropyTask"></task>
