@@ -1,0 +1,16 @@
+#############################
+# PhotoDNA Task configuration
+#############################
+
+# Compute photoDNA from image thumbnails. Much faster than using original image.
+computeFromThumbnail = true
+
+# Minimal image size (bytes) to compute photoDNA
+minFileSize = 10000
+
+# Do not compute photoDNA of files present in KFF databases (ignorable, alert or child porn)
+skipKffFiles = true
+
+# Maximum distance between photoDNA hashes to consider two images similar.
+# Here you can adjust false positives and false negatives.
+maxSimilarityDistance = 50000
