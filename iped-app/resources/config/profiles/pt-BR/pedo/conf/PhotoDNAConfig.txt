@@ -11,6 +11,9 @@ minFileSize = 10000
 # Do not compute photoDNA of files present in KFF databases (ignorable, alert or child porn)
 skipKffFiles = true
 
-# Maximum distance between photoDNA hashes to consider two images similar.
-# Here you can adjust false positives and false negatives.
-maxSimilarityDistance = 50000
+# Maximum distance between photoDNA hashes to consider two images as similar.
+# It is used to look up for photoDNA hashes in a hash database.
+# The bigger the number, you'll get more false positives and less false negatives.
+# Distances bellow this threshold will set 'photoDnaKffHit' property as 'true'
+# You can also sort by 'photoDnaKffDistance' instead.
+maxSimilarityDistance = 100000
