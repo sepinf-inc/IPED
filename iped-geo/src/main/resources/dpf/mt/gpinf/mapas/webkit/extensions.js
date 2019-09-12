@@ -67,7 +67,7 @@
 		  this.geodesicPoly.setVisible(true);
 		  
 		  var distance = google.maps.geometry.spherical.computeDistanceBetween(path[0], path[1]);
-		  document.getElementById('distancia_calc').innerHTML = distance.toFixed(0) + " metros";
+		  document.getElementById('distancia_calc').innerHTML = distance.toFixed(0) + " meters";
 	  }
   }
   
