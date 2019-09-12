@@ -10,13 +10,13 @@ ReportDate=xx/xx/201x
 RecordDate=xx/xx/201x
 RequestDoc=Examination request xxxxx
 Investigation=Investigation xxxxxxx
-Report=Examination number
-Material=Evidence identification
+Report=Examination_number
+Material=Evidence_description
 ExaminerID=XX.XXX
-Examiner=Examiner name
-Record=Laboratory internal record number
-Requester = Investigator name
-Title= Examination Report Name
+Examiner=Examiner_name
+Record=Laboratory_internal_record_number
+Requester = Investigator_name
+Title= Examination_Report_Name
 
 # Items per HTML page.
 ItemsPerPage = 100
