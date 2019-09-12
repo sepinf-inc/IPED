@@ -47,12 +47,15 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
-        analyzerPerField.put(HashTask.HASH.MD5.toString(), new KeywordAnalyzer());
-        analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), new KeywordAnalyzer());
-        analyzerPerField.put(HashTask.HASH.SHA1.toString(), new KeywordAnalyzer());
-        analyzerPerField.put(HashTask.HASH.SHA256.toString(), new KeywordAnalyzer());
-        analyzerPerField.put(HashTask.HASH.SHA512.toString(), new KeywordAnalyzer());
-        analyzerPerField.put(PhotoDNATask.PHOTO_DNA, new KeywordAnalyzer());
+        
+        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+        hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
+        analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA1.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA256.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA512.toString(), hashAnalyzer);
+        analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
         StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
