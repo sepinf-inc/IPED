@@ -374,7 +374,6 @@ public class HTMLReportTask extends AbstractTask {
 
         if (taskEnabled && caseData.containsReport() && info != null) {
 
-            String reportRootModel = "report.htm"; //$NON-NLS-1$
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
             if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
                 Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
@@ -386,14 +385,22 @@ public class HTMLReportTask extends AbstractTask {
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
             String codePath = Configuration.getInstance().appRoot;
-            LocaleConfig localeConf = (LocaleConfig)ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
-            File templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
-
+            String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
+            File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
+            if(!new File(templatesFolder, reportRootModel).exists()) {
+                LocaleConfig localeConf = (LocaleConfig)ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+                templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
+            } 
+            
             Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
             Log.info(taskName, "Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
                 throw new FileNotFoundException("Template folder not found!"); //$NON-NLS-1$
             }
+            
+            File templateSubFolder = new File(templatesFolder, "modelos"); //$NON-NLS-1$
+            if(!templateSubFolder.exists())
+                templateSubFolder = new File(templatesFolder, "templates"); //$NON-NLS-1$
 
             long t = System.currentTimeMillis();
 
@@ -410,21 +417,24 @@ public class HTMLReportTask extends AbstractTask {
             if (!entriesByLabel.isEmpty() && !entriesNoLabel.isEmpty())
                 entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
-            modeloPerito = EncodedFile.readFile(new File(templatesFolder, "templates/perito.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
-            processBookmarks(templatesFolder);
+            modeloPerito = EncodedFile.readFile(new File(templateSubFolder, "perito.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+            processBookmarks(templateSubFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
                 createThumbsPage();
             }
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), //$NON-NLS-1$
                     new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
-            Files.copy(new File(templatesFolder, reportRootModel).toPath(),
-                    new File(reportSubFolder.getParentFile(), reportRoot).toPath());
-            try {
-                copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder); //$NON-NLS-1$
-            }catch(NoSuchFileException e) {
-                Log.warning(taskName, "Copy ignored: " + e.toString());
-            }
+            
+            File reportRootModelFile = new File(templatesFolder, reportRootModel);
+            if(!reportRootModelFile.exists())
+                reportRootModelFile = new File(templatesFolder, "report.htm"); //$NON-NLS-1$
+            Files.copy(reportRootModelFile.toPath(), new File(reportSubFolder.getParentFile(), reportRoot).toPath());
+            
+            File help = new File(templatesFolder, "ajuda.htm"); //$NON-NLS-1$
+            if(help.exists())
+                copyFile(help, reportSubFolder);
+            
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
@@ -627,9 +637,9 @@ public class HTMLReportTask extends AbstractTask {
 
     private void processBookmarks(File templatesFolder) throws Exception {
         sortRegs();
-        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "templates/arq.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "arq.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
         replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
-        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "templates/item.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
         int idx = 1;
         for (String marcador : entriesByLabel.keySet()) {
             String id = String.format("arq%06d", idx); //$NON-NLS-1$
