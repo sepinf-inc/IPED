@@ -1,0 +1,21 @@
+div#conteudo {
+    margin-left: 20px;
+    margin-right: 10px;
+    margin-top: 10px;
+    width: 90%;
+    text-align: left;
+}
+
+hr {
+    margin-top: 15px;
+    margin-bottom: 0px;
+}
+
+.HeaderText { 
+    font-size: 25px;
+    color: #034D86; 
+    font-family: 'Arial Black';
+    text-decoration: none;
+    border-bottom: 4px solid rgb(200,200,200);
+    width: 80%;
+}

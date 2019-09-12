@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.text.DateFormat;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -372,9 +374,9 @@ public class HTMLReportTask extends AbstractTask {
 
         if (taskEnabled && caseData.containsReport() && info != null) {
 
-            String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
+            String reportRootModel = "report.htm"; //$NON-NLS-1$
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
-            if (new File(reportSubFolder.getParentFile(), reportRootModel).exists()) {
+            if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
                 Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
                 return;
             }
@@ -384,7 +386,8 @@ public class HTMLReportTask extends AbstractTask {
 
             // Pasta com arquivos HTML formatado que são utilizados como entrada.
             String codePath = Configuration.getInstance().appRoot;
-            File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
+            LocaleConfig localeConf = (LocaleConfig)ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+            File templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
 
             Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
             Log.info(taskName, "Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
@@ -407,7 +410,7 @@ public class HTMLReportTask extends AbstractTask {
             if (!entriesByLabel.isEmpty() && !entriesNoLabel.isEmpty())
                 entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
-            modeloPerito = EncodedFile.readFile(new File(templatesFolder, "modelos/perito.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+            modeloPerito = EncodedFile.readFile(new File(templatesFolder, "templates/perito.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
             processBookmarks(templatesFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
                 createThumbsPage();
@@ -417,7 +420,11 @@ public class HTMLReportTask extends AbstractTask {
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
             Files.copy(new File(templatesFolder, reportRootModel).toPath(),
                     new File(reportSubFolder.getParentFile(), reportRoot).toPath());
-            copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder); //$NON-NLS-1$
+            try {
+                copyFile(new File(templatesFolder, "ajuda.htm"), reportSubFolder); //$NON-NLS-1$
+            }catch(NoSuchFileException e) {
+                Log.warning(taskName, "Copy ignored: " + e.toString());
+            }
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
@@ -534,8 +541,8 @@ public class HTMLReportTask extends AbstractTask {
         replace(arq.content, "%HEADER%", info.cabecalho); //$NON-NLS-1$
         replace(arq.content, "%TITLE%", info.titulo); //$NON-NLS-1$
         replace(arq.content, "%INVESTIGATION%", info.ipl); //$NON-NLS-1$
-        replace(arq.content, "%REQUEST_DOC%", //$NON-NLS-1$
-                info.documento + Messages.getString("HTMLReportTask.of") + info.dataDocumento); //$NON-NLS-1$
+        replace(arq.content, "%REQUEST_DOC%", info.documento); //$NON-NLS-1$
+        replace(arq.content, "%REQUEST_DATE%", info.dataDocumento); //$NON-NLS-1$
         replace(arq.content, "%REQUESTER%", info.solicitante); //$NON-NLS-1$
         replace(arq.content, "%RECORD%", info.protocolo); //$NON-NLS-1$
         replace(arq.content, "%RECORD_DATE%", info.dataProtocolo); //$NON-NLS-1$
@@ -620,9 +627,9 @@ public class HTMLReportTask extends AbstractTask {
 
     private void processBookmarks(File templatesFolder) throws Exception {
         sortRegs();
-        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "modelos/arq.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "templates/arq.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
         replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
-        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "modelos/item.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "templates/item.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
         int idx = 1;
         for (String marcador : entriesByLabel.keySet()) {
             String id = String.format("arq%06d", idx); //$NON-NLS-1$
