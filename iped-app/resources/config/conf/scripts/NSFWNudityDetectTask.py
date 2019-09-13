@@ -1,6 +1,7 @@
 ﻿# Tarefa de processamento em Python que calcula score nudez baseada no algoritmo deeplearning open NSFW do yahoo adaptado
-# Necessário instalar o keras e tensorflow, além do jep (https://github.com/ninia/jep)
-# E incluir a jep.dll(.so) no PATH (win) ou LD_LIBRARY_PATH (Linux)
+# Necessário instalar o jep (pip install jep==3.8.2), além do keras e tensorflow 
+# e incluir a jep.dll(.so) no PATH (win) ou LD_LIBRARY_PATH (Linux)
+# Habilitar esta tarefa em conf/TaskInstaller.xml
 
 import traceback
 import keras

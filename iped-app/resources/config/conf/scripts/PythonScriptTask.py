@@ -2,8 +2,8 @@
 # Devem ser implementados pelo menos os métodos getName() e process(item).
 # A tarefa pode acessar as propriedades, texto e conteúdo bruto dos items. Com base nessas informações,
 # pode ignorar o item, criar um atributo extra no item ou gerar bookmarks.
-# Necessário instalar o jep (https://github.com/ninia/jep)
-# E incluir a jep.dll(.so) no PATH (win) ou LD_LIBRARY_PATH (Linux)
+# Necessário instalar o jep (pip install jep==3.8.2) e incluir a jep.dll(.so) no PATH (win) ou LD_LIBRARY_PATH (Linux)
+# Habilitar esta tarefa em conf/TaskInstaller.xml
 
 # Retorna o nome da tarefa.
 def getName():
