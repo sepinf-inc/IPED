@@ -3,17 +3,22 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Properties;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
 
 public class PhotoDNALookup extends AbstractTask{
+    
+    private static Logger LOGGER = LoggerFactory.getLogger(PhotoDNALookup.class);
     
     private static final String photoDNAFilePath = "photoDNAFilePath";
     
@@ -28,28 +33,36 @@ public class PhotoDNALookup extends AbstractTask{
     private static ArrayList<byte[]> photoDNAHashSet = new ArrayList<>();
     
     private static Comparator<byte[]> photoDNAComparator;
+    
+    private static boolean taskEnabled = true;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        loadDatabase(confParams);
-    }
-    
-    @Override
-    public boolean isEnabled() {
-        return !photoDNAHashSet.isEmpty();
-    }
-    
-    private static synchronized void loadDatabase(Properties confParams) throws IOException, DecoderException {
         try {
-            photoDNAComparator = new br.dpf.sepinf.photodna.PhotoDNAComparator();
+            if(photoDNAComparator == null)
+                photoDNAComparator = new br.dpf.sepinf.photodna.PhotoDNAComparator();
         }catch(NoClassDefFoundError e) {
+            taskEnabled = false;
             return;
         }
         
-        if(photoDNAHashSet.isEmpty()) {
+        if(taskEnabled && photoDNAHashSet.isEmpty()) {
             String path = confParams.getProperty(photoDNAFilePath);
             if(path != null && !path.trim().isEmpty()) {
-                try (BufferedReader bf = new BufferedReader(new FileReader(path.trim()))){
+                File photoDnaHashSet = new File(path.trim());
+                if (!photoDnaHashSet.exists()) {
+                    String msg = "Invalid hash database path on " + photoDnaHashSet.getAbsolutePath(); //$NON-NLS-1$
+                    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+                    for (File source : args.getDatasources()) {
+                        if (source.getName().endsWith(".iped")) {
+                            LOGGER.warn(msg);
+                            taskEnabled = false;
+                            return;
+                        }
+                    }
+                    throw new IPEDException(msg);
+                }
+                try (BufferedReader bf = new BufferedReader(new FileReader(photoDnaHashSet))){
                     String line = null;
                     while((line = bf.readLine()) != null) {
                         String hash = line.split(",")[1];
@@ -58,6 +71,11 @@ public class PhotoDNALookup extends AbstractTask{
                 }
             }
         }
+    }
+    
+    @Override
+    public boolean isEnabled() {
+        return taskEnabled;
     }
 
     @Override

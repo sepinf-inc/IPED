@@ -58,8 +58,6 @@ public class PhotoDNATask extends AbstractTask{
         if(value != null && !value.trim().isEmpty())
             enabled = Boolean.valueOf(value.trim());
         
-        System.out.println("photodna enabled = " + enabled);
-        
         if(!enabled)
             return;
         
