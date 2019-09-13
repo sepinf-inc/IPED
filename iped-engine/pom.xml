@@ -16,6 +16,11 @@
     
     <dependencies>
     	<dependency>
+    		<groupId>com.eatthepath</groupId>
+    		<artifactId>jvptree</artifactId>
+    		<version>0.2</version>
+		</dependency>
+    	<dependency>
     		<groupId>black.ninia</groupId>
   			<artifactId>jep</artifactId>
   			<version>3.8.2</version>
