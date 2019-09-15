@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.eatthepath.jvptree.DistanceFunction;
 import com.eatthepath.jvptree.VPTree;
 
+import br.dpf.sepinf.photodna.PhotoDNATransforms;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
@@ -33,6 +34,8 @@ public class PhotoDNALookup extends AbstractTask{
     public static final String PHOTO_DNA_KFF_HASH = "photoDnaKffHash";
     
     public static int MAX_DISTANCE = 50000;
+    
+    public static boolean rotateAndFlip = true;
     
     private static VPTree<byte[], byte[]> vptree = new VPTree<>(new VPDistance());
     
@@ -112,15 +115,35 @@ public class PhotoDNALookup extends AbstractTask{
             return;
         
         byte[] photodna = getBytes(hashStr);
-        byte[] nearestNeighbor = vptree.getNearestNeighbors(photodna, 1).get(0);
         
-        int dist = photoDNAComparator.compare(nearestNeighbor, photodna);
-        if(dist <= MAX_DISTANCE) {
-            evidence.setExtraAttribute(PHOTO_DNA_KFF_HIT, "true");    
+        int rot = 0;
+        boolean flip = false;
+        while(rot == 0 || (rotateAndFlip && rot < 4)) {
+            int degree = 90 * rot++;
+            byte[] photodnaRot = PhotoDNATransforms.rotate(photodna, degree, flip);
+            
+            List<byte[]> neighbors = vptree.getAllWithinDistance(photodnaRot, MAX_DISTANCE);
+            
+            byte[] nearest = null;
+            int min_dist = Integer.MAX_VALUE;
+            for(byte[] neighbor : neighbors) {
+                int dist = photoDNAComparator.compare(neighbor, photodnaRot);
+                if(dist < min_dist) {
+                    min_dist = dist;
+                    nearest = neighbor;
+                }
+            }
+            if(nearest != null) {
+                evidence.setExtraAttribute(PHOTO_DNA_KFF_HIT, "true");
+                evidence.setExtraAttribute(PHOTO_DNA_KFF_DIST, min_dist);
+                evidence.setExtraAttribute(PHOTO_DNA_KFF_HASH, new String(Hex.encodeHex(nearest, false)));
+                break;
+            }
+            if(rot == 4 && !flip) {
+                rot = 0;
+                flip = true;
+            }
         }
-        evidence.setExtraAttribute(PHOTO_DNA_KFF_DIST, dist);
-        evidence.setExtraAttribute(PHOTO_DNA_KFF_HASH, new String(Hex.encodeHex(nearestNeighbor, false)));
-                
     }
     
     private static byte[] getBytes(String hash) throws DecoderException {

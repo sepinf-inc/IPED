@@ -39,6 +39,8 @@ public class PhotoDNATask extends AbstractTask{
     
     public static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
     
+    public static final String TEST_ROTATED_FLIPPED = "searchRotatedAndFlipped";
+    
     private static AtomicBoolean warned = new AtomicBoolean();
     
     private PhotoDNA photodna;
@@ -79,6 +81,10 @@ public class PhotoDNATask extends AbstractTask{
         if(value != null && !value.trim().isEmpty())
             PhotoDNALookup.MAX_DISTANCE = Integer.valueOf(value.trim());
         
+        value = config.getProperty(TEST_ROTATED_FLIPPED);
+        if(value != null && !value.trim().isEmpty())
+            PhotoDNALookup.rotateAndFlip = Boolean.valueOf(value.trim());
+        
         try {
             photodna = new PhotoDNA();
             
@@ -112,11 +118,11 @@ public class PhotoDNATask extends AbstractTask{
         if(skipKffFiles && evidence.getExtraAttribute(KFFTask.KFF_STATUS) != null)
             return;
                 
-        byte[] thumbHash;
+        byte[] hash;
         try (InputStream is = useThumbnail ? new ByteArrayInputStream(evidence.getThumb()) : evidence.getBufferedStream()){
             
-            thumbHash = computePhotoDNA(is);
-            String hashStr = new String(Hex.encodeHex(thumbHash, false));
+            hash = computePhotoDNA(is);
+            String hashStr = new String(Hex.encodeHex(hash, false));
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
             
         }catch(Throwable e) {
