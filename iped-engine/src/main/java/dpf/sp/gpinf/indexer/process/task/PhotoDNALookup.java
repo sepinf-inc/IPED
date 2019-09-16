@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,7 +24,7 @@ public class PhotoDNALookup extends AbstractTask{
     
     private static Logger LOGGER = LoggerFactory.getLogger(PhotoDNALookup.class);
     
-    private static final String photoDNAFilePath = "photoDNAFilePath";
+    private static final String photoDNAFilePath = "photoDNAHashDatabase";
     
     public static final String PHOTO_DNA_KFF_HIT = "photoDnaKffHit";
     
@@ -39,19 +38,12 @@ public class PhotoDNALookup extends AbstractTask{
     
     private static VPTree<byte[], byte[]> vptree = new VPTree<>(new VPDistance());
     
-    private static Comparator<byte[]> photoDNAComparator;
+    private static VPDistance photoDNADistance = new VPDistance();
     
     private static boolean taskEnabled = true;
     
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        try {
-            if(photoDNAComparator == null)
-                photoDNAComparator = new br.dpf.sepinf.photodna.PhotoDNAComparator();
-        }catch(NoClassDefFoundError e) {
-            taskEnabled = false;
-            return;
-        }
         
         if(taskEnabled && vptree.isEmpty()) {
             String path = confParams.getProperty(photoDNAFilePath);
@@ -72,13 +64,20 @@ public class PhotoDNALookup extends AbstractTask{
                 try (BufferedReader bf = new BufferedReader(new FileReader(photoDnaHashSet))){
                     String line = null;
                     ArrayList<byte[]> photoDNAHashSet = new ArrayList<>();
+                    int idx = -1;
                     while((line = bf.readLine()) != null) {
-                        String hash = line.split(",")[1];
-                        photoDNAHashSet.add(getBytes(hash));
+                        String[] hashes = line.split("\\*");
+                        if(idx == -1) {
+                            for(int i = 0; i < hashes.length; i ++)
+                                if(hashes[i].trim().length() == 2 * PhotoDNATask.HASH_SIZE)
+                                    idx = i;
+                        }
+                        photoDNAHashSet.add(getBytes(hashes[idx].trim()));
                     }
                     vptree.addAll(photoDNAHashSet);
                 }
-            }
+            }else
+                taskEnabled = false;
         }
     }
     
@@ -91,6 +90,8 @@ public class PhotoDNALookup extends AbstractTask{
                 int diff = (0xff & o1[i]) - (0xff & o2[i]);
                 distance += diff * diff;
             }
+            //This is not a metric (do not satisfy triangle inequality)
+            //Might it produce a wrong VPTree index???
             return distance;
         }
         
@@ -127,7 +128,7 @@ public class PhotoDNALookup extends AbstractTask{
             byte[] nearest = null;
             int min_dist = Integer.MAX_VALUE;
             for(byte[] neighbor : neighbors) {
-                int dist = photoDNAComparator.compare(neighbor, photodnaRot);
+                int dist = (int)photoDNADistance.getDistance(neighbor, photodnaRot);
                 if(dist < min_dist) {
                     min_dist = dist;
                     nearest = neighbor;
