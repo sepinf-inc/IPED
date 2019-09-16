@@ -151,7 +151,7 @@ maxBackups = 10
 backupInterval = 60
 
 # Habilita por padrão gerenciamento automático de colunas
-autoManageCols = false
+autoManageCols = true
 
 # Força abertura da imagens na inicialização do IPED. Desabilitado por padrão. 
 preOpenImagesOnSleuth = false

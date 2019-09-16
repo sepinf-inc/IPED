@@ -150,7 +150,7 @@ maxBackups = 10
 backupInterval = 60
 
 # Automatically manage visible columns
-autoManageCols = false
+autoManageCols = true
 
 # Open all disk images on program start up. By default, open each image only when it is accessed. 
 preOpenImagesOnSleuth = false
