@@ -5,9 +5,14 @@
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
 # Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
-# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
-# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
+# o processo auxiliar é derrubado, sendo reinicializado. Aumenta o uso de memória, em média ~500MB por processo.
+# Acelera bastante o processamento de imagens comprimidas E01 ou armazenadas na rede.
 robustImageReading = false
+
+# Número de processos auxiliares de leitura das imagens. 'auto' utiliza metade do número de processadores lógicos.
+# Pode-se diminuir esse valor caso haja pouca RAM. Aumentar normalmente é ineficaz, pois geralmente o IO não consegue
+# atender muitas requisições de leitura simultaneamente.
+numImageReaders = auto
 
 # Usa processos auxiliares para interpretar os arquivos, isolando travamentos e OutOfMemoryErrors no parsing.
 # Consome mais memória e é um pouco mais lento devido aos processos auxiliares e comunicação com eles.

@@ -4,10 +4,15 @@
 
 # PARSERS CAN BE ENABLED/DISABLED IN conf/ParserConfig.xml
 
-# If set to 'true', uses auxiliary processes to read the images. Consequently, if Sleuthkit crashes, only
-# the auxiliary process is killed and restarted. The auxiliary processes 
-# may double the memory usage. I/O and CPU demand will also increase.
+# Uses auxiliary processes to read the images. If Sleuthkit crashes, only
+# the auxiliary process is killed and restarted. Increases RAM usage often in about ~500MB per process. 
+# Increases a lot the processing speed of compressed E01 images or images in network.
 robustImageReading = false
+
+# Number of auxiliary image reading processes. 'auto' uses half of the number of logical CPU cores.
+# You can decrease the value if RAM memory is low. Increasing the value is not efficient, because often
+# IO devices can not handle many reading requests simultaneously.
+numImageReaders = auto
 
 # Use external processes to parse files, isolating infinite loops and OutOfMemoryErrors while parsing.
 # Uses more memory and it is a bit slower because more processes are started and communicated with.

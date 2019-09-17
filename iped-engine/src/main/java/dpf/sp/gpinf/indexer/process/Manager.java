@@ -253,11 +253,7 @@ public class Manager {
     }
 
     public void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        ArrayList<ThreadGroup> threadGroups = new ArrayList<>();
-        threadGroups.add(Thread.currentThread().getThreadGroup());
-        for (Thread thread : workers)
-            threadGroups.add(thread.getThreadGroup());
-        SleuthkitClient.initSleuthkitServers(threadGroups, dbPath);
+        SleuthkitClient.initSleuthkitServers(dbPath);
     }
 
     private void shutDownSleuthkitServers() {
