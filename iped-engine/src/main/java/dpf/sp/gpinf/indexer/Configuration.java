@@ -91,7 +91,7 @@ public class Configuration {
     private Configuration() {
     }
 
-    private static String getAppRoot(String configPath) {
+    private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
         if (appRoot.contains("profiles")) //$NON-NLS-1$
             appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
@@ -116,7 +116,9 @@ public class Configuration {
 
         configPath = configPathStr;
 
-        appRoot = getAppRoot(configPath);
+        if(appRoot == null) {
+            appRoot = getAppRoot(configPath);
+        }
 
         configureLogger(configPath);
 

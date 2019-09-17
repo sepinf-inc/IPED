@@ -11,6 +11,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -114,7 +115,7 @@ public class SleuthkitClient {
                 .iterator().next();
         String pipePath = localConfig.getIndexerTemp() + "/pipe-" + port; //$NON-NLS-1$
 
-        String classpath = Configuration.getInstance().appRoot + "/iped.jar"; //$NON-NLS-1$
+        String classpath = Configuration.getInstance().appRoot + "/lib/*"; //$NON-NLS-1$
         if (Configuration.getInstance().tskJarFile != null) {
             classpath += SystemUtils.IS_OS_WINDOWS ? ";" : ":";
             classpath += Configuration.getInstance().tskJarFile.getAbsolutePath(); // $NON-NLS-1$
@@ -125,6 +126,8 @@ public class SleuthkitClient {
                 String.valueOf(port), pipePath };
 
         try {
+            logger.info("Starting SleuthkitServer on port " + port + ": " + Arrays.asList(cmd));
+            
             ProcessBuilder pb = new ProcessBuilder(cmd);
             process = pb.start();
 
@@ -184,7 +187,7 @@ public class SleuthkitClient {
                     while ((r = is.read(b)) != -1) {
                         String msg = new String(b, 0, r).trim();
                         if (!msg.isEmpty())
-                            logger.info("SleuthkitServer port" + port + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
+                            logger.info("SleuthkitServer port " + port + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
                     }
 
                 } catch (Exception e) {
