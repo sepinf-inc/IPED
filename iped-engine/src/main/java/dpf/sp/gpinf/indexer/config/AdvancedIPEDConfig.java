@@ -44,8 +44,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.endsWith(CONFIG_FILE) ||
-                   entry.endsWith(IPEDConfig.CONFIG_FILE);
+            return entry.endsWith(CONFIG_FILE);
         }
     };
 
@@ -75,8 +74,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             int div = ocrconfig.isOCREnabled() ? 1 : 2; 
             ForkParser2.SERVER_POOL_SIZE = (int)Math.ceil((float)Runtime.getRuntime().availableProcessors() / div);
         }
-        
-        System.out.println("Config resource: " + resource);
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
