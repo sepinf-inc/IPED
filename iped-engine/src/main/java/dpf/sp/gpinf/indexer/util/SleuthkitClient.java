@@ -65,6 +65,7 @@ public class SleuthkitClient {
     
     private int openedStreams = 0;
     private Set<Long> currentStreams = new HashSet<Long>();
+    private volatile int numCurrentStreams = 0;
     
     public static SleuthkitClient get() {
         SleuthkitClient sc = clientsDeque.pollLast();        
@@ -75,12 +76,9 @@ public class SleuthkitClient {
         SleuthkitClient lessBusyClient = null;
         for(int i = 0; i < clientsList.size(); i++) {
             SleuthkitClient currentClient = clientsList.get(i);
-            synchronized(currentClient) {
-                int currentStreams = currentClient.currentStreams.size();
-                if(currentStreams < lessCurrentStreams) {
-                    lessCurrentStreams = currentStreams;
-                    lessBusyClient = currentClient;
-                }
+            if(currentClient.numCurrentStreams < lessCurrentStreams) {
+                lessCurrentStreams = currentClient.numCurrentStreams;
+                lessBusyClient = currentClient;
             }
         }
         return lessBusyClient;
@@ -113,7 +111,9 @@ public class SleuthkitClient {
     }
 
     private SleuthkitClient() {
-        start();
+        while (process == null || !isAlive(process)) {
+            start();
+        }
     }
 
     private void start() {
@@ -223,6 +223,7 @@ public class SleuthkitClient {
             serverError = false;
             openedStreams = 0;
             currentStreams.clear();
+            numCurrentStreams = 0;
         }
 
         while (process == null || !isAlive(process)) {
@@ -232,6 +233,7 @@ public class SleuthkitClient {
         SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
 
         currentStreams.add(stream.streamId);
+        numCurrentStreams++;
         openedStreams++;
 
         return stream;
@@ -239,7 +241,8 @@ public class SleuthkitClient {
 
     synchronized void removeStream(long streamID) {
         currentStreams.remove(streamID);
-        if(currentStreams.size() == 0)
+        numCurrentStreams--;
+        if(numCurrentStreams == 0)
             clientsDeque.addFirst(this);
     }
 
