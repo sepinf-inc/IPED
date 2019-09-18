@@ -18,7 +18,8 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.endsWith(CONFIG_FILE);
+            return entry.endsWith(CONFIG_FILE) || 
+                    entry.endsWith(IPEDConfig.CONFIG_FILE);
         }
     };
 
