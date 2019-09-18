@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -509,7 +510,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    worker.processNewItem(subItem, ProcessTime.LATER);
+                    //When external parsing is on, items MUST be sent to queue, or errors will occur
+                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO; 
+                    worker.processNewItem(subItem, time);
                     incSubitensDiscovered();
 
                     long diff = (System.nanoTime() / 1000) - start;
