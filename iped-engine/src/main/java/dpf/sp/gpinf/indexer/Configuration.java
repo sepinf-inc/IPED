@@ -228,12 +228,12 @@ public class Configuration {
 
         KFFConfig kffConfig = new KFFConfig();
         configManager.addObject(kffConfig);
+        
+        OCRConfig ocrConfig = new OCRConfig();
+        configManager.addObject(ocrConfig);
 
         AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
         configManager.addObject(advancedConfig);
-
-        OCRConfig ocrConfig = new OCRConfig();
-        configManager.addObject(ocrConfig);
 
         PDFToImageConfig pdfToImageConfig = new PDFToImageConfig();
         configManager.addObject(pdfToImageConfig);

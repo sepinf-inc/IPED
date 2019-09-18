@@ -18,9 +18,8 @@ numImageReaders = auto
 # Consome mais memória e é um pouco mais lento devido aos processos auxiliares e comunicação com eles.
 enableExternalParsing = false
 
-# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza o número de processadores lógicos.
-# Pode-se diminuir esse valor pois raramente todos os Workers estão realizando parsing ao mesmo tempo,
-# exceto em casos com OCR habilitado, pois o tempo de parsing é significativo.
+# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza metade do número de processadores
+# lógicos caso OCR esteja desligado ou o número de processadores lógicos caso OCR esteja ligado. 
 numExternalParsers = auto
 
 # Memória heap máxima a usar POR EXTERNAL PARSER. Valores baixos podem provocar erros de parsing por falta de memória.

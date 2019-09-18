@@ -14,6 +14,8 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     public static final String pageSegMode = "pageSegMode";
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
+    
+    private Boolean enableOCR;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -36,6 +38,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
         value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
+            enableOCR = Boolean.valueOf(value.trim());
             System.setProperty(OCRParser.ENABLE_PROP, value.trim());
         }
 
@@ -59,6 +62,10 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
             System.setProperty(OCRParser.PAGE_SEGMODE_PROP, value.trim());
         }
 
+    }
+    
+    public Boolean isOCREnabled() {
+        return enableOCR;
     }
 
 }

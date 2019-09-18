@@ -44,7 +44,8 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            return entry.endsWith(CONFIG_FILE);
+            return entry.endsWith(CONFIG_FILE) ||
+                   entry.endsWith(IPEDConfig.CONFIG_FILE);
         }
     };
 
@@ -66,8 +67,16 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
-        } else
-            ForkParser2.SERVER_POOL_SIZE = Runtime.getRuntime().availableProcessors();
+        } else {
+            OCRConfig ocrconfig = (OCRConfig)ConfigurationManager.getInstance().findObjects(OCRConfig.class).iterator().next();
+            if(ocrconfig.isOCREnabled() == null)
+                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before " + AdvancedIPEDConfig.class.getSimpleName());
+            
+            int div = ocrconfig.isOCREnabled() ? 1 : 2; 
+            ForkParser2.SERVER_POOL_SIZE = (int)Math.ceil((float)Runtime.getRuntime().availableProcessors() / div);
+        }
+        
+        System.out.println("Config resource: " + resource);
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
