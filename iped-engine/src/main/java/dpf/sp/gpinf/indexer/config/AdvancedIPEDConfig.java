@@ -23,7 +23,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     int timeOutPerMB;
     boolean embutirLibreOffice;
     boolean addFatOrphans;
-    long minOrphanSizeToIgnore;
+    long minOrphanSizeToIgnore = -1;
     int searchThreads;
     boolean autoManageCols;
     boolean entropyTest = true;
