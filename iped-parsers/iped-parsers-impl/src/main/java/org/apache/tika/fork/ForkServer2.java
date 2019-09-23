@@ -16,11 +16,6 @@
  */
 package org.apache.tika.fork;
 
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.ParserFactory;
-import org.xml.sax.SAXException;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -28,13 +23,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.NotSerializableException;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.zip.CheckedInputStream;
-import java.util.zip.CheckedOutputStream;
-import java.util.zip.Checksum;
+
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.ParserFactory;
+import org.apache.tika.sax.ContentHandlerDecorator;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 class ForkServer2 implements Runnable {
 
@@ -111,6 +109,7 @@ class ForkServer2 implements Runnable {
 
     private boolean parsing = false;
     private long since;
+    private boolean updateSince = false;
     private Thread parsingThread;
 
     /**
@@ -139,6 +138,10 @@ class ForkServer2 implements Runnable {
         try {
             while (true) {
                 synchronized (lock) {
+                    if(updateSince) {
+                        since = System.currentTimeMillis();
+                        updateSince = false;
+                    }
                     long elapsed = System.currentTimeMillis() - since;
                     if (parsing && elapsed > serverParserTimeoutMillis) {
                         parsingThread.interrupt();
@@ -178,7 +181,7 @@ class ForkServer2 implements Runnable {
                     break;
                 } else if (request == PING) {
                     synchronized (lock) {
-                        since = System.currentTimeMillis();
+                        updateSince = true;
                     }
                     output.writeByte(PING);
                 } else if (request == CALL) {
@@ -244,7 +247,7 @@ class ForkServer2 implements Runnable {
     private void call(ClassLoader loader, Object object) throws Exception {
         synchronized (lock) {
             parsing = true;
-            since = System.currentTimeMillis();
+            updateSince = true;
         }
         try {
             Method method = getMethod(object, input.readUTF());
@@ -253,6 +256,8 @@ class ForkServer2 implements Runnable {
                 args[i] = readObject(loader);
                 if (args[i] instanceof ParseContext)
                     updateParsingTimeout((ParseContext) args[i]);
+                if (args[i] instanceof ContentHandler)
+                    args[i] = new UpdateProgressContentHandler((ContentHandler)args[i]);
             }
             try {
                 method.invoke(object, args);
@@ -274,7 +279,7 @@ class ForkServer2 implements Runnable {
         } finally {
             synchronized (lock) {
                 parsing = false;
-                since = System.currentTimeMillis();
+                updateSince = true;
             }
         }
     }
@@ -329,5 +334,21 @@ class ForkServer2 implements Runnable {
         output.flush();
 
         return object;
+    }
+    
+    private class UpdateProgressContentHandler extends ContentHandlerDecorator{
+        
+        public UpdateProgressContentHandler(ContentHandler contentHandler) {
+            super(contentHandler);
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            super.characters(ch, start, length);
+            synchronized (lock) {
+                updateSince = true;
+            }
+        }
+        
     }
 }
