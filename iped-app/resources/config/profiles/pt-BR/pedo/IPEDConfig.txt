@@ -6,6 +6,10 @@
 # Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey
 hash = md5; sha-1; sha-256; edonkey
 
+# Habilita o cálculo do hash photoDNA de imagens. Caso tenha direito de uso (forças da lei que combatem pornografia infantil)
+# e tenha recebido a biblioteca, necessário copiá-la para a pasta de plugins/optional_jars.
+enablePhotoDNA = true
+
 # Habilita consulta de hashes na base do IPED. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt.
 # Necessário utilizar hash md5 ou sha-1.
 enableKff = true

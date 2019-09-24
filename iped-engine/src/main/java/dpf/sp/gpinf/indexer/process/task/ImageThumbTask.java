@@ -3,7 +3,9 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -133,6 +135,7 @@ public class ImageThumbTask extends AbstractTask {
         if (thumbFile.exists()) {
             if (thumbFile.length() != 0) {
                 evidence.setExtraAttribute(HAS_THUMB, true);
+                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
             } else {
                 evidence.setExtraAttribute(HAS_THUMB, false);
             }
@@ -233,7 +236,10 @@ public class ImageThumbTask extends AbstractTask {
                     }
                 }
 
-                ImageIO.write(img, "jpg", tmp); //$NON-NLS-1$
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
+                evidence.setThumb(baos.toByteArray());
+                Files.write(tmp.toPath(), baos.toByteArray());
             }
 
         } catch (Throwable e) {

@@ -19,6 +19,25 @@
 -->
 <mime-info>
 
+	<mime-type type="application/x-vnd.corel.zcf.draw.document+zip">
+        <glob pattern="*.CDR"/>
+        <sub-class-of type="application/zip"/>
+    </mime-type>
+    
+    <mime-type type="application/coreldraw">
+    	<magic priority="60">
+          <match value="RIFF" type="string" offset="0">
+           	<match value="CDR" type="stringignorecase" offset="8" />
+           	<match value="DES" type="stringignorecase" offset="8" />
+          </match>
+          <match value="RIFF" type="string" offset="50">
+           	<match value="CDR" type="stringignorecase" offset="58" />
+           	<match value="DES" type="stringignorecase" offset="58" />
+          </match>
+     	</magic>
+        <glob pattern="*.cdr"/>
+    </mime-type>
+
 	<mime-type type="application/x-superfetch">
 		<_comment>Windows EVT Log</_comment>
     	<magic priority="40">

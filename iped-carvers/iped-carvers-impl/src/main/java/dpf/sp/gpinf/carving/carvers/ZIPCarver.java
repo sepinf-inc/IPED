@@ -47,6 +47,9 @@ public class ZIPCarver extends FromFarthestHeaderCarver {
                     break;
                 }
             }
+            
+            if(firstHeaderOcurrence == null)
+                return null;
 
             Hit header = firstHeaderOcurrence;
 

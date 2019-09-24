@@ -29,6 +29,10 @@ numThreads = default
 # Diretório contendo a base de hashes de alerta de pornografia infantil do LED.
 #ledWkffPath = E:/LED/V1.21.00/pedo/wkff
 
+# Caminho para arquivo contendo lista de hashes photoDNA para confronto.
+# Deve conter um photodna por linha e, opcionalmente, outras informações na mesma linha, delimitadas por *
+#photoDNAHashDatabase = E:/PhotoDNA-3.3/PhotoDNAChildPornHashes-1.0.txt
+
 # Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
 # Necessário apontar para arquivo de dados presente no LED versão 1.21 ou superior.
 #ledDie = E:/LED/V1.21.00/pedo/die/rfdie.dat

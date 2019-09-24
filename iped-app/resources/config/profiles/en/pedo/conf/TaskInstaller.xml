@@ -30,10 +30,13 @@
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
+	<task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
+	<!--<task script="NSFWNudityDetectTask.py"></task>-->
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.CarveTask"></task>
+    <task class="dpf.sp.gpinf.carver.CarverTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.EntropyTask"></task>

@@ -364,8 +364,9 @@ public class ExportFileTask extends AbstractTask {
                             throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
                     }
 
-                } catch (IOException e) {
-                    if (IOUtil.isDiskFull(e))
+                //must catch generic Exception because of Runtime exceptions while extracting corrupted subitems
+                } catch (Exception e) {
+                    if (e instanceof IOException && IOUtil.isDiskFull((IOException)e))
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$

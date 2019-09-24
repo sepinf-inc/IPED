@@ -187,7 +187,7 @@ public class MenuClass extends JPopupMenu {
 
         this.addSeparator();
 
-        createReport = new JMenuItem("Gerar Relatório Indexado"); //$NON-NLS-1$
+        createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);
         this.add(createReport);
 

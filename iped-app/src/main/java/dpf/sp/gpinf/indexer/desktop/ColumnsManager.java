@@ -364,9 +364,13 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 return null;
             try {
                 int baseOrd = 0;
+                int MAX_ITEMS_TO_CHECK = 50;
+                int interval = docs.length / MAX_ITEMS_TO_CHECK;
+                if (interval == 0)
+                    interval = 1;
                 AtomicReader reader = null;
                 Bits bits0 = null, bits1 = null, bits2 = null;
-                for (i = 0; i < docs.length; i++) {
+                for (i = 0; i < docs.length; i += interval) {
                     while (docs[i] >= docBases[baseOrd + 1]) {
                         baseOrd++;
                         reader = null;

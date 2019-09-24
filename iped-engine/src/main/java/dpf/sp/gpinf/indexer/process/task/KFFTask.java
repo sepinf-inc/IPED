@@ -105,7 +105,7 @@ public class KFFTask extends AbstractTask {
 
             File kffDb = new File(kffDbPath.trim());
             if (!kffDb.exists()) {
-                String msg = "Invalid hash database path on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+                String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
                 CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
                 for (File source : args.getDatasources()) {
                     if (source.getName().endsWith(".iped")) {
@@ -138,7 +138,9 @@ public class KFFTask extends AbstractTask {
 
             if (confDir != null) {
                 alertProducts = new HashSet<String>();
-                File confFile = new File(confDir, CONF_FILE);
+                File confFile = new File(kffDb.getParentFile(), CONF_FILE); 
+                if(!confFile.exists())
+                    confFile = new File(confDir, CONF_FILE);
                 BufferedReader reader = new BufferedReader(new FileReader(confFile));
                 String line = reader.readLine();
                 while ((line = reader.readLine()) != null) {

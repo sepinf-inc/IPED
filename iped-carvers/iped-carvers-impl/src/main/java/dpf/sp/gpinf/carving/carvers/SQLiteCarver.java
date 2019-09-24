@@ -57,9 +57,10 @@ public class SQLiteCarver extends AbstractCarver {
             while (i != -1 && (off += i) < data.length)
                 i = is.read(data, off, data.length - off);
 
-            int numPages = (data[0] & 0xff) << 24 | (data[1] & 0xff) << 16 | (data[2] & 0xff) << 8 | (data[3] & 0xff);
+            long numPages = (long)(data[0] & 0xff) << 24 | (data[1] & 0xff) << 16 | (data[2] & 0xff) << 8 | (data[3] & 0xff);
 
-            return (long) numPages * (long) pageSize;
+            return numPages * (long) pageSize;
+            
         } catch (Exception e) {
             e.printStackTrace();
 

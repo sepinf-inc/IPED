@@ -50,6 +50,9 @@ public class IgnoreHardLinkTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
+        if(caseData.isIpedReport())
+            return;
+        
         if (!taskEnabled || evidence.getLength() == null || evidence.getLength() == 0 || evidence.isCarved()) {
             return;
         }
@@ -57,7 +60,7 @@ public class IgnoreHardLinkTask extends AbstractTask {
         if (!(evidence instanceof ISleuthKitItem)) {
             return;
         }
-
+        
         ISleuthKitItem sevidence = ((ISleuthKitItem) evidence);
         Content content = sevidence.getSleuthFile();
         if (content != null && content instanceof FsContent) {

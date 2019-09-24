@@ -165,8 +165,8 @@ public class PDFToImage implements Closeable {
 
             } else {
                 URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-                String appPath = new File(url.toURI()).getParentFile().getParent();
-                String classpath = appPath + "/iped.jar"; //$NON-NLS-1$
+                String jarDir = new File(url.toURI()).getParent();
+                String classpath = jarDir + "/*"; //$NON-NLS-1$
                 String[] cmd = { "java", "-cp", classpath, "-Xmx" + externalConvMaxMem, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         this.getClass().getCanonicalName(), input.getAbsolutePath(), output.getAbsolutePath(),
                         String.valueOf(page), PDFLIB, String.valueOf(RESOLUTION) };

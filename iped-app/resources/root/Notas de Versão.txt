@@ -1,15 +1,26 @@
 xx/08/2019: IPED-3.16
+- Suporte a APFS (novo parâmetro -p password)
+- Suporte a tarefas de processamento em Python (ver detalhes em conf/scripts/PythonScriptTask.py)
+- Detecção de nudez via deeplearning com Yahoo open-nsfw (desligado por padrão, ver detalhes em NSFWNudityDetectTask.py)
+- Integração do PhotoDNA-3.3 (distribuído a parte, copiar photodna-1.0.0.jar em optional_jars)
+- Busca de hashes em base PhotoDNA, configurar 'photoDNAHashDatabase' em LocalConfig.txt
 - Refactoring do data carving, agora configurável em XML e javascript (PCFs Patrick e Nassif)
 - Melhorias nos carvers de ZIP e EML (PCFs Patrick e Nassif)
-- Novos carvers para DER e VCARD (PCFs Patrick e Pfeifer)
+- Carvers para KML, GPX, DER e certificados digitais (PCF Patrick)
+- Novo Carver para VCARD (PCF Pfeifer)
 - Melhorias no WhatsAppParser: suporte a msgs de sistema, localizações (exibidas no mapa), chamadas de áudio e vídeo, melhor linkagem de anexos no iphone (PCF Pfeifer)
-- WebAPI básica para pesquisas em casos remotos, extração de itens, texto e criação de marcadores (PCF Átila)
+- Parsers específicos para históricos do Chrome, Firefox, Edge e Safari (PCF Herrmann)
+- Parser para arquivos KML e GPX (PCF Patrick)
+- Parser para arquivos VCARD (PCF Pfeifer)
+- WebAPI básica para pesquisas em casos remotos, obtenção de propriedades, extração de itens, texto, thumbs e criação de marcadores (PCF Átila)
 - Refactoring do módulo de Regex, permitindo escrever validadores em java ou javascript (APF Filipe Simões)
 - Regex e validador para endereços Bitcoin (PCF Pfeifer)
-- Suporte a APFS (novo parâmetro -p password)
-- Suporte a AD1 versão 4
+- Otimiza exibição dinâmica de colunas, habilita por padrão (desligável em AdvancedConfig/autoManageCols)
+- Opção "useNIOFSDirectory" para não mapear o índice em memória, o que eventualmente causava crashes pela rede
+- Opção "numImageReaders" para setar nº de processos ao ligar 'robustImageReading', padrão usa metade do nº de CPUs lógicas
+- Altera "numExternalParsers=auto" para usar metade do número de processadores caso OCR esteja desligado
 - Atualização para sleuthkit-4.6.5
-- Opção useNIOFSDirectory para não mapear o índice em memória, o que eventualmente causava crashes pela rede
+- Suporte a AD1 versão 4
 Correções:
 - Erro ao processar relatórios UFED com bookmarks (ignorados por ora)
 - Caracteres de controle inválidos no XML do UFED abortavam processamento
@@ -17,6 +28,11 @@ Correções:
 - Emails de PST com corpo apenas em RTF apareciam em branco
 - Downgrade da libpff p/ 20131028 devido a raros anexos extraídos zerados
 - Erro ao ligar enableExternalParsing qdo PATH continha valores com aspas duplas
+- Correções diversas na localização para o inglês
+- Travamento no processamento ao abrir GUI de análise com opção robustImageReading ligada
+- Hard links HFS+ exportados zerados para relatório, caso nele incluídos
+- Subitens corrompidos zerados eram abanonados na pasta indexador/subitens
+- Timeouts com itens de processamento mto lento (ole, ocr) ao ligar 'enableExternalParsing'
 
 29/03/2019: IPED-3.15.6
 - Corrige OutOfMemory ao expandir conteineres gigantes (3.15)

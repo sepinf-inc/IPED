@@ -15,7 +15,8 @@ public class SleuthKitConfig extends AbstractPropertiesConfigurable {
         }
     };
 
-    boolean robustImageReading;
+    private boolean robustImageReading;
+    private int numImageReaders;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -34,10 +35,23 @@ public class SleuthKitConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.isEmpty()) {
             robustImageReading = Boolean.valueOf(value);
         }
+        
+        value = properties.getProperty("numImageReaders"); //$NON-NLS-1$
+        if (value != null) {
+            value = value.trim();
+        }
+        if (value != null && !"auto".equalsIgnoreCase(value)) {
+            numImageReaders = Integer.valueOf(value);
+        }else
+            numImageReaders = (int) Math.ceil((float)Runtime.getRuntime().availableProcessors() / 2);
 
     }
 
     public boolean isRobustImageReading() {
         return robustImageReading;
+    }
+    
+    public int getNumImageReaders() {
+        return numImageReaders;
     }
 }

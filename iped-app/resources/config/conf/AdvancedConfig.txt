@@ -5,17 +5,21 @@
 # OS PARSERS PODEM SER HABILITADOS/DESABILITADOS EM conf/ParserConfig.xml
 
 # Usa processos auxiliares para ler as imagens. Assim, no caso de crash no Sleuthkit, apenas
-# o processo auxiliar é derrubado, sendo reinicializado. Porém a memória usada no processamento 
-# pode dobrar devido aos processos auxiliares. Também aumenta o uso de IO e CPU.
+# o processo auxiliar é derrubado, sendo reinicializado. Aumenta o uso de memória, em média ~500MB por processo.
+# Acelera bastante o processamento de imagens comprimidas E01 ou armazenadas na rede.
 robustImageReading = false
+
+# Número de processos auxiliares de leitura das imagens. 'auto' utiliza metade do número de processadores lógicos.
+# Pode-se diminuir esse valor caso haja pouca RAM. Aumentar normalmente é ineficaz, pois geralmente o IO não consegue
+# atender muitas requisições de leitura simultaneamente.
+numImageReaders = auto
 
 # Usa processos auxiliares para interpretar os arquivos, isolando travamentos e OutOfMemoryErrors no parsing.
 # Consome mais memória e é um pouco mais lento devido aos processos auxiliares e comunicação com eles.
 enableExternalParsing = false
 
-# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza o número de processadores lógicos.
-# Pode-se diminuir esse valor pois raramente todos os Workers estão realizando parsing ao mesmo tempo,
-# exceto em casos com OCR habilitado, pois o tempo de parsing é significativo.
+# Número máximo de processos de parsing a serem utilizados. 'auto' utiliza metade do número de processadores
+# lógicos caso OCR esteja desligado ou o número de processadores lógicos caso OCR esteja ligado. 
 numExternalParsers = auto
 
 # Memória heap máxima a usar POR EXTERNAL PARSER. Valores baixos podem provocar erros de parsing por falta de memória.
@@ -151,7 +155,7 @@ maxBackups = 10
 backupInterval = 60
 
 # Habilita por padrão gerenciamento automático de colunas
-autoManageCols = false
+autoManageCols = true
 
 # Força abertura da imagens na inicialização do IPED. Desabilitado por padrão. 
 preOpenImagesOnSleuth = false

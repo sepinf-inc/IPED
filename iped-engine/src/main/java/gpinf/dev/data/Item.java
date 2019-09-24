@@ -622,7 +622,7 @@ public class Item implements ISleuthKitItem {
             if (sleuthcase == null || !tskConfig.isRobustImageReading()) {
                 stream = new SleuthkitInputStream(sleuthFile);
             } else {
-                SleuthkitClient sleuthProcess = SleuthkitClient.get(sleuthcase.getDbDirPath());
+                SleuthkitClient sleuthProcess = SleuthkitClient.get();
                 stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
             }
         }

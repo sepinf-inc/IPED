@@ -29,6 +29,8 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HashTask;
+import dpf.sp.gpinf.indexer.process.task.PhotoDNATask;
 
 /*
  * Define analizadores, tokenizadores implicitamente, de indexação específicos para cada propriedade, 
@@ -45,6 +47,15 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
+        
+        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+        hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
+        analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA1.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA256.toString(), hashAnalyzer);
+        analyzerPerField.put(HashTask.HASH.SHA512.toString(), hashAnalyzer);
+        analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
         StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()

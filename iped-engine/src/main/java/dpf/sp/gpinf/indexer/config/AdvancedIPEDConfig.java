@@ -23,7 +23,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     int timeOutPerMB;
     boolean embutirLibreOffice;
     boolean addFatOrphans;
-    long minOrphanSizeToIgnore;
+    long minOrphanSizeToIgnore = -1;
     int searchThreads;
     boolean autoManageCols;
     boolean entropyTest = true;
@@ -66,8 +66,14 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
-        } else
-            ForkParser2.SERVER_POOL_SIZE = Runtime.getRuntime().availableProcessors();
+        } else {
+            OCRConfig ocrconfig = (OCRConfig)ConfigurationManager.getInstance().findObjects(OCRConfig.class).iterator().next();
+            if(ocrconfig.isOCREnabled() == null)
+                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before " + AdvancedIPEDConfig.class.getSimpleName());
+            
+            int div = ocrconfig.isOCREnabled() ? 1 : 2; 
+            ForkParser2.SERVER_POOL_SIZE = (int)Math.ceil((float)Runtime.getRuntime().availableProcessors() / div);
+        }
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {

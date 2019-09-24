@@ -6,6 +6,7 @@
 -->
 <tasks>
     <!--<task script="ExampleScriptTask.js"></task>-->
+    <!--<task script="PythonScriptTask.py"></task>-->
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     
@@ -30,6 +31,9 @@
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
+	<task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
+    <!--<task script="NSFWNudityDetectTask.py"></task>-->
     
     <!--Carving precisa ficar apos exportação (devido a rename p/ hash de subitens, que são referenciaos por seus filhos carved)
     e antes da indexação (pois pode setar propriedade hasChildren nos itens)-->

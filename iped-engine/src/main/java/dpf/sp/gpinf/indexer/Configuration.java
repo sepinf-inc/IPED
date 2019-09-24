@@ -91,7 +91,7 @@ public class Configuration {
     private Configuration() {
     }
 
-    private static String getAppRoot(String configPath) {
+    private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
         if (appRoot.contains("profiles")) //$NON-NLS-1$
             appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
@@ -116,10 +116,13 @@ public class Configuration {
 
         configPath = configPathStr;
 
-        appRoot = getAppRoot(configPath);
+        if(appRoot == null) {
+            appRoot = getAppRoot(configPath);
+        }
 
         configureLogger(configPath);
 
+        System.setProperty("iped.root", appRoot);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
@@ -225,12 +228,12 @@ public class Configuration {
 
         KFFConfig kffConfig = new KFFConfig();
         configManager.addObject(kffConfig);
+        
+        OCRConfig ocrConfig = new OCRConfig();
+        configManager.addObject(ocrConfig);
 
         AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
         configManager.addObject(advancedConfig);
-
-        OCRConfig ocrConfig = new OCRConfig();
-        configManager.addObject(ocrConfig);
 
         PDFToImageConfig pdfToImageConfig = new PDFToImageConfig();
         configManager.addObject(pdfToImageConfig);

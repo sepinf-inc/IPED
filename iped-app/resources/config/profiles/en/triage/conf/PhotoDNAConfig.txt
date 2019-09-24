@@ -1,0 +1,21 @@
+#############################
+# PhotoDNA Task configuration
+#############################
+
+# Compute photoDNA from image thumbnails. Much faster than using original image.
+computeFromThumbnail = true
+
+# Minimal image size (bytes) to compute photoDNA
+minFileSize = 4000
+
+# Do not compute photoDNA of files present in KFF databases (ignorable, alert or child porn)
+skipKffFiles = true
+
+# Maximum distance between photoDNA hashes to consider two images as similar.
+# It is used to look up for photoDNA hashes in a hash database.
+# The bigger the number, the look up will be SLOWER and you'll get more false positives and less false negatives.
+# Distances bellow this threshold will set 'photoDnaKffHit' property as 'true'
+maxSimilarityDistance = 50000
+
+# Search for photoDNA of rotated (90, 180 and 270 degrees) and flipped images in photoDNA database.
+searchRotatedAndFlipped = true

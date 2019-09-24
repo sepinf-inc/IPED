@@ -11,10 +11,11 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.utils.SystemUtils;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
@@ -31,12 +33,25 @@ import iped3.io.SeekableInputStream;
 public class SleuthkitClient {
 
     private static Logger logger = LoggerFactory.getLogger(SleuthkitClient.class);
-
+    
     private static final int START_PORT = 2000;
     private static final int MAX_PORT = 65535;
-
+    private static final int MAX_STREAMS = 10000;
+    
+    private static ConcurrentLinkedDeque<SleuthkitClient> clientsDeque = new ConcurrentLinkedDeque<>();
+    
+    private static List<SleuthkitClient> clientsList = new ArrayList<>();
+    
+    public static int NUM_TSK_SERVERS;
+    
     static volatile String dbDirPath;
     static AtomicInteger portStart = new AtomicInteger(START_PORT);
+    
+    static {
+        SleuthKitConfig config = (SleuthKitConfig) ConfigurationManager.getInstance()
+                .findObjects(SleuthKitConfig.class).iterator().next();
+        NUM_TSK_SERVERS = config.getNumImageReaders();
+    }
 
     Process process;
     Socket socket;
@@ -47,42 +62,40 @@ public class SleuthkitClient {
     OutputStream os;
 
     volatile boolean serverError = false;
-
-    private static final int max_streams = 10000;
+    
     private int openedStreams = 0;
     private Set<Long> currentStreams = new HashSet<Long>();
-
-    /*
-     * private static final ThreadLocal<SleuthkitClient> threadLocal = new
-     * ThreadLocal<SleuthkitClient>() {
-     * 
-     * @Override protected SleuthkitClient initialValue() { return new
-     * SleuthkitClient(); } };
-     */
-    private static ConcurrentHashMap<String, SleuthkitClient> clients = new ConcurrentHashMap<String, SleuthkitClient>();
-
-    public static SleuthkitClient get(String dbPath) {
-        return get(Thread.currentThread().getThreadGroup(), dbPath);
-    }
-
-    public static SleuthkitClient get(ThreadGroup tg, String dbPath) {
-        dbDirPath = dbPath;
-        String threadGroupName = tg.getName();
-        SleuthkitClient sc = clients.get(threadGroupName);
-        if (sc == null) {
-            sc = new SleuthkitClient();
-            clients.put(threadGroupName, sc);
+    private volatile int numCurrentStreams = 0;
+    
+    public static SleuthkitClient get() {
+        SleuthkitClient sc = clientsDeque.pollLast();        
+        if(sc != null)
+            return sc;
+        
+        int lessCurrentStreams = Integer.MAX_VALUE;
+        SleuthkitClient lessBusyClient = null;
+        for(int i = 0; i < clientsList.size(); i++) {
+            SleuthkitClient currentClient = clientsList.get(i);
+            if(currentClient.numCurrentStreams < lessCurrentStreams) {
+                lessCurrentStreams = currentClient.numCurrentStreams;
+                lessBusyClient = currentClient;
+            }
         }
-        return sc;
+        return lessBusyClient;
     }
 
-    public static void initSleuthkitServers(List<ThreadGroup> threadGroups, final String dbPath)
+    public static void initSleuthkitServers(final String dbPath)
             throws InterruptedException {
+        dbDirPath = dbPath;
         ArrayList<Thread> initThreads = new ArrayList<Thread>();
-        for (final ThreadGroup group : threadGroups) {
+        for (int i = 0; i < NUM_TSK_SERVERS; i++) {
             Thread t = new Thread() {
                 public void run() {
-                    SleuthkitClient.get(group, dbPath);
+                    SleuthkitClient sc = new SleuthkitClient();
+                    clientsDeque.add(sc);
+                    synchronized(clientsList) {
+                        clientsList.add(sc);
+                    }
                 }
             };
             t.start();
@@ -93,12 +106,14 @@ public class SleuthkitClient {
     }
 
     public static void shutDownServers() {
-        for (SleuthkitClient sc : clients.values())
+        for (SleuthkitClient sc : clientsList)
             sc.finishProcessAndClearMmap();
     }
 
     private SleuthkitClient() {
-        start();
+        while (process == null || !isAlive(process)) {
+            start();
+        }
     }
 
     private void start() {
@@ -114,7 +129,7 @@ public class SleuthkitClient {
                 .iterator().next();
         String pipePath = localConfig.getIndexerTemp() + "/pipe-" + port; //$NON-NLS-1$
 
-        String classpath = Configuration.getInstance().appRoot + "/iped.jar"; //$NON-NLS-1$
+        String classpath = Configuration.getInstance().appRoot + "/lib/*"; //$NON-NLS-1$
         if (Configuration.getInstance().tskJarFile != null) {
             classpath += SystemUtils.IS_OS_WINDOWS ? ";" : ":";
             classpath += Configuration.getInstance().tskJarFile.getAbsolutePath(); // $NON-NLS-1$
@@ -125,13 +140,15 @@ public class SleuthkitClient {
                 String.valueOf(port), pipePath };
 
         try {
+            logger.info("Starting SleuthkitServer on port " + port + ": " + Arrays.asList(cmd));
+            
             ProcessBuilder pb = new ProcessBuilder(cmd);
             process = pb.start();
 
             logStdErr(process.getInputStream(), port);
             logStdErr(process.getErrorStream(), port);
 
-            Thread.sleep(3000);
+            Thread.sleep(5000);
 
             // is = process.getInputStream();
             // os = process.getOutputStream();
@@ -184,7 +201,7 @@ public class SleuthkitClient {
                     while ((r = is.read(b)) != -1) {
                         String msg = new String(b, 0, r).trim();
                         if (!msg.isEmpty())
-                            logger.info("SleuthkitServer port" + port + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
+                            logger.info("SleuthkitServer port " + port + ": " + msg); //$NON-NLS-1$ //$NON-NLS-2$
                     }
 
                 } catch (Exception e) {
@@ -196,7 +213,7 @@ public class SleuthkitClient {
 
     public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
 
-        if (serverError || (openedStreams > max_streams && currentStreams.size() == 0)) {
+        if (serverError || (openedStreams > MAX_STREAMS && currentStreams.size() == 0)) {
             if (process != null) {
                 process.destroyForcibly();
             }
@@ -206,6 +223,7 @@ public class SleuthkitClient {
             serverError = false;
             openedStreams = 0;
             currentStreams.clear();
+            numCurrentStreams = 0;
         }
 
         while (process == null || !isAlive(process)) {
@@ -215,6 +233,7 @@ public class SleuthkitClient {
         SleuthkitClientInputStream stream = new SleuthkitClientInputStream(id, path, this);
 
         currentStreams.add(stream.streamId);
+        numCurrentStreams++;
         openedStreams++;
 
         return stream;
@@ -222,6 +241,9 @@ public class SleuthkitClient {
 
     synchronized void removeStream(long streamID) {
         currentStreams.remove(streamID);
+        numCurrentStreams--;
+        if(numCurrentStreams == 0)
+            clientsDeque.addFirst(this);
     }
 
     private void finishProcessAndClearMmap() {
