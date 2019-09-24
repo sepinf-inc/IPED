@@ -3,7 +3,7 @@ xx/08/2019: IPED-3.16
 - Suporte a tarefas de processamento em Python (ver detalhes em conf/scripts/PythonScriptTask.py)
 - Detecção de nudez via deeplearning com Yahoo open-nsfw (desligado por padrão, ver detalhes em NSFWNudityDetectTask.py)
 - Integração do PhotoDNA-3.3 (distribuído a parte, copiar photodna-1.0.0.jar em optional_jars)
-- Busca de hashes em base PhotoDNA, configurar photoDNAHashDatabase em LocalConfig.txt
+- Busca de hashes em base PhotoDNA, configurar 'photoDNAHashDatabase' em LocalConfig.txt
 - Refactoring do data carving, agora configurável em XML e javascript (PCFs Patrick e Nassif)
 - Melhorias nos carvers de ZIP e EML (PCFs Patrick e Nassif)
 - Carvers para KML, GPX, DER e certificados digitais (PCF Patrick)
@@ -16,9 +16,9 @@ xx/08/2019: IPED-3.16
 - Refactoring do módulo de Regex, permitindo escrever validadores em java ou javascript (APF Filipe Simões)
 - Regex e validador para endereços Bitcoin (PCF Pfeifer)
 - Otimiza exibição dinâmica de colunas, habilita por padrão (desligável em AdvancedConfig/autoManageCols)
-- Opção AdvancedConfig/useNIOFSDirectory para não mapear o índice em memória, o que eventualmente causava crashes pela rede
-- Opção AdvancedConfig/numImageReaders para calibrar número de processos Sleuthkit ao ligar 'robustImageReading' 
-- Calibra numExternalParsers para usar metade do número de processadores caso OCR esteja desligado
+- Opção "useNIOFSDirectory" para não mapear o índice em memória, o que eventualmente causava crashes pela rede
+- Opção "numImageReaders" para setar nº de processos ao ligar 'robustImageReading', padrão usa metade do nº de CPUs lógicas
+- Altera "numExternalParsers=auto" para usar metade do número de processadores caso OCR esteja desligado
 - Atualização para sleuthkit-4.6.5
 - Suporte a AD1 versão 4
 Correções:
@@ -30,6 +30,9 @@ Correções:
 - Erro ao ligar enableExternalParsing qdo PATH continha valores com aspas duplas
 - Correções diversas na localização para o inglês
 - Travamento no processamento ao abrir GUI de análise com opção robustImageReading ligada
+- Hard links HFS+ exportados zerados para relatório, caso nele incluídos
+- Subitens corrompidos zerados eram abanonados na pasta indexador/subitens
+- Timeouts com itens de processamento mto lento (ole, ocr) ao ligar 'enableExternalParsing'
 
 29/03/2019: IPED-3.15.6
 - Corrige OutOfMemory ao expandir conteineres gigantes (3.15)
