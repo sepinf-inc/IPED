@@ -15,17 +15,17 @@ import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
+    
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
-    boolean forceMerge;
-    int timeOut;
-    int timeOutPerMB;
-    boolean embutirLibreOffice;
-    boolean addFatOrphans;
+    boolean forceMerge = false;
+    int timeOut = 180;
+    int timeOutPerMB = 2;
+    boolean embutirLibreOffice = true;
     long minOrphanSizeToIgnore = -1;
-    int searchThreads;
-    boolean autoManageCols;
+    int searchThreads = 1;
+    boolean autoManageCols = true;
     boolean entropyTest = true;
     boolean storeTermVectors = true;
     boolean filterNonLatinChars = false;
@@ -165,14 +165,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             convertCharsToAscii = Boolean.valueOf(value.trim());
         }
 
-        value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            addFatOrphans = Boolean.valueOf(value);
-        }
-
         value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -270,10 +262,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isEmbutirLibreOffice() {
         return embutirLibreOffice;
-    }
-
-    public boolean isAddFatOrphans() {
-        return addFatOrphans;
     }
 
     public long getMinOrphanSizeToIgnore() {

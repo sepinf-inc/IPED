@@ -9,10 +9,9 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import java.nio.file.Path;
 
 public class IPEDConfig extends AbstractPropertiesConfigurable {
+    
     boolean toAddUnallocated = false;
     boolean toAddFileSlacks = false;
-
-    String confDir;
 
     public static final String CONFDIR = "confdir";
     public static final String TOADDUNALLOCATED = "addUnallocated";
@@ -36,20 +35,12 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
         return (String) properties.get(IPEDConfig.CONFDIR);
     }
 
-    public void setConfDir(String confDir) {
-        properties.put(IPEDConfig.CONFDIR, confDir);
-    }
-
     public boolean isToAddUnallocated() {
-        return "true".equals(properties.get(IPEDConfig.TOADDUNALLOCATED));
-    }
-
-    public void setToAddUnallocated(boolean toAddUnallocated) {
-        properties.put(IPEDConfig.TOADDUNALLOCATED, new Boolean(toAddUnallocated).toString());
+        return toAddUnallocated;
     }
 
     public boolean isToAddFileSlacks() {
-        return "true".equals(properties.get(IPEDConfig.TOADDFILESLACKS));
+        return toAddFileSlacks;
     }
 
     @Override
