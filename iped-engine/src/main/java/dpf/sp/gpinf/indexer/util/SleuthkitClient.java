@@ -163,7 +163,7 @@ public class SleuthkitClient {
             is = socket.getInputStream();
             os = socket.getOutputStream();
 
-            int size = 10 * 1024 * 1024;
+            int size = SleuthkitServer.MMAP_FILE_SIZE;
             pipe = new File(pipePath);
             try (RandomAccessFile raf = new RandomAccessFile(pipePath, "rw")) { //$NON-NLS-1$
                 raf.setLength(size);

@@ -64,7 +64,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
         if (empty) {
             synchronized (client) {
-                byte cmd = sendRead();
+                byte cmd = sendRead(len);
                 if (cmd == FLAGS.EOF) {
                     return -1;
                 }
@@ -89,9 +89,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         return copyLen;
     }
 
-    private byte sendRead() throws IOException {
+    private byte sendRead(int len) throws IOException {
         mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
+        mbb.putInt(13, len);
         SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
         notifyServer();
         return waitServerResponse();
