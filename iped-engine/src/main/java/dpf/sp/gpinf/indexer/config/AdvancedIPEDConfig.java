@@ -36,7 +36,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     int openImagesCacheWarmUpThreads = 255;
     boolean useNIOFSDirectory = false;
 
-    private static int textSplitSize = 100000000;
+    private static int textSplitSize = 10000000;
     private static int textOverlapSize = 10000;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
