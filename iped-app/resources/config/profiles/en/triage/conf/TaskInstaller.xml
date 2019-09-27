@@ -6,6 +6,7 @@
 -->
 <tasks>
     <!--<task script="ExampleScriptTask.js"></task>-->
+	<task script="IgnoreFilesByPathTask.js"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     
