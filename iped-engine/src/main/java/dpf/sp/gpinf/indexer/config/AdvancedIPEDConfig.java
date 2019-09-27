@@ -35,7 +35,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
     boolean useNIOFSDirectory = false;
-
+    private boolean storeTextCacheOnDisk = true;
     private static int textSplitSize = 10000000;
     private static int textOverlapSize = 10000;
 
@@ -214,6 +214,11 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         FragmentingReader.setTextSplitSize(textSplitSize);
         FragmentingReader.setTextOverlapSize(textOverlapSize);
+        
+        value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            storeTextCacheOnDisk = Boolean.valueOf(value.trim());
+        }
 
         value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
@@ -314,5 +319,9 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public int getOpenImagesCacheWarmUpThreads() {
         return openImagesCacheWarmUpThreads;
+    }
+    
+    public boolean isStoreTextCacheOnDisk() {
+        return storeTextCacheOnDisk;
     }
 }

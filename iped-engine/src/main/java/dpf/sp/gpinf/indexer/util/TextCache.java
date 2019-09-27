@@ -17,21 +17,30 @@ public class TextCache implements Closeable {
     private File tmp;
     private Writer writer;
     private long size = 0;
+    private boolean diskCacheEnabled = true;
+    
+    public void setEnableDiskCache(boolean diskCacheEnabled) {
+        this.diskCacheEnabled = diskCacheEnabled;
+    }
 
     public void write(String string) throws IOException {
         this.write(string.toCharArray(), 0, string.length());
     }
 
     public void write(char[] buf, int off, int len) throws IOException {
-        if (tmp == null && sb != null && sb.length() + len > MAX_MEMORY_CHARS) {
+        if (tmp == null && sb != null && sb.length() + len > MAX_MEMORY_CHARS && diskCacheEnabled) {
             tmp = File.createTempFile("text", null);
             writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.APPEND);
             writer.write(sb.toString());
             sb = null;
         }
 
-        if (sb != null)
+        if (sb != null && sb.length() < MAX_MEMORY_CHARS) {
+            if(sb.length() + len > MAX_MEMORY_CHARS)
+                len = MAX_MEMORY_CHARS - sb.length();
             sb.append(buf, off, len);
+        }
+            
 
         if (writer != null)
             try {
