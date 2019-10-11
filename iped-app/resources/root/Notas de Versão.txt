@@ -36,6 +36,7 @@ Correções:
 - Subitens corrompidos zerados eram abandonados na pasta indexador/subitens
 - Timeouts com itens de processamento mto lento (ex: ocr) ao ligar 'enableExternalParsing'
 - Raro bug de concorrência na comunicação com robustImageReaders
+- Raro OutOfMemory devido a excessivos hits de Regex em arquivos gigantes
 
 29/03/2019: IPED-3.15.6
 - Corrige OutOfMemory ao expandir conteineres gigantes (3.15)

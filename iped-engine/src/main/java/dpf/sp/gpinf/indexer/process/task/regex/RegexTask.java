@@ -39,6 +39,8 @@ public class RegexTask extends AbstractTask {
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
 
     private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
+    
+    private static final int MAX_RESULTS = 50000; // OOME protection for files with tons of hits
 
     private static List<Regex> regexList;
 
@@ -256,6 +258,10 @@ public class RegexTask extends AbstractTask {
                     Set<String> hitSet = new HashSet<>();
                     List<String> prevHits = (List<String>) evidence.getExtraAttribute(key);
                     if (prevHits != null) {
+                        if(prevHits.size() >= MAX_RESULTS) {
+                            evidence.setExtraAttribute("maxHitsReached" + key, "true");
+                            continue;
+                        }
                         hitSet.addAll(prevHits);
                     }
                     hitSet.addAll(hitList.get(i));
