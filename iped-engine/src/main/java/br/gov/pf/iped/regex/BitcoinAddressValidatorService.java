@@ -51,7 +51,7 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("BITCOIN_ADDRESS");
+        return Arrays.asList("CRIPTOCOIN_BITCOIN_ADDRESS");
     }
 
     @Override
