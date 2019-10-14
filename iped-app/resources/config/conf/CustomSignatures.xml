@@ -262,7 +262,25 @@
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
     </mime-type>
-    
+
+    <mime-type type="application/x-mssql">
+        <magic priority="50">
+            <match value="\x01\x0F\x00\x00" type="string" offset="0"/>
+        </magic> 
+        <glob pattern="*.mdf"/>
+        <glob pattern="*.ldf"/>
+    </mime-type>
+
+    <mime-type type="application/x-mssql-data">
+        <sub-class-of type="application/x-mssql"/>
+        <glob pattern="*.mdf"/>
+    </mime-type>    
+
+    <mime-type type="application/x-mssql-transactionlog">
+        <sub-class-of type="application/x-mssql"/>
+        <glob pattern="*.ldf"/>
+    </mime-type>
+
     <mime-type type="application/x-sqlite3">
         <magic priority="50">
             <match value="SQLite format 3\x00" type="string" offset="0"/>
