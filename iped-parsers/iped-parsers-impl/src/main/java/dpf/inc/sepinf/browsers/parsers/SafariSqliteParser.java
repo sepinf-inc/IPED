@@ -114,8 +114,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, SAFARI_HISTORY_REG.toString());
                     metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Safari History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
-                    metadataHistory.set(TikaCoreProperties.CREATED, h.getVisitDate());
-                    metadataHistory.add(TikaCoreProperties.IDENTIFIER, h.getUrl());
+                    metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
+                    metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);

@@ -132,8 +132,8 @@ public class SafariPlistParser extends AbstractParser {
                         metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, SAFARI_HISTORY_REG.toString());
                         metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist History Entry " + i); //$NON-NLS-1$
                         metadataHistory.add(TikaCoreProperties.TITLE, v.getTitle());
-                        metadataHistory.set(TikaCoreProperties.CREATED, v.getLastVisitDate());
-                        metadataHistory.add(TikaCoreProperties.IDENTIFIER, v.getUrl());
+                        metadataHistory.set(ExtraProperties.ACCESSED, v.getLastVisitDate());
+                        metadataHistory.add(ExtraProperties.URL, v.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
@@ -174,8 +174,8 @@ public class SafariPlistParser extends AbstractParser {
                         metadataDownload.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
                                 SAFARI_DOWNLOADS_REG.toString());
                         metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Download Entry " + i); //$NON-NLS-1$
-                        metadataDownload.add(TikaCoreProperties.IDENTIFIER, d.getUrlFromDownload());
-                        metadataDownload.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, d.getDownloadedLocalPath());
+                        metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
+                        metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                         metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
@@ -217,7 +217,7 @@ public class SafariPlistParser extends AbstractParser {
                                 SAFARI_DOWNLOADS_REG.toString());
                         metadataBookmark.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Bookmark Entry " + i); //$NON-NLS-1$
                         metadataBookmark.add(TikaCoreProperties.TITLE, b.getTitle());
-                        metadataBookmark.add(TikaCoreProperties.IDENTIFIER, b.getUrl());
+                        metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                         metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);

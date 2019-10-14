@@ -134,7 +134,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataBookmark.add(TikaCoreProperties.TITLE, b.getTitle());
                     metadataBookmark.set(TikaCoreProperties.CREATED, b.getDateAdded());
                     metadataBookmark.set(TikaCoreProperties.MODIFIED, b.getLastModified());
-                    metadataBookmark.add(TikaCoreProperties.IDENTIFIER, b.getUrl());
+                    metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                     metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
@@ -169,8 +169,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_HISTORY_REG.toString());
                     metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Firefox History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
-                    metadataHistory.set(TikaCoreProperties.CREATED, h.getVisitDate());
-                    metadataHistory.add(TikaCoreProperties.IDENTIFIER, h.getUrl());
+                    metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
+                    metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
@@ -204,8 +204,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
 
                     metadataDownload.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MOZ_DOWNLOADS_REG.toString());
                     metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Firefox Download Entry " + i); //$NON-NLS-1$
-                    metadataDownload.add(TikaCoreProperties.IDENTIFIER, d.getUrlFromDownload());
-                    metadataDownload.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, d.getDownloadedLocalPath());
+                    metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
+                    metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
 

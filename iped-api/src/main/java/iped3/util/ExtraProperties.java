@@ -60,6 +60,10 @@ public class ExtraProperties {
 
     public static final String LOCATIONS = "locations"; //$NON-NLS-1$
     
+    public static final String URL = "url"; //$NON-NLS-1$
+    
+    public static final String LOCAL_PATH = "localPath"; //$NON-NLS-1$
+    
     public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,
             Message.MESSAGE_BCC, PST_ATTACH, PST_EMAIL_HAS_ATTACHS};

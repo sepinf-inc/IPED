@@ -131,8 +131,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
                     metadataDownload.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHROME_DOWNLOADS_REG.toString());
                     metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Chrome Download Entry " + i); //$NON-NLS-1$
-                    metadataDownload.add(TikaCoreProperties.IDENTIFIER, d.getUrlFromDownload());
-                    metadataDownload.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME, d.getDownloadedLocalPath());
+                    metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
+                    metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
 
@@ -168,8 +168,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHROME_HISTORY_REG.toString());
                     metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Chrome History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
-                    metadataHistory.set(TikaCoreProperties.CREATED, h.getVisitDate());
-                    metadataHistory.add(TikaCoreProperties.IDENTIFIER, h.getUrl());
+                    metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
+                    metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
