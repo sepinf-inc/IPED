@@ -101,6 +101,10 @@ minItemSizeToFragment = 104857600
 # não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
 textSplitSize = 10000000
 
+# Realizar cache na pasta temporária do texto decodificado dos itens caso ultrapasse 10M de caracteres,
+# para ser reusado durante busca por regex, indexação, etc, evitando que o item seja decodificado novamente.
+storeTextCacheOnDisk = false
+
 # Usa NIOFSDirectory ao invés de MMAPDirectory ao manipular o índice (https://lucene.apache.org/core/4_9_0/core/org/apache/lucene/store/FSDirectory.html)
 # É um pouco mais lento, mas pode evitar crashes da JVM ao manipular o índice via rede.
 useNIOFSDirectory = false

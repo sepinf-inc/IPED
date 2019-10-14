@@ -51,7 +51,7 @@ public class ForkParser2 extends AbstractParser {
     /** Serial version UID */
     private static final long serialVersionUID = -4962742892274663950L;
 
-    public static boolean enabled = false;
+    public static Boolean enabled;
 
     public static String SERVER_MAX_HEAP = "512M";
 

@@ -15,17 +15,17 @@ import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
+    
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
-    boolean forceMerge;
-    int timeOut;
-    int timeOutPerMB;
-    boolean embutirLibreOffice;
-    boolean addFatOrphans;
+    boolean forceMerge = false;
+    int timeOut = 180;
+    int timeOutPerMB = 2;
+    boolean embutirLibreOffice = true;
     long minOrphanSizeToIgnore = -1;
-    int searchThreads;
-    boolean autoManageCols;
+    int searchThreads = 1;
+    boolean autoManageCols = true;
     boolean entropyTest = true;
     boolean storeTermVectors = true;
     boolean filterNonLatinChars = false;
@@ -35,8 +35,8 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
     boolean useNIOFSDirectory = false;
-
-    private static int textSplitSize = 100000000;
+    private boolean storeTextCacheOnDisk = true;
+    private static int textSplitSize = 10000000;
     private static int textOverlapSize = 10000;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
@@ -165,14 +165,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             convertCharsToAscii = Boolean.valueOf(value.trim());
         }
 
-        value = properties.getProperty("addFatOrphans"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            addFatOrphans = Boolean.valueOf(value);
-        }
-
         value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -222,6 +214,11 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         FragmentingReader.setTextSplitSize(textSplitSize);
         FragmentingReader.setTextOverlapSize(textOverlapSize);
+        
+        value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            storeTextCacheOnDisk = Boolean.valueOf(value.trim());
+        }
 
         value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
@@ -270,10 +267,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isEmbutirLibreOffice() {
         return embutirLibreOffice;
-    }
-
-    public boolean isAddFatOrphans() {
-        return addFatOrphans;
     }
 
     public long getMinOrphanSizeToIgnore() {
@@ -326,5 +319,9 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public int getOpenImagesCacheWarmUpThreads() {
         return openImagesCacheWarmUpThreads;
+    }
+    
+    public boolean isStoreTextCacheOnDisk() {
+        return storeTextCacheOnDisk;
     }
 }

@@ -30,8 +30,11 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     private InputStream in;
     OutputStream os;
     int bufPos = 0;
+    byte[] buf;
     MappedByteBuffer mbb;
     boolean closed = false, empty = true;
+    long position = 0;
+    Long size;
 
     public SleuthkitClientInputStream(int id, String path, SleuthkitClient client) {
         this.sleuthId = id;
@@ -52,42 +55,45 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
         }
 
-        synchronized (client) {
-            int read = readIn(b, off, len);
-            return read;
-        }
+        int read = readIn(b, off, len);
+        return read;
 
     }
 
     private int readIn(byte b[], int off, int len) throws IOException {
 
         if (empty) {
-            byte cmd = sendRead();
-            if (cmd == FLAGS.EOF) {
-                return -1;
+            synchronized (client) {
+                byte cmd = sendRead(len);
+                if (cmd == FLAGS.EOF) {
+                    return -1;
+                }
+                int size = mbb.getInt(13);
+                buf = new byte[size];
+                mbb.position(17);
+                mbb.get(buf, 0, size);
+                bufPos = 0;
+                empty = false;
             }
         }
-        empty = false;
 
-        int size = mbb.getInt(13);
-        int copyLen = Math.min(len, size - bufPos);
-        mbb.position(bufPos + 17);
-        mbb.get(b, off, copyLen);
+        int copyLen = Math.min(len, buf.length - bufPos);
+        System.arraycopy(buf, bufPos, b, off, copyLen);
+        
         bufPos += copyLen;
-        if (bufPos == size) {
+        if (bufPos == buf.length) {
             empty = true;
         }
+        position += copyLen;
 
         return copyLen;
     }
 
-    private byte sendRead() throws IOException {
+    private byte sendRead(int len) throws IOException {
         mbb.putInt(1, sleuthId);
         mbb.putLong(5, streamId);
+        mbb.putInt(13, len);
         SleuthkitServer.commitByte(mbb, 0, FLAGS.READ);
-
-        bufPos = 0;
-        empty = true;
         notifyServer();
         return waitServerResponse();
     }
@@ -174,42 +180,36 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         if (client.serverError) {
             throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
         }
-
-        synchronized (client) {
+        
+        long dif = pos - position;
+        if(!empty && bufPos + dif >= 0 && bufPos + dif < buf.length) {
+            bufPos += dif;
+        
+        }else synchronized (client) {
             mbb.putInt(1, sleuthId);
             mbb.putLong(5, streamId);
             mbb.putLong(13, pos);
             SleuthkitServer.commitByte(mbb, 0, FLAGS.SEEK);
-            empty = true;
             notifyServer();
             waitServerResponse();
+            empty = true;
+            bufPos = 0;
         }
+        
+        position = pos;
 
     }
 
     @Override
     public long position() throws IOException {
-
-        if (closed) {
-            throw new IOException("Stream is closed!"); //$NON-NLS-1$
-        }
-        if (client.serverError) {
-            throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
-        }
-
-        synchronized (client) {
-            mbb.putInt(1, sleuthId);
-            mbb.putLong(5, streamId);
-            SleuthkitServer.commitByte(mbb, 0, FLAGS.POSITION);
-            notifyServer();
-            waitServerResponse();
-            return mbb.getLong(13);
-        }
-
+        return position;
     }
 
     @Override
     public long size() throws IOException {
+        
+        if(size != null)
+            return size;
 
         if (closed) {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
@@ -224,7 +224,8 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             SleuthkitServer.commitByte(mbb, 0, FLAGS.SIZE);
             notifyServer();
             waitServerResponse();
-            return mbb.getLong(13);
+            size = mbb.getLong(13);
+            return size;
         }
 
     }

@@ -121,7 +121,8 @@ public class PhotoDNATask extends AbstractTask{
         byte[] hash;
         try (InputStream is = useThumbnail ? new ByteArrayInputStream(evidence.getThumb()) : evidence.getBufferedStream()){
             
-            hash = computePhotoDNA(is);
+            photodna.reset();
+            hash = photodna.computePhotoDNA(is);
             String hashStr = new String(Hex.encodeHex(hash, false));
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
             
@@ -136,31 +137,6 @@ public class PhotoDNATask extends AbstractTask{
         int distance = new br.dpf.sepinf.photodna.PhotoDNAComparator().compare(thumbHash, fileHash);
         evidence.setExtraAttribute("photodna_diff", distance);
         */
-    }
-    
-    private byte[] computePhotoDNA(InputStream is) throws Exception {
-        BufferedImage img = ImageIO.read(is);
-        
-        byte[] data;
-        if (img.getType() == BufferedImage.TYPE_3BYTE_BGR && img.getRaster() != null && img.getRaster().getDataBuffer() instanceof DataBufferByte) {
-            data = ((DataBufferByte) img.getRaster().getDataBuffer()).getData();
-        } else {
-            BufferedImage bgrImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-            Graphics g = bgrImg.getGraphics();  
-            g.drawImage(img, 0, 0, null);  
-            g.dispose();  
-            data = ((DataBufferByte) bgrImg.getRaster().getDataBuffer()).getData();
-        }
-        
-        byte[] hash = new byte[HASH_SIZE];
-        
-        photodna.reset();
-        int ret = photodna.ComputeHash(data, img.getWidth(), img.getHeight(), 0, hash);
-        
-        if(ret == 0)
-            return hash;
-        else
-            throw new Exception("photodna returned error " + ret);
     }
     
 }

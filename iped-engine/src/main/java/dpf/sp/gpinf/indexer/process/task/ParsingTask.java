@@ -319,7 +319,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.startBackgroundParsing();
 
         try {
+            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
+                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            
             TextCache textCache = new TextCache();
+            textCache.setEnableDiskCache(advancedConfig.isStoreTextCacheOnDisk());
             char[] cbuf = new char[128 * 1024];
             int len = 0;
             while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {

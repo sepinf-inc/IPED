@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -22,6 +21,9 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 
 public class SleuthkitServer {
+    
+    public static final int MMAP_FILE_SIZE = 10 * 1024 * 1024;
+    private static final int MAX_BUF_SIZE = 8 * 1024 * 1024; //must be less than MMAP_FILE_SIZE
 
     static class FLAGS {
 
@@ -60,7 +62,7 @@ public class SleuthkitServer {
             // os = System.out;
             // System.setOut(System.err);
 
-            int size = 10 * 1024 * 1024;
+            int size = MMAP_FILE_SIZE;
             RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
             raf.setLength(size);
             FileChannel fc = raf.getChannel();
@@ -91,7 +93,8 @@ public class SleuthkitServer {
             commitByte(out, 0, FLAGS.DONE);
             notify(os);
 
-            byte[] buf = new byte[8 * 1024 * 1024];
+            byte[] buf = new byte[MAX_BUF_SIZE];
+            int minToRead = 64 * 1024;
             SleuthkitInputStream sis = null;
 
             while (true) {
@@ -106,7 +109,9 @@ public class SleuthkitServer {
                         sis = sisMap.remove(out.getLong(5));
                         sis.close();
                     } else if (cmd == FLAGS.READ) {
-                        int len = readIn(sis, buf);
+                        int len = out.getInt(13);
+                        len = Math.max(minToRead, Math.min(len, buf.length));
+                        len = readIn(sis, buf, len);
                         if (len == -1) {
                             commitByte(out, 0, FLAGS.EOF);
                             notify(os);
@@ -182,8 +187,8 @@ public class SleuthkitServer {
         return cmd;
     }
 
-    private static int readIn(SleuthkitInputStream sis, byte[] buf) throws IOException {
-        return sis.read(buf);
+    private static int readIn(SleuthkitInputStream sis, byte[] buf, int len) throws IOException {
+        return sis.read(buf, 0, len);
     }
 
     private static void writeOut(MappedByteBuffer out, byte[] buf, int len) throws Exception {
