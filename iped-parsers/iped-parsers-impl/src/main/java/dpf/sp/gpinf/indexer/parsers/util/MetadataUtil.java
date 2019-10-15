@@ -25,8 +25,6 @@ import iped3.util.ExtraProperties;
 
 public class MetadataUtil {
 
-    private static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
-
     private static Set<String> generalKeys = getGeneralKeys();
 
     private static Map<String, Property> compositeProps = getCompositeProps();
@@ -67,9 +65,9 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.LOCATIONS);
         generalKeys.add(ExtraProperties.URL);
         generalKeys.add(ExtraProperties.LOCAL_PATH);
+        generalKeys.add(ExtraProperties.TIKA_PARSER_USED);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
-        generalKeys.add(TIKA_PARSER_USED);
 
         return generalKeys;
     }
