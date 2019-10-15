@@ -129,6 +129,38 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
+    <mime-type type="application/x-firefox-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-bookmarks-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-edge-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+            
     <mime-type type="application/x-firefox-history">
         <sub-class-of type="text/html"/>
     </mime-type>

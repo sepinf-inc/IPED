@@ -20,6 +20,7 @@ import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Side;
@@ -102,6 +103,16 @@ public class MetadataViewer extends Viewer {
         ignoreMetas.add(Metadata.CONTENT_LENGTH);
         ignoreMetas.add(Metadata.CONTENT_TYPE);
         ignoreMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        ignoreMetas.add(ExtraProperties.TIKA_PARSER_USED);
+    }
+    
+    public void selectTab(int tabIdx) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                tabPane.getSelectionModel().select(tabIdx);
+            }
+        });
     }
 
     @Override
@@ -219,6 +230,7 @@ public class MetadataViewer extends Viewer {
         for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
+        fillProp(sb, ExtraProperties.TIKA_PARSER_USED, item.getMetadata().get(ExtraProperties.TIKA_PARSER_USED));
         sb.append("</table>"); //$NON-NLS-1$
     }
 
