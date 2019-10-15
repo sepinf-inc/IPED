@@ -134,6 +134,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
                     metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
+                    metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
@@ -169,6 +170,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Chrome History Entry " + i); //$NON-NLS-1$
                     metadataHistory.add(TikaCoreProperties.TITLE, h.getTitle());
                     metadataHistory.set(ExtraProperties.ACCESSED, h.getVisitDate());
+                    metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
 

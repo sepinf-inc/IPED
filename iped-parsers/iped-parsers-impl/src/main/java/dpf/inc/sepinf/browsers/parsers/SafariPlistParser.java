@@ -133,6 +133,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataHistory.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist History Entry " + i); //$NON-NLS-1$
                         metadataHistory.add(TikaCoreProperties.TITLE, v.getTitle());
                         metadataHistory.set(ExtraProperties.ACCESSED, v.getLastVisitDate());
+                        metadataHistory.set(ExtraProperties.VISIT_DATE, v.getLastVisitDate());
                         metadataHistory.add(ExtraProperties.URL, v.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
 

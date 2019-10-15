@@ -11,10 +11,16 @@ import org.apache.tika.metadata.Property;
  */
 public class ExtraProperties {
 
+    public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
+    
     // public static String EMBEDDED_PATH = "INDEXER_EMBEDDED_PATH";
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
     // public static String INDEXER_ID = "INDEXER_ID";\
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
+    
+    public static final Property VISIT_DATE = Property.internalDate("visitDate"); //$NON-NLS-1$
+    
+    public static final Property DOWNLOAD_DATE = Property.internalDate("downloadDate"); //$NON-NLS-1$
 
     public static final String DELETED = "IpedDeletedEmbeddedItem"; //$NON-NLS-1$
 

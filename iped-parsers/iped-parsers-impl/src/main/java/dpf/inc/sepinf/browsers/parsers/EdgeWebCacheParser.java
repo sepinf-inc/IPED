@@ -203,6 +203,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         metadataHistory.set(TikaCoreProperties.CREATED, ev.getCreationDate());
                         metadataHistory.set(TikaCoreProperties.MODIFIED, ev.getModifiedDate());
                         metadataHistory.set(ExtraProperties.ACCESSED, ev.getAccessedDate());
+                        metadataHistory.set(ExtraProperties.VISIT_DATE, ev.getAccessedDate());
                         metadataHistory.add(ExtraProperties.URL, ev.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
 
