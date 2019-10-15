@@ -18,20 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.ICaseData;
-import iped3.IIPEDSource;
-import iped3.datasource.IDataSource;
-import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
-import iped3.search.SearchResult;
-import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -48,11 +34,13 @@ import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MediaTypeRegistry;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
@@ -75,6 +63,19 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import gpinf.dev.filetypes.GenericFileType;
+import iped3.ICaseData;
+import iped3.IIPEDSource;
+import iped3.datasource.IDataSource;
+import iped3.search.IIPEDSearcher;
+import iped3.search.IMarcadores;
+import iped3.search.IMultiMarcadores;
+import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
@@ -84,6 +85,8 @@ public class IPEDReader extends DataSourceReader {
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
     private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    
+    private static MediaTypeRegistry mimeRegistry;
 
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
@@ -94,9 +97,15 @@ public class IPEDReader extends DataSourceReader {
     private int[] oldToNewIdMap;
     private List<IIPEDSource> srcList = new ArrayList<IIPEDSource>();
     private String deviceName;
-
+    
     public IPEDReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
+    }
+    
+    public MediaType getParentType(MediaType mediaType) {
+        if (mimeRegistry == null)
+            mimeRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+        return mimeRegistry.getSupertype(mediaType);
     }
 
     public boolean isSupported(File report) {
@@ -480,6 +489,10 @@ public class IPEDReader extends DataSourceReader {
 
                     } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
                         evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+                    
+                    else if(MediaType.application("x-browser-registry").equals(getParentType(evidence.getMediaType()))) { //$NON-NLS-1$
+                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));                        
+                    }
                 }
             } else {
                 evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$

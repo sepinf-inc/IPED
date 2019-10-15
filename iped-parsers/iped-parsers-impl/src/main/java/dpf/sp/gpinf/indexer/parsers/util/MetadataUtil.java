@@ -18,7 +18,6 @@ import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -34,6 +33,18 @@ public class MetadataUtil {
     private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
+    
+    public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
+    
+    private static Set<String> getIgnorePreviewMetas(){
+        ignorePreviewMetas = new HashSet<>();
+        ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
+        ignorePreviewMetas.add(Metadata.CONTENT_LENGTH);
+        ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
+        ignorePreviewMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
+        return ignorePreviewMetas;
+    }
 
     private static Set<String> getGeneralKeys() {
         Set<String> generalKeys = new HashSet<String>();
