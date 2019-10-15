@@ -195,6 +195,13 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     protected Boolean doInBackground() {
         try {
             WorkerProvider.setInstance(this);
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    WorkerProvider.getInstance().cancel(true);
+                }
+            });
+            
             manager = new Manager(dataSource, output, palavrasChave);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
