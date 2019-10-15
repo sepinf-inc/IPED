@@ -20,6 +20,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class MetadataUtil {
@@ -61,6 +62,11 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.WKFF_HITS);
         generalKeys.add(ExtraProperties.PST_ATTACH);
         generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
+        generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
+        generalKeys.add(ExtraProperties.LOCATIONS);
+        generalKeys.add(ExtraProperties.URL);
+        generalKeys.add(ExtraProperties.LOCAL_PATH);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
         generalKeys.add(TIKA_PARSER_USED);
@@ -107,6 +113,9 @@ public class MetadataUtil {
         ignoredMetadata.add("File Name"); //$NON-NLS-1$
         ignoredMetadata.add("File Modified Date"); //$NON-NLS-1$
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
+        ignoredMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID);
+        ignoredMetadata.add(ExtraProperties.PARENT_VIRTUAL_ID);
+        ignoredMetadata.add(BasicProps.HASCHILD);
         return ignoredMetadata;
     }
 
