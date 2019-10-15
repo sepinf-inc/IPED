@@ -118,6 +118,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
+                    metadataHistory.add((BasicProps.HASH), "");
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }

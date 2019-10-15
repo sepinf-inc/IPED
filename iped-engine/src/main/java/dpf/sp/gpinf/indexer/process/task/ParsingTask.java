@@ -468,6 +468,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(BasicProps.HASCHILD);
                 subItem.setHasChildren(true);
             }
+            
+            subItem.setHash(metadata.get(BasicProps.HASH));
+            metadata.remove(BasicProps.HASH);
 
             if (metadata.get(ExtraProperties.PST_EMAIL_HAS_ATTACHS) != null)
                 subItem.setHasChildren(true);

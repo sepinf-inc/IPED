@@ -136,6 +136,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataHistory.set(ExtraProperties.VISIT_DATE, v.getLastVisitDate());
                         metadataHistory.add(ExtraProperties.URL, v.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
+                        metadataHistory.add((BasicProps.HASH), "");
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }
@@ -178,6 +179,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
                         metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                         metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
+                        metadataDownload.add((BasicProps.HASH), "");
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                     }
@@ -220,6 +222,7 @@ public class SafariPlistParser extends AbstractParser {
                         metadataBookmark.add(TikaCoreProperties.TITLE, b.getTitle());
                         metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                         metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
+                        metadataBookmark.add((BasicProps.HASH), "");
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
                     }
