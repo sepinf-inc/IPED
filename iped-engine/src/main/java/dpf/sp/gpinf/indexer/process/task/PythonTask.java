@@ -11,6 +11,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
+import jep.NDArray;
 import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask{
@@ -46,6 +47,33 @@ public class PythonTask extends AbstractTask{
         
     }
     
+    private class ArrayConverter{
+        public NDArray<?> getNDArray(byte[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(int[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(long[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(float[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(double[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(boolean[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(short[] array) {
+            return new NDArray(array);
+        }
+        public NDArray<?> getNDArray(char[] array) {
+            return new NDArray(array);
+        }
+    }
+    
     private Jep getNewJep() throws JepException {
         Jep jep = new SharedInterpreter();
         jep.setInteractive(false);
@@ -59,6 +87,7 @@ public class PythonTask extends AbstractTask{
         jep.set("worker", this.worker); //$NON-NLS-1$
         jep.set("stats", this.stats); //$NON-NLS-1$
         jep.set("logger", LOGGER); //$NON-NLS-1$
+        jep.set("javaArray", new ArrayConverter()); //$NON-NLS-1$
         
         jep.runScript(scriptFile.getAbsolutePath());
         
