@@ -14,6 +14,7 @@ import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 
 public abstract class AbstractCarver implements Carver {
     protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
@@ -29,9 +30,6 @@ public abstract class AbstractCarver implements Carver {
 
     Hit lastEscapeFooter;
     boolean ignoreCorrupted;
-
-    private static final String CARVEDBY_METADATA_NAME = "CarvedBy";
-    private static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset");
 
     // carveia do cabeçalho a partir da informação de tamanho retornada pelo método
     // getLengthFromHit
@@ -92,8 +90,8 @@ public abstract class AbstractCarver implements Carver {
             long prevOff = parentEvidence.getFileOffset();
             offsetFile.setFileOffset(prevOff == -1 ? header.getOffset() : prevOff + header.getOffset());
 
-            offsetFile.getMetadata().add(CARVEDBY_METADATA_NAME, this.getClass().getName());
-            offsetFile.getMetadata().add(CARVEDOFFSET_METADATA_NAME, Long.toString(offsetFile.getFileOffset()));
+            offsetFile.getMetadata().add(ExtraProperties.CARVEDBY_METADATA_NAME, this.getClass().getName());
+            offsetFile.getMetadata().add(ExtraProperties.CARVEDOFFSET_METADATA_NAME, Long.toString(offsetFile.getFileOffset()));
 
             for (Iterator<CarvedItemListener> iterator = carvedItemListeners.iterator(); iterator.hasNext();) {
                 CarvedItemListener carvedItemListener = iterator.next();

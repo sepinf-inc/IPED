@@ -77,6 +77,8 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.URL);
         generalKeys.add(ExtraProperties.LOCAL_PATH);
         generalKeys.add(ExtraProperties.TIKA_PARSER_USED);
+        generalKeys.add(ExtraProperties.CARVEDBY_METADATA_NAME);
+        generalKeys.add(ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName());
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
