@@ -46,6 +46,12 @@ public class PhotoDNALookup extends AbstractTask{
     public void init(Properties confParams, File confDir) throws Exception {
         
         if(taskEnabled && vptree.isEmpty()) {
+            try {
+                PhotoDNATransforms.class.getName();
+            }catch(NoClassDefFoundError e) {
+                taskEnabled = false;
+                return;
+            }
             String path = confParams.getProperty(photoDNAFilePath);
             if(path != null && !path.trim().isEmpty()) {
                 File photoDnaHashSet = new File(path.trim());
