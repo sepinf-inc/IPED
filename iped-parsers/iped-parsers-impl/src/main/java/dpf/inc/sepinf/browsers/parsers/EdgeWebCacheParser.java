@@ -79,7 +79,8 @@ public class EdgeWebCacheParser extends AbstractParser {
             try (InputStream is = EdgeWebCacheParser.class
                     .getResourceAsStream("/nativelibs/libesedb/" + arch + "/libesedb.dll")) {
                 File file = new File(System.getProperty("java.io.tmpdir") + "/libesedb.dll");
-                Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                if(!file.exists())
+                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 System.load(file.getAbsolutePath());
 
             } catch (Throwable e) {
