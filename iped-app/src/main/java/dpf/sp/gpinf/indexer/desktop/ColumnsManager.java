@@ -57,6 +57,7 @@ import gpinf.dev.data.Item;
 import iped3.IItemId;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class ColumnsManager implements ActionListener, Serializable, IColumnsManager {
@@ -447,7 +448,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         for (String field : (List<String>) colState.visibleFields.clone())
             if (!dinamicFields.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                    && !field.equals(ResultTableModel.BOOKMARK_COL))
+                    && !field.equals(ResultTableModel.BOOKMARK_COL)
+                    && !field.equals(BasicProps.LENGTH))
                 updateGUICol(field, false);
 
         int firstCol = App.get().resultsTable.getColumnCount();
