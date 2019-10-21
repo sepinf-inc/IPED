@@ -263,7 +263,7 @@
         <glob pattern="*.mbox"/>
     </mime-type>
 
-    <mime-type type="application/x-mssql">
+	<mime-type type="application/x-mssql">
         <magic priority="50">
             <match value="\x01\x0F\x00\x00" type="string" offset="0"/>
         </magic> 
