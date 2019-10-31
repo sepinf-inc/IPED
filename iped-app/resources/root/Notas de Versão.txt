@@ -1,3 +1,12 @@
+31/10/2019: IPED-3.16.1-beta
+- Plugin RegRipper para downloads e pesquisas do Shareaza (PCF Ayrton)
+- Assinatura e categorização para bases de dados MSSQL (PCF Patrick)
+- Pergunta por caminho de imagens ad1 ou ufdr não encontradas
+- Verifica se arquivo de marcadores carregado manualmente é compatível com caso atual
+- Coluna "Tamanho" era ocultada em alguns casos com autoManageCols = true
+- Fixa NoClassDefFoundError ao gerar relatório com base photoDNA configurada
+- Fixa EdgeWebCacheParser quando enableExternalParsing = true
+
 16/10/2019: IPED-3.16-beta
 - Suporte a APFS (novo parâmetro -p password)
 - Suporte a módulos de processamento em Python (ver detalhes em conf/scripts/PythonScriptTask.py)
