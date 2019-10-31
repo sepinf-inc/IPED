@@ -304,6 +304,7 @@ public class ExportFileTask extends AbstractTask {
         String relativePath = Util.getRelativePath(output, file);
         evidence.setExportedFile(relativePath);
         evidence.setFile(file);
+        file.setReadOnly();
     }
 
     public void extractFile(InputStream inputStream, IItem evidence, Long parentSize) throws IOException {
