@@ -153,7 +153,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 }
 
                 Query q = searcher.getQuery();
-                LOGGER.info("Searching for query " + q.toString()); //$NON-NLS-1$
+                LOGGER.info("Searching for query " + (q != null ? q.toString() : queryText)); //$NON-NLS-1$
 
                 if (q instanceof MatchAllDocsQuery && allItemsCache != null)
                     result = allItemsCache.get();
