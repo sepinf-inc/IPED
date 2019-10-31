@@ -13,9 +13,15 @@ public class SelectImagePathWithDialog implements Runnable {
     
     private File origImage;
     private File newImage;
+    private boolean selectFolder = false;
     
     public SelectImagePathWithDialog(File origImage) {
         this.origImage = origImage;
+    }
+    
+    public SelectImagePathWithDialog(File origImage, boolean selectFolder) {
+        this.origImage = origImage;
+        this.selectFolder = selectFolder;
     }
     
     public File askImagePathInGUI() {
@@ -39,7 +45,9 @@ public class SelectImagePathWithDialog implements Runnable {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(Messages.getString("SelectImage.NewImgPath") + origImage.getName()); //$NON-NLS-1$
         fileChooser.setFileFilter(new ImageFilter(origImage));
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        if(selectFolder)
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             newImage = fileChooser.getSelectedFile();
         } else
