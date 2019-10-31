@@ -19,6 +19,7 @@ public class SelectImagePathWithDialog implements Runnable {
     }
     
     public File askImagePathInGUI() {
+        int i = 0;
         do {
             try {
                 SwingUtilities.invokeAndWait(this);
@@ -26,7 +27,7 @@ public class SelectImagePathWithDialog implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }while(newImage == null || !newImage.exists());
+        }while(++i < 2 && (newImage == null || !newImage.exists()));
         
         return newImage;
     }
