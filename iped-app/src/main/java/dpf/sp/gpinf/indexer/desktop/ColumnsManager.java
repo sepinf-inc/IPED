@@ -511,7 +511,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         int j = 0;
         for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
             TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length) {
+            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length && j < widths.size()) {
                 tc.setPreferredWidth(widths.get(j++));
             }
         }
