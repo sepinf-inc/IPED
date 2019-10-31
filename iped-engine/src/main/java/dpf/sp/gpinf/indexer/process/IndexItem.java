@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -833,7 +834,14 @@ public class IndexItem extends BasicProps {
     }
     
     private static File checkIfEvidenceFolderExists(Item evidence, File localFile) {
-        Path path = Paths.get(evidence.getPath());
+        if(evidence.getPath().contains(">>"))
+            return localFile;
+        Path path;
+        try {
+            path = Paths.get(evidence.getPath());
+        }catch(InvalidPathException e) {
+            return localFile;
+        }
         String pathSuffix = "";
         if(path.getNameCount() > 1)
             pathSuffix = path.subpath(1, path.getNameCount()).toString();
