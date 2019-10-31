@@ -330,9 +330,9 @@ public class LibreOfficeViewer extends Viewer {
                             descriptor.setReadOnly(false);
                             copySpreadsheetToHighlight();
                         }
-
+                        
                         document = officeApplication.getDocumentService().loadDocument(officeFrame,
-                                lastFile.getAbsolutePath(), descriptor);
+                                lastFile.toURI().toURL().toString(), descriptor);
                         ajustLayout();
 
                     } else {
