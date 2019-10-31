@@ -57,14 +57,14 @@ public class Util {
                 || file.getAbsolutePath().toLowerCase().startsWith("/dev/"); //$NON-NLS-1$
     }
 
-    public static File getRelativeFile(String basePath, String export) {
-        export = export.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-        File file = new File(export);
+    public static File getResolvedFile(String prefix, String suffix) {
+        suffix = suffix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+        File file = new File(suffix);
         if (file.isAbsolute())
             return file;
         else {
-            basePath = basePath.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-            return new File(basePath, export);
+            prefix = prefix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+            return new File(prefix, suffix);
         }
     }
 

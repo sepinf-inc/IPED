@@ -466,7 +466,7 @@ public class IPEDReader extends DataSourceReader {
             if (!treeNode) {
                 value = doc.get(IndexItem.EXPORT);
                 if (value != null && !value.isEmpty()) {
-                    evidence.setFile(Util.getRelativeFile(basePath, value));
+                    evidence.setFile(Util.getResolvedFile(basePath, value));
                 } else {
                     value = doc.get(IndexItem.SLEUTHID);
                     if (value != null && !value.isEmpty()) {
@@ -476,7 +476,7 @@ public class IPEDReader extends DataSourceReader {
                     } else if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
                         evidence.setIdInDataSource(value.trim());
                         String relPath = doc.get(IndexItem.SOURCE_PATH);
-                        Path absPath = Util.getRelativeFile(basePath, relPath).toPath();
+                        Path absPath = Util.getResolvedFile(basePath, relPath).toPath();
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
                         if (sisf == null) {
                             String className = doc.get(IndexItem.SOURCE_DECODER);

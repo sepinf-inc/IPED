@@ -311,7 +311,7 @@ public class GalleryModel extends AbstractTableModel {
             File file = null;
             if (i1 > -1) {
                 String thumbPath = export.substring(0, i1) + "thumbnails/" + nome; //$NON-NLS-1$
-                file = Util.getRelativeFile(basePath, thumbPath);
+                file = Util.getResolvedFile(basePath, thumbPath);
             }
             if (file != null && file.exists()) {
                 image = ImageIO.read(file);
