@@ -1,4 +1,4 @@
-31/10/2019: IPED-3.16.1-beta
+01/11/2019: IPED-3.16.1-beta
 - Plugin RegRipper para downloads e pesquisas do Shareaza (PCF Ayrton)
 - Assinatura e categorização para bases de dados MSSQL (PCF Patrick)
 - Pergunta por caminho de evidências ad1, ufdr ou pastas não encontradas
@@ -6,7 +6,9 @@
 - Coluna "Tamanho" era ocultada em alguns casos com autoManageCols = true
 - Fixa NoClassDefFoundError ao gerar relatório com base photoDNA configurada
 - Fixa EdgeWebCacheParser quando enableExternalParsing = true
-- Fixa abertura de documentos Office se caminho do caso contiver '#' (PCF Pfeifer)
+- Fixa abertura de documentos Office quando caminho do caso contém '#' (PCF Pfeifer)
+- Fixa NullPointerException no SleuthkitJNI-4.6.5
+- Portadas correções do sleuthkit-4.6.6 para o 4.6.5 com APFS
 
 16/10/2019: IPED-3.16-beta
 - Suporte a APFS (novo parâmetro -p password)
