@@ -57,7 +57,6 @@ entropyTest = true
 minRawStringSize = 4
 
 # Define additional characters to be indexed in addition to letters and numbers, i.e. these characters will no longer be treated as separators.
-# Separate the characters with a blank space
 extraCharsToIndex =
 
 # Converts text to lowercase before indexing, making the search case-insensitive.

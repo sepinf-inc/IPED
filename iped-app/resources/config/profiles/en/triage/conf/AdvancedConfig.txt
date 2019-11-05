@@ -57,7 +57,6 @@ entropyTest = false
 minRawStringSize = 4
 
 # Define additional characters to be indexed in addition to letters and numbers, i.e. these characters will no longer be treated as separators.
-# Separate the characters with a blank space
 extraCharsToIndex =
 
 # Store term vectors into index, needed to search for similar documents.
