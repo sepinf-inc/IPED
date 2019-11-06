@@ -522,8 +522,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             // The Chrome downloads.start_time is in (the number of) microseconds since
             // January 1, 1601 UTC
             // java Date use epoch time in milliseconds
-            String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads.tab_url, downloads.current_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
-                    + "FROM downloads;"; //$NON-NLS-1$
+            String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads_url_chains.url, downloads.current_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
+                    + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
             ResultSet rs = st.executeQuery(sql);
 
             while (rs.next()) {
