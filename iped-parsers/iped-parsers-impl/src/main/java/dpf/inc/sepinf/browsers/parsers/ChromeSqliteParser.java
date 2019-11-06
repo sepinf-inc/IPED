@@ -200,7 +200,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             
             sqliteParser.parse(tis, handler, metadata, context);
             

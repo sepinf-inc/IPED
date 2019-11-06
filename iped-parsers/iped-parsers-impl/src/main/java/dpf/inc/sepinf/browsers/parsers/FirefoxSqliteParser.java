@@ -41,6 +41,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -75,6 +76,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
     public static final MediaType MOZ_DOWNLOADS_REG = MediaType.application("x-firefox-downloads-registry"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MOZ_PLACES);
+    
+    private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -89,7 +92,8 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
         File bookmarksFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
         File downloadFile = tmp.createTemporaryFile();
-        File dbFile = TikaInputStream.get(stream, tmp).getFile();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
+        File dbFile = tis.getFile();
         
         try (Connection connection = getConnection(dbFile)){
 
@@ -113,7 +117,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     bookmarksMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     bookmarksMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseFirefoxBookmarks(stream, bookmarksHandler, bookmarksMetadata, context, bookmarks);
+                    parseFirefoxBookmarks(bookmarksHandler, bookmarksMetadata, context, bookmarks);
 
                     try (FileInputStream fis = new FileInputStream(bookmarksFile)) {
                         extractor.parseEmbedded(fis, handler, bookmarksMetadata, true);
@@ -151,7 +155,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseFirefoxResumedHistory(stream, historyHandler, historyMetadata, context, resumedHistory);
+                    parseFirefoxResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
                     try (FileInputStream fis = new FileInputStream(historyFile)) {
                         extractor.parseEmbedded(fis, handler, historyMetadata, true);
@@ -189,7 +193,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(2));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseFirefoxDownloads(stream, downloadsHandler, downloadsMetadata, context, downloads);
+                    parseFirefoxDownloads(downloadsHandler, downloadsMetadata, context, downloads);
 
                     try (FileInputStream fis = new FileInputStream(downloadFile)) {
                         extractor.parseEmbedded(fis, handler, downloadsMetadata, true);
@@ -218,14 +222,16 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            sqliteParser.parse(tis, handler, metadata, context);
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
+            
         } finally {
             tmp.close();
         }
     }
 
-    private void parseFirefoxBookmarks(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseFirefoxBookmarks(ContentHandler handler, Metadata metadata,
             ParseContext context, List<FirefoxMozBookmark> bookmarks) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
@@ -314,7 +320,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
 
     }
 
-    private void parseFirefoxDownloads(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseFirefoxDownloads(ContentHandler handler, Metadata metadata,
             ParseContext context, List<Download> downloads) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
@@ -394,7 +400,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
         }
     }
 
-    private void parseFirefoxResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseFirefoxResumedHistory(ContentHandler handler, Metadata metadata,
             ParseContext context, List<ResumedVisit> resumedHistory) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;

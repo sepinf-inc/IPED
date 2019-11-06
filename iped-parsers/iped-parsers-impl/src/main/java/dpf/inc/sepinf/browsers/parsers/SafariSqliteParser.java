@@ -30,6 +30,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -63,6 +64,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(SAFARI_SQLITE);
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariSqliteParser.class);
+    
+    private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -75,7 +78,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
         TemporaryResources tmp = new TemporaryResources();
         File historyFile = tmp.createTemporaryFile();
-        File dbFile = TikaInputStream.get(stream, tmp).getFile();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp); 
+        File dbFile = tis.getFile();
 
         try (Connection connection = getConnection(dbFile)){
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -94,7 +98,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseSafariResumedHistory(stream, historyHandler, historyMetadata, context, resumedHistory);
+                    parseSafariResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
                     try (FileInputStream fis = new FileInputStream(historyFile)) {
                         extractor.parseEmbedded(fis, handler, historyMetadata, true);
@@ -123,7 +127,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            sqliteParser.parse(tis, handler, metadata, context);
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
         } finally {
             tmp.close();
@@ -131,8 +136,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     }
 
-    private void parseSafariResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
-            ParseContext context, List<SafariResumedVisit> resumedHistory)
+    private void parseSafariResumedHistory(ContentHandler handler, Metadata metadata, ParseContext context, List<SafariResumedVisit> resumedHistory)
             throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
