@@ -1,3 +1,7 @@
+xx/11/2019: IPED-3.16.2
+- Correção da obtenção das URLs de downloads do Chrome, tratamento de versões antigas do Chrome
+- Correção do RecycleBinParser (estava incluindo nome de arquivos temporários no relatório)
+
 01/11/2019: IPED-3.16.1-beta
 - Plugin RegRipper para downloads e pesquisas do Shareaza (PCF Ayrton)
 - Assinatura e categorização para bases de dados MSSQL (PCF Patrick)
