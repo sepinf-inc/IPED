@@ -29,6 +29,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -75,6 +76,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
     public static final MediaType CHROME_SEARCHES = MediaType.application("x-chrome-searches"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(CHROME_SQLITE);
+    
+    private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -86,7 +89,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             throws IOException, SAXException, TikaException {
 
         TemporaryResources tmp = new TemporaryResources();
-        File dbFile = TikaInputStream.get(stream, tmp).getFile();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp); 
+        File dbFile = tis.getFile();
         File downloadsFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
         File searchFile = tmp.createTemporaryFile();
@@ -112,7 +116,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseChromeDownloads(stream, downloadsHandler, downloadsMetadata, context, downloads);
+                    parseChromeDownloads(downloadsHandler, downloadsMetadata, context, downloads);
 
                     try (FileInputStream fis = new FileInputStream(downloadsFile)) {
                         extractor.parseEmbedded(fis, handler, downloadsMetadata, true);
@@ -150,7 +154,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                    parseChromeResumedHistory(stream, historyHandler, historyMetadata, context, resumedHistory);
+                    parseChromeResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
                     try (FileInputStream fis = new FileInputStream(historyFile)) {
                         extractor.parseEmbedded(fis, handler, historyMetadata, true);
@@ -188,7 +192,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     searchesMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     searchesMetadata.set(BasicProps.HASCHILD, "false"); //$NON-NLS-1$
 
-                    parseChromeSearches(stream, searchesHandler, searchesMetadata, context, searches);
+                    parseChromeSearches(searchesHandler, searchesMetadata, context, searches);
 
                     try (FileInputStream fis = new FileInputStream(searchFile)) {
                         extractor.parseEmbedded(fis, handler, searchesMetadata, true);
@@ -197,13 +201,17 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             }
 
         } catch (SQLException e) {
+            
+            sqliteParser.parse(tis, handler, metadata, context);
+            
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
+            
         } finally {
             tmp.close();
         }
     }
 
-    private void parseChromeDownloads(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseChromeDownloads(ContentHandler handler, Metadata metadata,
             ParseContext context, List<Download> downloads) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
@@ -283,7 +291,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         }
     }
 
-    private void parseChromeResumedHistory(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseChromeResumedHistory(ContentHandler handler, Metadata metadata,
             ParseContext context, List<ResumedVisit> resumedHistory) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
@@ -372,7 +380,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         }
     }
     
-    private void parseChromeSearches(InputStream stream, ContentHandler handler, Metadata metadata,
+    private void parseChromeSearches(ContentHandler handler, Metadata metadata,
             ParseContext context, List<Search> searches) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
@@ -522,9 +530,17 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             // The Chrome downloads.start_time is in (the number of) microseconds since
             // January 1, 1601 UTC
             // java Date use epoch time in milliseconds
-            String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads_url_chains.url, downloads.current_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
-                    + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
-            ResultSet rs = st.executeQuery(sql);
+            ResultSet rs = null;
+            try {
+                String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads_url_chains.url, downloads.current_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
+                        + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
+                rs = st.executeQuery(sql);
+            }catch(Exception e) {
+                //Old Chrome versions
+                String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads.url, downloads.full_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
+                        + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
+                rs = st.executeQuery(sql);
+            }
 
             while (rs.next()) {
                 downloads.add(new Download(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)));
