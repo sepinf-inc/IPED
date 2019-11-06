@@ -538,7 +538,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             }catch(Exception e) {
                 //Old Chrome versions
                 String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads.url, downloads.full_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
-                        + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
+                        + "FROM downloads;"; //$NON-NLS-1$
                 rs = st.executeQuery(sql);
             }
 
