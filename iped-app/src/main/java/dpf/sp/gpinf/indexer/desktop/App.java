@@ -38,6 +38,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -765,11 +766,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void removeAllDockables() {
-        DefaultSingleCDockable[] dockables = new DefaultSingleCDockable[] { compositeViewerDock, hitsDock, subitemDock,
+        
+        List<DefaultSingleCDockable> docks = new ArrayList<>();
+        docks.addAll(Arrays.asList(compositeViewerDock, hitsDock, subitemDock,
                 duplicateDock, parentDock, tableTabDock, galleryTabDock, bookmarksTabDock, evidenceTabDock,
-                metadataTabDock, categoriesTabDock };
+                metadataTabDock, categoriesTabDock));
+        docks.addAll(rsTabDock);
+        rsTabDock.clear();
 
-        for (DefaultSingleCDockable dockable : dockables) {
+        for (DefaultSingleCDockable dockable : docks) {
             if (dockable != null) {
                 Component c = dockable.getContentPane().getComponent(0);
                 dockable.remove(c);
@@ -908,6 +913,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 DefaultSingleCDockable tabDock = iterator.next();
                 tabDock.setLocation(nextLocation);
                 tabDock.setVisible(true);
+                nextLocation = tabDock.getBaseLocation().aside();
             }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
@@ -966,6 +972,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 DefaultSingleCDockable tabDock = iterator.next();
                 tabDock.setLocation(nextLocation);
                 tabDock.setVisible(true);
+                nextLocation = tabDock.getBaseLocation().aside();
             }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.3));
