@@ -29,6 +29,7 @@ import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -216,6 +217,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.error("Processing Error: " + e.getMessage()); //$NON-NLS-1$
             else
                 LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
+            
+            if(!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
+                LOGGER.error("It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
+                        + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
 
         } finally {
             done = true;
