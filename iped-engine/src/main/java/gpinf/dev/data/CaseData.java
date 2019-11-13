@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -236,6 +235,10 @@ public class CaseData implements ICaseData {
      */
     public LinkedBlockingDeque<IItem> getItemQueue() {
         return queues.get(currentQueuePriority);
+    }
+    
+    public LinkedBlockingDeque<IItem> getItemQueue(int priority) {
+        return queues.get(priority);
     }
 
     /**

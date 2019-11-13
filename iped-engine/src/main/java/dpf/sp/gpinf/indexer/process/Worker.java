@@ -125,7 +125,9 @@ public class Worker extends Thread {
     }
 
     public void processNextQueue() {
-        this.interrupt();
+        synchronized(this) {
+            this.notifyAll();
+        }
     }
 
     /**
@@ -152,9 +154,7 @@ public class Worker extends Thread {
     public void process(IItem evidence) {
 
         IItem prevEvidence = this.evidence;
-        if (!evidence.isQueueEnd()) {
-            this.evidence = evidence;
-        }
+        this.evidence = evidence;
 
         try {
 
@@ -168,6 +168,8 @@ public class Worker extends Thread {
              * processTask(evidence, task); }
              */
             firstTask.processAndSendToNextTask(evidence);
+            
+            this.evidence = prevEvidence;
 
         } catch (Throwable t) {
             // ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
@@ -182,9 +184,6 @@ public class Worker extends Thread {
             }
 
         }
-
-        this.evidence = prevEvidence;
-
     }
 
     /**
@@ -233,16 +232,19 @@ public class Worker extends Thread {
                 } else {
                     IItem queueEnd = evidence;
                     evidence = null;
-                    if (manager.numItensBeingProcessed() == 0) {
+                    if (manager.numItensBeingProcessed() == 0 && caseData.getItemQueue().size() == 0) {
                         caseData.getItemQueue().addLast(queueEnd);
                         process(queueEnd);
-                        break;
+                        synchronized(this) {
+                            this.wait();
+                        }
                     } else {
+                        int size = caseData.getItemQueue().size();
                         caseData.getItemQueue().addLast(queueEnd);
-                        if (itensBeingProcessed > 0) {
+                        if (itensBeingProcessed > 0 && size == 0) {
                             process(queueEnd);
                         } else {
-                            Thread.sleep(1000);
+                            //Thread.sleep(1000);
                         }
                     }
                 }

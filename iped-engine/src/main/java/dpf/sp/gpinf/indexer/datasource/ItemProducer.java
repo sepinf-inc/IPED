@@ -113,8 +113,9 @@ public class ItemProducer extends Thread {
             }
             if (!listOnly) {
                 Item evidence = new Item();
+                evidence.setPath("[queue-end]");
                 evidence.setQueueEnd(true);
-                // caseData.addEvidenceFile(evidence);
+                caseData.addItem(evidence);
 
             } else {
                 WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$

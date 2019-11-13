@@ -77,6 +77,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
+import iped3.IItem;
 import iped3.configuration.IConfigurationDirectory;
 import iped3.search.LuceneSearchResult;
 
@@ -357,12 +358,17 @@ public class Manager {
                  * detectado o problema no log de estatísticas e o usuario sera informado do
                  * erro.
                  */
-                if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || produtor.isAlive()) // if(workers[k].isAlive())
+                if (workers[k].evidence != null) // if(workers[k].isAlive())
                     someWorkerAlive = true;
             }
+            boolean queueEmpty = false;
+            IItem queueEnd = caseData.getItemQueue().peek();
+            queueEmpty = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
 
-            if (!someWorkerAlive) {
+            if (!someWorkerAlive && !produtor.isAlive() && queueEmpty) {
                 if (caseData.changeToNextQueue() != null) {
+                    LOGGER.info("Changed to next processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
+                    caseData.getItemQueue().addLast(queueEnd);
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();

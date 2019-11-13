@@ -148,7 +148,7 @@ public abstract class AbstractTask {
             Thread.sleep(1000);
         }
 
-        if (this == worker.firstTask && !evidence.isQueueEnd()) {
+        if (this == worker.firstTask) {
             worker.itensBeingProcessed++;
         }
 
@@ -165,12 +165,23 @@ public abstract class AbstractTask {
             taskTime += System.nanoTime() / 1000 - t - subitensTime;
         }
 
-        sendToNextTask(evidence);
-
+        boolean decremented = false;
+        int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
+        if (priority <= caseData.getCurrentQueuePriority()) {
+            sendToNextTask(evidence);
+        }else {
+            caseData.addItemToQueue(evidence, priority);
+            worker.itensBeingProcessed--;
+            decremented = true;
+        }
+        
         worker.runningTask = prevTask;
+        
+        if(nextTask == null && !decremented)
+            worker.itensBeingProcessed--;
 
         // ESTATISTICAS
-        if ((nextTask == null) && !evidence.isQueueEnd()) {
+        if (nextTask == null && !evidence.isQueueEnd()) {
             evidence.dispose();
             stats.incProcessed();
             if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
@@ -183,7 +194,6 @@ public abstract class AbstractTask {
                 }
                 stats.addVolume(len);
             }
-            worker.itensBeingProcessed--;
         }
     }
 
@@ -197,13 +207,7 @@ public abstract class AbstractTask {
      */
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
-            int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
-            if (priority <= caseData.getCurrentQueuePriority())
-                nextTask.processAndSendToNextTask(evidence);
-            else {
-                caseData.addItemToQueue(evidence, priority);
-                worker.itensBeingProcessed--;
-            }
+            nextTask.processAndSendToNextTask(evidence);
         }
     }
 
@@ -218,7 +222,8 @@ public abstract class AbstractTask {
      */
     private void processMonitorTimeout(IItem evidence) throws Exception {
         try {
-            this.process(evidence);
+            if(!evidence.isQueueEnd())
+                this.process(evidence);
 
         } catch (TimeoutException e) {
             LOGGER.warn("{} TIMEOUT processing {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), //$NON-NLS-1$

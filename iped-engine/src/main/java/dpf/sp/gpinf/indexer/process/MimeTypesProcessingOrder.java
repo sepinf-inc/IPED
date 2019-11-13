@@ -54,7 +54,8 @@ public class MimeTypesProcessingOrder {
 
     /** Obtém a prioridade de processamento do mimeType */
     public static int getProcessingPriority(MediaType mediaType) {
-
+        if(mediaType == null)
+            return 0;
         Integer priority = mediaTypes.get(mediaType);
         if (priority != null)
             return priority;

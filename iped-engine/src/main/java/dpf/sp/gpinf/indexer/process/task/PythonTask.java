@@ -88,6 +88,7 @@ public class PythonTask extends AbstractTask{
         jep.set("stats", this.stats); //$NON-NLS-1$
         jep.set("logger", LOGGER); //$NON-NLS-1$
         jep.set("javaArray", new ArrayConverter()); //$NON-NLS-1$
+        jep.set("javaTask", this); //$NON-NLS-1$
         
         jep.runScript(scriptFile.getAbsolutePath());
         
@@ -131,6 +132,32 @@ public class PythonTask extends AbstractTask{
             finished = true;
         }
         
+    }
+    
+    public void sendToNextTaskSuper(IItem item) throws Exception {
+        super.sendToNextTask(item);
+    }
+    
+    private boolean methodExists = true;
+    
+    @Override
+    protected void sendToNextTask(IItem item) throws Exception {
+        if(!methodExists) {
+            super.sendToNextTask(item);
+            return;
+        }
+        try {
+            jep.invoke("sendToNextTask", item); //$NON-NLS-1$
+            
+        }catch(JepException e) {
+            if(e.toString().contains("Unable to find object with name: sendToNextTask")) { //$NON-NLS-1$
+                methodExists = false;
+                super.sendToNextTask(item);
+                return;
+            }
+            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString());
+            LOGGER.debug("", e);
+        }
     }
 
     @Override
