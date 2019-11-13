@@ -361,11 +361,14 @@ public class Manager {
                 if (workers[k].evidence != null) // if(workers[k].isAlive())
                     someWorkerAlive = true;
             }
-            boolean queueEmpty = false;
+            
             IItem queueEnd = caseData.getItemQueue().peek();
-            queueEmpty = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+            boolean queueEmpty = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+            
+            if(!queueEmpty || produtor.isAlive())
+                someWorkerAlive = true;
 
-            if (!someWorkerAlive && !produtor.isAlive() && queueEmpty) {
+            if (!someWorkerAlive) {
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to next processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
                     caseData.getItemQueue().addLast(queueEnd);
