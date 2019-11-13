@@ -231,10 +231,10 @@ public class Worker extends Thread {
 
                 } else {
                     IItem queueEnd = evidence;
-                    evidence = null;
                     if (manager.numItensBeingProcessed() == 0 && caseData.getItemQueue().size() == 0) {
                         caseData.getItemQueue().addLast(queueEnd);
                         process(queueEnd);
+                        evidence = null;
                         synchronized(this) {
                             this.wait();
                         }
