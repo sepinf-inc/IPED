@@ -236,10 +236,6 @@ public class CaseData implements ICaseData {
     public LinkedBlockingDeque<IItem> getItemQueue() {
         return queues.get(currentQueuePriority);
     }
-    
-    public LinkedBlockingDeque<IItem> getItemQueue(int priority) {
-        return queues.get(priority);
-    }
 
     /**
      * Salva o objeto atual em arquivo. Utiliza serialização direta do objeto e
