@@ -21,6 +21,10 @@ public class ExtraProperties {
     public static final Property VISIT_DATE = Property.internalDate("visitDate"); //$NON-NLS-1$
     
     public static final Property DOWNLOAD_DATE = Property.internalDate("downloadDate"); //$NON-NLS-1$
+    
+    public static final String DOWNLOAD_TOTAL_BYTES = "totalBytes"; //$NON-NLS-1$
+    
+    public static final String DOWNLOAD_RECEIVED_BYTES = "receivedBytes"; //$NON-NLS-1$
 
     public static final String DELETED = "IpedDeletedEmbeddedItem"; //$NON-NLS-1$
 

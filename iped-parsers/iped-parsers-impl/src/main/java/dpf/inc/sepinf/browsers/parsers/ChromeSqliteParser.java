@@ -139,6 +139,10 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
                     metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
+                    if(d.getTotalBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_TOTAL_BYTES, d.getTotalBytes().toString());
+                    if(d.getReceivedBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
                     metadataDownload.add((BasicProps.HASH), "");
 
@@ -242,15 +246,23 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("URL"); //$NON-NLS-1$
+            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-
+            
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("DOWNLOADED FILE"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-
+            
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
+            xHandler.characters("RECEIVED BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("TOTAL BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
@@ -263,17 +275,25 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Integer.toString(i));
                 xHandler.endElement("td"); //$NON-NLS-1$
-
+                
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getUrlFromDownload());
+                xHandler.characters(d.getDownloadedDateAsString());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getDownloadedLocalPath());
                 xHandler.endElement("td"); //$NON-NLS-1$
-
+                
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getDownloadedDateAsString());
+                xHandler.characters(d.getReceivedBytes() != null ? d.getReceivedBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getTotalBytes() != null ? d.getTotalBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getUrlFromDownload());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.endElement("tr"); //$NON-NLS-1$
@@ -543,7 +563,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             }
 
             while (rs.next()) {
-                downloads.add(new Download(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)));
+                downloads.add(new Download(String.valueOf(rs.getLong(1)), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getLong(6), rs.getLong(5)));
             }
         } finally {
             if (st != null)

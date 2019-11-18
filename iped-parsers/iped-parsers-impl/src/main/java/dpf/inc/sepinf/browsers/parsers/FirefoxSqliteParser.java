@@ -30,6 +30,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.json.simple.parser.JSONParser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -215,6 +216,10 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
                     metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
+                    if(d.getTotalBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_TOTAL_BYTES, d.getTotalBytes().toString());
+                    if(d.getReceivedBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
                     metadataDownload.add((BasicProps.HASH), "");
 
@@ -355,11 +360,15 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("URL"); //$NON-NLS-1$
-            xHandler.endElement("th"); //$NON-NLS-1$
-
-            xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("PATH"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("TOTAL SIZE"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
@@ -378,11 +387,16 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getUrlFromDownload());
-                xHandler.endElement("td"); //$NON-NLS-1$
-
-                xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getDownloadedLocalPath());
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                Long size = d.getTotalBytes();
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(size != null ? size.toString() : "-");
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getUrlFromDownload());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.endElement("tr"); //$NON-NLS-1$
@@ -585,12 +599,14 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
 
             while (rs.next()) {
                 // 1- id, 2- date, 3- url, 4- path
-                long id = rs.getLong(1);
+                Long id = rs.getLong(1);
                 String url = rs.getString(2);
                 String path = rs.getString(3);
                 String att = rs.getString(4);
-                long date = Long.parseLong((att.split(","))[1].split(":")[1]);
-                downloads.add(new Download(id, date, url, path));
+                JSONObject json = new JSONObject(att);
+                long date = json.getLong("endTime"); //$NON-NLS-1$
+                long size = json.getLong("fileSize"); //$NON-NLS-1$
+                downloads.add(new Download(id.toString(), date, url, path, size));
             }
         } finally {
             if (st != null)

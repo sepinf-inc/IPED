@@ -5,23 +5,36 @@ import java.util.Date;
 import java.util.TimeZone;
 
 public class Download {
-    private long id;
+    private String id;
     private String urlFromDownload;
     private String downloadedLocalPath;
     private Date downloadedDate;
+    private Long totalBytes;
+    private Long receivedBytes;
 
-    public Download(long id, long downloadedDate, String urlFromDownload, String downloadedLocalPath) {
+    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath) {
         this.id = id;
         this.urlFromDownload = urlFromDownload;
         this.downloadedLocalPath = downloadedLocalPath;
-        this.downloadedDate = new Date(downloadedDate);
+        if(downloadedTime != null)
+            this.downloadedDate = new Date(downloadedTime);
+    }
+    
+    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath, Long totalBytes) {
+        this(id, downloadedTime, urlFromDownload, downloadedLocalPath);
+        this.totalBytes = totalBytes;
+    }
+    
+    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath, Long totalBytes, Long receivedBytes) {
+        this(id, downloadedTime, urlFromDownload, downloadedLocalPath, totalBytes);
+        this.receivedBytes = receivedBytes;
     }
 
-    public long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -53,6 +66,14 @@ public class Download {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         return format.format(downloadedDate);
+    }
+    
+    public Long getTotalBytes() {
+        return totalBytes;
+    }
+    
+    public Long getReceivedBytes() {
+        return receivedBytes;
     }
 
 }

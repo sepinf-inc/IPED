@@ -27,6 +27,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.dd.plist.NSArray;
+import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSNumber;
 import com.dd.plist.NSObject;
@@ -145,7 +146,7 @@ public class SafariPlistParser extends AbstractParser {
                 /* Downloads.plist */
                 if (evidenceFile.contains("Downloads")) {
 
-                    List<SafariDownload> downloads = getDownloads(stream);
+                    List<Download> downloads = getDownloads(stream);
 
                     try (FileOutputStream tmpDownloadFile = new FileOutputStream(downloadFile)) {
 
@@ -165,7 +166,7 @@ public class SafariPlistParser extends AbstractParser {
 
                     int i = 0;
 
-                    for (SafariDownload d : downloads) {
+                    for (Download d : downloads) {
                         
                         if(!extractEntries)
                             break;
@@ -178,6 +179,12 @@ public class SafariPlistParser extends AbstractParser {
                         metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Download Entry " + i); //$NON-NLS-1$
                         metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
                         metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
+                        if(d.getDownloadedDate() != null)
+                            metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
+                        if(d.getTotalBytes() != null)
+                            metadataDownload.set(ExtraProperties.DOWNLOAD_TOTAL_BYTES, d.getTotalBytes().toString());
+                        if(d.getReceivedBytes() != null)
+                            metadataDownload.set(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                         metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                         metadataDownload.add((BasicProps.HASH), "");
 
@@ -385,8 +392,8 @@ public class SafariPlistParser extends AbstractParser {
     // return history;
     // }
 
-    private List<SafariDownload> getDownloads(InputStream is) throws Exception {
-        List<SafariDownload> downloads = new LinkedList<SafariDownload>();
+    private List<Download> getDownloads(InputStream is) throws Exception {
+        List<Download> downloads = new LinkedList<>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
         NSObject[] parameters = ((NSArray) rootDict.objectForKey("DownloadHistory")).getArray();
@@ -395,19 +402,27 @@ public class SafariPlistParser extends AbstractParser {
             String uid = ((NSString) d.objectForKey("DownloadEntryIdentifier")).getContent();
             String url = ((NSString) d.objectForKey("DownloadEntryURL")).getContent();
             String path = ((NSString) d.objectForKey("DownloadEntryPath")).getContent();
-            // int totalBytes = ((NSNumber)
-            // d.objectForKey("DownloadEntryProgressTotalToLoad")).intValue();
-            // int bytesDownloaded = ((NSNumber)
-            // d.objectForKey("DownloadEntryProgressBytesSoFar")).intValue();
+            NSDate nsDate = (NSDate) d.objectForKey("DownloadEntryDateAddedKey");
+            Long time = null;
+            if(nsDate != null)
+                time = nsDate.getDate().getTime();
+            NSNumber number = (NSNumber) d.objectForKey("DownloadEntryProgressTotalToLoad");
+            Long totalBytes = null;
+            if(number != null)
+                totalBytes = number.longValue();
+            number = (NSNumber) d.objectForKey("DownloadEntryProgressBytesSoFar");
+            Long bytesDownloaded = null;
+            if(number != null)
+                bytesDownloaded = number.longValue();
 
-            downloads.add(new SafariDownload(uid, url, path));
+            downloads.add(new Download(uid, time, url, path, totalBytes, bytesDownloaded));
 
         }
         return downloads;
     }
 
     private void parseSafariDownloads(InputStream stream, ToXMLContentHandler downloadHandler,
-            Metadata downloadMetadata, ParseContext context, List<SafariDownload> downloads) throws SAXException {
+            Metadata downloadMetadata, ParseContext context, List<Download> downloads) throws SAXException {
         XHTMLContentHandler xHandler = null;
 
         try {
@@ -436,30 +451,54 @@ public class SafariPlistParser extends AbstractParser {
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("URL"); //$NON-NLS-1$
+            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-
+            
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("DOWNLOADED FILE"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("RECEIVED BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("TOTAL BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
 
             int i = 1;
 
-            for (SafariDownload d : downloads) {
+            for (Download d : downloads) {
                 xHandler.startElement("tr"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Integer.toString(i));
                 xHandler.endElement("td"); //$NON-NLS-1$
-
+                
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getUrlFromDownload());
+                xHandler.characters(d.getDownloadedDate() != null ? d.getDownloadedDateAsString() : "-");
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getDownloadedLocalPath());
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getReceivedBytes() != null ? d.getReceivedBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getTotalBytes() != null ? d.getTotalBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+                
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getUrlFromDownload());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.endElement("tr"); //$NON-NLS-1$
