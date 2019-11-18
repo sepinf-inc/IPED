@@ -180,7 +180,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         ToXMLContentHandler historyHandler = new ToXMLContentHandler(tmpHistoryFile, "UTF-8"); //$NON-NLS-1$
                         Metadata historyMetadata = new Metadata();
                         historyMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, EDGE_HISTORY.toString());
-                        historyMetadata.add(Metadata.RESOURCE_NAME_KEY, ec.getTableName()); // $NON-NLS-1$
+                        historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Edge History " + ec.getTableName()); // $NON-NLS-1$
                         historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
                         historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 

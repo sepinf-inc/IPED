@@ -364,7 +364,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.endElement("th"); //$NON-NLS-1$
             
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("TOTAL SIZE"); //$NON-NLS-1$
+            xHandler.characters("TOTAL BYTES"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
             
             xHandler.startElement("th"); //$NON-NLS-1$
