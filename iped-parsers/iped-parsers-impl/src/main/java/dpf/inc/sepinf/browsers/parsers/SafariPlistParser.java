@@ -344,14 +344,13 @@ public class SafariPlistParser extends AbstractParser {
             NSDictionary d = (NSDictionary) param;
             // String uid = ((NSString)
             // d.objectForKey("DownloadEntryIdentifier")).getContent();
-            String url = ((NSString) d.objectForKey("")).getContent();
-            NSString t = (NSString) d.objectForKey("title");
-            String title = "";
-            if (t != null)
-                title = t.getContent();
-            long visitCount = ((NSNumber) d.objectForKey("visitCount")).longValue();
-            Double lastVisitedDate = ((Double.parseDouble(((NSString) d.objectForKey("lastVisitedDate")).getContent())
-                    + 978307200) * 1000);
+            String url = getString(d.objectForKey(""));
+            String title = getString(d.objectForKey("title"));
+            
+            NSObject nso = d.objectForKey("visitCount");
+            long visitCount = nso != null ? ((NSNumber) nso).longValue() : -1;
+            String dateStr = getString(d.objectForKey("lastVisitedDate"));
+            Double lastVisitedDate = dateStr.isEmpty() ? 0 : ((Double.parseDouble(dateStr) + 978307200) * 1000);
             // int totalBytes = ((NSNumber)
             // d.objectForKey("DownloadEntryProgressTotalToLoad")).intValue();
             // int bytesDownloaded = ((NSNumber)
@@ -399,9 +398,9 @@ public class SafariPlistParser extends AbstractParser {
         NSObject[] parameters = ((NSArray) rootDict.objectForKey("DownloadHistory")).getArray();
         for (NSObject param : parameters) {
             NSDictionary d = (NSDictionary) param;
-            String uid = ((NSString) d.objectForKey("DownloadEntryIdentifier")).getContent();
-            String url = ((NSString) d.objectForKey("DownloadEntryURL")).getContent();
-            String path = ((NSString) d.objectForKey("DownloadEntryPath")).getContent();
+            String uid = getString(d.objectForKey("DownloadEntryIdentifier"));
+            String url = getString(d.objectForKey("DownloadEntryURL"));
+            String path = getString(d.objectForKey("DownloadEntryPath"));
             NSDate nsDate = (NSDate) d.objectForKey("DownloadEntryDateAddedKey");
             Long time = null;
             if(nsDate != null)
@@ -515,51 +514,35 @@ public class SafariPlistParser extends AbstractParser {
                 xHandler.endDocument();
         }
     }
+    
+    private String getString(NSObject nsObj) {
+        if(nsObj == null)
+            return "";
+        else
+            return ((NSString) nsObj).getContent();
+    }
 
-    private void parseChildren(int i, List<SafariBookmark> bookmarks, NSObject[] children) {
+    private void parseChildren(List<SafariBookmark> bookmarks, NSDictionary dict) {
+        
+        NSArray children = (NSArray) dict.objectForKey("Children");
+        if(children != null) {
+            NSObject[] array = children.getArray();
+            if(array != null)
+                for (NSObject child : array)
+                    parseChildren(bookmarks, (NSDictionary)child);
+        }
+        
+        if(dict.containsKey("URLString") || dict.containsKey("URIDictionary")) {
+            NSDictionary d = dict;
+            //String bookmarkType = getString(d.objectForKey("WebBookmarkType"));
+            String uuid = getString(d.objectForKey("WebBookmarkUUID"));
 
-        // System.out.println("=== Children ===");
-        for (NSObject child : children) {
-            i++;
-            NSDictionary d = (NSDictionary) child;
+            NSDictionary uriDictionary = ((NSDictionary) d.objectForKey("URIDictionary"));
+            String urlTitle = uriDictionary == null ? "" : getString(uriDictionary.objectForKey("title"));
+            String urlString = getString(d.objectForKey("URLString"));
 
-            String bookmarkType = ((NSString) d.objectForKey("WebBookmarkType")).getContent();
-            String uuid = ((NSString) d.objectForKey("WebBookmarkUUID")).getContent();
-            String title = "";
-            String identifier = "";
-
-            if (bookmarkType.equalsIgnoreCase("WebBookmarkTypeProxy")) {
-                title = ((NSString) d.objectForKey("Title")).getContent();
-                identifier = ((NSString) d.objectForKey("WebBookmarkIdentifier")).getContent();
-            }
-
-            // System.out.println("Title: " + title);
-            // System.out.println("Bookmark Type: " + bookmarkType);
-            // System.out.println("Identifier: " + identifier);
-            // System.out.println("UUID: " + uuid);
-
-            if (bookmarkType.equalsIgnoreCase("WebBookmarkTypeList")) {
-                NSArray c = (NSArray) d.objectForKey("Children");
-                if (c != null) {
-                    // System.out.println("Children:");
-                    parseChildren(i, bookmarks, c.getArray());
-                }
-
-            } else if (bookmarkType.equalsIgnoreCase("WebBookmarkTypeLeaf")) {
-
-                NSDictionary uriDictionary = ((NSDictionary) d.objectForKey("URIDictionary"));
-                NSString urlTitle = (NSString) uriDictionary.objectForKey("title");
-                String urlString = ((NSString) d.objectForKey("URLString")).getContent();
-                String ut = "";
-
-                if (urlTitle != null) {
-                    ut = urlTitle.getContent();
-                    // System.out.println("\t URL Title: " + ut);
-                }
-                // System.out.println("\t URL String: " + urlString);
-                bookmarks.add(new SafariBookmark(i, uuid, ut, urlString));
-
-            }
+            if(!urlTitle.isEmpty() || urlString.isEmpty())
+                bookmarks.add(new SafariBookmark(bookmarks.size(), uuid, urlTitle, urlString));
         }
     }
 
@@ -567,17 +550,8 @@ public class SafariPlistParser extends AbstractParser {
         List<SafariBookmark> bookmarks = new LinkedList<SafariBookmark>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
-        String title = ((NSString) rootDict.objectForKey("Title")).getContent();
-        String bookmarkType = ((NSString) rootDict.objectForKey("WebBookmarkType")).getContent();
-
-        // System.out.println("Title: " + title);
-        // System.out.println("Bookmark Type: " + bookmarkType);
-
-        int i = 0;
-
-        if (bookmarkType.equalsIgnoreCase("WebBookmarkTypeList")) {
-            parseChildren(i, bookmarks, ((NSArray) rootDict.objectForKey("Children")).getArray());
-        }
+        
+        parseChildren(bookmarks, rootDict);
 
         return bookmarks;
     }
