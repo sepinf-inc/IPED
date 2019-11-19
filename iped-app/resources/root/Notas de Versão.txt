@@ -1,6 +1,12 @@
-xx/11/2019: IPED-3.16.2
+19/11/2019: IPED-3.16.2
+- Obtenção de mais dados de downloads quando disponíveis (bytes totais e recebidos, datas de downloads p/ Safari)
+- Utilização de parsers genéricos no caso de erro nos parsers específicos de navegadores
 - Correção da obtenção das URLs de downloads do Chrome, tratamento de versões antigas do Chrome
-- Correção do RecycleBinParser (estava incluindo nome de arquivos temporários no relatório)
+- Correção do RecycleBinParser: estava incluindo nome de arquivos temporários na saída
+- Raro NullPointerException ao reaproveitar arquivo temporário abortava processamento
+- Raro IOException "Write end dead" abortava processamento
+- Fixa erro ao alterar layout vertical/horizontal na interface
+- Upgrade PDFBox-2.0.13 -> 2.0.17
 
 01/11/2019: IPED-3.16.1-beta
 - Plugin RegRipper para downloads e pesquisas do Shareaza (PCF Ayrton)
