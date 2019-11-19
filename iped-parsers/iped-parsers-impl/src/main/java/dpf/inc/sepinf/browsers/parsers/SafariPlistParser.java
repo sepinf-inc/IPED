@@ -541,7 +541,7 @@ public class SafariPlistParser extends AbstractParser {
             String urlTitle = uriDictionary == null ? "" : getString(uriDictionary.objectForKey("title"));
             String urlString = getString(d.objectForKey("URLString"));
 
-            if(!urlTitle.isEmpty() || urlString.isEmpty())
+            if(!urlTitle.isEmpty() || !urlString.isEmpty())
                 bookmarks.add(new SafariBookmark(bookmarks.size(), uuid, urlTitle, urlString));
         }
     }
