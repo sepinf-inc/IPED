@@ -40,6 +40,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
@@ -63,6 +64,8 @@ public class EdgeWebCacheParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(EdgeWebCacheParser.class);
 
     private static EsedbLibrary esedbLibrary;
+    
+    private EDBParser genericParser = new EDBParser();
     
     protected boolean extractEntries = true;
     
@@ -153,6 +156,7 @@ public class EdgeWebCacheParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
         File webcacheFile = tmp.createTemporaryFile();
         File evidenceFile = null;
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
         try {
 
@@ -161,7 +165,6 @@ public class EdgeWebCacheParser extends AbstractParser {
 
             if (extractor.shouldParseEmbedded(metadata)) {
 
-                TikaInputStream tis = TikaInputStream.get(stream, tmp);
                 evidenceFile = tis.getFile();
 
                 String filePath = evidenceFile.getAbsolutePath();
@@ -184,7 +187,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(virtualId));
                         historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
 
-                        parseEdgeHistory(stream, historyHandler, historyMetadata, context, ec.getEntries());
+                        parseEdgeHistory(historyHandler, historyMetadata, context, ec.getEntries());
 
                         try (FileInputStream fis = new FileInputStream(webcacheFile)) {
                             extractor.parseEmbedded(fis, handler, historyMetadata, true);
@@ -213,14 +216,16 @@ public class EdgeWebCacheParser extends AbstractParser {
                     }
                 }
             }
-        } catch (EdgeWebCacheException e) {
-            LOGGER.error(e.getMessage());
+        } catch (Exception e) {
+            genericParser.parse(tis, handler, metadata, context);
+            throw new TikaException(this.getClass().getSimpleName() + " exception", e); //$NON-NLS-1$
+            
         } finally {
             tmp.close();
         }
     }
 
-    private void parseEdgeHistory(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
+    private void parseEdgeHistory(ContentHandler handler, Metadata metadata, ParseContext context,
             List<EdgeVisit> edgeHistory) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
