@@ -62,6 +62,8 @@ public class EdgeWebCacheParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(EDGE_WEB_CACHE);
 
     private static Logger LOGGER = LoggerFactory.getLogger(EdgeWebCacheParser.class);
+    
+    private static Object lock = new Object();
 
     private static EsedbLibrary esedbLibrary;
     
@@ -96,6 +98,7 @@ public class EdgeWebCacheParser extends AbstractParser {
         if (!SUPPORTED_TYPES.isEmpty())
             try {
                 esedbLibrary = (EsedbLibrary) Native.load("esedb", EsedbLibrary.class);
+                LOGGER.info("Libesedb library version: " + esedbLibrary.libesedb_get_version());
 
             } catch (Throwable e) {
                 LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
@@ -106,31 +109,12 @@ public class EdgeWebCacheParser extends AbstractParser {
     }
 
     private void printError(String function, int result, PointerByReference errorPointer) {
-        LOGGER.error("Function: " + function); //$NON-NLS-1$
-        LOGGER.error("Function result number: " + result);
-        LOGGER.error("Error value: " + errorPointer.getValue().getString(0));
+        LOGGER.error("Function: '" + function + "'. Function result number: '" + result +
+                "'. Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
         esedbLibrary.libesedb_error_free(errorPointer);
     }
 
-    private String convertLDAPTimeToString(long nanoseconds) {
-        /*
-         * Convert LDAP Timestamp to human readable date
-         * https://www.epochconverter.com/ldap
-         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.
-         * html
-         */
-        long mills = (nanoseconds / 10000000);
-        long unix = (((1970 - 1601) * 365) - 3 + Math.round((1970 - 1601) / 4)) * 86400L;
-        long timeStamp = mills - unix;
-        Date date = new Date(timeStamp * 1000L); // *1000 is to convert seconds to milliseconds
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"); // the format of your date
-        sdf.setTimeZone(TimeZone.getTimeZone("UTC")); // give a timezone reference for formating (see comment at the
-                                                      // bottom
-        String formattedDate = sdf.format(date);
-        return formattedDate;
-    }
-
-    static long convertLDAPTime(long nanoseconds) {
+    private static long convertLDAPTime(long nanoseconds) {
         /*
          * Convert LDAP Timestamp to epoch time in milliseconds
          * https://www.epochconverter.com/ldap
@@ -312,8 +296,6 @@ public class EdgeWebCacheParser extends AbstractParser {
         List<EdgeContainer> history = new LinkedList<EdgeContainer>();
 
         try {
-            LOGGER.info("Libesedb library version: " + esedbLibrary.libesedb_get_version());
-
             // String table = "";
             int contagemAbertura = 0;
             int contagemFechamentos = 0;
@@ -340,34 +322,37 @@ public class EdgeWebCacheParser extends AbstractParser {
             int accessFlags = 1;
             int columnFlags = 1;
             int result = 0;
+            
+            synchronized(lock) {
+                
+                result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
+                if (result < 0)
+                    printError("File Initialize", result, errorPointer);
 
-            LOGGER.info("File: " + filePath);
+                result = esedbLibrary.libesedb_check_file_signature(filePath, errorPointer);
+                if (result < 0)
+                    printError("Check File Signature", result, errorPointer);
+                
+                if (result == 0) {
+                    throw new EdgeWebCacheException("File does not contains an ESEDB");
+                }
 
-            result = esedbLibrary.libesedb_file_initialize(filePointerReference, errorPointer);
-            if (result < 0)
-                printError("File Initialize", result, errorPointer);
+                result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
+                        errorPointer);
+                if (result < 0)
+                    printError("File Open", result, errorPointer);
+                
+                contagemAbertura++;
 
-            result = esedbLibrary.libesedb_check_file_signature(filePath, errorPointer);
-            if (result < 0)
-                printError("Check File Signature", result, errorPointer);
-            if (result == 0) {
-                LOGGER.error("File does not contains an ESEDB");
-                throw new EdgeWebCacheException("File does not contains an ESEDB");
+                result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(), numberOfTables,
+                        errorPointer);
+                if (result < 0)
+                    printError("File Get Number of Tables", result, errorPointer);
+                
+                numTables = numberOfTables.getValue();
+
+                LOGGER.info("Number of tables: " + numTables);
             }
-
-            result = esedbLibrary.libesedb_file_open(filePointerReference.getValue(), filePath, accessFlags,
-                    errorPointer);
-            if (result < 0)
-                printError("File Open", result, errorPointer);
-            contagemAbertura++;
-
-            result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(), numberOfTables,
-                    errorPointer);
-            if (result < 0)
-                printError("File Get Number of Tables", result, errorPointer);
-            numTables = numberOfTables.getValue();
-
-            LOGGER.info("Number of tables: " + numTables);
 
             for (int tables = 0; tables < numTables; tables++) {
 
