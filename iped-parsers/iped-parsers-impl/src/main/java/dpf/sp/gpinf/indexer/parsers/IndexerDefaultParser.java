@@ -286,7 +286,7 @@ public class IndexerDefaultParser extends CompositeParser {
                     metadata.set(PARSER_EXCEPTION, "true"); //$NON-NLS-1$
 
                     LOGGER.warn("{} Parsing exception: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), filePath, //$NON-NLS-1$
-                            lengthStr, e.toString());
+                            lengthStr, e.getCause() != null ? e.getCause().toString() : e.toString());
                     LOGGER.debug(Thread.currentThread().getName() + " Parsing exception: " + filePath, e); //$NON-NLS-1$
 
                     InputStream is = null;
