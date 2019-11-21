@@ -43,6 +43,7 @@ import com.sun.jna.ptr.PointerByReference;
 
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.TimeConverter;
 import iped3.util.BasicProps;
@@ -72,6 +73,8 @@ public class EdgeWebCacheParser extends AbstractParser {
     private EDBParser genericParser = new EDBParser();
     
     protected boolean extractEntries = true;
+    
+    private ItemInfo itemInfo;
     
     @Field
     public void setExtractEntries(boolean extractEntries) {
@@ -111,8 +114,8 @@ public class EdgeWebCacheParser extends AbstractParser {
     }
 
     private void printError(String function, int result, PointerByReference errorPointer) {
-        LOGGER.error("Function: '" + function + "'. Function result number: '" + result +
-                "'. Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
+        LOGGER.warn("Error decoding " + itemInfo.getPath() + ": Function '" + function + "'. Function result number '" + result +
+                "' Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
         esedbLibrary.libesedb_error_free(errorPointer);
     }
 
@@ -124,6 +127,8 @@ public class EdgeWebCacheParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
+        
+        itemInfo = context.get(ItemInfo.class);
 
         TemporaryResources tmp = new TemporaryResources();
         File webcacheFile = tmp.createTemporaryFile();
@@ -288,9 +293,6 @@ public class EdgeWebCacheParser extends AbstractParser {
         List<EdgeContainer> history = new LinkedList<EdgeContainer>();
 
         try {
-            // String table = "";
-            int contagemAbertura = 0;
-            int contagemFechamentos = 0;
             /*
              * Variables used by file functions
              */
@@ -332,8 +334,6 @@ public class EdgeWebCacheParser extends AbstractParser {
                         errorPointer);
                 if (result < 0)
                     printError("File Open", result, errorPointer);
-                
-                contagemAbertura++;
 
                 result = esedbLibrary.libesedb_file_get_number_of_tables(filePointerReference.getValue(), numberOfTables,
                         errorPointer);
@@ -342,7 +342,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                 
                 numTables = numberOfTables.getValue();
 
-                LOGGER.info("Number of tables: " + numTables);
+                LOGGER.info(numTables + " tables found in " + itemInfo.getPath());
             }
 
             for (int tables = 0; tables < numTables; tables++) {
@@ -368,7 +368,6 @@ public class EdgeWebCacheParser extends AbstractParser {
                         tablePointerReference, errorPointer);
                 if (result < 0)
                     printError("File Get Table", result, errorPointer);
-                contagemAbertura++;
 
                 result = esedbLibrary.libesedb_table_get_utf8_name_size(tablePointerReference.getValue(), tableNameSize,
                         errorPointer);
@@ -423,8 +422,6 @@ public class EdgeWebCacheParser extends AbstractParser {
                 }
 
             }
-
-            contagemFechamentos++;
 
         } finally {
 
