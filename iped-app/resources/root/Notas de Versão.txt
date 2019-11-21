@@ -1,28 +1,29 @@
 xx/11/2019: IPED-3.16.3
-- Corrige StringIndexOutOfBounds na validação de boletos que abortava processamento
-- Menor uso de memória no EdgeParser e proteção para raros erros de concorrência
+- Corrige StringIndexOutOfBounds na validação de boletos que abortava processamento (3.16)
+- Menor uso de memória no EdgeParser e proteção para raros erros de concorrência (3.16)
+- Filtra WARNs do PDFBox do log e console, melhor log de exceções de parsing
 
 19/11/2019: IPED-3.16.2
 - Obtenção de mais dados de downloads quando disponíveis (bytes totais e recebidos, datas de downloads p/ Safari)
 - Utilização de parsers genéricos no caso de erro nos parsers específicos de navegadores
-- Correção da obtenção das URLs de downloads do Chrome, tratamento de versões antigas do Chrome
-- Correção do RecycleBinParser: estava incluindo nome de arquivos temporários na saída
-- Raro NullPointerException ao reaproveitar arquivo temporário abortava processamento
-- Raro IOException "Write end dead" abortava processamento
-- Fixa erro ao alterar layout vertical/horizontal na interface
+- Correção da obtenção das URLs de downloads do Chrome, tratamento de versões antigas do Chrome (3.16)
+- Correção do RecycleBinParser: estava incluindo nome de arquivos temporários na saída (<3.16)
+- Raro NullPointerException ao reaproveitar arquivo temporário abortava processamento (<3.16)
+- Raro IOException "Write end dead" abortava processamento (<3.16)
+- Fixa erro ao alterar layout vertical/horizontal na interface (3.16)
 - Upgrade PDFBox-2.0.13 -> 2.0.17
 
 01/11/2019: IPED-3.16.1-beta
 - Plugin RegRipper para downloads e pesquisas do Shareaza (PCF Ayrton)
 - Assinatura e categorização para bases de dados MSSQL (PCF Patrick)
 - Pergunta por caminho de evidências ad1, ufdr ou pastas não encontradas
-- Verifica se arquivo de marcadores carregado manualmente é compatível com caso atual
-- Coluna "Tamanho" era ocultada em alguns casos com autoManageCols = true
-- Fixa NoClassDefFoundError ao gerar relatório com base photoDNA configurada
-- Fixa EdgeWebCacheParser quando enableExternalParsing = true
-- Fixa abertura de documentos Office quando caminho do caso contém '#' (PCF Pfeifer)
-- Fixa NullPointerException no SleuthkitJNI-4.6.5
-- Portadas correções do sleuthkit-4.6.6 para o 4.6.5 com APFS
+- Verifica se arquivo de marcadores carregado manualmente é compatível com caso atual (<3.16)
+- Coluna "Tamanho" era ocultada em alguns casos com autoManageCols = true (<3.16)
+- Fixa NoClassDefFoundError ao gerar relatório com base photoDNA configurada (3.16)
+- Fixa EdgeWebCacheParser quando enableExternalParsing = true (3.16)
+- Fixa abertura de documentos Office quando caminho do caso contém '#' (PCF Pfeifer) (<3.16)
+- Fixa NullPointerException no SleuthkitJNI-4.6.5 (3.16)
+- Portadas correções do sleuthkit-4.6.6 para o 4.6.5 com APFS (<3.16)
 
 16/10/2019: IPED-3.16-beta
 - Suporte a APFS (novo parâmetro -p password)
