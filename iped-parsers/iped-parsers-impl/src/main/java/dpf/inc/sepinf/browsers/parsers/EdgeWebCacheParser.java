@@ -44,6 +44,7 @@ import com.sun.jna.ptr.PointerByReference;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.TimeConverter;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -113,20 +114,6 @@ public class EdgeWebCacheParser extends AbstractParser {
         LOGGER.error("Function: '" + function + "'. Function result number: '" + result +
                 "'. Error value: " + errorPointer.getValue().getString(0)); //$NON-NLS-1$
         esedbLibrary.libesedb_error_free(errorPointer);
-    }
-
-    private static long convertLDAPTime(long nanoseconds) {
-        /*
-         * Convert LDAP Timestamp to epoch time in milliseconds
-         * https://www.epochconverter.com/ldap
-         * http://goliferay.blogspot.com/2015/11/convert-18-digit-ldap-timestamps-to.
-         * html
-         */
-        long mills = (nanoseconds / 10000000);
-        long unix = (((1970 - 1601) * 365) - 3 + Math.round((1970 - 1601) / 4)) * 86400L;
-        long timeStamp = (mills - unix) * 1000L;
-
-        return timeStamp;
     }
 
     @Override
@@ -556,19 +543,19 @@ public class EdgeWebCacheParser extends AbstractParser {
                 recordValueData, errorPointer);
         if (result < 0)
             printError("Record Get CreationTime Data", result, errorPointer);
-        creation = convertLDAPTime(recordValueData.getValue());
+        creation = TimeConverter.filetimeToMillis(recordValueData.getValue());
         /* Integer 64bit signed */
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 12,
                 recordValueData, errorPointer);
         if (result < 0)
             printError("Record Get ModifiedTime Data", result, errorPointer);
-        modified = convertLDAPTime(recordValueData.getValue());
+        modified = TimeConverter.filetimeToMillis(recordValueData.getValue());
         /* Integer 64bit signed */
         result = esedbLibrary.libesedb_record_get_value_64bit(recordPointerReference.getValue(), 13,
                 recordValueData, errorPointer);
         if (result < 0)
             printError("Record Get AccessedTime Data", result, errorPointer);
-        accessed = convertLDAPTime(recordValueData.getValue());
+        accessed = TimeConverter.filetimeToMillis(recordValueData.getValue());
 
         /* Large Text */
         result = esedbLibrary.libesedb_record_get_column_type(recordPointerReference.getValue(), 17,
