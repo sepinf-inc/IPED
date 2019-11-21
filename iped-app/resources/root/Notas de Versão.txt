@@ -1,3 +1,7 @@
+xx/11/2019: IPED-3.16.3
+- Corrige StringIndexOutOfBounds na validação de boletos que abortava processamento
+- Menor uso de memória no EdgeParser e proteção para raros erros de concorrência
+
 19/11/2019: IPED-3.16.2
 - Obtenção de mais dados de downloads quando disponíveis (bytes totais e recebidos, datas de downloads p/ Safari)
 - Utilização de parsers genéricos no caso de erro nos parsers específicos de navegadores
