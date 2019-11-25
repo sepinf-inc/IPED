@@ -356,10 +356,12 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         int idx = list.getSelectedIndex();
         if (idx == -1) {
             comments.setText(null);
+            newLabel.setText(null);
             return;
         }
         String labelName = list.getModel().getElementAt(idx);
         String comment = App.get().appCase.getMultiMarcadores().getLabelComment(labelName);
+        newLabel.setText(labelName);
         comments.setText(comment);
     }
 
