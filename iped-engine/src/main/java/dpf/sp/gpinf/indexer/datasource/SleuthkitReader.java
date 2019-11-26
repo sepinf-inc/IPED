@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteException;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -530,11 +531,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
             long k = item.id;
 
-            // Faster than getContentById
-            Content content = sleuthCase.getAbstractFileById(k);
-            if (content == null) {
-                content = sleuthCase.getContentById(k);
-            }
+            Content content = getContentById(k);
             if (content == null) {
                 continue;
             }
@@ -547,6 +544,30 @@ public class SleuthkitReader extends DataSourceReader {
 
             addContent(content, parentId);
         }
+    }
+    
+    private static final int SQLITE_BUSY_ERROR = 5;
+    
+    private Content getContentById(long id) throws TskCoreException, InterruptedException {
+        long start = System.currentTimeMillis() / 1000;
+        while(true)
+            try {
+                // Faster than getContentById
+                Content content = sleuthCase.getAbstractFileById(id);
+                if (content == null) {
+                    content = sleuthCase.getContentById(id);
+                }
+                return content;
+                
+            } catch (TskCoreException e) {
+                if(e.getCause() instanceof SQLiteException && ((SQLiteException)e.getCause()).getErrorCode() == SQLITE_BUSY_ERROR) {
+                    long now = System.currentTimeMillis() / 1000;
+                    LOGGER.error("SQLite busy after " + (now - start) + "s reading sleuthid=" + id + ", trying again...");
+                    Thread.sleep(1000);
+                    continue;
+                }else
+                    throw e;
+            }
     }
 
     private Long getTskParentId(long id) throws TskCoreException, SQLException {
