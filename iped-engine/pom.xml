@@ -79,7 +79,7 @@
         <dependency>
             <groupId>org.sleuthkit</groupId>
             <artifactId>sleuthkit</artifactId>
-            <version>4.6.5-p03</version>
+            <version>${sleuthkit.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
