@@ -161,7 +161,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 else
                     sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 
-                if (!isReport && iw == null)
+                if (!isReport)
                     updateImagePathsToAbsolute(casePath, sleuthFile);
 
                 tskCaseList.add(sleuthCase);
@@ -462,7 +462,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else
+                } else if(iw == null)
                     askNewImagePath(id, paths, sleuthFile);
         }
     }
