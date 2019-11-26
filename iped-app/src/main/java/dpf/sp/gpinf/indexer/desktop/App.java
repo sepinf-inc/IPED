@@ -89,6 +89,7 @@ import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
@@ -755,7 +756,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         try {
             if (resultSetViewerConfiguration == null) {
                 resultSetViewerConfiguration = (new XMLResultSetViewerConfiguration(
-                        new File(casesPathFile, "indexador/conf/ResultSetViewersConf.xml")));
+                        new File(Configuration.getInstance().configPath + "/conf/ResultSetViewersConf.xml")));
                 // resultSetViewerConfiguration = (new FixedResultSetViewerConfiguration());
             }
             return resultSetViewerConfiguration;
