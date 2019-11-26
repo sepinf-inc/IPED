@@ -1,7 +1,12 @@
-xx/11/2019: IPED-3.16.3
+26/11/2019: IPED-3.16.3
 - Corrige StringIndexOutOfBounds na validação de boletos que abortava processamento (3.16)
 - Menor uso de memória no EdgeParser e proteção para raros erros de concorrência (3.16)
-- Filtra WARNs do PDFBox do log e console, melhor log de exceções de parsing
+- Corrige abertura de casos somente leitura via patch04 no tsk-4.6.5-apfs (3.16)
+- Corrige abertura de multicasos, no carregamento do ResultSetViewersConf.xml (3.16)
+- Filtra erros e warns do PDFBox e Freemarker do log e console, melhor log de exceções de parsing (<=3.16)
+- Workarounds para erros raros SQLITE_BUSY que abortavam processamento (<3.16)
+- Corrige erro "Image not found" ao abrir caso durante processamento com --portable e --append (<3.16)
+- Upgrade xerial-sqlite 3.23.1 -> 3.25.2
 
 19/11/2019: IPED-3.16.2
 - Obtenção de mais dados de downloads quando disponíveis (bytes totais e recebidos, datas de downloads p/ Safari)
