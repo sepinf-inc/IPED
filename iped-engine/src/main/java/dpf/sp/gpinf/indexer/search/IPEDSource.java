@@ -148,7 +148,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
         // sourceId = nextId.getAndIncrement();
 
         try {
-            Configuration.getInstance().getConfiguration(moduleDir.getAbsolutePath());
+            Configuration.getInstance().loadConfigurables(moduleDir.getAbsolutePath(), true);
 
             isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
