@@ -80,6 +80,9 @@ public class AppMain {
                             Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
                                     Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                     }
+                    if(!System.getProperty("os.arch").contains("64"))
+                        JOptionPane.showMessageDialog(null, "You are using a java 32bits, things may not work properly. It is strongly recommended to install a java 64bits!"); //$NON-NLS-1$
+                        
                     Messages.resetLocale();
                 }
             });
