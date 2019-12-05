@@ -154,7 +154,7 @@ public class SleuthkitClient {
             // os = process.getOutputStream();
 
             socket = new Socket();
-            socket.setPerformancePreferences(0, 1, 2);
+            socket.setPerformancePreferences(0, 2, 1);
             socket.setReceiveBufferSize(1);
             socket.setSendBufferSize(1);
             socket.setTcpNoDelay(true);
