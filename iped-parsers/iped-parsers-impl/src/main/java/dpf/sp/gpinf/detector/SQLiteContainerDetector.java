@@ -94,6 +94,12 @@ public class SQLiteContainerDetector implements Detector {
 
     private MediaType detectTableNames(Set<String> tableNames) {
 
+        if (tableNames.contains("messagesv12") && //$NON-NLS-1$
+                tableNames.contains("profilecachev8") && //$NON-NLS-1$
+                ( tableNames.contains("conversationsv14") || tableNames.contains("conversationsv13") )&& //$NON-NLS-1$
+                tableNames.contains("internaldata")) //$NON-NLS-1$
+            return SkypeParser.SKYPE_MIME_V12;
+
         if (tableNames.contains("Messages") && //$NON-NLS-1$
                 tableNames.contains("Participants") && //$NON-NLS-1$
                 tableNames.contains("Contacts") && //$NON-NLS-1$

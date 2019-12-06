@@ -1,6 +1,5 @@
 package dpf.mt.gpinf.skype.parser;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -30,7 +29,7 @@ import iped3.util.BasicProps;
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
 
-public class SkypeSqlite implements Closeable {
+public class SkypeSqlite implements SkypeStorage {
 
     private static final String STORAGE_DB_PATH = "/media_messaging/storage_db/asyncdb/storage_db.db"; //$NON-NLS-1$
     private static final String CACHE_DB_PATH = "/media_messaging/media_cache/asyncdb/cache_db.db"; //$NON-NLS-1$
@@ -47,7 +46,6 @@ public class SkypeSqlite implements Closeable {
     private File cacheMediaDbPath;
 
     private String skypeName;
-    private Hashtable<Integer, SkypeContact> contacts = null;
     private Hashtable<Integer, SkypeConversation> conversations = null;
 
     List<IItemBase> cachedMediaList = null;
@@ -60,7 +58,8 @@ public class SkypeSqlite implements Closeable {
         carregaSkypeName();
     }
 
-    public void searchMediaCache(IItemSearcher searcher) {
+    @Override
+	public void searchMediaCache(IItemSearcher searcher) {
         if (baseSkypeFolder == null)
             return;
         baseSkypeFolder = baseSkypeFolder.replace('\\', '/');
@@ -206,7 +205,7 @@ public class SkypeSqlite implements Closeable {
 
             account = new SkypeAccount();
             account.setSkypeName(skypeName);
-            account.setId(rs.getShort("id")); //$NON-NLS-1$
+            account.setId(Short.toString(rs.getShort("id"))); //$NON-NLS-1$
             account.setAbout(rs.getString("about")); //$NON-NLS-1$
             account.setMood(rs.getString("mood_text")); //$NON-NLS-1$
             account.setFullname(rs.getString("fullname")); //$NON-NLS-1$
@@ -412,17 +411,16 @@ public class SkypeSqlite implements Closeable {
     private SkypeConversation criaConvResultSet(ResultSet rs) throws SkypeParserException {
         /* Prepara consulta dos participantes de conversas - usado adiante no método */
         try (PreparedStatement partsstmt = getConnection().prepareStatement(SELECT_PARTICIPANTS)) {
-
             SkypeConversation c = new SkypeConversation();
 
             c.setChatName(rs.getString("chatname")); //$NON-NLS-1$
             c.setDisplayName(rs.getString("displayname")); //$NON-NLS-1$
             c.setCreationDate(rs.getDate("creation_timestamp")); //$NON-NLS-1$
             c.setLastActivity(rs.getDate("last_activity_timestamp")); //$NON-NLS-1$
-            c.setId(rs.getInt("convo_id")); //$NON-NLS-1$
+            c.setId(rs.getString("convo_id")); //$NON-NLS-1$
 
             /* busca e preenche os participantes da conversa */
-            partsstmt.setInt(1, c.getId());
+            partsstmt.setInt(1, Integer.parseInt(c.getId()));
             ResultSet parts = partsstmt.executeQuery();
             ArrayList<String> participantes = new ArrayList<String>();
             while (parts.next()) {
@@ -434,14 +432,13 @@ public class SkypeSqlite implements Closeable {
         } catch (SQLException e) {
             throw new SkypeParserException(e);
         }
-
     }
 
-    public List<SkypeConversation> extraiMensagens() throws SkypeParserException {
+    @Override
+	public List<SkypeConversation> extraiMensagens() throws SkypeParserException {
         conversations = new Hashtable<Integer, SkypeConversation>();
 
         try (Statement stmt = getConnection().createStatement();) {
-
             ResultSet rs = stmt.executeQuery(SkypeSqlite.SELECT_MESSAGES);
 
             List<SkypeConversation> resultado = new ArrayList<SkypeConversation>();
@@ -450,7 +447,6 @@ public class SkypeSqlite implements Closeable {
             List<SkypeMessage> mensagens = new ArrayList<SkypeMessage>();
 
             while (rs.next()) {
-
                 /* caso seja o primeiro registro sendo processado */
                 if (c == null) {
                     c = criaConvResultSet(rs);
@@ -462,7 +458,7 @@ public class SkypeSqlite implements Closeable {
                  * se a mensagem for de uma conversa diferente da mensagem imediatamente
                  * anterior
                  */
-                if (rs.getInt("convo_id") != c.getId()) { //$NON-NLS-1$
+                if (!rs.getString("convo_id").contentEquals(c.getId())) { //$NON-NLS-1$
                     /* atribui a lista de mensagens à conversação anterior e limpa a lista */
                     c.setMessages(mensagens);
                     mensagens = new ArrayList<SkypeMessage>();
@@ -474,16 +470,15 @@ public class SkypeSqlite implements Closeable {
                 }
 
                 SkypeMessage sm = null;
-                int msgId = rs.getInt("messageId"); //$NON-NLS-1$
 
                 if (!rs.wasNull()) {
                     int messageType = rs.getInt("type"); //$NON-NLS-1$
 
                     sm = new SkypeMessage();
-                    sm.setId(rs.getInt("messageId")); //$NON-NLS-1$
+                    sm.setId(Long.toString(rs.getLong("messageId")) ); //$NON-NLS-1$
                     sm.setAutor(rs.getString("author")); //$NON-NLS-1$
                     sm.setFromMe(skypeName.equals(sm.getAutor()));
-                    if (!sm.getAutor().equals(skypeName)) {
+                    if ((sm.getAutor()!=null) && !sm.getAutor().equals(skypeName)) {
                         sm.setDestino(skypeName);
                     } else {
                         sm.setDestino(rs.getString("identity")); //$NON-NLS-1$
@@ -538,7 +533,8 @@ public class SkypeSqlite implements Closeable {
             + " lastused_timestamp*1000 as lastused_timestamp " //$NON-NLS-1$
             + "from contacts"; //$NON-NLS-1$
 
-    public List<SkypeContact> extraiContatos() throws SkypeParserException {
+    @Override
+	public List<SkypeContact> extraiContatos() throws SkypeParserException {
         try (Statement stmt = getConnection().createStatement();) {
 
             ResultSet rs = stmt.executeQuery(SkypeSqlite.SELECT_CONTACTS);
@@ -548,7 +544,7 @@ public class SkypeSqlite implements Closeable {
             while (rs.next()) {
                 SkypeContact c = new SkypeContact();
 
-                c.setId(rs.getInt("id")); //$NON-NLS-1$
+                c.setId(rs.getString("id")); //$NON-NLS-1$
                 c.setFullName(rs.getString("fullname")); //$NON-NLS-1$
                 c.setSkypeName(rs.getString("skypename")); //$NON-NLS-1$
                 c.setCity(rs.getString("city")); //$NON-NLS-1$
@@ -638,7 +634,8 @@ public class SkypeSqlite implements Closeable {
             + "					left join Conversations c on c.id = t.convo_id " //$NON-NLS-1$
             + " 				left join Messages m on m.guid = t.chatmsg_guid "; //$NON-NLS-1$
 
-    public List<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException {
+    @Override
+	public List<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException {
         try (Statement stmt = getConnection().createStatement();) {
 
             ResultSet rs = stmt.executeQuery(SkypeSqlite.SELECT_FILE_TRANSFER);
@@ -703,11 +700,13 @@ public class SkypeSqlite implements Closeable {
         }
     }
 
-    public String getSkypeName() {
+    @Override
+	public String getSkypeName() {
         return skypeName;
     }
 
-    public SkypeAccount getAccount() {
+    @Override
+	public SkypeAccount getAccount() {
         return account;
     }
 

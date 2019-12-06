@@ -13,6 +13,9 @@ import java.util.List;
 import org.apache.tika.metadata.Metadata;
 import org.xml.sax.ContentHandler;
 
+import dpf.mt.gpinf.skype.parser.v8.SkypeContactV8;
+import dpf.mt.gpinf.skype.parser.v8.SkypeConversationV14;
+import dpf.mt.gpinf.skype.parser.v8.SkypeMessageV12;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -98,15 +101,20 @@ public class ReportGenerator {
                  * + "<TH>Enviada?</TH>" + "<TH>Entregue?</TH>"
                  */ + "<TH>" + Messages.getString("SkypeReport.EditedBy") + "</TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + "<TH>" + Messages.getString("SkypeReport.EditedDate") + "</TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                + "<TH>" + Messages.getString("SkypeReport.RemoteID") + "</TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                + "</TR>"); //$NON-NLS-1$
+                + "<TH>" + Messages.getString("SkypeReport.RemoteID") + "</TH>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+        if(c instanceof SkypeConversationV14) {
+            out.println("<TH>JSON</TH>"); //$NON-NLS-1$
+        }                
+
+        out.println("</TR>"); //$NON-NLS-1$
 
         int i = 0;
         for (SkypeMessage sm : c.getMessages()) {
             i++;
 
             // boolean destaque=(i%2)==0;
-            boolean destaque = skypeName.equals(sm.getAutor());
+            boolean destaque = sm.isFromMe();// skypeName.equals(sm.getAutor());
 
             out.println("<TR class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     + "<TD>" + sm.getId() + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
@@ -128,6 +136,11 @@ public class ReportGenerator {
             } else {
                 out.print("<TD>" + FormatUtil.format(sm.getConteudo()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
+            if(sm instanceof SkypeMessageV12) {
+                out.println("<td>"); //$NON-NLS-1$
+                out.println(((SkypeMessageV12) sm).getJSONdata());
+                out.println("</td>"); //$NON-NLS-1$
+            }
 
             /*
              * out.print("<TD>"+sm.isEnviada()+"</TD>");
@@ -143,6 +156,13 @@ public class ReportGenerator {
         }
 
         out.println("</TABLE>"); //$NON-NLS-1$
+
+        if(c instanceof SkypeConversationV14) {
+            out.println("<p>JSON:</p>"); //$NON-NLS-1$
+            out.println("<p>"); //$NON-NLS-1$
+            out.println(((SkypeConversationV14) c).getJSONdata());
+            out.println("</p>"); //$NON-NLS-1$
+        }
 
         endDocument(out);
 
@@ -201,6 +221,13 @@ public class ReportGenerator {
 
         out.println("</TABLE>"); //$NON-NLS-1$
 
+        if(c instanceof SkypeContactV8) {
+            out.println("<p>JSON:</p>"); //$NON-NLS-1$
+            out.println("<p>"); //$NON-NLS-1$
+            out.println(((SkypeContactV8) c).getJSONdata());
+            out.println("</p>"); //$NON-NLS-1$
+        }
+        
         endDocument(out);
 
         out.flush();

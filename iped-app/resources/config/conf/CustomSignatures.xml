@@ -172,9 +172,14 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="application/sqlite-skype">     
+    <mime-type type="application/sqlite-skype">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="main*.db"/>
+    </mime-type>
+    
+    <mime-type type="application/sqlite-skype-v12">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="s4l-*.db"/>
     </mime-type>
     
     <mime-type type="contact/x-skype-account">     

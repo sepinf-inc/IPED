@@ -4,7 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,16 +40,19 @@ import iped3.util.ExtraProperties;
  */
 
 public class SkypeParser extends AbstractParser {
-
     public static final MediaType SKYPE_MIME = MediaType.application("sqlite-skype"); //$NON-NLS-1$
-
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(SKYPE_MIME);
+    public static final MediaType SKYPE_MIME_V12 = MediaType.application("sqlite-skype-v12"); //$NON-NLS-1$
+    private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>();
+    
+    static {
+    	SUPPORTED_TYPES.add(SKYPE_MIME);
+    	SUPPORTED_TYPES.add(SKYPE_MIME_V12);
+    }
 
     private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        // TODO Auto-generated method stub
         return SUPPORTED_TYPES;
     }
 
@@ -67,7 +71,7 @@ public class SkypeParser extends AbstractParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         TemporaryResources tmp = new TemporaryResources();
-        SkypeSqlite sqlite = null;
+        SkypeStorage sqlite = null;
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
@@ -80,17 +84,17 @@ public class SkypeParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File tmpFile = tis.getFile();
 
-            sqliteParser.parse(tis, handler, metadata, context);
+            //sqliteParser.parse(tis, handler, metadata, context);
 
             if (extractor.shouldParseEmbedded(metadata)) {
+                sqlite = SkypeStorageFactory.createFromMediaType(metadata.get(HttpHeaders.CONTENT_TYPE), tmpFile, filePath);
 
-                sqlite = new SkypeSqlite(tmpFile, filePath);
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
 
                 ReportGenerator r = new ReportGenerator(handler, metadata, sqlite.getSkypeName());
 
-                List<SkypeContact> contatos = sqlite.extraiContatos();
+                Collection<SkypeContact> contatos = sqlite.extraiContatos();
 
                 for (SkypeContact c : contatos) {
                     Metadata chatMetadata = new Metadata();
@@ -109,7 +113,7 @@ public class SkypeParser extends AbstractParser {
                     }
                 }
 
-                List<SkypeConversation> convs = sqlite.extraiMensagens();
+                Collection<SkypeConversation> convs = sqlite.extraiMensagens();
 
                 int msgCount = 0;
                 for (SkypeConversation conv : convs) {
@@ -160,7 +164,7 @@ public class SkypeParser extends AbstractParser {
                         }
                 }
 
-                List<SkypeFileTransfer> transfers = sqlite.extraiTransferencias();
+                Collection<SkypeFileTransfer> transfers = sqlite.extraiTransferencias();
 
                 for (SkypeFileTransfer t : transfers) {
                     /* add file transfers */

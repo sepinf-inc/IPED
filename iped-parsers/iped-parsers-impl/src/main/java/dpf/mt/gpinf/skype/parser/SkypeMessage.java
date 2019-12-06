@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class SkypeMessage {
 
-    int id;
+    String id;
     String conteudo;
     String autor;
     String destino;
@@ -43,11 +43,11 @@ public class SkypeMessage {
     public static final short SE_MSG_NAO_ENVIADA = 1; // representa uma mensagem digitada e com o botão enviar
                                                       // pressionado mas não enviada de fato ainda por qualquer motivo.
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
