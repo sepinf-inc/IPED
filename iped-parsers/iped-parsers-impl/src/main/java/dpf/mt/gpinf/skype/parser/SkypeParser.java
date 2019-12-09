@@ -84,7 +84,7 @@ public class SkypeParser extends AbstractParser {
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File tmpFile = tis.getFile();
 
-            //sqliteParser.parse(tis, handler, metadata, context);
+            sqliteParser.parse(tis, handler, metadata, context);
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 sqlite = SkypeStorageFactory.createFromMediaType(metadata.get(HttpHeaders.CONTENT_TYPE), tmpFile, filePath);
