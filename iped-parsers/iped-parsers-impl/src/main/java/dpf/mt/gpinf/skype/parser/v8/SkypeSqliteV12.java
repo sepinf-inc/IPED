@@ -266,8 +266,14 @@ public class SkypeSqliteV12 implements SkypeStorage {
 			sm.setAutor((String) jsonMessage.get("creator")); //$NON-NLS-1$
 			sm.setFromMe(((Long)jsonMessage.get("_isMyMessage")).intValue() == 1);
 
-			if (!sm.getAutor().endsWith(":"+skypeName)) {
-				sm.setDestino(skypeName);
+			if (!sm.getAutor().endsWith(":"+skypeName)){
+				if(sm.getAutor().endsWith("@thread.skype")) {
+					/* if the author of the message was any other participant on a group conversation */
+					sm.setDestino((String) jsonMessage.get("conversationId")); //$NON-NLS-1$
+				}else {
+					/* if the author of the message was the other participant on a direct conversation */
+					sm.setDestino(skypeName);
+				}
 			} else {
 				sm.setDestino((String) jsonMessage.get("conversationId")); //$NON-NLS-1$
 			}
