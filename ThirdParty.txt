@@ -1,4 +1,4 @@
-The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses, detailed below:
+The following libraries or softwares are used and distributed by IPED, but they have their own distribution licenses (in licenses folder), detailed below:
 
 Apache Lucene 4.9.0
 - Site: https://lucene.apache.org/core/

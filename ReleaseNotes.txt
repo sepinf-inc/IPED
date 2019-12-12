@@ -1,3 +1,8 @@
+XX/12/2019: IPED-3.17
+- First English release
+
+### Previous release notes in Portuguese (not translated) ###
+
 26/11/2019: IPED-3.16.3
 - Corrige StringIndexOutOfBounds na validação de boletos que abortava processamento (3.16)
 - Menor uso de memória no EdgeParser e proteção para raros erros de concorrência (3.16)

@@ -12,6 +12,7 @@
     
     <properties>
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
+    	<parent.root>${resources.dir}/../..</parent.root>
     </properties>
     
     <dependencies>
@@ -566,6 +567,30 @@
                                 <resource>
                                     <directory>${resources.dir}/root</directory>
                                     <filtering>false</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>${parent.root}</directory>
+                                    <includes>
+                						<include>LICENSE.txt</include>
+                						<include>ThirdParty.txt</include>
+                						<include>ReleaseNotes.txt</include>
+            						</includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY THIRD LICENSES FOLDER -->
+                    <execution>
+                        <id>copy-licenses</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/licenses</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${parent.root}/licenses</directory>
                                 </resource>
                             </resources>
                         </configuration>
