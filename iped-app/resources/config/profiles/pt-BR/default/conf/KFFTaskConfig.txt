@@ -1,6 +1,6 @@
-# NSRL hash database product names which files will receive "alert" kffstatus.
-# ATTENTION: Product names not listed here will receive "ignore" kffstatus automatically.
-# Changes are automatically applied to new cases, without reimporting NSRL database.
+﻿# Nomes de grupos/produtos em base de hashes no formato NSRL cujos arquivos devem receber o status de alerta.
+# Arquivos pertencentes todos os demais grupos não listados recebem status de irrelevância.
+# Alterações automaticamente são aplicadas em novos processamentos, sem necessidade de reimportar a base.
 
 NSRL_Alert
 eMule

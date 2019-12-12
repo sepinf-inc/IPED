@@ -1,16 +1,13 @@
 #############################################
-# Definições da hierarquia entre Categorias:
-# categoria = subcategoria1; subcategoria2; ...
+# Hierarchy Definitions between Categories:
+# category = subcategory1; subcategory2; ...
 #############################################
 
-Documentos = Documentos de Texto; Documentos PDF; Documentos HTML; Documentos RTF; Outros Documentos
-Imagens = Possíveis Digitalizações; Imagens Temporárias Internet; Imagens em Pasta de Sistema; Outras Imagens
-Textos = Textos Temporários Internet; Textos em Pasta de Sistema; Outros Textos
-Atalhos = Atalhos para arquivos; Atalhos para URLs
-Emails e Caixas = Emails; Caixas de Emails
-Multimídia = Áudios; Vídeos; Imagens
-Espelhos de Discos = Discos ISO; Outros Espelhos; Discos Virtuais
-Vestígios de Navegadores = Histórico de Internet; Registros de Histórico de Internet; Favoritos Web;
-
-Receita Federal = Declaracoes e Recibos IRPF; Declaracoes e Recibos DIRF; Declaracoes e Recibos DIPJ; Declaracoes e Recibos CNPJ; Declaracoes e Recibos DSIMPLES; Declaracoes e Recibos DCTF; Declaracoes e Recibos PER DCOMP; Outras Declaracoes e Recibos; Guias em PDF; Arquivos programa SPED; Arquivos programa Receitanet; Arquivos programas RFB
-Previdência Social e CEF = Arquivos SEFIP_GEFIP; Arquivos Conectividade Social; Base de dados SEFIP; Executaveis SEFIP; Executaveis Conectividade Social; Arquivos GRRF; 
+Documents = Text Documents; PDF Documents; HTML Documents; RTF Documents; Other Documents
+Images = Temporary Internet Images; Images in System Folders; Other Images; Scanned Documents
+Plain Texts = Temporary Internet Texts; Texts in System Folders; Other Texts
+Links = Link files; URL links
+Emails and Mailboxes = Emails; Mailboxes
+Multimedia = Audios; Videos; Images
+Image Disks = ISO disks; Virtual disks; Other disks
+Browser Artifacts = Internet History; Internet History Entries; Web Bookmarks;

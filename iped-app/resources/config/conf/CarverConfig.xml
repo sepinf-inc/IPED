@@ -165,7 +165,7 @@
         </carverType>
 
         <carverType>
-            <!-- A ser melhorado pois "se o PDF for editado, as alterações são adicionadas ao final com um novo rodapé, então deveria acumular rodapés para arquivos PDF também" -->
+            <!-- May be improved: if a PDF is edited, changes are appended to the end of file and a new footer is added, so it should also accumulate footers for PDFs -->
             <name>PDF</name>
             <signatures>
     	        <headerSignature>%PDF-</headerSignature>
@@ -310,7 +310,7 @@
             <name>ASF</name>
             <signatures>
     	        <headerSignature>\30\26\B2\75\8E\66\CF\11\A6\D9\00\AA\00\62\CE\6C????????????\01\02</headerSignature>    	        
-    	        <lengthRefSignature>\A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65</lengthRefSignature><!-- Assinatura a partir de onde será bucado o tamanho -->
+    	        <lengthRefSignature>\A1\DC\AB\8C\47\A9\CF\11\8E\E4\00\C0\0C\20\53\65</lengthRefSignature><!-- file size will be searched from this signature -->
     	    </signatures>
             <minLength>100000</minLength>
             <maxLength>500000000</maxLength>

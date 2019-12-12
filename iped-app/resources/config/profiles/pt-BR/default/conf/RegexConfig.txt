@@ -1,22 +1,30 @@
 ﻿##################################################################################################################
-# Configuration for Regular Expression search task.
+# Arquivo de configuração da tarefa de busca por expressões regulares
 #
-# Syntax:
-# name , prefix, suffix, ignoreCase = regex
+# Sintaxe:
+# name , prefix, sufix, ignoreCase = regex
 #
-# name: 	(required) regex name
-# regex: 	(required) regular expression, do not accept groups nor backreferences, syntax on http://www.brics.dk/automaton/doc/index.html
-# prefix: 	number of prefix chars which will be removed from matches (default 0)
-# suffix: 	number of suffix chars which will be removed from matches (default 0)
-# ignoreCase: tells if capitalization should be ignored (default true)
+# name: 	(obrigatório) nome da expressão regular
+# regex: 	(obrigatório) expressão regular, não aceita grupos e backreferences, ver sintaxe em http://www.brics.dk/automaton/doc/index.html
+# prefix: 	qtde de caracteres de prefixo que serão removidos dos hits (padrão 0)
+# sufix: 	qtde de caracteres de sufixo que serão removidos dos hits (padrão 0)
+# ignoreCase: indica se a capitalização das letras deve ser ignorada (padrão true)
 #
 ##################################################################################################################
 
-# If enabled, format/normalize regex matches using registered validators.
-# However regex results may not be highlighted in content preview.
+# Se habilitado, formata/normaliza as ocorrências encontradas usando os validadores registrados.
+# Entretanto, os resultados podem deixar de ser destacados na pre-visualização
 formatRegexMatches = false
 
-# Register REGEX below:
+# REGEX cadastradas:
+
+CPF , 1 , 1 = [^0-9][0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}[^0-9]
+
+CNPJ , 1 , 1 , false = [^0-9][0-9]{2}\.?[0-9]{3}\.?[0-9]{3}/[0-9]{4}-?[0-9]{2}[^0-9]
+
+PISPASEP , 1 , 1 , false = [^0-9][0-9]{3}\.?[0-9]{4}\.?[0-9]{3}-?[0-9]{1}[^0-9]
+
+CNH, 1 , 1 , false = [^0-9][0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}[^0-9]
 
 EMAIL , 0 , 0 , true = [0-9a-z][0-9a-z\+\.\_\%\-]{1,64}\@[0-9a-z\-]{2,64}(\.[0-9a-z\-]{2,25}){1,3}
 
@@ -26,16 +34,20 @@ IP , 1 , 1 = [^0-9\.]([^0].?.?&<1-255>)(\.(([^0].?.?&<1-255>)|0)){3}[^0-9\.]
 			
 MONEY , 1 , 1 , false = [^0-9\.\,]((([^0].?.?&<1-999>)(((\.[0-9]{3}){1,4}\,[0-9]{2})|((\,[0-9]{3}){1,4}\.[0-9]{2})))|(\$\s{0,10}<1-999>(((\.[0-9]{3}){1,4}(\,[0-9]{2})?)|((\,[0-9]{3}){1,4}(\.[0-9]{2})?))))[^0-9\.\,]
 			
-# BANK_ACCOUNT , 0 , 0 , true = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
+CONTA_BANCARIA , 0 , 0 , true = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
+
+BOLETO, 1 , 1 = [^0-9][0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0-9xX](\s|\.)?[0-9]{14}[^0-9]
 
 CREDIT_CARD, 1 , 1 = [^0-9]([0-9]{4} ){3}[0-9]{4}[^0-9]
+
+TITULO_ELEITOR, 1 , 1 , false = [^0-9][0-9]{12}[^0-9]
 
 SWIFT, 1 , 1 , false = [^A-Z][A-Z]{4}[A-Z]{2}[A-Z0-9]{2}[a-zA-Z0-9]{3}[^a-zA-Z0-9]
 
 # IBAN, 1 , 1 , false = [^A-Z][A-Z]{2}[0-9]{2}[A-Z0-9]{5,30}[^A-Z0-9]
 
-# PHONE = (\\+[0-9]+[\\- \\.]*)?(\\([0-9]+\\)[\\- \\.]*)?([0-9][0-9\\- \\.]+[0-9])
-
+# TELEFONE = (\\+[0-9]+[\\- \\.]*)?(\\([0-9]+\\)[\\- \\.]*)?([0-9][0-9\\- \\.]+[0-9])
+				
 CRIPTOCOIN_BITCOIN_ADDRESS, 1, 1, false = ([^0-9a-zA-Z][13][a-km-zA-HJ-NP-Z1-9]{25,34}[^0-9a-zA-Z])|([^0-9a-zA-Z]bc1[a-z0-9]{20,87}[^0-9a-zA-Z])
 
 CRIPTOCOIN_MONERO, 1, 1, false = [^0-9a-zA-Z]4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}[^0-9a-zA-Z]

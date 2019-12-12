@@ -24,4 +24,4 @@ minLangScore = 0.2
 mimeTypesToIgnore = audio; video; application/x-unallocated; application/octet-stream
 
 # Do not run NER on the following categories
-categoriesToIgnore = Programs and Libraries; Virtual disks; Other files
+categoriesToIgnore = Programas e Bibliotecas; Discos Virtuais; Outros Arquivos
