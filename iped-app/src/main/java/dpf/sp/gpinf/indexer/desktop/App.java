@@ -755,9 +755,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {
         try {
             if (resultSetViewerConfiguration == null) {
-                resultSetViewerConfiguration = (new XMLResultSetViewerConfiguration(
-                        new File(Configuration.getInstance().configPath + "/conf/ResultSetViewersConf.xml")));
-                // resultSetViewerConfiguration = (new FixedResultSetViewerConfiguration());
+                File xml = new File(Configuration.getInstance().appRoot + "/conf/ResultSetViewersConf.xml"); //$NON-NLS-1$
+                resultSetViewerConfiguration = new XMLResultSetViewerConfiguration(xml);
             }
             return resultSetViewerConfiguration;
         } catch (Exception e) {
