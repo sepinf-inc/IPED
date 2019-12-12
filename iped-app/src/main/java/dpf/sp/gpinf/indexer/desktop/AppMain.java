@@ -108,6 +108,14 @@ public class AppMain {
             return;
         }
 
+        libDir = detectLibDir();
+        casePath = libDir.getParentFile().getParentFile();
+        
+        if(!new File(casePath, "indexador").exists()) //$NON-NLS-1$
+            casePath = null;
+    }
+    
+    private File detectLibDir() {
         URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
         File jarFile = null;
         try {
@@ -116,14 +124,11 @@ public class AppMain {
             else
                 jarFile = new File(url.toURI().getSchemeSpecificPart());
             
-            libDir = jarFile.getParentFile();
-            casePath = libDir.getParentFile().getParentFile();
-            
-            if(!new File(casePath, "indexador").exists()) //$NON-NLS-1$
-                casePath = null;
+            return jarFile.getParentFile();
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 
@@ -166,6 +171,9 @@ public class AppMain {
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
             LogConfiguration logConfiguration = null;
+            
+            if(libDir == null)
+                libDir = detectLibDir();
 
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
