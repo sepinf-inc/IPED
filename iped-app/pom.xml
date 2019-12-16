@@ -419,6 +419,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-die</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>led</groupId>
+                                    <artifactId>die</artifactId>
+                                    <version>1.25.1</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-nativeview</id>
                         <phase>package</phase>
                         <goals>
