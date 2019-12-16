@@ -16,7 +16,7 @@ Since the beginning, the goal of the tool was efficient data processing and stab
 
 Currently IPED uses the Sleuthkit library (https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, ISO9660, AFF, VHD, VMDK. Also there is support for UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats. Recently support for APFS was added, thanks to BlackBag implementation for Sleuthkit.
 
-If you are new to the tool, please refer to the Quick Start Guide (https://github.com/lfcnassif/IPED/wiki/Quick-Start-Guide).
+If you are new to the tool, please refer to the Beginner's Start Guide (https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
 ## Features
 
