@@ -78,6 +78,10 @@ ZSTD-jni
 - Site: https://github.com/luben/zstd-jni
 - License: BSD 2 clause
 
+Rifiuti2
+- Site: https://github.com/abelcheung/rifiuti2
+- License: BSD 3 clause
+
 --------------------------------------------
 
 Eclipse SWT
@@ -120,6 +124,22 @@ Libpff
 
 Libmsiecf
 - Site: https://github.com/libyal/Libmsiecf
+- License: GNU LGPL v.3
+
+Libevt
+- Site: https://github.com/libyal/libevt
+- License: GNU LGPL v.3
+
+Libevtx
+- Site: https://github.com/libyal/libevtx
+- License: GNU LGPL v.3
+
+Libagdb
+- Site: https://github.com/libyal/libagdb
+- License: GNU LGPL v.3
+
+Libscca
+- Site: https://github.com/libyal/libscca
 - License: GNU LGPL v.3
 
 LibreOffice 4.0.4 for windows
