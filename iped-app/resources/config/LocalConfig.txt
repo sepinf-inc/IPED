@@ -34,7 +34,7 @@ numThreads = default
 
 # File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
 # It is supported models from LED version 1.21 or higher.
-#ledDie = E:/LED/V1.21.00/pedo/die/rfdie.dat
+ledDie = models/rfdie.dat
 
 # Full path for sleuthkit-4.x.x.jar built on Linux OS.
 # It is distributed a Windows only version with some optimization patches.
