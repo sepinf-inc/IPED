@@ -14,16 +14,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.Log;
 import iped3.IItem;
 import iped3.IHashValue;
 
 public class KFFCarveTask extends BaseCarveTask {
+    
+    private static Logger logger = LoggerFactory.getLogger(KFFCarveTask.class);
     /**
      * Nome da tarefa.
      */
@@ -94,13 +96,13 @@ public class KFFCarveTask extends BaseCarveTask {
                 if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
                     if (LedKFFTask.kffItems != null) {
                         md5_512 = LedHashes.hashMap.get("md5-512"); //$NON-NLS-1$
-                        Log.info(taskName, "Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
+                        logger.info("Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
                         taskEnabled = true;
                     } else {
-                        Log.error(taskName, "LED database must be loaded to enable KFFCarving."); //$NON-NLS-1$
+                        logger.error("LED database must be loaded to enable KFFCarving."); //$NON-NLS-1$
                     }
                 }
-                Log.info(taskName, taskEnabled ? "Task enabled." : "Task disabled."); //$NON-NLS-1$ //$NON-NLS-2$
+                logger.info(taskEnabled ? "Task enabled." : "Task disabled."); //$NON-NLS-1$ //$NON-NLS-2$
                 init.set(true);
             }
         }
@@ -116,10 +118,10 @@ public class KFFCarveTask extends BaseCarveTask {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
                 NumberFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
-                Log.info(taskName, "Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
-                Log.info(taskName, "512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " //$NON-NLS-1$ //$NON-NLS-2$
+                logger.info("Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
+                logger.info("512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " //$NON-NLS-1$ //$NON-NLS-2$
                         + nf.format(num512total.get()));
-                Log.info(taskName, "Bytes hashes: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
+                logger.info("Bytes hashes: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
             }
         }
     }
@@ -196,7 +198,7 @@ public class KFFCarveTask extends BaseCarveTask {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Log.warning(taskName, "Error KFFCarving on: " + evidence.getPath() + " : " + e); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn("Error KFFCarving on: " + evidence.getPath() + " : " + e); //$NON-NLS-1$ //$NON-NLS-2$
         } finally {
             IOUtil.closeQuietly(is);
         }
