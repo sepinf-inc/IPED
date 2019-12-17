@@ -16,8 +16,6 @@ import com.eatthepath.jvptree.DistanceFunction;
 import com.eatthepath.jvptree.VPTree;
 
 import br.dpf.sepinf.photodna.PhotoDNATransforms;
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
 
 public class PhotoDNALookup extends AbstractTask{
@@ -57,15 +55,9 @@ public class PhotoDNALookup extends AbstractTask{
                 File photoDnaHashSet = new File(path.trim());
                 if (!photoDnaHashSet.exists()) {
                     String msg = "Invalid hash database path on " + photoDnaHashSet.getAbsolutePath(); //$NON-NLS-1$
-                    CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                    for (File source : args.getDatasources()) {
-                        if (source.getName().endsWith(".iped")) {
-                            LOGGER.warn(msg);
-                            taskEnabled = false;
-                            return;
-                        }
-                    }
-                    throw new IPEDException(msg);
+                    LOGGER.error(msg);
+                    taskEnabled = false;
+                    return;
                 }
                 try (BufferedReader bf = new BufferedReader(new FileReader(photoDnaHashSet))){
                     String line = null;

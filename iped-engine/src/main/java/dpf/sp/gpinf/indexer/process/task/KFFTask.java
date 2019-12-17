@@ -20,9 +20,7 @@ import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
@@ -61,7 +59,7 @@ public class KFFTask extends AbstractTask {
     private static Map<Integer, String[]> products;
     private static Set<String> alertProducts;
     private static DB db;
-    private static boolean taskEnabled = false;
+    private static Boolean taskEnabled;
 
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
@@ -74,7 +72,7 @@ public class KFFTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
 
         String hashes = confParams.getProperty("hash"); //$NON-NLS-1$
-        if (hashes == null) {
+        if (hashes == null || (taskEnabled != null && !taskEnabled)) {
             return;
         }
         if (hashes.contains("md5")) { //$NON-NLS-1$
@@ -90,8 +88,12 @@ public class KFFTask extends AbstractTask {
         excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim()); //$NON-NLS-1$
 
         String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
-        if (taskEnabled && kffDbPath == null)
-            throw new IPEDException("Configure hash database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
+        if (taskEnabled && kffDbPath == null) {
+            String msg = "Configure hash database path on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+            LOGGER.error(msg);
+            taskEnabled = false;
+            return;
+        }
 
         // backwards compatibility
         if (enableParam == null && kffDbPath != null)
@@ -106,15 +108,9 @@ public class KFFTask extends AbstractTask {
             File kffDb = new File(kffDbPath.trim());
             if (!kffDb.exists()) {
                 String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
-                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                for (File source : args.getDatasources()) {
-                    if (source.getName().endsWith(".iped")) {
-                        LOGGER.warn(msg);
-                        taskEnabled = false;
-                        return;
-                    }
-                }
-                throw new IPEDException(msg);
+                LOGGER.error(msg);
+                taskEnabled = false;
+                return;
             }
 
             try {

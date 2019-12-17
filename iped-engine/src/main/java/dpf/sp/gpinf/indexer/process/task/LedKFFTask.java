@@ -19,15 +19,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Log;
-import iped3.IItem;
 import iped3.IHashValue;
+import iped3.IItem;
 
 /**
  * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser
@@ -51,7 +49,7 @@ public class LedKFFTask extends AbstractTask {
     private static final int idxLength = 5;
     private static final int idxName = 6;
     private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
-    private static boolean taskEnabled = false;
+    private static Boolean taskEnabled;
 
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
@@ -61,7 +59,7 @@ public class LedKFFTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
 
         synchronized (lock) {
-            if (hashArrays != null) {
+            if (hashArrays != null || (taskEnabled != null && !taskEnabled)) {
                 return;
             }
 
@@ -71,8 +69,12 @@ public class LedKFFTask extends AbstractTask {
 
             String hash = confParams.getProperty("hash"); //$NON-NLS-1$
             String ledWkffPath = confParams.getProperty("ledWkffPath"); //$NON-NLS-1$
-            if (taskEnabled && ledWkffPath == null)
-                throw new IPEDException("Configure LED database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
+            if (taskEnabled && ledWkffPath == null) {
+                String msg = "Configure LED database path on " + Configuration.LOCAL_CONFIG;
+                logger.error(msg);
+                taskEnabled = false;
+                return;
+            }
 
             // backwards compatibility
             if (enabled == null && ledWkffPath != null)
@@ -84,15 +86,9 @@ public class LedKFFTask extends AbstractTask {
             File wkffDir = new File(ledWkffPath.trim());
             if (!wkffDir.exists()) {
                 String msg = "Invalid LED database path: " + wkffDir.getAbsolutePath(); //$NON-NLS-1$
-                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                for (File source : args.getDatasources()) {
-                    if (source.getName().endsWith(".iped")) {
-                        logger.warn(msg);
-                        taskEnabled = false;
-                        return;
-                    }
-                }
-                throw new IPEDException(msg);
+                logger.error(msg);
+                taskEnabled = false;
+                return;
             }
 
             if (hash == null || hash.trim().isEmpty())
