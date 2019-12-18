@@ -46,7 +46,7 @@ Some of IPED several features are listed below:
 - External command line tools integration for file decoding
 - Browser history for Edge, Firefox, Chrome and Safari
 - Custom parsers for LNK, Emule, Shareaza, Ares, WhatsApp, Skype artifacts.
-- Fast nudity detection using random forests algorithm (only for law enforcement, will post contact info soon)
+- Fast nudity detection using random forests algorithm (thanks to its author Wladimir Leite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and jep)
 - Stable processing with out-of-process file system reading and file parsing
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
