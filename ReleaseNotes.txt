@@ -1,5 +1,17 @@
-XX/12/2019: IPED-3.17
-- First English release
+XX/XX/2019: IPED-3.17.x
+News:
+- Changed default locale and configuration files to english
+- Moved all source code to github
+- Moved custom dependencies from internal to external repo
+- Report dialog to fill in case information
+- Created json format to store and load report info
+- Embedded fast random forest nudity detection model
+- Allow opening multicases from iped program folder
+- Show warning info instead of aborting when optional databases are not found
+- Updated project and thirdparty licenses, moved them to root project
+Fixes:
+- back compatibility of IPEDSource class
+- FileNotFoundException when opening case while processing with some profile
 
 ### Previous release notes in Portuguese (not translated) ###
 
