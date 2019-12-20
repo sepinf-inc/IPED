@@ -63,9 +63,15 @@ public class KFFTask extends AbstractTask {
 
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
+    private boolean importing = false;
 
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
+    }
+    
+    public void init(Properties confParams, File confDir, boolean importing) throws Exception {
+        this.importing = importing;
+        init(confParams, confDir);
     }
 
     @Override
@@ -99,14 +105,17 @@ public class KFFTask extends AbstractTask {
         if (enableParam == null && kffDbPath != null)
             taskEnabled = true;
 
-        if (!taskEnabled)
+        if (!importing && !taskEnabled)
             return;
 
         if (map == null) {
             excluded = 0;
 
             File kffDb = new File(kffDbPath.trim());
-            if (!kffDb.exists()) {
+            if(importing)
+                kffDb.getParentFile().mkdirs();
+            
+            if (!kffDb.exists() && !importing) {
                 String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
                 LOGGER.error(msg);
                 taskEnabled = false;
@@ -160,9 +169,6 @@ public class KFFTask extends AbstractTask {
     }
 
     public void importKFF(File kffDir) throws IOException {
-
-        if (!taskEnabled)
-            throw new IPEDException("Enable " + ENABLE_PARAM + " on IPEDConfig.txt"); //$NON-NLS-1$ //$NON-NLS-2$
 
         File NSRLProd = new File(kffDir, "NSRLProd.txt"); //$NON-NLS-1$
         BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));
