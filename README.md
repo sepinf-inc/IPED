@@ -22,7 +22,7 @@ If you are new to the tool, please refer to the [Beginner's Start Guide](https:/
 
 Some of IPED several features are listed below:
 
-- Supported hashes: md5, sha-1, sha-256, sha-512, edonkey and photoDNA (only for law enforcement, contact sepinf.inc@dpf.gov.br)
+- Supported hashes: md5, sha-1, sha-256, sha-512, edonkey and photoDNA (only for law enforcement, please contact iped@dpf.gov.br)
 - Fast hash deduplication and NIST NSRL hash lookup
 - Signature analysis
 - Categorization by file type and properties
