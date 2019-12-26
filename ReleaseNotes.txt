@@ -9,9 +9,11 @@ News:
 - Allow opening multicases from iped program folder
 - Show warning info instead of aborting when optional databases are not found
 - Updated project and thirdparty licenses, moved them to root project
+- Removes photoDNA compile dependency
 Fixes:
 - back compatibility of IPEDSource class
 - FileNotFoundException when opening case while processing with some profile
+- Fix NSRL importing error
 
 ### Previous release notes in Portuguese (not translated) ###
 
