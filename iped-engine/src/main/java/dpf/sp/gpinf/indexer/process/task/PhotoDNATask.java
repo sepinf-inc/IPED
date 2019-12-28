@@ -89,7 +89,7 @@ public class PhotoDNATask extends AbstractTask{
             Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNA");
             photodna = (PhotoDNA)c.newInstance();
             
-        }catch(NoClassDefFoundError e) {
+        }catch(ClassNotFoundException e) {
             enabled = false;
             if(!warned.getAndSet(true))
                 LOGGER.error("Optional photoDNA lib not loaded. If you have rights to use it, you should put it into plugin/optional_jars folder.");
