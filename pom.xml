@@ -50,7 +50,7 @@
         </repository>
         <repository>
         	<id>mvn-repo</id>
-        	<url>https://github.com/lfcnassif/maven/raw/master</url>
+        	<url>https://gitlab.com/iped-project/iped-maven/raw/master</url>
         	<releases>
             	<enabled>true</enabled>
         	</releases>
