@@ -94,11 +94,16 @@ public class KFFTask extends AbstractTask {
         excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim()); //$NON-NLS-1$
 
         String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
-        if (taskEnabled && kffDbPath == null) {
-            String msg = "Configure hash database path on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
-            LOGGER.error(msg);
-            taskEnabled = false;
-            return;
+        if (kffDbPath == null) {
+            String msg = "Configure hash database path (kffDb) on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+            if(importing) {
+            	throw new IPEDException(msg);
+            }
+            if(taskEnabled) {
+            	LOGGER.error(msg);
+                taskEnabled = false;
+                return;
+            }
         }
 
         // backwards compatibility

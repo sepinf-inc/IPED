@@ -182,6 +182,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             KFFTask kff = new KFFTask();
             kff.init(Configuration.getInstance().properties, null, true);
             kff.importKFF(kffPath);
+        } catch (IPEDException e) {
+        	System.out.println(e.toString());
+        	
         } catch (Exception e) {
             e.printStackTrace();
         }
