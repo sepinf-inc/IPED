@@ -363,6 +363,7 @@ public class Manager {
 
             if (!someWorkerAlive) {
                 if (caseData.changeToNextQueue() != null) {
+                    LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();

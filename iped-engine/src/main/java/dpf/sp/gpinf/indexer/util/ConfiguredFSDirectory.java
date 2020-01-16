@@ -18,11 +18,15 @@ public class ConfiguredFSDirectory {
     public static FSDirectory open(File indexDir) throws IOException {
         AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
         
+        FSDirectory result;
         if(advConfig.isUseNIOFSDirectory()) {
-            LOGGER.info("Using NIOFSDirectory to open index...");
-            return NIOFSDirectory.open(indexDir);
-        }else
-            return FSDirectory.open(indexDir);
+            result = new NIOFSDirectory(indexDir);
+        }else {
+            result = FSDirectory.open(indexDir);
+        }
+        LOGGER.info("Using " + result.getClass().getSimpleName() + " to open index...");
+        return result;
+        
     }
 
 }
