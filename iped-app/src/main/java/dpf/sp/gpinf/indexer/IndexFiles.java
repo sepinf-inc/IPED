@@ -106,11 +106,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         this.palavrasChave = keywordList;
         this.configPath = configPath;
         this.logFile = logFile;
-        
-        String list = "";
-        for(String o : bookmarksToOCR)
-            list += o + OCRParser.SUBSET_SEPARATOR;
-        System.setProperty(OCRParser.SUBSET_TO_OCR, list);
+        OCRParser.bookmarksToOCR = bookmarksToOCR;
     }
 
     /**

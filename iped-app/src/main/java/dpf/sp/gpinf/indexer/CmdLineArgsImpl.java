@@ -337,11 +337,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             }
         }
 
+        OCRParser.bookmarksToOCR = new ArrayList<String>();
         if (this.ocr != null) {
-            String list = "";
-            for(String o : ocr)
-                list += (o + OCRParser.SUBSET_SEPARATOR);
-            System.setProperty(OCRParser.SUBSET_TO_OCR, list);
+            OCRParser.bookmarksToOCR.addAll(this.ocr);
         }
         if (this.palavrasChave != null) {
             IndexFiles.getInstance().palavrasChave = this.palavrasChave;
