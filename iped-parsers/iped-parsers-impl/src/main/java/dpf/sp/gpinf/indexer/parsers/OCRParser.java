@@ -186,15 +186,10 @@ public class OCRParser extends AbstractParser {
         if (bookmarksToOCR.size() == 0)
             return true;
 
-        for (String group : bookmarksToOCR) {
+        for (String bookmarkToOCR : bookmarksToOCR)
             for (String bookmark : ocrContext.getBookmarks())
-                if (group.equalsIgnoreCase(bookmark))
+                if (bookmarkToOCR.equalsIgnoreCase(bookmark))
                     return true;
-            for (String category : ocrContext.getCategories())
-                if (group.equalsIgnoreCase(category))
-                    return true;
-        }
-            
         return false;
     }
 

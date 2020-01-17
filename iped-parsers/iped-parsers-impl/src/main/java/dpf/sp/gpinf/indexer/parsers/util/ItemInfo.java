@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.HashSet;
 
 /**
@@ -37,16 +36,14 @@ public class ItemInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int child = -1, id;
-    private Collection<String> bookmarks;
-    private Collection<String> categories;
+    private HashSet<String> bookmarks;
     private String path, hash;
     private boolean carved = false;
 
-    public ItemInfo(int id, String hash, Collection<String> bookmarks, Collection<String> categories, String path, boolean carved) {
+    public ItemInfo(int id, String hash, HashSet<String> bookmarks, String path, boolean carved) {
         this.id = id;
         this.hash = hash;
         this.bookmarks = bookmarks;
-        this.categories = categories;
         this.path = path;
         this.setCarved(carved);
     }
@@ -79,12 +76,8 @@ public class ItemInfo implements Serializable {
         this.bookmarks = bookmarks;
     }
 
-    public Collection<String> getBookmarks() {
+    public HashSet<String> getBookmarks() {
         return bookmarks;
-    }
-    
-    public Collection<String> getCategories() {
-        return categories;
     }
 
     public boolean isCarved() {
