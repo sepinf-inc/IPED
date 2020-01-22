@@ -40,7 +40,7 @@ public class PhotoDNALookup extends AbstractTask{
     
     private static boolean taskEnabled = true;
     
-    private PhotoDNATransforms transforms;
+    private static PhotoDNATransforms transforms;
     
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
