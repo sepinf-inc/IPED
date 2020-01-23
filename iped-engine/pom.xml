@@ -15,6 +15,11 @@
     </properties>
     
     <dependencies>
+        <dependency>
+    	    <groupId>br.dpf</groupId>
+    	    <artifactId>photodna-api</artifactId>
+    	    <version>1.0</version>
+	    </dependency>
     	<dependency>
     		<groupId>com.eatthepath</groupId>
     		<artifactId>jvptree</artifactId>

@@ -15,7 +15,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.util.PhotoDNA;
+import br.dpf.sepinf.photodna.api.PhotoDNA;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 

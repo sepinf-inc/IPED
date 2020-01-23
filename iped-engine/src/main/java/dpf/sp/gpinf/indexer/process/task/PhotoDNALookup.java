@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.eatthepath.jvptree.DistanceFunction;
 import com.eatthepath.jvptree.VPTree;
 
-import dpf.sp.gpinf.indexer.util.PhotoDNATransforms;
+import br.dpf.sepinf.photodna.api.PhotoDNATransforms;
 import iped3.IItem;
 
 public class PhotoDNALookup extends AbstractTask{
@@ -122,7 +122,7 @@ public class PhotoDNALookup extends AbstractTask{
         boolean flip = false;
         while(rot == 0 || (rotateAndFlip && rot < 4)) {
             int degree = 90 * rot++;
-            byte[] photodnaRot = transforms.rotate(photodna, degree, flip);
+            byte[] photodnaRot = transforms.rot(photodna, degree, flip);
             
             List<byte[]> neighbors = vptree.getAllWithinDistance(photodnaRot, MAX_DISTANCE);
             
