@@ -130,7 +130,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
                     time = System.currentTimeMillis();
                 }
                 Thread.sleep(1);
-                LOGGER.error("Waiting Server memory write..."); //$NON-NLS-1$
+                LOGGER.warn("Waiting Server memory write..."); //$NON-NLS-1$
 
                 if (System.currentTimeMillis() - time >= TIMEOUT) {
                     client.serverError = true;

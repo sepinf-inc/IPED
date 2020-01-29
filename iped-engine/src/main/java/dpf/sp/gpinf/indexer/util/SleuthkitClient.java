@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -54,12 +55,14 @@ public class SleuthkitClient {
     }
 
     Process process;
+    int port;
     Socket socket;
     InputStream is;
     FileChannel fc;
     File pipe;
     MappedByteBuffer out;
     OutputStream os;
+    Random rand = new Random();
 
     volatile boolean serverError = false;
     
@@ -118,7 +121,7 @@ public class SleuthkitClient {
 
     private void start() {
 
-        int port = portStart.getAndIncrement();
+        port = portStart.getAndIncrement();
 
         if (port > MAX_PORT) {
             port = START_PORT;
@@ -210,8 +213,28 @@ public class SleuthkitClient {
             }
         }.start();
     }
+    
+    private boolean ping() {
+        int i = rand.nextInt(255) + 1;
+        try {
+            os.write(i);
+            os.flush();
+            int r = is.read();
+            if(r == i)
+                return true;
+            
+        }catch(IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
+        
+        if(!ping()) {
+            logger.error("Ping SleuthkitServer port " + port + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
+            serverError = true;
+        }
 
         if (serverError || (openedStreams > MAX_STREAMS && currentStreams.size() == 0)) {
             if (process != null) {

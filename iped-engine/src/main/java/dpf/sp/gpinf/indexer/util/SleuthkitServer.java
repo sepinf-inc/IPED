@@ -40,9 +40,9 @@ public class SleuthkitServer {
         static byte EXCEPTION = 10;
         // temp state
         static byte SQLITE_READ = 11;
-
+        
         final static boolean isClientCmd(int cmd) {
-            return cmd != FLAGS.DONE && cmd != FLAGS.ERROR && cmd != FLAGS.EOF && cmd != FLAGS.EXCEPTION;
+            return cmd != FLAGS.DONE && cmd != FLAGS.ERROR && cmd != FLAGS.EOF && cmd != FLAGS.EXCEPTION && cmd != FLAGS.SQLITE_READ;
         }
     }
 
@@ -99,6 +99,13 @@ public class SleuthkitServer {
 
             while (true) {
                 try {
+                    int read = in.read();
+                    if(read > 0) {
+                        //ping response
+                        os.write(read);
+                        os.flush();
+                        continue;
+                    }
                     byte cmd = waitCmd(out, in);
                     sis = getSis(out);
                     commitByte(out, 0, FLAGS.SQLITE_READ);
@@ -178,7 +185,6 @@ public class SleuthkitServer {
     }
 
     private static byte waitCmd(MappedByteBuffer out, InputStream in) throws Exception {
-        in.read();
         byte cmd;
         while (!FLAGS.isClientCmd(cmd = getByte(out, 0))) {
             System.err.println("Waiting Client Memory Write..."); //$NON-NLS-1$
@@ -198,7 +204,7 @@ public class SleuthkitServer {
     }
 
     static void notify(OutputStream os) throws IOException {
-        os.write(1);
+        os.write(0);
         os.flush();
     }
 
