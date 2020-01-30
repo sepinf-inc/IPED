@@ -197,7 +197,7 @@ public class SleuthkitServer {
                 t = System.currentTimeMillis();
             long time = (System.currentTimeMillis() - t) / 1000; 
             if(time >= 10)
-                System.err.println("Waiting Client Memory Write for " + time + " seconds..."); //$NON-NLS-1$
+                throw new IOException("MemoryReadTimeout waiting SleuthkitClient!"); //$NON-NLS-1$
             Thread.sleep(1);
         }
         return cmd;
