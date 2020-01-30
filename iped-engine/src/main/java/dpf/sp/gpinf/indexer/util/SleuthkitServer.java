@@ -186,8 +186,13 @@ public class SleuthkitServer {
 
     private static byte waitCmd(MappedByteBuffer out, InputStream in) throws Exception {
         byte cmd;
+        long t = 0;
         while (!FLAGS.isClientCmd(cmd = getByte(out, 0))) {
-            System.err.println("Waiting Client Memory Write..."); //$NON-NLS-1$
+            if(t == 0)
+                t = System.currentTimeMillis();
+            long time = (System.currentTimeMillis() - t) / 1000; 
+            if(time >= 10)
+                System.err.println("Waiting Client Memory Write for " + time + " seconds..."); //$NON-NLS-1$
             Thread.sleep(1);
         }
         return cmd;

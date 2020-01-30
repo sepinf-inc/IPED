@@ -168,7 +168,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     }
 
     private String getCrashMsg() {
-        return "Possible Sleuthkit Crash reading " + path; //$NON-NLS-1$
+        return "Possible SleuthkitServer Crash reading " + path; //$NON-NLS-1$
     }
 
     @Override
