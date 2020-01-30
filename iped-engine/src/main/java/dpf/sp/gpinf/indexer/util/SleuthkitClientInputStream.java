@@ -102,7 +102,9 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         boolean sqliteBusy = true;
         while (sqliteBusy) {
             try {
-                in.read();
+                int b = in.read();
+                if(b == -1)
+                    throw new IOException("SleuthkitServer Pipe closed!"); //$NON-NLS-1$
                 sqliteBusy = false;
 
             } catch (SocketTimeoutException e) {
