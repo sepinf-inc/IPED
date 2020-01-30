@@ -148,14 +148,15 @@ public class SleuthkitClient {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             process = pb.start();
 
-            logStdErr(process.getInputStream(), port);
+            //logStdErr(process.getInputStream(), port);
             logStdErr(process.getErrorStream(), port);
 
-            Thread.sleep(5000);
+            //Thread.sleep(5000);
 
-            // is = process.getInputStream();
-            // os = process.getOutputStream();
-
+            is = process.getInputStream();
+            os = process.getOutputStream();
+            
+            /*
             socket = new Socket();
             socket.setPerformancePreferences(0, 2, 1);
             socket.setReceiveBufferSize(1);
@@ -165,7 +166,8 @@ public class SleuthkitClient {
             socket.setSoTimeout(60000);
             is = socket.getInputStream();
             os = socket.getOutputStream();
-
+            */
+            
             int size = SleuthkitServer.MMAP_FILE_SIZE;
             pipe = new File(pipePath);
             try (RandomAccessFile raf = new RandomAccessFile(pipePath, "rw")) { //$NON-NLS-1$
@@ -231,8 +233,8 @@ public class SleuthkitClient {
 
     public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
         
-        if(!ping()) {
-            logger.error("Ping SleuthkitServer port " + port + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
+        if(!serverError && !ping()) {
+            logger.warn("Ping SleuthkitServer port " + port + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
             serverError = true;
         }
 
