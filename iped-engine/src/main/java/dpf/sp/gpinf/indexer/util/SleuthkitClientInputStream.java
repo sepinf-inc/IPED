@@ -247,23 +247,18 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
 
     @Override
     public void close() throws IOException {
-        if (closed) {
-            return;
-        }
-
-        if (client.serverError) {
-            return;
-        }
-
+        
         synchronized (client) {
-            closed = true;
-            mbb.putInt(1, sleuthId);
-            mbb.putLong(5, streamId);
-            SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
+            if(!closed && !client.serverError) {
+                mbb.putInt(1, sleuthId);
+                mbb.putLong(5, streamId);
+                SleuthkitServer.commitByte(mbb, 0, FLAGS.CLOSE);
+                notifyServer();
+                waitServerResponse();
+            }
             empty = true;
-            notifyServer();
-            waitServerResponse();
             client.removeStream(streamId);
+            closed = true;
         }
 
     }
