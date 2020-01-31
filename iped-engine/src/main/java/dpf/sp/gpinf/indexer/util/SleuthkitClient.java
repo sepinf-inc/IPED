@@ -38,6 +38,7 @@ public class SleuthkitClient {
     private static final int START_PORT = 2000;
     private static final int MAX_PORT = 65535;
     private static final int MAX_STREAMS = 10000;
+    private static final int TIMEOUT_SECONDS = 3600;
     
     private static ConcurrentLinkedDeque<SleuthkitClient> clientsDeque = new ConcurrentLinkedDeque<>();
     
@@ -69,6 +70,39 @@ public class SleuthkitClient {
     private int openedStreams = 0;
     private Set<Long> currentStreams = new HashSet<Long>();
     private volatile int numCurrentStreams = 0;
+    private volatile long requestTime = 0;
+    
+    class TimeoutMonitor extends Thread{
+        public void run() {
+            try {
+                while(true) {
+                    Thread.sleep(5000);
+                    if(requestTime == 0)
+                        continue;
+                    if (SleuthkitServer.getByte(out, 0) != FLAGS.SQLITE_READ) {
+                        logger.info("Waiting SleuthkitServer database read..."); //$NON-NLS-1$
+                        continue;
+                    }
+                    if(System.currentTimeMillis()/1000 - requestTime >= TIMEOUT_SECONDS) {
+                        logger.error("Timeout waiting SleuthkitServer response! Restarting...");
+                        if (process != null) {
+                            process.destroyForcibly();
+                        }
+                        serverError = true;
+                        requestTime = 0;
+                    }
+                }
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+    
+    public void enableTimeoutCheck(boolean enable) {
+        if(enable)
+            requestTime = System.currentTimeMillis()/1000;
+        else
+            requestTime = 0;
+    }
     
     public static SleuthkitClient get() {
         SleuthkitClient sc = clientsDeque.pollLast();        
@@ -90,22 +124,13 @@ public class SleuthkitClient {
     public static void initSleuthkitServers(final String dbPath)
             throws InterruptedException {
         dbDirPath = dbPath;
-        ArrayList<Thread> initThreads = new ArrayList<Thread>();
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
-            Thread t = new Thread() {
-                public void run() {
-                    SleuthkitClient sc = new SleuthkitClient();
-                    clientsDeque.add(sc);
-                    synchronized(clientsList) {
-                        clientsList.add(sc);
-                    }
-                }
-            };
-            t.start();
-            initThreads.add(t);
+            SleuthkitClient sc = new SleuthkitClient();
+            clientsDeque.add(sc);
+            synchronized(clientsList) {
+                clientsList.add(sc);
+            }
         }
-        for (Thread t : initThreads)
-            t.join();
     }
 
     public static void shutDownServers() {
@@ -117,6 +142,9 @@ public class SleuthkitClient {
         while (process == null || !isAlive(process)) {
             start();
         }
+        Thread t = new TimeoutMonitor();
+        t.setDaemon(true);
+        t.start();
     }
 
     private void start() {

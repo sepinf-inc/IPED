@@ -99,29 +99,20 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     }
 
     private byte waitServerResponse() throws IOException {
-        boolean sqliteBusy = true;
-        while (sqliteBusy) {
-            try {
-                int b = in.read();
-                if(b == -1)
-                    throw new IOException("SleuthkitServer Pipe closed!"); //$NON-NLS-1$
-                sqliteBusy = false;
+        
+        client.enableTimeoutCheck(true);
+        try {
+            int b = in.read();
+            if(b == -1)
+                throw new IOException("SleuthkitServer Pipe closed!"); //$NON-NLS-1$
 
-            } catch (SocketTimeoutException e) {
-                if (SleuthkitServer.getByte(mbb, 0) != FLAGS.SQLITE_READ) {
-                    LOGGER.info("Waiting SleuthkitServer open file " + path); //$NON-NLS-1$
-                    continue;
-                }
+        } catch (IOException e) {
+            client.serverError = true;
+            LOGGER.error(getCrashMsg());
+            throw e;
 
-                client.serverError = true;
-                LOGGER.error("SocketTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
-                throw e;
-
-            } catch (IOException e1) {
-                client.serverError = true;
-                LOGGER.error(getCrashMsg());
-                throw e1;
-            }
+        }finally {
+            client.enableTimeoutCheck(false);
         }
 
         byte cmd;
