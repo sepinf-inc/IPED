@@ -52,7 +52,7 @@ public class SleuthkitServer {
     public static void main(String args[]) {
 
         String dbPath = args[0];
-        String port = args[1];
+        String id = args[1];
         String pipePath = args[2];
         MappedByteBuffer out = null;
         
