@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -68,18 +66,6 @@ public class SleuthkitServer {
             FileChannel fc = raf.getChannel();
             out = fc.map(MapMode.READ_WRITE, 0, size);
             out.load();
-
-            /*
-            ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
-            serverSocket.setPerformancePreferences(0, 1, 2);
-            serverSocket.setReceiveBufferSize(1);
-            serverSocket.setSoTimeout(10000);
-            Socket clientSocket = serverSocket.accept();
-            clientSocket.setTcpNoDelay(true);
-            clientSocket.setSendBufferSize(1);
-            in = clientSocket.getInputStream();
-            os = clientSocket.getOutputStream();
-            */
             
             Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.getInstance();

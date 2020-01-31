@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -56,7 +54,6 @@ public class SleuthkitClient {
 
     Process process;
     int id = idStart.getAndIncrement();;
-    Socket socket;
     InputStream is;
     FileChannel fc;
     File pipe;
@@ -168,25 +165,10 @@ public class SleuthkitClient {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             process = pb.start();
 
-            //logStdErr(process.getInputStream(), port);
             logStdErr(process.getErrorStream(), id);
-
-            //Thread.sleep(5000);
 
             is = process.getInputStream();
             os = process.getOutputStream();
-            
-            /*
-            socket = new Socket();
-            socket.setPerformancePreferences(0, 2, 1);
-            socket.setReceiveBufferSize(1);
-            socket.setSendBufferSize(1);
-            socket.setTcpNoDelay(true);
-            socket.connect(new InetSocketAddress("127.0.0.1", port)); //$NON-NLS-1$
-            socket.setSoTimeout(60000);
-            is = socket.getInputStream();
-            os = socket.getOutputStream();
-            */
             
             int size = SleuthkitServer.MMAP_FILE_SIZE;
             pipe = new File(pipePath);
