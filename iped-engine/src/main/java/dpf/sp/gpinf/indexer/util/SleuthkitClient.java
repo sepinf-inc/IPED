@@ -269,7 +269,7 @@ public class SleuthkitClient {
         return stream;
     }
 
-    synchronized void removeStream(long streamID) {
+    public void removeStream(long streamID) {
         currentStreams.remove(streamID);
         if(currentStreams.size() == 0)
             clientsDeque.addFirst(this);
