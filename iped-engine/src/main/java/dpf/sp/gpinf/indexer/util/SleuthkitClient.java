@@ -67,28 +67,34 @@ public class SleuthkitClient {
     private Set<Long> currentStreams = Collections.synchronizedSet(new HashSet<>());
     private volatile long requestTime = 0;
     
-    class TimeoutMonitor extends Thread{
+    static class TimeoutMonitor extends Thread{
         public void run() {
             try {
                 while(true) {
                     Thread.sleep(5000);
-                    if(requestTime == 0)
-                        continue;
-                    if (SleuthkitServer.getByte(out, 0) != FLAGS.SQLITE_READ) {
-                        logger.info("Waiting SleuthkitServer database read..."); //$NON-NLS-1$
-                        continue;
-                    }
-                    if(System.currentTimeMillis()/1000 - requestTime >= TIMEOUT_SECONDS) {
-                        logger.error("Timeout waiting SleuthkitServer response! Restarting...");
-                        if (process != null) {
-                            process.destroyForcibly();
-                        }
-                        serverError = true;
-                        requestTime = 0;
+                    for(SleuthkitClient client : clientsList) {
+                        client.checkTimeout();
                     }
                 }
             } catch (InterruptedException e) {
             }
+        }
+    }
+    
+    private void checkTimeout() {
+        if(requestTime == 0)
+            return;
+        if (SleuthkitServer.getByte(out, 0) != FLAGS.SQLITE_READ) {
+            logger.info("Waiting SleuthkitServer database read..."); //$NON-NLS-1$
+            return;
+        }
+        if(System.currentTimeMillis()/1000 - requestTime >= TIMEOUT_SECONDS) {
+            logger.error("Timeout waiting SleuthkitServer " + id + " response! Restarting...");
+            if (process != null) {
+                process.destroyForcibly();
+            }
+            serverError = true;
+            requestTime = 0;
         }
     }
     
@@ -106,8 +112,7 @@ public class SleuthkitClient {
         
         int lessCurrentStreams = Integer.MAX_VALUE;
         SleuthkitClient lessBusyClient = null;
-        for(int i = 0; i < clientsList.size(); i++) {
-            SleuthkitClient currentClient = clientsList.get(i);
+        for(SleuthkitClient currentClient : clientsList) {
             int numStreams = currentClient.currentStreams.size();
             if(numStreams < lessCurrentStreams) {
                 lessCurrentStreams = numStreams;
@@ -127,6 +132,9 @@ public class SleuthkitClient {
                 clientsList.add(sc);
             }
         }
+        Thread t = new TimeoutMonitor();
+        t.setDaemon(true);
+        t.start();
     }
 
     public static void shutDownServers() {
@@ -138,9 +146,6 @@ public class SleuthkitClient {
         while (process == null || !isAlive(process)) {
             start();
         }
-        Thread t = new TimeoutMonitor();
-        t.setDaemon(true);
-        t.start();
     }
 
     private void start() {
