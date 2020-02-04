@@ -177,7 +177,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (output != null && worker != null)
             context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
 
-        extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories());
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
