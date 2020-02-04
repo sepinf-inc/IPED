@@ -13,9 +13,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.utils.SystemUtils;
@@ -30,14 +30,15 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
 
-public class SleuthkitClient {
+public class SleuthkitClient implements Comparable<SleuthkitClient>{
 
     private static Logger logger = LoggerFactory.getLogger(SleuthkitClient.class);
     
     private static final int MAX_STREAMS = 10000;
     private static final int TIMEOUT_SECONDS = 3600;
     
-    private static ConcurrentLinkedDeque<SleuthkitClient> clientsDeque = new ConcurrentLinkedDeque<>();
+    private static PriorityQueue<SleuthkitClient> clientPriorityQueue = new PriorityQueue<>();
+    private static Object lock = new Object();
     
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
     
@@ -51,7 +52,7 @@ public class SleuthkitClient {
                 .findObjects(SleuthKitConfig.class).iterator().next();
         NUM_TSK_SERVERS = config.getNumImageReaders();
     }
-
+    
     Process process;
     int id = idStart.getAndIncrement();;
     InputStream is;
@@ -65,6 +66,7 @@ public class SleuthkitClient {
     
     private int openedStreams = 0;
     private Set<Long> currentStreams = Collections.synchronizedSet(new HashSet<>());
+    private int priority = 0;
     private volatile long requestTime = 0;
     
     static class TimeoutMonitor extends Thread{
@@ -106,20 +108,14 @@ public class SleuthkitClient {
     }
     
     public static SleuthkitClient get() {
-        SleuthkitClient sc = clientsDeque.pollLast();        
-        if(sc != null)
-            return sc;
         
-        int lessCurrentStreams = Integer.MAX_VALUE;
-        SleuthkitClient lessBusyClient = null;
-        for(SleuthkitClient currentClient : clientsList) {
-            int numStreams = currentClient.currentStreams.size();
-            if(numStreams < lessCurrentStreams) {
-                lessCurrentStreams = numStreams;
-                lessBusyClient = currentClient;
-            }
+        synchronized(lock) {
+            SleuthkitClient sc = clientPriorityQueue.poll();
+            sc.priority++;
+            clientPriorityQueue.add(sc);
+            return sc;
         }
-        return lessBusyClient;
+        
     }
 
     public static void initSleuthkitServers(final String dbPath)
@@ -127,8 +123,8 @@ public class SleuthkitClient {
         dbDirPath = dbPath;
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
             SleuthkitClient sc = new SleuthkitClient();
-            clientsDeque.add(sc);
-            synchronized(clientsList) {
+            synchronized(lock) {
+                clientPriorityQueue.add(sc);
                 clientsList.add(sc);
             }
         }
@@ -241,7 +237,7 @@ public class SleuthkitClient {
     public synchronized SeekableInputStream getInputStream(int id, String path) throws IOException {
         
         if(!serverError && !ping()) {
-            logger.warn("Ping SleuthkitServer " + id + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn("Ping SleuthkitServer " + this.id + " failed! Restarting..."); //$NON-NLS-1$ //$NON-NLS-2$
             serverError = true;
         }
 
@@ -255,6 +251,9 @@ public class SleuthkitClient {
             serverError = false;
             openedStreams = 0;
             currentStreams.clear();
+            synchronized(lock) {
+                priority = 1;
+            }
         }
 
         while (process == null || !isAlive(process)) {
@@ -270,9 +269,14 @@ public class SleuthkitClient {
     }
 
     public void removeStream(long streamID) {
-        currentStreams.remove(streamID);
-        if(currentStreams.size() == 0)
-            clientsDeque.addFirst(this);
+        boolean removed = currentStreams.remove(streamID);
+        if(removed) {
+            synchronized(lock) {
+                clientPriorityQueue.remove(this);
+                priority--;
+                clientPriorityQueue.add(this);
+            }
+        }
     }
 
     private void finishProcessAndClearMmap() {
@@ -298,5 +302,10 @@ public class SleuthkitClient {
         } catch (Exception e) {
             return true;
         }
+    }
+
+    @Override
+    public int compareTo(SleuthkitClient o) {
+        return priority - o.priority;
     }
 }
