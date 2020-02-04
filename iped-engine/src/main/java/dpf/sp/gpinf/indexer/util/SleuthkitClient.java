@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
@@ -178,6 +179,10 @@ public class SleuthkitClient implements Comparable<SleuthkitClient>{
                 fc = raf.getChannel();
                 out = fc.map(MapMode.READ_WRITE, 0, size);
                 out.load();
+            }catch(ClosedByInterruptException e) {
+                //clear interrupt status
+                Thread.interrupted();
+                throw e;
             }
 
             is.read();
