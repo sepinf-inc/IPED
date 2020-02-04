@@ -251,8 +251,6 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     @Override
     public void close() throws IOException {
         
-        client.removeStream(streamId);
-        
         synchronized (client) {
             if(!closed && !client.serverError) {
                 mbb.putInt(1, sleuthId);
@@ -262,6 +260,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
                 waitServerResponse();
             }
         }
+        client.removeStream(streamId);
         empty = true;
         closed = true;
 

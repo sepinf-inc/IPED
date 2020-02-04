@@ -11,7 +11,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -66,7 +65,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient>{
     volatile boolean serverError = false;
     
     private int openedStreams = 0;
-    private Set<Long> currentStreams = Collections.synchronizedSet(new HashSet<>());
+    private Set<Long> currentStreams = new HashSet<>();
     private int priority = 0;
     private volatile long requestTime = 0;
     
@@ -273,7 +272,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient>{
         return stream;
     }
 
-    public void removeStream(long streamID) {
+    public synchronized void removeStream(long streamID) {
         boolean removed = currentStreams.remove(streamID);
         if(removed) {
             synchronized(lock) {
