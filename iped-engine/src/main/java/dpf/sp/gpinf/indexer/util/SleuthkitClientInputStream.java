@@ -43,6 +43,10 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         this.in = client.is;
         this.os = client.os;
     }
+    
+    private String getServerId() {
+        return "SleuthkitServer " + client.id;
+    }
 
     @Override
     public int read(byte b[], int off, int len) throws IOException {
@@ -51,7 +55,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
         if (client.serverError) {
-            throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
+            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
         }
 
         int read = readIn(b, off, len);
@@ -103,7 +107,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
         try {
             int b = in.read();
             if(b == -1)
-                throw new IOException("SleuthkitServer Pipe closed!"); //$NON-NLS-1$
+                throw new IOException(getServerId() + " pipe closed!"); //$NON-NLS-1$
 
         } catch (IOException e) {
             client.serverError = true;
@@ -122,12 +126,12 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
                     time = System.currentTimeMillis();
                 }
                 Thread.sleep(1);
-                LOGGER.warn("Waiting Server memory write..."); //$NON-NLS-1$
+                LOGGER.warn("Waiting " + getServerId() + " memory write..."); //$NON-NLS-1$
 
                 if (System.currentTimeMillis() - time >= TIMEOUT) {
                     client.serverError = true;
-                    LOGGER.error("MemoryReadTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
-                    throw new IOException("MemoryReadTimeout waiting SleuthkitServer: " + path); //$NON-NLS-1$
+                    LOGGER.error("MemoryReadTimeout waiting " + getServerId() + ": " + path); //$NON-NLS-1$
+                    throw new IOException("MemoryReadTimeout waiting " + getServerId() + ": " + path); //$NON-NLS-1$
                 }
 
             } catch (InterruptedException e) {
@@ -141,7 +145,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             mbb.position(17);
             mbb.get(b);
             try {
-                throw new IOException("SleuthkitServer error: " + new String(b, "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
+                throw new IOException(getServerId() + " error: " + new String(b, "UTF-8")); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (UnsupportedEncodingException e) {
             }
         }
@@ -160,7 +164,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
     }
 
     private String getCrashMsg() {
-        return "Possible SleuthkitServer Crash reading " + path; //$NON-NLS-1$
+        return "Possible " + getServerId() + " crash reading " + path; //$NON-NLS-1$
     }
 
     @Override
@@ -170,7 +174,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
         if (client.serverError) {
-            throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
+            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
         }
         
         long dif = pos - position;
@@ -207,7 +211,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
         if (client.serverError) {
-            throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
+            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
         }
 
         synchronized (client) {
@@ -228,7 +232,7 @@ public class SleuthkitClientInputStream extends SeekableInputStream {
             throw new IOException("Stream is closed!"); //$NON-NLS-1$
         }
         if (client.serverError) {
-            throw new IOException("SleuthkitServer returned an error before."); //$NON-NLS-1$
+            throw new IOException(getServerId() + " returned an error before."); //$NON-NLS-1$
         }
 
         byte[] b = new byte[1];
