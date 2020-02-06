@@ -252,7 +252,7 @@
                                     <version>1.8.0_152</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${release.dir}/jre</outputDirectory>
+                                    <outputDirectory>${release.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
