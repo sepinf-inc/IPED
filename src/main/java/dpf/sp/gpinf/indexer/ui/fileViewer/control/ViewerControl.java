@@ -150,7 +150,7 @@ public class ViewerControl implements IViewerControl {
          
         if (result == JOptionPane.YES_OPTION) {
             if (systemLO == null) {
-              LOExtractor extractor = new LOExtractor(compressedLO, pathLO);
+              LOExtractor extractor = new LOExtractor(new File(compressedLO), new File(pathLO));
               useLO = extractor.decompressLO();
             } else {
               useLO = true;
