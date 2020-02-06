@@ -21,18 +21,18 @@
         <repository>
             <id>internal</id>
             <name>Archiva SEPINF - Internal</name>
-            <url>http://10.61.242.12:8081/repository/internal/</url>
+            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/internal/</url>
         </repository>
         <repository>
             <id>snapshots</id>
             <name>Archiva SEPINF - Snapshot</name>
-            <url>http://10.61.242.12:8081/repository/snapshots/</url>
+            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/snapshots/</url>
         </repository>
         <repository>
             <id>central</id>
             <name>Maven Repository Switchboard</name>
             <layout>default</layout>
-            <url>http://repo1.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
         </repository>
     </repositories>
 
