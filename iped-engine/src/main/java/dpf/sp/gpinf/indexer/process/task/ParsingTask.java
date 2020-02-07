@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -60,7 +61,6 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -177,7 +177,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (output != null && worker != null)
             context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
 
-        extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories());
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -221,7 +221,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.close();
     }
 
-    private static boolean isToBeExpanded(HashSet<String> categories) {
+    private static boolean isToBeExpanded(Collection<String> categories) {
 
         if (!expandContainers) {
             return false;

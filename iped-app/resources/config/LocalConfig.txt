@@ -1,54 +1,53 @@
 ﻿########################################################################
-# Configurações Locais do Ambiente
+# Local environment configuration
 ########################################################################
 
-# Define a localização/idioma do programa. Atualmente há localizações para pt-BR e en.
-locale = pt-BR
+# Defines program localization/language. Currently there are localizations for 'en' and 'pt-BR'.
+locale = en
 
-# Diretório temporário de indexação: "default" utiliza o diretório temporário padrão do sistema.
-# Configurar indexTemp num disco livre de antivirus, principalmente num SSD, pode aumentar consideravelmente o desempenho.
+# Temporary directory for processing: "default" uses the system temporary folder.
+# Configure it on a folder free of antivirus, system indexing or restoring. Using a SSD disk is highly recommended.
 indexTemp = default
 
-# Habilite caso indexTemp esteja em disco SSD. Nesse caso, são feitas otimizações que podem reduzir
-# o tempo de processamento em até 60%: o número de merge threads do índice é aumentado e 
-# são utilizados arquivos temporários para evitar múltiplas leituras/descompactações dos itens.
+# Enable if indexTemp is on a SSD disk. Optimizations are made that can improve processing speed up to 2x.
+# Do not enable it if indexTemp is NOT on SSD or you will have performance problems.
 indexTempOnSSD = false
 
-# Habilite caso a pasta de saída -o esteja em disco SSD. Nesse caso o índice é criado diretamente
-# na pasta de saída e não na pasta temporária, diminuindo o requisito de espaço livre no temp.
+# Enable if output/case folder is on SSD. If enabled, index is created directly in case folder,
+# not in indexTemp, so you will need less free space in temp folder.
 outputOnSSD = false
 
-# Número de threads de processamento: "default" utiliza o número de processadores.
-# Caso haja problemas de consumo de memória, configurar um valor pequeno e/ou aumentar memória heap do java (-Xms)
+# Number of processing threads/workers: "default" uses the number of CPU logical cores.
+# If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
 numThreads = default
 
-# Caminho para base de hashes (KFF) do IPED. É altamente recomendado armazenar a base num disco SSD
-# sob pena de impactar o tempo de processamento. Pode-se importar base NSRL via opção -importkff. 
-#kffDb = E:/kff/kff.db
+# Full path for hash index database. It is highly recommended to store it on a SSD disk or you will have performance problems.
+# After configured, you can import a NIST NSRL database using -importkff option.
+#kffDb = C:/IPED/IPED-KFF-1.2/kff.db
 
-# Diretório contendo a base de hashes de alerta de pornografia infantil do LED.
+# Folder with child porn hash database from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
 #ledWkffPath = E:/LED/V1.21.00/pedo/wkff
 
-# Caminho para arquivo contendo lista de hashes photoDNA para confronto.
-# Deve conter um photodna por linha e, opcionalmente, outras informações na mesma linha, delimitadas por *
+# Path to photoDNA hashset file for hash lookup. It must have 1 photoDNA hash per line.
+# It can have other file info in the same line (eg: file name, other hash), * should be used as separator
 #photoDNAHashDatabase = E:/PhotoDNA-3.3/PhotoDNAChildPornHashes-1.0.txt
 
-# Arquivo de dados utilizado pelo DIE (Detecção de Imagens Explícitas). 
-# Necessário apontar para arquivo de dados presente no LED versão 1.21 ou superior.
-#ledDie = E:/LED/V1.21.00/pedo/die/rfdie.dat
+# File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
+# It is supported models from LED version 1.21 or higher.
+ledDie = models/rfdie.dat
 
-# Caminho absoluto obrigatório para o Tsk_DataModel.jar compilado em sistemas Linux ou MacOS.
-# É distribuída versão com patch para Windows com diversas correções de bugs e otimizações. 
-# No caso de Linux, recomenda-se compilar o código-fonte com patch (pasta sources)
-#tskJarPath = /home/user/tsk-4.3-src-folder/bindings/java/dist/Tsk_DataModel.jar
+# Full path for sleuthkit-4.x.x.jar built on Linux OS.
+# It is distributed a Windows only version with some optimization patches.
+# It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
+#tskJarPath = /home/user/tsk-4.6.5-src-folder/bindings/java/dist/sleuthkit-4.6.5.jar
 
-# Caminho para mplayer em sistemas Windows.
-# Em sistemas Linux deve estar no PATH, não precisando comentar a variável abaixo.
+# Full Path for mplayer on Windows.
+# For Linux OS, mplayer must be on PATH. Do not comment out the param below.
 mplayerPath = ../mplayer/mplayer.exe
 
-# Pasta contendo bibliotecas java opcionais com licenças de distribuição restritivas,
-# as quais são carregadas dinamicamente em tempo de execução.
+# Plugin folder for optional libs not embedded because of license restrictions.
+# They will be dynamically loaded at runtime.
 optional_jars = ../optional_jars/
 
-# Caminho para pasta do RegRipper.
+# Path for RegRipper folder.
 regripperFolder = ../regripper/

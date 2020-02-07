@@ -20,9 +20,7 @@ import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.task.HashTask.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
@@ -61,20 +59,26 @@ public class KFFTask extends AbstractTask {
     private static Map<Integer, String[]> products;
     private static Set<String> alertProducts;
     private static DB db;
-    private static boolean taskEnabled = false;
+    private static Boolean taskEnabled;
 
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
+    private boolean importing = false;
 
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
+    }
+    
+    public void init(Properties confParams, File confDir, boolean importing) throws Exception {
+        this.importing = importing;
+        init(confParams, confDir);
     }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
         String hashes = confParams.getProperty("hash"); //$NON-NLS-1$
-        if (hashes == null) {
+        if (hashes == null || (taskEnabled != null && !taskEnabled)) {
             return;
         }
         if (hashes.contains("md5")) { //$NON-NLS-1$
@@ -90,31 +94,37 @@ public class KFFTask extends AbstractTask {
         excludeKffIgnorable = Boolean.valueOf(confParams.getProperty("excludeKffIgnorable").trim()); //$NON-NLS-1$
 
         String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
-        if (taskEnabled && kffDbPath == null)
-            throw new IPEDException("Configure hash database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
+        if (kffDbPath == null) {
+            String msg = "Configure hash database path (kffDb) on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
+            if(importing) {
+            	throw new IPEDException(msg);
+            }
+            if(taskEnabled) {
+            	LOGGER.error(msg);
+                taskEnabled = false;
+                return;
+            }
+        }
 
         // backwards compatibility
         if (enableParam == null && kffDbPath != null)
             taskEnabled = true;
 
-        if (!taskEnabled)
+        if (!importing && !taskEnabled)
             return;
 
         if (map == null) {
             excluded = 0;
 
             File kffDb = new File(kffDbPath.trim());
-            if (!kffDb.exists()) {
+            if(importing)
+                kffDb.getParentFile().mkdirs();
+            
+            if (!kffDb.exists() && !importing) {
                 String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
-                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                for (File source : args.getDatasources()) {
-                    if (source.getName().endsWith(".iped")) {
-                        LOGGER.warn(msg);
-                        taskEnabled = false;
-                        return;
-                    }
-                }
-                throw new IPEDException(msg);
+                LOGGER.error(msg);
+                taskEnabled = false;
+                return;
             }
 
             try {
@@ -164,9 +174,6 @@ public class KFFTask extends AbstractTask {
     }
 
     public void importKFF(File kffDir) throws IOException {
-
-        if (!taskEnabled)
-            throw new IPEDException("Enable " + ENABLE_PARAM + " on IPEDConfig.txt"); //$NON-NLS-1$ //$NON-NLS-2$
 
         File NSRLProd = new File(kffDir, "NSRLProd.txt"); //$NON-NLS-1$
         BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));

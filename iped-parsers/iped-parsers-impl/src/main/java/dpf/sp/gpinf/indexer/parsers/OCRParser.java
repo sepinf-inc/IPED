@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +90,8 @@ public class OCRParser extends AbstractParser {
     public static final String PAGE_SEGMODE_PROP = "ocr.pageSegMode"; //$NON-NLS-1$
     public static final String MIN_SIZE_PROP = "ocr.minFileSize"; //$NON-NLS-1$
     public static final String MAX_SIZE_PROP = "ocr.maxFileSize"; //$NON-NLS-1$
+    public static final String SUBSET_TO_OCR = "subsetToOcr"; //$NON-NLS-1$
+    public static final String SUBSET_SEPARATOR = "_#_"; //$NON-NLS-1$
 
     private boolean ENABLED = Boolean.valueOf(System.getProperty(ENABLE_PROP, "false")); //$NON-NLS-1$
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
@@ -96,6 +99,7 @@ public class OCRParser extends AbstractParser {
     private String PAGESEGMODE = System.getProperty(PAGE_SEGMODE_PROP, "1"); //$NON-NLS-1$
     private int MIN_SIZE = Integer.valueOf(System.getProperty(MIN_SIZE_PROP, "10000")); //$NON-NLS-1$
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
+    private List<String> bookmarksToOCR = Arrays.asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); //$NON-NLS-1$;
 
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
@@ -103,8 +107,6 @@ public class OCRParser extends AbstractParser {
     // Caso configurado, armazena texto extraído para reaproveitamento
     private File OUTPUT_BASE;
     public static String TEXT_DIR = "text"; //$NON-NLS-1$
-
-    public static List<String> bookmarksToOCR;
 
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
@@ -183,13 +185,19 @@ public class OCRParser extends AbstractParser {
     private String filePath = "";
 
     private boolean isFromBookmarkToOCR(ItemInfo ocrContext) {
+        
         if (bookmarksToOCR.size() == 0)
             return true;
 
-        for (String bookmarkToOCR : bookmarksToOCR)
+        for (String group : bookmarksToOCR) {
             for (String bookmark : ocrContext.getBookmarks())
-                if (bookmarkToOCR.equalsIgnoreCase(bookmark))
+                if (group.equalsIgnoreCase(bookmark))
                     return true;
+            for (String category : ocrContext.getCategories())
+                if (group.equalsIgnoreCase(category))
+                    return true;
+        }
+            
         return false;
     }
 

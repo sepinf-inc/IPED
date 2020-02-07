@@ -151,6 +151,8 @@ public class DIETask extends AbstractTask {
                 }
 
                 File dieDat = new File(diePath.trim());
+                if(!dieDat.exists())
+                    dieDat = new File(new File(Configuration.getInstance().appRoot), diePath.trim());
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
                     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());

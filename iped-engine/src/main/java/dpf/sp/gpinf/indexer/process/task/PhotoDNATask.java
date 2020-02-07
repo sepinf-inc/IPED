@@ -15,7 +15,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.dpf.sepinf.photodna.PhotoDNA;
+import br.dpf.sepinf.photodna.api.PhotoDNA;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
@@ -86,9 +86,10 @@ public class PhotoDNATask extends AbstractTask{
             PhotoDNALookup.rotateAndFlip = Boolean.valueOf(value.trim());
         
         try {
-            photodna = new PhotoDNA();
+            Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNA");
+            photodna = (PhotoDNA)c.newInstance();
             
-        }catch(NoClassDefFoundError e) {
+        }catch(ClassNotFoundException e) {
             enabled = false;
             if(!warned.getAndSet(true))
                 LOGGER.error("Optional photoDNA lib not loaded. If you have rights to use it, you should put it into plugin/optional_jars folder.");

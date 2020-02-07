@@ -171,25 +171,10 @@ public class ParsingReader extends Reader {
     }
 
     public void startBackgroundParsing() {
-        future = getThreadPool().submit(new BackgroundParsing());
+        future = threadPool.submit(new BackgroundParsing());
     }
 
-    // public static ExecutorService threadPool = Executors.newCachedThreadPool(new
-    // ParsingThreadFactory());
-    // must create 1 threadPool per thread group because robustImageReading reuses
-    // the same server per thread group
-    public static ConcurrentHashMap<String, ExecutorService> threadPools = new ConcurrentHashMap<String, ExecutorService>();
-
-    private ExecutorService getThreadPool() {
-        // return threadPool;
-        String threadGroupName = Thread.currentThread().getThreadGroup().getName();
-        ExecutorService tp = threadPools.get(threadGroupName);
-        if (tp == null) {
-            tp = Executors.newCachedThreadPool(new ParsingThreadFactory());
-            threadPools.put(threadGroupName, tp);
-        }
-        return tp;
-    }
+    public static ExecutorService threadPool = Executors.newCachedThreadPool(new ParsingThreadFactory());
 
     private Future<?> future;
 
@@ -203,8 +188,7 @@ public class ParsingReader extends Reader {
 
         @Override
         public Thread newThread(Runnable r) {
-            ThreadGroup group = Thread.currentThread().getThreadGroup();
-            Thread t = new Thread(group, r, group.getName() + "-ParsingThread-" + i++); //$NON-NLS-1$
+            Thread t = new Thread(r, "ParsingThread-" + i++); //$NON-NLS-1$
             t.setDaemon(true);
             return t;
         }
@@ -212,10 +196,7 @@ public class ParsingReader extends Reader {
     }
 
     public static void shutdownTasks() {
-        // threadPool.shutdownNow();
-        for (ExecutorService es : threadPools.values()) {
-            es.shutdownNow();
-        }
+        threadPool.shutdownNow();
     }
 
     public void closeAndInterruptParsingTask() {
@@ -233,7 +214,7 @@ public class ParsingReader extends Reader {
         // em situações raríssimas essa chamada pode travar,
         // ex: ao ler arquivos proibidos pelo FS, como aux no Windows,
         // então é executada em outra thread por segurança
-        getThreadPool().submit(new Runnable() {
+        threadPool.submit(new Runnable() {
             public void run() {
                 future.cancel(true);
             }

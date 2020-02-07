@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.IndexFiles;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -40,16 +39,12 @@ public class AppMain {
     boolean isMultiCase = false;
     boolean nolog = false;
     File casesPathFile = null;
+    File libDir;
 
     public static void main(String[] args) {
-        AppMain appMain = new AppMain();
-        appMain.casePath = appMain.detectCasePath();
-        try {
-            Configuration.getInstance().loadConfigurables(new File(appMain.casePath, "indexador").getAbsolutePath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         checkJavaVersion();
+        AppMain appMain = new AppMain();
+        appMain.detectCasePath();
         appMain.start(args);
     }
 
@@ -85,6 +80,9 @@ public class AppMain {
                             Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
                                     Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                     }
+                    if(!System.getProperty("os.arch").contains("64"))
+                        JOptionPane.showMessageDialog(null, "You are using a java 32bits, things may not work properly. It is strongly recommended to install a java 64bits!"); //$NON-NLS-1$
+                        
                     Messages.resetLocale();
                 }
             });
@@ -99,14 +97,25 @@ public class AppMain {
         start(casePath, null, args);
     }
 
-    private File detectCasePath() {
-        if (testPath != null)
-            return testPath;
-
-        if ("true".equals(System.getProperty("Debugging"))) {
-            return new File(System.getProperty("user.dir"));
+    private void detectCasePath() {
+        if (testPath != null) {
+            casePath = testPath;
+            return;
         }
 
+        if ("true".equals(System.getProperty("Debugging"))) {
+            casePath = new File(System.getProperty("user.dir"));
+            return;
+        }
+
+        libDir = detectLibDir();
+        casePath = libDir.getParentFile().getParentFile();
+        
+        if(!new File(casePath, "indexador").exists()) //$NON-NLS-1$
+            casePath = null;
+    }
+    
+    private File detectLibDir() {
         URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
         File jarFile = null;
         try {
@@ -114,8 +123,8 @@ public class AppMain {
                 jarFile = new File(url.toURI());
             else
                 jarFile = new File(url.toURI().getSchemeSpecificPart());
-
-            return jarFile.getParentFile().getParentFile().getParentFile();
+            
+            return jarFile.getParentFile();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -153,7 +162,6 @@ public class AppMain {
 
             loadArgs(args);
 
-            File libDir = new File(new File(casePath, "indexador"), "lib"); //$NON-NLS-1$ //$NON-NLS-2$
             if (casesPathFile == null)
                 casesPathFile = casePath;
 
@@ -163,6 +171,9 @@ public class AppMain {
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
             LogConfiguration logConfiguration = null;
+            
+            if(libDir == null)
+                libDir = detectLibDir();
 
             if (processingManager == null) {
                 logConfiguration = new LogConfiguration(libDir.getParentFile().getAbsolutePath(), logFile);
@@ -172,6 +183,8 @@ public class AppMain {
                 if (!fromCustomLoader)
                     LOGGER.info(Versao.APP_NAME);
             }
+            
+            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();

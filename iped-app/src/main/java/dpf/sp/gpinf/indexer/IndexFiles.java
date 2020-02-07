@@ -106,7 +106,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         this.palavrasChave = keywordList;
         this.configPath = configPath;
         this.logFile = logFile;
-        OCRParser.bookmarksToOCR = bookmarksToOCR;
+        
+        String list = "";
+        for(String o : bookmarksToOCR)
+            list += o + OCRParser.SUBSET_SEPARATOR;
+        System.setProperty(OCRParser.SUBSET_TO_OCR, list);
     }
 
     /**
@@ -152,7 +156,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
         if (cmdLineParams.getProfile() != null) {
             profile = cmdLineParams.getProfile();
-        } else if (!locale.equals("pt-BR") && !isReportFromCaseFolder) //$NON-NLS-1$
+        } else if (!locale.equals("en") && !isReportFromCaseFolder) //$NON-NLS-1$
             profile = "default"; //$NON-NLS-1$
 
         if (profile != null)
@@ -180,8 +184,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             setConfigPath();
             Configuration.getInstance().getConfiguration(configPath);
             KFFTask kff = new KFFTask();
-            kff.init(Configuration.getInstance().properties, null);
+            kff.init(Configuration.getInstance().properties, null, true);
             kff.importKFF(kffPath);
+        } catch (IPEDException e) {
+        	System.out.println(e.toString());
+        	
         } catch (Exception e) {
             e.printStackTrace();
         }
