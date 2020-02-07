@@ -15,11 +15,13 @@ import java.util.Set;
 import org.apache.tika.metadata.Metadata;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Side;
@@ -37,7 +39,6 @@ public class MetadataViewer extends Viewer {
     private List<HtmlViewer> htmlViewers = new ArrayList<>();;
 
     private Collator collator;
-    private Set<String> ignoreMetas = new HashSet<>();
 
     public MetadataViewer() {
         super(new GridLayout());
@@ -97,11 +98,15 @@ public class MetadataViewer extends Viewer {
 
         collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
-
-        ignoreMetas.add(Metadata.RESOURCE_NAME_KEY);
-        ignoreMetas.add(Metadata.CONTENT_LENGTH);
-        ignoreMetas.add(Metadata.CONTENT_TYPE);
-        ignoreMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+    }
+    
+    public void selectTab(int tabIdx) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                tabPane.getSelectionModel().select(tabIdx);
+            }
+        });
     }
 
     @Override
@@ -171,7 +176,7 @@ public class MetadataViewer extends Viewer {
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         Arrays.sort(metas, collator);
         for (String meta : metas) {
-            if (ignoreMetas.contains(meta))
+            if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
             sb.append(meta);
@@ -219,6 +224,7 @@ public class MetadataViewer extends Viewer {
         for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
+        fillProp(sb, ExtraProperties.TIKA_PARSER_USED, item.getMetadata().get(ExtraProperties.TIKA_PARSER_USED));
         sb.append("</table>"); //$NON-NLS-1$
     }
 

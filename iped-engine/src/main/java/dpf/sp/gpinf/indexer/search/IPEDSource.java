@@ -33,11 +33,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
@@ -52,7 +47,6 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
@@ -69,6 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
@@ -166,7 +161,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 else
                     sleuthCase = SleuthkitCase.openCase(sleuthFile.getAbsolutePath());
 
-                if (!isReport && iw == null)
+                if (!isReport)
                     updateImagePathsToAbsolute(casePath, sleuthFile);
 
                 tskCaseList.add(sleuthCase);
@@ -467,7 +462,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else
+                } else if(iw == null)
                     askNewImagePath(id, paths, sleuthFile);
         }
     }
@@ -486,67 +481,17 @@ public class IPEDSource implements Closeable, IIPEDSource {
         }
     }
 
-    private class SelectImagePath implements Runnable {
-        File file;
-
-        @Override
-        public void run() {
-            JOptionPane.showMessageDialog(null,
-                    Messages.getString("IPEDSource.ImageNotFound") + file.getAbsolutePath()); //$NON-NLS-1$
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle(Messages.getString("IPEDSource.NewImgPath") + file.getName()); //$NON-NLS-1$
-            fileChooser.setFileFilter(new ImageFilter(file));
-            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                file = fileChooser.getSelectedFile();
-            } else
-                file = null;
-        }
-    }
-
-    private class ImageFilter extends FileFilter {
-
-        private String ext;
-
-        public ImageFilter(File file) {
-            int extIdx = file.getName().lastIndexOf('.');
-            if (extIdx >= file.getName().length() - 5)
-                ext = file.getName().substring(extIdx).toLowerCase();
-        }
-
-        @Override
-        public boolean accept(File pathname) {
-            if (ext != null && pathname.isFile() && !pathname.getName().toLowerCase().endsWith(ext))
-                return false;
-
-            return true;
-        }
-
-        @Override
-        public String getDescription() {
-            return ext == null ? "*.*" : "*" + ext; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-
-    }
-
     private void askNewImagePath(long imgId, List<String> paths, File sleuthFile) throws TskCoreException, IOException {
-        SelectImagePath sip = new SelectImagePath();
-        try {
-            sip.file = new File(paths.get(0));
-            SwingUtilities.invokeAndWait(sip);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        if (sip.file == null)
-            return;
+        SelectImagePathWithDialog sip = new SelectImagePathWithDialog(new File(paths.get(0)));
+        File newImage =  sip.askImagePathInGUI();
+        
         ArrayList<String> newPaths = new ArrayList<String>();
         if (paths.size() == 1) {
-            newPaths.add(sip.file.getAbsolutePath());
+            newPaths.add(newImage.getAbsolutePath());
         } else
             for (String path : paths) {
                 String ext = path.substring(path.lastIndexOf('.'));
-                String basePath = sip.file.getAbsolutePath().substring(0, sip.file.getAbsolutePath().lastIndexOf('.'));
+                String basePath = newImage.getAbsolutePath().substring(0, newImage.getAbsolutePath().lastIndexOf('.'));
                 if (!new File(basePath + ext).exists())
                     throw new IOException(Messages.getString("IPEDSource.ImgFragNotFound") + basePath + ext); //$NON-NLS-1$
                 newPaths.add(basePath + ext);

@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Rectangle;
 import java.awt.Dialog.ModalityType;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -14,8 +14,10 @@ import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -34,9 +36,9 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.util.Bits;
-import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +46,6 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -56,6 +57,7 @@ import gpinf.dev.data.Item;
 import iped3.IItemId;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class ColumnsManager implements ActionListener, Serializable, IColumnsManager {
@@ -100,7 +102,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.WKFF_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
-            ExtraProperties.LINKED_ITEMS };
+            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED};
 
     public static final String[] email = ExtraProperties.EMAIL_PROPS;
 
@@ -326,11 +328,10 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
         progress.setNote(Messages.getString("ColumnsManager.LoadingCols")); //$NON-NLS-1$
-        progress.setMaximum(indexFields.length);
-
+        
         new Thread() {
             public void run() {
-                final Set<String> usedCols = getUsedCols2(progress);
+                final Set<String> usedCols = getUsedCols(progress);
 
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
@@ -343,6 +344,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private Set<String> getUsedCols2(ProgressDialog progress) {
+        
+        progress.setMaximum(indexFields.length);
+        
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         TreeSet<String> dinamicFields = new TreeSet<>(collator);
@@ -400,8 +404,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         return dinamicFields;
     }
-
+    
     private Set<String> getUsedCols(ProgressDialog progress) {
+                
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         TreeSet<String> dinamicFields = new TreeSet<>(collator);
@@ -410,36 +415,29 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         int i = 0;
         for (IItemId item : App.get().ipedResult.getIterator())
             docs[i++] = App.get().appCase.getLuceneId(item);
-
+        
+        int MAX_ITEMS_TO_CHECK = 50;
+        progress.setMaximum(MAX_ITEMS_TO_CHECK);
+        
+        int interval = docs.length / MAX_ITEMS_TO_CHECK;
+        if (interval == 0)
+            interval = 1;
+        
         int p = 0;
-        for (String field : indexFields) {
+        for (i = 0; i < docs.length; i += interval) {
             if (progress.isCanceled())
                 return null;
             try {
-                Bits bits0 = App.get().appCase.getAtomicReader().getDocsWithField(field);
-                Bits bits1 = App.get().appCase.getAtomicReader().getDocsWithField("_num_" + field); //$NON-NLS-1$
-                Bits bits2 = App.get().appCase.getAtomicReader().getDocsWithField("_" + field); //$NON-NLS-1$
-                // long tb = System.currentTimeMillis();
-                for (i = 0; i < docs.length; i++) {
-                    int doc = docs[i];
-                    // long ta = System.currentTimeMillis();
-                    if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
-                            || (bits0 != null && bits0.get(doc))) {
+                Document doc = App.get().appCase.getReader().document(docs[i]);
+                for (String field : indexFields) {
+                    if(doc.getField(field) != null)
                         dinamicFields.add(field);
-                        break;
-                    }
-                    // t0 += System.currentTimeMillis() - ta;
                 }
-                // t1 += System.currentTimeMillis() - tb;
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
             progress.setProgress(++p);
         }
-        // System.out.println("t0 = " + t0);
-        // System.out.println("t1 = " + t1);
-
         return dinamicFields;
     }
 
@@ -450,7 +448,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         for (String field : (List<String>) colState.visibleFields.clone())
             if (!dinamicFields.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                    && !field.equals(ResultTableModel.BOOKMARK_COL))
+                    && !field.equals(ResultTableModel.BOOKMARK_COL)
+                    && !field.equals(BasicProps.LENGTH))
                 updateGUICol(field, false);
 
         int firstCol = App.get().resultsTable.getColumnCount();
@@ -512,7 +511,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         int j = 0;
         for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
             TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
-            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length) {
+            if (tc.getModelIndex() >= ResultTableModel.fixedCols.length && j < widths.size()) {
                 tc.setPreferredWidth(widths.get(j++));
             }
         }
@@ -636,6 +635,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }
 
     }
+    
+    private Map<String, Integer> lastWidths = new HashMap<>();
 
     private void updateGUICol(String colName, boolean insert) {
 
@@ -650,15 +651,21 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 modelIdx += ResultTableModel.fixedCols.length;
 
             TableColumn tc = new TableColumn(modelIdx);
-            tc.setPreferredWidth(150);
+            if(lastWidths.containsKey(colName))
+                tc.setPreferredWidth(lastWidths.get(colName));
+            else
+                tc.setPreferredWidth(150);
             App.get().resultsTable.addColumn(tc);
             setColumnRenderer(tc);
         } else {
             colState.visibleFields.remove(colName);
             modelIdx += ResultTableModel.fixedCols.length;
             int viewIdx = App.get().resultsTable.convertColumnIndexToView(modelIdx);
-            if (viewIdx > -1)
-                App.get().resultsTable.removeColumn(App.get().resultsTable.getColumnModel().getColumn(viewIdx));
+            if (viewIdx > -1) {
+                TableColumn col = App.get().resultsTable.getColumnModel().getColumn(viewIdx);
+                lastWidths.put(colName, col.getWidth());
+                App.get().resultsTable.removeColumn(col);
+            }
         }
     }
 

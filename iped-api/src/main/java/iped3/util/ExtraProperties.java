@@ -11,10 +11,20 @@ import org.apache.tika.metadata.Property;
  */
 public class ExtraProperties {
 
+    public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
+    
     // public static String EMBEDDED_PATH = "INDEXER_EMBEDDED_PATH";
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
     // public static String INDEXER_ID = "INDEXER_ID";\
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
+    
+    public static final Property VISIT_DATE = Property.internalDate("visitDate"); //$NON-NLS-1$
+    
+    public static final Property DOWNLOAD_DATE = Property.internalDate("downloadDate"); //$NON-NLS-1$
+    
+    public static final String DOWNLOAD_TOTAL_BYTES = "totalBytes"; //$NON-NLS-1$
+    
+    public static final String DOWNLOAD_RECEIVED_BYTES = "receivedBytes"; //$NON-NLS-1$
 
     public static final String DELETED = "IpedDeletedEmbeddedItem"; //$NON-NLS-1$
 
@@ -59,6 +69,14 @@ public class ExtraProperties {
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
     public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    
+    public static final String URL = "url"; //$NON-NLS-1$
+    
+    public static final String LOCAL_PATH = "localPath"; //$NON-NLS-1$
+    
+    public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
+    
+    public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
     
     public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,

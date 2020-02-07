@@ -145,6 +145,9 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
         } else {
             changeToViewerInEDT(bestViewer);
         }
+        
+        if(!fixViewer.isSelected() && bestViewer instanceof MetadataViewer)
+            ((MetadataViewer)bestViewer).selectTab(2);
 
         if (highlightTerms != null && !highlightTerms.isEmpty()) {
             loadInViewer(textViewer);
@@ -166,7 +169,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
                     MediaType parentType = viewer.getParentType(MediaType.parse(contentType));
-                    if (contentType.contains("x-ufed") && MediaType.OCTET_STREAM.equals(parentType))
+                    if (MediaType.application("x-browser-registry").equals(parentType) || (contentType.contains("x-ufed") && MediaType.OCTET_STREAM.equals(parentType)))
                         result = viewer;
                 } else
                     result = viewer;

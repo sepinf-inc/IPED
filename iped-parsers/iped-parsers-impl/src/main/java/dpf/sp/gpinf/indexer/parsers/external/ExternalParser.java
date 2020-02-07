@@ -270,17 +270,19 @@ public class ExternalParser extends AbstractParser {
                 outputFile.delete();
             }
         }
+        File workDir = null;
         if (SystemUtils.IS_OS_WINDOWS && toolPath != null) {
-            String fullPath = getRootFolder() + "/" + toolPath;
-            cmd[0] = fullPath + cmd[0];
-        }
+            String separator = toolPath.endsWith("/") ? "" : "/";
+            cmd[0] = getRootFolder() + "/" + toolPath + separator + cmd[0];
+        }else
+            workDir = new File(getRootFolder());
         // Execute
         Process process = null;
         try {
             if (cmd.length == 1) {
-                process = Runtime.getRuntime().exec(cmd[0]);
+                process = Runtime.getRuntime().exec(cmd[0], null, workDir);
             } else {
-                process = Runtime.getRuntime().exec(cmd);
+                process = Runtime.getRuntime().exec(cmd, null, workDir);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -325,7 +327,8 @@ public class ExternalParser extends AbstractParser {
                 if (hasPatterns) {
                     extractMetadata(is, metadata);
                 } else {
-                    extractOutput(is, xhtml);
+                    File tmpFile =  inputToStdIn ? null : stream.getFile();
+                    extractOutput(is, xhtml, metadata.get(Metadata.RESOURCE_NAME_KEY), tmpFile);
                 }
             }
 
@@ -373,7 +376,7 @@ public class ExternalParser extends AbstractParser {
      *             if an input error occurred
      * @throws TikaException
      */
-    private void extractOutput(InputStream stream, XHTMLContentHandler xhtml)
+    private void extractOutput(InputStream stream, XHTMLContentHandler xhtml, String origFileName, File tmpFile)
             throws SAXException, IOException, TikaException {
         if (outputHtml) {
             ParseContext context = new ParseContext();
@@ -387,19 +390,16 @@ public class ExternalParser extends AbstractParser {
             char[] buffer = new char[1024];
             int line = 1;
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
-                int prev = 0;
-                for (int i = 0; i < n; i++) {
-                    if (buffer[i] == '\n') {
-                        if (line++ > linesToIgnore) {
-                            xhtml.characters(buffer, prev, i - prev);
-                            xhtml.startElement("br");
-                            xhtml.endElement("br");
-                        }
-                        prev = i + 1;
+                String str = new String(buffer, 0, n);
+                if(tmpFile != null)
+                    str = str.replace(tmpFile.getName(), origFileName);
+                String[] lines = str.split("\n");
+                for (String s : lines) {
+                    if (line++ > linesToIgnore) {
+                        xhtml.characters(s);
+                        xhtml.startElement("br");
+                        xhtml.endElement("br");
                     }
-                }
-                if (line > linesToIgnore) {
-                    xhtml.characters(buffer, prev, n - prev);
                 }
             }
             xhtml.endElement("p");

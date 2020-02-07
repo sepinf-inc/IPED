@@ -10,3 +10,4 @@ Links = Link files; URL links
 Emails and Mailboxes = Emails; Mailboxes
 Multimedia = Audios; Videos; Images
 Image Disks = ISO disks; Virtual disks; Other disks
+Browser Artifacts = Internet History; Internet History Entries; Web Bookmarks;

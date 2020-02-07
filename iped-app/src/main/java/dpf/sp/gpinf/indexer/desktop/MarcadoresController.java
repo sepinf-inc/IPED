@@ -78,6 +78,7 @@ public class MarcadoresController {
                         + App.get().appCase.getTotalItens());
                 App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
+                App.get().resultsTable.repaint();
                 GerenciadorMarcadores.updateCounters();
             }
         });

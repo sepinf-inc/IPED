@@ -336,6 +336,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setParsed(true);
             totalText.addAndGet(textCache.getSize());
 
+        } catch(IOException e) {
+            if(e.toString().contains("Write end dead"))
+                LOGGER.error("{} Parsing thread ended without closing pipedWriter {} ({} bytes)", //$NON-NLS-1$
+                        Thread.currentThread().getName(), evidence.getPath(), evidence.getLength());
+            else
+                throw e;
+        
         } finally {
             // IOUtil.closeQuietly(tis);
             reader.close();
@@ -468,6 +475,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(BasicProps.HASCHILD);
                 subItem.setHasChildren(true);
             }
+            
+            subItem.setHash(metadata.get(BasicProps.HASH));
+            metadata.remove(BasicProps.HASH);
 
             if (metadata.get(ExtraProperties.PST_EMAIL_HAS_ATTACHS) != null)
                 subItem.setHasChildren(true);

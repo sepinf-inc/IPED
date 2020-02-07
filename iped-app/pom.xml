@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>3.16</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -237,7 +237,7 @@
                                 <artifactItem>
                                     <groupId>keydet89</groupId>
                                     <artifactId>regripper</artifactId>
-                                    <version>2.8_20180406</version>
+                                    <version>2.8_20180406_p01</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/../</outputDirectory>

@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,6 +74,7 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -106,6 +109,7 @@ public class IndexItem extends BasicProps {
     private static volatile boolean guessMetaTypes = false;
 
     private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static class StringComparator implements Comparator<String> {
         @Override
@@ -691,7 +695,9 @@ public class IndexItem extends BasicProps {
             boolean hasFile = false;
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
-                evidence.setFile(Util.getRelativeFile(outputBase.getParent(), value));
+                File localFile = Util.getResolvedFile(outputBase.getParent(), value);
+                localFile = checkIfEvidenceFolderExists(evidence, localFile);
+                evidence.setFile(localFile);
                 hasFile = true;
 
             } else {
@@ -705,7 +711,7 @@ public class IndexItem extends BasicProps {
                 if (value != null && !value.isEmpty()) {
                     evidence.setIdInDataSource(value.trim());
                     String relPath = doc.get(IndexItem.SOURCE_PATH);
-                    Path absPath = Util.getRelativeFile(outputBase.getParent(), relPath).toPath();
+                    Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
                     SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
                     if (sisf == null) {
                         String className = doc.get(IndexItem.SOURCE_DECODER);
@@ -825,6 +831,36 @@ public class IndexItem extends BasicProps {
 
         return null;
 
+    }
+    
+    private static File checkIfEvidenceFolderExists(Item evidence, File localFile) {
+        if(evidence.getPath().contains(">>"))
+            return localFile;
+        Path path;
+        try {
+            path = Paths.get(evidence.getPath());
+        }catch(InvalidPathException e) {
+            return localFile;
+        }
+        String pathSuffix = "";
+        if(path.getNameCount() > 1)
+            pathSuffix = path.subpath(1, path.getNameCount()).toString();
+        if(localFile.toPath().endsWith(pathSuffix)) {
+            String evidenceFolderStr = localFile.getAbsolutePath().substring(0, localFile.getAbsolutePath().lastIndexOf(pathSuffix));
+            File evidenceFolder = new File(evidenceFolderStr);
+            File mappedFolder = localEvidenceMap.get(evidenceFolder);
+            if(mappedFolder == null) {
+                if(evidenceFolder.exists()) {
+                    mappedFolder = evidenceFolder;
+                }else {
+                    SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
+                    mappedFolder = siwd.askImagePathInGUI();
+                }
+                localEvidenceMap.put(evidenceFolder, mappedFolder);
+            }
+            localFile = new File(mappedFolder, pathSuffix);
+        }
+        return localFile;
     }
 
     public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {

@@ -51,6 +51,8 @@ public class RegexTask extends AbstractTask {
     private static boolean formatRegexMatches = false;
 
     private boolean enabled = true;
+    
+    private char[] cbuf = new char[1000000];
 
     private static RegexValidator regexValidator;
 
@@ -213,11 +215,10 @@ public class RegexTask extends AbstractTask {
         }
         processRegex(evidence, new StringReader(evidence.getName()));
     }
-
+    
     @SuppressWarnings("unchecked")
     private void processRegex(IItem evidence, Reader reader) throws IOException {
 
-        char[] cbuf = new char[1000000];
         int k = 0;
         while (k != -1) {
             int off = 0;

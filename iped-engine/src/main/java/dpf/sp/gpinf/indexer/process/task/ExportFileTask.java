@@ -250,7 +250,7 @@ public class ExportFileTask extends AbstractTask {
     public void renameToHash(IItem evidence) {
 
         String hash = evidence.getHash();
-        if (hash != null && !hash.isEmpty()) {
+        if (hash != null && !hash.isEmpty() && evidence.getFile() != null) {
             File file = evidence.getFile();
             String ext = evidence.getType().getLongDescr();
             if (!ext.isEmpty()) {
@@ -304,11 +304,12 @@ public class ExportFileTask extends AbstractTask {
         String relativePath = Util.getRelativePath(output, file);
         evidence.setExportedFile(relativePath);
         evidence.setFile(file);
+        file.setReadOnly();
     }
 
     public void extractFile(InputStream inputStream, IItem evidence, Long parentSize) throws IOException {
 
-        String hash;
+        String hash = null;
         File outputFile = null;
         Object hashLock = new Object();
 
@@ -343,15 +344,20 @@ public class ExportFileTask extends AbstractTask {
             }
         }
 
+        boolean fileExists = false;
+        
         synchronized (hashLock) {
-            if (outputFile.createNewFile()) {
+            if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
                 try {
-                    bos = new BufferedOutputStream(new FileOutputStream(outputFile));
                     BufferedInputStream bis = new BufferedInputStream(inputStream);
-                    byte[] buf = new byte[1024 * 1024];
+                    byte[] buf = new byte[8 * 1024];
                     int total = 0, len;
                     while ((len = bis.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
+                        if(bos == null) {
+                            fileExists = outputFile.createNewFile();
+                            bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                        }
                         bos.write(buf, 0, len);
                         total += len;
                         if (parentSize != null && total >= ZIPBOMB_MIN_SIZE
@@ -374,10 +380,11 @@ public class ExportFileTask extends AbstractTask {
             }
         }
 
-        changeTargetFile(evidence, outputFile);
-
-        if (evidence.isSubItem()) {
-            evidence.setLength(outputFile.length());
+        if(fileExists) {
+            changeTargetFile(evidence, outputFile);
+            if (evidence.isSubItem()) {
+                evidence.setLength(outputFile.length());
+            }
         }
 
     }

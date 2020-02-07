@@ -119,9 +119,8 @@ public class WhatsAppParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             try {
-                TikaInputStream tis = TikaInputStream.get(stream, tmp);
-
                 ItemInfo itemInfo = context.get(ItemInfo.class);
                 String filePath = null;
                 if (itemInfo != null) {
@@ -159,9 +158,8 @@ public class WhatsAppParser extends AbstractParser {
                     }
                 }
 
+            } catch (Exception e) {
                 sqliteParser.parse(tis, handler, metadata, context);
-
-            } catch (WAExtractorException e) {
                 throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
 
             } finally {
@@ -283,8 +281,8 @@ public class WhatsAppParser extends AbstractParser {
         TemporaryResources tmp = new TemporaryResources();
 
         if (extractor.shouldParseEmbedded(metadata)) {
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             try {
-                TikaInputStream tis = TikaInputStream.get(stream, tmp);
                 WAContactsExtractor waExtractor = extFactory.createContactsExtractor(tis.getFile());
                 waExtractor.extractContactList();
 
@@ -311,9 +309,8 @@ public class WhatsAppParser extends AbstractParser {
                     }
                 }
 
+            } catch (Exception e) {
                 sqliteParser.parse(tis, handler, metadata, context);
-
-            } catch (WAExtractorException e) {
                 throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
 
             } finally {

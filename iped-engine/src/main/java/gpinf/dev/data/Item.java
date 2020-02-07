@@ -610,7 +610,8 @@ public class Item implements ISleuthKitItem {
                 }
 
                 // workaround para itens carveados apontando para tmpFile do pai que foi apagado
-            } catch (IOException fnfe) {
+                //Sometimes NPE is thrown, needs investigation...
+            } catch (IOException | NullPointerException e) {
                 file = null;
             }
         }

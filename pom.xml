@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>iped</groupId>
     <artifactId>iped-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>3.16</version>
     <packaging>pom</packaging>
     
     <modules>
@@ -31,13 +31,13 @@
         <!--dependencies-->
         <tika.version>1.20</tika.version>
         <lucene.version>4.9.0</lucene.version>
-        <sleuthkit.version>4.6.5-p01</sleuthkit.version>
+        <sleuthkit.version>4.6.5-p04</sleuthkit.version>
         <libreoffice.version>5.1.4</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.3</log4j.version>
         <junit.version>4.12</junit.version>
         <icepdf.version>6.3.2</icepdf.version>
-        <xerial.sqlite.version>3.23.1</xerial.sqlite.version>
+        <xerial.sqlite.version>3.25.2</xerial.sqlite.version>
         <dockingframes.version>1.1.1</dockingframes.version>
     </properties>
     

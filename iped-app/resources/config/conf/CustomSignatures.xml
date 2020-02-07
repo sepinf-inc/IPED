@@ -116,12 +116,95 @@
         </magic>
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-plist">
+        <_comment>Apple Binary Property List File </_comment>
+        <magic priority="60">
+            <match value="0x62706C697374" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.plist"/>
+    </mime-type>
    
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-firefox-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-bookmarks-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-edge-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-history-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-downloads-registry">
+        <sub-class-of type="application/x-browser-registry"/>
+    </mime-type>
+            
+    <mime-type type="application/x-firefox-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-firefox-bookmarks">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-firefox-downloads">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-chrome-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+
+    <mime-type type="application/x-chrome-downloads">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-chrome-searches">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-edge-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-history">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-downloads">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-safari-plist">     
+        <sub-class-of type="application/x-plist"/>
+        <glob pattern="History.plist"/>
+        <glob pattern="Downloads.plist"/>
+        <glob pattern="Bookmarks.plist"/>
+    </mime-type>
    
-    <mime-type type="application/x-webcache">     
+    <mime-type type="application/x-edge-web-cache">     
         <sub-class-of type="application/x-edb"/>
         <glob pattern="WebCacheV01*.dat"/>
     </mime-type>
@@ -268,12 +351,10 @@
         <glob pattern="*.mbox"/>
     </mime-type>
 
-    <mime-type type="application/x-mssql">
+	<mime-type type="application/x-mssql">
         <magic priority="50">
             <match value="\x01\x0F\x00\x00" type="string" offset="0"/>
         </magic> 
-        <glob pattern="*.mdf"/>
-        <glob pattern="*.ldf"/>
     </mime-type>
 
     <mime-type type="application/x-mssql-data">

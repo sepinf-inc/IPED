@@ -136,7 +136,7 @@ public class Worker extends Thread {
     private void checkFile(IItem evidence) {
         String filePath = evidence.getFileToIndex();
         if (evidence.getFile() == null && !filePath.isEmpty()) {
-            File file = Util.getRelativeFile(baseFilePath, filePath);
+            File file = Util.getResolvedFile(baseFilePath, filePath);
             evidence.setFile(file);
             evidence.setLength(file.length());
         }

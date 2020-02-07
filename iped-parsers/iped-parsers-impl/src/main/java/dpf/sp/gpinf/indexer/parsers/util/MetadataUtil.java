@@ -18,13 +18,11 @@ import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class MetadataUtil {
-
-    private static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
     private static Set<String> generalKeys = getGeneralKeys();
 
@@ -35,6 +33,18 @@ public class MetadataUtil {
     private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
+    
+    public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
+    
+    private static Set<String> getIgnorePreviewMetas(){
+        ignorePreviewMetas = new HashSet<>();
+        ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
+        ignorePreviewMetas.add(Metadata.CONTENT_LENGTH);
+        ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
+        ignorePreviewMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
+        return ignorePreviewMetas;
+    }
 
     private static Set<String> getGeneralKeys() {
         Set<String> generalKeys = new HashSet<String>();
@@ -61,9 +71,19 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.WKFF_HITS);
         generalKeys.add(ExtraProperties.PST_ATTACH);
         generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
+        generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
+        generalKeys.add(ExtraProperties.LOCATIONS);
+        generalKeys.add(ExtraProperties.URL);
+        generalKeys.add(ExtraProperties.LOCAL_PATH);
+        generalKeys.add(ExtraProperties.DOWNLOAD_DATE.getName());
+        generalKeys.add(ExtraProperties.DOWNLOAD_TOTAL_BYTES);
+        generalKeys.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES);
+        generalKeys.add(ExtraProperties.TIKA_PARSER_USED);
+        generalKeys.add(ExtraProperties.CARVEDBY_METADATA_NAME);
+        generalKeys.add(ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName());
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
-        generalKeys.add(TIKA_PARSER_USED);
 
         return generalKeys;
     }
@@ -107,6 +127,9 @@ public class MetadataUtil {
         ignoredMetadata.add("File Name"); //$NON-NLS-1$
         ignoredMetadata.add("File Modified Date"); //$NON-NLS-1$
         ignoredMetadata.add("File Size"); //$NON-NLS-1$
+        ignoredMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID);
+        ignoredMetadata.add(ExtraProperties.PARENT_VIRTUAL_ID);
+        ignoredMetadata.add(BasicProps.HASCHILD);
         return ignoredMetadata;
     }
 
