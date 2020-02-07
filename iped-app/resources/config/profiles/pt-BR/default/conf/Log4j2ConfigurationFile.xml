@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+	<CustomLevels>
+    	<CustomLevel name="MSG" intLevel="250" />
+  	</CustomLevels>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%class{3}]\t\t\t%msg%n" />
+            <PackageRegexpFilter regex="(.*org\.icepdf.*)|(.*org\.apache\.pdfbox.*)|(.*com\.levigo\.jbig2.*)|(.*apache\.fontbox.*)|(.*freemarker\.log.*)" onMatch="DENY" onMismatch="ACCEPT"/>
+        </Console>
+        <File name="LogFile" fileName="${sys:logFileNamePath}" immediateFlush="true" append="true" bufferSize="4096">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss}\t[%level]\t[%class{3}]\t\t\t%msg%n" />
+            <PackageRegexpFilter regex="(.*org\.icepdf.*)|(.*org\.apache\.pdfbox.*)|(.*com\.levigo\.jbig2.*)|(.*apache\.fontbox.*)|(.*freemarker\.log.*)" onMatch="DENY" onMismatch="ACCEPT"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console" level="MSG"/>
+            <AppenderRef ref="LogFile" />
+        </Root>
+    </Loggers>
+</Configuration>

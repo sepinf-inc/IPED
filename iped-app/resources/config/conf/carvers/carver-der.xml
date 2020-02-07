@@ -1,0 +1,23 @@
+<carverconfig>
+    <carverTypes>
+        <carverType>
+            <name>DER</name>
+            <signatures>
+            	<headerSignature>\30\82??\30\82</headerSignature>
+            	<headerSignature>\30\83???\30\83</headerSignature>
+            </signatures>
+            <mediaType>application/pkix-cert</mediaType>
+            <carverScriptFile>DERCarver.js</carverScriptFile>
+        </carverType>
+
+        <carverType>
+            <name>CER</name>
+            <mediaType>application/x-pem-file</mediaType>
+            <signatures>
+            	<headerSignature>-----BEGIN CERTIFICATE-----</headerSignature>
+            	<footerSignature>-----END CERTIFICATE-----</footerSignature>
+            </signatures>
+            <maxLength>30000</maxLength>
+        </carverType>
+    </carverTypes>
+</carverconfig>

@@ -1,0 +1,53 @@
+﻿########################################################################
+# Local environment configuration
+########################################################################
+
+# Defines program localization/language. Currently there are localizations for 'en' and 'pt-BR'.
+locale = en
+
+# Temporary directory for processing: "default" uses the system temporary folder.
+# Configure it on a folder free of antivirus, system indexing or restoring. Using a SSD disk is highly recommended.
+indexTemp = default
+
+# Enable if indexTemp is on a SSD disk. Optimizations are made that can improve processing speed up to 2x.
+# Do not enable it if indexTemp is NOT on SSD or you will have performance problems.
+indexTempOnSSD = false
+
+# Enable if output/case folder is on SSD. If enabled, index is created directly in case folder,
+# not in indexTemp, so you will need less free space in temp folder.
+outputOnSSD = false
+
+# Number of processing threads/workers: "default" uses the number of CPU logical cores.
+# If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
+numThreads = default
+
+# Full path for hash index database. It is highly recommended to store it on a SSD disk or you will have performance problems.
+# After configured, you can import a NIST NSRL database using -importkff option.
+#kffDb = C:/IPED/IPED-KFF-1.2/kff.db
+
+# Folder with child porn hash database from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
+#ledWkffPath = E:/LED/V1.21.00/pedo/wkff
+
+# Path to photoDNA hashset file for hash lookup. It must have 1 photoDNA hash per line.
+# It can have other file info in the same line (eg: file name, other hash), * should be used as separator
+#photoDNAHashDatabase = E:/PhotoDNA-3.3/PhotoDNAChildPornHashes-1.0.txt
+
+# File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
+# It is supported models from LED version 1.21 or higher.
+ledDie = models/rfdie.dat
+
+# Full path for sleuthkit-4.x.x.jar built on Linux OS.
+# It is distributed a Windows only version with some optimization patches.
+# It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
+#tskJarPath = /home/user/tsk-4.6.5-src-folder/bindings/java/dist/sleuthkit-4.6.5.jar
+
+# Full Path for mplayer on Windows.
+# For Linux OS, mplayer must be on PATH. Do not comment out the param below.
+mplayerPath = ../mplayer/mplayer.exe
+
+# Plugin folder for optional libs not embedded because of license restrictions.
+# They will be dynamically loaded at runtime.
+optional_jars = ../optional_jars/
+
+# Path for RegRipper folder.
+regripperFolder = ../regripper/

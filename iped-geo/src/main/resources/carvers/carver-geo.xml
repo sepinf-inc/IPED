@@ -1,0 +1,29 @@
+<carverconfig>
+
+    <carverTypes>
+        <carverType>
+            <name>GPX</name>
+            <signatures>
+            	<headerSignature>&lt;gpx</headerSignature>
+            	<footerSignature>&lt;/gpx&gt;</footerSignature>
+            </signatures>
+            <minLength>100</minLength>
+            <maxLength>10000000</maxLength>
+            <mediaType>application/gpx</mediaType>
+        </carverType>
+    </carverTypes>
+
+    <carverTypes>
+        <carverType>
+            <name>KML</name>
+            <signatures>
+            	<headerSignature>&lt;kml</headerSignature>
+            	<footerSignature>&lt;/kml&gt;</footerSignature>
+            </signatures>
+            <minLength>100</minLength>
+            <maxLength>10000000</maxLength>
+            <mediaType>application/vnd.google-earth.kml+xml</mediaType>
+        </carverType>
+    </carverTypes>
+
+</carverconfig>

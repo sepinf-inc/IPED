@@ -1,0 +1,15 @@
+<registryparserconfig>
+
+<registryKeyParsers>
+	<registryKeyParser class="dpf.mt.gpinf.registro.keyparsers.CertificateKeyParser">
+		<key name="ROOT/Microsoft/SystemCertificates/*/Certificates"/>
+		<key name="ROOT/Software/Microsoft/SystemCertificates/*/Certificates"/>
+
+		<key name="ROOT/Policies/Microsoft/SystemCertificates/*/Certificates"/>		
+		<key name="ROOT/Software/Policies/Microsoft/SystemCertificates/*/Certificates"/>		
+
+		<passwords>1234</passwords>
+	</registryKeyParser>
+</registryKeyParsers>
+
+</registryparserconfig>

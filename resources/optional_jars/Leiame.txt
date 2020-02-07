@@ -1,7 +1,0 @@
-Coloque nesta pasta arquivos JAR de bibliotecas opcionais com licenças de distribuição
-restritivas a serem carregadas dinamicamente em tempo de execução.
-
-Por exemplo:
-- java-dbx-1.1-p3.jar: para decodificar caixas de email DBX do Outlook Express
-- jai-imageio-jpeg2000-1.3.0.jar: para decodificar imagens incomuns jpeg2000 (https://github.com/jai-imageio/jai-imageio-jpeg2000)
-- oracle-jdbc: para conectar a bancos de dados Oracle (http://www.oracle.com/technetwork/database/features/jdbc/index-091264.html)
