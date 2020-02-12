@@ -35,7 +35,6 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
@@ -77,6 +76,15 @@ public class UfedXmlReader extends DataSourceReader {
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
+    }
+
+    private void reset() {
+        root = null;
+        ufdrFile = null;
+        ufdr = null;
+        zisf = null;
+        rootItem = null;
+        decodedFolder = null;
     }
 
     @Override
@@ -146,26 +154,33 @@ public class UfedXmlReader extends DataSourceReader {
 
     @Override
     public int read(File root) throws Exception {
+        read(root, null);
+        return 0;
+    }
+
+    @Override
+    public void read(File root, Item parent) throws Exception {
 
         this.root = root;
-        addRootItem();
+        addRootItem(parent);
         addVirtualDecodedFolder();
-        InputStream xmlStream = lookUpXmlReportInputStream(root);
+        InputStream xmlStream = null;
+        try {
+            xmlStream = lookUpXmlReportInputStream(root);
 
-        configureParsers();
+            configureParsers();
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-        spf.setNamespaceAware(true);
-        SAXParser saxParser = spf.newSAXParser();
-        XMLReader xmlReader = saxParser.getXMLReader();
-        xmlReader.setContentHandler(new XMLContentHandler());
-        xmlReader.setErrorHandler(new XMLErrorHandler());
-        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
-
-        IOUtil.closeQuietly(xmlStream);
-        // IOUtil.closeQuietly(ufdr);
-
-        return 0;
+            SAXParserFactory spf = SAXParserFactory.newInstance();
+            spf.setNamespaceAware(true);
+            SAXParser saxParser = spf.newSAXParser();
+            XMLReader xmlReader = saxParser.getXMLReader();
+            xmlReader.setContentHandler(new XMLContentHandler());
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+            xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
+        } finally {
+            IOUtil.closeQuietly(xmlStream);
+            reset();
+        }
     }
 
     private void configureParsers() {
@@ -180,7 +195,7 @@ public class UfedXmlReader extends DataSourceReader {
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
     }
 
-    private void addRootItem() throws InterruptedException {
+    private void addRootItem(IItem parent) throws InterruptedException {
 
         if (listOnly)
             return;
@@ -192,16 +207,25 @@ public class UfedXmlReader extends DataSourceReader {
         evidenceSource.setName(evidenceName);
 
         rootItem = new Item();
-        rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
-        rootItem.setPath(evidenceName);
-        rootItem.setName(evidenceName);
         rootItem.setHasChildren(true);
         if (root.getName().endsWith(".ufdr")) {
             rootItem.setLength(root.length());
             rootItem.setSumVolume(false);
         }
+        // rootItem.setLength(0L);
         rootItem.setHash(""); //$NON-NLS-1$
+
+        if (parent != null) {
+            rootItem.setName(root.getName());
+            rootItem.setParent(parent);
+            rootItem.setPath(parent.getPath() + "/" + root.getName());
+        } else {
+            rootItem.setPath(evidenceName);
+            rootItem.setRoot(true);
+            rootItem.setName(evidenceName);
+        }
+        rootItem.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
 
         pathToParent.put(rootItem.getPath(), rootItem);
 
@@ -498,10 +522,10 @@ public class UfedXmlReader extends DataSourceReader {
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
             XmlNode currentNode = nodeSeq.remove(nodeSeq.size() - 1);
-            
-            for(XmlNode node : nodeSeq) {
-                if(node.element.equals("entityBookmarks")) { //$NON-NLS-1$
-                    //currently there is no support for bookmarks
+
+            for (XmlNode node : nodeSeq) {
+                if (node.element.equals("entityBookmarks")) { //$NON-NLS-1$
+                    // currently there is no support for bookmarks
                     return;
                 }
             }

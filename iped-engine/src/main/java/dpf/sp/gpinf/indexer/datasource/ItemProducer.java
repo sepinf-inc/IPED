@@ -66,9 +66,14 @@ public class ItemProducer extends Thread {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, FolderTreeReader.class // deve ser o
-                                                                                                         // último
+        Class<? extends DataSourceReader>[] readerList = new Class[] {
+                FTK3ReportReader.class,
+                SleuthkitReader.class,
+                IPEDReader.class,
+                UfedXmlReader.class,
+                AD1DataSourceReader.class,
+                IpedCaseReader.class,
+                FolderTreeReader.class // deve ser o último
         };
 
         for (Class<? extends DataSourceReader> srcReader : readerList) {

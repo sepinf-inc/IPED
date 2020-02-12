@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -78,8 +79,8 @@ import iped3.sleuthkit.ISleuthKitItem;
 public class SleuthkitReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
-    
-    public static final String MIN_TSK_VER = "4.6.5"; 
+
+    public static final String MIN_TSK_VER = "4.6.5";
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -101,6 +102,9 @@ public class SleuthkitReader extends DataSourceReader {
     private ArrayList<Integer> parentIds = new ArrayList<Integer>();
 
     private ArrayList<Long> tskParentIds = new ArrayList<Long>();
+
+    private List<Integer> inheritedParents;
+    private String inheritedPath;
 
     private AddImageProcess addImage;
     private static volatile Thread waitLoadDbThread;
@@ -218,23 +222,24 @@ public class SleuthkitReader extends DataSourceReader {
         String[] str = out.toString().split(" "); //$NON-NLS-1$
         String tskVer = str[str.length - 1].trim();
         LOGGER.info("Sleuthkit version " + tskVer + " detected."); //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         String patchSufix = "-iped-patch";
-        if (tskVer.contains(patchSufix)) { //$NON-NLS-1$
+        if (tskVer.contains(patchSufix)) { // $NON-NLS-1$
             isTskPatched = true;
             tskVer = tskVer.substring(0, tskVer.indexOf(patchSufix));
         } else
             LOGGER.error("It is highly recommended to apply the iped patch (in sources folder) on sleuthkit!"); //$NON-NLS-1$
 
-        if (tskVer.compareTo(MIN_TSK_VER) < 0) //$NON-NLS-1$
+        if (tskVer.compareTo(MIN_TSK_VER) < 0) // $NON-NLS-1$
             throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (tskVer.compareTo(MIN_TSK_VER) > 0) //$NON-NLS-1$
+        else if (tskVer.compareTo(MIN_TSK_VER) > 0) // $NON-NLS-1$
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
     }
 
-    public int read(File image) throws Exception {
+    @Override
+    public void read(File image, Item parent) throws Exception {
 
         checkTSKVersion();
 
@@ -264,8 +269,16 @@ public class SleuthkitReader extends DataSourceReader {
         tskParentIds.clear();
 
         deviceName = getEvidenceName(image);
-        dataSource = new DataSource(image);
-        dataSource.setName(deviceName);
+        if (parent == null) {
+            dataSource = new DataSource(image);
+            dataSource.setName(deviceName);
+            inheritedParents = Collections.emptyList();
+            inheritedPath = "";
+        } else {
+            inheritedParents = new ArrayList<>(parent.getParentIds());
+            inheritedParents.add(parent.getId());
+            inheritedPath = parent.getPath();
+        }
 
         String dbPath = output.getParent() + File.separator + DB_NAME;
 
@@ -376,6 +389,10 @@ public class SleuthkitReader extends DataSourceReader {
         else if (waitLoadDbThread != null)
             waitLoadDbThread.join();
 
+    }
+
+    public int read(File image) throws Exception {
+        read(image, null);
         return 0;
     }
 
@@ -545,12 +562,12 @@ public class SleuthkitReader extends DataSourceReader {
             addContent(content, parentId);
         }
     }
-    
+
     private static final int SQLITE_BUSY_ERROR = 5;
-    
+
     private Content getContentById(long id) throws TskCoreException, InterruptedException {
         long start = System.currentTimeMillis() / 1000;
-        while(true)
+        while (true)
             try {
                 // Faster than getContentById
                 Content content = sleuthCase.getAbstractFileById(id);
@@ -558,14 +575,16 @@ public class SleuthkitReader extends DataSourceReader {
                     content = sleuthCase.getContentById(id);
                 }
                 return content;
-                
+
             } catch (TskCoreException e) {
-                if(e.getCause() instanceof SQLiteException && ((SQLiteException)e.getCause()).getErrorCode() == SQLITE_BUSY_ERROR) {
+                if (e.getCause() instanceof SQLiteException
+                        && ((SQLiteException) e.getCause()).getErrorCode() == SQLITE_BUSY_ERROR) {
                     long now = System.currentTimeMillis() / 1000;
-                    LOGGER.error("SQLite busy after " + (now - start) + "s reading sleuthid=" + id + ", trying again...");
+                    LOGGER.error(
+                            "SQLite busy after " + (now - start) + "s reading sleuthid=" + id + ", trying again...");
                     Thread.sleep(1000);
                     continue;
-                }else
+                } else
                     throw e;
             }
     }
@@ -697,6 +716,7 @@ public class SleuthkitReader extends DataSourceReader {
         if (deviceName != null) {
             path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
+        path = inheritedPath + path;
         evidence.setPath(path);
     }
 
@@ -783,9 +803,16 @@ public class SleuthkitReader extends DataSourceReader {
         }
         parentIds.set(evidence.getId(), parentId);
 
+        List<Integer> parents = new ArrayList<>();
+
         do {
-            evidence.addParentId(parentId);
+            // evidence.addParentId(parentId);
+            parents.add(parentId);
         } while ((parentId = parentIds.get(parentId)) != -1);
+
+        Collections.reverse(parents);
+        evidence.addParentIds(inheritedParents);
+        evidence.addParentIds(parents);
 
         if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)
                 || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC)
@@ -867,12 +894,12 @@ public class SleuthkitReader extends DataSourceReader {
         String path = content.getUniquePath();
         if (deviceName != null) {
             if (path.indexOf('/', 1) == -1) {
-                evidence.setPath("/" + deviceName); //$NON-NLS-1$
+                evidence.setPath(inheritedPath + "/" + deviceName); //$NON-NLS-1$
             } else {
                 setPath(evidence, path);
             }
         } else {
-            evidence.setPath(path);
+            evidence.setPath(inheritedPath + path);
         }
 
         if (content instanceof Image) {
@@ -908,6 +935,9 @@ public class SleuthkitReader extends DataSourceReader {
         if (parent != null) {
             parentId = sleuthIdToId.get((int) (parent.getId() - firstId));
             evidence.setParentId(parentId);
+        } else if (!inheritedParents.isEmpty()) {
+            evidence.setParentId(inheritedParents.get(inheritedParents.size() - 1));
+            evidence.setRoot(false);
         }
 
         while (evidence.getId() >= parentIds.size()) {
@@ -915,13 +945,19 @@ public class SleuthkitReader extends DataSourceReader {
         }
         parentIds.set(evidence.getId(), parentId);
 
+        List<Integer> parents = new ArrayList<>();
+
         while (parentId != -1) {
-            evidence.addParentId(parentId);
+            // evidence.addParentId(parentId);
+            parents.add(parentId);
             parentId = parentIds.get(parentId);
         }
 
-        caseData.addItem(evidence);
+        Collections.reverse(parents);
+        evidence.addParentIds(inheritedParents);
+        evidence.addParentIds(parents);
 
+        caseData.addItem(evidence);
     }
 
     private boolean isFATFile(Content content) {
