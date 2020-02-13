@@ -1,4 +1,16 @@
-XX/XX/2019: IPED-3.17.x
+13/02/2020: IPED-3.17.1
+News:
+- Check and abort if user changed default locale and default english configuration files
+- Changed communication with external robustImageReaders from sockets to pipes
+- Better pooling, increased timeout and communication checks with robustImageReaders
+Fixes:
+- NullPointerException in PhotoDNA module
+- Back compatibility of PhotoDNA module with 3.16.x version
+- -ocr option did not work with bookmark names or enableExternalParsing on
+- useNIOFSDirectory option did not work properly
+- Rare infinite loop in robustImageReader restarting if mmap is interrupted
+
+27/12/2019: IPED-3.17
 News:
 - Changed default locale and configuration files to english
 - Moved all source code to github
