@@ -312,7 +312,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
             Configuration.getInstance().loadConfigurables(indexador.configPath);
             
-            if(!indexador.locale.equals("en") && indexador.profile.equals("default")) {
+            if(!indexador.locale.equals("en") && "default".equals(indexador.profile)) {
                 Configuration.getInstance().checkIfDefaultProfileWasChanged();
             }
 
