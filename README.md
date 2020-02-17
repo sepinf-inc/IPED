@@ -24,6 +24,8 @@ git clone https://github.com/lfcnassif/IPED.git
 cd IPED
 mvn install
 ```
+It will generate a snapshot version of IPED in target/release folder.
+
 If you want to contribute to the project, refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
 
 ## Features
