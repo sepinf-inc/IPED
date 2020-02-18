@@ -25,6 +25,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.kharon.Edge;
+import org.kharon.EdgeListener;
 import org.kharon.Graph;
 import org.kharon.GraphPane;
 import org.kharon.Node;
@@ -107,6 +108,7 @@ public class AppGraphAnalytics extends JPanel {
 
     this.graphPane.addNodeListener(new AppNodeListener());
     this.graphPane.addStageListener(new AppStageListerner());
+    this.graphPane.addEdgeListener(new AppEdgeListener());
     this.graphPane.setHistoryEnabled(true);
     this.graphPane.setBackground(Color.WHITE);
 
@@ -252,12 +254,41 @@ public class AppGraphAnalytics extends JPanel {
 
     @Override
     public void stageClicked(MouseEvent evt) {
+      if(evt.isControlDown() || evt.isShiftDown())
+          return;
       graphPane.deselectAll();
       if (SwingUtilities.isRightMouseButton(evt)) {
         stagePopup.show(graphPane, evt.getX(), evt.getY());
       }
     }
 
+  }
+  
+  private class AppEdgeListener implements EdgeListener {
+
+    @Override
+    public void edgeClicked(Edge edge, MouseEvent e) {
+        boolean selected = graphPane.isEdgeSelected(edge);
+        boolean keepSelection = e.isControlDown() || e.isShiftDown();
+        if (!selected) {
+            graphPane.selectEdge(edge.getId(), keepSelection);
+          } else if (keepSelection) {
+            graphPane.deselectEdge(edge.getId());
+          } else {
+            graphPane.selectEdge(edge.getId());
+        }
+    }
+
+    @Override
+    public void edgeHovered(Edge edge, MouseEvent e) {
+        graphPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    }
+
+    @Override
+    public void edgeOut(Edge edge, MouseEvent e) {
+        graphPane.setCursor(Cursor.getDefaultCursor());
+    }
+      
   }
 
   private class AppNodeListener extends NodeAdapter {
