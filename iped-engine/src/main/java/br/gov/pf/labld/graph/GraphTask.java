@@ -116,7 +116,7 @@ public class GraphTask extends AbstractTask {
     List<Label> labels = new ArrayList<>(1);
     Label label;
     String propertyName = "evidenceId";
-    Object property = evidence.getId();
+    Object identifier = evidence.getId();
     if (entityType != null) {
       IpedDatasourceType type = IpedDatasourceType.valueOf(entityType.toString());
 
@@ -147,16 +147,16 @@ public class GraphTask extends AbstractTask {
       }
 
       if (entityPropertyValue != null) {
-        property = entityPropertyValue.toString();
+        identifier = entityPropertyValue.toString();
       } else {
-        property = evidence.getId();
+        identifier = evidence.getId();
       }
 
       nodeProperties.put(propertyName, entityPropertyValue);
     } else {
       label = DynLabel.label(configuration.getDefaultEntity());
       propertyName = "evidenceId";
-      property = evidence.getId();
+      identifier = evidence.getId();
     }
 
     nodeProperties.put("evidenceId", evidence.getId());
@@ -188,29 +188,31 @@ public class GraphTask extends AbstractTask {
       nodeProperties.put("source", reader.toString());
     }
 
-    nodeProperties.put(propertyName, property);
-    String nodeId = graphFileWriter.writeCreateNode(propertyName, property, nodeProperties, label,
+    nodeProperties.put(propertyName, identifier);
+    
+    String nodeId = graphFileWriter.writeCreateNode(propertyName, identifier, nodeProperties, label,
         labels.toArray(new Label[labels.size()]));
+    
     if (isGraphDatasource) {
       graphFileWriter.writeNodeReplace(DynLabel.label(configuration.getDefaultEntity()), "evidenceId", evidence.getId(),
           nodeId);
     }
-
+    
     RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
 
     if (isIpedCase && parentIds.size() > 2) {
       // Cria vinculo da evidencia com a entrada do datasource se ipedCase.
       Integer inputId = parentIds.get(2);
-      graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, property,
+      graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, identifier,
           relationshipType);
     } else if (isIpedCase && parentIds.size() == 2) {
       // Cria vinculo da entrada com o datasource se ipedCase.
       Integer datasourceId = parentIds.get(1);
       graphFileWriter.writeCreateRelationship(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
-          datasourceId, label, propertyName, property, relationshipType);
+          datasourceId, label, propertyName, identifier, relationshipType);
     }
 
-    processMetadata(evidence, label, propertyName, property);
+    processMetadata(evidence, label, propertyName, identifier);
   }
 
   @SuppressWarnings("unchecked")
@@ -219,14 +221,23 @@ public class GraphTask extends AbstractTask {
     Map<String, Object> extraAttributeMap = evidence.getExtraAttributeMap();
     if (includeEvidence(evidence) && extraAttributeMap != null) {
       Set<Entry<String, Object>> entries = extraAttributeMap.entrySet();
+      Set<String> relationsAdded = new HashSet<>();
       for (Entry<String, Object> entry : entries) {
         String key = entry.getKey();
         List<GraphEntity> entities = configuration.getEntities(key);
         if (entities != null) {
           for (GraphEntity entity : entities) {
-            GraphEntityMetadata metadata = entity.getMetadata(key);
-            processMatches(entity, metadata, evidence, (List<Object>) entry.getValue(), evidenceLabel, evidenceProp,
-                evidenceId);
+              GraphEntityMetadata metadata = entity.getMetadata(key);
+              for (Entry<String, Object> entry2 : entries) {
+                  String key2 = entry2.getKey();
+                  List<GraphEntity> entities2 = configuration.getEntities(key2);
+                  if (entities2 != null) {
+                    for (GraphEntity entity2 : entities2) {
+                      GraphEntityMetadata metadata2 = entity2.getMetadata(key2);
+                      processMatches(entity, metadata, (List<Object>) entry.getValue(), entity2, metadata2, (List<Object>) entry2.getValue(), evidence, relationsAdded);
+                    }
+                  }
+              }
           }
         }
       }
@@ -247,24 +258,42 @@ public class GraphTask extends AbstractTask {
     return include;
   }
 
-  private void processMatches(GraphEntity entity, GraphEntityMetadata metadata, IItem evidence,
-      List<Object> matches, Label evidenceLabel, String evidenceProp, Object evidenceId) throws IOException {
+  private void processMatches(GraphEntity entity, GraphEntityMetadata metadata, List<Object> matches, 
+          GraphEntity entity2, GraphEntityMetadata metadata2, List<Object> matches2, IItem evidence, Set<String> relationsAdded) throws IOException {
     String labelName = entity.getLabel();
     String propertyName = metadata.getProperty();
-
     Label label = DynLabel.label(labelName);
+    
+    String labelName2 = entity2.getLabel();
+    String propertyName2 = metadata2.getProperty();
+    Label label2 = DynLabel.label(labelName2);
 
-    if (matches != null) {
-      RelationshipType relationshipType = DynRelationshipType.withName(metadata.getRelationship());
-
+    if (matches != null && matches2 != null) {
+      //RelationshipType relationshipType = DynRelationshipType.withName(metadata.getRelationship());
+      RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
+      
+      Map<String, Object> relProps = new HashMap<>();
+      relProps.put("relId", evidence.getId());
+      
       Set<String> controlSet = new HashSet<>();
       for (Object match : matches) {
-        String propertyValue = match.toString();
-        if (controlSet.add(propertyValue)) {
-          graphFileWriter.writeMergeNode(label, propertyName, propertyValue);
-          graphFileWriter.writeCreateRelationship(evidenceLabel, evidenceProp, evidenceId, label, propertyName,
-              propertyValue, relationshipType);
-        }
+          for (Object match2 : matches2) {
+              String propertyValue = match.toString();
+              String propertyValue2 = match2.toString();
+              if(propertyValue.equals(propertyValue2)) {
+                  continue;
+              }
+              
+              String relId = propertyValue.compareTo(propertyValue2) < 0 ? propertyValue + "-" + propertyValue2 : propertyValue2 + "-" + propertyValue;
+              if(!relationsAdded.add(relId))
+                  continue;
+              
+              if (controlSet.add(propertyValue) && controlSet.add(propertyValue2)) {
+                graphFileWriter.writeMergeNode(label, propertyName, propertyValue);
+                graphFileWriter.writeMergeNode(label2, propertyName2, propertyValue2);
+                graphFileWriter.writeRelationship(label, propertyName, propertyValue, label2, propertyName2, propertyValue2, relationshipType, relProps);
+              }
+          }
       }
     }
   }

@@ -99,13 +99,14 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   private CSVWriter openRelationshipWriter(RelationshipType type) throws IOException {
     CSVWriter writer = new CSVWriter(root, "relationships", type.name(), suffix);
-    writer.fieldPositions = new LinkedHashSet<>(Arrays.asList("start", "end", "type"));
+    writer.fieldPositions = new LinkedHashSet<>(Arrays.asList("start", "end", "type", "relId"));
 
     writer.fieldTypes = new HashMap<>();
 
     writer.fieldTypes.put("start", "START_ID");
     writer.fieldTypes.put("end", "END_ID");
     writer.fieldTypes.put("type", "TYPE");
+    writer.fieldTypes.put("relId", "string");
     return writer;
   }
 
