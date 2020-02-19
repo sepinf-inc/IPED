@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import br.gov.pf.labld.cases.IpedCase;
 import br.gov.pf.labld.cases.IpedCase.IpedDatasource;
 import br.gov.pf.labld.cases.IpedCase.IpedInput;
-import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
 
 public class IpedCaseReader extends DataSourceReader {
 
@@ -21,7 +21,7 @@ public class IpedCaseReader extends DataSourceReader {
 
     private List<DataSourceReader> subReaders;
 
-    public IpedCaseReader(CaseData caseData, File output, boolean listOnly) {
+    public IpedCaseReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
         initSubReaders();
     }
