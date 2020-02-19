@@ -238,6 +238,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         return app;
     }
+    
+    public AppListener getAppListener() {
+        return appletListener;
+    }
 
     public AppSearchParams getSearchParams() {
         return this.appSearchParams;

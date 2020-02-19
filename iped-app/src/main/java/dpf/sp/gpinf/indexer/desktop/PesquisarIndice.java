@@ -22,6 +22,7 @@ import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,10 +32,12 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -46,6 +49,7 @@ import iped3.desktop.ProgressDialog;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
+import iped3.util.BasicProps;
 
 public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
 
@@ -130,6 +134,19 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 result = boolQuery;
                 numFilters++;
             }
+        }
+        
+        Collection<Integer> ids = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+        if(!ids.isEmpty()) {
+            BooleanQuery boolQuery = new BooleanQuery();
+            BooleanQuery idsQuery = new BooleanQuery();
+            for(Integer id : ids) {
+                idsQuery.add(NumericRangeQuery.newIntRange(BasicProps.ID, id, id, true, true), Occur.SHOULD);
+            }
+            boolQuery.add(idsQuery, Occur.MUST);
+            boolQuery.add(result, Occur.MUST);
+            result = boolQuery;
+            numFilters++;
         }
 
         return result;

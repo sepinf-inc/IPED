@@ -257,6 +257,7 @@ public class AppGraphAnalytics extends JPanel {
       if(evt.isControlDown() || evt.isShiftDown())
           return;
       graphPane.deselectAll();
+      FilterSelectedEdges.getInstance().clearSelection();
       if (SwingUtilities.isRightMouseButton(evt)) {
         stagePopup.show(graphPane, evt.getX(), evt.getY());
       }
@@ -272,10 +273,14 @@ public class AppGraphAnalytics extends JPanel {
         boolean keepSelection = e.isControlDown() || e.isShiftDown();
         if (!selected) {
             graphPane.selectEdge(edge.getId(), keepSelection);
+            FilterSelectedEdges.getInstance().addEdge(edge, keepSelection);
+                
           } else if (keepSelection) {
             graphPane.deselectEdge(edge.getId());
+            FilterSelectedEdges.getInstance().removeEdge(edge);
           } else {
             graphPane.selectEdge(edge.getId());
+            FilterSelectedEdges.getInstance().setEdge(edge);
         }
     }
 
@@ -503,7 +508,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel(relationship.getType().name());
+        edge.setLabel((String)relationship.getProperty("relId"));
         // AppGraphAnalytics.this.graph.addEdge(edge);
         newEdges.add(edge);
       }
@@ -547,7 +552,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel(relationship.getType().name());
+        edge.setLabel((String)relationship.getProperty("relId"));
         this.newEdges.add(edge);
       }
       return true;
@@ -697,7 +702,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel(relationship.getType().name());
+        edge.setLabel((String)relationship.getProperty("relId"));
         AppGraphAnalytics.this.graph.addEdge(edge);
         newEdges.add(edge);
       }
@@ -785,7 +790,7 @@ public class AppGraphAnalytics extends JPanel {
           boolean inNewNodes = graphElements.containsNode(startNodeId) && graphElements.containsNode(endNodeId);
           if (inGraph || inNewNodes) {
             Edge edge = new Edge(edgeId, startNodeId, endNodeId);
-            edge.setLabel(relationship.getType().name());
+            edge.setLabel((String)relationship.getProperty("relId"));
             graphElements.add(edge);
           }
         }
@@ -814,7 +819,7 @@ public class AppGraphAnalytics extends JPanel {
       String endNodeId = Long.toString(relationship.getEndNodeId());
       if (this.containsNode(startNodeId) && this.containsNode(endNodeId)) {
         Edge edge = new Edge(edgeId, startNodeId, endNodeId);
-        edge.setLabel(relationship.getType().name());
+        edge.setLabel((String)relationship.getProperty("relId"));
         this.graph.addEdge(edge);
         return edge;
       }
