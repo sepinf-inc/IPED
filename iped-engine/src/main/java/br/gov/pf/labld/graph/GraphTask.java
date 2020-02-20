@@ -278,20 +278,27 @@ public class GraphTask extends AbstractTask {
       Set<String> controlSet = new HashSet<>();
       for (Object match : matches) {
           for (Object match2 : matches2) {
+              
               String propertyValue = match.toString();
               String propertyValue2 = match2.toString();
-              if(propertyValue.equals(propertyValue2)) {
+              
+              String id1 = label.name() + propertyValue;
+              String id2 = label2.name() + propertyValue2;
+              
+              if(id1.equals(id2)) {
                   continue;
               }
               
-              String relId = propertyValue.compareTo(propertyValue2) < 0 ? propertyValue + "-" + propertyValue2 : propertyValue2 + "-" + propertyValue;
-              if(!relationsAdded.add(relId))
-                  continue;
+              if (controlSet.add(id1)) {
+                  graphFileWriter.writeMergeNode(label, propertyName, propertyValue);  
+              }
+              if (controlSet.add(id2)) {
+                  graphFileWriter.writeMergeNode(label2, propertyName2, propertyValue2);  
+              }
               
-              if (controlSet.add(propertyValue) && controlSet.add(propertyValue2)) {
-                graphFileWriter.writeMergeNode(label, propertyName, propertyValue);
-                graphFileWriter.writeMergeNode(label2, propertyName2, propertyValue2);
-                graphFileWriter.writeRelationship(label, propertyName, propertyValue, label2, propertyName2, propertyValue2, relationshipType, relProps);
+              String ids = id1.compareTo(id2) <= 0 ? id1 + "-" + id2 : id2 + "-" + id1;
+              if(relationsAdded.add(ids)) {
+                  graphFileWriter.writeRelationship(label, propertyName, propertyValue, label2, propertyName2, propertyValue2, relationshipType, relProps);
               }
           }
       }
