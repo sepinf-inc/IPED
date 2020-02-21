@@ -327,7 +327,7 @@
                             </artifactItems>
                         </configuration>
                     </execution>
-                    <!-- execution>
+                    <execution>
                         <id>unpack-graphviz</id>
                         <phase>package</phase>
                         <goals>
@@ -345,7 +345,7 @@
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
-                    </execution-->
+                    </execution>
                     <execution>
                         <id>copy-tsk-patch</id>
                         <phase>package</phase>
