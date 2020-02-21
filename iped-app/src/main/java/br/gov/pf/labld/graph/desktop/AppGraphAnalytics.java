@@ -238,7 +238,7 @@ public class AppGraphAnalytics extends JPanel {
 
     @Override
     public void stageDragStarted(MouseEvent e) {
-      if (e.isControlDown() || e.isShiftDown()) {
+      if (e.isControlDown() || e.isShiftDown() || SwingUtilities.isRightMouseButton(e)) {
         graphPane.setStageMode(StageMode.SELECTION);
       } else {
         graphPane.setStageMode(StageMode.PAN);
