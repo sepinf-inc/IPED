@@ -14,7 +14,8 @@
 
 # If enabled, format/normalize regex matches using registered validators.
 # However regex results may not be highlighted in content preview.
-formatRegexMatches = false
+
+formatRegexMatches = true
 
 # Register REGEX below:
 

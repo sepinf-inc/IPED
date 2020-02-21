@@ -66,6 +66,7 @@ public class RegexTask extends AbstractTask {
         int prefix, sufix;
         Automaton automaton;
         RunAutomaton pattern;
+        boolean ignoreCases;
 
         public Regex(String name, int prefix, int sufix, boolean ignoreCases, boolean ignoreDiacritics, String regex) {
             this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()), ignoreCases, ignoreDiacritics);
@@ -82,6 +83,7 @@ public class RegexTask extends AbstractTask {
                 aut = ignoreCases(aut);
             if (ignoreDiacritics)
                 aut = ignoreDiacritics(aut);
+            this.ignoreCases = ignoreCases;
             this.name = name;
             this.automaton = aut;
             this.pattern = new RunAutomaton(aut);
@@ -242,6 +244,8 @@ public class RegexTask extends AbstractTask {
                 for (Regex regex : regexList) {
                     if (regex.pattern.run(hit)) {
                         hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+                        if(regex.ignoreCases)
+                            hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {
                             if (formatRegexMatches) {
                                 hit = regexValidator.format(regex, hit);
