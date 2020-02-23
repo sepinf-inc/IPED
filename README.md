@@ -18,7 +18,7 @@ Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthk
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
-To compile from source:
+To build from source, you need git, maven and java8 (Oracle or OpenJDK+JFX) installed. Run:
 ```
 git clone https://github.com/lfcnassif/IPED.git
 cd IPED
