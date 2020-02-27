@@ -285,6 +285,8 @@ public class UfedXmlReader extends DataSourceReader {
         HashSet<String> types = new HashSet<>();
 
         HashMap<String, IItem> ids = new HashMap<>();
+        
+        String msisdn = null;
 
         private class XmlNode {
             String element;
@@ -542,7 +544,11 @@ public class UfedXmlReader extends DataSourceReader {
             if (nodeSeq.size() > 0)
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
 
-            if (qName.equals("item")) { //$NON-NLS-1$
+            if("MSISDN".equals(nameAttr) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
+                msisdn = "+" + chars.toString().trim();
+                caseData.putCaseObject("MSISDN" + rootItem.getDataSource().getUUID(), msisdn);
+                
+            }else if (qName.equals("item")) { //$NON-NLS-1$
                 if ("Tags".equals(nameAttr) && "Configuration".equals(chars.toString())) { //$NON-NLS-1$ //$NON-NLS-2$
                     item.setCategory(chars.toString());
 
@@ -734,6 +740,7 @@ public class UfedXmlReader extends DataSourceReader {
                 } else
                     try {
                         caseData.incDiscoveredVolume(item.getLength());
+                        fillMissingInfo(item);
                         caseData.addItem(item);
 
                     } catch (InterruptedException e) {
@@ -744,6 +751,22 @@ public class UfedXmlReader extends DataSourceReader {
             chars = new StringBuilder();
             nameAttr = null;
 
+        }
+        
+        private void fillMissingInfo(Item item) {
+            String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
+            String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
+            if(item.getMetadata().get(Message.MESSAGE_TO) == null && 
+                    ("Incoming".equals(direction) || "Missed".equals(direction) || 
+                     "Read".equals(status) || "Unread".equals(status))) {
+                item.getMetadata().set(Message.MESSAGE_TO, msisdn);
+                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
+            } else if(item.getMetadata().get(Message.MESSAGE_FROM) == null && 
+                    ("Outgoing".equals(direction) || 
+                     "Sent".equals(status) || "Unsent".equals(status))) {
+                item.getMetadata().set(Message.MESSAGE_FROM, msisdn);
+                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
+            }
         }
 
         private void setContent(Item item, String path) {

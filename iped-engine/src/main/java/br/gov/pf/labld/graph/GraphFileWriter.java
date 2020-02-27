@@ -196,14 +196,14 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
 
   public void writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
-      Map<String, Object> propeties) throws IOException {
+      Map<String, Object> properties) throws IOException {
     String id = uniqueId(label, uniquePropertyName, uniquePropertyValue.toString());
-    writeMergeNode(id, label, propeties);
+    properties.put(uniquePropertyName, uniquePropertyValue);
+    writeMergeNode(id, label, properties);
   }
 
   public void writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue) throws IOException {
     HashMap<String, Object> properties = new HashMap<>();
-    properties.put(uniquePropertyName, uniquePropertyValue);
     writeMergeNode(label, uniquePropertyName, uniquePropertyValue, properties);
   }
 
