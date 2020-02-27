@@ -23,6 +23,28 @@ public class FilterSelectedEdges {
         return INSTANCE;
     }
     
+    public void selectEdges(Collection<Edge> edges, boolean keepSelection) {
+        if(!keepSelection) {
+            this.selectedEdges.clear();
+        }
+        boolean added = false;
+        for(Edge edge : edges) {
+            if(edge instanceof OverlappedEdges) {
+                OverlappedEdges overlapped = (OverlappedEdges)edge;
+                for(Edge e : overlapped.getEdges()) {
+                    if(selectedEdges.add(e))
+                        added = true;
+                }
+            }else {
+                if(selectedEdges.add(edge))
+                    added = true;
+            }
+        }
+        if(added) {
+            App.get().getAppListener().updateFileListing();
+        }
+    }
+    
     public void setEdge(Edge edge) {
         if(edge instanceof OverlappedEdges) {
             OverlappedEdges edges = (OverlappedEdges)edge;
