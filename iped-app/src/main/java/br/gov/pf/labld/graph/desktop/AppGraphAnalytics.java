@@ -294,7 +294,6 @@ public class AppGraphAnalytics extends JPanel {
         graphPane.setCursor(Cursor.getDefaultCursor());
     }
 
-    @Override
     public void edgesSelected(Collection<Edge> edges, MouseEvent e) {
         boolean keepSelection = e.isControlDown() || e.isShiftDown();
         FilterSelectedEdges.getInstance().selectEdges(edges, keepSelection);
