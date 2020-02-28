@@ -185,8 +185,6 @@ public class HtmlViewer extends Viewer {
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
-                            ProxySever.get().disable();
-
                             if (webEngine.isJavaScriptEnabled()) {
                                 JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                                 window.setMember("app", fileOpenApp); //$NON-NLS-1$
