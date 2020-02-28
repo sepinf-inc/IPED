@@ -299,7 +299,10 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     if (!replaces.isEmpty()) {
       for (CSVWriter writer : relationshipWriters.values()) {
-        writer.replace(replaces);
+        writer.replace(replaces, false);
+      }
+      for (CSVWriter writer : nodeWriters.values()) {
+          writer.replace(replaces, true);
       }
     }
   }
@@ -405,7 +408,7 @@ public class GraphFileWriter implements Closeable, Flushable {
       out.write("\r\n");
     }
 
-    public void replace(Map<String, String> replaces) throws IOException {
+    public void replace(Map<String, String> replaces, boolean isNodeWriter) throws IOException {
       BufferedReader reader = null;
       BufferedWriter writer = null;
       File tmp = new File(output.getParentFile(), output.getName() + ".tmp");
@@ -422,6 +425,9 @@ public class GraphFileWriter implements Closeable, Flushable {
               newId = tmpId;
           }
           if (newId != null) {
+            if(isNodeWriter) {
+                continue;
+            }
             line = line.replaceFirst(id1, newId);
           }
           tmpId = id2;
