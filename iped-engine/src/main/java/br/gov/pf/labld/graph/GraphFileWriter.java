@@ -414,12 +414,22 @@ public class GraphFileWriter implements Closeable, Flushable {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(output), Charset.forName("utf-8")));
         String line;
         while ((line = reader.readLine()) != null) {
-          String id = line.substring(0, line.indexOf(",")).trim();
-          String tmpId = id, newId = null;
-          while((tmpId = replaces.get(tmpId)) != null)
+          int firstIdx = line.indexOf(",");
+          String id1 = line.substring(0, firstIdx).trim();
+          String id2 = line.substring(firstIdx + 1, line.indexOf(",", firstIdx + 1)).trim();
+          String tmpId = id1, newId = null, newId2 = null;
+          while((tmpId = replaces.get(tmpId)) != null) {
               newId = tmpId;
+          }
           if (newId != null) {
-            line = line.replaceFirst(id, newId);
+            line = line.replaceFirst(id1, newId);
+          }
+          tmpId = id2;
+          while((tmpId = replaces.get(tmpId)) != null) {
+              newId2 = tmpId;
+          }
+          if (newId2 != null) {
+              line = line.replaceFirst(id2, newId2);
           }
           writer.write(line);
           writer.write("\r\n");
