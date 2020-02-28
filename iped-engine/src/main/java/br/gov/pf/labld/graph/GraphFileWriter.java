@@ -18,12 +18,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -195,16 +197,17 @@ public class GraphFileWriter implements Closeable, Flushable {
     return id;
   }
 
-  public void writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
+  public String writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
       Map<String, Object> properties) throws IOException {
     String id = uniqueId(label, uniquePropertyName, uniquePropertyValue.toString());
     properties.put(uniquePropertyName, uniquePropertyValue);
     writeMergeNode(id, label, properties);
+    return id;
   }
 
-  public void writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue) throws IOException {
+  public String writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue) throws IOException {
     HashMap<String, Object> properties = new HashMap<>();
-    writeMergeNode(label, uniquePropertyName, uniquePropertyValue, properties);
+    return writeMergeNode(label, uniquePropertyName, uniquePropertyValue, properties);
   }
 
   public void writeRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
@@ -228,7 +231,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   }
 
-  public void writeNodeReplace(DynLabel label, String propName, Object propId, String nodeId) throws IOException {
+  public void writeNodeReplace(Label label, String propName, Object propId, String nodeId) throws IOException {
     String uniqueId1 = uniqueId(label, propName, propId.toString());
     synchronized (replaceWriter) {
       replaceWriter.write("\"");
@@ -412,7 +415,9 @@ public class GraphFileWriter implements Closeable, Flushable {
         String line;
         while ((line = reader.readLine()) != null) {
           String id = line.substring(0, line.indexOf(",")).trim();
-          String newId = replaces.get(id);
+          String tmpId = id, newId = null;
+          while((tmpId = replaces.get(tmpId)) != null)
+              newId = tmpId;
           if (newId != null) {
             line = line.replaceFirst(id, newId);
           }
@@ -438,8 +443,32 @@ public class GraphFileWriter implements Closeable, Flushable {
         String line;
         while ((line = reader.readLine()) != null) {
           String id = line.substring(0, line.indexOf(",")).trim();
-          if (!uniques.containsKey(id)) {
-            uniques.put(id, line);
+          String prevLine = uniques.get(id);
+          if (prevLine == null) {
+              uniques.put(id, line);
+          }else {
+              TreeMap<Integer, Set<String>> map = new TreeMap<>();
+              String[][] valss = {line.split(","), prevLine.split(",")};
+              for(String[] vals : valss) {
+                  for(int i = 0; i < vals.length; i++) {
+                      Set<String> vs = map.get(i);
+                      if(vs == null) {
+                          vs = new HashSet<>();
+                          map.put(i, vs);
+                      }
+                      vs.addAll(Arrays.asList(vals[i].replaceAll("\"", "").split(";")));
+                  }
+              }
+              StringBuilder sb = new StringBuilder();
+              int i = 0;
+              for(Set<String> set : map.values()) {
+                  sb.append("\"");
+                  sb.append(set.stream().filter(a -> !a.isEmpty()).collect(Collectors.joining(";")));
+                  sb.append("\"");
+                  if(++i < map.size())
+                      sb.append(",");
+              }
+              uniques.put(id, sb.toString());
           }
         }
       }
