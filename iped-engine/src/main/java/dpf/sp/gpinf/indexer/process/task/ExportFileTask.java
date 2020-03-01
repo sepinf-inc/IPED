@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -41,6 +42,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.compress.compressors.CompressorOutputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.slf4j.Logger;
@@ -83,7 +86,7 @@ public class ExportFileTask extends AbstractTask {
     private static final String CREATE_TABLE = 
     		"CREATE TABLE IF NOT EXISTS t1(id INTEGER, data BLOB, thumb BLOB, text TEXT);";
     
-    private static final String CREATE_INDEX = "CREATE INDEX index ON t1(id);";
+    private static final String CREATE_INDEX = "CREATE INDEX idx1 ON t1(id);";
     
     private static final String INSERT_DATA = 
     		"INSERT INTO t1(id, data) VALUES(?,?);";
@@ -420,12 +423,15 @@ public class ExportFileTask extends AbstractTask {
                         	}
                         	try(PreparedStatement ps = storageCon.prepareStatement(INSERT_DATA)){
                         		ps.setInt(1, evidence.getId());
-                        		byte[] bs = new byte[len];
-                        		System.arraycopy(buf, 0, bs, 0, len);
-                            	ps.setBytes(2, bs);
+                        		ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
+                        		CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                        			    .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                        		gzippedOut.write(buf, 0, len);
+                        		gzippedOut.close();
+                            	ps.setBytes(2, baos.toByteArray());
                             	ps.executeUpdate();
                             	evidence.setIdInDataSource(String.valueOf(evidence.getId()));
-                            	evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.toPath(), storageCon));
+                            	evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.toPath(), baos.toByteArray()));
                             	evidence.setLength((long)len);
                             	return;
                         	}
@@ -447,8 +453,6 @@ public class ExportFileTask extends AbstractTask {
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
-                    
-                    e.printStackTrace();
 
                 } finally {
                     if (bos != null) {
@@ -472,14 +476,15 @@ public class ExportFileTask extends AbstractTask {
     	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id = ?;";
     	
     	private Connection conn;
+    	private byte[] data;
     	
     	public SQLiteInputStreamFactory(Path datasource) {
     		super(datasource);
     	}
     	
-    	public SQLiteInputStreamFactory(Path datasource, Connection conn) {
+    	public SQLiteInputStreamFactory(Path datasource, byte[] data) {
     		super(datasource);
-    		this.conn = conn;
+    		this.data = data;
     	}
 
 		@Override
@@ -487,16 +492,26 @@ public class ExportFileTask extends AbstractTask {
 			PreparedStatement ps = null;
 			ResultSet rs = null;
 			try{
-				if(conn == null) {
-					conn = DriverManager.getConnection("jdbc:sqlite:" + getDataSourcePath().toFile().getAbsolutePath());
+				byte[] bytes = null;
+				if(data != null) {
+					bytes = data;
+				}else {
+					if(conn == null) {
+						conn = DriverManager.getConnection("jdbc:sqlite:" + getDataSourcePath().toFile().getAbsolutePath());
+					}
+					ps = conn.prepareStatement(SELECT_DATA);
+					ps.setInt(1, Integer.valueOf(identifier));
+					rs = ps.executeQuery();
+					if(rs.next()) {
+						bytes = rs.getBytes(1);
+					}
 				}
-				ps = conn.prepareStatement(SELECT_DATA);
-				ps.setInt(1, Integer.valueOf(identifier));
-				rs = ps.executeQuery();
-				if(rs.next()) {
-					byte[] bytes = rs.getBytes(1);
-					return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
-				}
+				InputStream gzippedIn = new CompressorStreamFactory()
+            		    .createCompressorInputStream(CompressorStreamFactory.GZIP, new ByteArrayInputStream(bytes));
+				bytes = IOUtils.toByteArray(gzippedIn);
+				gzippedIn.close();
+				return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
+				
 			} catch (Exception e) {
 				throw new IOException(e);
 			}finally {
@@ -506,10 +521,9 @@ public class ExportFileTask extends AbstractTask {
 					if(ps != null)
 						ps.close();
 				}catch (Exception e) {
-					throw new IOException(e);
+					//ignore
 				}
 			}
-			return null;
 		}
     	
     }
@@ -539,8 +553,12 @@ public class ExportFileTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        if(storageCon != null && !storageCon.isClosed()) {
+        	try(Statement stmt = storageCon.createStatement()){
+				stmt.executeUpdate(CREATE_INDEX);
+			}
+        	storageCon.close();
+        }
     }
 
 }
