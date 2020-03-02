@@ -24,12 +24,12 @@
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-delta</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-swing</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
@@ -39,7 +39,7 @@
 		<dependency>
     		<groupId>org.exbin.utils</groupId>
     		<artifactId>exbin-binary_data</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3</version>
 		</dependency>
         <dependency>
       		<groupId>com.drewnoakes</groupId>
