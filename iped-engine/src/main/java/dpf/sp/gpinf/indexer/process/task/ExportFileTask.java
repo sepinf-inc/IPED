@@ -40,7 +40,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
@@ -84,7 +85,7 @@ public class ExportFileTask extends AbstractTask {
     private static final int SQLITE_CACHE_SIZE = 1 << 24;
     
     private static final String CREATE_TABLE = 
-    		"CREATE TABLE IF NOT EXISTS t1(id INTEGER, data BLOB, thumb BLOB, text TEXT);";
+    		"CREATE TABLE IF NOT EXISTS t1(id TEXT, data BLOB, thumb BLOB, text TEXT);";
     
     private static final String CREATE_INDEX = "CREATE INDEX IF NOT EXISTS idx1 ON t1(id);";
     
@@ -100,6 +101,8 @@ public class ExportFileTask extends AbstractTask {
 
     private static boolean computeHash = false;
     private File extractDir;
+    private static HashMap<HashValue, HashValue> insertedMD5 = new HashMap<>();
+    private static HashValue insertedHash = new HashValue(new byte[16]);
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
@@ -134,10 +137,10 @@ public class ExportFileTask extends AbstractTask {
     }
     
     private void configureSQLiteStorage() {
-    	String storageName = STORAGE_PREFIX + this.worker.id + ".db";
-        storage = new File(output, STORAGE_PREFIX + File.separator + storageName);
+    	String connectionName = STORAGE_PREFIX + this.worker.id + ".db";
+        storage = new File(output, STORAGE_PREFIX + File.separator + "storage.db");
         storage.getParentFile().mkdir();
-        storageCon = (Connection)caseData.getCaseObject(STORAGE_CON_PREFIX + storageName);
+        storageCon = (Connection)caseData.getCaseObject(STORAGE_CON_PREFIX + connectionName);
     	if(storageCon == null) {
     	    try {
     	        storageCon = getSQLiteConnection(storage);
@@ -147,17 +150,17 @@ public class ExportFileTask extends AbstractTask {
                 try(Statement stmt = storageCon.createStatement()){
                     stmt.executeUpdate(CREATE_INDEX);
                 }
-                caseData.putCaseObject(STORAGE_CON_PREFIX + storageName, storageCon);
+                caseData.putCaseObject(STORAGE_CON_PREFIX + connectionName, storageCon);
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
     	}
-    	ps = (PreparedStatement)caseData.getCaseObject("prepareStatement" + storageName);
+    	ps = (PreparedStatement)caseData.getCaseObject("prepareStatement" + connectionName);
     	if(ps == null) {
     	    try {
                 ps = storageCon.prepareStatement(INSERT_DATA);
-                caseData.putCaseObject("prepareStatement" + storageName, ps);
+                caseData.putCaseObject("prepareStatement" + connectionName, ps);
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -172,7 +175,7 @@ public class ExportFileTask extends AbstractTask {
         config.setPragma(Pragma.CACHE_SIZE, "-" + SQLITE_CACHE_SIZE / 1024);
         config.setBusyTimeout(3600000);
         Connection conn = config.createConnection("jdbc:sqlite:" + storage.getAbsolutePath());
-        conn.setAutoCommit(false);
+        //conn.setAutoCommit(false);
         return conn;
     }
 
@@ -447,19 +450,7 @@ public class ExportFileTask extends AbstractTask {
                         		evidence.setLength(0L);
                         		return;
                         	}
-                        	ps.setInt(1, evidence.getId());
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                                    .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
-                            gzippedOut.write(buf, 0, len);
-                            gzippedOut.close();
-                            buf = null;
-                            ps.setBytes(2, baos.toByteArray());
-                            baos = null;
-                            ps.executeUpdate();
-                            evidence.setIdInDataSource(String.valueOf(evidence.getId()));
-                            evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.toPath(), storageCon));
-                            evidence.setLength((long)len);
+                        	insertIntoStorage(evidence, buf, len);
                             return;
                         }
                         if(bos == null) {
@@ -479,7 +470,7 @@ public class ExportFileTask extends AbstractTask {
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
-
+                    
                 } finally {
                     if (bos != null) {
                         bos.close();
@@ -497,9 +488,56 @@ public class ExportFileTask extends AbstractTask {
 
     }
     
+    private void insertIntoStorage(IItem evidence, byte[] buf, int len) throws InterruptedException, IOException, SQLException, CompressorException {
+        HashValue md5 = new HashValue(DigestUtils.md5(new ByteArrayInputStream(buf, 0, len)));
+        HashValue prev;
+        boolean first = false, inserted = false;
+        synchronized(insertedMD5) {
+            prev = insertedMD5.putIfAbsent(md5, md5);
+        }
+        if(prev == null) {
+            first = true;
+        }else if(!prev.equals(insertedHash)) {
+            md5 = prev;
+        }else {
+            inserted = true;
+        }
+        if(!inserted) {
+            synchronized(md5) {
+                if(!first) {
+                    boolean wait; 
+                    synchronized(insertedMD5) {
+                        wait = !insertedMD5.get(md5).equals(insertedHash);
+                    }
+                    if(wait) {
+                        md5.wait();
+                    }
+                }else {
+                    ps.setString(1, md5.toString());
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                            .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                    gzippedOut.write(buf, 0, len);
+                    gzippedOut.close();
+                    buf = null;
+                    ps.setBytes(2, baos.toByteArray());
+                    baos = null;
+                    ps.executeUpdate();
+                    synchronized(insertedMD5) {
+                        insertedMD5.put(md5, insertedHash);
+                    }
+                    md5.notifyAll();
+                }
+            }
+        }
+        evidence.setIdInDataSource(md5.toString());
+        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.toPath(), storageCon));
+        evidence.setLength((long)len);
+    }
+    
     public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory{
     	
-    	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id = ?;";
+    	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
     	
     	private Connection conn;
     	private PreparedStatement ps;
@@ -524,7 +562,7 @@ public class ExportFileTask extends AbstractTask {
 				if(ps == null) {
 				    ps = conn.prepareStatement(SELECT_DATA);
 				}
-                ps.setInt(1, Integer.valueOf(identifier));
+                ps.setString(1, identifier);
                 rs = ps.executeQuery();
                 if(rs.next()) {
                     bytes = rs.getBytes(1);
@@ -578,7 +616,7 @@ public class ExportFileTask extends AbstractTask {
             ps.close();
         }
         if(storageCon != null && !storageCon.isClosed()) {
-        	storageCon.commit();
+        	//storageCon.commit();
         	storageCon.close();
         }
     }
