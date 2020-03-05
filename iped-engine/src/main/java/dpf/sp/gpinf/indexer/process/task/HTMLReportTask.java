@@ -229,6 +229,8 @@ public class HTMLReportTask extends AbstractTask {
      * geração de miniaturas.
      */
     private static final Set<String> currentFiles = new HashSet<String>();
+    
+    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
@@ -381,7 +383,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-
+    	
         if (taskEnabled && caseData.containsReport() && info != null) {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
@@ -449,6 +451,8 @@ public class HTMLReportTask extends AbstractTask {
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
             Log.info(taskName, "Report creation time (seconds): " + t); //$NON-NLS-1$
+            
+            graphicsMagicConverter.close();
         }
     }
 
@@ -950,7 +954,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (img == null) {
                     stream = evidence.getBufferedStream();
                     try {
-                        img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
+                        img = graphicsMagicConverter.getImage(stream, thumbSize * sampleFactor);
                     } finally {
                         IOUtil.closeQuietly(stream);
                     }
