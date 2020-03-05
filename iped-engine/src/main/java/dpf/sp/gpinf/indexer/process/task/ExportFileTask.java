@@ -502,7 +502,6 @@ public class ExportFileTask extends AbstractTask {
     	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id = ?;";
     	
     	private Connection conn;
-    	private PreparedStatement ps;
     	
     	public SQLiteInputStreamFactory(Path datasource) {
     		super(datasource);
@@ -515,20 +514,19 @@ public class ExportFileTask extends AbstractTask {
 
 		@Override
 		public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-			ResultSet rs = null;
 			try{
 				byte[] bytes = null;
 				if(conn == null) {
                     conn = getSQLiteConnection(getDataSourcePath().toFile());
                 }
-				if(ps == null) {
-				    ps = conn.prepareStatement(SELECT_DATA);
+				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
+				    ps.setInt(1, Integer.valueOf(identifier));
+	                try(ResultSet rs = ps.executeQuery()){
+	                    if(rs.next()) {
+	                        bytes = rs.getBytes(1);
+	                    }
+	                }
 				}
-                ps.setInt(1, Integer.valueOf(identifier));
-                rs = ps.executeQuery();
-                if(rs.next()) {
-                    bytes = rs.getBytes(1);
-                }
 				InputStream gzippedIn = new CompressorStreamFactory()
             		    .createCompressorInputStream(CompressorStreamFactory.GZIP, new ByteArrayInputStream(bytes));
 				bytes = IOUtils.toByteArray(gzippedIn);
@@ -537,13 +535,6 @@ public class ExportFileTask extends AbstractTask {
 				
 			} catch (Exception e) {
 				throw new IOException(e);
-			}finally {
-				try {
-					if(rs != null)
-						rs.close();
-				}catch (Exception e) {
-					//ignore
-				}
 			}
 		}
     	
