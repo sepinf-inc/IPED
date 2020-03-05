@@ -34,6 +34,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
+import org.sqlite.SQLiteOpenMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
@@ -106,9 +108,8 @@ public class ExportFileTask extends AbstractTask {
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
-    private File storage;
-    private Connection storageCon;
-    private PreparedStatement ps;
+    private static HashMap<Integer, File> storage = new HashMap<>();
+    private static HashMap<Integer, Connection> storageCon = new HashMap<>();
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -131,41 +132,36 @@ public class ExportFileTask extends AbstractTask {
             }
             IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
             if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-            	configureSQLiteStorage();
+                if(storage.isEmpty()) {
+                    configureSQLiteStorage(output);
+                }
             }
         }
     }
     
-    private void configureSQLiteStorage() {
-    	String connectionName = STORAGE_PREFIX + this.worker.id + ".db";
-        storage = new File(output, STORAGE_PREFIX + File.separator + "storage.db");
-        storage.getParentFile().mkdir();
-        storageCon = (Connection)caseData.getCaseObject(STORAGE_CON_PREFIX + connectionName);
-    	if(storageCon == null) {
-    	    try {
-    	        storageCon = getSQLiteConnection(storage);
-                try(Statement stmt = storageCon.createStatement()){
+    private static synchronized void configureSQLiteStorage(File output) {
+        if(!storage.isEmpty()) {
+            return;
+        }
+        for(int i = 0; i < 16; i++) {
+            String storageName = STORAGE_PREFIX + "-" + i + ".db";
+            File db = new File(output, STORAGE_PREFIX + File.separator + storageName);
+            db.getParentFile().mkdir();
+            storage.put(i, db);
+            try {
+                Connection con = getSQLiteConnection(db);
+                try(Statement stmt = con.createStatement()){
                     stmt.executeUpdate(CREATE_TABLE);
                 }
-                try(Statement stmt = storageCon.createStatement()){
+                try(Statement stmt = con.createStatement()){
                     stmt.executeUpdate(CREATE_INDEX);
                 }
-                caseData.putCaseObject(STORAGE_CON_PREFIX + connectionName, storageCon);
+                storageCon.put(i, con);
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-    	}
-    	ps = (PreparedStatement)caseData.getCaseObject("prepareStatement" + connectionName);
-    	if(ps == null) {
-    	    try {
-                ps = storageCon.prepareStatement(INSERT_DATA);
-                caseData.putCaseObject("prepareStatement" + connectionName, ps);
-                
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-    	}
+        }
     }
     
     private static Connection getSQLiteConnection(File storage) throws SQLException {
@@ -174,8 +170,10 @@ public class ExportFileTask extends AbstractTask {
         config.setPragma(Pragma.JOURNAL_MODE, "TRUNCATE");
         config.setPragma(Pragma.CACHE_SIZE, "-" + SQLITE_CACHE_SIZE / 1024);
         config.setBusyTimeout(3600000);
+        config.setSharedCache(true);
+        config.setReadUncommited(true);
         Connection conn = config.createConnection("jdbc:sqlite:" + storage.getAbsolutePath());
-        //conn.setAutoCommit(false);
+        conn.setAutoCommit(false);
         return conn;
     }
 
@@ -471,6 +469,8 @@ public class ExportFileTask extends AbstractTask {
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
                     
+                    e.printStackTrace();
+                    
                 } finally {
                     if (bos != null) {
                         bos.close();
@@ -489,7 +489,9 @@ public class ExportFileTask extends AbstractTask {
     }
     
     private void insertIntoStorage(IItem evidence, byte[] buf, int len) throws InterruptedException, IOException, SQLException, CompressorException {
-        HashValue md5 = new HashValue(DigestUtils.md5(new ByteArrayInputStream(buf, 0, len)));
+        byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
+        int k = (hash[0] & 0xFF) >> 4;
+        HashValue md5 = new HashValue(hash);
         HashValue prev;
         boolean first = false, inserted = false;
         synchronized(insertedMD5) {
@@ -513,16 +515,18 @@ public class ExportFileTask extends AbstractTask {
                         md5.wait();
                     }
                 }else {
-                    ps.setString(1, md5.toString());
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                            .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
-                    gzippedOut.write(buf, 0, len);
-                    gzippedOut.close();
-                    buf = null;
-                    ps.setBytes(2, baos.toByteArray());
-                    baos = null;
-                    ps.executeUpdate();
+                    try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+                        ps.setString(1, md5.toString());
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                                .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                        gzippedOut.write(buf, 0, len);
+                        gzippedOut.close();
+                        buf = null;
+                        ps.setBytes(2, baos.toByteArray());
+                        baos = null;
+                        ps.executeUpdate();
+                    }
                     synchronized(insertedMD5) {
                         insertedMD5.put(md5, insertedHash);
                     }
@@ -531,7 +535,7 @@ public class ExportFileTask extends AbstractTask {
             }
         }
         evidence.setIdInDataSource(md5.toString());
-        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.toPath(), storageCon));
+        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(k).toPath(), storageCon.get(k)));
         evidence.setLength((long)len);
     }
     
@@ -540,7 +544,6 @@ public class ExportFileTask extends AbstractTask {
     	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
     	
     	private Connection conn;
-    	private PreparedStatement ps;
     	
     	public SQLiteInputStreamFactory(Path datasource) {
     		super(datasource);
@@ -553,20 +556,19 @@ public class ExportFileTask extends AbstractTask {
 
 		@Override
 		public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-			ResultSet rs = null;
 			try{
 				byte[] bytes = null;
 				if(conn == null) {
                     conn = getSQLiteConnection(getDataSourcePath().toFile());
                 }
-				if(ps == null) {
-				    ps = conn.prepareStatement(SELECT_DATA);
+				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
+				    ps.setString(1, identifier);
+	                try(ResultSet rs = ps.executeQuery()){
+	                    if(rs.next()) {
+	                        bytes = rs.getBytes(1);
+	                    }
+	                }
 				}
-                ps.setString(1, identifier);
-                rs = ps.executeQuery();
-                if(rs.next()) {
-                    bytes = rs.getBytes(1);
-                }
 				InputStream gzippedIn = new CompressorStreamFactory()
             		    .createCompressorInputStream(CompressorStreamFactory.GZIP, new ByteArrayInputStream(bytes));
 				bytes = IOUtils.toByteArray(gzippedIn);
@@ -574,14 +576,8 @@ public class ExportFileTask extends AbstractTask {
 				return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
 				
 			} catch (Exception e) {
+			    e.printStackTrace();
 				throw new IOException(e);
-			}finally {
-				try {
-					if(rs != null)
-						rs.close();
-				}catch (Exception e) {
-					//ignore
-				}
 			}
 		}
     	
@@ -612,13 +608,13 @@ public class ExportFileTask extends AbstractTask {
     
     @Override
     public void finish() throws Exception {
-        if(ps != null && !ps.isClosed()) {
-            ps.close();
+        for(Connection con : storageCon.values()) {
+            if(con != null && !con.isClosed()) {
+                con.commit();
+                con.close();
+            }
         }
-        if(storageCon != null && !storageCon.isClosed()) {
-        	//storageCon.commit();
-        	storageCon.close();
-        }
+        
     }
 
 }
