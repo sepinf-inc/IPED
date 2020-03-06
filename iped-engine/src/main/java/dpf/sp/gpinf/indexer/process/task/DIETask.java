@@ -113,6 +113,8 @@ public class DIETask extends AbstractTask {
     private static final AtomicLong totalTime = new AtomicLong();
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
+    
+    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
     @Override
     public boolean isEnabled() {
@@ -188,7 +190,8 @@ public class DIETask extends AbstractTask {
      * no Log.
      */
     public void finish() throws Exception {
-        synchronized (finished) {
+    	synchronized (finished) {
+    		graphicsMagicConverter.close();
             if (taskEnabled && !finished.get()) {
                 Log.info(taskName, "Total images processed: " + totalProcessed); //$NON-NLS-1$
                 Log.info(taskName, "Total images not processed: " + totalFailed); //$NON-NLS-1$
@@ -287,7 +290,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = new GraphicsMagicConverter().getImage(stream, die.getExpectedImageSize());
+                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
