@@ -69,7 +69,6 @@ public class GalleryModel extends AbstractTableModel {
     private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
     private ExecutorService executor;
-    private GraphicsMagicConverter magickConverter;
 
     @Override
     public int getColumnCount() {
@@ -142,7 +141,6 @@ public class GalleryModel extends AbstractTableModel {
 
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
-            magickConverter = new GraphicsMagicConverter(executor);
         }
 
         executor.execute(new Runnable() {
@@ -225,7 +223,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     if (image == null && stream != null) {
-                        image = magickConverter.getImage(stream, thumbSize);
+                        image = new GraphicsMagicConverter().getImage(stream, thumbSize);
                     }
 
                     if (image == null || image == errorImg) {
