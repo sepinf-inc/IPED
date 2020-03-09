@@ -23,6 +23,11 @@
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
+    		<artifactId>deltahex-core</artifactId>
+    		<version>0.1.3</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-delta</artifactId>
     		<version>0.1.3</version>
 		</dependency>
@@ -34,7 +39,7 @@
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-highlight-swing</artifactId>
-    		<version>0.1.3</version>
+    		<version>0.1.3-p1</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.utils</groupId>
