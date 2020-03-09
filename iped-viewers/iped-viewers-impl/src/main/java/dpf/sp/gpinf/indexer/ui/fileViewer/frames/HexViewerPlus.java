@@ -173,6 +173,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 	JCheckBox showUnprintableCharactersCheckBox;	
 	JCheckBox showPositionBarCheckBox;
 	JCheckBox showSelectionBarCheckBox;
+	JCheckBox showLineNumberBackgroundCheckBox;
 	
 	
 	RoundButton btnColorFontMain;
@@ -187,7 +188,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 	RoundButton btnColorFoundMatchBackground;
 	RoundButton btnColorCurrentMatchText;	
 	RoundButton btnColorCurrentMatchBackground;
-	RoundButton btnColorCursor;	
+	RoundButton btnColorCursor;
+	RoundButton btnColorHeaderText;	
+	RoundButton btnColorHeaderBackground;	
 
 	JSpinner fontSizeSpinner;
 	JSpinner cursorBlinkSpinner;
@@ -311,6 +314,10 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 					dialogPesquisar.setLocationRelativeTo(codeArea);
 					dialogPesquisar.setVisible(true);
 				}				
+				if ((e.getKeyCode() == KeyEvent.VK_G) && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+					dialogIrParaEndereco.setLocationRelativeTo(codeArea);
+					dialogIrParaEndereco.setVisible(true);
+				}				
 		  }		  
 		});
 
@@ -334,8 +341,12 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		bottomPanelLeft.setLayout(new BoxLayout(bottomPanelLeft, BoxLayout.LINE_AXIS));
 		bottomPanelLeft.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bottomPanelLeft.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-
-		bottomPanelLeft.add(new JLabel(Messages.getString("HexViewerPlus.position")+" "));
+				
+		JLabel JLabelPosition = new JLabel(Messages.getString("HexViewerPlus.position"));
+		JLabelPosition.setPreferredSize(new Dimension(60, JLabelPosition.getMinimumSize().height));
+		JLabelPosition.setMaximumSize(new Dimension(60, JLabelPosition.getMinimumSize().height));
+		bottomPanelLeft.add(JLabelPosition);
+		bottomPanelLeft.add(Box.createHorizontalGlue());
 		posicao.setMaximumSize(new Dimension(200, posicao.getMinimumSize().height));
 		posicao.setMinimumSize(new Dimension(100, posicao.getMinimumSize().height));
 		posicao.setPreferredSize(new Dimension(200, posicao.getMinimumSize().height));		
@@ -366,10 +377,16 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		bottomPanel2.setAlignmentX(Component.LEFT_ALIGNMENT);
 		bottomPanel2.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 		
-		bottomPanel2.add(new JLabel(Messages.getString("HexViewerPlus.selection")+" "));
+		
+		JLabel JLabelSelection = new JLabel(Messages.getString("HexViewerPlus.selection"));
+		JLabelSelection.setPreferredSize(new Dimension(60, JLabelSelection.getMinimumSize().height));
+		JLabelSelection.setMaximumSize(new Dimension(60, JLabelSelection.getMinimumSize().height));
+		bottomPanel2.add(JLabelSelection);
+		selecao_inicial.setPreferredSize(new Dimension(200, selecao_inicial.getMinimumSize().height));
 		selecao_inicial.setMaximumSize(new Dimension(200, selecao_inicial.getMinimumSize().height));
 		bottomPanel2.add(selecao_inicial);		
 		bottomPanel2.add(new JLabel(" "+Messages.getString("HexViewerPlus.to")+" "));
+		selecao_final.setPreferredSize(new Dimension(200, selecao_final.getMinimumSize().height));
 		selecao_final.setMaximumSize(new Dimension(200, selecao_final.getMinimumSize().height));
 		bottomPanel2.add(selecao_final);
 		bottomPanel2.add(new JLabel(" "));
@@ -474,7 +491,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		
 		hits.currentHit = 0;		
 		hits.totalHits = 0;		
-
+		resultSearch.setText("");
 		
 		contentAux = content;
 		
@@ -502,9 +519,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 codeArea.notifyDataChanged();				
 									
 				if (high) {
-																		
-					hexSearcher.doSearch(codeArea, painter, hits,content.getStream(),codeArea.getCharset(),highlightTerms,0 ,true, true, resultSearch, max_terms);
-					
+					//Uncomment the line below if you want the automatic search when opening a file. If so, see how not to trigger Search text at the same time.													
+					//hexSearcher.doSearch(codeArea, painter, hits,content.getStream(),codeArea.getCharset(),highlightTerms,0 ,true, true, resultSearch, max_terms);
+					;
 				}
 				
 			} catch (Exception ex) {
@@ -679,7 +696,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		
 		jPopupMenu.add(new JSeparator());
 		
-		menuItemGo = new JMenuItem(Messages.getString("HexViewerPlus.goToPosition"));
+		menuItemGo = new JMenuItem(Messages.getString("HexViewerPlus.goToPosition"),KeyEvent.VK_G);
+		menuItemGo.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.CTRL_MASK));
 		menuItemGo.addActionListener(menuListener);
 		jPopupMenu.add(menuItemGo);		
 		
@@ -753,7 +771,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		dialogOpcoes = new JDialog();
 		dialogOpcoes.setModal(true);
 		dialogOpcoes.setTitle(Messages.getString("HexViewerPlus.settings")+" - "+appName);
-		dialogOpcoes.setBounds(0, 0, 810, 560);
+		dialogOpcoes.setBounds(0, 0, 810, 590);
 		
 		String selectColorText = Messages.getString("HexViewerPlus.selectColor");
 	
@@ -776,6 +794,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		JLabel lblColorSelectionMirrorText = new JLabel(Messages.getString("HexViewerPlus.fontColor"));
 		JLabel lblColorSelectionMirrorBackground = new JLabel(Messages.getString("HexViewerPlus.backGroundColor"));	
 		JLabel lblSelectionMain = new JLabel(Messages.getString("HexViewerPlus.selectionCharactersMain"));
+		JLabel lblHeaderColor = new JLabel(Messages.getString("HexViewerPlus.headerLineBackground"));
+		JLabel lblColorHeaderText = new JLabel(Messages.getString("HexViewerPlus.fontColor"));
+		JLabel lblColorHeaderBackground = new JLabel(Messages.getString("HexViewerPlus.backGroundColor"));		
 		JLabel lblColorSelectionMainText = new JLabel(Messages.getString("HexViewerPlus.fontColor"));
 		JLabel lblColorSelectionMainBackground = new JLabel(Messages.getString("HexViewerPlus.backGroundColor"));
 		JLabel lblColorFoundMatch = new JLabel(Messages.getString("HexViewerPlus.searchHitsFoundMatch"));
@@ -796,6 +817,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		showLineNumbersCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showLines"),true);		
 		wrapLineModeCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.lineBreak"),true);
 		showUnprintableCharactersCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showAllCharacters"),false);			
+		showLineNumberBackgroundCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showLineNumberBackground"),true);
 		showPositionBarCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showPositionBar"),true);
 		showSelectionBarCheckBox = new JCheckBox(Messages.getString("HexViewerPlus.showSelectionBar"),true);
 		
@@ -824,6 +846,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		btnColorCursor = new RoundButton("",codeArea.getCursorColor());		
 		btnColorBackgroundMain = new RoundButton("",codeArea.getMainColors().getBackgroundColor());		
 		btnColorBackgroundAlt = new RoundButton("",codeArea.getAlternateColors().getBackgroundColor());
+		btnColorHeaderText = new RoundButton("",codeArea.getForeground());	
+		btnColorHeaderBackground = new RoundButton("",codeArea.getBackground());				
 		
         String[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 		String [] cursors = new String[CursorShape.values().length];
@@ -961,15 +985,21 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 				
         wrapLineModeCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                codeArea.setWrapMode(!wrapLineModeCheckBox.isSelected());
+                codeArea.setWrapMode(!codeArea.isWrapMode());
             }
         });
 		
         showUnprintableCharactersCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                codeArea.setShowUnprintableCharacters(showUnprintableCharactersCheckBox.isSelected());
+                codeArea.setShowUnprintableCharacters(!codeArea.isShowUnprintableCharacters());
             }
-        });				
+        });
+
+        showLineNumberBackgroundCheckBox.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                codeArea.setLineNumberBackground(!codeArea.isLineNumberBackground());
+            }
+        });		
 		
         hexCharactersCaseCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -1065,6 +1095,26 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 				}
 			}
 		});		
+
+		btnColorHeaderBackground.addActionListener(new ActionListener (){
+			public void actionPerformed(ActionEvent e) {
+				Color c = JColorChooser.showDialog( dialogOpcoes, selectColorText, codeArea.getBackground() );
+				if (c!=null){
+					codeArea.setBackground(c);
+					btnColorHeaderBackground.setBackground(c);
+				}
+			}
+		});	
+
+		btnColorHeaderText.addActionListener(new ActionListener (){
+			public void actionPerformed(ActionEvent e) {
+				Color c = JColorChooser.showDialog( dialogOpcoes, selectColorText, codeArea.getForeground() );
+				if (c!=null){
+					codeArea.setForeground(c);
+					btnColorHeaderText.setBackground(c);
+				}
+			}
+		});
 		
 		btnColorSelectionMainBackground.addActionListener(new ActionListener (){
 			public void actionPerformed(ActionEvent e) {
@@ -1278,6 +1328,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		coluna += size1+gap;
 		showSelectionBarCheckBox.setBounds(coluna, linha, size1, space);		
 		
+		coluna += size1+gap+sep;
+		showLineNumberBackgroundCheckBox.setBounds(coluna, linha, size1, space);		
+		
 		//
 		size1 = 220;
 		coluna = 30;		
@@ -1402,6 +1455,28 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		btnColorCursor.setBounds(coluna, linha, roundButtonSize, roundButtonSize);	
 		coluna += size2+sep;
 		cursorExample.setBounds(coluna+25, linha+8, roundButtonSize, roundButtonSize);		
+
+		//
+		size1 = 220;
+		size2 = 0;
+		linha += line_space;
+		coluna = 30;		
+		lblHeaderColor.setBounds(coluna, linha, size1, space);
+		coluna += size1;
+		
+		size1 = 120;
+		coluna += size2+gap;
+		lblColorHeaderText.setBounds(coluna, linha, size1, space);
+		size2 = space;	
+		coluna += size1+(3*sep);
+		btnColorHeaderText.setBounds(coluna, linha, roundButtonSize, roundButtonSize);		
+
+		size1 = 120;
+		coluna += 110+gap+-(3*sep);
+		lblColorHeaderBackground.setBounds(coluna, linha, size1, space);
+		size2 = space;	
+		coluna += size1+(3*sep);
+		btnColorHeaderBackground.setBounds(coluna, linha, roundButtonSize, roundButtonSize);	
 		
 		//
 		size1 = 220;
@@ -1509,10 +1584,15 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		buttonCancel.setBounds(coluna, linha, size1, space);		
 		
 		dialogOpcoes.getContentPane().add(lblSelectionMain);
+		dialogOpcoes.getContentPane().add(lblHeaderColor);
 		dialogOpcoes.getContentPane().add(lblColorSelectionMainText);		
+		dialogOpcoes.getContentPane().add(lblColorHeaderBackground);		
+		dialogOpcoes.getContentPane().add(lblColorHeaderText);		
 		dialogOpcoes.getContentPane().add(btnColorSelectionMainText);		
 		dialogOpcoes.getContentPane().add(lblColorSelectionMainBackground);
 		dialogOpcoes.getContentPane().add(btnColorSelectionMainBackground);		
+		dialogOpcoes.getContentPane().add(btnColorHeaderText);	
+		dialogOpcoes.getContentPane().add(btnColorHeaderBackground);	
 		dialogOpcoes.getContentPane().add(lblSelectionMirror);
 		dialogOpcoes.getContentPane().add(lblColorSelectionMirrorText);		
 		dialogOpcoes.getContentPane().add(btnColorSelectionMirrorText);		
@@ -1559,6 +1639,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		dialogOpcoes.getContentPane().add(positionCodeTypeComboBox);
 		dialogOpcoes.getContentPane().add(wrapLineModeCheckBox);
 		dialogOpcoes.getContentPane().add(showUnprintableCharactersCheckBox);
+		dialogOpcoes.getContentPane().add(showLineNumberBackgroundCheckBox);
 		dialogOpcoes.getContentPane().add(hexCharactersCaseCheckBox);
 		dialogOpcoes.getContentPane().add(showHeaderCheckBox);
 		dialogOpcoes.getContentPane().add(showLineNumbersCheckBox);
@@ -1622,6 +1703,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		showLineNumbersCheckBox.setSelected(values.showLineNumbers);		
 		wrapLineModeCheckBox.setSelected(values.wrapLineMode);
 		showUnprintableCharactersCheckBox.setSelected(values.showUnprintableCharacters);
+		showLineNumberBackgroundCheckBox.setSelected(values.showLineNumberBackground);
 
 		fontSizeSpinner.setValue(values.fontSize);
 		cursorBlinkSpinner.setValue(values.cursorBlink);
@@ -1680,6 +1762,12 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		btnColorCurrentMatchText.setBackground(values.ColorCurrentMatchText);		
 		btnColorCurrentMatchBackground.setBackground(values.ColorCurrentMatchBackground);		
 
+		codeArea.setForeground(values.ColorHeaderText);
+		btnColorHeaderText.setBackground(values.ColorHeaderText);		
+
+		codeArea.setBackground(values.ColorHeaderBackground);
+		btnColorHeaderBackground.setBackground(values.ColorHeaderBackground);		
+		
 		codeArea.setCursorColor(values.ColorCursor);
 		btnColorCursor.setBackground(values.ColorCursor);		
 		
@@ -1703,6 +1791,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		values.showLineNumbers = showLineNumbersCheckBox.isSelected();		
 		values.wrapLineMode = wrapLineModeCheckBox.isSelected();
 		values.showUnprintableCharacters = showUnprintableCharactersCheckBox.isSelected();	
+		values.showLineNumberBackground = showLineNumberBackgroundCheckBox.isSelected();	
 	
 		values.fontSize = (Integer)fontSizeSpinner.getValue();
 		values.cursorBlink = (Integer)cursorBlinkSpinner.getValue();
@@ -1722,6 +1811,10 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		values.ColorCurrentMatchText = painter.getCurrentMatchTextColor();			
 		values.ColorCurrentMatchBackground = painter.getCurrentMatchBackgroundColor();			
 		values.ColorCursor = codeArea.getCursorColor();	
+		
+		values.ColorHeaderText = codeArea.getForeground();
+		values.ColorHeaderBackground = codeArea.getBackground();
+
 
 	}	
 
@@ -2129,6 +2222,15 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		dialogIrParaEndereco.getContentPane().add(buttonCancel);
 		dialogIrParaEndereco.getContentPane().add(new JLabel());
 		
+		jtfTexto.addKeyListener(new KeyAdapter() {
+		  @Override
+		  public void keyPressed(KeyEvent e) {
+			if ((e.getKeyCode() == KeyEvent.VK_ENTER)) {
+				buttonOK.doClick();
+			}
+		  }		  	  
+		});			
+		
 		buttonCancel.addActionListener(new ActionListener (){
 			public void actionPerformed(ActionEvent e) {
 				jtfTexto.requestFocus();
@@ -2371,12 +2473,14 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 				
 				Charset charsetParam = null;
 				String charSetString = fcbCharset.getSelectedItem().toString();
-				if (charSetString != null && !charSetString.isEmpty() && Charset.isSupported(charSetString)){
-					charsetParam = Charset.forName(charSetString);
-				}else{
-					JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.charset")+" \""+charSetString+"\" "+Messages.getString("HexViewerPlus.invalid")+"!",appName,JOptionPane.ERROR_MESSAGE);
-					return;
-				}						
+				if (jrbTexto.isSelected()){
+					if (charSetString != null && !charSetString.isEmpty() && Charset.isSupported(charSetString)){
+						charsetParam = Charset.forName(charSetString);
+					}else{
+						JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.charset")+" \""+charSetString+"\" "+Messages.getString("HexViewerPlus.invalid")+"!",appName,JOptionPane.ERROR_MESSAGE);
+						return;
+					}	
+				}				
 				
 				long off = jrbInicio.isSelected()?0:codeArea.getCaretPosition().getDataPosition();					
 				
@@ -2916,6 +3020,7 @@ class HVPSettings implements Serializable{
 	public boolean showLineNumbers = true;		
 	public boolean wrapLineMode = true;
 	public boolean showUnprintableCharacters = false;	
+	public boolean showLineNumberBackground = true;
 	public boolean showSelectionBar = true;
 	public boolean showPositionBar = true;	
 	
@@ -2935,7 +3040,10 @@ class HVPSettings implements Serializable{
 	public Color ColorFoundMatchBackground = Color.YELLOW;
 	public Color ColorCurrentMatchText = Color.BLACK;			
 	public Color ColorCurrentMatchBackground = Color.GREEN;			
-	public Color ColorCursor = Color.BLACK;			
+	public Color ColorCursor = Color.BLACK;	
+
+	public Color ColorHeaderText = Color.BLACK;
+	public Color ColorHeaderBackground = new Color (198,201,207);	
 	
 	public static boolean saveObject(String path, HVPSettings obj){
 		
@@ -3536,7 +3644,9 @@ class Messages {
 		map.put( "HexViewerPlus.invalidMaxLessThen", "Máximo inválido!. Menor ou igual a " );
 		map.put( "HexViewerPlus.invalid", "inválido" );
 		map.put( "HexViewerPlus.showPositionBar", "Mostra barra de Posição" );
-		map.put( "HexViewerPlus.showSelectionBar","Mostrar barra de Seleção" );		
+		map.put( "HexViewerPlus.showSelectionBar","Mostrar barra de Seleção" );	
+		map.put( "HexViewerPlus.showLineNumberBackground","Mesclar Cabeçalho com Layout" );				
+		map.put( "HexViewerPlus.headerLineBackground","Cabeçalho e Linhas Numeradas:" );				
 
 		map.put( "HexSearcherImpl.hits", "ocorrências" );
 		map.put( "HexSearcherImpl.hit", "Ocorrência" );
@@ -3629,6 +3739,8 @@ class Messages {
 		map.put( "HexViewerPlus.invalid", "inválid" );
 		map.put( "HexViewerPlus.showPositionBar", "Show Position Bar" );
 		map.put( "HexViewerPlus.showSelectionBar","Show Selection Bar" );		
+		map.put( "HexViewerPlus.showLineNumberBackground","Merge Header and Line Column Background" );	
+		map.put( "HexViewerPlus.headerLineBackground","Header and Line Number Column:" );						
 
 		map.put( "HexSearcherImpl.hits", "Hits" );
 		map.put( "HexSearcherImpl.hit", "Hit" );
