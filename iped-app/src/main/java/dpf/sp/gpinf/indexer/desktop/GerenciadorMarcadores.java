@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -27,8 +26,6 @@ import java.awt.event.ActionListener;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map.Entry;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -57,9 +54,9 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
@@ -90,9 +87,14 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     public static GerenciadorMarcadores get() {
         return instance;
     }
+    public static boolean isVisible()
+    {
+    	return instance.dialog.isVisible();
+    }
 
     public static void setVisible() {
         instance.dialog.setVisible(true);
+        
     }
 
     public static void updateCounters() {

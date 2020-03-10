@@ -23,12 +23,14 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JTable;
@@ -37,14 +39,19 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableRowSorter;
 
-import dpf.sp.gpinf.indexer.search.ItemId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
+import iped3.IItem;
 import iped3.IItemId;
+import iped3.search.LuceneSearchResult;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
     public static boolean syncingSelectedItems = false;
-
+    private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
     private long lastKeyTime = -1;
     private String lastKeyString = ""; //$NON-NLS-1$
     private Collator collator = Collator.getInstance();
@@ -188,30 +195,106 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(selection, selection);
 
-        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            int firstRow = App.get().resultsTable.getSelectedRow();
-            boolean value = true;
-            if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
-                value = false;
-            }
-
-            MarcadoresController.get().setMultiSetting(true);
-            App.get().resultsTable.setUpdateSelectionOnSort(false);
-            int[] selectedRows = App.get().resultsTable.getSelectedRows();
-            for (int i = 0; i < selectedRows.length; i++) {
-                if (i == selectedRows.length - 1) {
-                    MarcadoresController.get().setMultiSetting(false);
-                    App.get().resultsTable.setUpdateSelectionOnSort(true);
-                }
-                App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-            }
-
-        }
+        } 
+        else if (evt.getKeyCode() == KeyEvent.VK_SPACE) 
+        	itemSelection();
+        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0))  //Shortcut to Deep-Selection (Item plus sub-items)
+        	recursiveItemSelection(true);
+        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) //Shortcut to Deep-Selection (Item plus sub-items)
+        	recursiveItemSelection(false);
+        else if (evt.getKeyCode() == KeyEvent.VK_F5 && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to direct bookmark or unbookmark by keyboard using CTRL+F5 and SHIFT+F5
+        	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().add, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
+       	else if (evt.getKeyCode() == KeyEvent.VK_F5 && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) 
+        	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().remove, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
+        else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) //Shortcut to BookmarkManager Window
+        	GerenciadorMarcadores.setVisible();
 
         keyBefore = evt.getKeyCode();
 
     }
+    public void itemSelection()
+    {
+    	 int col = App.get().resultsTable.convertColumnIndexToView(1);
+         int firstRow = App.get().resultsTable.getSelectedRow();
+         boolean value = true;
+         if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
+             value = false;
+         }
+
+         MarcadoresController.get().setMultiSetting(true);
+         App.get().resultsTable.setUpdateSelectionOnSort(false);
+         int[] selectedRows = App.get().resultsTable.getSelectedRows();
+         for (int i = 0; i < selectedRows.length; i++) {
+             if (i == selectedRows.length - 1) {
+                 MarcadoresController.get().setMultiSetting(false);
+                 App.get().resultsTable.setUpdateSelectionOnSort(true);
+             }
+             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+    }
+    }
+    public void recursiveItemSelection(boolean value)
+    {
+    	 int col = App.get().resultsTable.convertColumnIndexToView(1);
+         int firstRow = App.get().resultsTable.getSelectedRow();
+         
+         MarcadoresController.get().setMultiSetting(true);
+         App.get().resultsTable.setUpdateSelectionOnSort(false);
+         int[] selectedRows = App.get().resultsTable.getSelectedRows();
+			for (int i = 0; i < selectedRows.length; i++) {
+				if (i == selectedRows.length - 1) {
+					MarcadoresController.get().setMultiSetting(false);
+					App.get().resultsTable.setUpdateSelectionOnSort(true);
+				}
+				App.get().resultsTable.setValueAt(value, selectedRows[i], col);
+				
+				iterativeSelection (value, App.get().ipedResult.getItem(selectedRows[i]), new ArrayList<Integer>(selectedRows.length));
+			}
+			MarcadoresController.get().atualizarGUI();
+			App.get().subItemTable.repaint();    	
+    }
+    
+    /**Perform iterative selection of items
+     * @param state - which state to set true or false
+     * @param rootID - parent of the selection
+     * @param selectedRowsIds - list of the already selected items
+     */
+    private void iterativeSelection (boolean state, IItemId rootID, List<Integer> selectedRowsIds)
+    {
+
+		try {
+
+			IItem item = App.get().appCase.getItemByItemId(rootID);
+			selectedRowsIds.add(rootID.getId());
+			if (item.hasChildren() || item.isDir()) { //Filter subItems which have children or are directories. 
+				int docId = App.get().appCase.getLuceneId(rootID);
+				logger.debug("Searching items with parentID (lucene):" + docId);
+				logger.debug("Searching items with parentID:" + rootID.getId());
+				IPEDSearcher task = new IPEDSearcher(App.get().appCase, "parentId:" + rootID.getId());
+				task.setTreeQuery(true);
+				LuceneSearchResult result = new LuceneSearchResult(0);
+				result = task.luceneSearch();
+				if (result.getLength() > 0) {
+					for (int iDoc : result.getLuceneIds()) {
+						logger.debug("Found item with luceneID:" + iDoc);
+						IItem subItem = App.get().appCase.getItemByLuceneID(iDoc);
+						logger.debug("Change Item ID:" + subItem.getId());
+						if (!selectedRowsIds.contains(subItem.getId())) {
+							IItemId subItemId = App.get().appCase.getItemId(iDoc);
+							App.get().appCase.getMultiMarcadores().setSelected((Boolean) state,
+									subItemId, App.get().appCase);
+							selectedRowsIds.add(subItem.getId());
+							iterativeSelection(state, subItemId, selectedRowsIds);
+						}
+					}
+				}
+			}
+
+		} catch (Exception e) {
+			logger.debug("Error :" + e.getLocalizedMessage());
+			e.printStackTrace();
+		}
+	}
+
 
     @Override
     public void keyTyped(KeyEvent evt) {
