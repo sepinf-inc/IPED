@@ -27,12 +27,15 @@ import java.awt.event.MouseListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped3.IItemId;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
     private GalleryCellEditor cellEditor;
-
+    private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
     @Override
     public void valueChanged(ListSelectionEvent e) {
 
@@ -129,6 +132,30 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
         } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
             ctrlDown = true;
         }
+        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {  //Shortcut to Deep-Selection (Item plus sub-items)
+        	logger.debug("DSelect mark");
+        	cellEditor.stopCellEditing();
+            int col = App.get().resultsTable.convertColumnIndexToView(1);
+            MarcadoresController.get().setMultiSetting(true);
+            App.get().resultsTable.setValueAt(true, App.get().resultsTable.getSelectedRows()[0], col);
+            MarcadoresController.get().setMultiSetting(false);
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) evt.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
+        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
+        		kl.keyReleased(keyCTRL_R_Pressed);
+        }
+        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) { //Shortcut to Deep-Selection (Item plus sub-items)
+        	logger.debug("DSelect unmark");
+        	cellEditor.stopCellEditing();
+            int col = App.get().resultsTable.convertColumnIndexToView(1);
+            MarcadoresController.get().setMultiSetting(true);
+            App.get().resultsTable.setValueAt(false, App.get().resultsTable.getSelectedRows()[0], col);
+            MarcadoresController.get().setMultiSetting(false);
+                        
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) evt.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.SHIFT_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
+        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
+        		kl.keyReleased(keyCTRL_R_Pressed);
+        }
+
 
     }
 

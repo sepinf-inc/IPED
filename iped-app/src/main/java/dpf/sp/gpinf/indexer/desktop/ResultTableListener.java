@@ -230,13 +230,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                  App.get().resultsTable.setUpdateSelectionOnSort(true);
              }
              App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-    }
+         }
     }
     public void recursiveItemSelection(boolean value)
     {
     	 int col = App.get().resultsTable.convertColumnIndexToView(1);
-         int firstRow = App.get().resultsTable.getSelectedRow();
-         
          MarcadoresController.get().setMultiSetting(true);
          App.get().resultsTable.setUpdateSelectionOnSort(false);
          int[] selectedRows = App.get().resultsTable.getSelectedRows();
