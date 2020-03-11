@@ -24,6 +24,7 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
@@ -31,6 +32,7 @@ import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
@@ -156,6 +158,7 @@ public class MakePreviewTask extends AbstractTask {
             final ParseContext context = new ParseContext();
             context.set(IItemSearcher.class, itemSearcher);
             context.set(IItemBase.class, evidence);
+            context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
             AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
