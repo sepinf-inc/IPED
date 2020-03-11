@@ -264,10 +264,7 @@ public class IndexTask extends BaseCarveTask {
             }
         }
 
-        if (IndexItem.getMetadataTypes().size() == 0) {
-            IndexItem.loadMetadataTypes(confDir);
-            IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
-        }
+        IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
 
     }
