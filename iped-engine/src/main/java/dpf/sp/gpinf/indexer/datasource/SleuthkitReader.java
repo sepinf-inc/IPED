@@ -560,9 +560,12 @@ public class SleuthkitReader extends DataSourceReader {
                 return content;
                 
             } catch (TskCoreException e) {
-                if(e.getCause() instanceof SQLiteException && ((SQLiteException)e.getCause()).getErrorCode() == SQLITE_BUSY_ERROR) {
+                if(e.getCause() instanceof SQLiteException) {
                     long now = System.currentTimeMillis() / 1000;
-                    LOGGER.error("SQLite busy after " + (now - start) + "s reading sleuthid=" + id + ", trying again...");
+                    int errorCode = ((SQLiteException)e.getCause()).getErrorCode();
+                    LOGGER.warn("SQLite error " + errorCode + " after " + (now - start) + "s reading sleuthid=" + id + ", trying again...");
+                    if(now - start > 3600)
+                        throw new RuntimeException("Timeout after 1h retrying!", e); //$NON-NLS-1$
                     Thread.sleep(1000);
                     continue;
                 }else
