@@ -1,6 +1,9 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.List;
 
 public abstract class Extractor {
@@ -28,4 +31,8 @@ public abstract class Extractor {
     }
 
     protected abstract List<Chat> extractChatList() throws WAExtractorException;
+    
+    protected Connection getConnection() throws SQLException {
+        return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
+    }
 }
