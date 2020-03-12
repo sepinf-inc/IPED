@@ -2261,7 +2261,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 				jtfTexto.requestFocus();
 			
 				if (!jtfTexto.isValidNumber()){
-					JOptionPane.showMessageDialog(dialogIrParaEndereco, "Endereço inválido!",appName,JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(dialogIrParaEndereco, Messages.getString("HexViewerPlus.invalidPosition"),appName,JOptionPane.ERROR_MESSAGE);
 					return;
 				}			
 				
