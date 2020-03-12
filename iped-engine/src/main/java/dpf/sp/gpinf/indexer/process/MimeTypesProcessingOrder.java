@@ -80,7 +80,7 @@ public class MimeTypesProcessingOrder {
             }
             mediaType = mediaRegistry.getSupertype(mediaType);
                     
-        }while(!MediaType.OCTET_STREAM.equals(mediaType));
+        }while(mediaType != null && !MediaType.OCTET_STREAM.equals(mediaType));
 
         return 0;
     }
