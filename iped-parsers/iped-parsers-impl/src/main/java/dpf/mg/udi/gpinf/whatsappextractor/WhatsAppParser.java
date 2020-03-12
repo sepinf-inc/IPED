@@ -23,8 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,7 +46,6 @@ import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.io.IItemBase;
@@ -61,7 +58,7 @@ import iped3.util.ExtraProperties;
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
-public class WhatsAppParser extends SQLite3DBParser {
+public class WhatsAppParser extends AbstractParser {
 
     /**
      * 
@@ -116,7 +113,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        extFactory.setConnectionParams(stream, metadata, context);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -279,7 +275,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseWhatsAppContacts(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        extFactory.setConnectionParams(stream, metadata, context);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -341,75 +336,36 @@ public class WhatsAppParser extends SQLite3DBParser {
         return cd;
     }
 
-    private abstract class ExtractorFactory {
-        
-        InputStream is;
-        Metadata metadata;
-        ParseContext context;
-        
-        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory);
+    private static interface ExtractorFactory {
+        Extractor createMessageExtractor(File file, WAContactsDirectory directory);
 
-        abstract WAContactsExtractor createContactsExtractor(File file);
-        
-        void setConnectionParams(InputStream is, Metadata metadata, ParseContext context) {
-            this.is = is;
-            this.metadata = metadata;
-            this.context = context;
-        }
-        
-        protected Connection getConnection() throws SQLException{
-            try {
-                return WhatsAppParser.this.getConnection(is, metadata, context);
-            } catch (IOException e) {
-                throw new SQLException(e);
-            }
-        }
+        WAContactsExtractor createContactsExtractor(File file);
     }
 
-    private class ExtractorAndroidFactory extends ExtractorFactory {
-        
+    private class ExtractorAndroidFactory implements ExtractorFactory {
+
         @Override
         public Extractor createMessageExtractor(File file, WAContactsDirectory directory) {
-            return new ExtractorAndroid(file, directory) {
-                @Override
-                protected Connection getConnection() throws SQLException {
-                    return ExtractorAndroidFactory.this.getConnection();
-                }
-            };
+            return new ExtractorAndroid(file, directory);
         }
 
         @Override
         public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorAndroid(file, new WAContactsDirectory()) {
-                @Override
-                protected Connection getConnection() throws SQLException {
-                    return ExtractorAndroidFactory.this.getConnection();
-                }
-            };
+            return new WAContactsExtractorAndroid(file, new WAContactsDirectory());
         }
 
     }
 
-    private class ExtractorIOSFactory extends ExtractorFactory {
+    private class ExtractorIOSFactory implements ExtractorFactory {
 
         @Override
         public Extractor createMessageExtractor(File file, WAContactsDirectory directory) {
-            return new ExtractorIOS(file, directory) {
-                @Override
-                protected Connection getConnection() throws SQLException {
-                    return ExtractorIOSFactory.this.getConnection();
-                }
-            };
+            return new ExtractorIOS(file, directory);
         }
 
         @Override
         public WAContactsExtractor createContactsExtractor(File file) {
-            return new WAContactsExtractorIOS(file, new WAContactsDirectory()) {
-                @Override
-                protected Connection getConnection() throws SQLException {
-                    return ExtractorIOSFactory.this.getConnection();
-                }
-            };
+            return new WAContactsExtractorIOS(file, new WAContactsDirectory());
         }
 
     }

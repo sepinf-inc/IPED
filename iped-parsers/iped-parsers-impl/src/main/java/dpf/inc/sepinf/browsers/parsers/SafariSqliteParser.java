@@ -79,8 +79,9 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
         TemporaryResources tmp = new TemporaryResources();
         File historyFile = tmp.createTemporaryFile();
         TikaInputStream tis = TikaInputStream.get(stream, tmp); 
+        File dbFile = tis.getFile();
 
-        try (Connection connection = getConnection(tis, metadata, context)){
+        try (Connection connection = getConnection(dbFile)){
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 

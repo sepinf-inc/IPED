@@ -2,6 +2,7 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,7 +17,7 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
 
     @Override
     public void extractContactList() throws WAExtractorException {
-        try (Connection conn = getConnection();
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath()); //$NON-NLS-1$
                 Statement stmt = conn.createStatement()) {
 
             try (ResultSet rs = stmt.executeQuery(SELECT_CONTACT_NAMES)) {

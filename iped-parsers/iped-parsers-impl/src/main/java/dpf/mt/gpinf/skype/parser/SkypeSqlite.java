@@ -39,7 +39,7 @@ public class SkypeSqlite implements Closeable {
     private File mainDb;
     private String baseSkypeFolder;
 
-    protected Connection conn = null;
+    private Connection conn = null;
     private Connection connStorageDb = null;
     private Connection connMediaCacheDb = null;
 

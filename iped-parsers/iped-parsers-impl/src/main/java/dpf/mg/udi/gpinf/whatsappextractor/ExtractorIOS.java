@@ -4,6 +4,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,7 +40,7 @@ public class ExtractorIOS extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath()); //$NON-NLS-1$
                 Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_LIST)) {
                 while (rs.next()) {
