@@ -5,7 +5,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
-import iped3.IIPEDSource;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,7 +46,6 @@ public class AppSearchParams {
     public int MAX_HITS = -1;
     public int MAX_LINE_SIZE = -1;
     public int lastSelectedDoc;
-    public IIPEDSource lastSelectedSource;
     public JLabel status;
     public Set<String> highlightTerms;
 }
