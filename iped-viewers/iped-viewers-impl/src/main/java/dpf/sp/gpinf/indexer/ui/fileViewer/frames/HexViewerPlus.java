@@ -211,7 +211,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 	
 	private JLabel resultSearch = new JLabel("");
 		
-	private int fontSize = 14;
+	private int fontSize = defaultSettings.fontSize;
+	private String font = defaultSettings.font;
 	
 	private CursorComponent cursorExample;
 	
@@ -771,7 +772,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		dialogOpcoes = new JDialog();
 		dialogOpcoes.setModal(true);
 		dialogOpcoes.setTitle(Messages.getString("HexViewerPlus.settings")+" - "+appName);
-		dialogOpcoes.setBounds(0, 0, 810, 590);
+		dialogOpcoes.setBounds(0, 0, 810, 600);
 		
 		String selectColorText = Messages.getString("HexViewerPlus.selectColor");
 	
@@ -849,7 +850,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		btnColorHeaderText = new RoundButton("",codeArea.getForeground());	
 		btnColorHeaderBackground = new RoundButton("",codeArea.getBackground());				
 		
-        String[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+        List<String> fonts = Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
 		String [] cursors = new String[CursorShape.values().length];
 		int i = 0;
 		for (Enum e: CursorShape.values()){
@@ -898,18 +899,19 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
             }
         });		
 		
-        fontComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(fonts));
-        fontComboBox.setSelectedIndex(Arrays.asList(fonts).indexOf(Font.MONOSPACED));
+        fontComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>((String[])fonts.toArray()));
+        fontComboBox.setSelectedItem(getAndVerifyFontName(font, fonts));
         fontComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-				codeArea.setFont(new Font(fonts[fontComboBox.getSelectedIndex()], Font.PLAIN, fontSize));
+				font = getAndVerifyFontName((String)fontComboBox.getSelectedItem(), fonts);
+				codeArea.setFont(new Font(font, Font.PLAIN, fontSize));
             }
         });
-							
+		
 		fontSizeSpinner.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
 				fontSize = (Integer)((JSpinner)e.getSource()).getValue();
-				codeArea.setFont(new Font(fonts[fontComboBox.getSelectedIndex()], Font.PLAIN, fontSize));
+				codeArea.setFont(new Font(font, Font.PLAIN, fontSize));
 			}
 		});
 				
@@ -1025,12 +1027,14 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         showPositionBarCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
 				bottomPanel1.setVisible(!bottomPanel1.isVisible());
+				codeArea.repaint();
             }
         });
 		
         showSelectionBarCheckBox.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
 				bottomPanel2.setVisible(!bottomPanel2.isVisible());
+				codeArea.repaint();
             }
         });		
 		
@@ -1669,6 +1673,19 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 	
 	}
 	
+	public static String getAndVerifyFontName(String name, List<String> fonts){
+
+		if(fonts != null){
+			int index = fonts.indexOf(name);
+			if(index != -1)
+				return fonts.get(index);
+			else
+				return Font.MONOSPACED;	
+		}else{
+			return Font.MONOSPACED;	
+		}
+	}	
+	
 	public boolean verificarSalvarArquivo(String arquivo){
 
 		Object[] options = {Messages.getString("HexViewerPlus.yes"),Messages.getString("HexViewerPlus.no")};
@@ -1692,7 +1709,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		codeTypeComboBox.setSelectedIndex(values.codeType);
 		positionCodeTypeComboBox.setSelectedIndex(values.positionCodeType);
 		backGroundComboBox.setSelectedIndex(values.backGround);
-		fontComboBox.setSelectedIndex(values.font);
+		fontComboBox.setSelectedItem(values.font);
 		formatoNumeroComboBox.setSelectedIndex(values.formatoNumero);		
 		cursorComboBox.setSelectedIndex(values.cursor);		
 		
@@ -1779,7 +1796,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		values.codeType = codeTypeComboBox.getSelectedIndex();
 		values.positionCodeType = positionCodeTypeComboBox.getSelectedIndex();
 		values.backGround = backGroundComboBox.getSelectedIndex();
-		values.font = fontComboBox.getSelectedIndex();
+		values.font = (String)fontComboBox.getSelectedItem();
 		values.formatoNumero = formatoNumeroComboBox.getSelectedIndex();		
 		values.cursor = cursorComboBox.getSelectedIndex();
 
@@ -2460,7 +2477,12 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 						JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMax"),appName,JOptionPane.ERROR_MESSAGE);
 						return;
 					}				
-					max_hits = Integer.parseInt(jtfMaxHits.getText().toString().trim());	
+					try {
+						max_hits = Integer.parseInt(jtfMaxHits.getText().toString().trim());	
+					}catch (NumberFormatException nfe){
+						JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMaxLessThen")+max_terms,appName,JOptionPane.ERROR_MESSAGE);
+						return;
+					}
 					if (max_hits > max_terms){
 						JOptionPane.showMessageDialog(dialogPesquisar, Messages.getString("HexViewerPlus.invalidMaxLessThen")+max_terms,appName,JOptionPane.ERROR_MESSAGE);
 						return;
@@ -3011,7 +3033,7 @@ class HVPSettings implements Serializable{
 	public int codeType = 3;
 	public int positionCodeType = 2;
 	public int backGround = 2;
-	public int font = Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()).indexOf(Font.MONOSPACED);
+	public String font = Font.MONOSPACED;
 	public int formatoNumero = 3;		
 	public int cursor = 6;
 
