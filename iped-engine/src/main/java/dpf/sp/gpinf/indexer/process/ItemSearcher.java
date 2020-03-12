@@ -11,7 +11,6 @@ import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.io.IItemBase;
-import iped3.search.IIPEDSearcher;
 import iped3.search.IItemSearcher;
 import iped3.search.SearchResult;
 
@@ -21,6 +20,10 @@ public class ItemSearcher implements IItemSearcher {
     IndexWriter iw;
     IPEDSource iSource;
 
+    public ItemSearcher(IPEDSource iSource) {
+        this.iSource = iSource;
+    }
+    
     public ItemSearcher(File caseFolder, IndexWriter iw) {
         this.caseFolder = caseFolder;
         this.iw = iw;

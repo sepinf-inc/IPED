@@ -71,6 +71,7 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
@@ -150,10 +151,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
     
     public ParseContext getTikaContext() {
-        return getTikaContext(this.output);
+        return getTikaContext(this.output, null);
+    }
+    
+    public ParseContext getTikaContext(IPEDSource ipedsource) {
+        return getTikaContext(ipedsource.getModuleDir(), ipedsource);
     }
 
-    public ParseContext getTikaContext(File output) {
+    private ParseContext getTikaContext(File output, IPEDSource ipedsource) {
         // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
         context = new ParseContext();
         context.set(Parser.class, this.autoParser);
@@ -175,7 +180,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
-        context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+        if(ipedsource != null) {
+            context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
+        }else {
+            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+        }
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories());
         if (extractEmbedded) {
