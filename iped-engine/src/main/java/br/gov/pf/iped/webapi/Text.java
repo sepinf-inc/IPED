@@ -63,8 +63,9 @@ public class Text {
     public static ParseContext getTikaContext(IItem item, Parser parser, File moduleDir) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-        ParseContext context = expander.getTikaContext(moduleDir);
+        ParseContext context = expander.getTikaContext();
         expander.setExtractEmbedded(false);
+        context.set(OCROutputFolder.class, new OCROutputFolder(moduleDir));
         return context;
     }
 

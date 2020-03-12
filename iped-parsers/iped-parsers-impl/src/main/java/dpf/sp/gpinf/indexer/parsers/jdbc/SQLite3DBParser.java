@@ -19,7 +19,6 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,10 +33,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
-
-import iped3.io.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
 
 /**
  * This is the implementation of the db parser for SQLite.
@@ -86,24 +81,6 @@ class SQLite3DBParser extends AbstractDBParser {
     @Override
     protected String getConnectionString(InputStream is, Metadata metadata, ParseContext context) throws IOException {
         File dbFile = TikaInputStream.get(is).getFile();
-        IItemSearcher searcher = context.get(IItemSearcher.class);
-        if(searcher != null) {
-            IItemBase dbItem = context.get(IItemBase.class);
-            if(dbItem != null) {
-                String dbPath = dbItem.getPath();
-                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
-                List<IItemBase> items = searcher.search(walQuery);
-                if(items.size() > 0) {
-                    IItemBase wal = items.get(0);
-                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                    if(!walTemp.exists()) {
-                        try(InputStream in = wal.getBufferedStream()){
-                            Files.copy(in, walTemp.toPath());
-                        }
-                    }
-                }
-            }
-        }
         return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
 

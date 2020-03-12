@@ -49,7 +49,7 @@ public class SQLite3Parser extends AbstractParser {
     /** Serial version UID */
     private static final long serialVersionUID = -752276948656079347L;
 
-    public static final MediaType MEDIA_TYPE = MediaType.application("x-sqlite3"); //$NON-NLS-1$
+    private static final MediaType MEDIA_TYPE = MediaType.application("x-sqlite3"); //$NON-NLS-1$
 
     private final Set<MediaType> SUPPORTED_TYPES;
 

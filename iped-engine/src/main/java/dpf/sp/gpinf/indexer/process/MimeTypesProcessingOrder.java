@@ -5,16 +5,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
-import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 
 /**
@@ -32,16 +29,11 @@ public class MimeTypesProcessingOrder {
 
     /** Mapa do mimeType para sua prioridade de processamento */
     private static Map<MediaType, Integer> mediaTypes = installTypesToPostProcess();
-    
-    private static MediaTypeRegistry mediaRegistry;
 
     /** Definie as prioridades de processamento dos mimeTypes */
     private static Map<MediaType, Integer> installTypesToPostProcess() {
 
         Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
-        
-        //handle wal logs
-        mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 1);
 
         mediaTypes.put(SkypeParser.SKYPE_MIME, 1);
 
@@ -59,30 +51,15 @@ public class MimeTypesProcessingOrder {
 
         return mediaTypes;
     }
-    
-    private static synchronized void setMediaRegistry() {
-        if(mediaRegistry == null) {
-            mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-        }
-    }
 
     /** Obtém a prioridade de processamento do mimeType */
     public static int getProcessingPriority(MediaType mediaType) {
-        
-        if(mediaRegistry == null) {
-            setMediaRegistry();
-        }
 
-        do {
-            Integer priority = mediaTypes.get(mediaType);
-            if (priority != null) {
-                return priority;
-            }
-            mediaType = mediaRegistry.getSupertype(mediaType);
-                    
-        }while(!MediaType.OCTET_STREAM.equals(mediaType));
-
-        return 0;
+        Integer priority = mediaTypes.get(mediaType);
+        if (priority != null)
+            return priority;
+        else
+            return 0;
     }
 
     /** Obtém todas as prioridades de processamento configuradas */

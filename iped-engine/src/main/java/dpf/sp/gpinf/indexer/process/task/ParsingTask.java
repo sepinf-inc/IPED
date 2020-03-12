@@ -148,19 +148,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static void setExpandContainers(boolean enabled) {
         expandContainers = enabled;
     }
-    
-    public ParseContext getTikaContext() {
-        return getTikaContext(this.output);
-    }
 
-    public ParseContext getTikaContext(File output) {
+    public ParseContext getTikaContext() {
         // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
         context = new ParseContext();
         context.set(Parser.class, this.autoParser);
 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
-        context.set(OCROutputFolder.class, new OCROutputFolder(output));
+        if (output != null)
+            context.set(OCROutputFolder.class, new OCROutputFolder(output));
+        else
+            context.set(OCROutputFolder.class, new OCROutputFolder());
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -175,7 +174,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
-        context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+        if (output != null && worker != null)
+            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories());
         if (extractEmbedded) {
