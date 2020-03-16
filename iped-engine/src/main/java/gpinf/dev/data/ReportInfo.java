@@ -172,8 +172,11 @@ public class ReportInfo implements Serializable {
         evidences.clear();
         for(String evidence : text.split(EVIDENCE_DELIMITER)) {
             String[] id_desc = evidence.split(ID_DESC_DELIMITER, 2);
-            if(id_desc.length != 2)
-                continue;
+            if(id_desc.length != 2) {
+            	evidences.clear();
+            	setSimpleEvidenceDesc(text);
+            	return;
+            }
             EvidenceDesc e = new EvidenceDesc();
             e.desc = id_desc[1];
             e.id = id_desc[0].replaceFirst(EVIDENCE_PREFIX, "");
