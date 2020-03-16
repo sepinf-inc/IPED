@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -110,7 +111,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
     
-    private File exportWalLog(File dbFile, ParseContext context) throws IOException {
+    private File exportWalLog(File dbFile, ParseContext context) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         if(searcher != null) {
             IItemBase dbItem = context.get(IItemBase.class);
@@ -121,10 +122,10 @@ public class SQLite3DBParser extends AbstractDBParser {
                 if(items.size() > 0) {
                     IItemBase wal = items.get(0);
                     File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                    if(!walTemp.exists()) {
-                        try(InputStream in = wal.getBufferedStream()){
-                            Files.copy(in, walTemp.toPath());
-                        }
+                    try(InputStream in = wal.getBufferedStream()){
+                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }catch(IOException e) {
+                        e.printStackTrace();
                     }
                     return walTemp;
                 }
