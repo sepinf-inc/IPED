@@ -332,7 +332,7 @@ public class HTMLReportTask extends AbstractTask {
                     info.requestForm = properties.getProperty("RequestDoc"); //$NON-NLS-1$
                     info.caseNumber = properties.getProperty("Investigation"); //$NON-NLS-1$
                     info.reportNumber = properties.getProperty("Report"); //$NON-NLS-1$
-                    info.setSimpleEvidenceDesc(properties.getProperty("Material")); //$NON-NLS-1$
+                    info.fillEvidenceFromText(properties.getProperty("Material")); //$NON-NLS-1$
                     info.examinersID.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
                     info.examiners.add(properties.getProperty("Examiner")); //$NON-NLS-1$
                     info.labCaseNumber = properties.getProperty("Record"); //$NON-NLS-1$
