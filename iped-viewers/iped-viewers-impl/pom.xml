@@ -9,15 +9,7 @@
 	</parent>
 	<artifactId>iped-viewers-impl</artifactId>
 
-    <repositories>
-       <!-- proprietary lib <repository>
-            <id>AsposeJavaAPI</id>
-            <name>Aspose Java API</name>
-            <url>http://repository.aspose.com/repo/</url>
-        </repository> -->
-    </repositories>
-
-	<dependencies>
+    <dependencies>
 		<dependency>
 			<groupId>iped</groupId>
 			<artifactId>iped-viewers-api</artifactId>
@@ -136,12 +128,7 @@
             <type>jar</type>
         </dependency>
         
-        <!-- https://mvnrepository.com/artifact/com.aspose/aspose-cad -->
-        <!-- <dependency>
-            <groupId>com.aspose</groupId>
-            <artifactId>aspose-cad</artifactId>
-            <version>19.5</version>
-        </dependency> -->
+       
 	</dependencies>
 
 </project>

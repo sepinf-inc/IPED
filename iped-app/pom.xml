@@ -361,6 +361,26 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                     <execution>
+                        <id>copy-caffviewer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem> <!--  https://caff.de/projects/caffviewer/caffviewer.jar  -->
+                                    <groupId>de.caff</groupId>
+                                    <artifactId>caffviewer</artifactId>
+                                    <version>1.0</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${tools.dir}</outputDirectory>
+                                    <destFileName>caffviewer.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>copy-stanfordCoreNLP</id>
                         <phase>package</phase>
