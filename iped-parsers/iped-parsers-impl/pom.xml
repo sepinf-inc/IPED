@@ -105,7 +105,19 @@
         <dependency>
 	        <groupId>com.googlecode.ez-vcard</groupId>
 	        <artifactId>ez-vcard</artifactId>
-	        <version>0.10.5</version>
+	        <version>0.10.6</version>
+	        <exclusions>
+				<!-- hCard functionality not needed -->
+				<exclusion>
+					<groupId>org.jsoup</groupId>
+					<artifactId>jsoup</artifactId>
+				</exclusion>
+				<!-- jCard functionality not needed -->
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-core</artifactId>
+				</exclusion>
+			</exclusions>
         </dependency>
         <dependency>
             <groupId>com.googlecode.plist</groupId>
