@@ -93,6 +93,8 @@ public class ExportFileTask extends AbstractTask {
     
     private static final String INSERT_DATA = 
     		"INSERT INTO t1(id, data) VALUES(?,?);";
+    
+    private static final String LOAD_HASHES = "SELECT id FROM t1 WHERE data IS NOT NULL;";
 
     private static final int MAX_SUBITEM_COMPRESSION = 100;
     private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
@@ -130,12 +132,6 @@ public class ExportFileTask extends AbstractTask {
             } else {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
-            IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-            if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-                if(storage.isEmpty()) {
-                    configureSQLiteStorage(output);
-                }
-            }
         }
     }
     
@@ -157,6 +153,17 @@ public class ExportFileTask extends AbstractTask {
                     stmt.executeUpdate(CREATE_INDEX);
                 }
                 storageCon.put(i, con);
+                
+                //load hashes if exists
+                try(PreparedStatement ps = con.prepareStatement(LOAD_HASHES)){
+                    ResultSet rs = ps.executeQuery();
+                    while(rs.next()) {
+                        HashValue md5 = new HashValue(rs.getString(1));
+                        synchronized(insertedMD5) {
+                            insertedMD5.put(md5, insertedHash);
+                        }
+                    }
+                }
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -611,6 +618,11 @@ public class ExportFileTask extends AbstractTask {
         subDirCounter = 0;
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
+        
+        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
+            configureSQLiteStorage(output);
+        }
 
     }
     
