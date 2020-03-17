@@ -434,29 +434,40 @@ public class ExportFileTask extends AbstractTask {
             if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
                 try {
-                    BufferedInputStream bis = new BufferedInputStream(inputStream);
-                    byte[] buf = new byte[MAX_BUFFER_SIZE];
                     long total = 0;
                     int i = 0;
                     while(i != -1 && !Thread.currentThread().isInterrupted()) {
-                    	int len = 0;
-                    	while (len < buf.length && (i = bis.read(buf, len, buf.length - len)) != -1) {
-                        	len += i;
+                    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    	IOException exception = null;
+                    	try {
+                    	    byte[] buf = new byte[8 * 1024];
+                    	    while (baos.size() <= MAX_BUFFER_SIZE - buf.length && (i = inputStream.read(buf)) != -1) {
+                                baos.write(buf, 0, i);
+                            }
+                    	}catch(IOException e) {
+                    	    //catch ioexceptions here to extract some content
+                    	    exception = e;
                     	}
-                        if(i == -1 && storageCon != null && total == 0) {
-                        	if(len == 0) {
+                        if((i == -1 || exception != null) && storageCon != null && total == 0) {
+                        	if(baos.size() == 0) {
                         		evidence.setLength(0L);
-                        		return;
+                        	}else {
+                        	    byte[] buf = baos.toByteArray();
+                                baos = null;
+                                insertIntoStorage(evidence, buf, buf.length);
                         	}
-                        	insertIntoStorage(evidence, buf, len);
-                            return;
+                        }else {
+                            if(bos == null) {
+                                fileExists = outputFile.createNewFile();
+                                bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                            }
+                            bos.write(baos.toByteArray());
+                            total += baos.size();
                         }
-                        if(bos == null) {
-                            fileExists = outputFile.createNewFile();
-                            bos = new BufferedOutputStream(new FileOutputStream(outputFile));
-                        }
-                        bos.write(buf, 0, len);
-                        total += len;
+                        
+                        if(exception != null)
+                            throw exception;
+                        
                         if (parentSize != null && total >= ZIPBOMB_MIN_SIZE
                                 && total > parentSize * MAX_SUBITEM_COMPRESSION)
                             throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
@@ -468,8 +479,6 @@ public class ExportFileTask extends AbstractTask {
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
-                    
-                    e.printStackTrace();
                     
                 } finally {
                     if (bos != null) {
@@ -522,7 +531,6 @@ public class ExportFileTask extends AbstractTask {
                                 .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
                         gzippedOut.write(buf, 0, len);
                         gzippedOut.close();
-                        buf = null;
                         ps.setBytes(2, baos.toByteArray());
                         baos = null;
                         ps.executeUpdate();
