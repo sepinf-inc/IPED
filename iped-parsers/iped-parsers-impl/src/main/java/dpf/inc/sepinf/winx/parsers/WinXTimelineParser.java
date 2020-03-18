@@ -102,7 +102,6 @@ public class WinXTimelineParser extends SQLite3DBParser {
 		
 		//Set Connection
 		Connection connection = getConnection(stream, metadata, context);
-
 		try {
 			
 			//Run Query and Obtain the Timeline entries
@@ -116,20 +115,21 @@ public class WinXTimelineParser extends SQLite3DBParser {
 			 * a subclass of "text/html" in CustomSignatures.xml
 			 */
 			File timelineFile = tmp.createTemporaryFile();
-			FileOutputStream tmpTimelineFile = new FileOutputStream(timelineFile);
-
-			ToXMLContentHandler timelineHandler = new ToXMLContentHandler(tmpTimelineFile, "UTF-8");
 			Metadata timelineMetadata = new Metadata();
-			timelineMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE.toString());
-			timelineMetadata.add(Metadata.RESOURCE_NAME_KEY, "Windows10Timeline.html");
-			timelineMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
-			timelineMetadata.set(BasicProps.HASCHILD, "true");
+			
+			try(FileOutputStream timelineFos = new FileOutputStream(timelineFile)){
+			    ToXMLContentHandler timelineHandler = new ToXMLContentHandler(timelineFos, "UTF-8");    
+	            timelineMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE.toString());
+	            timelineMetadata.add(Metadata.RESOURCE_NAME_KEY, "Windows10Timeline.html");
+	            timelineMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
+	            timelineMetadata.set(BasicProps.HASCHILD, "true");
 
-			parseTimelineQuery(timelineHandler, timelineMetadata, entries);
+	            parseTimelineQuery(timelineHandler, timelineMetadata, entries);
+			}
 
-			FileInputStream fis = new FileInputStream(timelineFile);
-			extractor.parseEmbedded(fis, handler, timelineMetadata, true);
-
+			try(FileInputStream fis = new FileInputStream(timelineFile)){
+	            extractor.parseEmbedded(fis, handler, timelineMetadata, true);
+			}
 			
 			/**
 			 * Optionally extract entries as subitems 
