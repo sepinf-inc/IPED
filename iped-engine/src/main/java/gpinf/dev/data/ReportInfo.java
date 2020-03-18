@@ -43,6 +43,7 @@ public class ReportInfo implements Serializable {
     public List<String> examiners = new ArrayList<>();
     public List<String> examinersID = new ArrayList<>();
     public List<EvidenceDesc> evidences = new ArrayList<>();
+    public String finalEvidenceDesc;
     
     class EvidenceDesc implements Serializable{
         
@@ -133,9 +134,9 @@ public class ReportInfo implements Serializable {
     }
     
     public String getEvidenceDescHtml() {
-        if(evidences.size() == 1 && evidences.get(0).id == null)
-            return evidences.get(0).desc;
-        
+        if(finalEvidenceDesc != null) {
+            return finalEvidenceDesc;
+        }
         StringBuilder mat = new StringBuilder();
         for (int i = 0; i < evidences.size(); i++) {
             if (i > 0) {
@@ -144,12 +145,6 @@ public class ReportInfo implements Serializable {
             mat.append(EVIDENCE_PREFIX).append(evidences.get(i).id).append(ID_DESC_DELIMITER).append(evidences.get(i).desc); //$NON-NLS-1$ //$NON-NLS-2$
         }
         return mat.toString();
-    }
-    
-    public void setSimpleEvidenceDesc(String desc) {
-        EvidenceDesc e = new EvidenceDesc();
-        e.desc = desc;
-        evidences.add(e);
     }
     
     public String getExaminersText() {
@@ -169,16 +164,7 @@ public class ReportInfo implements Serializable {
     }
     
     public void fillEvidenceFromText(String text) {
-        evidences.clear();
-        for(String evidence : text.split(EVIDENCE_DELIMITER)) {
-            String[] id_desc = evidence.split(ID_DESC_DELIMITER, 2);
-            if(id_desc.length != 2)
-                continue;
-            EvidenceDesc e = new EvidenceDesc();
-            e.desc = id_desc[1];
-            e.id = id_desc[0].replaceFirst(EVIDENCE_PREFIX, "");
-            evidences.add(e);
-        }
+        finalEvidenceDesc = text;
     }
     
     public void readJsonInfoFile(File file) throws IOException {

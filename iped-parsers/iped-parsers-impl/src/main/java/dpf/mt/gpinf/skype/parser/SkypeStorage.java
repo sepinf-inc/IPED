@@ -1,6 +1,7 @@
 package dpf.mt.gpinf.skype.parser;
 
 import java.io.Closeable;
+import java.sql.Connection;
 import java.util.Collection;
 import iped3.search.IItemSearcher;
 
@@ -17,5 +18,7 @@ public interface SkypeStorage extends Closeable {
 	String getSkypeName();
 
 	SkypeAccount getAccount();
+	
+	Connection getConnection() throws SkypeParserException;
 
 }

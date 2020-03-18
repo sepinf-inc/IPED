@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.17-snapshot</version>
+        <version>3.17.2</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -314,7 +314,7 @@
                                 <artifactItem>
                                     <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-loaddb</artifactId>
-                                    <version>${sleuthkit.version}</version>
+                                    <version>4.6.5-p04</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -331,7 +331,7 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>tsk</groupId>
+                                    <groupId>org.sleuthkit</groupId>
                                     <artifactId>tsk-iped-patch-zip</artifactId>
                                     <version>${sleuthkit.version}</version>
                                     <type>zip</type>

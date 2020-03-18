@@ -15,6 +15,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.poi.util.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -32,7 +33,7 @@ import iped3.search.IItemSearcher;
 public class SkypeSqliteV12 implements SkypeStorage {
 	private File mainDb;
 
-	private Connection conn = null;
+	protected Connection conn = null;
 
 	private String skypeName;
 	private Hashtable<String, SkypeConversation> conversations = null;
@@ -156,13 +157,14 @@ public class SkypeSqliteV12 implements SkypeStorage {
 
 	private void loadConversations() throws SkypeParserException {
 		conversations = new Hashtable<String, SkypeConversation>();
-		PreparedStatement partsstmt=null;
+		PreparedStatement partsstmt = null;
 		try{
 			partsstmt = getConnection().prepareStatement(SELECT_CONVERSATIONS);
 			ResultSet convs;
 			try {
 				convs = partsstmt.executeQuery();
 			}catch (SQLException e) {
+			    partsstmt.close();
 				partsstmt = getConnection().prepareStatement(SELECT_CONVERSATIONS_V13);
 				convs = partsstmt.executeQuery();
 			}
@@ -177,13 +179,15 @@ public class SkypeSqliteV12 implements SkypeStorage {
 				}
 			}
 		} catch (SQLException e) {
-			if(partsstmt!=null) {
-				try {
-					partsstmt.close();
-				}catch(SQLException ex) {
-				}
-			}
 			throw new SkypeParserException(e);
+			
+		}finally {
+		    if(partsstmt != null) {
+                try {
+                    partsstmt.close();
+                }catch(SQLException ex) {
+                }
+            }
 		}
 	}
 

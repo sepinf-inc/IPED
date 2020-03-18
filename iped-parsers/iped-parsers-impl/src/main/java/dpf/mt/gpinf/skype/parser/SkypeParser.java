@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
+import java.sql.Connection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +26,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
@@ -38,8 +41,13 @@ import iped3.util.ExtraProperties;
  *
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
-
 public class SkypeParser extends AbstractParser {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    
     public static final MediaType SKYPE_MIME = MediaType.application("sqlite-skype"); //$NON-NLS-1$
     public static final MediaType SKYPE_MIME_V12 = MediaType.application("sqlite-skype-v12"); //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>();
@@ -80,15 +88,11 @@ public class SkypeParser extends AbstractParser {
         if (itemInfo != null)
             filePath = itemInfo.getPath();
 
+        final TikaInputStream tis = TikaInputStream.get(stream, tmp);
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
-            File tmpFile = tis.getFile();
-
-            sqliteParser.parse(tis, handler, metadata, context);
-
             if (extractor.shouldParseEmbedded(metadata)) {
-                sqlite = SkypeStorageFactory.createFromMediaType(metadata.get(HttpHeaders.CONTENT_TYPE), tmpFile, filePath);
-
+                sqlite = new SkypeStorageFactory().createFromMediaType(tis, metadata, context, filePath);
+                
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
 
@@ -217,7 +221,7 @@ public class SkypeParser extends AbstractParser {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            sqliteParser.parse(tis, handler, metadata, context);
             throw new TikaException("SkypeParserException Exception", e); //$NON-NLS-1$
 
         } finally {

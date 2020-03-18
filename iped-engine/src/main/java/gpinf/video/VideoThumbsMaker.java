@@ -438,10 +438,11 @@ public class VideoThumbsMaker {
         AtomicInteger counter = new AtomicInteger();
         int exitCode = -1000;
         boolean isTimeout = false;
+        Process process = null;
         try {
             final ProcessBuilder pb = new ProcessBuilder(cmds);
             pb.redirectErrorStream(true);
-            Process process = pb.start();
+            process = pb.start();
             StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), sb, counter, process);
             outputGobbler.start();
 
@@ -461,6 +462,9 @@ public class VideoThumbsMaker {
                 System.err.print("Error running program '"); //$NON-NLS-1$
                 e.printStackTrace();
             }
+        } finally {
+            if(process != null && process.isAlive())
+                process.destroyForcibly();
         }
         return new ExecResult(exitCode, null, isTimeout);
     }

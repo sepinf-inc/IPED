@@ -49,7 +49,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     private static final long serialVersionUID = 1L;
 
-    private static final List<String> dateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
+    private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
             IndexItem.CREATED, IndexItem.RECORDDATE);
 
     private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
@@ -267,7 +267,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             if (value.isEmpty())
                 return value;
 
-            if (dateFields.contains(field))
+            if (basicDateFields.contains(field))
                 try {
                     Date date = DateUtil.stringToDate(value);
                     if (field.equals(IndexItem.ACCESSED)) {
@@ -279,6 +279,11 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 } catch (Exception e) {
                     // e.printStackTrace();
                 }
+            
+            if(Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
+                //it was stored lowercase because query parser converts range queries to lowercase
+                value = value.toUpperCase();
+            }
 
             if (field.equals(IndexItem.LENGTH)) {
                 value = numberFormat.format(Long.valueOf(value));

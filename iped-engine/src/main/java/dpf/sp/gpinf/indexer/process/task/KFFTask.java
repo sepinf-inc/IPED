@@ -59,7 +59,7 @@ public class KFFTask extends AbstractTask {
     private static Map<Integer, String[]> products;
     private static Set<String> alertProducts;
     private static DB db;
-    private static Boolean taskEnabled;
+    private static boolean taskEnabled = true;
 
     private boolean excludeKffIgnorable = true;
     private boolean md5 = true;
@@ -78,7 +78,7 @@ public class KFFTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
 
         String hashes = confParams.getProperty("hash"); //$NON-NLS-1$
-        if (hashes == null || (taskEnabled != null && !taskEnabled)) {
+        if (hashes == null || !taskEnabled) {
             return;
         }
         if (hashes.contains("md5")) { //$NON-NLS-1$
