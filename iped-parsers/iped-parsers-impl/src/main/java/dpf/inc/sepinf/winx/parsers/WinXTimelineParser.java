@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -23,13 +22,10 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.IOExceptionWithCause;
 import org.apache.tika.io.TemporaryResources;
-import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -37,6 +33,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
@@ -55,7 +52,7 @@ import iped3.util.ExtraProperties;
  * @author Matheus Bichara de Assumpção <bda.matheus@gmail.com>
  */
 
-public class WinXTimelineParser extends AbstractParser {
+public class WinXTimelineParser extends SQLite3DBParser {
 
 	private static final long serialVersionUID = 1L;
 
@@ -86,33 +83,6 @@ public class WinXTimelineParser extends AbstractParser {
         this.extractEntries = extractEntries;
     }
 	
-	/**
-	 * SQLite DB Connection methods
-	 * Should probably be put in a superclass instead. Here for now
-	 */
-    protected static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; 
-
-    private Connection getConnection(File dbFile) throws IOException, TikaException {
-        String connectionString = getConnectionString(dbFile);
-        Connection connection = null;
-        try {
-            Class.forName(SQLITE_CLASS_NAME);
-        } catch (ClassNotFoundException e) {
-            throw new TikaException(e.getMessage());
-        }
-        try {
-            connection = DriverManager.getConnection(connectionString);
-        } catch (SQLException e) {
-            throw new IOExceptionWithCause(e);
-        }
-        return connection;
-    }
-    
-	private String getConnectionString(File dbFile) throws IOException {
-        return "jdbc:sqlite:" + dbFile.getAbsolutePath(); 
-    }
-	
-	
 	// Conversion from Datetime Format String to Date
     private Date convertStringToDate(String datetime) throws ParseException {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -130,13 +100,8 @@ public class WinXTimelineParser extends AbstractParser {
 
 		TemporaryResources tmp = new TemporaryResources();
 		
-		//Get File
-		TikaInputStream tis = TikaInputStream.get(stream, tmp);
-		File dbFile = tis.getFile();
-		
 		//Set Connection
-		Connection connection = null;
-		connection = getConnection(dbFile);
+		Connection connection = getConnection(stream, metadata, context);
 
 		try {
 			
