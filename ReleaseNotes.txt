@@ -1,4 +1,4 @@
-03/16/2020: IPED-3.17.2
+03/18/2020: IPED-3.17.2
 Fixes:
 - Profile fastmode not working in v3.17 (#30)
 - HtmlViewer is downloading external resources since 3.16 (#22)
@@ -7,6 +7,7 @@ Fixes:
 - Range searches in internal dates (exif, office, message-date...) not working (#19)
 - Error reading files on Linux without patch in sleuthkit (#16)
 - Retry sleuthkit sqlite read errors (#38)
+- Fix parsing of carved vcards (PR #40) by Fabio Pfeifer
 
 02/13/2020: IPED-3.17.1
 News:
