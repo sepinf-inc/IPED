@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -79,6 +80,11 @@ public class WinXTimelineParser extends AbstractParser {
 	public Set<MediaType> getSupportedTypes(ParseContext context) {
 		return SUPPORTED_TYPES;
 	}
+	
+	@Field
+    public void setExtractEntries(boolean extractEntries) {
+        this.extractEntries = extractEntries;
+    }
 	
 	/**
 	 * SQLite DB Connection methods
