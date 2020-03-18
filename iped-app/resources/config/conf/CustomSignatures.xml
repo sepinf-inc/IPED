@@ -896,9 +896,13 @@
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
     
-    <mime-type type="application/x-win10-timeline">     
+    <mime-type type="application/x-win10-timeline-sqlite">     
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ActivitiesCache.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-win10-timeline">
+        <sub-class-of type="text/html"/>
     </mime-type>
    
 </mime-info>
