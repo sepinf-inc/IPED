@@ -2,7 +2,6 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.io.File;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -21,7 +20,7 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
 
     @Override
     public void extractContactList() throws WAExtractorException {
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath()); //$NON-NLS-1$
+        try (Connection conn = getConnection();
                 Statement stmt = conn.createStatement()) {
 
             ResultSet rs;

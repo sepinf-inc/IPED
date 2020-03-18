@@ -90,12 +90,11 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp); 
-        File dbFile = tis.getFile();
         File downloadsFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
         File searchFile = tmp.createTemporaryFile();
 
-        try (Connection connection = getConnection(dbFile)) {
+        try (Connection connection = getConnection(tis, metadata, context)) {
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
