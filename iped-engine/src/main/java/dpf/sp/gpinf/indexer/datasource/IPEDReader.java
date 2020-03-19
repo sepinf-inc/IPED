@@ -38,9 +38,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
@@ -75,6 +73,7 @@ import iped3.search.IMultiMarcadores;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
+import iped3.util.MediaTypes;
 import iped3.util.ExtraProperties;
 
 /*
@@ -83,11 +82,9 @@ import iped3.util.ExtraProperties;
 public class IPEDReader extends DataSourceReader {
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
-
+    
     private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     
-    private static MediaTypeRegistry mimeRegistry;
-
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
     boolean extractCheckedItems = false;
@@ -100,12 +97,6 @@ public class IPEDReader extends DataSourceReader {
     
     public IPEDReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
-    }
-    
-    public MediaType getParentType(MediaType mediaType) {
-        if (mimeRegistry == null)
-            mimeRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-        return mimeRegistry.getSupertype(mediaType);
     }
 
     public boolean isSupported(File report) {
@@ -490,8 +481,15 @@ public class IPEDReader extends DataSourceReader {
                     } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
                         evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
                     
-                    else if(MediaType.application("x-browser-registry").equals(getParentType(evidence.getMediaType()))) { //$NON-NLS-1$
-                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));                        
+                    else {
+                        MediaType type = evidence.getMediaType();
+                        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
+                            if(type.equals(MediaTypes.METADATA_ENTRY)) {
+                                evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));
+                                break;
+                            }
+                            type = MediaTypes.getParentType(type);
+                        }                   
                     }
                 }
             } else {
