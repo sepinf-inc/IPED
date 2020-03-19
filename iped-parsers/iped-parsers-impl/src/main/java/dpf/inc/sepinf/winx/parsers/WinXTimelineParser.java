@@ -1,5 +1,6 @@
 package dpf.inc.sepinf.winx.parsers;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -13,6 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +34,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.inc.sepinf.browsers.parsers.EdgeVisit;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
@@ -102,10 +105,9 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         //Set Connection
         Connection connection = getConnection(stream, metadata, context);
-        try {
 
-            //Run Query and Obtain the Timeline entries
-            List<TimelineEntry> entries = runQuery(connection);
+        //Run Query and Obtain the Timeline entry iterable
+        try (TimelineEntryIterable entries = runQuery(connection)){
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -118,87 +120,37 @@ public class WinXTimelineParser extends SQLite3DBParser {
             Metadata timelineMetadata = new Metadata();
 
             try(FileOutputStream timelineFos = new FileOutputStream(timelineFile)){
+                
                 ToXMLContentHandler timelineHandler = new ToXMLContentHandler(timelineFos, "UTF-8");    
                 timelineMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE.toString());
                 timelineMetadata.add(Metadata.RESOURCE_NAME_KEY, "Windows10Timeline.html");
                 timelineMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                 timelineMetadata.set(BasicProps.HASCHILD, "true");
 
-                parseTimelineQuery(timelineHandler, timelineMetadata, entries);
-            }
+                XHTMLContentHandler xHtmlOuput = startWriteTimelineEntries(timelineHandler, timelineMetadata);
+                
+                int i = 0;
+                for (TimelineEntry entry: entries) {
+                    
+                    emitTimelineEntry(xHtmlOuput, entry);
 
+                    /**
+                     * Optionally extract entries as subitems 
+                     */
+                    if (!extractEntries)
+                        break;
+
+                    Metadata metadataTimelineItem = getEntryMetadata(entry, i++);
+
+                    extractor.parseEmbedded(new EmptyInputStream(), handler, metadataTimelineItem, true);
+
+                }
+                
+                endTimelineEntries(xHtmlOuput);
+            }
+            
             try(FileInputStream fis = new FileInputStream(timelineFile)){
                 extractor.parseEmbedded(fis, handler, timelineMetadata, true);
-            }
-
-            /**
-             * Optionally extract entries as subitems 
-             */
-
-            int i = 0;
-            for (TimelineEntry entry: entries) {
-
-                if (!extractEntries)
-                    break;
-
-                i++;
-
-                Metadata metadataTimelineItem = new Metadata();
-
-                metadataTimelineItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE_REG.toString());
-                metadataTimelineItem.add(Metadata.RESOURCE_NAME_KEY, "Timeline Entry " + i);
-
-                //These properties need to get a "Date" type as parameters, so it can correctly show times in UTC
-                metadataTimelineItem.set(TikaCoreProperties.CREATED, convertStringToDate(entry.getStartTime()));
-                metadataTimelineItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getLastModified()));
-
-                metadataTimelineItem.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
-                metadataTimelineItem.add((BasicProps.HASH), "");
-
-                //Timeline data
-                metadataTimelineItem.add("etag", entry.getEtag());
-                metadataTimelineItem.add("order", entry.getOrder());
-                metadataTimelineItem.add("application", entry.getApplication());
-                metadataTimelineItem.add("displayName", entry.getDisplayName());
-                metadataTimelineItem.add("fileOpened", entry.getFileOpened());
-                metadataTimelineItem.add("fullPath", entry.getFullPath());
-                metadataTimelineItem.add("content_url", entry.getContent_url());
-                metadataTimelineItem.add("info", entry.getInfo());
-                metadataTimelineItem.add("appActivityId", entry.getAppActivityId());
-                metadataTimelineItem.add("payload_OriginalTimezone", entry.getPayload_Timezone());
-                metadataTimelineItem.add("activity_type", entry.getActivity_type());
-                metadataTimelineItem.add("group", entry.getGroup());
-                metadataTimelineItem.add("synced", entry.getSynced());
-                metadataTimelineItem.add("platform", entry.getPlatform());
-                metadataTimelineItem.add("tileStatus", entry.getTileStatus());
-                metadataTimelineItem.add("wasRemoved", entry.getWasRemoved());
-                metadataTimelineItem.add("uploadQueue", entry.getUploadQueue());
-                metadataTimelineItem.add("isLocalOnly", entry.getIsLocalOnly());
-                metadataTimelineItem.add("app_Uri", entry.getApp_Uri());
-                metadataTimelineItem.add("priority", entry.getPriority());
-                metadataTimelineItem.add("activeDuration", entry.getActiveDuration());
-                metadataTimelineItem.add("calculatedDuration", entry.getCalculatedDuration());
-                metadataTimelineItem.add("startTime", entry.getStartTime());
-                metadataTimelineItem.add("lastModified", entry.getLastModified());
-                metadataTimelineItem.add("lastModifiedOnClient", entry.getLastModifiedOnClient());
-                metadataTimelineItem.add("endTime", entry.getEndTime());
-                metadataTimelineItem.add("createdInCloud", entry.getCreatedInCloud());
-                metadataTimelineItem.add("expiresIndays", entry.getExpiresIndays());
-                metadataTimelineItem.add("expirationOnPackageID", entry.getExpirationOnPackageID());
-                metadataTimelineItem.add("expiration", entry.getExpiration());
-                metadataTimelineItem.add("tag", entry.getTag());
-                metadataTimelineItem.add("matchID", entry.getMatchID());
-                metadataTimelineItem.add("deviceID", entry.getDeviceID());
-                metadataTimelineItem.add("packageIdHash", entry.getPackageIdHash());
-                metadataTimelineItem.add("id", entry.getId());
-                metadataTimelineItem.add("clipboardTextBase64", entry.getClipboardTextBase64());
-                metadataTimelineItem.add("groupAppActivityId", entry.getGroupAppActivityId());
-                metadataTimelineItem.add("enterpriseId", entry.getEnterpriseId());
-                metadataTimelineItem.add("parentActivityId", entry.getParentActivityId());
-                metadataTimelineItem.add("originalPayload", entry.getOriginalPayload());
-
-                extractor.parseEmbedded(new EmptyInputStream(), handler, metadataTimelineItem, true);
-
             }
 
         } catch (Exception e) {
@@ -217,68 +169,161 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         }
     }
+    
+    private Metadata getEntryMetadata(TimelineEntry entry, int i) throws ParseException {
+        
+        Metadata metadataTimelineItem = new Metadata();
 
+        metadataTimelineItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE_REG.toString());
+        metadataTimelineItem.add(Metadata.RESOURCE_NAME_KEY, "WinXTimeline Entry " + i);
 
-    private List<TimelineEntry> runQuery(Connection connection) throws SQLException {
+        //These properties need to get a "Date" type as parameters, so it can correctly show times in UTC
+        metadataTimelineItem.set(TikaCoreProperties.CREATED, convertStringToDate(entry.getStartTime()));
+        metadataTimelineItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getLastModified()));
 
-        List<TimelineEntry> entries = new LinkedList<TimelineEntry> ();
+        metadataTimelineItem.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
+        metadataTimelineItem.add((BasicProps.HASH), "");
 
-        try(Statement statement = connection.createStatement()){
+        //Timeline data
+        metadataTimelineItem.add("etag", entry.getEtag());
+        metadataTimelineItem.add("order", entry.getOrder());
+        metadataTimelineItem.add("application", entry.getApplication());
+        metadataTimelineItem.add("displayName", entry.getDisplayName());
+        metadataTimelineItem.add("fileOpened", entry.getFileOpened());
+        metadataTimelineItem.add("fullPath", entry.getFullPath());
+        metadataTimelineItem.add("content_url", entry.getContent_url());
+        metadataTimelineItem.add("info", entry.getInfo());
+        metadataTimelineItem.add("appActivityId", entry.getAppActivityId());
+        metadataTimelineItem.add("payload_OriginalTimezone", entry.getPayload_Timezone());
+        metadataTimelineItem.add("activity_type", entry.getActivity_type());
+        metadataTimelineItem.add("group", entry.getGroup());
+        metadataTimelineItem.add("synced", entry.getSynced());
+        metadataTimelineItem.add("platform", entry.getPlatform());
+        metadataTimelineItem.add("tileStatus", entry.getTileStatus());
+        metadataTimelineItem.add("wasRemoved", entry.getWasRemoved());
+        metadataTimelineItem.add("uploadQueue", entry.getUploadQueue());
+        metadataTimelineItem.add("isLocalOnly", entry.getIsLocalOnly());
+        metadataTimelineItem.add("app_Uri", entry.getApp_Uri());
+        metadataTimelineItem.add("priority", entry.getPriority());
+        metadataTimelineItem.add("activeDuration", entry.getActiveDuration());
+        metadataTimelineItem.add("calculatedDuration", entry.getCalculatedDuration());
+        metadataTimelineItem.add("startTime", entry.getStartTime());
+        metadataTimelineItem.add("lastModified", entry.getLastModified());
+        metadataTimelineItem.add("lastModifiedOnClient", entry.getLastModifiedOnClient());
+        metadataTimelineItem.add("endTime", entry.getEndTime());
+        metadataTimelineItem.add("createdInCloud", entry.getCreatedInCloud());
+        metadataTimelineItem.add("expiresIndays", entry.getExpiresIndays());
+        metadataTimelineItem.add("expirationOnPackageID", entry.getExpirationOnPackageID());
+        metadataTimelineItem.add("expiration", entry.getExpiration());
+        metadataTimelineItem.add("tag", entry.getTag());
+        metadataTimelineItem.add("matchID", entry.getMatchID());
+        metadataTimelineItem.add("deviceID", entry.getDeviceID());
+        metadataTimelineItem.add("packageIdHash", entry.getPackageIdHash());
+        metadataTimelineItem.add("id", entry.getId());
+        metadataTimelineItem.add("clipboardTextBase64", entry.getClipboardTextBase64());
+        metadataTimelineItem.add("groupAppActivityId", entry.getGroupAppActivityId());
+        metadataTimelineItem.add("enterpriseId", entry.getEnterpriseId());
+        metadataTimelineItem.add("parentActivityId", entry.getParentActivityId());
+        metadataTimelineItem.add("originalPayload", entry.getOriginalPayload());
+        
+        return metadataTimelineItem;
+    }
+    
+    private interface TimelineEntryIterable extends Iterable<TimelineEntry>, Closeable{
+    }
+    
+    private TimelineEntryIterable runQuery(Connection connection) throws SQLException {
+
+        return new TimelineEntryIterable() {
+            
+            Statement statement = connection.createStatement();
             ResultSet rs = statement.executeQuery(WINX_TIMELINE_QUERY);
 
-            while (rs.next()) {
+            @Override
+            public Iterator<TimelineEntry> iterator() {
+                
+                return new Iterator<TimelineEntry>() {
+                    
+                    @Override
+                    public boolean hasNext() {
+                        try {
+                            return rs.next();
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
 
-                TimelineEntry entry = new TimelineEntry();
-
-                entry.setEtag(rs.getString("Etag"));
-                entry.setOrder(rs.getString("Order"));
-                entry.setApplication(rs.getString("Application"));
-                entry.setDisplayName(rs.getString("DisplayName"));
-                entry.setFileOpened(rs.getString("File Opened"));
-                entry.setFullPath(rs.getString("Full Path"));
-                entry.setContent_url(rs.getString("content_url"));
-                entry.setInfo(rs.getString("Info"));
-                entry.setAppActivityId(rs.getString("AppActivityId"));
-                entry.setPayload_Timezone(rs.getString("Payload/Timezone"));
-                entry.setActivity_type(rs.getString("Activity_type"));
-                entry.setGroup(rs.getString("Group"));
-                entry.setSynced(rs.getString("Synced"));
-                entry.setPlatform(rs.getString("Platform"));
-                entry.setTileStatus(rs.getString("TileStatus"));
-                entry.setWasRemoved(rs.getString("WasRemoved"));
-                entry.setUploadQueue(rs.getString("UploadQueue"));
-                entry.setIsLocalOnly(rs.getString("IsLocalOnly"));
-                entry.setApp_Uri(rs.getString("App/Uri"));
-                entry.setPriority(rs.getString("Priority"));
-                entry.setActiveDuration(rs.getString("Active Duration"));
-                entry.setCalculatedDuration(rs.getString("Calculated Duration"));
-                entry.setStartTime(rs.getString("StartTime"));
-                entry.setLastModified(rs.getString("LastModified"));
-                entry.setLastModifiedOnClient(rs.getString("LastModifiedOnClient"));
-                entry.setEndTime(rs.getString("EndTime"));
-                entry.setCreatedInCloud(rs.getString("CreatedInCloud"));
-                entry.setExpiresIndays(rs.getString("Expires In days"));
-                entry.setExpirationOnPackageID(rs.getString("Expiration on PackageID"));
-                entry.setExpiration(rs.getString("Expiration"));
-                entry.setTag(rs.getString("Tag"));
-                entry.setMatchID(rs.getString("MatchID"));
-                entry.setDeviceID(rs.getString("Device ID"));
-                entry.setPackageIdHash(rs.getString("PackageIdHash"));
-                entry.setId(rs.getString("ID"));
-                entry.setClipboardTextBase64(rs.getString("Clipboard Text(Base64)"));
-                entry.setGroupAppActivityId(rs.getString("GroupAppActivityId"));
-                entry.setEnterpriseId(rs.getString("EnterpriseId"));
-                entry.setParentActivityId(rs.getString("ParentActivityId"));
-                entry.setOriginalPayload(rs.getString("Original Payload"));
-
-                entries.add(entry);
+                    @Override
+                    public TimelineEntry next() {
+                        
+                        TimelineEntry entry = new TimelineEntry();
+                        
+                        try {
+                            entry.setEtag(rs.getString("Etag"));
+                            entry.setOrder(rs.getString("Order"));
+                            entry.setApplication(rs.getString("Application"));
+                            entry.setDisplayName(rs.getString("DisplayName"));
+                            entry.setFileOpened(rs.getString("File Opened"));
+                            entry.setFullPath(rs.getString("Full Path"));
+                            entry.setContent_url(rs.getString("content_url"));
+                            entry.setInfo(rs.getString("Info"));
+                            entry.setAppActivityId(rs.getString("AppActivityId"));
+                            entry.setPayload_Timezone(rs.getString("Payload/Timezone"));
+                            entry.setActivity_type(rs.getString("Activity_type"));
+                            entry.setGroup(rs.getString("Group"));
+                            entry.setSynced(rs.getString("Synced"));
+                            entry.setPlatform(rs.getString("Platform"));
+                            entry.setTileStatus(rs.getString("TileStatus"));
+                            entry.setWasRemoved(rs.getString("WasRemoved"));
+                            entry.setUploadQueue(rs.getString("UploadQueue"));
+                            entry.setIsLocalOnly(rs.getString("IsLocalOnly"));
+                            entry.setApp_Uri(rs.getString("App/Uri"));
+                            entry.setPriority(rs.getString("Priority"));
+                            entry.setActiveDuration(rs.getString("Active Duration"));
+                            entry.setCalculatedDuration(rs.getString("Calculated Duration"));
+                            entry.setStartTime(rs.getString("StartTime"));
+                            entry.setLastModified(rs.getString("LastModified"));
+                            entry.setLastModifiedOnClient(rs.getString("LastModifiedOnClient"));
+                            entry.setEndTime(rs.getString("EndTime"));
+                            entry.setCreatedInCloud(rs.getString("CreatedInCloud"));
+                            entry.setExpiresIndays(rs.getString("Expires In days"));
+                            entry.setExpirationOnPackageID(rs.getString("Expiration on PackageID"));
+                            entry.setExpiration(rs.getString("Expiration"));
+                            entry.setTag(rs.getString("Tag"));
+                            entry.setMatchID(rs.getString("MatchID"));
+                            entry.setDeviceID(rs.getString("Device ID"));
+                            entry.setPackageIdHash(rs.getString("PackageIdHash"));
+                            entry.setId(rs.getString("ID"));
+                            entry.setClipboardTextBase64(rs.getString("Clipboard Text(Base64)"));
+                            entry.setGroupAppActivityId(rs.getString("GroupAppActivityId"));
+                            entry.setEnterpriseId(rs.getString("EnterpriseId"));
+                            entry.setParentActivityId(rs.getString("ParentActivityId"));
+                            entry.setOriginalPayload(rs.getString("Original Payload"));
+                            
+                        }catch(SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                        return entry;
+                    }
+                
+                };
             }
-        }       
 
-        return entries;
+            @Override
+            public void close() throws IOException {
+                try {
+                    rs.close();
+                    statement.close();
+                } catch (SQLException e) {
+                    //swallow
+                }                
+            }
+            
+        };
+
     }
 
-    private void parseTimelineQuery(ContentHandler handler, Metadata metadata, List<TimelineEntry> entries) throws IOException, SAXException, TikaException, IllegalArgumentException, IllegalAccessException {
+    private XHTMLContentHandler startWriteTimelineEntries(ContentHandler handler, Metadata metadata) throws SAXException {
 
         XHTMLContentHandler xHandler = null;
 
@@ -423,138 +468,143 @@ public class WinXTimelineParser extends SQLite3DBParser {
         xHandler.endElement("th");
 
         xHandler.endElement("tr");
+        
+        return xHandler;
+        
+    }
+        
+    private void emitTimelineEntry(XHTMLContentHandler xHandler, TimelineEntry entry) throws SAXException {
 
-        for (TimelineEntry entry: entries) {
-            xHandler.startElement("tr");
+        xHandler.startElement("tr");
 
-            xHandler.startElement("td");
-            xHandler.characters(entry.getEtag());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getOrder());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getApplication());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getDisplayName());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getFileOpened());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getFullPath());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getContent_url());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getInfo());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getAppActivityId());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getPayload_Timezone());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getActivity_type());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getGroup());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getSynced());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getPlatform());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getTileStatus());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getWasRemoved());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getUploadQueue());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getIsLocalOnly());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getApp_Uri());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getPriority());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getActiveDuration());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getCalculatedDuration());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getStartTime());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getLastModified());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getLastModifiedOnClient());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getEndTime());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getCreatedInCloud());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getExpiresIndays());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getExpirationOnPackageID());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getExpiration());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getTag());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getMatchID());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getDeviceID());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getPackageIdHash());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getId());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getClipboardTextBase64());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getGroupAppActivityId());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getEnterpriseId());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getParentActivityId());
-            xHandler.endElement("td");
-            xHandler.startElement("td");
-            xHandler.characters(entry.getOriginalPayload());
-            xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getEtag());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getOrder());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getApplication());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getDisplayName());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getFileOpened());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getFullPath());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getContent_url());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getInfo());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getAppActivityId());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getPayload_Timezone());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getActivity_type());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getGroup());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getSynced());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getPlatform());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getTileStatus());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getWasRemoved());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getUploadQueue());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getIsLocalOnly());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getApp_Uri());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getPriority());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getActiveDuration());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getCalculatedDuration());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getStartTime());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getLastModified());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getLastModifiedOnClient());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getEndTime());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getCreatedInCloud());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getExpiresIndays());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getExpirationOnPackageID());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getExpiration());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getTag());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getMatchID());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getDeviceID());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getPackageIdHash());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getId());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getClipboardTextBase64());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getGroupAppActivityId());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getEnterpriseId());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getParentActivityId());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        xHandler.characters(entry.getOriginalPayload());
+        xHandler.endElement("td");
 
-            xHandler.endElement("tr");
-        }
-
+        xHandler.endElement("tr");
+    
+    }
+        
+    private void endTimelineEntries(XHTMLContentHandler xHandler) throws SAXException {
         xHandler.endElement("table");
-
         xHandler.endDocument();
-
     }
 
     /**
