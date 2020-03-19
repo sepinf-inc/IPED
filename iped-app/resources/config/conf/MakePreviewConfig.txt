@@ -4,7 +4,8 @@
 
 # List of mimetypes which will have a html preview file generated.
 # Their parsers must support creating a formatted html preview.
-supportedMimes = application/x-msaccess; application/x-sqlite3; application/sqlite-skype; application/x-lnk;
+supportedMimes = application/x-msaccess; application/x-lnk;
+supportedMimes = application/x-sqlite3; application/sqlite-skype; application/x-win10-timeline-sqlite
 supportedMimes = application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-shareaza-searches-dat; application/x-msie-cache
 supportedMimes = application/x-prefetch
 

@@ -1,9 +1,6 @@
 package dpf.inc.sepinf.winx.parsers;
 
 import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -15,8 +12,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -24,23 +19,19 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.ToXMLContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.inc.sepinf.browsers.parsers.EdgeVisit;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
 
 /**
  * Parser for the Windows 10 Timeline feature (v1803/1809/1903+)
@@ -100,58 +91,34 @@ public class WinXTimelineParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-
-        TemporaryResources tmp = new TemporaryResources();
+        
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
 
         //Set Connection
         Connection connection = getConnection(stream, metadata, context);
 
         //Run Query and Obtain the Timeline entry iterable
-        try (TimelineEntryIterable entries = runQuery(connection)){
+        try (TimelineEntryIterable entries = runQuery(connection)){            
 
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                    new ParsingEmbeddedDocumentExtractor(context));
-
-            /**
-             * Parsing content and writing to a new HTML with MIME "x-win10-timeline", which was registered as 
-             * a subclass of "text/html" in CustomSignatures.xml
-             */
-            File timelineFile = tmp.createTemporaryFile();
-            Metadata timelineMetadata = new Metadata();
-
-            try(FileOutputStream timelineFos = new FileOutputStream(timelineFile)){
+            XHTMLContentHandler xHtmlOuput = startWriteTimelineEntries(handler, metadata);
+            
+            int i = 0;
+            for (TimelineEntry entry: entries) {
                 
-                ToXMLContentHandler timelineHandler = new ToXMLContentHandler(timelineFos, "UTF-8");    
-                timelineMetadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WIN10_TIMELINE.toString());
-                timelineMetadata.add(Metadata.RESOURCE_NAME_KEY, "Windows10Timeline.html");
-                timelineMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
-                timelineMetadata.set(BasicProps.HASCHILD, "true");
+                emitTimelineEntry(xHtmlOuput, entry);
 
-                XHTMLContentHandler xHtmlOuput = startWriteTimelineEntries(timelineHandler, timelineMetadata);
-                
-                int i = 0;
-                for (TimelineEntry entry: entries) {
-                    
-                    emitTimelineEntry(xHtmlOuput, entry);
-
-                    /**
-                     * Optionally extract entries as subitems 
-                     */
-                    if (!extractEntries)
-                        break;
-
+                /**
+                 * Optionally extract entries as subitems 
+                 */
+                if (extractEntries) {
                     Metadata metadataTimelineItem = getEntryMetadata(entry, i++);
-
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataTimelineItem, true);
-
                 }
-                
-                endTimelineEntries(xHtmlOuput);
+
             }
             
-            try(FileInputStream fis = new FileInputStream(timelineFile)){
-                extractor.parseEmbedded(fis, handler, timelineMetadata, true);
-            }
+            endTimelineEntries(xHtmlOuput);
 
         } catch (Exception e) {
 
@@ -159,7 +126,6 @@ public class WinXTimelineParser extends SQLite3DBParser {
             throw new TikaException("SQLite Win10Timeline parsing exception", e);
 
         } finally {
-            tmp.close();
             try {
                 if (connection != null)
                     connection.close();
@@ -181,7 +147,6 @@ public class WinXTimelineParser extends SQLite3DBParser {
         metadataTimelineItem.set(TikaCoreProperties.CREATED, convertStringToDate(entry.getStartTime()));
         metadataTimelineItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getLastModified()));
 
-        metadataTimelineItem.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
         metadataTimelineItem.add((BasicProps.HASH), "");
 
         //Timeline data
