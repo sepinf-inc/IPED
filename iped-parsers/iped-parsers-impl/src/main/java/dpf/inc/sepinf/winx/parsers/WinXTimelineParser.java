@@ -50,15 +50,11 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
     private static final long serialVersionUID = 1L;
 
-    public static final MediaType WIN10_TIMELINE_SQLITE = MediaType.application("x-win10-timeline-sqlite");
-
-    public static final String WIN10_TIMELINE_SQLITE_MIME = "application/" + WIN10_TIMELINE_SQLITE.toString();
-
     public static final MediaType WIN10_TIMELINE = MediaType.application("x-win10-timeline");
 
     public static final MediaType WIN10_TIMELINE_REG = MediaType.application("x-win10-timeline-registry");
 
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(WIN10_TIMELINE_SQLITE);
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(WIN10_TIMELINE);
 
     //Option to extract each Timeline registry as a subitem. Maybe also set this boolean in ParserConfig.xml..
     private boolean extractEntries = true;

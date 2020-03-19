@@ -31,7 +31,7 @@ Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/out
 
 Mailboxes = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
 
-Timeline = application/x-win10-timeline-sqlite; application/x-win10-timeline;
+Timeline = application/x-win10-timeline;
 
 Timeline Entries = application/x-win10-timeline-registry;
 

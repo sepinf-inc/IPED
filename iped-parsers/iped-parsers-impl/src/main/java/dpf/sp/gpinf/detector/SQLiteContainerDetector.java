@@ -147,7 +147,7 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("Activity") && 
                 tableNames.contains("Activity_PackageId") && 
                 tableNames.contains("ActivityOperation"))
-            return WinXTimelineParser.WIN10_TIMELINE_SQLITE;
+            return WinXTimelineParser.WIN10_TIMELINE;
 
         return SQLITE_MIME;
 
