@@ -223,59 +223,57 @@ public class WinXTimelineParser extends SQLite3DBParser {
 
         List<TimelineEntry> entries = new LinkedList<TimelineEntry> ();
 
-        Statement statement = null;
-        statement = connection.createStatement();
+        try(Statement statement = connection.createStatement()){
+            ResultSet rs = statement.executeQuery(WINX_TIMELINE_QUERY);
 
-        ResultSet rs = statement.executeQuery(WINX_TIMELINE_QUERY);
+            while (rs.next()) {
 
-        while (rs.next()) {
+                TimelineEntry entry = new TimelineEntry();
 
-            TimelineEntry entry = new TimelineEntry();
+                entry.setEtag(rs.getString("Etag"));
+                entry.setOrder(rs.getString("Order"));
+                entry.setApplication(rs.getString("Application"));
+                entry.setDisplayName(rs.getString("DisplayName"));
+                entry.setFileOpened(rs.getString("File Opened"));
+                entry.setFullPath(rs.getString("Full Path"));
+                entry.setContent_url(rs.getString("content_url"));
+                entry.setInfo(rs.getString("Info"));
+                entry.setAppActivityId(rs.getString("AppActivityId"));
+                entry.setPayload_Timezone(rs.getString("Payload/Timezone"));
+                entry.setActivity_type(rs.getString("Activity_type"));
+                entry.setGroup(rs.getString("Group"));
+                entry.setSynced(rs.getString("Synced"));
+                entry.setPlatform(rs.getString("Platform"));
+                entry.setTileStatus(rs.getString("TileStatus"));
+                entry.setWasRemoved(rs.getString("WasRemoved"));
+                entry.setUploadQueue(rs.getString("UploadQueue"));
+                entry.setIsLocalOnly(rs.getString("IsLocalOnly"));
+                entry.setApp_Uri(rs.getString("App/Uri"));
+                entry.setPriority(rs.getString("Priority"));
+                entry.setActiveDuration(rs.getString("Active Duration"));
+                entry.setCalculatedDuration(rs.getString("Calculated Duration"));
+                entry.setStartTime(rs.getString("StartTime"));
+                entry.setLastModified(rs.getString("LastModified"));
+                entry.setLastModifiedOnClient(rs.getString("LastModifiedOnClient"));
+                entry.setEndTime(rs.getString("EndTime"));
+                entry.setCreatedInCloud(rs.getString("CreatedInCloud"));
+                entry.setExpiresIndays(rs.getString("Expires In days"));
+                entry.setExpirationOnPackageID(rs.getString("Expiration on PackageID"));
+                entry.setExpiration(rs.getString("Expiration"));
+                entry.setTag(rs.getString("Tag"));
+                entry.setMatchID(rs.getString("MatchID"));
+                entry.setDeviceID(rs.getString("Device ID"));
+                entry.setPackageIdHash(rs.getString("PackageIdHash"));
+                entry.setId(rs.getString("ID"));
+                entry.setClipboardTextBase64(rs.getString("Clipboard Text(Base64)"));
+                entry.setGroupAppActivityId(rs.getString("GroupAppActivityId"));
+                entry.setEnterpriseId(rs.getString("EnterpriseId"));
+                entry.setParentActivityId(rs.getString("ParentActivityId"));
+                entry.setOriginalPayload(rs.getString("Original Payload"));
 
-            entry.setEtag(rs.getString("Etag"));
-            entry.setOrder(rs.getString("Order"));
-            entry.setApplication(rs.getString("Application"));
-            entry.setDisplayName(rs.getString("DisplayName"));
-            entry.setFileOpened(rs.getString("File Opened"));
-            entry.setFullPath(rs.getString("Full Path"));
-            entry.setContent_url(rs.getString("content_url"));
-            entry.setInfo(rs.getString("Info"));
-            entry.setAppActivityId(rs.getString("AppActivityId"));
-            entry.setPayload_Timezone(rs.getString("Payload/Timezone"));
-            entry.setActivity_type(rs.getString("Activity_type"));
-            entry.setGroup(rs.getString("Group"));
-            entry.setSynced(rs.getString("Synced"));
-            entry.setPlatform(rs.getString("Platform"));
-            entry.setTileStatus(rs.getString("TileStatus"));
-            entry.setWasRemoved(rs.getString("WasRemoved"));
-            entry.setUploadQueue(rs.getString("UploadQueue"));
-            entry.setIsLocalOnly(rs.getString("IsLocalOnly"));
-            entry.setApp_Uri(rs.getString("App/Uri"));
-            entry.setPriority(rs.getString("Priority"));
-            entry.setActiveDuration(rs.getString("Active Duration"));
-            entry.setCalculatedDuration(rs.getString("Calculated Duration"));
-            entry.setStartTime(rs.getString("StartTime"));
-            entry.setLastModified(rs.getString("LastModified"));
-            entry.setLastModifiedOnClient(rs.getString("LastModifiedOnClient"));
-            entry.setEndTime(rs.getString("EndTime"));
-            entry.setCreatedInCloud(rs.getString("CreatedInCloud"));
-            entry.setExpiresIndays(rs.getString("Expires In days"));
-            entry.setExpirationOnPackageID(rs.getString("Expiration on PackageID"));
-            entry.setExpiration(rs.getString("Expiration"));
-            entry.setTag(rs.getString("Tag"));
-            entry.setMatchID(rs.getString("MatchID"));
-            entry.setDeviceID(rs.getString("Device ID"));
-            entry.setPackageIdHash(rs.getString("PackageIdHash"));
-            entry.setId(rs.getString("ID"));
-            entry.setClipboardTextBase64(rs.getString("Clipboard Text(Base64)"));
-            entry.setGroupAppActivityId(rs.getString("GroupAppActivityId"));
-            entry.setEnterpriseId(rs.getString("EnterpriseId"));
-            entry.setParentActivityId(rs.getString("ParentActivityId"));
-            entry.setOriginalPayload(rs.getString("Original Payload"));
-
-            entries.add(entry);
-
-        }
+                entries.add(entry);
+            }
+        }       
 
         return entries;
     }
