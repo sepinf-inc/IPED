@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.xml.XMLConstants;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -54,7 +55,6 @@ import freemarker.template.Template;
 public class VCardParser extends AbstractParser {
 
     private static final long serialVersionUID = -7436203736342471550L;
-    private static final int MAX_BUFFER_SIZE = 1 << 24;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.text("x-vcard")); //$NON-NLS-1$
     public static final MediaType PARSED_VCARD_MIME_TYPE = MediaType.application("x-vcard-html"); //$NON-NLS-1$
     
@@ -443,10 +443,9 @@ public class VCardParser extends AbstractParser {
         }
     }
 
-    private static String readInputStream(InputStream is) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        IOUtils.copyLarge(is, bout, 0, MAX_BUFFER_SIZE);
-        return new String(bout.toByteArray(), StandardCharsets.UTF_8);
+    private static String readInputStream(InputStream is) throws IOException, TikaException {
+        AutoDetectReader reader = new AutoDetectReader(is);
+        return IOUtils.toString(reader);
     }
 
     public static final String HTML_STYLE = "<style>\n" //$NON-NLS-1$
