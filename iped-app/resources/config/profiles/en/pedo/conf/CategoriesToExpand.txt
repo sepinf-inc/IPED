@@ -18,12 +18,12 @@ OLE files
 # Generates registry reports:
 Windows Registry
 
-#Text Documents
-#Spreadsheets
-#Presentations
-#RTF Documents
-#PDF Documents
-#HTML Documents
+Text Documents
+Spreadsheets
+Presentations
+RTF Documents
+PDF Documents
+HTML Documents
 
 # To expand jar files, comment out the '<mime>application/java-archive</mime>' line in ParserConfig.xml
 #Programs and Libraries
