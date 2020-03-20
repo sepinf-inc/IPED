@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,13 +33,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
@@ -51,7 +50,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
-import org.sqlite.SQLiteOpenMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
@@ -87,12 +85,10 @@ public class ExportFileTask extends AbstractTask {
     private static final int SQLITE_CACHE_SIZE = 1 << 24;
     
     private static final String CREATE_TABLE = 
-    		"CREATE TABLE IF NOT EXISTS t1(id TEXT, data BLOB, thumb BLOB, text TEXT);";
-    
-    private static final String CREATE_INDEX = "CREATE INDEX IF NOT EXISTS idx1 ON t1(id);";
+    		"CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
     
     private static final String INSERT_DATA = 
-    		"INSERT INTO t1(id, data) VALUES(?,?);";
+    		"INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=?;";
     
     private static final String LOAD_HASHES = "SELECT id FROM t1 WHERE data IS NOT NULL;";
 
@@ -135,7 +131,7 @@ public class ExportFileTask extends AbstractTask {
         }
     }
     
-    private static synchronized void configureSQLiteStorage(File output) {
+    private void configureSQLiteStorage(File output) {
         if(!storage.isEmpty()) {
             return;
         }
@@ -149,10 +145,10 @@ public class ExportFileTask extends AbstractTask {
                 try(Statement stmt = con.createStatement()){
                     stmt.executeUpdate(CREATE_TABLE);
                 }
-                try(Statement stmt = con.createStatement()){
-                    stmt.executeUpdate(CREATE_INDEX);
-                }
+                
                 storageCon.put(i, con);
+                
+                caseData.putCaseObject(STORAGE_CON_PREFIX + i, con);
                 
                 //load hashes if exists
                 try(PreparedStatement ps = con.prepareStatement(LOAD_HASHES)){
@@ -538,8 +534,10 @@ public class ExportFileTask extends AbstractTask {
                                 .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
                         gzippedOut.write(buf, 0, len);
                         gzippedOut.close();
-                        ps.setBytes(2, baos.toByteArray());
+                        byte[] bytes = baos.toByteArray();
                         baos = null;
+                        ps.setBytes(2, bytes);
+                        ps.setBytes(3, bytes);
                         ps.executeUpdate();
                     }
                     synchronized(insertedMD5) {

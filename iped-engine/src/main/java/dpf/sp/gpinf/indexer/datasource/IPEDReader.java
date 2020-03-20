@@ -50,7 +50,6 @@ import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
@@ -524,16 +523,11 @@ public class IPEDReader extends DataSourceReader {
                             }
                         }
                     }
-
-                    // Copia miniaturas
-                    File thumbSrc = Util.getFileFromHash(
-                            new File(indexDir.getParentFile(), ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
-                    File thumbDst = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
-                    if (thumbSrc.exists()) {
-                        thumbDst.getParentFile().mkdirs();
-                        IOUtil.copiaArquivo(thumbSrc, thumbDst);
-                    }
                 }
+            }
+            
+            if (doc.getBinaryValue(BasicProps.THUMB) != null) {
+                evidence.setThumb(doc.getBinaryValue(BasicProps.THUMB).bytes);
             }
 
             for (HashTask.HASH hash : HashTask.HASH.values()) {

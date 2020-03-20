@@ -6,6 +6,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.file.Files;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,6 +21,8 @@ import javax.imageio.ImageIO;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
@@ -37,6 +42,10 @@ public class ImageThumbTask extends AbstractTask {
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
     private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
+    
+    private static final String SELECT_THUMB = "SELECT thumb FROM t1 WHERE id=?;";
+    
+    private static final String INSERT_THUMB = "INSERT INTO t1(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=?;";
 
     private static final int samplingRatio = 3;
 
@@ -51,6 +60,8 @@ public class ImageThumbTask extends AbstractTask {
     public boolean logGalleryRendering = false;
 
     private boolean taskEnabled = false;
+    
+    private boolean storeThumbsInDb;
 
     private GraphicsMagicConverter graphicsMagicConverter;
 
@@ -103,6 +114,7 @@ public class ImageThumbTask extends AbstractTask {
             logGalleryRendering = Boolean.valueOf(value.trim());
         }
         graphicsMagicConverter = new GraphicsMagicConverter(executor);
+        
     }
 
     @Override
@@ -122,24 +134,50 @@ public class ImageThumbTask extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null) {
+                || evidence.getHash() == null || evidence.getThumb() != null) {
             return;
         }
-
-        File thumbFile = Util.getFileFromHash(new File(output, thumbsFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
-        if (!thumbFile.getParentFile().exists()) {
-            thumbFile.getParentFile().mkdirs();
-        }
-
-        // Já está na pasta? Então não é necessário gerar.
-        if (thumbFile.exists()) {
-            if (thumbFile.length() != 0) {
-                evidence.setExtraAttribute(HAS_THUMB, true);
-                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
-            } else {
-                evidence.setExtraAttribute(HAS_THUMB, false);
+        
+        File thumbFile = null;
+        
+        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        storeThumbsInDb = !caseData.containsReport() || !ipedConfig.isHtmlReportEnabled();
+        
+        if(storeThumbsInDb) {
+            int dbSuffix = (evidence.getHashValue().getBytes()[0] & 0xFF) >> 4;
+            Connection con = (Connection)caseData.getCaseObject(ExportFileTask.STORAGE_CON_PREFIX + dbSuffix);
+            try(PreparedStatement ps = con.prepareStatement(SELECT_THUMB)){
+                ps.setString(1, evidence.getHash());
+                ResultSet rs = ps.executeQuery();
+                if(rs.next()) {
+                    byte[] thumb = rs.getBytes(1);
+                    if(thumb != null) {
+                        evidence.setThumb(thumb);
+                        if(thumb.length > 0) {
+                            evidence.setExtraAttribute(HAS_THUMB, true);
+                        } else {
+                            evidence.setExtraAttribute(HAS_THUMB, false);
+                        }
+                        return;
+                    }
+                }
             }
-            return;
+        }else {
+            thumbFile = Util.getFileFromHash(new File(output, thumbsFolder), evidence.getHash(), "jpg"); //$NON-NLS-1$
+            if (!thumbFile.getParentFile().exists()) {
+                thumbFile.getParentFile().mkdirs();
+            }
+
+            //if exists, do not need to compute again
+            if (thumbFile.exists()) {
+                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                if (thumbFile.length() != 0) {
+                    evidence.setExtraAttribute(HAS_THUMB, true);
+                } else {
+                    evidence.setExtraAttribute(HAS_THUMB, false);
+                }
+                return;
+            }
         }
 
         Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
@@ -191,7 +229,7 @@ public class ImageThumbTask extends AbstractTask {
             try (BufferedInputStream stream = evidence.getBufferedStream()) {
                 dimension = ImageUtil.getImageFileDimension(stream);
             }
-            if (extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
+            if(extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
                 }
@@ -218,9 +256,7 @@ public class ImageThumbTask extends AbstractTask {
                             + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
-
-            tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder)); //$NON-NLS-1$ //$NON-NLS-2$
-
+            
             if (img != null) {
                 if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize)
                         && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
@@ -239,7 +275,23 @@ public class ImageThumbTask extends AbstractTask {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
                 evidence.setThumb(baos.toByteArray());
-                Files.write(tmp.toPath(), baos.toByteArray());
+            }
+            
+            if(evidence.getThumb() == null) {
+                evidence.setThumb(new byte[0]); //zero size thumb means thumb error
+            }
+            if(storeThumbsInDb) {
+                int dbSuffix = (evidence.getHashValue().getBytes()[0] & 0xFF) >> 4;
+                Connection con = (Connection)caseData.getCaseObject(ExportFileTask.STORAGE_CON_PREFIX + dbSuffix);
+                try(PreparedStatement ps = con.prepareStatement(INSERT_THUMB)){
+                    ps.setString(1, evidence.getHash());
+                    ps.setBytes(2, evidence.getThumb());
+                    ps.setBytes(3, evidence.getThumb());
+                    ps.executeUpdate();
+                }
+            }else {
+                tmp = File.createTempFile("iped", ".tmp", new File(output, thumbsFolder)); //$NON-NLS-1$ //$NON-NLS-2$
+                Files.write(tmp.toPath(), evidence.getThumb());
             }
 
         } catch (Throwable e) {
@@ -250,10 +302,10 @@ public class ImageThumbTask extends AbstractTask {
             if (tmp != null && !tmp.renameTo(thumbFile)) {
                 tmp.delete();
             }
-
-            if (thumbFile.exists() && thumbFile.length() != 0) {
+            
+            if(evidence.getThumb() != null && evidence.getThumb().length > 0) {
                 evidence.setExtraAttribute(HAS_THUMB, true);
-            } else {
+            }else {
                 evidence.setExtraAttribute(HAS_THUMB, false);
             }
         }

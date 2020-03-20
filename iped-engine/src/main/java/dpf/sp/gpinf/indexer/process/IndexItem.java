@@ -747,7 +747,8 @@ public class IndexItem extends BasicProps {
                         File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
                                 "jpg"); //$NON-NLS-1$
                         try {
-                            evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                            if(thumbFile.exists())
+                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
