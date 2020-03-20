@@ -137,7 +137,8 @@
             <mime>application/x-nls</mime>
         </parser>
         <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
-	
+		<parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+		
     </parsers>
 
 </properties>

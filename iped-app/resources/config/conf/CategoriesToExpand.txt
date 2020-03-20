@@ -12,7 +12,7 @@ Chats
 Contacts
 ISO disks
 Internet History
-Timeline
+User Activities
 OLE files
 
 # Generates registry reports:

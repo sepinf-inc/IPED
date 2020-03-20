@@ -11,4 +11,4 @@ Emails and Mailboxes = Emails; Mailboxes
 Multimedia = Audios; Videos; Images
 Image Disks = ISO disks; Virtual disks; Other disks
 Browser Artifacts = Internet History; Internet History Entries; Web Bookmarks;
-Windows 10 = Timeline; Timeline Entries;
+Windows 10 = User Activities; User Activities Entries;

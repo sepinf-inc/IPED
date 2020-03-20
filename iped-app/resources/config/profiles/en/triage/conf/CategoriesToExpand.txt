@@ -12,6 +12,7 @@ Chats
 Contacts
 ISO disks
 Internet History
+User Activities
 OLE files
 
 # Generates registry reports:
