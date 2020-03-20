@@ -11,24 +11,32 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+
+import javax.xml.XMLConstants;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.DefaultHtmlMapper;
+import org.apache.tika.parser.html.HtmlMapper;
+import org.apache.tika.sax.ContentHandlerDecorator;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.ccil.cowan.tagsoup.HTMLSchema;
+import org.ccil.cowan.tagsoup.Schema;
+import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.HtmlToHtmlHandler;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
@@ -52,6 +60,10 @@ public class VCardParser extends AbstractParser {
     
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;
+    /**
+     * HTML schema singleton used to amortise the heavy instantiation time.
+     */
+    private static final Schema HTML_SCHEMA = new HTMLSchema();
     
     static {
         TEMPLATE_CFG.setClassForTemplateLoading(VCardParser.class, "");
@@ -61,7 +73,7 @@ public class VCardParser extends AbstractParser {
         } catch (Exception e) {
         }
     }
-
+    
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -71,50 +83,40 @@ public class VCardParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-
-        ItemInfo itemInfo = context.get(ItemInfo.class);
-        String title = null;
-        if (itemInfo != null) {
-            title = itemInfo.getPath();
-        }
-        if (title == null) {
-            title = ""; //$NON-NLS-1$
-        } else if (title.contains("/")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf('/') + 1); // $NON-NLS-1$
-        } else if (title.contains("\\")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf('\\') + 1); // $NON-NLS-1$
-        }
-        if (title.contains(">>")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf(">>") + 2); //$NON-NLS-1$
-        }
-        title += " (Conv)"; //$NON-NLS-1$
-
         String text = readInputStream(stream);
 
+        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, PARSED_VCARD_MIME_TYPE.toString());
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
-        xhtml.startDocument();
-        xhtml.startElement("pre"); //$NON-NLS-1$
-        xhtml.characters(text);
-        xhtml.characters("\n\n"); //$NON-NLS-1$
-        xhtml.endElement("pre"); //$NON-NLS-1$
-
         try {
+            xhtml.startDocument();
             List<VCard> vcards = Ezvcard.parse(text).all();
-
-            Metadata cMetadata = new Metadata();
-            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, PARSED_VCARD_MIME_TYPE.toString());
-            cMetadata.set(TikaCoreProperties.TITLE, title); // $NON-NLS-1$
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
-            
             new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
-
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
-            extractor.parseEmbedded(is, xhtml, cMetadata, false);
+            
+            // this part of the code was adapted from org.apache.tika.parser.html.HtmlParser
+            // Get the HTML mapper from the parse context
+            HtmlMapper mapper =
+                    context.get(HtmlMapper.class, DefaultHtmlMapper.INSTANCE);
+
+            // Parse the HTML document
+            org.ccil.cowan.tagsoup.Parser parser =
+                    new org.ccil.cowan.tagsoup.Parser();
+
+            // Use schema from context or default
+            Schema schema = context.get(Schema.class, HTML_SCHEMA);
+            // TIKA-528: Reuse share schema to avoid heavy instantiation
+            parser.setProperty(
+                    org.ccil.cowan.tagsoup.Parser.schemaProperty, schema);
+            // TIKA-599: Shared schema is thread-safe only if bogons are ignored
+            parser.setFeature(
+                    org.ccil.cowan.tagsoup.Parser.ignoreBogonsFeature, true);
+            parser.setContentHandler(new XHTMLDowngradeHandler(
+                    new HtmlToHtmlHandler(mapper, xhtml, metadata, context)));
+            parser.parse(new InputSource(is));
         } finally {
             xhtml.endDocument();
         }
@@ -451,4 +453,59 @@ public class VCardParser extends AbstractParser {
             + ".tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}\n" //$NON-NLS-1$
             + ".cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}\n" //$NON-NLS-1$
             + "</style>\n"; //$NON-NLS-1$
+    
+    /**
+     * Content handler decorator that downgrades XHTML elements to
+     * old-style HTML elements before passing them on to the decorated
+     * content handler. This downgrading consists of dropping all namespaces
+     * (and namespaced attributes) and uppercasing all element names.
+     * Used by the {@link HtmlParser} to make all incoming HTML look the same.
+     * 
+     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler
+     */
+    private static class XHTMLDowngradeHandler extends ContentHandlerDecorator {
+
+        public XHTMLDowngradeHandler(ContentHandler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void startElement(
+                String uri, String localName, String name, Attributes atts)
+                throws SAXException {
+            String upper = localName.toUpperCase(Locale.ENGLISH);
+
+            AttributesImpl attributes = new AttributesImpl();
+            for (int i = 0; i < atts.getLength(); i++) {
+                String auri = atts.getURI(i);
+                String local = atts.getLocalName(i);
+                String qname = atts.getQName(i);
+                if (XMLConstants.NULL_NS_URI.equals(auri)
+                        && !local.equals(XMLConstants.XMLNS_ATTRIBUTE)
+                        && !qname.startsWith(XMLConstants.XMLNS_ATTRIBUTE + ":")) {
+                    attributes.addAttribute(
+                            auri, local, qname, atts.getType(i), atts.getValue(i));
+                }
+            }
+
+            super.startElement(XMLConstants.NULL_NS_URI, upper, upper, attributes);
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String name)
+                throws SAXException {
+            String upper = localName.toUpperCase(Locale.ENGLISH);
+            super.endElement(XMLConstants.NULL_NS_URI, upper, upper);
+        }
+
+        @Override
+        public void startPrefixMapping(String prefix, String uri) {
+        }
+
+        @Override
+        public void endPrefixMapping(String prefix) {
+        }
+
+    }
+
 }
