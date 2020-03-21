@@ -62,6 +62,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
@@ -106,7 +107,7 @@ public class ExportFileTask extends AbstractTask {
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
-    private static HashMap<Integer, File> storage = new HashMap<>();
+    private static HashMap<Integer, File> storage;
     private static HashMap<Integer, Connection> storageCon = new HashMap<>();
 
     public ExportFileTask() {
@@ -129,12 +130,20 @@ public class ExportFileTask extends AbstractTask {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
         }
+        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
+            if(storage == null) {
+                configureSQLiteStorage(output, caseData);
+            }
+        }
     }
     
-    private void configureSQLiteStorage(File output) {
-        if(!storage.isEmpty()) {
+    private static synchronized void configureSQLiteStorage(File output, ICaseData caseData) {
+        if(storage != null) {
             return;
         }
+        storage = new HashMap<>();
+        
         for(int i = 0; i < 16; i++) {
             String storageName = STORAGE_PREFIX + "-" + i + ".db";
             File db = new File(output, STORAGE_PREFIX + File.separator + storageName);
@@ -194,9 +203,6 @@ public class ExportFileTask extends AbstractTask {
     private static synchronized File getSubDir(File extractDir) {
         if (subDirCounter % 1000 == 0) {
             subDir = new File(extractDir, Integer.toString(subDirCounter / 1000));
-            if (!subDir.exists()) {
-                subDir.mkdirs();
-            }
         }
         subDirCounter++;
         return subDir;
@@ -239,15 +245,18 @@ public class ExportFileTask extends AbstractTask {
             incItensExtracted();
             copyViewFile(evidence);
         }
+        
+        boolean isAutomaticFileExtractionOn = hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn(); 
 
         // Renomeia subitem caso deva ser exportado
         if (!caseData.isIpedReport() && evidence.isSubItem() && (evidence.isToExtract() || isToBeExtracted(evidence)
-                || !(hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn()))) {
+                || !isAutomaticFileExtractionOn)) {
 
             evidence.setToExtract(true);
             if (!doNotExport(evidence)) {
                 renameToHash(evidence);
             } else {
+                //just clear path to be indexed, continues to point to file for processing
                 evidence.setExportedFile(null);
                 evidence.setDeleteFile(true);
             }
@@ -321,17 +330,7 @@ public class ExportFileTask extends AbstractTask {
         if (extractDir == null) {
             setExtractLocation();
         }
-        File result = new File(extractDir, path);
-        File parent = result.getParentFile();
-        if (!parent.exists()) {
-            try {
-                Files.createDirectories(parent.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return result;
+        return new File(extractDir, path);
     }
 
     public void renameToHash(IItem evidence) {
@@ -346,7 +345,9 @@ public class ExportFileTask extends AbstractTask {
             ext = Util.removeNonLatin1Chars(ext);
 
             File hashFile = getHashFile(hash, ext);
-
+            if(!hashFile.getParentFile().exists()) {
+                hashFile.getParentFile().mkdirs();
+            }
             IHashValue hashVal = new HashValue(hash);
             IHashValue hashLock;
             synchronized (hashMap) {
@@ -426,9 +427,6 @@ public class ExportFileTask extends AbstractTask {
 
         } else {
             outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext)); //$NON-NLS-1$
-            if (!outputFile.getParentFile().exists()) {
-                outputFile.getParentFile().mkdirs();
-            }
         }
 
         boolean fileExists = false;
@@ -451,7 +449,7 @@ public class ExportFileTask extends AbstractTask {
                     	    //catch ioexceptions here to extract some content
                     	    exception = e;
                     	}
-                        if((i == -1 || exception != null) && storageCon != null && total == 0) {
+                        if((i == -1 || exception != null) && storage != null && total == 0) {
                         	if(baos.size() == 0) {
                         		evidence.setLength(0L);
                         	}else {
@@ -461,6 +459,9 @@ public class ExportFileTask extends AbstractTask {
                         	}
                         }else {
                             if(bos == null) {
+                                if (!outputFile.getParentFile().exists()) {
+                                    outputFile.getParentFile().mkdirs();
+                                }
                                 fileExists = outputFile.createNewFile();
                                 bos = new BufferedOutputStream(new FileOutputStream(outputFile));
                             }
@@ -617,11 +618,6 @@ public class ExportFileTask extends AbstractTask {
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
         
-        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-        if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-            configureSQLiteStorage(output);
-        }
-
     }
     
     @Override
