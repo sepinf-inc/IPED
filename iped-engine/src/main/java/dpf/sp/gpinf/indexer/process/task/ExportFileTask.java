@@ -133,12 +133,24 @@ public class ExportFileTask extends AbstractTask {
         IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
         if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
             if(storage == null) {
-                configureSQLiteStorage(output, caseData);
+                configureSQLiteStorage(output);
             }
         }
     }
     
-    private static synchronized void configureSQLiteStorage(File output, ICaseData caseData) {
+    public static Connection getSQLiteStorageCon(File output, byte[] hash) {
+        if(storage == null) {
+            configureSQLiteStorage(output);
+        }
+        int dbSuffix = getStorageSuffix(hash);
+        return storageCon.get(dbSuffix);
+    }
+    
+    private static int getStorageSuffix(byte[] hash) {
+        return (hash[0] & 0xFF) >> 4;
+    }
+    
+    private static synchronized void configureSQLiteStorage(File output) {
         if(storage != null) {
             return;
         }
@@ -156,8 +168,6 @@ public class ExportFileTask extends AbstractTask {
                 }
                 
                 storageCon.put(i, con);
-                
-                caseData.putCaseObject(STORAGE_CON_PREFIX + i, con);
                 
                 //load hashes if exists
                 try(PreparedStatement ps = con.prepareStatement(LOAD_HASHES)){
@@ -503,7 +513,7 @@ public class ExportFileTask extends AbstractTask {
     
     private void insertIntoStorage(IItem evidence, byte[] buf, int len) throws InterruptedException, IOException, SQLException, CompressorException {
         byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
-        int k = (hash[0] & 0xFF) >> 4;
+        int k = getStorageSuffix(hash);
         HashValue md5 = new HashValue(hash);
         HashValue prev;
         boolean first = false, inserted = false;

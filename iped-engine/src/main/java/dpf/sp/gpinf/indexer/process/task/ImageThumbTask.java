@@ -144,8 +144,7 @@ public class ImageThumbTask extends AbstractTask {
         storeThumbsInDb = !caseData.containsReport() || !ipedConfig.isHtmlReportEnabled();
         
         if(storeThumbsInDb) {
-            int dbSuffix = (evidence.getHashValue().getBytes()[0] & 0xFF) >> 4;
-            Connection con = (Connection)caseData.getCaseObject(ExportFileTask.STORAGE_CON_PREFIX + dbSuffix);
+            Connection con = ExportFileTask.getSQLiteStorageCon(output, evidence.getHashValue().getBytes());
             try(PreparedStatement ps = con.prepareStatement(SELECT_THUMB)){
                 ps.setString(1, evidence.getHash());
                 ResultSet rs = ps.executeQuery();
@@ -281,8 +280,7 @@ public class ImageThumbTask extends AbstractTask {
                 evidence.setThumb(new byte[0]); //zero size thumb means thumb error
             }
             if(storeThumbsInDb) {
-                int dbSuffix = (evidence.getHashValue().getBytes()[0] & 0xFF) >> 4;
-                Connection con = (Connection)caseData.getCaseObject(ExportFileTask.STORAGE_CON_PREFIX + dbSuffix);
+                Connection con = ExportFileTask.getSQLiteStorageCon(output, evidence.getHashValue().getBytes());
                 try(PreparedStatement ps = con.prepareStatement(INSERT_THUMB)){
                     ps.setString(1, evidence.getHash());
                     ps.setBytes(2, evidence.getThumb());
