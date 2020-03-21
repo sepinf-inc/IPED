@@ -58,7 +58,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -511,18 +510,7 @@ public class IPEDReader extends DataSourceReader {
                         evidence.setViewFile(viewFile);
                     }
 
-                    // Copia resultado prévio do OCR
-                    String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1); //$NON-NLS-1$ //$NON-NLS-2$
-                    File ocrSrc = new File(indexDir.getParentFile(), ocrPrefix);
-                    File ocrDst = new File(output, ocrPrefix);
-                    if (ocrSrc.exists()) {
-                        ocrDst.mkdirs();
-                        for (String name : ocrSrc.list()) {
-                            if (name.equals(value + ".txt") || name.startsWith(value + "-child")) { //$NON-NLS-1$ //$NON-NLS-2$
-                                IOUtil.copiaArquivo(new File(ocrSrc, name), new File(ocrDst, name));
-                            }
-                        }
-                    }
+                    OCRParser.copyOcrResults(value, indexDir.getParentFile(), output);
                 }
             }
             
