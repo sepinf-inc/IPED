@@ -28,6 +28,8 @@ import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
@@ -82,6 +84,8 @@ import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
+import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.event.CDockableStateListener;
@@ -104,10 +108,11 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
 import iped3.desktop.CancelableWorker;
-import iped3.desktop.IColumnsManager;
 import iped3.desktop.GUIProvider;
+import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
@@ -684,6 +689,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
+        
+        // Add buttons to control the number of columns displayed in the thumbnail gallery
+        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseColumns"), IconUtil.getIcon("minus"));
+        galleryTabDock.addAction(butDec);
+        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseColumns"), IconUtil.getIcon("plus"));
+        galleryTabDock.addAction(butInc);
+        galleryTabDock.addSeparator();
+        butDec.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateGalleryColCount(-1);
+            }
+        });
+        butInc.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateGalleryColCount(1);
+            }
+        });
 
         List<ResultSetViewer> rsViewers = getResultSetViewerConfiguration().getResultSetViewers();
         for (Iterator<ResultSetViewer> iterator = rsViewers.iterator(); iterator.hasNext();) {
@@ -750,6 +772,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(compositeViewerDock);
 
         setDockablesColors();
+    }
+    
+    private void updateGalleryColCount(int inc) {
+        int cnt = App.get().galleryModel.colCount + inc;
+        if (cnt > 0 && cnt <= 40) {
+            App.get().galleryModel.colCount = cnt;
+            int colWidth = App.get().gallery.getWidth() / App.get().galleryModel.colCount;
+            App.get().gallery.setRowHeight(colWidth);
+            int selRow = App.get().resultsTable.getSelectedRow();
+            App.get().galleryModel.fireTableStructureChanged();
+            if (selRow >= 0) {
+                int galleryRow = selRow / App.get().galleryModel.colCount;
+                int galleyCol = selRow % App.get().galleryModel.colCount;
+                App.get().gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
+                App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
+            }
+        }
     }
 
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {
