@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
@@ -186,7 +185,9 @@ public class ImageViewer extends Viewer implements ActionListener {
             public void stateChanged(ChangeEvent e) {
                 if (image != null) {
                     int factor = sliderBrightness.getValue();
-                    updatePanel(ImageUtil.adjustBrightness(image, factor));
+                    BufferedImage img = image;
+                    if (rotation != 0) img = ImageUtil.rotatePos(img, rotation);
+                    updatePanel(ImageUtil.adjustBrightness(img, factor));
                 }
             }
         });
@@ -201,7 +202,7 @@ public class ImageViewer extends Viewer implements ActionListener {
         };
         panelAux.setOpaque(false);
         panelAux.add(sliderBrightness);
-        panelAux.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+        panelAux.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
         toolBar.add(panelAux);
         toolBar.add(new JLabel(iconSeparator));
 
@@ -213,7 +214,6 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     protected JButton createToolBarButton(String action) {
         JButton but = new JButton(IconUtil.getIcon(action, 24));
-        but.setMargin(new Insets(0, 1, 0, 1));
         but.setActionCommand(action);
         but.setOpaque(false);
         toolBar.add(but);
@@ -230,10 +230,10 @@ public class ImageViewer extends Viewer implements ActionListener {
         String cmd = e.getActionCommand();
         if (cmd.equals(actionRotLeft)) {
             if (--rotation < 0) rotation = 3;
-            updatePanel(ImageUtil.rotatePos(image, rotation));
+            updateRotation();
         } else if (cmd.equals(actionRotRight)) {
             if (++rotation > 3) rotation = 0;
-            updatePanel(ImageUtil.rotatePos(image, rotation));
+            updateRotation();
         } else if (cmd.equals(actionZoomIn)) {
             imagePanel.changeZoom(1.2, null);
         } else if (cmd.equals(actionZoomOut)) {
@@ -245,5 +245,12 @@ public class ImageViewer extends Viewer implements ActionListener {
         } else if (cmd.equals(actionCopyImage)) {
             copyScreen();
         }
+    }
+
+    private void updateRotation() {
+        BufferedImage img = image;
+        int factor = sliderBrightness.getValue();
+        if (factor != 0) img = ImageUtil.adjustBrightness(img, factor);
+        updatePanel(ImageUtil.rotatePos(img, rotation));
     }
 }
