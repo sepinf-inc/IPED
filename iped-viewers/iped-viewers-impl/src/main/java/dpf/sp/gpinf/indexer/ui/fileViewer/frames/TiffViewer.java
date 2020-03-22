@@ -140,7 +140,7 @@ public class TiffViewer extends ImageViewer {
             @Override
             public void run() {
                 disposeResources();
-                if (content.equals(currentContent)) return;
+                if (!content.equals(currentContent)) return;
                 try {
                     is = currentContent.getStream();
                     iis = ImageIO.createImageInputStream(is);
