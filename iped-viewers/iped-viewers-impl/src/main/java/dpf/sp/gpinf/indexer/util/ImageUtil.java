@@ -109,17 +109,21 @@ public class ImageUtil {
         try {
             iis = ImageIO.createImageInputStream(source);
             Iterator<ImageReader> iter = ImageIO.getImageReaders(iis);
-            if (!iter.hasNext()) return null;
+            if (!iter.hasNext()) {
+                return null;
+            }
             reader = iter.next();
             reader.setInput(iis, false, true);
 
             int w0 = reader.getWidth(0);
             int h0 = reader.getHeight(0);
             int sampling = 1;
-            if (w0 > w || h0 > h) if (w * h0 < w0 * h) {
-                sampling = w0 / w;
-            } else {
-                sampling = h0 / h;
+            if (w0 > w || h0 > h) {
+                if (w * h0 < w0 * h) {
+                    sampling = w0 / w;
+                } else {
+                    sampling = h0 / h;
+                }
             }
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
@@ -133,9 +137,13 @@ public class ImageUtil {
 
         } catch (Throwable e) {
             // e.printStackTrace();
-            if (renderException != null) renderException.value = true;
+            if (renderException != null) {
+                renderException.value = true;
+            }
 
-            if (image != null && isMonoColorImage(image)) image = null;
+            if (image != null && isMonoColorImage(image)) {
+                image = null;
+            }
 
         } finally {
             if (reader != null) {
@@ -158,7 +166,9 @@ public class ImageUtil {
         int color;
         if (pixels.length > 0) {
             color = pixels[0];
-        } else return false;
+        } else {
+            return false;
+        }
 
         for (int p : pixels)
             if (p != color) return false;
@@ -416,7 +426,9 @@ public class ImageUtil {
                 if (dirs != null) {
                     for (ExifIFD0Directory dir : dirs) {
                         Integer tagOrientation = dir.getInteger(ExifIFD0Directory.TAG_ORIENTATION);
-                        if (tagOrientation != null) return tagOrientation;
+                        if (tagOrientation != null) {
+                            return tagOrientation;
+                        }
                     }
                 }
             }
@@ -426,20 +438,27 @@ public class ImageUtil {
     }
 
     public static BufferedImage rotatePos(BufferedImage src, int pos) {
-        if (pos < 0 || pos > 3) return src;
+        if (pos < 0 || pos > 3) {
+            return src;
+        }
         return rotate(src, orientations[pos]);
     }
 
     public static BufferedImage rotate(BufferedImage src, int orientation) {
-        if (orientation <= 1 || orientation > 8) return src;
+        if (orientation <= 1 || orientation > 8) {
+            return src;
+        }
         int angle = (orientation - 1) / 2;
         int w = src.getWidth();
         int h = src.getHeight();
         BufferedImage dest = new BufferedImage(angle == 1 ? w : h, angle == 1 ? h : w, src.getType());
         Graphics2D g = dest.createGraphics();
         double d = (h - w) / 2.0;
-        if (angle == 2) g.translate(d, d);
-        else if (angle == 3) g.translate(-d, -d);
+        if (angle == 2) {
+            g.translate(d, d);
+        } else if (angle == 3) {
+            g.translate(-d, -d);
+        }
         g.rotate((angle == 1 ? 2 : angle == 2 ? 1 : 3) * Math.PI / 2, dest.getWidth() / 2.0, dest.getHeight() / 2.0);
         g.drawRenderedImage(src, null);
         g.dispose();

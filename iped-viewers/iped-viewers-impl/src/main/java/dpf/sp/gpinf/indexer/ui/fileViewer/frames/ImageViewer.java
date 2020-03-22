@@ -124,6 +124,7 @@ public class ImageViewer extends Viewer implements ActionListener {
                 IOUtil.closeQuietly(in);
             }
         }
+        toolBar.setVisible(image != null);
         updatePanel(image);
     }
 
@@ -191,6 +192,8 @@ public class ImageViewer extends Viewer implements ActionListener {
         });
         ImageIcon icon = IconUtil.getIcon("bright", 12);
         JPanel panelAux = new JPanel() {
+            private static final long serialVersionUID = 8147197693022129080L;
+
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 g.drawImage(icon.getImage(), (getWidth() - icon.getIconWidth()) / 2, 0, null);
@@ -204,7 +207,6 @@ public class ImageViewer extends Viewer implements ActionListener {
 
         JButton butCopyImage = createToolBarButton(actionCopyImage);
         butCopyImage.setToolTipText(Messages.getString("ImageViewer.Copy"));
-        System.err.println(">>>>>>" + Messages.getString("ImageViewer.Copy"));
 
         toolBar.add(new JLabel(iconSeparator));
     }

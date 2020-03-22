@@ -135,6 +135,7 @@ public class ImageViewPanel extends JPanel {
             scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         } else {
             imgPanel.setPreferredSize(new Dimension(1, 1));
+            imgPanel.repaint();
         }
         imgPanel.revalidate();
         return image != null;

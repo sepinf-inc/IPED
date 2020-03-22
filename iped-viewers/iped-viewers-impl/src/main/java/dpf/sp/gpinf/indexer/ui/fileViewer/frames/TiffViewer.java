@@ -115,8 +115,11 @@ public class TiffViewer extends ImageViewer {
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState();
         currentContent = content;
+        toolBar.setVisible(currentContent != null);
         if (currentContent != null) {
             openContent(content);
+        } else {
+            imagePanel.setImage(null);
         }
     }
 
@@ -137,7 +140,7 @@ public class TiffViewer extends ImageViewer {
             @Override
             public void run() {
                 disposeResources();
-                if (content != currentContent) return;
+                if (content.equals(currentContent)) return;
                 try {
                     is = currentContent.getStream();
                     iis = ImageIO.createImageInputStream(is);
