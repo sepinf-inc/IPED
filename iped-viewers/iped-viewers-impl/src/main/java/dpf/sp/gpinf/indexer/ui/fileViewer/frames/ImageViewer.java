@@ -1,128 +1,247 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import gpinf.led.ImageViewPanel;
-
+import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.GridLayout;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JToolBar;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import iped3.io.IStreamSource;
+import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import gpinf.led.ImageViewPanel;
+import iped3.io.IStreamSource;
 
-public class ImageViewer extends Viewer {
+public class ImageViewer extends Viewer implements ActionListener {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(ImageViewer.class);
 
-    private ImageViewPanel imagePanel;
+	protected ImageViewPanel imagePanel;
+	protected JToolBar toolBar;
+	private JSlider sliderBrightness;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+	private GraphicsMagicConverter graphicsMagicConverter;
 
-    public ImageViewer() {
-        super(new GridLayout());
-        imagePanel = new ImageViewPanel();
-        this.getPanel().add(imagePanel);
+	private static final String actionRotLeft = "rotate-left";
+	private static final String actionRotRight = "rotate-right";
+	private static final String actionZoomIn = "zoom-in";
+	private static final String actionZoomOut = "zoom-out";
+	private static final String actionFitWidth = "fit-width";
+	private static final String actionFitWindow = "fit-window";
+	private static final String actionCopyImage = "copy-image";
 
-    }
+	volatile protected BufferedImage image;
+	volatile protected int rotation;
 
-    @Override
-    public String getName() {
-        return "Imagem"; //$NON-NLS-1$
-    }
+	public ImageViewer() {
+		this(0);
+	}
 
-    @Override
-    public boolean isSupportedType(String contentType) {
-        return contentType.startsWith("image"); //$NON-NLS-1$
-    }
+	public ImageViewer(int initialFitMode) {
+		super(new BorderLayout());
+		imagePanel = new ImageViewPanel(initialFitMode);
+		createToolBar();
+		getPanel().add(imagePanel, BorderLayout.CENTER);
+		getPanel().add(toolBar, BorderLayout.NORTH);
+	}
 
-    @Override
-    public void loadFile(IStreamSource content, Set<String> highlightTerms) {
+	@Override
+	public String getName() {
+		return "Imagem"; //$NON-NLS-1$
+	}
 
-        BufferedImage image = null;
-        if (content != null) {
-            InputStream in = null;
-            try {
-                in = new BufferedInputStream(content.getStream());
-                image = ImageUtil.getSubSampledImage(in, 2000, 2000);
+	@Override
+	public boolean isSupportedType(String contentType) {
+		return contentType.startsWith("image"); //$NON-NLS-1$
+	}
 
-                if (image == null) {
-                    IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    image = ImageUtil.getThumb(in);
-                }
-                if (image == null) {
-                    IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    image = graphicsMagicConverter.getImage(in, 1000);
-                }
+	protected void cleanState(boolean cleanRotation) {
+		image = null;
+		sliderBrightness.setValue(0);
+		if (cleanRotation) {
+			rotation = 0;
+		}
+	}
 
-                if (image != null) {
-                    IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    int orientation = ImageUtil.getOrientation(in);
-                    if (orientation > 0) {
-                        image = ImageUtil.rotate(image, orientation);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+	@Override
+	public void loadFile(IStreamSource content, Set<String> highlightTerms) {
+		cleanState(true);
+		if (content != null) {
+			InputStream in = null;
+			try {
+				in = new BufferedInputStream(content.getStream());
+				image = ImageUtil.getSubSampledImage(in, 2000, 2000);
 
-            } finally {
-                IOUtil.closeQuietly(in);
-            }
-        }
+				if (image == null) {
+					IOUtil.closeQuietly(in);
+					in = new BufferedInputStream(content.getStream());
+					image = ImageUtil.getThumb(in);
+				}
+				if (image == null) {
+					IOUtil.closeQuietly(in);
+					in = new BufferedInputStream(content.getStream());
+					image = graphicsMagicConverter.getImage(in, 1000);
+				}
 
-        final BufferedImage img = image;
+				if (image != null) {
+					IOUtil.closeQuietly(in);
+					in = new BufferedInputStream(content.getStream());
+					int orientation = ImageUtil.getOrientation(in);
+					if (orientation > 0) {
+						image = ImageUtil.rotate(image, orientation);
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                imagePanel.setImage(img);
-            }
-        });
+			} finally {
+				IOUtil.closeQuietly(in);
+			}
+		}
+		updatePanel(image);
+	}
 
-    }
+	protected void updatePanel(final BufferedImage img) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				imagePanel.setImage(img);
+			}
+		});
+	}
 
-    @Override
-    public void init() {
-        graphicsMagicConverter = new GraphicsMagicConverter();
-    }
+	@Override
+	public void init() {
+		graphicsMagicConverter = new GraphicsMagicConverter();
+	}
 
-    @Override
-    public void copyScreen(Component comp) {
-        BufferedImage image = imagePanel.getImage();
+	@Override
+	public void copyScreen(Component comp) {
+		BufferedImage image = imagePanel.getImage();
+		TransferableImage trans = new TransferableImage(image);
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(trans, trans);
+	}
 
-        TransferableImage trans = new TransferableImage(image);
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(trans, trans);
-    }
+	@Override
+	public void dispose() {
+		try {
+			graphicsMagicConverter.close();
+		} catch (IOException e) {
+			LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+		}
+	}
 
-    @Override
-    public void dispose() {
-        try {
-            graphicsMagicConverter.close();
-        } catch (IOException e) {
-            LOGGER.warn("Error closing " + graphicsMagicConverter, e);
-        }
+	@Override
+	public void scrollToNextHit(boolean forward) {
+	}
 
-    }
+	private void createToolBar() {
+		toolBar = new JToolBar();
+		toolBar.setFloatable(false);
+		ImageIcon iconSeparator = IconUtil.getIcon("separator", 24);
 
-    @Override
-    public void scrollToNextHit(boolean forward) {
-        // TODO Auto-generated method stub
+		toolBar.add(new JLabel(iconSeparator));
+		createToolBarButton(actionRotLeft);
+		createToolBarButton(actionRotRight);
+		toolBar.add(new JLabel(iconSeparator));
+		createToolBarButton(actionZoomIn);
+		createToolBarButton(actionZoomOut);
+		createToolBarButton(actionFitWindow);
+		createToolBarButton(actionFitWidth);
+		toolBar.add(new JLabel(iconSeparator));
 
-    }
+		sliderBrightness = new JSlider(SwingConstants.HORIZONTAL, 0, 100, 0);
+		sliderBrightness.setPreferredSize(new Dimension(60, 16));
+		sliderBrightness.setMinimumSize(new Dimension(20, 16));
+		sliderBrightness.setOpaque(false);
+		sliderBrightness.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				if (image != null) {
+					int factor = sliderBrightness.getValue();
+					updatePanel(ImageUtil.adjustBrightness(image, factor));
+				}
+			}
+		});
+		ImageIcon icon = IconUtil.getIcon("bright", 12);
+		JPanel panelAux = new JPanel() {
+			protected void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				g.drawImage(icon.getImage(), (getWidth() - icon.getIconWidth()) / 2, 0, null);
+			}
+		};
+		panelAux.setOpaque(false);
+		panelAux.add(sliderBrightness);
+		panelAux.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+		toolBar.add(panelAux);
+		toolBar.add(new JLabel(iconSeparator));
 
+		JButton butCopyImage = createToolBarButton(actionCopyImage);
+		butCopyImage.setToolTipText(Messages.getString("ImageViewer.Copy"));
+		System.err.println(">>>>>>"+Messages.getString("ImageViewer.Copy"));
+
+		toolBar.add(new JLabel(iconSeparator));
+	}
+
+	protected JButton createToolBarButton(String action) {
+		JButton but = new JButton(IconUtil.getIcon(action, 24));
+		but.setMargin(new Insets(0, 1, 0, 1));
+		but.setActionCommand(action);
+		but.setOpaque(false);
+		toolBar.add(but);
+		but.setFocusPainted(false);
+		but.setFocusable(false);
+		but.addActionListener(this);
+		return but;
+	}
+
+	public synchronized void actionPerformed(ActionEvent e) {
+		if (image == null) {
+			return;
+		}
+		String cmd = e.getActionCommand();
+		if (cmd.equals(actionRotLeft)) {
+			if (--rotation < 0) rotation = 3;
+			updatePanel(ImageUtil.rotatePos(image, rotation));
+		} else if (cmd.equals(actionRotRight)) {
+			if (++rotation > 3) rotation = 0;
+			updatePanel(ImageUtil.rotatePos(image, rotation));
+		} else if (cmd.equals(actionZoomIn)) {
+			imagePanel.changeZoom(1.2, null);
+		} else if (cmd.equals(actionZoomOut)) {
+			imagePanel.changeZoom(1 / 1.2, null);
+		} else if (cmd.equals(actionFitWindow)) {
+			imagePanel.fitToWindow();
+		} else if (cmd.equals(actionFitWidth)) {
+			imagePanel.fitToWidth();
+		} else if (cmd.equals(actionCopyImage)) {
+			copyScreen();
+		}
+	}
 }
