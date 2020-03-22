@@ -575,21 +575,18 @@ public class OCRParser extends AbstractParser {
      * @throws IOException
      *             if an input error occurred
      */
-    private String extractOutput(InputStream stream, XHTMLContentHandler xhtml) throws SAXException, IOException {
+    private void extractOutput(InputStream stream, XHTMLContentHandler xhtml) throws SAXException, IOException {
         Reader reader = new InputStreamReader(stream, "UTF-8"); //$NON-NLS-1$
-        StringBuilder sb = new StringBuilder();
         try {
             // xhtml.startElement("p");
             char[] buffer = new char[1024];
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
                 xhtml.characters(buffer, 0, n);
-                sb.append(buffer, 0, n);
             }
             // xhtml.endElement("p");
         } finally {
             reader.close();
         }
-        return sb.toString();
     }
 
     // Object msgLock = new Object();
