@@ -231,7 +231,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         // Provisoriamente as colunas estão fixas
         // (colunas onde a comparação de String não funcionaria, porque ordenação é
         // numérica ou de Data)
-        if (!((RowComparator) ((TableRowSorter) table.getRowSorter()).getComparator(sortCol)).isStringComparator()) {
+        if (!((RowComparator) ((ResultTableRowSorter) table.getRowSorter()).getComparator(sortCol)).isStringComparator()) {
             return;
         }
 
