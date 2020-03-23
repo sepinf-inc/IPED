@@ -143,6 +143,9 @@ public class IndexItem extends BasicProps {
 
         BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
+        BasicProps.SET.add(ID_IN_SOURCE);
+        BasicProps.SET.add(SOURCE_PATH);
+        BasicProps.SET.add(SOURCE_DECODER);
     }
 
     private static final FieldType getContentField() {
