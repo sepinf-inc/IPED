@@ -56,7 +56,6 @@ public class VCardParser extends AbstractParser {
 
     private static final long serialVersionUID = -7436203736342471550L;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.text("x-vcard")); //$NON-NLS-1$
-    public static final MediaType PARSED_VCARD_MIME_TYPE = MediaType.application("x-vcard-html"); //$NON-NLS-1$
     
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;
@@ -85,7 +84,6 @@ public class VCardParser extends AbstractParser {
 
         String text = readInputStream(stream);
 
-        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, PARSED_VCARD_MIME_TYPE.toString());
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
         try {
