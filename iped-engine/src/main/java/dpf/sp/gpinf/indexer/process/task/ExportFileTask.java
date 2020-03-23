@@ -62,7 +62,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
@@ -85,13 +84,13 @@ public class ExportFileTask extends AbstractTask {
     private static final int MAX_BUFFER_SIZE = 1 << 24;
     private static final int SQLITE_CACHE_SIZE = 1 << 24;
     
+    private static final byte DB_SUFFIX_BITS = 4; // current impl maximum is 8
+    
     private static final String CREATE_TABLE = 
     		"CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
     
     private static final String INSERT_DATA = 
-    		"INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=?;";
-    
-    private static final String LOAD_HASHES = "SELECT id FROM t1 WHERE data IS NOT NULL;";
+    		"INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final int MAX_SUBITEM_COMPRESSION = 100;
     private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
@@ -102,8 +101,6 @@ public class ExportFileTask extends AbstractTask {
 
     private static boolean computeHash = false;
     private File extractDir;
-    private static HashMap<HashValue, HashValue> insertedMD5 = new HashMap<>();
-    private static HashValue insertedHash = new HashValue(new byte[16]);
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
@@ -147,7 +144,7 @@ public class ExportFileTask extends AbstractTask {
     }
     
     private static int getStorageSuffix(byte[] hash) {
-        return (hash[0] & 0xFF) >> 4;
+        return (hash[0] & 0xFF) >> (8 - DB_SUFFIX_BITS);
     }
     
     private static synchronized void configureSQLiteStorage(File output) {
@@ -156,7 +153,7 @@ public class ExportFileTask extends AbstractTask {
         }
         storage = new HashMap<>();
         
-        for(int i = 0; i < 16; i++) {
+        for(int i = 0; i < Math.pow(2, DB_SUFFIX_BITS); i++) {
             String storageName = STORAGE_PREFIX + "-" + i + ".db";
             File db = new File(output, STORAGE_PREFIX + File.separator + storageName);
             db.getParentFile().mkdir();
@@ -168,17 +165,6 @@ public class ExportFileTask extends AbstractTask {
                 }
                 
                 storageCon.put(i, con);
-                
-                //load hashes if exists
-                try(PreparedStatement ps = con.prepareStatement(LOAD_HASHES)){
-                    ResultSet rs = ps.executeQuery();
-                    while(rs.next()) {
-                        HashValue md5 = new HashValue(rs.getString(1));
-                        synchronized(insertedMD5) {
-                            insertedMD5.put(md5, insertedHash);
-                        }
-                    }
-                }
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -515,48 +501,18 @@ public class ExportFileTask extends AbstractTask {
         byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         int k = getStorageSuffix(hash);
         HashValue md5 = new HashValue(hash);
-        HashValue prev;
-        boolean first = false, inserted = false;
-        synchronized(insertedMD5) {
-            prev = insertedMD5.putIfAbsent(md5, md5);
-        }
-        if(prev == null) {
-            first = true;
-        }else if(!prev.equals(insertedHash)) {
-            md5 = prev;
-        }else {
-            inserted = true;
-        }
-        if(!inserted) {
-            synchronized(md5) {
-                if(!first) {
-                    boolean wait; 
-                    synchronized(insertedMD5) {
-                        wait = !insertedMD5.get(md5).equals(insertedHash);
-                    }
-                    if(wait) {
-                        md5.wait();
-                    }
-                }else {
-                    try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
-                        ps.setString(1, md5.toString());
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                                .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
-                        gzippedOut.write(buf, 0, len);
-                        gzippedOut.close();
-                        byte[] bytes = baos.toByteArray();
-                        baos = null;
-                        ps.setBytes(2, bytes);
-                        ps.setBytes(3, bytes);
-                        ps.executeUpdate();
-                    }
-                    synchronized(insertedMD5) {
-                        insertedMD5.put(md5, insertedHash);
-                    }
-                    md5.notifyAll();
-                }
-            }
+        try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+            ps.setString(1, md5.toString());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                    .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+            gzippedOut.write(buf, 0, len);
+            gzippedOut.close();
+            byte[] bytes = baos.toByteArray();
+            baos = null;
+            ps.setBytes(2, bytes);
+            ps.setBytes(3, bytes);
+            ps.executeUpdate();
         }
         evidence.setIdInDataSource(md5.toString());
         evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(k).toPath(), storageCon.get(k)));

@@ -45,7 +45,7 @@ public class ImageThumbTask extends AbstractTask {
     
     private static final String SELECT_THUMB = "SELECT thumb FROM t1 WHERE id=?;";
     
-    private static final String INSERT_THUMB = "INSERT INTO t1(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=?;";
+    private static final String INSERT_THUMB = "INSERT INTO t1(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;";
 
     private static final int samplingRatio = 3;
 
