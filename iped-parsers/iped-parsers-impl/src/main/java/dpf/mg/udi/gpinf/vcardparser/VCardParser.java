@@ -93,8 +93,9 @@ public class VCardParser extends AbstractParser {
             List<VCard> vcards = Ezvcard.parse(text).all();
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
-            new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
+            try(PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8))){
+                new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
+            }
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
             
             // this part of the code was adapted from org.apache.tika.parser.html.HtmlParser
