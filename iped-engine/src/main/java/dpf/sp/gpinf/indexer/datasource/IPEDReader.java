@@ -50,7 +50,6 @@ import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
-import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
@@ -59,7 +58,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.DateUtil;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -512,28 +510,12 @@ public class IPEDReader extends DataSourceReader {
                         evidence.setViewFile(viewFile);
                     }
 
-                    // Copia resultado prévio do OCR
-                    String ocrPrefix = OCRParser.TEXT_DIR + "/" + value.charAt(0) + "/" + value.charAt(1); //$NON-NLS-1$ //$NON-NLS-2$
-                    File ocrSrc = new File(indexDir.getParentFile(), ocrPrefix);
-                    File ocrDst = new File(output, ocrPrefix);
-                    if (ocrSrc.exists()) {
-                        ocrDst.mkdirs();
-                        for (String name : ocrSrc.list()) {
-                            if (name.equals(value + ".txt") || name.startsWith(value + "-child")) { //$NON-NLS-1$ //$NON-NLS-2$
-                                IOUtil.copiaArquivo(new File(ocrSrc, name), new File(ocrDst, name));
-                            }
-                        }
-                    }
-
-                    // Copia miniaturas
-                    File thumbSrc = Util.getFileFromHash(
-                            new File(indexDir.getParentFile(), ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
-                    File thumbDst = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), value, "jpg"); //$NON-NLS-1$
-                    if (thumbSrc.exists()) {
-                        thumbDst.getParentFile().mkdirs();
-                        IOUtil.copiaArquivo(thumbSrc, thumbDst);
-                    }
+                    OCRParser.copyOcrResults(value, indexDir.getParentFile(), output);
                 }
+            }
+            
+            if (doc.getBinaryValue(BasicProps.THUMB) != null) {
+                evidence.setThumb(doc.getBinaryValue(BasicProps.THUMB).bytes);
             }
 
             for (HashTask.HASH hash : HashTask.HASH.values()) {
