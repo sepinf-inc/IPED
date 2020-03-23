@@ -11,7 +11,8 @@ Databases
 Chats
 Contacts
 ISO disks
-Internet History
+#Internet History
+#User Activities
 OLE files
 
 # Generates registry reports:
