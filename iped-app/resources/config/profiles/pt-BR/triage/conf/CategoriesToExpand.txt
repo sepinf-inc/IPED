@@ -11,8 +11,8 @@ Bases de dados
 Chats
 Contatos
 Discos ISO
-Histórico de Internet
-Atividades de Usuário
+#Histórico de Internet
+#Atividades de Usuário
 Arquivos OLE
 
 # Gera relatórios de registro:
