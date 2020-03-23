@@ -91,6 +91,8 @@ public class ExportFileTask extends AbstractTask {
     
     private static final String INSERT_DATA = 
     		"INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
+    
+    private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
 
     private static final int MAX_SUBITEM_COMPRESSION = 100;
     private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
@@ -104,8 +106,8 @@ public class ExportFileTask extends AbstractTask {
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
-    private static HashMap<Integer, File> storage;
-    private static HashMap<Integer, Connection> storageCon = new HashMap<>();
+    private static HashMap<Integer, File> storage = new HashMap<>();
+    private static HashMap<Integer, Connection> storageCon;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -129,14 +131,14 @@ public class ExportFileTask extends AbstractTask {
         }
         IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
         if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-            if(storage == null) {
+            if(storageCon == null) {
                 configureSQLiteStorage(output);
             }
         }
     }
     
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
-        if(storage == null) {
+        if(storageCon == null) {
             configureSQLiteStorage(output);
         }
         int dbSuffix = getStorageSuffix(hash);
@@ -148,10 +150,10 @@ public class ExportFileTask extends AbstractTask {
     }
     
     private static synchronized void configureSQLiteStorage(File output) {
-        if(storage != null) {
+        if(storageCon != null) {
             return;
         }
-        storage = new HashMap<>();
+        HashMap<Integer, Connection> tempStorageCon = new HashMap<>();
         
         for(int i = 0; i < Math.pow(2, DB_SUFFIX_BITS); i++) {
             String storageName = STORAGE_PREFIX + "-" + i + ".db";
@@ -164,12 +166,13 @@ public class ExportFileTask extends AbstractTask {
                     stmt.executeUpdate(CREATE_TABLE);
                 }
                 
-                storageCon.put(i, con);
+                tempStorageCon.put(i, con);
                 
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
+        storageCon = tempStorageCon;
     }
     
     private static Connection getSQLiteConnection(File storage) throws SQLException {
@@ -445,7 +448,7 @@ public class ExportFileTask extends AbstractTask {
                     	    //catch ioexceptions here to extract some content
                     	    exception = e;
                     	}
-                        if((i == -1 || exception != null) && storage != null && total == 0) {
+                        if((i == -1 || exception != null) && total == 0) {
                         	if(baos.size() == 0) {
                         		evidence.setLength(0L);
                         	}else {
@@ -501,18 +504,28 @@ public class ExportFileTask extends AbstractTask {
         byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         int k = getStorageSuffix(hash);
         HashValue md5 = new HashValue(hash);
-        try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+        boolean alreadyInDB = false;
+        try(PreparedStatement ps = storageCon.get(k).prepareStatement(CHECK_HASH)){
             ps.setString(1, md5.toString());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                    .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
-            gzippedOut.write(buf, 0, len);
-            gzippedOut.close();
-            byte[] bytes = baos.toByteArray();
-            baos = null;
-            ps.setBytes(2, bytes);
-            ps.setBytes(3, bytes);
-            ps.executeUpdate();
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()) {
+                alreadyInDB = true;
+            }
+        }
+        if(!alreadyInDB) {
+            try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+                ps.setString(1, md5.toString());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                        .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                gzippedOut.write(buf, 0, len);
+                gzippedOut.close();
+                byte[] bytes = baos.toByteArray();
+                baos = null;
+                ps.setBytes(2, bytes);
+                ps.setBytes(3, bytes);
+                ps.executeUpdate();
+            }
         }
         evidence.setIdInDataSource(md5.toString());
         evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(k).toPath(), storageCon.get(k)));
