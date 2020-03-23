@@ -533,6 +533,12 @@ public class ExportFileTask extends AbstractTask {
     		super(datasource);
     		this.conn = conn;
     	}
+    	
+    	@Override
+    	protected void checkIfDataSourceExists() {
+    	    //do nothing, it will always be into case folder
+    	    //and files which content was not exported to report will not trigger a dialog asking for datasource path
+    	}
 
 		@Override
 		public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
