@@ -14,6 +14,7 @@ Discos ISO
 #Histórico de Internet
 #Atividades de Usuário
 Arquivos OLE
+#Arquivos de Georeferenciamento
 
 # Gera relatórios de registro:
 Registro do Windows
@@ -23,6 +24,7 @@ Registro do Windows
 #Apresentações
 #Documentos RTF
 #Documentos PDF
+#Documentos HTML
 
 # Para expandir arquivos jar, comente a linha <mime>application/java-archive</mime> em ParserConfig.xml
 #Programas e Bibliotecas
