@@ -62,9 +62,9 @@ import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.utils.DateUtils;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -143,6 +143,9 @@ public class IndexItem extends BasicProps {
 
         BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
+        BasicProps.SET.add(ID_IN_SOURCE);
+        BasicProps.SET.add(SOURCE_PATH);
+        BasicProps.SET.add(SOURCE_DECODER);
     }
 
     private static final FieldType getContentField() {
@@ -159,7 +162,7 @@ public class IndexItem extends BasicProps {
     }
 
     public static Map<String, Class> getMetadataTypes() {
-        return typesMap;
+        return Collections.unmodifiableMap(typesMap);
     }
 
     public static void saveMetadataTypes(File confDir) throws IOException {
@@ -172,7 +175,8 @@ public class IndexItem extends BasicProps {
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
-
+        if(typesMap.size() > 0)
+            return;
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         if (metadataTypesFile.exists()) {
             UTF8Properties props = new UTF8Properties();
@@ -182,7 +186,7 @@ public class IndexItem extends BasicProps {
             }
         }
     }
-
+    
     private static final String normalize(String value) {
         return normalize(value, true);
     }
@@ -427,8 +431,9 @@ public class IndexItem extends BasicProps {
             keyPrefix = "_num_"; //$NON-NLS-1$
         }
         if (oValue instanceof Date) {
-            String value = DateUtil.dateToString((Date) oValue);
-            doc.add(new StringField(key, value, Field.Store.YES));
+            String value = DateUtils.formatDate((Date)oValue);
+            //query parser converts range queries to lowercase
+            doc.add(new StringField(key, value.toLowerCase(), Field.Store.YES));
             if (!isMultiValued)
                 doc.add(new SortedDocValuesField(key, new BytesRef(value)));
             else
@@ -473,8 +478,9 @@ public class IndexItem extends BasicProps {
             isString = true;
         }
 
-        if (isString)
+        if (isString) {
             doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
+        }
 
         if (isMetadataKey || isString) {
             String value = oValue.toString();
@@ -550,6 +556,12 @@ public class IndexItem extends BasicProps {
                     typesMap.put(key, String.class);
                 }
             }
+        }
+
+        Date date = DateUtil.tryToParseDate(value);
+        if(date != null) {
+            oValue = date;
+            typesMap.put(key, Date.class);
         }
 
         addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued);
@@ -747,7 +759,8 @@ public class IndexItem extends BasicProps {
                         File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
                                 "jpg"); //$NON-NLS-1$
                         try {
-                            evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                            if(thumbFile.exists())
+                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -806,10 +819,10 @@ public class IndexItem extends BasicProps {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
+                Class<?> c = typesMap.get(f.name());
                 if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
                         continue;
-                    Class<?> c = typesMap.get(f.name());
                     IndexableField[] fields = doc.getFields(f.name());
                     if (fields.length > 1) {
                         multiValuedFields.add(f.name());
@@ -819,8 +832,15 @@ public class IndexItem extends BasicProps {
                         evidence.setExtraAttribute(f.name(), fieldList);
                     } else
                         evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
-                } else
-                    evidence.getMetadata().add(f.name(), f.stringValue());
+                } else {
+                    String val = f.stringValue();
+                    if(Date.class.equals(c)) {
+                        //it was stored lowercase because query parser converts range queries to lowercase
+                        val = val.toUpperCase();
+                    }
+                    evidence.getMetadata().add(f.name(), val);
+                }
+                    
             }
 
             return evidence;
@@ -864,9 +884,15 @@ public class IndexItem extends BasicProps {
     }
 
     public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
-        if (Date.class.equals(c))
-            return DateUtil.stringToDate(f.stringValue());
-        else if (Number.class.isAssignableFrom(c))
+        if (Date.class.equals(c)) {
+            //it was stored lowercase because query parser converts range queries to lowercase
+            String value = f.stringValue().toUpperCase();
+            try {
+                return DateUtil.stringToDate(value);
+            }catch(ParseException e) {
+                return DateUtil.tryToParseDate(value);
+            }   
+        }else if (Number.class.isAssignableFrom(c))
             return f.numericValue();
         else
             return f.stringValue();

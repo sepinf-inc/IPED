@@ -201,6 +201,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());
         fillProp(sb, BasicProps.MODIFIED, item.getModDate());
         fillProp(sb, BasicProps.ACCESSED, item.getAccessDate());
+        fillProp(sb, BasicProps.RECORDDATE, item.getRecordDate());
         fillProp(sb, BasicProps.HASH, item.getHash());
         fillProp(sb, BasicProps.PATH, item.getPath());
         sb.append("</table>"); //$NON-NLS-1$

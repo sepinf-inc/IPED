@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Connection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
@@ -38,7 +40,7 @@ import iped3.util.ExtraProperties;
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
 
-public class SkypeParser extends AbstractParser {
+public class SkypeParser extends SQLite3DBParser {
 
     public static final MediaType SKYPE_MIME = MediaType.application("sqlite-skype"); //$NON-NLS-1$
 
@@ -76,15 +78,28 @@ public class SkypeParser extends AbstractParser {
         if (itemInfo != null)
             filePath = itemInfo.getPath();
 
+        final TikaInputStream tis = TikaInputStream.get(stream, tmp);
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             File tmpFile = tis.getFile();
-
+            
+            //call here instead of catch clause because calls, videos and other info are not parsed currently
             sqliteParser.parse(tis, handler, metadata, context);
 
             if (extractor.shouldParseEmbedded(metadata)) {
 
-                sqlite = new SkypeSqlite(tmpFile, filePath);
+                sqlite = new SkypeSqlite(tmpFile, filePath) {
+                    @Override
+                    public Connection getConnection() throws SkypeParserException {
+                        if(conn == null) {
+                            try {
+                                conn = SkypeParser.this.getConnection(tis, metadata, context);
+                            } catch (IOException e) {
+                                throw new SkypeParserException(e);
+                            }
+                        }
+                        return conn;
+                    }
+                };
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
 
@@ -213,7 +228,6 @@ public class SkypeParser extends AbstractParser {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
             throw new TikaException("SkypeParserException Exception", e); //$NON-NLS-1$
 
         } finally {

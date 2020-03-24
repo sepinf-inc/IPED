@@ -24,7 +24,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,7 +34,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.text.DateFormat;
@@ -49,7 +47,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -61,21 +58,17 @@ import javax.imageio.ImageIO;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
@@ -332,7 +325,7 @@ public class HTMLReportTask extends AbstractTask {
                     info.requestForm = properties.getProperty("RequestDoc"); //$NON-NLS-1$
                     info.caseNumber = properties.getProperty("Investigation"); //$NON-NLS-1$
                     info.reportNumber = properties.getProperty("Report"); //$NON-NLS-1$
-                    info.setSimpleEvidenceDesc(properties.getProperty("Material")); //$NON-NLS-1$
+                    info.fillEvidenceFromText(properties.getProperty("Material")); //$NON-NLS-1$
                     info.examinersID.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
                     info.examiners.add(properties.getProperty("Examiner")); //$NON-NLS-1$
                     info.labCaseNumber = properties.getProperty("Record"); //$NON-NLS-1$
@@ -932,8 +925,11 @@ public class HTMLReportTask extends AbstractTask {
         if (!thumbFile.getParentFile().exists()) {
             thumbFile.getParentFile().mkdirs();
         }
-
         try {
+            if(evidence.getThumb() != null) {
+                Files.write(thumbFile.toPath(), evidence.getThumb());
+                return;
+            }
             BufferedImage img = null;
             if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();

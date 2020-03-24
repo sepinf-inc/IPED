@@ -71,6 +71,7 @@ import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
@@ -148,18 +149,23 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static void setExpandContainers(boolean enabled) {
         expandContainers = enabled;
     }
-
+    
     public ParseContext getTikaContext() {
+        return getTikaContext(this.output, null);
+    }
+    
+    public ParseContext getTikaContext(IPEDSource ipedsource) {
+        return getTikaContext(ipedsource.getModuleDir(), ipedsource);
+    }
+
+    private ParseContext getTikaContext(File output, IPEDSource ipedsource) {
         // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
         context = new ParseContext();
         context.set(Parser.class, this.autoParser);
 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
-        if (output != null)
-            context.set(OCROutputFolder.class, new OCROutputFolder(output));
-        else
-            context.set(OCROutputFolder.class, new OCROutputFolder());
+        context.set(OCROutputFolder.class, new OCROutputFolder(output));
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -174,8 +180,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
-        if (output != null && worker != null)
-            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
+        if(ipedsource != null) {
+            context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
+        }else {
+            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+        }
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories());
         if (extractEmbedded) {

@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
+import ezvcard.io.chain.ChainingHtmlWriter;
 import ezvcard.property.Photo;
 import ezvcard.property.RawProperty;
 import ezvcard.property.StructuredName;
@@ -39,6 +40,8 @@ import ezvcard.property.Telephone;
 import ezvcard.property.TextListProperty;
 import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 
 public class VCardParser extends AbstractParser {
 
@@ -46,6 +49,18 @@ public class VCardParser extends AbstractParser {
     private static final int MAX_BUFFER_SIZE = 1 << 24;
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.text("x-vcard")); //$NON-NLS-1$
     public static final MediaType PARSED_VCARD_MIME_TYPE = MediaType.application("x-vcard-html"); //$NON-NLS-1$
+    
+    private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
+    private static Template TEMPLATE = null;
+    
+    static {
+        TEMPLATE_CFG.setClassForTemplateLoading(VCardParser.class, "");
+        TEMPLATE_CFG.setWhitespaceStripping(true);
+        try {
+            TEMPLATE = TEMPLATE_CFG.getTemplate("hcard-template.html");
+        } catch (Exception e) {
+        }
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -95,8 +110,8 @@ public class VCardParser extends AbstractParser {
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
-
-            Ezvcard.writeHtml(vcards).go(out);
+            
+            new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
 
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
             extractor.parseEmbedded(is, xhtml, cMetadata, false);

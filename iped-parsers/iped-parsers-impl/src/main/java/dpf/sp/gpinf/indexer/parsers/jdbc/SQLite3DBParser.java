@@ -16,9 +16,12 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  * limitations under the License.
  */
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,11 +31,17 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.io.IOExceptionWithCause;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
+
+import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 
 /**
  * This is the implementation of the db parser for SQLite.
@@ -40,7 +49,7 @@ import org.sqlite.SQLiteConfig;
  * This parser is internal only; it should not be registered in the services
  * file or configured in the TikaConfig xml file.
  */
-class SQLite3DBParser extends AbstractDBParser {
+public class SQLite3DBParser extends AbstractDBParser {
 
     protected static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
@@ -57,30 +66,82 @@ class SQLite3DBParser extends AbstractDBParser {
 
     @Override
     protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context) throws IOException {
-        String connectionString = getConnectionString(stream, metadata, context);
-
         Connection connection = null;
         try {
             Class.forName(getJDBCClassName());
         } catch (ClassNotFoundException e) {
             throw new IOExceptionWithCause(e);
         }
+        TemporaryResources tmp = new TemporaryResources();
         try {
+            File dbFile = TikaInputStream.get(stream, tmp).getFile();
+            File walTemp = exportWalLog(dbFile, context);
+            if(walTemp != null) {
+                tmp.addResource(new Closeable() {
+                    @Override
+                    public void close() {
+                        walTemp.delete();
+                        new File(dbFile.getAbsolutePath() + "-shm").delete();
+                    }
+                });
+            }
+            String connectionString = getConnectionString(dbFile);
+            
             SQLiteConfig config = new SQLiteConfig();
 
             // good habit, but effectively meaningless here
             config.setReadOnly(true);
             connection = config.createConnection(connectionString);
+            
+            connection = new DelegatingConnection(connection) {
+                @Override
+                public void close() throws SQLException {
+                    super.close();
+                    try {
+                        tmp.close();
+                    } catch (IOException e) {
+                        throw new SQLException(e);
+                    }
+                }
+            };
 
         } catch (SQLException e) {
             throw new IOException(e.getMessage());
         }
         return connection;
     }
-
+    
+    private File exportWalLog(File dbFile, ParseContext context) {
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        if(searcher != null) {
+            IItemBase dbItem = context.get(IItemBase.class);
+            if(dbItem != null) {
+                String dbPath = dbItem.getPath();
+                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
+                List<IItemBase> items = searcher.search(walQuery);
+                if(items.size() > 0) {
+                    IItemBase wal = items.get(0);
+                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
+                    try(InputStream in = wal.getBufferedStream()){
+                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    }catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                    return walTemp;
+                }
+            }
+        }
+        return null;
+    }
+    
+    
+    
     @Override
-    protected String getConnectionString(InputStream is, Metadata metadata, ParseContext context) throws IOException {
-        File dbFile = TikaInputStream.get(is).getFile();
+    protected String getConnectionString(InputStream stream, Metadata metadata, ParseContext context) throws IOException {
+        throw new RuntimeException("Not Implemented"); //$NON-NLS-1$
+    }
+
+    protected String getConnectionString(File dbFile) throws IOException {
         return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
 

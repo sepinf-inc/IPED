@@ -1,4 +1,15 @@
-13/02/2020: IPED-3.17.1
+03/18/2020: IPED-3.17.2
+Fixes:
+- Profile fastmode not working in v3.17 (#30)
+- HtmlViewer is downloading external resources since 3.16 (#22)
+- Typed evidence description not included in html report (#37)
+- Records from sqlites in wal mode may be missed (#21)
+- Range searches in internal dates (exif, office, message-date...) not working (#19)
+- Error reading files on Linux without patch in sleuthkit (#16)
+- Retry sleuthkit sqlite read errors (#38)
+- Fix parsing of carved vcards (PR #40) by Fabio Pfeifer
+
+02/13/2020: IPED-3.17.1
 News:
 - Check and abort if user changed default locale and default english configuration files
 - Changed communication with external robustImageReaders from sockets to pipes
@@ -10,7 +21,7 @@ Fixes:
 - useNIOFSDirectory option did not work properly
 - Rare infinite loop in robustImageReader restarting if mmap is interrupted
 
-27/12/2019: IPED-3.17
+12/27/2019: IPED-3.17
 News:
 - Changed default locale and configuration files to english
 - Moved all source code to github

@@ -15,7 +15,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewerPlus;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.IcePDFViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
@@ -29,10 +29,18 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import dpf.sp.gpinf.indexer.util.FileContentSource;
-import dpf.sp.gpinf.indexer.util.JarLoader;
-import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import iped3.io.IStreamSource;
+
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexSearcherImpl;
+
+import dpf.sp.gpinf.indexer.Configuration;
+
+import java.io.File;
+import java.util.Set;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Controle da interface gráfica de visualização dos dados
@@ -74,7 +82,8 @@ public class ViewerControl implements IViewerControl {
                         @Override
                         public void run() {
 
-                            params.compositeViewer.addViewer(new HexViewer());
+							params.compositeViewer.addViewer(new HexViewerPlus(new HexSearcherImpl(),Configuration.getInstance().configPath));
+                            //params.compositeViewer.addViewer(new HexViewer());
                             params.textViewer = new TextViewer(params);
                             params.compositeViewer.addViewer(params.textViewer);
                             params.compositeViewer.addViewer(new MetadataViewer());

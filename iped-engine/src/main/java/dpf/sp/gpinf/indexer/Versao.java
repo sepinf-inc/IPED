@@ -26,7 +26,7 @@ import org.apache.lucene.util.Version;
 public class Versao {
 
     public static Version current = Version.LUCENE_4_9;
-    public static String APP_VERSION = "3.17.1"; //$NON-NLS-1$
-    public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION + "(SPI distro)"; //$NON-NLS-1$
+    public static String APP_VERSION = "3.17.2"; //$NON-NLS-1$
+    public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION; //$NON-NLS-1$
     public static String APP_EXT = "IPED"; //$NON-NLS-1$
 }
