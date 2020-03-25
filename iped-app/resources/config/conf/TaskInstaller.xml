@@ -41,6 +41,7 @@
     
     <task class="dpf.sp.gpinf.indexer.process.task.EntropyTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IndexTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.ExportCSVTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.HTMLReportTask"></task>

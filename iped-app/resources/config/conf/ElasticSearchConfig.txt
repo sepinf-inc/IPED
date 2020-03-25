@@ -1,0 +1,25 @@
+##################################
+# ElasticSearch Task configuration
+#################################
+
+host = Sepinf-hpw03
+
+port = 9200
+
+index.number_of_shards = 1
+
+index.number_of_replicas = 1
+
+index.lifecycle.name = default_policy
+
+min_bulk_size = 8388608
+
+min_bulk_items = 1000
+
+max_async_requests = 10
+
+timeout_millis = 3600000
+
+connect_timeout_millis = 5000
+
+index.mapping.total_fields.limit = 10000
