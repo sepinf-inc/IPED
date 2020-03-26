@@ -607,13 +607,14 @@ public class ExportFileTask extends AbstractTask {
     
     @Override
     public void finish() throws Exception {
-        for(Connection con : storageCon.values()) {
-            if(con != null && !con.isClosed()) {
-                con.commit();
-                con.close();
+        if(storageCon != null) {
+            for(Connection con : storageCon.values()) {
+                if(con != null && !con.isClosed()) {
+                    con.commit();
+                    con.close();
+                }
             }
         }
-        
     }
 
 }
