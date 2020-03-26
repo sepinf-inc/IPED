@@ -161,7 +161,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .put(MAX_FIELDS_KEY, max_fields)
                 .put(INDEX_SHARDS_KEY, index_shards)
                 .put(INDEX_REPLICAS_KEY, index_replicas)
-                .put(INDEX_POLICY_KEY, index_policy));
+                .put(INDEX_POLICY_KEY, index_policy)
+                .put("analysis.analyzer.default.type", "custom") //$NON-NLS-1$ //$NON-NLS-2$
+                .put("analysis.analyzer.default.tokenizer", "standard") //$NON-NLS-1$ //$NON-NLS-2$
+                .putList("analysis.analyzer.default.filter", "lowercase", "asciifolding") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                );
         
         CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
         if(!response.isAcknowledged()) {
