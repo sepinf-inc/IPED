@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,6 +32,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
@@ -58,6 +60,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String MAX_ASYNC_REQUESTS_KEY = "max_async_requests";
     private static final String TIMEOUT_MILLIS_KEY = "timeout_millis";
     private static final String CONNECT_TIMEOUT_KEY = "connect_timeout_millis";
+    private static final String CMD_FIELDS_KEY = "elastic";
     
     private static String host;
     private static int port = 9200;
@@ -66,7 +69,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static int min_bulk_items = 1000;
     private static int connect_timeout = 5000;
     private static int timeout_millis = 3600000;
-    private static int max_async_requests = 10;
+    private static int max_async_requests = 5;
     private static int index_shards = 1;
     private static int index_replicas = 1;
     private static String index_policy = "default_policy";
@@ -74,6 +77,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static RestHighLevelClient client;
     
     private static AtomicInteger count = new AtomicInteger();
+    
+    private static HashMap<String, String> cmdLineFields = new HashMap<>();
     
     private String indexName;
     
@@ -100,6 +105,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
         
         loadConfFile(new File(confDir, CONF_FILE_NAME));
         
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        String cmdFields = args.getExtraParams().get(CMD_FIELDS_KEY);
+        if(cmdFields != null) {
+            parseCmdLineFields(cmdFields);
+        }
+        
         client = new RestHighLevelClient(
                 RestClient.builder(new HttpHost(host, port, "http")).setRequestConfigCallback(
                 new RestClientBuilder.RequestConfigCallback() {
@@ -117,6 +128,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
         
         createIndex(indexName);
+    }
+    
+    private void parseCmdLineFields(String cmdFields) {
+        String[] entries = cmdFields.split(";");
+        for(String entry : entries) {
+            String[] pair = entry.split(":");
+            cmdLineFields.put(pair[0], pair[1]);
+        }
     }
     
     private void loadConfFile(File file) throws IOException {
@@ -247,7 +266,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
-                    LOGGER.error("Error indexing to ElasticSearch " + path + ": " + failure.getMessage());
+                    LOGGER.warn("Error indexing to ElasticSearch " + path + ": " + failure.getMessage());
                 }
             }
         }
@@ -307,6 +326,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         for (String key : getMetadataKeys(item)) {
             builder.array(key, item.getMetadata().getValues(key));
+        }
+        
+        for(Entry<String, String> entry : cmdLineFields.entrySet()) {
+            builder.field(entry.getKey(), entry.getValue());
         }
                 
         return builder.endObject();
