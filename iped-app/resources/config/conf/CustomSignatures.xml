@@ -312,6 +312,14 @@
         <glob pattern="Library1.dat" />
         <glob pattern="Library2.dat" />
     </mime-type>
+    
+    <mime-type type="application/x-bittorrent-resume-dat">
+        <_comment>BitTorrent Client Resume.dat file</_comment>
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="resume.dat" />
+        <glob pattern="resume.dat.old" />
+        <glob pattern="resume.dat.new" />
+    </mime-type>
 
     <mime-type type="message/outlook-pst">
         <magic priority="70">
@@ -910,3 +918,4 @@
     </mime-type>
    
 </mime-info>
+
