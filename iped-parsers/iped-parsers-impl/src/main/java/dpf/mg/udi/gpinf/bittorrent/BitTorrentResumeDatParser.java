@@ -5,8 +5,6 @@ import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -20,8 +18,6 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
-import com.dampcake.bencode.BencodeInputStream;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 
@@ -64,7 +60,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         metadata.set(HttpHeaders.CONTENT_TYPE, RESUME_DAT_MIME_TYPE);
         metadata.remove(TikaMetadataKeys.RESOURCE_NAME_KEY);
 
-        Map<String, Object> dict = new BencodeInputStream(stream).readDictionary();
+        BencodedDict dict = new BencodedDict(stream, df);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -93,16 +89,17 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                     continue;
                 }
                 xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-                String[] rowElememts = new String[] { torrent, getString(dict, torrent, "rootdir"), //$NON-NLS-1$
-                        getString(dict, torrent, "path"), //$NON-NLS-1$
-                        Long.toString(getLong(dict, torrent, "downloaded")), //$NON-NLS-1$
-                        Long.toString(getLong(dict, torrent, "uploaded")), //$NON-NLS-1$
-                        getDate(dict, torrent, "added_on", df), //$NON-NLS-1$
-                        getDate(dict, torrent, "completed_on", df), //$NON-NLS-1$
-                        getDate(dict, torrent, "time", df), //$NON-NLS-1$
-                        getDate(dict, torrent, "last seen complete", df), //$NON-NLS-1$
-                        Long.toString(getLong(dict, torrent, "seedtime")), //$NON-NLS-1$
-                        Long.toString(getLong(dict, torrent, "runtime")) //$NON-NLS-1$
+                BencodedDict torrentDict = dict.getDict(torrent);
+                String[] rowElememts = new String[] { torrent, torrentDict.getString("rootdir"), //$NON-NLS-1$
+                        torrentDict.getString("path"), //$NON-NLS-1$
+                        Long.toString(torrentDict.getLong("downloaded")), //$NON-NLS-1$
+                        Long.toString(torrentDict.getLong("uploaded")), //$NON-NLS-1$
+                        torrentDict.getDate("added_on"), //$NON-NLS-1$
+                        torrentDict.getDate("completed_on"), //$NON-NLS-1$
+                        torrentDict.getDate("time"), //$NON-NLS-1$
+                        torrentDict.getDate("last seen complete"), //$NON-NLS-1$
+                        Long.toString(torrentDict.getLong("seedtime")), //$NON-NLS-1$
+                        Long.toString(torrentDict.getLong("runtime")) //$NON-NLS-1$
                 };
                 for (String c : rowElememts) {
                     xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
@@ -122,45 +119,4 @@ public class BitTorrentResumeDatParser extends AbstractParser {
         }
 
     }
-
-    private static String getDate(Map<String, Object> dict, String torrent, String key, DateFormat df) {
-        String resp = ""; //$NON-NLS-1$
-        long num = getLong(dict, torrent, key);
-        if (num != 0) {
-            Date date = new Date(num * 1000);
-            resp = df.format(date);
-        }
-        return resp;
-    }
-
-    private static Object getObject(Map<String, Object> dict, String torrent, String key) {
-        if (dict.containsKey(torrent)) {
-            if (!(dict.get(torrent) instanceof Map)) {
-                return null;
-            }
-            @SuppressWarnings("unchecked") //$NON-NLS-1$
-            Map<String, Object> torrentDict = (Map<String, Object>) dict.get(torrent);
-            if (torrentDict.containsKey(key)) {
-                return torrentDict.get(key);
-            }
-        }
-        return null;
-    }
-
-    private static long getLong(Map<String, Object> dict, String torrent, String key) {
-        Object obj = getObject(dict, torrent, key);
-        if (obj == null || !(obj instanceof Long)) {
-            return 0;
-        }
-        return (Long) obj;
-    }
-
-    private static String getString(Map<String, Object> dict, String torrent, String key) {
-        Object obj = getObject(dict, torrent, key);
-        if (obj == null || !(obj instanceof String)) {
-            return ""; //$NON-NLS-1$
-        }
-        return (String) obj;
-    }
-
 }
