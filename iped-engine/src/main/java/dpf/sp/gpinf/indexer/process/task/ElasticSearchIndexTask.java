@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -17,6 +18,7 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.Cancellable;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Requests;
@@ -25,6 +27,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.unit.TimeValue;
@@ -181,17 +184,35 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if(!response.isAcknowledged()) {
             throw new IOException("Creation of index '" + indexName + "'failed!");
         }
+        
+        createFieldMappings(indexName);
     }
     
     private String getLatinExtendedBPattern() {
         StringBuilder sb = new StringBuilder();
         sb.append('[');
-        for(int i = 0; i < 0x24F; i++) {
+        for(int i = 0; i <= 0x24F; i++) {
             if(Character.isLetterOrDigit(i))
                 sb.append(new String(Character.toChars(i)));
         }
-        sb.append("]+");
+        //photoDNA has 144 bytes
+        sb.append("]{1,288}"); //$NON-NLS-1$ //$NON-NLS-2$
         return sb.toString();
+    }
+    
+    private void createFieldMappings(String indexName) throws IOException {
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
+        
+        HashMap<String, Object> jsonMap = new HashMap<>();
+        jsonMap.put("properties", properties);
+        PutMappingRequest putMappings = new PutMappingRequest(indexName);
+        putMappings.source(jsonMap);
+        
+        AcknowledgedResponse putMappingResponse = client.indices().putMapping(putMappings, RequestOptions.DEFAULT);
+        if(!putMappingResponse.isAcknowledged()) {
+            throw new IOException("Creation of mappings in index '" + indexName + "'failed!");
+        }
     }
 
     @Override
@@ -318,7 +339,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId())
                 .field(BasicProps.PARENTID, item.getParentId())
-                .field(BasicProps.PARENTIDs, item.getParentIdsString())
+                .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID, item instanceof ISleuthKitItem ? ((ISleuthKitItem)item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
                 .field(IndexItem.SOURCE_PATH, getInputStreamSourcePath(item))
