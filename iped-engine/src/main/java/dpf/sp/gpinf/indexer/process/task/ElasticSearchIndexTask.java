@@ -26,6 +26,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.Settings.Builder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -61,6 +62,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String TIMEOUT_MILLIS_KEY = "timeout_millis";
     private static final String CONNECT_TIMEOUT_KEY = "connect_timeout_millis";
     private static final String CMD_FIELDS_KEY = "elastic";
+    private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
     
     private static String host;
     private static int port = 9200;
@@ -73,6 +75,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static int index_shards = 1;
     private static int index_replicas = 1;
     private static String index_policy = "default_policy";
+    private static boolean useCustomAnalyzer;
     
     private static RestHighLevelClient client;
     
@@ -153,24 +156,42 @@ public class ElasticSearchIndexTask extends AbstractTask {
         index_shards = Integer.valueOf(props.getProperty(INDEX_SHARDS_KEY).trim());
         index_replicas = Integer.valueOf(props.getProperty(INDEX_REPLICAS_KEY).trim());
         index_policy = props.getProperty(INDEX_POLICY_KEY).trim();
+        useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
     
     private void createIndex(String indexName) throws IOException {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        request.settings(Settings.builder()
+        Builder builder = Settings.builder()
                 .put(MAX_FIELDS_KEY, max_fields)
                 .put(INDEX_SHARDS_KEY, index_shards)
                 .put(INDEX_REPLICAS_KEY, index_replicas)
-                .put(INDEX_POLICY_KEY, index_policy)
-                .put("analysis.analyzer.default.type", "custom") //$NON-NLS-1$ //$NON-NLS-2$
-                .put("analysis.analyzer.default.tokenizer", "standard") //$NON-NLS-1$ //$NON-NLS-2$
-                .putList("analysis.analyzer.default.filter", "lowercase", "asciifolding") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                );
+                .put(INDEX_POLICY_KEY, index_policy);
+
+        if(useCustomAnalyzer) {
+            builder.put("analysis.tokenizer.latinExtB.type", "simple_pattern") //$NON-NLS-1$ //$NON-NLS-2$
+            .put("analysis.tokenizer.latinExtB.pattern", getLatinExtendedBPattern()) //$NON-NLS-1$ //$NON-NLS-2$
+            .put("analysis.analyzer.default.type", "custom") //$NON-NLS-1$ //$NON-NLS-2$
+            .put("analysis.analyzer.default.tokenizer", "latinExtB") //$NON-NLS-1$ //$NON-NLS-2$
+            .putList("analysis.analyzer.default.filter", "lowercase", "asciifolding"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
+                
+        request.settings(builder);
         
         CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
         if(!response.isAcknowledged()) {
             throw new IOException("Creation of index '" + indexName + "'failed!");
         }
+    }
+    
+    private String getLatinExtendedBPattern() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        for(int i = 0; i < 0x24F; i++) {
+            if(Character.isLetterOrDigit(i))
+                sb.append(new String(Character.toChars(i)));
+        }
+        sb.append("]+");
+        return sb.toString();
     }
 
     @Override

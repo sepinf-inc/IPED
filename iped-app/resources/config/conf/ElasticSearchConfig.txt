@@ -38,3 +38,7 @@ connect_timeout_millis = 5000
 
 # Maximum number of indexed fields
 index.mapping.total_fields.limit = 10000
+
+# Use a custom analyzer that tokenizes on non digits and non latin1 chars,
+# converts them to lowercase and uses asciifolding filter
+useCustomAnalyzer = true
