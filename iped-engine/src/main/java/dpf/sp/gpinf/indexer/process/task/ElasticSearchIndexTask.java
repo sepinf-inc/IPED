@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -133,7 +134,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             throw new IOException("ElasticSearch cluster at " + host + ":" + port + " not responding to ping.");
         }
         
-        createIndex(indexName);
+        createIndex(indexName, args);
     }
     
     private void parseCmdLineFields(String cmdFields) {
@@ -162,7 +163,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
     
-    private void createIndex(String indexName) throws IOException {
+    private void createIndex(String indexName, CmdLineArgs args) throws IOException {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder()
                 .put(MAX_FIELDS_KEY, max_fields)
@@ -180,12 +181,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 
         request.settings(builder);
         
-        CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
-        if(!response.isAcknowledged()) {
-            throw new IOException("Creation of index '" + indexName + "'failed!");
+        try {
+            CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+            if(!response.isAcknowledged()) {
+                throw new IOException("Creation of index '" + indexName + "'failed!");
+            }
+            createFieldMappings(indexName);
+            
+        }catch (ElasticsearchStatusException e) {
+            if(/*!args.isAppendIndex() ||*/ !e.getDetailedMessage().contains("resource_already_exists_exception")) { //$NON-NLS-1$
+                throw e;
+            }
         }
         
-        createFieldMappings(indexName);
     }
     
     private String getLatinExtendedBPattern() {
@@ -262,7 +270,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 bulkRequest.add(indexRequest);
                 idToPath.put(id, item.getPath());
                 
-                LOGGER.debug("Added to bulk request " + item.getPath());
+                LOGGER.debug("Added to bulk request {}", item.getPath());
                 
                 if(bulkRequest.estimatedSizeInBytes() >= min_bulk_size || bulkRequest.numberOfActions() >= min_bulk_items) {
                     sendBulkRequest();
@@ -291,7 +299,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
             
         }catch(Exception e) {
             LOGGER.error("Error indexing to ElasticSearch " + bulkRequest.getDescription(), e);
-            e.printStackTrace();
         }
     }
     
@@ -312,7 +319,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
-                    LOGGER.warn("Error indexing to ElasticSearch " + path + ": " + failure.getMessage());
+                    LOGGER.warn("Warn indexing to ElasticSearch " + path + ": " + failure.getMessage());
+                }else {
+                    LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(), idPathMap.get(bulkItemResponse.getId()));
                 }
             }
         }
