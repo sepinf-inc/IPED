@@ -105,4 +105,22 @@ public class BencodedDict {
         
         return resp;
     }
+    
+    /**
+     * Returns a list of all String objects in list. Ignore elements that are not Strings.
+     * @param key
+     * @return
+     */
+    public List<String> getListOfStrings(String key) {
+        List<String> resp = new ArrayList<>();
+        List<Object> listOfObj = getList(key);
+        if (listOfObj != null) {
+            for (Object obj: listOfObj) {
+                if (obj instanceof String) {
+                    resp.add((String) obj);
+                }
+            }
+        }
+        return resp;
+    }
 }
