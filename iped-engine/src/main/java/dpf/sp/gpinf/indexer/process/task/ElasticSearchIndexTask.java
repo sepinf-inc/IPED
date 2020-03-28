@@ -15,6 +15,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -255,10 +256,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         try {
             int fragNum = 0;
             do {
-                String id = String.valueOf(item.getId());
-                if(fragNum > 0) {
-                    id += "_frag" + fragNum;
-                }
+                String id = Util.generatePersistentIdForTextFrag(item, fragNum);
                 
                 XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader);
                 
@@ -266,6 +264,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 indexRequest.id(id);
                 indexRequest.source(jsonBuilder);
                 indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
+                indexRequest.opType(OpType.CREATE);
                 
                 bulkRequest.add(indexRequest);
                 idToPath.put(id, item.getPath());
@@ -319,7 +318,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
-                    LOGGER.warn("Warn indexing to ElasticSearch " + path + ": " + failure.getMessage());
+                    LOGGER.warn("ElasticSearch failure result " + path + ": " + failure.getMessage());
                 }else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(), idPathMap.get(bulkItemResponse.getId()));
                 }
@@ -347,6 +346,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         builder.startObject()
                 .field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId())
+                .field(BasicProps.SUBITEMID, item.getSubitemId())
                 .field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID, item instanceof ISleuthKitItem ? ((ISleuthKitItem)item).getSleuthId() : null)

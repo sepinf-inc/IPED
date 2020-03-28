@@ -40,7 +40,55 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.zip.Deflater;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
+import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.IItem;
+import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.BasicProps;
+
 public class Util {
+    
+    public static String getPersistentId(IItem item) {
+        String id = (String)item.getExtraAttribute(IndexItem.PERSISTENT_ID);
+        if(id == null) {
+            return generatePersistentId(null, item);
+        }
+        return id;
+    }
+    
+    public static String generatePersistentIdForTextFrag(IItem item, int fragNum) {
+        String id = getPersistentId(item);
+        if(fragNum == 0) {
+            return id;
+        }
+        StringBuilder sb = new StringBuilder(id);
+        sb.append("fragNum").append(fragNum);
+        id = DigestUtils.md5Hex(sb.toString());
+        item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
+        return id;
+    }
+    
+    public static String generatePersistentId(IItem parent, IItem item) {
+        StringBuilder sb = new StringBuilder();
+        if(parent != null) {
+            sb.append(getPersistentId(parent));
+        }
+        if(item instanceof ISleuthKitItem) {
+            sb.append(IndexItem.SLEUTHID).append(((ISleuthKitItem)item).getSleuthId());
+        }
+        if(item.getIdInDataSource() != null) {
+            sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
+        }
+        if(item.getSubitemId() != null) {
+            sb.append(IndexItem.SUBITEMID).append(item.getSubitemId());
+        }
+        sb.append(BasicProps.PATH).append(item.getPath());
+        
+        String id = DigestUtils.md5Hex(sb.toString());
+        item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
+        return id;
+    }
 
     public static String readUTF8Content(File file) throws IOException {
         byte[] bytes = Files.readAllBytes(file.toPath());

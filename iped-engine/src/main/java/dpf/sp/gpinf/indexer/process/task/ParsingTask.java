@@ -76,6 +76,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.io.IItemBase;
@@ -447,8 +448,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             Item subItem = new Item();
             subItem.setPath(subitemPath);
+            subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-
+            
+            Util.generatePersistentId(evidence, subItem);
+            
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
             handler.characters(nameChars, 0, nameChars.length);

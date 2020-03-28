@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +28,7 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -109,7 +109,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         offsetFile.setLength(len);
         offsetFile.setSumVolume(false);
         offsetFile.setParent(parentEvidence);
-
+        
         offsetFile.setDeleted(parentEvidence.isDeleted());
 
         if (mediaType != null)
@@ -176,6 +176,7 @@ public abstract class BaseCarveTask extends AbstractTask {
             }
         }
         parentItem.setHasChildren(true);
+        Util.generatePersistentId(parentItem, carvedItem);
     }
 
     // adiciona uma evidência já carveada por uma classe que implemente a interface

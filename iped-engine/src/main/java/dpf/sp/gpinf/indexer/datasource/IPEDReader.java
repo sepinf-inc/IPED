@@ -403,6 +403,11 @@ public class IPEDReader extends DataSourceReader {
                 }
             }
             evidence.addParentIds(parents);
+            
+            value = doc.get(IndexItem.SUBITEMID);
+            if (value != null) {
+                evidence.setSubitemId(Integer.valueOf(value));
+            }
 
             value = doc.get(IndexItem.TYPE);
             if (value != null) {

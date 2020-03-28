@@ -130,6 +130,8 @@ public class Item implements ISleuthKitItem {
     private Integer ftkID;
 
     private Integer parentId;
+    
+    private Integer subitemId;
 
     private List<Integer> parentIds = new ArrayList<Integer>();
 
@@ -495,6 +497,10 @@ public class Item implements ISleuthKitItem {
      */
     public Integer getParentId() {
         return parentId;
+    }
+    
+    public Integer getSubitemId() {
+        return subitemId;
     }
 
     /**
@@ -1071,6 +1077,10 @@ public class Item implements ISleuthKitItem {
         this.name = name;
         int p = name.lastIndexOf("."); //$NON-NLS-1$
         extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
+    }
+    
+    public void setSubitemId(Integer subitemId) {
+        this.subitemId = subitemId;
     }
 
     /**

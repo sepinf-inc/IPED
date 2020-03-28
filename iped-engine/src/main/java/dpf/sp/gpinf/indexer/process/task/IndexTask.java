@@ -161,7 +161,6 @@ public class IndexTask extends BaseCarveTask {
         FragmentingReader fragReader = new FragmentingReader(textReader);
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
-        Document doc = IndexItem.Document(evidence, noCloseReader, output);
         int fragments = 0;
         try {
             /*
@@ -169,11 +168,14 @@ public class IndexTask extends BaseCarveTask {
              * consome mta memória com documentos grandes
              */
             do {
+                Util.generatePersistentIdForTextFrag(evidence, fragments);
+                
                 if (++fragments > 1) {
                     stats.incSplits();
-                    LOGGER.debug("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
+                    LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
                 }
 
+                Document doc = IndexItem.Document(evidence, noCloseReader, output);
                 worker.writer.addDocument(doc);
 
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
