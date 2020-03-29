@@ -325,6 +325,8 @@
 		<magic priority="50">
     		<match value="d8:announce" type="string" offset="0"/>
     		<match value="d4:info" type="string" offset="0"/>
+    		<match value="d10:created by" type="string" offset="0"/>
+    		<match value="d8:encoding" type="string" offset="0"/>
 		</magic>
 		<glob pattern="*.torrent"/>
 	</mime-type>
