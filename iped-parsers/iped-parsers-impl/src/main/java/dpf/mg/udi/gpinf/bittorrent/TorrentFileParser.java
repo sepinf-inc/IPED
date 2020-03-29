@@ -35,7 +35,9 @@ public class TorrentFileParser extends AbstractParser {
     private static final String TORRENT_FILE_MIME_TYPE = "application/x-bittorrent"; //$NON-NLS-1$
     private static final String[] header = { Messages.getString("TorrentFileDatParser.FullPath"), //$NON-NLS-1$
             Messages.getString("TorrentFileDatParser.FileSize"), //$NON-NLS-1$
-            Messages.getString("TorrentFileDatParser.MD5") //$NON-NLS-1$
+            Messages.getString("TorrentFileDatParser.MD5"), //$NON-NLS-1$
+            Messages.getString("TorrentFileDatParser.SHA1"), //$NON-NLS-1$
+            Messages.getString("TorrentFileDatParser.ED2K") //$NON-NLS-1$
     };
 
     @Override
@@ -58,7 +60,15 @@ public class TorrentFileParser extends AbstractParser {
             throw new TikaException("Error parsing torrent file", e); //$NON-NLS-1$
         }
 
+        
         List<FileInTorrent> files = extractFileList(dict);
+        
+        boolean [] include = { true, true, false, false, false };
+        for (FileInTorrent file : files) {
+            if (! file.md5.isEmpty() ) include[2] = true;
+            if (! file.sha1.isEmpty() ) include[3] = true;
+            if (! file.ed2k.isEmpty() ) include[4] = true;
+        }
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
@@ -75,24 +85,28 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.startElement("div", "class", "dt"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
 
         xhtml.startElement("div", "class", "rh"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
-        for (String h : header) {
-            xhtml.startElement("div", "class", "b"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
-            xhtml.characters(h);
-            xhtml.endElement("div"); //$NON-NLS-1$
+        for (int i = 0; i < header.length; i++) {
+            if (include[i]) {
+                xhtml.startElement("div", "class", "b"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+                xhtml.characters(header[i]);
+                xhtml.endElement("div"); //$NON-NLS-1$
+            }
         }
         xhtml.endElement("div"); //$NON-NLS-1$
 
         boolean a = true;
         for (FileInTorrent file : files) {
             xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-            String[] rowElements = new String[] { file.fullPath, Long.toString(file.length), file.md5 };
-            for (String c : rowElements) {
-                xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
-                if (c.equals("")) { //$NON-NLS-1$
-                    c = " "; //$NON-NLS-1$
+            String[] rowElements = new String[] { file.fullPath, Long.toString(file.length), file.md5, file.sha1, file.ed2k };
+            for (int i = 0; i < rowElements.length; i++) {
+                if (include[i]) {
+                    xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+                    if (rowElements[i].equals("")) { //$NON-NLS-1$
+                        rowElements[i] = " "; //$NON-NLS-1$
+                    }
+                    xhtml.characters(rowElements[i]);
+                    xhtml.endElement("div"); //$NON-NLS-1$
                 }
-                xhtml.characters(c);
-                xhtml.endElement("div"); //$NON-NLS-1$
             }
             xhtml.endElement("div"); //$NON-NLS-1$
             a = !a;
@@ -129,6 +143,8 @@ public class TorrentFileParser extends AbstractParser {
                     file.fullPath = fullPathBuilder.toString();
                     file.length = fileDict.getLong("length"); //$NON-NLS-1$
                     file.md5 = fileDict.getString("md5sum"); //$NON-NLS-1$
+                    file.sha1 = fileDict.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                    file.ed2k = fileDict.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
                     files.add(file);
                 }
 
@@ -138,6 +154,8 @@ public class TorrentFileParser extends AbstractParser {
                 file.fullPath = info.getString("name"); //$NON-NLS-1$
                 file.length = info.getLong("length"); //$NON-NLS-1$
                 file.md5 = info.getString("md5sum"); //$NON-NLS-1$
+                file.sha1 = info.getHexEncodedBytes("sha1"); //$NON-NLS-1$
+                file.ed2k = info.getHexEncodedBytes("ed2k"); //$NON-NLS-1$
                 files = Collections.singletonList(file);
             }
 
@@ -154,6 +172,8 @@ public class TorrentFileParser extends AbstractParser {
         String fullPath;
         long length;
         String md5;
+        String sha1;
+        String ed2k;
     }
 
 }
