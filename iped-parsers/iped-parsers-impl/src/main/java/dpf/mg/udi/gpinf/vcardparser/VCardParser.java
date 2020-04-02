@@ -23,8 +23,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.DefaultHtmlMapper;
-import org.apache.tika.parser.html.HtmlMapper;
+import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.ccil.cowan.tagsoup.HTMLSchema;
@@ -36,8 +35,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.HtmlToHtmlHandler;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
@@ -98,9 +95,6 @@ public class VCardParser extends AbstractParser {
             
             // this part of the code was adapted from org.apache.tika.parser.html.HtmlParser
             // Get the HTML mapper from the parse context
-            HtmlMapper mapper =
-                    context.get(HtmlMapper.class, DefaultHtmlMapper.INSTANCE);
-
             // Parse the HTML document
             org.ccil.cowan.tagsoup.Parser parser =
                     new org.ccil.cowan.tagsoup.Parser();
@@ -113,8 +107,12 @@ public class VCardParser extends AbstractParser {
             // TIKA-599: Shared schema is thread-safe only if bogons are ignored
             parser.setFeature(
                     org.ccil.cowan.tagsoup.Parser.ignoreBogonsFeature, true);
-            parser.setContentHandler(new XHTMLDowngradeHandler(
-                    new HtmlToHtmlHandler(mapper, xhtml, metadata, context)));
+            // Ignore extra Whitespaces
+            parser.setFeature(
+                    org.ccil.cowan.tagsoup.Parser.ignorableWhitespaceFeature, true);
+
+            parser.setContentHandler(new XHTMLDowngradeHandler(xhtml));
+            
             parser.parse(new InputSource(is));
         } finally {
             xhtml.endDocument();
@@ -459,9 +457,19 @@ public class VCardParser extends AbstractParser {
      * (and namespaced attributes) and uppercasing all element names.
      * Used by the {@link HtmlParser} to make all incoming HTML look the same.
      * 
-     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler
-     */
+     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler with some adjusts:
+     *  - drop HTML elements
+     *  - drop BODY elements
+     *  - drop HEAD elements
+     */ 
     private static class XHTMLDowngradeHandler extends ContentHandlerDecorator {
+        private static Set<String> IGNORE_ELEMENTS = new HashSet<>();
+        
+        static {
+            IGNORE_ELEMENTS.add("HTML");
+            IGNORE_ELEMENTS.add("HEAD");
+            IGNORE_ELEMENTS.add("BODY");
+        }
 
         public XHTMLDowngradeHandler(ContentHandler handler) {
             super(handler);
@@ -472,6 +480,9 @@ public class VCardParser extends AbstractParser {
                 String uri, String localName, String name, Attributes atts)
                 throws SAXException {
             String upper = localName.toUpperCase(Locale.ENGLISH);
+            if (IGNORE_ELEMENTS.contains(upper)) {
+                return;
+            }
 
             AttributesImpl attributes = new AttributesImpl();
             for (int i = 0; i < atts.getLength(); i++) {
@@ -493,6 +504,9 @@ public class VCardParser extends AbstractParser {
         public void endElement(String uri, String localName, String name)
                 throws SAXException {
             String upper = localName.toUpperCase(Locale.ENGLISH);
+            if (IGNORE_ELEMENTS.contains(upper)) {
+                return;
+            }
             super.endElement(XMLConstants.NULL_NS_URI, upper, upper);
         }
 
