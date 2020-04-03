@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -82,6 +83,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
     public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
+    public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
 
     /**
      * workaround para JVM não coletar objeto, nesse caso Sleuthkit perde referencia
@@ -124,6 +126,16 @@ public class IPEDSource implements Closeable, IIPEDSource {
     Set<String> extraAttributes = new HashSet<String>();
 
     boolean isFTKReport = false, isReport = false;
+    
+    public static File getTempDirInfoFile(File moduleDir) {
+        return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
+    }
+    
+    public static File getTempIndexDir(File moduleDir) throws IOException {
+        File prevTempInfoFile = getTempDirInfoFile(moduleDir);
+        String prevTemp = new String(Files.readAllBytes(prevTempInfoFile.toPath()), "UTF-8");
+        return new File(prevTemp, INDEX_DIR);
+    }
 
     public IPEDSource(File casePath) {
         this(casePath, null);
@@ -141,8 +153,15 @@ public class IPEDSource implements Closeable, IIPEDSource {
             return;
 
         if (!index.exists() && iw == null) {
-            LOGGER.error("Index not found: " + index.getAbsolutePath()); //$NON-NLS-1$
-            return;
+            File defaultIndex = index;
+            try {
+                index = getTempIndexDir(moduleDir);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            if(!index.exists()) {
+                throw new RuntimeException("Index not found: " + defaultIndex.getAbsolutePath()); //$NON-NLS-1$
+            }
         }
 
         // sourceId = nextId.getAndIncrement();
@@ -280,6 +299,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private void loadCategories() {
         try {
             Fields fields = atomicReader.fields();
+            if(fields == null)
+                return;
             Terms terms = fields.terms(IndexItem.CATEGORY);
             TermsEnum termsEnum = terms.iterator(null);
             while (termsEnum.next() != null) {

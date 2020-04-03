@@ -253,10 +253,15 @@ public class ElasticSearchIndexTask extends AbstractTask {
             textReader = new StringReader(""); //$NON-NLS-1$
         }
         FragmentingReader fragReader = new FragmentingReader(textReader);
+        int fragNum = fragReader.estimateNumberOfFrags();
+        if(fragNum == -1) {
+            fragNum = 1;
+        }
+        String originalId = Util.getPersistentId(item);
         try {
-            int fragNum = 0;
             do {
-                String id = Util.generatePersistentIdForTextFrag(item, fragNum);
+                String id = Util.generatePersistentIdForTextFrag(originalId, --fragNum);
+                item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
                 
                 XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader);
                 
@@ -277,11 +282,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     idToPath = new HashMap<>();
                 }
                 
-                fragNum++;
-                
             } while(!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
             
         }finally {
+            item.setExtraAttribute(IndexItem.PERSISTENT_ID, originalId);
             fragReader.close();
         }
         

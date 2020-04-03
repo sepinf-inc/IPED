@@ -7,6 +7,7 @@
 <tasks>
     <!--<task script="ExampleScriptTask.js"></task>-->
     <!--<task script="PythonScriptTask.py"></task>-->
+    <task class="dpf.sp.gpinf.indexer.process.task.SkipCommitedTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     

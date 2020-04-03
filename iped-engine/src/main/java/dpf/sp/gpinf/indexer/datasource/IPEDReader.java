@@ -34,10 +34,12 @@ import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +48,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
@@ -56,6 +59,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -129,6 +133,24 @@ public class IPEDReader extends DataSourceReader {
 
         return 0;
 
+    }
+    
+    public void read(Set<HashValue> parentsWithLostSubitems, Manager manager) throws Exception {
+        
+        try(IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), manager.getIndexWriter())){
+            ipedCase = ipedSrc;
+            basePath = ipedCase.getCaseDir().getAbsolutePath();
+            indexDir = ipedCase.getIndex();
+            
+            BooleanQuery query = new BooleanQuery();
+            for(HashValue persistentId : parentsWithLostSubitems) {
+                TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
+                query.add(tq, Occur.SHOULD);
+            }
+            IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
+            LuceneSearchResult result = searcher.luceneSearch();
+            insertIntoProcessQueue(result, false);
+        }
     }
 
     private void processBookmark(IMarcadores state) throws Exception {
@@ -324,6 +346,19 @@ public class IPEDReader extends DataSourceReader {
 
         }
     }
+    
+    private int getId(String value) {
+        int id = Integer.valueOf(value);
+        if(oldToNewIdMap != null) {
+            int newId = oldToNewIdMap[id];
+            if (newId == -1) {
+                newId = Item.getNextId();
+                oldToNewIdMap[id] = newId;
+            }
+            id = newId;
+        }
+        return id;
+    }
 
     private void insertIntoProcessQueue(LuceneSearchResult result, boolean treeNode) throws Exception {
 
@@ -357,15 +392,10 @@ public class IPEDReader extends DataSourceReader {
             dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
             evidence.setDataSource(dataSource);
 
-            int id = Integer.valueOf(doc.get(IndexItem.ID));
-            int newId = oldToNewIdMap[id];
-            if (newId == -1) {
-                newId = Item.getNextId();
-                oldToNewIdMap[id] = newId;
-            }
-            evidence.setId(newId);
+            int id = getId(doc.get(IndexItem.ID));
+            evidence.setId(id);
 
-            if (!treeNode) {
+            if (!treeNode && caseData.isIpedReport()) {
                 if (extractCheckedItems) {
                     selectedLabels.addAll(state.getLabelIds(id));
                     evidence.setLabels(state.getLabelList(id));
@@ -380,26 +410,16 @@ public class IPEDReader extends DataSourceReader {
 
             value = doc.get(IndexItem.PARENTID);
             if (value != null) {
-                id = Integer.valueOf(value);
-                newId = oldToNewIdMap[id];
-                if (newId == -1) {
-                    newId = Item.getNextId();
-                    oldToNewIdMap[id] = newId;
-                }
-                evidence.setParentId(newId);
+                id = getId(value);
+                evidence.setParentId(id);
             }
 
             value = doc.get(IndexItem.PARENTIDs);
             ArrayList<Integer> parents = new ArrayList<Integer>();
             for (String parent : value.split(" ")) { //$NON-NLS-1$
                 if (!parent.isEmpty()) {
-                    id = Integer.valueOf(parent);
-                    newId = oldToNewIdMap[id];
-                    if (newId == -1) {
-                        newId = Item.getNextId();
-                        oldToNewIdMap[id] = newId;
-                    }
-                    parents.add(newId);
+                    id = getId(parent);
+                    parents.add(id);
                 }
             }
             evidence.addParentIds(parents);
@@ -507,7 +527,7 @@ public class IPEDReader extends DataSourceReader {
                 value = value.toUpperCase();
                 evidence.setHash(value);
 
-                if (!value.isEmpty()) {
+                if (!value.isEmpty() && caseData.isIpedReport()) {
                     File viewFile = Util.findFileFromHash(new File(indexDir.getParentFile(), "view"), value); //$NON-NLS-1$
                     if (viewFile != null) {
                         evidence.setViewFile(viewFile);
@@ -561,8 +581,9 @@ public class IPEDReader extends DataSourceReader {
             value = doc.get(IndexItem.ISROOT);
             if (value != null) {
                 evidence.setRoot(true);
-                if (deviceName != null)
+                if (deviceName != null) {
                     evidence.setName(deviceName);
+                }
             }
 
             Set<String> multiValuedFields = new HashSet<>();

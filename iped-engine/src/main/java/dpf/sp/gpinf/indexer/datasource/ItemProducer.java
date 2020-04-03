@@ -23,6 +23,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 
@@ -110,6 +113,14 @@ public class ItemProducer extends Thread {
 
                 }
                 caseData.incAlternativeFiles(alternativeFiles);
+                
+                //executed only when restarting interrupted processing
+                Set<HashValue> parentsWithLostSubitems = (Set<HashValue>)caseData.getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
+                if(parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
+                    IPEDReader reader = new IPEDReader(caseData, output, listOnly);
+                    reader.read(parentsWithLostSubitems, manager);
+                }
+                
             }
             if (!listOnly) {
                 Item evidence = new Item();

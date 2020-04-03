@@ -95,7 +95,9 @@ public class IndexItem extends BasicProps {
 
     public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-    public static final String PERSISTENT_ID = "persistentId";
+    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
+    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
+    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
