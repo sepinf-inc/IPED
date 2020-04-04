@@ -231,6 +231,7 @@ public class Statistics {
                     + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$
         }
 
+        LOGGER.info("Partial commits took {} seconds", manager.partialCommitsTime.get());
         LOGGER.info("File Splits: {}", getSplits()); //$NON-NLS-1$
         LOGGER.info("Timeouts: {}", getTimeouts()); //$NON-NLS-1$
         LOGGER.info("Parsing Exceptions: {}", IndexerDefaultParser.parsingErrors); //$NON-NLS-1$

@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
@@ -133,6 +134,7 @@ public class Manager {
     private CmdLineArgs args;
     
     private Thread commitThread = null;
+    AtomicLong partialCommitsTime = new AtomicLong();
 
     public static Manager getInstance() {
         return instance;
@@ -434,6 +436,7 @@ public class Manager {
             @Override
             public void run() {
                 try {
+                    long start = System.currentTimeMillis() / 1000;
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
                     
@@ -446,7 +449,9 @@ public class Manager {
                     ExportFileTask.commitStorage();
                     
                     writer.commit();
-                    LOGGER.info("Commit finished.");
+                    long end = System.currentTimeMillis() / 1000;
+                    LOGGER.info("Commit finished in " + (end - start) + "s");
+                    partialCommitsTime.addAndGet(end - start);
                     
                 } catch (Exception e) {
                     exception = e;
