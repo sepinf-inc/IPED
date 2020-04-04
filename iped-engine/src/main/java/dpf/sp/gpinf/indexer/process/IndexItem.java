@@ -58,6 +58,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -175,6 +176,7 @@ public class IndexItem extends BasicProps {
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
+        IOUtils.fsync(metadataTypesFile, false);
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {

@@ -2,7 +2,6 @@ package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -17,6 +16,7 @@ import javax.swing.JOptionPane;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,6 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
 
@@ -125,6 +124,7 @@ public class Statistics {
                 oos.writeObject(ignoredMap);
             }
         }
+        IOUtils.fsync(file, false);
     }
 
     synchronized public int getSplits() {
