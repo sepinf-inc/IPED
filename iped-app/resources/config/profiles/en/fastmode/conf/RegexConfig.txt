@@ -48,7 +48,7 @@ CRIPTOCOIN_BITCOIN_CASH_CASHADDR, 0, 1, false = bitcoincash:[a-z0-9]{20,87}[^0-9
 
 CRIPTOCOIN_ETHEREUM, 0, 1, false = 0x[a-fA-F0-9]{40}[^a-fA-F0-9]
 
-#CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z]r[0-9a-zA-Z]{33}[^0-9a-zA-Z]
+CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z](r|X)[a-km-zA-HJ-NP-Z1-9]{20,55}[^0-9a-zA-Z]
 
 #CRIPTOCOIN_DOGECOIN, 1, 1, false = [^0-9a-zA-Z]D{1}[5-9A-HJ-NP-U]{1}[1-9A-HJ-NP-Za-km-z]{32}[^0-9a-zA-Z]
 
