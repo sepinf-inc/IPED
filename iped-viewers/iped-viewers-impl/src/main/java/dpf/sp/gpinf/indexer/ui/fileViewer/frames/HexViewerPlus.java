@@ -1,129 +1,114 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import java.awt.*;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.MouseAdapter;
-import java.awt.geom.*;
-import javax.swing.border.Border;
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.List;
+import java.awt.geom.Rectangle2D;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import org.apache.commons.lang.StringUtils;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JTable;
-import javax.swing.JSplitPane;
-import javax.swing.table.AbstractTableModel;
-import java.awt.Component;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JRadioButton;
+import javax.swing.JRootPane;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileView;
 
-import org.apache.lucene.document.Document;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TemporaryResources;
-
-import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.exbin.deltahex.CaretMovedListener;
 import org.exbin.deltahex.CaretPosition;
 import org.exbin.deltahex.CodeAreaLineNumberLength;
+import org.exbin.deltahex.CodeAreaUtils;
 import org.exbin.deltahex.CodeType;
-import org.exbin.deltahex.DataChangedListener;
 import org.exbin.deltahex.EditationAllowed;
-import org.exbin.deltahex.HexCharactersCase;
+import org.exbin.deltahex.EditationMode;
 import org.exbin.deltahex.PositionCodeType;
-import org.exbin.deltahex.ScrollBarVisibility;
-import org.exbin.deltahex.ScrollingListener;
 import org.exbin.deltahex.Section;
 import org.exbin.deltahex.SelectionChangedListener;
 import org.exbin.deltahex.SelectionRange;
 import org.exbin.deltahex.ViewMode;
+import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter;
 import org.exbin.deltahex.swing.CodeArea;
-import org.exbin.deltahex.swing.ColorsGroup;
 import org.exbin.deltahex.swing.CodeArea.BackgroundMode;
 import org.exbin.deltahex.swing.CodeAreaCaret;
 import org.exbin.deltahex.swing.CodeAreaCaret.CursorShape;
-import org.exbin.deltahex.swing.CodeAreaSpace.SpaceType;
-import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter;
-import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter;
-import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter.SearchMatch;
-import org.exbin.utils.binary_data.EditableBinaryData;
+import org.exbin.deltahex.swing.ColorsGroup;
 import org.exbin.utils.binary_data.BinaryData;
-import org.exbin.utils.binary_data.PagedData;
-import org.exbin.utils.binary_data.ByteArrayDataInputStream;
-import org.exbin.utils.binary_data.ByteArrayDataOutputStream;
-import org.exbin.utils.binary_data.OutOfBoundsException;
 import org.exbin.utils.binary_data.ByteArrayEditableData;
-import org.exbin.deltahex.EditationMode;
-import org.exbin.deltahex.CodeAreaUtils;
-
-import org.apache.tika.io.TikaInputStream;
-import org.exbin.deltahex.delta.DeltaDocument;
-import org.exbin.deltahex.delta.FileDataSource;
-
-import org.apache.lucene.search.highlight.QueryScorer;
-
-import iped3.io.IStreamSource;
-
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
-
-import iped3.io.SeekableInputStream;
-import java.awt.datatransfer.DataFlavor;	
-import java.awt.Toolkit;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Clipboard;
-
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.border.Border;
+import org.exbin.utils.binary_data.OutOfBoundsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.filechooser.*;
-
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import javax.swing.plaf.basic.BasicComboBoxUI;
-
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
+import iped3.io.IStreamSource;
+import iped3.io.SeekableInputStream;
 
 /**
  *
@@ -326,7 +311,20 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 		
 		
 		try   {
-			data = new ByteArraySeekData();
+			data = new ByteArraySeekData() {
+			    @Override
+			    void fireReadError() {
+			        try {
+                        this.setData(new SeekableFileInputStream(new SeekableInMemoryByteChannel("READ ERROR!".getBytes())));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+			        codeArea.setViewMode(ViewMode.TEXT_PREVIEW);
+			        codeArea.resetPosition();
+			        codeArea.notifyDataChanged();
+			        codeArea.repaint();
+			    }
+			};
 			SeekableInputStream nothing = null;
 			data.setData(nothing);
 		}
@@ -515,9 +513,13 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 				codeArea.setLineNumberType(CodeAreaLineNumberLength.LineNumberType.AUTO);
 				
 				painter.clearMatches();
+				ViewMode selectedViewMode = ViewMode.values()[modeComboBox.getSelectedIndex()];
+				if(codeArea.getViewMode() != selectedViewMode) {
+				    codeArea.setViewMode(selectedViewMode);
+				}
 				codeArea.setData(data);
                 codeArea.resetPosition();
-                codeArea.notifyDataChanged();				
+                codeArea.notifyDataChanged();
 									
 				if (high) {
 					//Uncomment the line below if you want the automatic search when opening a file. If so, see how not to trigger Search text at the same time.													
@@ -2849,7 +2851,7 @@ class ByteArraySeekData extends ByteArrayEditableData  {
     private boolean err;
 	private static final int MAX_MEMO = 2000;
 	
-	private SeekableInputStream file;	
+	private SeekableInputStream file;
 	
     public ByteArraySeekData() {
     }
@@ -2916,13 +2918,19 @@ class ByteArraySeekData extends ByteArrayEditableData  {
 		  }
 		  int bpos = (int) (vpos - off);
 		  return (byte)buf[bpos];
+		  
 		} catch (Exception e) {
 		  e.printStackTrace();
 		  err = true;
-		  memoBytes.clear();
-		  throw new OutOfBoundsException(e);
+		  this.clear();
+		  fireReadError();
+		  return -1;
 		}
 		
+    }
+    
+    void fireReadError() {
+        //do nothing by default
     }
 
     @Override
