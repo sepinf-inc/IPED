@@ -140,7 +140,6 @@ public class IndexTask extends AbstractTask {
             fragments = 1;
         }
         String origPersistentId = Util.getPersistentId(evidence);
-        boolean fragmented = false;
         try {
             /**
              * breaks very large texts in separate documents to be indexed
@@ -154,7 +153,7 @@ public class IndexTask extends AbstractTask {
                 evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
                 
                 if (fragments != 0) {
-                    fragmented = true;
+                    stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
                     LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
                 }
@@ -180,9 +179,6 @@ public class IndexTask extends AbstractTask {
             else
                 throw e;
         } finally {
-            if(fragmented) {
-                stats.incSplits();
-            }
             evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, origPersistentId);
             noCloseReader.reallyClose();
         }
