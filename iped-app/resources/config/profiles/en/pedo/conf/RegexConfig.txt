@@ -44,6 +44,8 @@ CRIPTOCOIN_MONERO, 1, 1, false = [^0-9a-zA-Z]4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}[^0
 
 #CRIPTOCOIN_BITCOIN_CASH, 1, 1, false = [^0-9a-zA-Z][13][a-km-zA-HJ-NP-Z1-9]{33}[^0-9a-zA-Z]
 
+CRIPTOCOIN_BITCOIN_CASH_CASHADDR, 0, 1, false = bitcoincash:[a-z0-9]{20,87}[^0-9a-zA-Z]
+
 CRIPTOCOIN_ETHEREUM, 0, 1, false = 0x[a-fA-F0-9]{40}[^a-fA-F0-9]
 
 #CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z]r[0-9a-zA-Z]{33}[^0-9a-zA-Z]
