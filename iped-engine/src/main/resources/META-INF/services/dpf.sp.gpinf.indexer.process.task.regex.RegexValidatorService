@@ -10,3 +10,4 @@ br.gov.pf.iped.regex.ScriptValidatorService
 br.gov.pf.iped.regex.BitcoinAddressValidatorService
 br.gov.pf.iped.regex.BCHAddressValidatorService
 br.gov.pf.iped.regex.EthereumAddressValidatorService
+br.gov.pf.iped.regex.RippleAddressValidatorService
