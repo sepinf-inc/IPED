@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.encoders.Hex;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 
@@ -21,6 +20,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 public class EthereumAddressValidatorService extends BasicAbstractRegexValidatorService {
 
     private static final MessageDigest digest;
+    private static final int[] MASKS = { 128, 8 };
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -45,24 +45,25 @@ public class EthereumAddressValidatorService extends BasicAbstractRegexValidator
     public boolean validateEthereumAddress(String addr) {
         // remove the 0x prefix
         addr = addr.substring(2);
-        String hexDigest = null;
+        byte[] keccak = null;
 
         synchronized (digest) {
             digest.reset();
             digest.update(addr.toLowerCase().getBytes());
-            hexDigest = Hex.toHexString(digest.digest());
+            keccak = digest.digest();
         }
 
         for (int i = 0; i < addr.length(); i++) {
             char c = addr.charAt(i);
-            char hc = hexDigest.charAt(i);
+            int bit = keccak[i / 2] & MASKS[i % 2];
+
             if (Character.isLetter(c)) {
                 if (Character.isLowerCase(c)) {
-                    if (!(hc >= '0' && hc <= '7')) {
+                    if (bit != 0) {
                         return false;
                     }
                 } else {
-                    if (hc >= '0' && hc <= '7') {
+                    if (bit == 0) {
                         return false;
                     }
                 }
