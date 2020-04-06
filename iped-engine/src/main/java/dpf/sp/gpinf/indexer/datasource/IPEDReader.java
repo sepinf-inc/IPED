@@ -142,11 +142,19 @@ public class IPEDReader extends DataSourceReader {
             basePath = ipedCase.getCaseDir().getAbsolutePath();
             indexDir = ipedCase.getIndex();
             
-            BooleanQuery query = new BooleanQuery();
+            BooleanQuery parents = new BooleanQuery();
             for(HashValue persistentId : parentsWithLostSubitems) {
                 TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
-                query.add(tq, Occur.SHOULD);
+                parents.add(tq, Occur.SHOULD);
             }
+            BooleanQuery subitems = new BooleanQuery();
+            TermQuery tq = new TermQuery(new Term(BasicProps.SUBITEM, Boolean.TRUE.toString()));
+            subitems.add(tq, Occur.SHOULD);
+            tq = new TermQuery(new Term(BasicProps.CARVED, Boolean.TRUE.toString()));
+            subitems.add(tq, Occur.SHOULD);
+            BooleanQuery query = new BooleanQuery();
+            query.add(parents, Occur.MUST);
+            query.add(subitems, Occur.MUST);
             IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
             LuceneSearchResult result = searcher.luceneSearch();
             insertIntoProcessQueue(result, false);
