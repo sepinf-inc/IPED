@@ -15,13 +15,12 @@ import java.util.Set;
 
 import javax.swing.JPanel;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 /**
  * Classe base para todas as interfaces gráficas de visualizadores.
@@ -37,8 +36,6 @@ public abstract class Viewer {
     private JPanel panel;
 
     protected int currentHit, totalHits;
-
-    private static MediaTypeRegistry mimeRegistry;
 
     public Viewer() {
         panel = new JPanel();
@@ -75,9 +72,7 @@ public abstract class Viewer {
     }
 
     public MediaType getParentType(MediaType mediaType) {
-        if (mimeRegistry == null)
-            mimeRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-        return mimeRegistry.getSupertype(mediaType);
+        return MediaTypes.getParentType(mediaType);
     }
 
     /*

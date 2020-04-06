@@ -73,9 +73,11 @@ public class Worker extends Thread {
     public ICaseData caseData;
     public volatile Exception exception;
     public volatile IItem evidence;
+    public final int id;
 
     public Worker(int k, ICaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
+        id = k;
         this.caseData = caseData;
         this.writer = writer;
         this.output = output;

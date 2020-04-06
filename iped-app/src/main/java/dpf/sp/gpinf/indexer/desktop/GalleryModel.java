@@ -167,8 +167,14 @@ public class GalleryModel extends AbstractTableModel {
                         LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
                     }
 
-                    if (doc.getBinaryValue(IndexItem.THUMB) != null)
-                        image = ImageIO.read(new ByteArrayInputStream(doc.getBinaryValue(IndexItem.THUMB).bytes));
+                    if (doc.getBinaryValue(IndexItem.THUMB) != null) {
+                        byte[] thumb = doc.getBinaryValue(IndexItem.THUMB).bytes;
+                        if(thumb.length > 0) {
+                            image = ImageIO.read(new ByteArrayInputStream(thumb));
+                        }else {
+                            image = errorImg;
+                        }
+                    }
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {

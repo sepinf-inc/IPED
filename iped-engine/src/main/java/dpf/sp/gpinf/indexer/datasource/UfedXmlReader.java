@@ -35,7 +35,6 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
@@ -54,6 +53,7 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
@@ -65,8 +65,8 @@ public class UfedXmlReader extends DataSourceReader {
     private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
-    public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
-    public static final String UFED_EMAIL_MIME = "message/x-ufed-email"; //$NON-NLS-1$
+    public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
+    public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
 
     File root, ufdrFile;
     ZipFile4j ufdr;

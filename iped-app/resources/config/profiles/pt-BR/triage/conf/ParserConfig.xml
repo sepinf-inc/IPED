@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿﻿﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -129,7 +129,8 @@
 			<mime>application/x-edb</mime> <!-- Vai ser processado por esse parser para melhorar performance-->
 			<mime>application/x-sqlite3</mime> <!-- Vai ser processado por esse parser para melhorar performance-->
         </parser>
-	
+        <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+		
     </parsers>
 
 </properties>

@@ -24,6 +24,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 public class CompositeViewer extends JPanel implements ChangeListener, ActionListener {
 
@@ -168,9 +169,14 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
         for (Viewer viewer : viewerList) {
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
-                    MediaType parentType = viewer.getParentType(MediaType.parse(contentType));
-                    if (MediaType.application("x-browser-registry").equals(parentType) || (contentType.contains("x-ufed") && MediaType.OCTET_STREAM.equals(parentType)))
-                        result = viewer;
+                    MediaType type = MediaType.parse(contentType);
+                    while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
+                        if (MediaTypes.METADATA_ENTRY.equals(type)) {
+                            result = viewer;
+                            break;
+                        }
+                        type = viewer.getParentType(type);
+                    }
                 } else
                     result = viewer;
             }

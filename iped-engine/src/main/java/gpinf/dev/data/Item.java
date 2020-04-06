@@ -1298,7 +1298,6 @@ public class Item implements ISleuthKitItem {
 
     public void setThumb(byte[] thumb) {
         this.thumb = thumb;
-        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {

@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.List;
 import java.util.Properties;
@@ -34,13 +35,11 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Log;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
@@ -222,11 +221,9 @@ public class DIETask extends AbstractTask {
         // Chama o método de detecção
         try {
             long t = System.currentTimeMillis();
-            File thumbFile = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), evidence.getHash(),
-                    "jpg"); //$NON-NLS-1$
             BufferedImage img;
-            if (thumbFile.exists()) {
-                img = ImageIO.read(thumbFile);
+            if (evidence.getThumb() != null) {
+                img = ImageIO.read(new ByteArrayInputStream(evidence.getThumb()));
             } else {
                 img = getBufferedImage(evidence);
             }
