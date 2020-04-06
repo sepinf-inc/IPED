@@ -150,6 +150,7 @@ public class SkipCommitedTask extends AbstractTask{
         if(numSubitems == null) {
             return;
         }
+        SortedDocValues subitems = aReader.getSortedDocValues(BasicProps.SUBITEM);
         
         int[] referencingSubitems = new int[parentContainers.getValueCount()];
         
@@ -158,7 +159,9 @@ public class SkipCommitedTask extends AbstractTask{
             int id = (int) ids.get(doc);
             int ord = parentContainers.getOrd(doc);
             if(ord != -1 && !countedIds.get(id)) {
-                referencingSubitems[ord]++;
+                if(parentIdField == IndexItem.CONTAINER_PERSISTENT_ID || subitems == null || !Boolean.valueOf(subitems.get(doc).utf8ToString())) {
+                    referencingSubitems[ord]++;
+                }
             }
             //splited items occur more than once, so we track seen ids
             countedIds.set(id);
@@ -174,9 +177,11 @@ public class SkipCommitedTask extends AbstractTask{
                 if(subitemCountField == BaseCarveTask.NUM_CARVED_AND_FRAGS) {
                     carvedIgnored = stats.getCarvedIgnoredNum(new HashValue(persistId.utf8ToString()));
                 }
-                if(ord < 0 || subitemsCount != referencingSubitems[ord] + carvedIgnored) {
+                int references = ord < 0 ? 0 : referencingSubitems[ord];
+                if(subitemsCount != references + carvedIgnored) {
                     parentsWithLostSubitems.add(new HashValue(persistId.utf8ToString()));
-                    //System.out.println("Parent with lost child " + persistId.utf8ToString());
+                    //System.out.println("Parent with lost child " + persistId.utf8ToString() + " subitems " + subitemsCount + 
+                    //        " carvedIgnored " + carvedIgnored + (ord >= 0 ? " references " + referencingSubitems[ord] : ""));
                 }
             }
         }
@@ -201,7 +206,7 @@ public class SkipCommitedTask extends AbstractTask{
         
         //ignore already commited items. If they are containers without all their subitems commited, process again
         if(Arrays.binarySearch(commitedPersistentIds, persistentId) >= 0) {
-            if(!parentsWithLostSubitems.remove(persistentId)) {
+            if(!parentsWithLostSubitems.contains(persistentId)) {
                 item.setToIgnore(true);
                 return;
             }
