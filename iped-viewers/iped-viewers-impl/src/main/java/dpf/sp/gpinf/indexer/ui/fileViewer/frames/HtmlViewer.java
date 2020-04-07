@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -38,7 +39,6 @@ public class HtmlViewer extends Viewer {
     /**
      *
      */
-    private static final long serialVersionUID = 1L;
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
 
@@ -56,6 +56,16 @@ public class HtmlViewer extends Viewer {
 
     protected volatile File file;
     protected Set<String> highlightTerms;
+
+    private static String baseDir;
+
+    static {
+        baseDir = System.getProperty("user.dir");
+        if (baseDir.contains("\\")) {
+            baseDir = baseDir.replaceAll("\\\\", "/");
+        }
+        baseDir = "file:///" + baseDir;
+    }
 
     @Override
     public boolean isSupportedType(String contentType) {
@@ -78,6 +88,7 @@ public class HtmlViewer extends Viewer {
                 htmlViewer = new WebView();
                 webEngine = htmlViewer.getEngine();
                 addHighlighter();
+                addResourceReplacer();
 
                 StackPane root = new StackPane();
                 root.getChildren().add(htmlViewer);
@@ -181,7 +192,7 @@ public class HtmlViewer extends Viewer {
                 final WebEngine webEngine = htmlViewer.getEngine();
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
-                    public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
+                    public void changed(ObservableValue<? extends Worker.State> ov, Worker.State oldState, Worker.State newState) {
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
@@ -308,6 +319,41 @@ public class HtmlViewer extends Viewer {
             } while ((subnode = subnode.getNextSibling()) != null);
         }
     }
+
+    protected void addResourceReplacer() {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                final WebEngine webEngine = htmlViewer.getEngine();
+                webEngine.documentProperty().addListener(new ChangeListener<Document>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Document> ov, Document oldDocument, Document newDocument) {
+                        if (newDocument == null) {
+                            return;
+                        }
+
+                        //change link and img elements
+                        fixResourceLocationOnNodesOfType(newDocument, "link", "href", "../../../..", baseDir);
+                        fixResourceLocationOnNodesOfType(newDocument, "img", "src", "../../../..", baseDir);
+                    }
+                });
+            }
+        });
+    }
+
+    private static void fixResourceLocationOnNodesOfType(Document doc, String type, String attribute, String start, String newStart) {
+        NodeList nodes = doc.getElementsByTagName(type);
+        for (int idx = 0; idx < nodes.getLength(); idx++) {
+            Node node = nodes.item(idx);
+            Node value = node.getAttributes().getNamedItem(attribute);
+            String strVal = value.getNodeValue();
+            if (strVal.startsWith(start)) {
+                String newVal = newStart + strVal.substring(start.length());
+                value.setNodeValue(newVal);
+            }
+        }
+    }
+
 
     /*
      * public void loadFile2(File file){ if(file!= null &&
