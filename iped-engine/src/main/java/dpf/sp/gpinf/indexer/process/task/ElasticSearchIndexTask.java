@@ -55,6 +55,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
     
+    private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
@@ -69,6 +70,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String CMD_FIELDS_KEY = "elastic";
     private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
     
+    private static boolean enabled = false;
     private static String host;
     private static int port = 9200;
     private static int max_fields = 10000;
@@ -99,6 +101,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private Object lock = new Object();
     
     private char[] textBuf = new char[16 * 1024];
+    
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -112,6 +119,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
         
         loadConfFile(new File(confDir, CONF_FILE_NAME));
+        
+        if(!enabled) {
+            return;
+        }
         
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         String cmdFields = args.getExtraParams().get(CMD_FIELDS_KEY);
@@ -150,6 +161,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         UTF8Properties props = new UTF8Properties();
         props.load(file);
         
+        enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();
         port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
         max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
