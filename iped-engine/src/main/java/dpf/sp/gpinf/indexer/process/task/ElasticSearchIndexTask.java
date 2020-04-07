@@ -318,7 +318,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (bulkItemResponse.isFailed()) {
                     BulkItemResponse.Failure failure = bulkItemResponse.getFailure();
                     String path = idPathMap.get(bulkItemResponse.getId());
-                    LOGGER.warn("ElasticSearch failure result " + path + ": " + failure.getMessage());
+                    String msg = failure.getMessage();
+                    if(!msg.contains("document already exists")) { //$NON-NLS-1$
+                        LOGGER.error("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
+                    }else {
+                        LOGGER.debug("Elastic failure result {}: {}", path, msg); //$NON-NLS-1$
+                    }
                 }else {
                     LOGGER.debug("Elastic result {} {}", bulkItemResponse.getResponse().getResult(), idPathMap.get(bulkItemResponse.getId()));
                 }
