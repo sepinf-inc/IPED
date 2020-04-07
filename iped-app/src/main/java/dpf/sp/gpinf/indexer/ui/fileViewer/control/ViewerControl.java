@@ -9,13 +9,15 @@ import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewerPlus;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.IcePDFViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
@@ -29,18 +31,10 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexSearcherImpl;
-
-import dpf.sp.gpinf.indexer.Configuration;
-
-import java.io.File;
-import java.util.Set;
-
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import dpf.sp.gpinf.indexer.util.FileContentSource;
+import dpf.sp.gpinf.indexer.util.JarLoader;
+import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
+import iped3.io.IStreamSource;
 
 /**
  * Controle da interface gráfica de visualização dos dados
