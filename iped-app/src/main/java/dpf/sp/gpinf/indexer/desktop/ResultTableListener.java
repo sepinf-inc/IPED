@@ -43,10 +43,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.search.LuceneSearchResult;
+import iped3.util.BasicProps;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
 
@@ -202,9 +205,9 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         	recursiveItemSelection(true);
         else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) //Shortcut to Deep-Selection (Item plus sub-items)
         	recursiveItemSelection(false);
-        else if (evt.getKeyCode() == KeyEvent.VK_F5 && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to direct bookmark or unbookmark by keyboard using CTRL+F5 and SHIFT+F5
+        else if (evt.getKeyCode() == KeyEvent.VK_1 && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to direct bookmark or unbookmark by keyboard using CTRL+F5 and SHIFT+F5
         	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().add, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
-       	else if (evt.getKeyCode() == KeyEvent.VK_F5 && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) 
+       	else if (evt.getKeyCode() == KeyEvent.VK_1 && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) 
         	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().remove, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
         else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) //Shortcut to BookmarkManager Window
         	GerenciadorMarcadores.setVisible();
@@ -245,10 +248,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 				}
 				App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 				
-				iterativeSelection (value, App.get().ipedResult.getItem(selectedRows[i]), new ArrayList<Integer>(selectedRows.length));
+				int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
+				iterativeSelection (value, App.get().ipedResult.getItem(modelIndex));
 			}
 			MarcadoresController.get().atualizarGUI();
-			App.get().subItemTable.repaint();    	
+			App.get().subItemTable.repaint();
     }
     
     /**Perform iterative selection of items
@@ -256,33 +260,19 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
      * @param rootID - parent of the selection
      * @param selectedRowsIds - list of the already selected items
      */
-    private void iterativeSelection (boolean state, IItemId rootID, List<Integer> selectedRowsIds)
+    private void iterativeSelection (boolean state, IItemId rootID)
     {
-
 		try {
-
 			IItem item = App.get().appCase.getItemByItemId(rootID);
-			selectedRowsIds.add(rootID.getId());
 			if (item.hasChildren() || item.isDir()) { //Filter subItems which have children or are directories. 
-				int docId = App.get().appCase.getLuceneId(rootID);
-				logger.debug("Searching items with parentID (lucene):" + docId);
-				logger.debug("Searching items with parentID:" + rootID.getId());
-				IPEDSearcher task = new IPEDSearcher(App.get().appCase, "parentId:" + rootID.getId());
-				task.setTreeQuery(true);
-				LuceneSearchResult result = new LuceneSearchResult(0);
-				result = task.luceneSearch();
+				logger.debug("Searching items with evidenceUUID {} id {}", item.getDataSource().getUUID(), item.getId());
+				String query = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND " + BasicProps.PARENTIDs + ":" + rootID.getId();
+				IPEDSearcher task = new IPEDSearcher(App.get().appCase, query);
+				MultiSearchResult result = task.multiSearch();
 				if (result.getLength() > 0) {
-					for (int iDoc : result.getLuceneIds()) {
-						logger.debug("Found item with luceneID:" + iDoc);
-						IItem subItem = App.get().appCase.getItemByLuceneID(iDoc);
-						logger.debug("Change Item ID:" + subItem.getId());
-						if (!selectedRowsIds.contains(subItem.getId())) {
-							IItemId subItemId = App.get().appCase.getItemId(iDoc);
-							App.get().appCase.getMultiMarcadores().setSelected((Boolean) state,
-									subItemId, App.get().appCase);
-							selectedRowsIds.add(subItem.getId());
-							iterativeSelection(state, subItemId, selectedRowsIds);
-						}
+				    logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(), rootID.getId());
+					for (IItemId subItem : result.getIterator()) {
+						App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem, App.get().appCase);
 					}
 				}
 			}
