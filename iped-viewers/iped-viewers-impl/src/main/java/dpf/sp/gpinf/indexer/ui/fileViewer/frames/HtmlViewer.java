@@ -5,6 +5,8 @@ import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -60,11 +62,18 @@ public class HtmlViewer extends Viewer {
     private static String baseDir;
 
     static {
-        baseDir = System.getProperty("user.dir");
-        if (baseDir.contains("\\")) {
-            baseDir = baseDir.replaceAll("\\\\", "/");
+        try {
+            URL url = HtmlViewer.class.getProtectionDomain().getCodeSource().getLocation();
+            File root = new File(url.toURI()).getParentFile().getParentFile().getParentFile();
+            baseDir = root.getAbsolutePath();
+            if (baseDir.contains("\\")) {
+                baseDir = baseDir.replaceAll("\\\\", "/");
+            }
+            baseDir = "file:///" + baseDir;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        baseDir = "file:///" + baseDir;
     }
 
     @Override
@@ -333,8 +342,10 @@ public class HtmlViewer extends Viewer {
                         }
 
                         //change link and img elements
-                        fixResourceLocationOnNodesOfType(newDocument, "link", "href", "../../../..", baseDir);
-                        fixResourceLocationOnNodesOfType(newDocument, "img", "src", "../../../..", baseDir);
+                        if(baseDir != null) {
+                            fixResourceLocationOnNodesOfType(newDocument, "link", "href", "../../../..", baseDir);
+                            fixResourceLocationOnNodesOfType(newDocument, "img", "src", "../../../..", baseDir);
+                        }
                     }
                 });
             }
