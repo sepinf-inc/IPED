@@ -2,28 +2,27 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.awt.Desktop;
 import java.awt.GridLayout;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Set;
-
-import netscape.javascript.JSObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
+import dpf.mg.udi.gpinf.whatsappextractor.ReportGenerator;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import iped3.io.IStreamSource;
-
+import iped3.io.SeekableInputStream;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -33,6 +32,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 @SuppressWarnings("restriction")
 public class HtmlViewer extends Viewer {
@@ -55,6 +55,8 @@ public class HtmlViewer extends Viewer {
     boolean enableJavascript = false;
     boolean enableProxy = true;
     FileOpen fileOpenApp = new FileOpen();
+    
+    private char[] replaceBuf = new char[MAX_SIZE];
 
     protected volatile File file;
     protected Set<String> highlightTerms;
@@ -97,7 +99,6 @@ public class HtmlViewer extends Viewer {
                 htmlViewer = new WebView();
                 webEngine = htmlViewer.getEngine();
                 addHighlighter();
-                addResourceReplacer();
 
                 StackPane root = new StackPane();
                 root.getChildren().add(htmlViewer);
@@ -126,20 +127,16 @@ public class HtmlViewer extends Viewer {
 
                 webEngine.load(null);
                 if (content != null) {
-                    try {
-                        file = content.getFile();
+                    try (SeekableInputStream sis = content.getStream()) {
                         highlightTerms = terms;
-                        if (file.length() <= MAX_SIZE) {
-                            if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) { //$NON-NLS-1$ //$NON-NLS-2$
-                                try {
-                                    tmpFile = File.createTempFile("indexador", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-                                    tmpFile.deleteOnExit();
-                                    IOUtil.copiaArquivo(file, tmpFile);
-                                    file = tmpFile;
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
+                        if (sis.size() <= MAX_SIZE) {
+                            try {
+                                tmpFile = File.createTempFile("iped", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+                                tmpFile.deleteOnExit();
+                                copyReplacingBaseDir(sis, tmpFile);
+                                file = tmpFile;
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
                             webEngine.setJavaScriptEnabled(enableJavascript);
                             if (enableProxy) {
@@ -152,12 +149,28 @@ public class HtmlViewer extends Viewer {
                             webEngine.loadContent(LARGE_FILE_MSG);
                         }
 
-                    } catch (MalformedURLException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
         });
+    }
+    
+    private void copyReplacingBaseDir(InputStream src, File dst) throws IOException {
+        try(InputStreamReader in = new InputStreamReader(src, "UTF-8");
+                BufferedWriter out = Files.newBufferedWriter(dst.toPath())) {
+            
+            int len;
+            while ((len = in.read(replaceBuf)) >= 0) {
+                String str = new String(replaceBuf, 0, len);
+                if(baseDir != null) {
+                    str = str.replace("href=\"" + ReportGenerator.RSRC_PREFIX, "href=\"" + baseDir);
+                    str = str.replace("src=\"" + ReportGenerator.RSRC_PREFIX, "src=\"" + baseDir);
+                }
+                out.write(str);
+            }
+        }
     }
 
     public class FileOpen {
@@ -329,66 +342,6 @@ public class HtmlViewer extends Viewer {
         }
     }
 
-    protected void addResourceReplacer() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                final WebEngine webEngine = htmlViewer.getEngine();
-                webEngine.documentProperty().addListener(new ChangeListener<Document>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Document> ov, Document oldDocument, Document newDocument) {
-                        if (newDocument == null) {
-                            return;
-                        }
-
-                        //change link and img elements
-                        if(baseDir != null) {
-                            fixResourceLocationOnNodesOfType(newDocument, "link", "href", "../../../..", baseDir);
-                            fixResourceLocationOnNodesOfType(newDocument, "img", "src", "../../../..", baseDir);
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    private static void fixResourceLocationOnNodesOfType(Document doc, String type, String attribute, String start, String newStart) {
-        NodeList nodes = doc.getElementsByTagName(type);
-        for (int idx = 0; idx < nodes.getLength(); idx++) {
-            Node node = nodes.item(idx);
-            Node value = node.getAttributes().getNamedItem(attribute);
-            String strVal = value.getNodeValue();
-            if (strVal.startsWith(start)) {
-                String newVal = newStart + strVal.substring(start.length());
-                value.setNodeValue(newVal);
-            }
-        }
-    }
-
-
-    /*
-     * public void loadFile2(File file){ if(file!= null &&
-     * (file.getName().endsWith(".html") || file.getName().endsWith(".htm")))
-     * loadFile2(getHtmlVersion(file)); else loadFile2(file); }
-     * 
-     * private File getHtmlVersion(File file){
-     * 
-     * try { Metadata metadata = new Metadata();
-     * //metadata.set(Metadata.CONTENT_TYPE, contentType); TikaInputStream tis =
-     * TikaInputStream.get(file); ParseContext context = new ParseContext();
-     * //context.set(IndexerContext.class, new
-     * IndexerContext(file.getAbsolutePath(), null)); File outFile =
-     * File.createTempFile("indexador", ".html"); outFile.deleteOnExit();
-     * OutputStream outStream = new BufferedOutputStream(new
-     * FileOutputStream(outFile)); ToHTMLContentHandler handler = new
-     * ToHTMLContentHandler(outStream, "windows-1252");
-     * ((Parser)App.get().autoParser).parse(tis, handler, metadata, context);
-     * tis.close(); return outFile;
-     * 
-     * } catch (Exception e) { e.printStackTrace(); } return null;
-     * 
-     * }
-     */
     @Override
     public void init() {
 

@@ -32,8 +32,10 @@ public class ReportGenerator {
     private IItemSearcher searcher;
     private Chat lastChat;
     private int currentMsg = 0;
+    
+    public static final String RSRC_PREFIX = "../../../..";
 
-    static final String RSRC_PATH = "../../../../indexador/htm/whatsapp/"; //$NON-NLS-1$
+    static final String RSRC_PATH = RSRC_PREFIX + "/indexador/htm/whatsapp/"; //$NON-NLS-1$
 
     public ReportGenerator(IItemSearcher searcher) {
         this.searcher = searcher;
