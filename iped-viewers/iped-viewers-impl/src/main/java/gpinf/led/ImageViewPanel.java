@@ -13,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -29,7 +30,9 @@ public class ImageViewPanel extends JPanel {
     /**
      * Imagem que será apresentada.
      */
-    private BufferedImage image = null;
+    private BufferedImage image;
+
+    private BufferedImage orgImage;
 
     public BufferedImage getImage() {
         return image;
@@ -127,7 +130,7 @@ public class ImageViewPanel extends JPanel {
      * @return Indicador se uma imagem válida foi carregada com sucesso.
      */
     public boolean setImage(BufferedImage img) {
-        image = img;
+        orgImage = image = img;
         zoomFactor = 1;
         if (image != null) {
             updateZoomFactor(true, initialFitMode == 0, true);
@@ -252,6 +255,21 @@ public class ImageViewPanel extends JPanel {
         scrollPane.getHorizontalScrollBar().setUnitIncrement(d.width / 50);
     }
 
+    public void adjustBrightness(float factor) {
+        if (image != null) {
+            if (factor > 0 && factor <= 100) {
+                RescaleOp op = new RescaleOp(1 + factor * factor / 2000f, factor / 1.5f, null);
+                image = op.filter(orgImage, null);
+                imgPanel.repaint();
+            } else {
+                if (!image.equals(orgImage)) {
+                    image = orgImage;
+                    imgPanel.repaint();
+                }
+            }
+        }
+    }
+    
     public void fitToWindow() {
         updateZoomFactor(false, true, true);
         imgPanel.revalidate();

@@ -136,6 +136,15 @@ public class ImageViewer extends Viewer implements ActionListener {
         });
     }
 
+    protected void updateBrightness(float factor) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                imagePanel.adjustBrightness(factor);
+            }
+        });
+    }
+
     @Override
     public void init() {
         graphicsMagicConverter = new GraphicsMagicConverter();
@@ -185,9 +194,7 @@ public class ImageViewer extends Viewer implements ActionListener {
             public void stateChanged(ChangeEvent e) {
                 if (image != null) {
                     int factor = sliderBrightness.getValue();
-                    BufferedImage img = image;
-                    if (rotation != 0) img = ImageUtil.rotatePos(img, rotation);
-                    updatePanel(ImageUtil.adjustBrightness(img, factor));
+                    updateBrightness(factor);
                 }
             }
         });
@@ -249,8 +256,8 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     private void updateRotation() {
         BufferedImage img = image;
-        int factor = sliderBrightness.getValue();
-        if (factor != 0) img = ImageUtil.adjustBrightness(img, factor);
         updatePanel(ImageUtil.rotatePos(img, rotation));
+        int factor = sliderBrightness.getValue();
+        if (factor != 0) updateBrightness(factor);
     }
 }
