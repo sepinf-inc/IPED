@@ -249,18 +249,17 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 				App.get().resultsTable.setValueAt(value, selectedRows[i], col);
 				
 				int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
-				iterativeSelection (value, App.get().ipedResult.getItem(modelIndex));
+				selectAllSubitems (value, App.get().ipedResult.getItem(modelIndex));
 			}
 			MarcadoresController.get().atualizarGUI();
 			App.get().subItemTable.repaint();
     }
     
-    /**Perform iterative selection of items
+    /**Perform selection of all subitems
      * @param state - which state to set true or false
      * @param rootID - parent of the selection
-     * @param selectedRowsIds - list of the already selected items
      */
-    private void iterativeSelection (boolean state, IItemId rootID)
+    private void selectAllSubitems (boolean state, IItemId rootID)
     {
 		try {
 			IItem item = App.get().appCase.getItemByItemId(rootID);
