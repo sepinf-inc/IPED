@@ -17,6 +17,7 @@ import java.awt.image.RescaleOp;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
 
 /**
@@ -98,9 +99,11 @@ public class ImageViewPanel extends JPanel {
         scrollPane = new JScrollPane(imgPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(BorderLayout.CENTER, scrollPane);
 
-        imgPanel.addMouseWheelListener(new MouseAdapter() {
+        MouseAdapter mouseListener = new MouseAdapter() {
+            private Point refPos;
+            
             @Override
-            public void mousePressed(MouseEvent evt) {
+            public void mouseClicked(MouseEvent evt) {
                 if (image == null) {
                     return;
                 }
@@ -112,13 +115,39 @@ public class ImageViewPanel extends JPanel {
             }
 
             @Override
+            public void mousePressed(MouseEvent evt) {
+                if (image == null) {
+                    return;
+                }
+                if (evt.getButton() == MouseEvent.BUTTON1) {
+                    refPos = new Point(evt.getPoint());
+                } else {
+                    refPos = null;
+                }
+            }
+
+            @Override
+            public void mouseDragged(final MouseEvent evt) {
+                if (refPos != null) {
+                    JViewport viewport = scrollPane.getViewport();
+                    Rectangle view = viewport.getViewRect();
+                    view.x += refPos.x - evt.getX();
+                    view.y += refPos.y - evt.getY();
+                    imgPanel.scrollRectToVisible(view);
+                }
+            }
+            
+            @Override
             public void mouseWheelMoved(MouseWheelEvent evt) {
                 if (image == null) {
                     return;
                 }
                 changeZoom(1 - evt.getWheelRotation() / 5f, evt.getPoint());
             }
-        });
+        };
+        imgPanel.addMouseWheelListener(mouseListener);
+        imgPanel.addMouseMotionListener(mouseListener);
+        imgPanel.addMouseListener(mouseListener);
     }
 
     /**
