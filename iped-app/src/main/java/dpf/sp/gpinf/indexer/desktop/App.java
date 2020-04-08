@@ -82,7 +82,6 @@ import org.slf4j.LoggerFactory;
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPane;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
-import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.ArchGradientPainter;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.BorderedComponent;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.InvisibleTab;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.InvisibleTabPane;
@@ -123,8 +122,8 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
 import iped3.desktop.CancelableWorker;
-import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
+import iped3.desktop.GUIProvider;
 import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
@@ -730,20 +729,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
         
-        // Add buttons to control the number of columns displayed in the thumbnail gallery
-        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseColumns"), IconUtil.getIcon("minus"));
+        // Add buttons to control the thumbnails size / number of columns in the gallery
+        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus"));
         galleryTabDock.addAction(butDec);
-        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseColumns"), IconUtil.getIcon("plus"));
+        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getIcon("plus"));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                updateGalleryColCount(-1);
+                updateGalleryColCount(1);
             }
         });
         butInc.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                updateGalleryColCount(1);
+                updateGalleryColCount(-1);
             }
         });
 
