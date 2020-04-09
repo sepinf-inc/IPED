@@ -11,8 +11,10 @@ Databases
 Chats
 Contacts
 ISO disks
-Internet History
+#Internet History
+#User Activities
 OLE files
+#Georeferenced Files
 
 # Generates registry reports:
 Windows Registry

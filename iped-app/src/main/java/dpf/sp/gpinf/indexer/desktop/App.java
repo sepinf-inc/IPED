@@ -1114,6 +1114,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowClosing(WindowEvent e) {
+        removeAllDockables();
         this.dispose();
         destroy();
     }

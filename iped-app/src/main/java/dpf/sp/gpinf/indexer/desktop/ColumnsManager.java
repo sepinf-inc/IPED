@@ -519,7 +519,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateDinamicFields() {
 
-        if (lastCase != App.get().appCase) {
+        if (indexFields == null || lastCase != App.get().appCase) {
             lastCase = App.get().appCase;
             indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getAtomicReader(), new String[0]);
         }

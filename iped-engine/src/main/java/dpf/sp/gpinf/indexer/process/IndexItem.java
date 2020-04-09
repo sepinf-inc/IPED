@@ -143,6 +143,9 @@ public class IndexItem extends BasicProps {
 
         BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
+        BasicProps.SET.add(ID_IN_SOURCE);
+        BasicProps.SET.add(SOURCE_PATH);
+        BasicProps.SET.add(SOURCE_DECODER);
     }
 
     private static final FieldType getContentField() {
@@ -756,7 +759,8 @@ public class IndexItem extends BasicProps {
                         File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
                                 "jpg"); //$NON-NLS-1$
                         try {
-                            evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                            if(thumbFile.exists())
+                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -888,7 +892,7 @@ public class IndexItem extends BasicProps {
             }catch(ParseException e) {
                 return DateUtil.tryToParseDate(value);
             }   
-        }else if (Number.class.isAssignableFrom(c))
+        }else if ((c != null && Number.class.isAssignableFrom(c)) || f.numericValue() != null)
             return f.numericValue();
         else
             return f.stringValue();
