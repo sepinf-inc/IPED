@@ -1,0 +1,41 @@
+https://caff.de/projects/caffviewer/
+
+License
+The viewer is not Open Source, but the usage of the viewer is free of any charge. You may download it and use it at your own risk. Although doing my best to make it a useful tool there is no guarantee for this.
+
+3rd Party Code
+The viewer uses a few Open Source libraries. They run under the following licenses.
+
+Apache 2.0 License
+For unpacking files packed with bzip2 code from the Apache Ant project extracted by Kohsuke Kawaguchi is used. For displaying WMF (Windows Meta File) data code extracted from the Apache Batik project is used. Both are provided under the Apache 2.0 License. Thanks a lot!
+
+Public Domain Code
+For displaying files dragged on the viewer FileDrop by Robert Harder is used. It’s in the public domain. Thank you, Robert!
+
+Others
+For displaying balloon tool tips the BalloonTip library by Bernhard Pauler and Tim Molderez is used. It is provided under the following license:
+
+Copyright © 2011 Bernhard Pauler, Tim Molderez
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the Balloon tip Developer Team nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE BALLOON TIP DEVELOPER TEAM BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

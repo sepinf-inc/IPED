@@ -149,6 +149,14 @@ public class ExportFileTask extends AbstractTask {
         return (hash[0] & 0xFF) >> (8 - DB_SUFFIX_BITS);
     }
     
+    private static Connection  getSQLiteStorageCon(File db) {
+        if(storageCon == null) {
+            configureSQLiteStorage(db.getParentFile().getParentFile());
+        }
+        int dbSuffix = Integer.valueOf(db.getName().substring(STORAGE_PREFIX.length() + 1, db.getName().indexOf(".db")));
+        return storageCon.get(dbSuffix);
+    }
+    
     private static synchronized void configureSQLiteStorage(File output) {
         if(storageCon != null) {
             return;
@@ -558,7 +566,7 @@ public class ExportFileTask extends AbstractTask {
 			try{
 				byte[] bytes = null;
 				if(conn == null) {
-                    conn = getSQLiteConnection(getDataSourcePath().toFile());
+				    conn = getSQLiteStorageCon(getDataSourcePath().toFile());
                 }
 				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
 				    ps.setString(1, identifier);

@@ -9,7 +9,7 @@
 	</parent>
 	<artifactId>iped-viewers-impl</artifactId>
 
-	<dependencies>
+    <dependencies>
 		<dependency>
 			<groupId>iped</groupId>
 			<artifactId>iped-viewers-api</artifactId>
@@ -132,6 +132,8 @@
             <version>${icepdf.version}</version>
             <type>jar</type>
         </dependency>
+        
+       
 	</dependencies>
 
 </project>

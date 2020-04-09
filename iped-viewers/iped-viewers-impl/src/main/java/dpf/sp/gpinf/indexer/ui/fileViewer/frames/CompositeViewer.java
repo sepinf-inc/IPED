@@ -201,7 +201,7 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
                 loadedViewers.add(viewer);
                 if (viewer == textViewer && bestViewer != textViewer) {
                     viewer.loadFile(file, contentType, highlightTerms);
-                } else if (viewer instanceof HexViewer || viewer instanceof MetadataViewer) {
+                } else if (viewer instanceof HexViewer || viewer instanceof HexViewerPlus || viewer instanceof MetadataViewer) {
                     viewer.loadFile(file, contentType, highlightTerms);
                 } else {
                     viewer.loadFile(viewFile, viewMediaType, highlightTerms);
