@@ -103,72 +103,17 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     }
 
-    private boolean shiftDown = false, ctrlDown = false;
-
     @Override
     public void keyPressed(KeyEvent evt) {
-
-        if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-            cellEditor.stopCellEditing();
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            int firstRow = App.get().resultsTable.getSelectedRow();
-            boolean value = true;
-            if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
-                value = false;
-            }
-
-            MarcadoresController.get().setMultiSetting(true);
-
-            int[] selectedRows = App.get().resultsTable.getSelectedRows();
-            for (int i = 0; i < selectedRows.length; i++) {
-                if (i == selectedRows.length - 1)
-                    MarcadoresController.get().setMultiSetting(false);
-                App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-            }
-
-        } else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-            shiftDown = true;
-
-        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-            ctrlDown = true;
-        }
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {  //Shortcut to Deep-Selection (Item plus sub-items)
-        	logger.debug("DSelect mark");
-        	cellEditor.stopCellEditing();
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            MarcadoresController.get().setMultiSetting(true);
-            App.get().resultsTable.setValueAt(true, App.get().resultsTable.getSelectedRows()[0], col);
-            MarcadoresController.get().setMultiSetting(false);
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) evt.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
-        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
-        		kl.keyReleased(keyCTRL_R_Pressed);
-        }
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) { //Shortcut to Deep-Selection (Item plus sub-items)
-        	logger.debug("DSelect unmark");
-        	cellEditor.stopCellEditing();
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            MarcadoresController.get().setMultiSetting(true);
-            App.get().resultsTable.setValueAt(false, App.get().resultsTable.getSelectedRows()[0], col);
-            MarcadoresController.get().setMultiSetting(false);
-                        
-            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) evt.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.SHIFT_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
-        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
-        		kl.keyReleased(keyCTRL_R_Pressed);
-        }
-
 
     }
 
     @Override
     public void keyReleased(KeyEvent evt) {
-
-        if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-            shiftDown = false;
-
-        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-            ctrlDown = false;
+        cellEditor.stopCellEditing();
+        for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class)) {
+            kl.keyReleased(evt);
         }
-
     }
 
     @Override
