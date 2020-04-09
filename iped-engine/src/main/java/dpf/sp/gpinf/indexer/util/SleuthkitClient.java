@@ -121,12 +121,23 @@ public class SleuthkitClient implements Comparable<SleuthkitClient>{
     public static void initSleuthkitServers(final String dbPath)
             throws InterruptedException {
         dbDirPath = dbPath;
+        ArrayList<Thread> initThreads = new ArrayList<>();
         for (int i = 0; i < NUM_TSK_SERVERS; i++) {
-            SleuthkitClient sc = new SleuthkitClient();
-            synchronized(lock) {
-                clientPriorityQueue.add(sc);
-                clientsList.add(sc);
-            }
+            Thread t = new Thread() {
+                @Override
+                public void run() {
+                    SleuthkitClient sc = new SleuthkitClient();
+                    synchronized(lock) {
+                        clientPriorityQueue.add(sc);
+                        clientsList.add(sc);
+                    }
+                }
+            };
+            t.start();
+            initThreads.add(t);
+        }
+        for(Thread t : initThreads) {
+            t.join();
         }
         Thread t = new TimeoutMonitor();
         t.setDaemon(true);
