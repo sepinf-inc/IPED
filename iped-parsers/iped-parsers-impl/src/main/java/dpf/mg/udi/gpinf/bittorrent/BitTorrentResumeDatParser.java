@@ -88,8 +88,11 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                 if (torrent.equals(".fileguard") || torrent.equals("rec")) { //$NON-NLS-1$ $NON-NLS-2$
                     continue;
                 }
-                xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
                 BencodedDict torrentDict = dict.getDict(torrent);
+                if(torrentDict == null) {
+                    continue;
+                }
+                xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
                 String[] rowElememts = new String[] { torrent, torrentDict.getString("rootdir"), //$NON-NLS-1$
                         torrentDict.getString("path"), //$NON-NLS-1$
                         Long.toString(torrentDict.getLong("downloaded")), //$NON-NLS-1$
