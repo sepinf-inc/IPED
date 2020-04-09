@@ -176,16 +176,13 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     public void keyPressed(KeyEvent evt) {
     }
 
-    int keyBefore = -1;
-
     @Override
     public void keyReleased(KeyEvent evt) {
         if (App.get().resultsTable.getSelectedRow() == -1) {
             return;
         }
 
-        if ((keyBefore == KeyEvent.VK_CONTROL && evt.getKeyCode() == KeyEvent.VK_C)
-                || (keyBefore == KeyEvent.VK_C && evt.getKeyCode() == KeyEvent.VK_CONTROL)) {
+        if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
 
             int selCol = App.get().resultsTable.getSelectedColumn();
             if (selCol < 0) {
@@ -203,16 +200,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         	itemSelection();
         else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0))  //Shortcut to Deep-Selection (Item plus sub-items)
         	recursiveItemSelection(true);
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) //Shortcut to Deep-Selection (Item plus sub-items)
+        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) //Shortcut to Deep-Selection (Item plus sub-items)
         	recursiveItemSelection(false);
-        else if (evt.getKeyCode() == KeyEvent.VK_1 && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to direct bookmark or unbookmark by keyboard using CTRL+F5 and SHIFT+F5
-        	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().add, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
-       	else if (evt.getKeyCode() == KeyEvent.VK_1 && ((evt.getModifiers() & KeyEvent.SHIFT_MASK) != 0)) 
-        	GerenciadorMarcadores.get().actionPerformed(new ActionEvent(GerenciadorMarcadores.get().remove, ActionEvent.ACTION_PERFORMED, "add", System.currentTimeMillis(), 0));
-        else if (evt.getKeyCode() == KeyEvent.VK_D && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) //Shortcut to BookmarkManager Window
+        else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) //Shortcut to BookmarkManager Window
         	GerenciadorMarcadores.setVisible();
-
-        keyBefore = evt.getKeyCode();
+        else
+            GerenciadorMarcadores.get().keyReleased(evt);
 
     }
     public void itemSelection()

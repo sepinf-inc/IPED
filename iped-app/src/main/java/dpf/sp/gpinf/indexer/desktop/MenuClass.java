@@ -51,11 +51,13 @@ public class MenuClass extends JPopupMenu {
 
         marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
         marcarSelecionados.addActionListener(menuListener);
+        marcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(marcarSelecionados);
 
 		
 		desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
 		desmarcarSelecionados.addActionListener(menuListener);
+		desmarcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
  		this.add(desmarcarSelecionados);
 		 
         marcarRecursivamenteSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
@@ -66,7 +68,7 @@ public class MenuClass extends JPopupMenu {
 		
 	    desmarcarRecursivamenteSelecionados = new	  JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted"));	//$NON-NLS-1$
 		desmarcarRecursivamenteSelecionados.addActionListener(menuListener);
-		desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.SHIFT_MASK));
+		desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
 		this.add(desmarcarRecursivamenteSelecionados);
 		         
 		  /*
@@ -88,7 +90,7 @@ public class MenuClass extends JPopupMenu {
 
         gerenciarMarcadores = new JMenuItem(Messages.getString("MenuClass.ManageBookmarks")); //$NON-NLS-1$
         gerenciarMarcadores.addActionListener(menuListener);
-        gerenciarMarcadores.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.CTRL_MASK));
+        gerenciarMarcadores.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
         this.add(gerenciarMarcadores);
 
         gerenciarFiltros = new JMenuItem(Messages.getString("MenuClass.ManageFilters")); //$NON-NLS-1$

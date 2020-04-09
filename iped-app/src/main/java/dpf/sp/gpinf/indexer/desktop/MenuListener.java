@@ -105,6 +105,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.layoutPadrao) {
             App.get().refazLayout(true);
+            
         } else if (e.getSource() == menu.marcarSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -131,8 +132,9 @@ public class MenuListener implements ActionListener {
         	KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
         	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
         		kl.keyReleased(keyCTRL_R_Pressed);
+        	
 		} else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
-        	KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.SHIFT_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
+        	KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
         	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
         		kl.keyReleased(keyCTRL_R_Pressed);
 		}
