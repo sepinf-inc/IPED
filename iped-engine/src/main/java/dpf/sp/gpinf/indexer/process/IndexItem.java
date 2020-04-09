@@ -904,7 +904,7 @@ public class IndexItem extends BasicProps {
             }catch(ParseException e) {
                 return DateUtil.tryToParseDate(value);
             }   
-        }else if (Number.class.isAssignableFrom(c))
+        }else if ((c != null && Number.class.isAssignableFrom(c)) || f.numericValue() != null)
             return f.numericValue();
         else
             return f.stringValue();
