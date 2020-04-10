@@ -137,6 +137,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public void dispose() {
         dialog.setVisible(false);
         instance = null;
+        getInstance().loadedFields = this.loadedFields;
+        getInstance().colState = this.colState;
     }
 
     public void setVisible() {

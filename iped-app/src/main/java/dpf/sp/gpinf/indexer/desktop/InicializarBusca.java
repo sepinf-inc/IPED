@@ -167,8 +167,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         }
 
         if (updateItems) {
-            App.get().appletListener.updateFileListing();
             ColumnsManager.getInstance().dispose();
+            App.get().appletListener.updateFileListing();
             App.get().dialogBar.setVisible(false);
         }
     }
