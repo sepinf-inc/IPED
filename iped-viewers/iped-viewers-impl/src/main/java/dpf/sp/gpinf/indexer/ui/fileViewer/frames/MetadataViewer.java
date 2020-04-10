@@ -210,10 +210,11 @@ public class MetadataViewer extends Viewer {
     private void fillAdvancedProps(StringBuilder sb, IItemBase item) {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.AdvancedProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());
         fillProp(sb, BasicProps.ID, item.getId());
         fillProp(sb, BasicProps.PARENTID, item.getParentId());
-        fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());
         fillProp(sb, BasicProps.SUBITEM, item.isSubItem());
+        fillProp(sb, BasicProps.SUBITEMID, item.getSubitemId());
         fillProp(sb, BasicProps.CARVED, item.isCarved());
         fillProp(sb, BasicProps.ISDIR, item.isDir());
         fillProp(sb, BasicProps.HASCHILD, item.hasChildren());

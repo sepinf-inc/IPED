@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
@@ -149,6 +150,14 @@ public class ExportFileTask extends AbstractTask {
         return (hash[0] & 0xFF) >> (8 - DB_SUFFIX_BITS);
     }
     
+    private static Connection  getSQLiteStorageCon(File db) {
+        if(storageCon == null) {
+            configureSQLiteStorage(db.getParentFile().getParentFile());
+        }
+        int dbSuffix = Integer.valueOf(db.getName().substring(STORAGE_PREFIX.length() + 1, db.getName().indexOf(".db")));
+        return storageCon.get(dbSuffix);
+    }
+    
     private static synchronized void configureSQLiteStorage(File output) {
         if(storageCon != null) {
             return;
@@ -177,12 +186,10 @@ public class ExportFileTask extends AbstractTask {
     
     private static Connection getSQLiteConnection(File storage) throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
-        config.setPragma(Pragma.SYNCHRONOUS, "0");
+        config.setSynchronous(SynchronousMode.NORMAL);
         config.setPragma(Pragma.JOURNAL_MODE, "TRUNCATE");
         config.setPragma(Pragma.CACHE_SIZE, "-" + SQLITE_CACHE_SIZE / 1024);
         config.setBusyTimeout(3600000);
-        config.setSharedCache(true);
-        config.setReadUncommited(true);
         Connection conn = config.createConnection("jdbc:sqlite:" + storage.getAbsolutePath());
         conn.setAutoCommit(false);
         return conn;
@@ -558,7 +565,7 @@ public class ExportFileTask extends AbstractTask {
 			try{
 				byte[] bytes = null;
 				if(conn == null) {
-                    conn = getSQLiteConnection(getDataSourcePath().toFile());
+                    conn = getSQLiteStorageCon(getDataSourcePath().toFile());
                 }
 				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
 				    ps.setString(1, identifier);
@@ -608,10 +615,23 @@ public class ExportFileTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         if(storageCon != null) {
+            int i = 0;
             for(Connection con : storageCon.values()) {
-                if(con != null && !con.isClosed()) {
+                if(con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                     con.close();
+                    LOGGER.info("Closed connection to storage " + i);
+                }
+                i++;
+            }
+        }
+    }
+    
+    public static void commitStorage() throws SQLException {
+        if(storageCon != null) {
+            for(Connection con : storageCon.values()) {
+                if(con != null && !con.isClosed() && !con.getAutoCommit()) {
+                    con.commit();
                 }
             }
         }

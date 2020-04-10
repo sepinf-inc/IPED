@@ -58,6 +58,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -80,8 +81,8 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.IItem;
 import iped3.IEvidenceFileType;
+import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
@@ -95,6 +96,9 @@ public class IndexItem extends BasicProps {
 
     public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
+    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
+    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
+    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
@@ -172,6 +176,7 @@ public class IndexItem extends BasicProps {
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
+        IOUtils.fsync(metadataTypesFile, false);
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
@@ -237,6 +242,12 @@ public class IndexItem extends BasicProps {
             value = evidence.getInputStreamFactory().getClass().getName();
             doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+        }
+        
+        intVal = evidence.getSubitemId();
+        if (intVal != null) {
+            doc.add(new IntField(SUBITEMID, intVal, Field.Store.YES));
+            doc.add(new NumericDocValuesField(SUBITEMID, intVal));
         }
 
         intVal = evidence.getParentId();
@@ -659,6 +670,11 @@ public class IndexItem extends BasicProps {
             if (value != null) {
                 evidence.setParentId(Integer.valueOf(value));
             }
+            
+            value = doc.get(IndexItem.SUBITEMID);
+            if (value != null) {
+                evidence.setSubitemId(Integer.valueOf(value));
+            }
 
             value = doc.get(IndexItem.EVIDENCE_UUID);
             if (value != null) {
@@ -892,7 +908,7 @@ public class IndexItem extends BasicProps {
             }catch(ParseException e) {
                 return DateUtil.tryToParseDate(value);
             }   
-        }else if (Number.class.isAssignableFrom(c))
+        }else if ((c != null && Number.class.isAssignableFrom(c)) || f.numericValue() != null)
             return f.numericValue();
         else
             return f.stringValue();

@@ -44,6 +44,7 @@ import com.drew.metadata.jpeg.JpegDirectory;
 public class ImageUtil {
 
     public static final Set<String> jdkImagesSupported = getjdkImageMimesSupported();
+    private static final int[] orientations = new int[] {1,5,3,7};
 
     private static final Set<String> getjdkImageMimesSupported() {
         HashSet<String> set = new HashSet<String>();
@@ -307,7 +308,7 @@ public class ImageUtil {
         IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
         is.close();
         reader.dispose();
-        return new Object[] { img, findAttribute(root, "comment") }; //$NON-NLS-1$
+        return new Object[] {img,findAttribute(root, "comment")}; //$NON-NLS-1$
     }
 
     /**
@@ -363,15 +364,6 @@ public class ImageUtil {
         writer.write(null, iioimage, jpegParams);
         os.close();
         writer.dispose();
-    }
-
-    private static long scaleSubsamplingMaintainAspectRatio(Dimension d1, Dimension d2) {
-        long subsampling = 1;
-        if (d1.getWidth() > d2.getWidth() || d1.getHeight() > d2.getHeight()) {
-            subsampling = (long) Math.max(Math.floor(d1.getWidth() / d2.getWidth()),
-                    Math.floor(d1.getHeight() / d2.getHeight()));
-        }
-        return subsampling;
     }
 
     public static BufferedImage getThumb(InputStream stream) {
@@ -431,12 +423,19 @@ public class ImageUtil {
                         Integer tagOrientation = dir.getInteger(ExifIFD0Directory.TAG_ORIENTATION);
                         if (tagOrientation != null)
                             return tagOrientation;
+                        }
                     }
                 }
-            }
         } catch (Exception e) {
         }
         return -1;
+    }
+
+    public static BufferedImage rotatePos(BufferedImage src, int pos) {
+        if (pos < 0 || pos > 3) {
+            return src;
+        }
+        return rotate(src, orientations[pos]);
     }
 
     public static BufferedImage rotate(BufferedImage src, int orientation) {

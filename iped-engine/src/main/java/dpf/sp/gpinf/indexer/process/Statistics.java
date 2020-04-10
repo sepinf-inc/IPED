@@ -1,22 +1,27 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -25,7 +30,9 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import iped3.ICaseData;
+import iped3.IItem;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados,
@@ -33,11 +40,15 @@ import iped3.ICaseData;
  * métodos para enviar as estatísticas para arquivo de log.
  */
 public class Statistics {
+    
+    private static final String CARVED_IGNORED_MAP_FILE = "data/carvedIgnoredMap.dat";
 
     private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
     private static Statistics instance = null;
 
     private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
+    
+    private HashMap<HashValue, Integer> ignoredMap = new HashMap<>();
 
     ICaseData caseData;
     File indexDir;
@@ -65,10 +76,55 @@ public class Statistics {
     public static Statistics get() {
         return instance;
     }
+    
+    public int getCarvedIgnoredNum(HashValue persistentId) {
+        synchronized(ignoredMap) {
+            return ignoredMap.getOrDefault(persistentId, 0);
+        }
+    }
 
     private Statistics(ICaseData caseData, File indexDir) {
         this.caseData = caseData;
         this.indexDir = indexDir;
+        loadPrevCarvedIgnoredMap();
+    }
+    
+    private void loadPrevCarvedIgnoredMap() {
+        File file = new File(indexDir.getParentFile(), CARVED_IGNORED_MAP_FILE);
+        if(file.exists()) {
+            try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))){
+                ignoredMap = (HashMap<HashValue, Integer>) ois.readObject();
+                
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    
+    public void incCarvedIgnored(IItem item) {
+        this.incCorruptCarveIgnored();
+        HashValue parentPersistId = new HashValue((String)item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
+        synchronized(ignoredMap) {
+            Integer ignored = ignoredMap.getOrDefault(parentPersistId, 0);
+            ignoredMap.put(parentPersistId, ++ignored);
+        }
+    }
+    
+    public void resetCarvedIgnored(IItem item) {
+        HashValue parentPersistId = new HashValue((String)item.getExtraAttribute(IndexItem.PERSISTENT_ID));
+        synchronized(ignoredMap) {
+            ignoredMap.remove(parentPersistId);
+        }
+    }
+    
+    public void commit() throws IOException {
+        File file = new File(indexDir.getParentFile(), CARVED_IGNORED_MAP_FILE);
+        synchronized(ignoredMap) {
+            try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))){
+                oos.writeObject(ignoredMap);
+            }
+        }
+        IOUtils.fsync(file, false);
     }
 
     synchronized public int getSplits() {
@@ -123,7 +179,7 @@ public class Statistics {
         return corruptCarveIgnored;
     }
 
-    synchronized public void incCorruptCarveIgnored() {
+    private synchronized void incCorruptCarveIgnored() {
         corruptCarveIgnored++;
     }
 
@@ -175,6 +231,7 @@ public class Statistics {
                     + Math.round((100f * sec) / totalTime) + "%)"); //$NON-NLS-1$
         }
 
+        LOGGER.info("Partial commits took {} seconds", manager.partialCommitsTime.get());
         LOGGER.info("File Splits: {}", getSplits()); //$NON-NLS-1$
         LOGGER.info("Timeouts: {}", getTimeouts()); //$NON-NLS-1$
         LOGGER.info("Parsing Exceptions: {}", IndexerDefaultParser.parsingErrors); //$NON-NLS-1$

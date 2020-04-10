@@ -33,8 +33,6 @@ public class ReportGenerator {
     private Chat lastChat;
     private int currentMsg = 0;
 
-    static final String RSRC_PATH = "../../../../indexador/htm/whatsapp/"; //$NON-NLS-1$
-
     public ReportGenerator(IItemSearcher searcher) {
         this.searcher = searcher;
     }
@@ -184,7 +182,7 @@ public class ReportGenerator {
                 out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + message.getRemoteResource() //$NON-NLS-1$ //$NON-NLS-2$
                         + "</br>"); //$NON-NLS-1$
                 if (message.getData() != null && !message.getData().isEmpty()) {
-                    out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_JOINED_GROUP:
@@ -193,14 +191,14 @@ public class ReportGenerator {
                 out.println(
                         Messages.getString("WhatsAppReport.UserJoinedGroup") + message.getRemoteResource() + "</br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 if (message.getData() != null) {
-                    out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_JOINED_GROUP_FROM_LINK:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.UserJoinedGroupLink")); //$NON-NLS-1$
                 if (message.getData() != null) {
-                    out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_LEFT_GROUP:
@@ -259,13 +257,13 @@ public class ReportGenerator {
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
-                            out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case URL_MESSAGE:
                         out.println("<a href=\"" + message.getUrl() + "\">" + message.getUrl() + "</a><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         if (message.getData() != null) {
-                            out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case LOCATION_MESSAGE:
@@ -273,7 +271,7 @@ public class ReportGenerator {
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case SHARED_LOCATION_MESSAGE:
@@ -281,7 +279,7 @@ public class ReportGenerator {
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case CONTACT_MESSAGE:
@@ -331,8 +329,9 @@ public class ReportGenerator {
                                 out.println(" href=\"" + exportPath + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
                                 if (message.getMessageType() == AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
-                                    out.println("<img class=\"iped-show\" src=\"" + RSRC_PATH //$NON-NLS-1$
-                                            + "img/audio.png\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
+                                    out.println("<img class=\"iped-show\" src=\"" //$NON-NLS-1$
+                                            + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
+                                            + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
                                     out.println("</a><br/>"); //$NON-NLS-1$
                                     out.println("<audio class=\"iped-hide\" controls>"); //$NON-NLS-1$
                                     out.println("<source src=\"" + exportPath + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -349,8 +348,9 @@ public class ReportGenerator {
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
-                                        out.println("<img class=\"iped-show\" src=\"" + RSRC_PATH //$NON-NLS-1$
-                                                + "img/video.png\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                                        out.println("<img class=\"iped-show\" src=\"" //$NON-NLS-1$
+                                                + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
+                                                + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
                                     }
                                     out.println("</a><br/>"); //$NON-NLS-1$
                                     out.println("<video class=\"iped-hide\" controls>"); //$NON-NLS-1$
@@ -361,11 +361,13 @@ public class ReportGenerator {
                             }
                         } else {
                             if (message.getMessageType() == AUDIO_MESSAGE) {
-                                out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                                        + "img/audio.png\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
+                                out.println("<img src=\"" //$NON-NLS-1$
+                                        + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
+                                        + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
                             } else {
-                                out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                                        + "img/video.png\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                                out.println("<img src=\"" //$NON-NLS-1$
+                                        + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
+                                        + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
                             }
                         }
                         if (message.getMediaCaption() != null)
@@ -418,11 +420,13 @@ public class ReportGenerator {
 
                         } else {
                             if (message.getMessageType() == IMAGE_MESSAGE) { // $NON-NLS-1$
-                                out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                                        + "img/image.png\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                                out.println("<img src=\"" //$NON-NLS-1$
+                                        + Util.getImageResourceAsEmbedded("img/image.png") //$NON-NLS-1$
+                                        + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
                             } else
-                                out.println("Attachment:<br><img src=\"" + RSRC_PATH //$NON-NLS-1$
-                                        + "img/attach.png\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
+                                out.println("Attachment:<br><img src=\"" //$NON-NLS-1$
+                                        + Util.getImageResourceAsEmbedded("img/attach.png") //$NON-NLS-1$
+                                        + "\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
                         }
                         if (inLink) {
                             out.println("</a>"); //$NON-NLS-1$
@@ -544,8 +548,10 @@ public class ReportGenerator {
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" + RSRC_PATH + "img/favicon.ico\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + "	<link rel=\"stylesheet\" type=\"text/css\" href=\"" + RSRC_PATH + "css/whatsapp.css\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "	<link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")+ "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                + "<style>\n"
+                + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
+                + "\n</style>\n"
                 + "<script>\n" //$NON-NLS-1$
                 + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
                 + "css.type = \"text/css\";\n" //$NON-NLS-1$
@@ -571,7 +577,7 @@ public class ReportGenerator {
         if (avatar != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
                     + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
-        out.println(Util.convertEmojis(title) + "</span>\n" //$NON-NLS-1$
+        out.println(title + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$
