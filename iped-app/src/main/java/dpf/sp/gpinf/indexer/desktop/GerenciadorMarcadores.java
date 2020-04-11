@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,20 +53,26 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.VersionsMap;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
+import iped3.util.BasicProps;
 
 public class GerenciadorMarcadores implements ActionListener, ListSelectionListener, KeyListener {
 
@@ -272,49 +279,71 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             listModel.addElement(b);
         }
     }
+    
+    private int getEmptyDataHashOrd(SortedDocValues sdv) {
+        byte[] emptyData = new byte[0];
+        String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
+        int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
+        if(ord < 0) {
+            String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
+            ord = sdv.lookupTerm(new BytesRef(emptySHA1));
+        }
+        if(ord < 0) {
+            String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
+            ord = sdv.lookupTerm(new BytesRef(emptySHA256));
+        }
+        return ord;
+    }
 
-    /*
-     * Lento com mtos itens
-     */
     private void includeDuplicates(ArrayList<IItemId> uniqueSelectedIds) {
-
+        
         ProgressDialog progress = new ProgressDialog(App.get(), null);
-        progress.setNote(Messages.getString("BookmarksManager.LoadingHashes")); //$NON-NLS-1$
-        progress.setMaximum(uniqueSelectedIds.size());
+        progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
         try {
-            BooleanQuery query = new BooleanQuery();
-            App app = App.get();
+            AtomicReader reader = App.get().appCase.getAtomicReader();
+            SortedDocValues sdv = reader.getSortedDocValues(BasicProps.HASH);
+            
+            progress.setMaximum(uniqueSelectedIds.size() + reader.maxDoc());
             int i = 0;
+            
+            int emptyDataHashOrd = getEmptyDataHashOrd(sdv);
+            int emptyValueOrd = sdv.lookupTerm(new BytesRef("")); //$NON-NLS-1$
+            if(emptyValueOrd < 0) {
+                emptyValueOrd = -1;
+            }
+            
+            IPEDMultiSource ipedCase = App.get().appCase;
+            BitSet hashOrd = new BitSet(sdv.getValueCount());
+            BitSet luceneIds = new BitSet(reader.maxDoc());
             for (IItemId item : uniqueSelectedIds) {
-                if (progress.isCanceled()) {
+                int luceneId = ipedCase.getLuceneId(item);
+                int ord = sdv.getOrd(luceneId);
+                if(ord > emptyValueOrd && ord != emptyDataHashOrd) {
+                    hashOrd.set(ord);
+                }
+                luceneIds.set(luceneId);
+                progress.setProgress(++i);
+                if(progress.isCanceled())
                     return;
+            }
+            int duplicates = 0;
+            for(int doc = 0; doc < reader.maxDoc(); doc++) {
+                int ord = sdv.getOrd(doc);
+                if(ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
+                    IItemId itemId = ipedCase.getItemId(doc);
+                    uniqueSelectedIds.add(itemId);
+                    duplicates++;
                 }
                 progress.setProgress(++i);
-                String hash = app.appCase.getSearcher().doc(app.appCase.getLuceneId(item)).get(IndexItem.HASH);
-                if (hash != null) {
-                    query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
-                }
-                // query.add(new TermQuery(new Term(IndexItem.ID, id.toString())),
-                // Occur.MUST_NOT);
+                if(progress.isCanceled())
+                    return;
             }
-            query.add(NumericRangeQuery.newLongRange(IndexItem.LENGTH, NumericUtils.PRECISION_STEP_DEFAULT, 0L, 0L,
-                    true, true), Occur.MUST_NOT);
-
-            PesquisarIndice task = new PesquisarIndice(query);
-            progress.setTask(task);
-            progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
-            progress.setIndeterminate(true);
-            MultiSearchResult duplicates = MultiSearchResult.get(app.appCase, task.pesquisar());
-
-            System.out.println(Messages.getString("BookmarksManager.DuplicatesAdded") + duplicates.getLength()); //$NON-NLS-1$
-
-            for (IItemId item : duplicates.getIterator()) {
-                uniqueSelectedIds.add(item);
-            }
+            System.out.println(Messages.getString("BookmarksManager.DuplicatesAdded") + " " + duplicates + " (luceneIds)"); //$NON-NLS-1$ //$NON-NLS-2$
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
+            
+        }finally {
             progress.close();
         }
 
