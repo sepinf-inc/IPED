@@ -40,13 +40,16 @@ CRIPTOCOIN_BITCOIN_ADDRESS, 1, 1, false = ([^0-9a-zA-Z][13][a-km-zA-HJ-NP-Z1-9]{
 
 CRIPTOCOIN_MONERO, 1, 1, false = [^0-9a-zA-Z]4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}[^0-9a-zA-Z]
 
-# Regexes below are commented because of false positives, you could enable them if necessary 
+CRIPTOCOIN_BITCOIN_CASH_CASHADDR, 0, 1, false = (bitcoincash:)?[a-z0-9]{20,87}[^0-9a-zA-Z]
 
-#CRIPTOCOIN_BITCOIN_CASH, 1, 1, false = [^0-9a-zA-Z][13][a-km-zA-HJ-NP-Z1-9]{33}[^0-9a-zA-Z]
+CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z](r|X)[a-km-zA-HJ-NP-Z1-9]{20,55}[^0-9a-zA-Z]
 
-#CRIPTOCOIN_ETHEREUM, 1, 1, false = [^0-9a-zA-Z]0x[a-fA-F0-9]{40}[^0-9a-zA-Z]
+# Old Ethereum addresses before 2017 do not have checksums and will be rejected by the internal validator.
+# If you want to collect those addresses, copy and paste regex below and change its name
+# but be warned that you will get a lot of false positives.
+CRIPTOCOIN_ETHEREUM, 0, 1, false = 0x[a-fA-F0-9]{40}[^a-fA-F0-9]
 
-#CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z]r[0-9a-zA-Z]{33}[^0-9a-zA-Z]
+# Regexes below are commented out because they do not have validators currently and return many false positives, you could enable them if necessary
 
 #CRIPTOCOIN_DOGECOIN, 1, 1, false = [^0-9a-zA-Z]D{1}[5-9A-HJ-NP-U]{1}[1-9A-HJ-NP-Za-km-z]{32}[^0-9a-zA-Z]
 
