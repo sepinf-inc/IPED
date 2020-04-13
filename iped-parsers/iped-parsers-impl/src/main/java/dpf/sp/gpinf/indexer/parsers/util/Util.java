@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
@@ -81,25 +82,25 @@ public class Util {
 
         try {
             int count0 = 0, max = 10000;
-            if (data.length < max)
+            if (data.length < max) {
                 max = data.length;
-
-            for (int i = 0; i < max; i++)
-                if (data[i] == 0)
+            }
+            for (int i = 0; i < max; i++) {
+                if (data[i] == 0) {
                     count0++;
-            if (count0 > 0 && count0 * 2 >= 0.9 * (float) max)
-                return new String(data, "UTF-16LE"); //$NON-NLS-1$
-
-            boolean hasUtf8 = false;
-            for (int i = 0; i < max - 1; i++)
-                if (data[i] == (byte) 0xC3 && data[i + 1] >= (byte) 0x80 && data[i + 1] <= (byte) 0xBC) {
-                    hasUtf8 = true;
-                    break;
                 }
-            if (hasUtf8)
-                return new String(data, "UTF-8"); //$NON-NLS-1$
-
-            return new String(data, "windows-1252"); //$NON-NLS-1$
+            }
+            if (count0 > 0 && count0 * 2 >= 0.9 * (float) max) {
+                return new String(data, StandardCharsets.UTF_16LE);
+            }
+                
+            String result = new String(data, StandardCharsets.UTF_8);
+            
+            if(result.contains("�")) {
+                result = new String(data, "windows-1252"); //$NON-NLS-1$ 
+            }
+            
+            return result;
 
         } catch (UnsupportedEncodingException e) {
             return new String(data);

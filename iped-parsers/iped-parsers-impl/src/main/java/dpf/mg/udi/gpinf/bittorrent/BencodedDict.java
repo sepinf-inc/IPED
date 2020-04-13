@@ -13,6 +13,8 @@ import java.util.Set;
 
 import com.dampcake.bencode.BencodeInputStream;
 
+import dpf.sp.gpinf.indexer.parsers.util.Util;
+
 /**
  * Helper class for decoding bencoded streams
  *
@@ -72,7 +74,7 @@ public class BencodedDict {
             return ""; //$NON-NLS-1$
         }
         ByteBuffer buffer = (ByteBuffer) obj;
-        return new String(buffer.array(), StandardCharsets.UTF_8);
+        return getUnknownCharsetString(buffer.array());
     }
 
     public BencodedDict getDict(String key) {
@@ -103,7 +105,7 @@ public class BencodedDict {
                 resp.add(new BencodedDict(childDict, df));
             } else if (elem instanceof ByteBuffer) {
                 ByteBuffer buff = (ByteBuffer) elem;
-                resp.add(new String(buff.array(), StandardCharsets.UTF_8));
+                resp.add(getUnknownCharsetString(buff.array()));
             } else {
                 resp.add(elem);
             }
@@ -126,7 +128,7 @@ public class BencodedDict {
             for (Object obj : listOfObj) {
                 if (obj instanceof ByteBuffer) {
                     ByteBuffer buff = (ByteBuffer) obj;
-                    resp.add(new String(buff.array(), StandardCharsets.UTF_8));
+                    resp.add(getUnknownCharsetString(buff.array()));
                 } else if (obj instanceof String) {
                     resp.add((String) obj);
                 }
@@ -147,6 +149,10 @@ public class BencodedDict {
         }
 
         return resp;
+    }
+    
+    private String getUnknownCharsetString(byte[] data) {
+        return Util.decodeUnknowCharset(data);
     }
     
     /**
