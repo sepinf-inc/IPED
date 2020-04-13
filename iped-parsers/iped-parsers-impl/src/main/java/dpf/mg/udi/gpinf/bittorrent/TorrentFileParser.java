@@ -87,7 +87,7 @@ public class TorrentFileParser extends AbstractParser {
         xhtml.startElement("div", "class", "rh"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
         for (int i = 0; i < header.length; i++) {
             if (include[i]) {
-                xhtml.startElement("div", "class", "b"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
+                xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$
                 xhtml.characters(header[i]);
                 xhtml.endElement("div"); //$NON-NLS-1$
             }
