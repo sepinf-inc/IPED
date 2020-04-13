@@ -316,6 +316,9 @@
     <mime-type type="application/x-bittorrent-resume-dat">
         <_comment>BitTorrent Client Resume.dat file</_comment>
         <sub-class-of type="application/x-p2p"/>
+        <magic priority="50">
+    		<match value="d10:.fileguard" type="string" offset="0"/>
+		</magic>
         <glob pattern="resume.dat" />
         <glob pattern="resume.dat.old" />
         <glob pattern="resume.dat.new" />
