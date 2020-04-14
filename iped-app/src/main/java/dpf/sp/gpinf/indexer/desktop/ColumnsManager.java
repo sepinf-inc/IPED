@@ -98,7 +98,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
             IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
-            IndexItem.PARENTIDs, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
+            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.WKFF_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
@@ -137,6 +137,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public void dispose() {
         dialog.setVisible(false);
         instance = null;
+        getInstance().loadedFields = this.loadedFields;
+        getInstance().colState = this.colState;
     }
 
     public void setVisible() {
@@ -519,7 +521,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateDinamicFields() {
 
-        if (lastCase != App.get().appCase) {
+        if (indexFields == null || lastCase != App.get().appCase) {
             lastCase = App.get().appCase;
             indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getAtomicReader(), new String[0]);
         }

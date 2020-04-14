@@ -37,6 +37,10 @@ public interface CmdLineArgs {
     boolean isAddowner();
 
     boolean isAppendIndex();
+    
+    boolean isContinue();
+    
+    boolean isRestart();
 
     boolean isNogui();
 

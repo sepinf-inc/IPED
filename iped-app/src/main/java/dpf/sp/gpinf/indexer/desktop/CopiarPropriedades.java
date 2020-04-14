@@ -109,8 +109,8 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
                         value += values[i];
                     }
 
-                    writer.write("\"" + value.replace("\"", "\"\"") + "\"" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                            + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$
+                    String escapedVal = value.replace("\"", "\"\"").replaceAll("\r|\n", " "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    writer.write("\"" + escapedVal + "\"" + Messages.getString("CopyProperties.CSVDelimiter")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 }
                 writer.write("\r\n"); //$NON-NLS-1$
 

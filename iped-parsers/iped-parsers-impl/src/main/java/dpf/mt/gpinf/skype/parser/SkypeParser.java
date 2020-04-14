@@ -90,6 +90,9 @@ public class SkypeParser extends AbstractParser {
 
         final TikaInputStream tis = TikaInputStream.get(stream, tmp);
         try {
+            //call here instead of catch clause because calls, videos and other info are not parsed currently
+            sqliteParser.parse(tis, handler, metadata, context);
+
             if (extractor.shouldParseEmbedded(metadata)) {
                 sqlite = new SkypeStorageFactory().createFromMediaType(tis, metadata, context, filePath);
                 
@@ -221,7 +224,6 @@ public class SkypeParser extends AbstractParser {
             }
 
         } catch (Exception e) {
-            sqliteParser.parse(tis, handler, metadata, context);
             throw new TikaException("SkypeParserException Exception", e); //$NON-NLS-1$
 
         } finally {

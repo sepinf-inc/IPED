@@ -12,40 +12,28 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.lucene.document.Document;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
+import org.apache.lucene.util.IOUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.html.HtmlMapper;
-import org.apache.tika.parser.html.IdentityHtmlMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
-import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.ItemSearcher;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.process.Worker.STATE;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.CloseFilterReader;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.io.IItemBase;
-import iped3.io.IStreamSource;
 import iped3.search.IItemSearcher;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -58,10 +46,11 @@ import iped3.sleuthkit.ISleuthKitItem;
  * consome mta memória com documentos grandes.
  *
  */
-public class IndexTask extends BaseCarveTask {
+public class IndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
+    public static final String TEXT_SPLITTED = "textSplitted";
 
     public static boolean indexFileContents = true;
     public static boolean indexUnallocated = false;
@@ -90,6 +79,11 @@ public class IndexTask extends BaseCarveTask {
         if (evidence.isQueueEnd()) {
             return;
         }
+        
+        if(SkipCommitedTask.isAlreadyCommited(evidence)) {
+            evidence.setToIgnore(true);
+            return;
+        }
 
         Reader textReader = null;
 
@@ -109,31 +103,11 @@ public class IndexTask extends BaseCarveTask {
 
         stats.updateLastId(evidence.getId());
 
-        // Fragmenta itens grandes indexados via strings
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment()
-                && !caseData.isIpedReport()
-                && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
-                && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
-                        || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
-
-            int fragNum = 0;
-            int overlap = 1024;
-            long fragSize = 10 * 1024 * 1024;
-            for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
-                long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
-                this.addFragmentFile(evidence, offset, len, fragNum++);
-                if (Thread.currentThread().isInterrupted())
-                    return;
-            }
-            textReader = new StringReader(""); //$NON-NLS-1$
-        }
-
         if (textReader == null) {
-            if (indexFileContents && (indexUnallocated || !UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexFileContents && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
+                    LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
                     try {
                         TikaInputStream tis = evidence.getTikaStream();
                         Metadata metadata = getMetadata(evidence);
@@ -161,21 +135,41 @@ public class IndexTask extends BaseCarveTask {
         FragmentingReader fragReader = new FragmentingReader(textReader);
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
-        Document doc = IndexItem.Document(evidence, noCloseReader, output);
-        int fragments = 0;
+        int fragments = fragReader.estimateNumberOfFrags();
+        if(fragments == -1) {
+            fragments = 1;
+        }
+        String origPersistentId = Util.getPersistentId(evidence);
         try {
-            /*
-             * Indexa os arquivos dividindo-os em fragmentos, pois a lib de indexação
-             * consome mta memória com documentos grandes
+            /**
+             * breaks very large texts in separate documents to be indexed
              */
             do {
-                if (++fragments > 1) {
+                //use fragName = 1 for all frags, except last, to check if last frag was indexed
+                //and to reuse same frag id when continuing an aborted processing
+                int fragName = (--fragments) == 0 ? 0 : 1;
+                
+                String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
+                evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
+                
+                if (fragments != 0) {
                     stats.incSplits();
-                    LOGGER.debug("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
+                    evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
+                    LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
                 }
 
+                Document doc = IndexItem.Document(evidence, noCloseReader, output);
                 worker.writer.addDocument(doc);
-
+                
+                while (worker.state != STATE.RUNNING) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } catch (IOException e) {
@@ -185,10 +179,8 @@ public class IndexTask extends BaseCarveTask {
             else
                 throw e;
         } finally {
+            evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, origPersistentId);
             noCloseReader.reallyClose();
-            // comentado pois provoca problema de concorrência com temporaryResources
-            // Já é fechado na thread de parsing do parsingReader
-            // IOUtil.closeQuietly(tis);
         }
 
         textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
@@ -255,12 +247,16 @@ public class IndexTask extends BaseCarveTask {
                         textSizes.add(new IdLenPair(i, textSizesArray[i]));
                     }
                 }
-
                 in.close();
                 fileIn.close();
-
-                stats.setLastId(textSizesArray.length - 1);
-                Item.setStartID(textSizesArray.length);
+            }
+            
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            if(args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+                try(IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)){
+                    stats.setLastId(ipedSrc.getLastId());
+                    Item.setStartID(ipedSrc.getLastId() + 1);
+                }
             }
         }
 
@@ -277,7 +273,7 @@ public class IndexTask extends BaseCarveTask {
         if (textSizes != null) {
             salvarTamanhoTextosExtraidos();
 
-            saveExtraAttributes();
+            saveExtraAttributes(output);
 
             IndexItem.saveMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         }
@@ -285,10 +281,11 @@ public class IndexTask extends BaseCarveTask {
 
     }
 
-    private void saveExtraAttributes() throws IOException {
+    public static void saveExtraAttributes(File output) throws IOException {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
         Set<String> extraAttr = Item.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
+        IOUtils.fsync(extraAttributtesFile, false);
     }
 
     private void loadExtraAttributes() throws ClassNotFoundException, IOException {

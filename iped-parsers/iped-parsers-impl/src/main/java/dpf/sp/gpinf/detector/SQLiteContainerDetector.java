@@ -21,6 +21,7 @@ import org.apache.tika.mime.MediaType;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.SafariSqliteParser;
+import dpf.inc.sepinf.winx.parsers.WinXTimelineParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 
@@ -148,6 +149,11 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("visits") && //$NON-NLS-1$
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
+        
+        if (tableNames.contains("Activity") && 
+                tableNames.contains("Activity_PackageId") && 
+                tableNames.contains("ActivityOperation"))
+            return WinXTimelineParser.WIN10_TIMELINE;
 
         return SQLITE_MIME;
 
