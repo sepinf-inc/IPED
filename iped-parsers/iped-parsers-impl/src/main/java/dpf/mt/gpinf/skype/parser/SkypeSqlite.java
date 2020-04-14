@@ -67,12 +67,12 @@ public class SkypeSqlite implements SkypeStorage {
 
         String query = BasicProps.PATH + ":\"" + baseSkypeFolder + STORAGE_DB_PATH + "\""; //$NON-NLS-1$//$NON-NLS-2$
         List<IItemBase> items = searcher.search(query);
-        for (IItemBase item : items)
+        for (IItemBase item : items) {
             if (item.getName().equalsIgnoreCase("storage_db.db")) { //$NON-NLS-1$
                 storageDbPath = getTempFile(item);
                 break;
             }
-
+        }
         query = BasicProps.PATH + ":\"" + baseSkypeFolder + CACHE_DB_PATH + "\"~1"; // ~1 //$NON-NLS-1$//$NON-NLS-2$
                                                                                     // searchers for media_cache_v2,
                                                                                     // media_cache_v3, etc
@@ -85,7 +85,6 @@ public class SkypeSqlite implements SkypeStorage {
 
         query = BasicProps.PATH + ":\"" + baseSkypeFolder + CACHE_DIR_PATH + "\" -" + BasicProps.TYPE + ":slack"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         cachedMediaList = searcher.search(query);
-
     }
 
     private File getTempFile(IItemBase item) {
@@ -264,9 +263,14 @@ public class SkypeSqlite implements SkypeStorage {
         return ArrayUtils.subarray(bytes, start, end + 1);
     }
 
-    private static final String SELECT_CACHE_DB = "select id, key, serialized_data from assets where key like '%URI'"; //$NON-NLS-1$
+    private static final String SELECT_CACHE_DB = "select id, key, serialized_data, actual_size from assets where key like '%URI' order by actual_size desc"; //$NON-NLS-1$
+    
+    private class NameSize{
+        String name;
+        long size;
+    }
 
-    private String getFileNameFromCacheDb(String uri) {
+    private NameSize getFileNameFromCacheDb(String uri) {
 
         if (cacheMediaDbPath == null) {
             return null;
@@ -289,9 +293,11 @@ public class SkypeSqlite implements SkypeStorage {
                 if (bytes[end] == 0)
                     break;
 
-            String fileName = str.substring(start, end - 1);
-
-            return fileName;
+            NameSize result = new NameSize();
+            result.name = str.substring(start, end - 1);
+            result.size = rs.getLong("actual_size"); //$NON-NLS-1$
+            
+            return result;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -339,7 +345,7 @@ public class SkypeSqlite implements SkypeStorage {
                 boolean originalFound = false;
                 for (IItemBase item : cachedMediaList) {
                     String nome = item.getName();
-                    if (nome.startsWith("i" + urlFile.getId() + "^") && nome.contains("orig")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    if (nome.startsWith("i" + urlFile.getId() + "^") && item.getLength() == urlFile.getSize()) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         urlFile.setCacheFile(item);
                         originalFound = true;
                         break;
@@ -363,14 +369,19 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     private SkypeMessageUrlFile getCacheFileFromCacheDb(SkypeMessageUrlFile urlFile) {
-        String nome = getFileNameFromCacheDb(urlFile.getUri());
-        if (nome != null)
+        NameSize nameSize = getFileNameFromCacheDb(urlFile.getUri());
+        if (nameSize != null) {
+            String name = nameSize.name;
+            if(name.startsWith("^") && name.indexOf("^", 1) == 51) {
+                name = name.split("\\^")[1];
+            }
             for (IItemBase item : cachedMediaList) {
-                if (nome.equals(item.getName())) {
+                if (item.getName().contains(name) && item.getLength() == nameSize.size) {
                     urlFile.setCacheFile(item);
                     return urlFile;
                 }
             }
+        }
         return null;
     }
 
