@@ -22,6 +22,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 
 /**
  * Classe responsável por gerar a representação HTML dos registros encontrados
@@ -121,16 +122,24 @@ public class ReportGenerator {
                     + "<TD>" + FormatUtil.format(sm.getData()) + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getAutor()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
             out.print("<TD>" + FormatUtil.format(sm.getDestino()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
-            if (sm.getAnexoUri() != null && sm.getAnexoUri().getThumbFile() != null) {
-                try (InputStream is = sm.getAnexoUri().getThumbFile().getBufferedStream()) {
-                    byte[] b = IOUtil.loadInputStream(is);
-                    out.print("<TD>" //$NON-NLS-1$
-                            + "<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
-                            + Base64.getEncoder().encodeToString(b) + "\"/>" //$NON-NLS-1$
-                            + "<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            + "</TD>"); //$NON-NLS-1$
-                } catch (IOException e) {
-                    out.print("<TD></TD>"); //$NON-NLS-1$
+            if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
+                out.print("<TD>");
+                try {
+                    IItemBase item = sm.getAnexoUri().getCacheFile();
+                    byte[] thumb = item.getThumb();
+                    String onclick = "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\") ";
+                    String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
+                    out.println("<a onclick=" + onclick); //$NON-NLS-1$
+                    out.println(" href=\"" + exportPath + "\">");
+                    if(thumb != null) {
+                        out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
+                                + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
+                    }
+                    out.print("<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    out.println("</a></TD>"); //$NON-NLS-1$
+                    
+                } catch (Exception e) {
+                    out.print("</TD>"); //$NON-NLS-1$
                     e.printStackTrace();
                 }
             } else {
@@ -266,13 +275,13 @@ public class ReportGenerator {
         out.println(NEW_ROW + Messages.getString("SkypeReport.RemoteID") + NEW_COL + sm.getIdRemoto() + CLOSE_ROW); //$NON-NLS-1$
         out.println("</TABLE>"); //$NON-NLS-1$
 
-        if (sm.getAnexoUri() != null && sm.getAnexoUri().getThumbFile() != null) {
-            try (InputStream is = sm.getAnexoUri().getThumbFile().getBufferedStream()) {
-                byte[] b = IOUtil.loadInputStream(is);
+        if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
+            try {
+                byte[] b = sm.getAnexoUri().getCacheFile().getThumb();
                 out.print(Messages.getString("SkypeReport.ImageCacheMsg") //$NON-NLS-1$
                         + ":<br/><img src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                         + Base64.getEncoder().encodeToString(b) + "\"/></TD>"); //$NON-NLS-1$
-            } catch (IOException e) {
+            } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
