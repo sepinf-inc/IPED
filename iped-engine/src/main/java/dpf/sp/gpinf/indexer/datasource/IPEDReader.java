@@ -400,15 +400,16 @@ public class IPEDReader extends DataSourceReader {
             dataSource.setUUID(doc.get(IndexItem.EVIDENCE_UUID));
             evidence.setDataSource(dataSource);
 
+            int prevId = Integer.valueOf(doc.get(IndexItem.ID));
             int id = getId(doc.get(IndexItem.ID));
             evidence.setId(id);
 
             if (!treeNode && caseData.isIpedReport()) {
                 if (extractCheckedItems) {
-                    selectedLabels.addAll(state.getLabelIds(id));
-                    evidence.setLabels(state.getLabelList(id));
+                    selectedLabels.addAll(state.getLabelIds(prevId));
+                    evidence.setLabels(state.getLabelList(prevId));
                 } else
-                    for (int labelId : state.getLabelIds(id)) {
+                    for (int labelId : state.getLabelIds(prevId)) {
                         if (state.isInReport(labelId)) {
                             selectedLabels.add(labelId);
                             evidence.getLabels().add(state.getLabelName(labelId));
