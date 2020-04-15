@@ -107,8 +107,8 @@ public class ExportFileTask extends AbstractTask {
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     
-    private static HashMap<Integer, File> storage = new HashMap<>();
-    private static HashMap<Integer, Connection> storageCon;
+    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
+    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -132,18 +132,18 @@ public class ExportFileTask extends AbstractTask {
         }
         IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
         if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-            if(storageCon == null) {
+            if(storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
         }
     }
     
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
-        if(storageCon == null) {
+        if(storageCon.get(output) == null) {
             configureSQLiteStorage(output);
         }
         int dbSuffix = getStorageSuffix(hash);
-        return storageCon.get(dbSuffix);
+        return storageCon.get(output).get(dbSuffix);
     }
     
     private static int getStorageSuffix(byte[] hash) {
@@ -151,24 +151,25 @@ public class ExportFileTask extends AbstractTask {
     }
     
     private static Connection  getSQLiteStorageCon(File db) {
-        if(storageCon == null) {
-            configureSQLiteStorage(db.getParentFile().getParentFile());
+        File output = db.getParentFile().getParentFile();
+        if(storageCon.get(output) == null) {
+            configureSQLiteStorage(output);
         }
         int dbSuffix = Integer.valueOf(db.getName().substring(STORAGE_PREFIX.length() + 1, db.getName().indexOf(".db")));
-        return storageCon.get(dbSuffix);
+        return storageCon.get(output).get(dbSuffix);
     }
     
     private static synchronized void configureSQLiteStorage(File output) {
-        if(storageCon != null) {
+        if(storageCon.get(output) != null) {
             return;
         }
         HashMap<Integer, Connection> tempStorageCon = new HashMap<>();
-        
+        HashMap<Integer, File> tempStorage = new HashMap<>();
         for(int i = 0; i < Math.pow(2, DB_SUFFIX_BITS); i++) {
             String storageName = STORAGE_PREFIX + "-" + i + ".db";
             File db = new File(output, STORAGE_PREFIX + File.separator + storageName);
             db.getParentFile().mkdir();
-            storage.put(i, db);
+            tempStorage.put(i, db);
             try {
                 Connection con = getSQLiteConnection(db);
                 try(Statement stmt = con.createStatement()){
@@ -181,7 +182,8 @@ public class ExportFileTask extends AbstractTask {
                 throw new RuntimeException(e);
             }
         }
-        storageCon = tempStorageCon;
+        storage.put(output, tempStorage);
+        storageCon.put(output, tempStorageCon);
     }
     
     private static Connection getSQLiteConnection(File storage) throws SQLException {
@@ -455,7 +457,7 @@ public class ExportFileTask extends AbstractTask {
                     	    //catch ioexceptions here to extract some content
                     	    exception = e;
                     	}
-                        if((i == -1 || exception != null) && total == 0) {
+                        if((i == -1 || exception != null) && storageCon.get(output) != null && total == 0) {
                         	if(baos.size() == 0) {
                         		evidence.setLength(0L);
                         	}else {
@@ -490,6 +492,8 @@ public class ExportFileTask extends AbstractTask {
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
                     
+                    LOGGER.debug("", e);
+                    
                 } finally {
                     if (bos != null) {
                         bos.close();
@@ -512,7 +516,7 @@ public class ExportFileTask extends AbstractTask {
         int k = getStorageSuffix(hash);
         HashValue md5 = new HashValue(hash);
         boolean alreadyInDB = false;
-        try(PreparedStatement ps = storageCon.get(k).prepareStatement(CHECK_HASH)){
+        try(PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)){
             ps.setString(1, md5.toString());
             ResultSet rs = ps.executeQuery();
             if(rs.next()) {
@@ -520,7 +524,7 @@ public class ExportFileTask extends AbstractTask {
             }
         }
         if(!alreadyInDB) {
-            try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+            try(PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(INSERT_DATA)){
                 ps.setString(1, md5.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 CompressorOutputStream gzippedOut = new CompressorStreamFactory()
@@ -535,7 +539,7 @@ public class ExportFileTask extends AbstractTask {
             }
         }
         evidence.setIdInDataSource(md5.toString());
-        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(k).toPath(), storageCon.get(k)));
+        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
         evidence.setLength((long)len);
     }
     
@@ -614,9 +618,9 @@ public class ExportFileTask extends AbstractTask {
     
     @Override
     public void finish() throws Exception {
-        if(storageCon != null) {
+        if(storageCon.get(output) != null) {
             int i = 0;
-            for(Connection con : storageCon.values()) {
+            for(Connection con : storageCon.get(output).values()) {
                 if(con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                     con.close();
@@ -627,9 +631,9 @@ public class ExportFileTask extends AbstractTask {
         }
     }
     
-    public static void commitStorage() throws SQLException {
-        if(storageCon != null) {
-            for(Connection con : storageCon.values()) {
+    public static void commitStorage(File output) throws SQLException {
+        if(storageCon.get(output) != null) {
+            for(Connection con : storageCon.get(output).values()) {
                 if(con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                 }

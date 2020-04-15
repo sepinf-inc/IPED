@@ -446,7 +446,7 @@ public class Manager {
                     stats.commit();
                     
                     LOGGER.info("Commiting sqlite storages...");
-                    ExportFileTask.commitStorage();
+                    ExportFileTask.commitStorage(output);
                     
                     writer.commit();
                     long end = System.currentTimeMillis() / 1000;
