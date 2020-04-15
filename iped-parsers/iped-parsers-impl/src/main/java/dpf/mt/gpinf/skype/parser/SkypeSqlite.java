@@ -39,11 +39,11 @@ public class SkypeSqlite implements SkypeStorage {
     private String baseSkypeFolder;
 
     protected Connection conn = null;
-    private Connection connStorageDb = null;
-    private Connection connMediaCacheDb = null;
+    protected Connection connStorageDb = null;
+    protected Connection connMediaCacheDb = null;
 
-    private File storageDbPath;
-    private File cacheMediaDbPath;
+    protected File storageDbPath;
+    protected File cacheMediaDbPath;
 
     private String skypeName;
     private Hashtable<Integer, SkypeConversation> conversations = null;

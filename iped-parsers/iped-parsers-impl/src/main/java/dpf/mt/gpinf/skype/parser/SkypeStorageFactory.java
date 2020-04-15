@@ -43,6 +43,28 @@ public class SkypeStorageFactory extends SQLite3DBParser {
                     }
                     return conn;
                 }
+                @Override
+                public Connection getStorageDbConnection() throws SkypeParserException {
+                    if(this.storageDbPath != null && this.connStorageDb == null) {
+                        try (TikaInputStream tis = TikaInputStream.get(storageDbPath.toPath())){
+                            connStorageDb = SkypeStorageFactory.this.getConnection(tis, metadata, context);
+                        } catch (IOException e) {
+                            throw new SkypeParserException(e);
+                        }
+                    }
+                    return connStorageDb;
+                }
+                @Override
+                public Connection getMediaCacheDbConnection() throws SkypeParserException {
+                    if(this.cacheMediaDbPath != null && this.connMediaCacheDb == null) {
+                        try (TikaInputStream tis = TikaInputStream.get(cacheMediaDbPath.toPath())){
+                            connMediaCacheDb = SkypeStorageFactory.this.getConnection(tis, metadata, context);
+                        } catch (IOException e) {
+                            throw new SkypeParserException(e);
+                        }
+                    }
+                    return connMediaCacheDb;
+                }
             };
 		}
 		if(metadata.get(Metadata.CONTENT_TYPE).equals(SkypeParser.SKYPE_MIME_V12.toString())) {
