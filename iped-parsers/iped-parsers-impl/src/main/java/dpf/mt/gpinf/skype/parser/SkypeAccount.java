@@ -4,7 +4,7 @@ import java.util.Date;
 
 public class SkypeAccount {
 
-    int id;
+    String id;
     String skypeName;
     String about;
     String mood;
@@ -23,11 +23,11 @@ public class SkypeAccount {
     String province;
     Date registrationTimestamp;
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
