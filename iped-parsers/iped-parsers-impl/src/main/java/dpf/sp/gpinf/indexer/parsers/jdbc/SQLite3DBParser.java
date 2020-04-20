@@ -51,6 +51,7 @@ import iped3.util.BasicProps;
  */
 public class SQLite3DBParser extends AbstractDBParser {
 
+    private static final long serialVersionUID = 1L;
     protected static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
     /**
@@ -74,7 +75,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         TemporaryResources tmp = new TemporaryResources();
         try {
-            File dbFile = TikaInputStream.get(stream, tmp).getFile();
+            File dbFile = TikaInputStream.get(new InputStreamDelegate(stream), tmp).getFile();
             File walTemp = exportWalLog(dbFile, context);
             if(walTemp != null) {
                 tmp.addResource(new Closeable() {
@@ -174,5 +175,42 @@ public class SQLite3DBParser extends AbstractDBParser {
     @Override
     public JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext context) {
         return new SQLite3TableReader(connection, tableName, context);
+    }
+    
+    private static class InputStreamDelegate extends InputStream {
+        private final InputStream delegate;
+        public InputStreamDelegate(InputStream delegate) {
+            this.delegate = delegate;
+        }
+        public int read() throws IOException {
+            return delegate.read();
+        }
+        public int read(byte[] b) throws IOException {
+            return delegate.read(b);
+        }
+        public int read(byte[] b, int off, int len) throws IOException {
+            return delegate.read(b, off, len);
+        }
+        public long skip(long n) throws IOException {
+            return delegate.skip(n);
+        }
+        public String toString() {
+            return delegate.toString();
+        }
+        public int available() throws IOException {
+            return delegate.available();
+        }
+        public void close() throws IOException {
+            delegate.close();
+        }
+        public void mark(int readlimit) {
+            delegate.mark(readlimit);
+        }
+        public void reset() throws IOException {
+            delegate.reset();
+        }
+        public boolean markSupported() {
+            return delegate.markSupported();
+        }
     }
 }
