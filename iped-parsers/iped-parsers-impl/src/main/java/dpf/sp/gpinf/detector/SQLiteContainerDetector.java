@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.tika.detect.Detector;
@@ -17,6 +18,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.sqlite.SQLiteConfig;
 
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
@@ -43,11 +45,14 @@ public class SQLiteContainerDetector implements Detector {
     private static final String headerStr = "SQLite format 3\0"; //$NON-NLS-1$
 
     private static byte[] header;
+    
+    private static Properties sqliteConnectionProperties;
 
     static {
         try {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
-
+            SQLiteConfig config = new SQLiteConfig();
+            sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
         }
@@ -81,7 +86,7 @@ public class SQLiteContainerDetector implements Detector {
     }
 
     private MediaType detectSQLiteFormat(File file) {
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath()); //$NON-NLS-1$
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath(), sqliteConnectionProperties); //$NON-NLS-1$
                 Statement st = conn.createStatement();) {
             Set<String> tableNames = new HashSet<String>();
             String sql = "SELECT name FROM sqlite_master WHERE type='table'"; //$NON-NLS-1$
