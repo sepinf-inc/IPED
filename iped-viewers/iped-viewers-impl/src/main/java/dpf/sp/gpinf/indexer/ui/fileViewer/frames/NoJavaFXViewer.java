@@ -44,7 +44,10 @@ public class NoJavaFXViewer extends Viewer {
     @Override
     public void scrollToNextHit(boolean forward) {
         // TODO Auto-generated method stub
-
     }
 
+    @Override
+    public boolean getHitsSupported() {
+        return false;
+    }
 }

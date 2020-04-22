@@ -1,3 +1,6 @@
+//TODO:Remove before final commit
+
+/*
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.awt.BorderLayout;
@@ -271,3 +274,4 @@ public class CompositeViewer extends JPanel implements ChangeListener, ActionLis
     }
 
 }
+*/

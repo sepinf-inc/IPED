@@ -191,7 +191,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
             sortedHits = new TreeMap<Long, int[]>();
             hits = new ArrayList<Long>();
             viewRows = new ArrayList<Long>();
-            appSearchParams.hitsModel.fireTableDataChanged();
+            App.get().getTextViewer().getHitsModel().fireTableDataChanged();
             App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
             parseText();
@@ -359,7 +359,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
                         }
 
                         // atualiza lista de hits
-                        appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
+                        App.get().getTextViewer().getHitsModel().fireTableRowsInserted(numHits, numHits);
                         this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
                     }
 

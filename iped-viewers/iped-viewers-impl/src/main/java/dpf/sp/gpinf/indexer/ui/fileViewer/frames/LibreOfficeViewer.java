@@ -62,9 +62,7 @@ import ag.ion.bion.officelayer.desktop.DesktopException;
 import ag.ion.bion.officelayer.desktop.IFrame;
 import ag.ion.bion.officelayer.document.DocumentDescriptor;
 import ag.ion.bion.officelayer.document.IDocument;
-import ag.ion.bion.officelayer.event.IDocumentEvent;
-import ag.ion.bion.officelayer.event.IDocumentListener;
-import ag.ion.bion.officelayer.event.IEvent;
+import ag.ion.bion.officelayer.event.DocumentAdapter;
 import ag.ion.bion.officelayer.presentation.IPresentationDocument;
 import ag.ion.bion.officelayer.spreadsheet.ISpreadsheetDocument;
 import ag.ion.bion.officelayer.text.ITextDocument;
@@ -74,7 +72,6 @@ import ag.ion.noa.search.SearchDescriptor;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
-
 import iped3.io.IStreamSource;
 
 public class LibreOfficeViewer extends Viewer {
@@ -100,7 +97,6 @@ public class LibreOfficeViewer extends Viewer {
         return contentType.startsWith("application/msword") //$NON-NLS-1$
                 || contentType.equals("application/rtf") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.ms-word") //$NON-NLS-1$
-                || contentType.startsWith("application/vnd.ms-powerpoint") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.openxmlformats-officedocument") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.oasis.opendocument") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.sun.xml") //$NON-NLS-1$
@@ -125,8 +121,13 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.equals("image/cdr") //$NON-NLS-1$
                 || contentType.equals("application/coreldraw") //$NON-NLS-1$
                 || contentType.equals("application/x-vnd.corel.zcf.draw.document+zip") //$NON-NLS-1$
-                || isSpreadSheet(contentType);
+                || isSpreadSheet(contentType) 
+                || isPresentation(contentType);
 
+    }
+
+    public boolean isPresentation(String contentType) {
+        return contentType.startsWith("application/vnd.ms-powerpoint"); //$NON-NLS-1$
     }
 
     public boolean isSpreadSheet(String contentType) {
@@ -134,7 +135,6 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.startsWith("application/x-tika-msworks-spreadsheet") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.oasis.opendocument.spreadsheet"); //$NON-NLS-1$
-
     }
 
     @Override
@@ -206,7 +206,7 @@ public class LibreOfficeViewer extends Viewer {
             officeApplication = OfficeApplicationRuntime.getApplication(configuration);
             officeApplication.setConfiguration(configuration);
             officeApplication.activate();
-            officeApplication.getDesktopService().addDocumentListener(new DocumentListener());
+            officeApplication.getDesktopService().addDocumentListener(new DocumentAdapter());
 
             LOGGER.info("LibreOffice running."); //$NON-NLS-1$
 
@@ -276,7 +276,9 @@ public class LibreOfficeViewer extends Viewer {
 
     private volatile boolean loading = false;
     private volatile boolean restartCalled = false;
-    public volatile File lastFile = null;
+    private volatile File lastFile;
+    private volatile String lastContentType;
+    private volatile Set<String> lastHighlightTerms;
     // private volatile Thread loadingThread;
     private Thread edtMonitor;
 
@@ -291,14 +293,21 @@ public class LibreOfficeViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final String contentType, final Set<String> highlightTerms) {
-
         final File file = content != null ? content.getFile() : null;
         lastFile = file;
+        lastContentType = contentType;
+        lastHighlightTerms = highlightTerms;
+        doLoadFile(file, contentType, highlightTerms);
+    }
 
+    public void reloadLastFile() {
+        doLoadFile(lastFile, lastContentType, lastHighlightTerms);
+    }
+
+    private void doLoadFile(File file, String contentType, Set<String> highlightTerms) {
         new Thread() {
             @Override
             public void run() {
-
                 synchronized (startLOLock) {
                     /**
                      * Código de proteção/reinicialização para casos de documentos com carregamento
@@ -321,27 +330,39 @@ public class LibreOfficeViewer extends Viewer {
                     DocumentDescriptor descriptor = DocumentDescriptor.DEFAULT;
                     descriptor.setReadOnly(true);
 
+                    loading = true;
                     if (file != null) {
-                        loading = true;
-                        setNoaPanelVisible(true);
-                        preventPPSPlay();
+                        noaPanel.setVisible(true);
+                        officeFrame.getXFrame().getContainerWindow().setVisible(false);
+
+                        if (isPresentation(contentType)) {
+                            preventPPSPlay();
+                        }
 
                         if (isSpreadSheet(contentType) && file.length() < XLS_LENGTH_TO_COPY) {
                             descriptor.setReadOnly(false);
                             copySpreadsheetToHighlight();
                         }
-                        
                         document = officeApplication.getDocumentService().loadDocument(officeFrame,
                                 lastFile.toURI().toURL().toString(), descriptor);
-                        ajustLayout();
+                        adjustLayout();
+
+                        officeFrame.getXFrame().getContainerWindow().setVisible(false);
+                        officeFrame.getXFrame().getContainerWindow().setVisible(true);
+                        noaPanel.revalidate();
+                        
+                        //TODO:Remove before final commit, if revalidate works as expected
+                        //noaPanel.setSize(noaPanel.getWidth() + delta, noaPanel.getHeight());
+                        //delta *= -1;
 
                     } else {
                         boolean isVisible = noaPanel.isVisible();
-                        setNoaPanelVisible(false);
+                        noaPanel.setVisible(false);
                         if (isVisible) {
                             document = officeApplication.getDocumentService().loadDocument(officeFrame,
                                     blankDoc.getAbsolutePath(), descriptor);
-                            ajustLayout();
+                            adjustLayout();
+                            noaPanel.revalidate();
                         }
 
                     }
@@ -361,16 +382,14 @@ public class LibreOfficeViewer extends Viewer {
                     // e.printStackTrace();
 
                     if (e.toString().contains("Document not found")) { //$NON-NLS-1$
-                        setNoaPanelVisible(false);
+                        noaPanel.setVisible(false);
 
                     } else if (!restartCalled && file == lastFile) {
                         synchronized (startLOLock) {
                             restartLO();
                         }
                     }
-
                 }
-
             }
         }.start();
 
@@ -412,7 +431,7 @@ public class LibreOfficeViewer extends Viewer {
 
     }
 
-    public void restartLO() {
+    private void restartLO() {
         LOGGER.info("Restarting LibreOffice..."); //$NON-NLS-1$
         restartCalled = true;
 
@@ -445,8 +464,12 @@ public class LibreOfficeViewer extends Viewer {
         LOGGER.info("LibreOffice restarted."); //$NON-NLS-1$
     }
 
-    private int delta = 1;
+    //TODO:Remove before final commit, if revalidate works as expected
+    //private int delta = 1;
 
+    //TODO:Remove before final commit, if internal (only inside load method) 
+    //focus solution works as expected. 
+    /*
     public void releaseFocus() {
         if (officeFrame != null) {
             try {
@@ -458,6 +481,7 @@ public class LibreOfficeViewer extends Viewer {
             }
         }
     }
+    */
 
     private volatile File tempFile = null;
 
@@ -488,7 +512,7 @@ public class LibreOfficeViewer extends Viewer {
         }
     }
 
-    private void ajustLayout() {
+    private void adjustLayout() {
         if (document != null) {
             try {
                 // officeFrame.getLayoutManager().showElement(LayoutManager.URL_STATUSBAR);
@@ -501,13 +525,16 @@ public class LibreOfficeViewer extends Viewer {
                 if (document instanceof IPresentationDocument) {
                     ((IPresentationDocument) document).getPresentationSupplier().getPresentation().end();
                 }
-
+                //TODO:Remove before final commit, if internal focus solution works as expected. 
+                //releaseFocus();
             } catch (Exception e) {
                 // e.printStackTrace();
             }
         }
     }
 
+    //TODO:Remove before final commit, if internal focus solution works as expected. 
+    /*
     public void setNoaPanelVisible(final boolean visible) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -518,6 +545,7 @@ public class LibreOfficeViewer extends Viewer {
             }
         });
     }
+    */
 
     @Override
     public void dispose() {
@@ -835,8 +863,7 @@ public class LibreOfficeViewer extends Viewer {
                                 xSel.select(sheetHit[1]);
 
                             } else if (document instanceof IPresentationDocument) {
-                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class,
-                                        officeFrame.getXFrame().getController());
+                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class, officeFrame.getXFrame().getController());
                                 drawView.setCurrentPage((XDrawPage) hits.get(--currentHit));
 
                             }
@@ -853,130 +880,4 @@ public class LibreOfficeViewer extends Viewer {
         }.start();
 
     }
-
-    private class DocumentListener implements IDocumentListener {
-
-        @Override
-        public void disposing(IEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onAlphaCharInput(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onFocus(IDocumentEvent arg0) {
-            releaseFocus();
-        }
-
-        @Override
-        public void onInsertDone(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onInsertStart(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onLoad(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onLoadDone(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void onLoadFinished(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void onModifyChanged(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onMouseOut(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onMouseOver(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onNew(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onNonAlphaCharInput(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSave(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSaveAs(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSaveAsDone(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSaveDone(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSaveFinished(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onUnload(IDocumentEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-    }
-
-    /*
-     * private class SearchTimer extends Thread{
-     * 
-     * Thread searchThread; volatile boolean searchEnded = false;
-     * 
-     * @Override public void run() { try { Thread.sleep(2000); if(searchEnded ==
-     * false){ searchThread.interrupt(); }
-     * 
-     * } catch (InterruptedException e) { } } }
-     */
 }

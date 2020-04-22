@@ -35,6 +35,9 @@ public class IcePDFViewer extends Viewer {
     volatile int fitMode = DocumentViewController.PAGE_FIT_WINDOW_WIDTH;
     volatile int viewMode = DocumentViewControllerImpl.ONE_COLUMN_VIEW;
 
+    private final Object lock = new Object();
+    private IStreamSource lastContent;
+    
     @Override
     public boolean isSupportedType(String contentType) {
         return contentType.equals("application/pdf"); //$NON-NLS-1$
@@ -48,6 +51,7 @@ public class IcePDFViewer extends Viewer {
 
     public IcePDFViewer() {
         super(new BorderLayout());
+        isToolbarVisible = true;
 
         // System.setProperty("org.icepdf.core.imageReference", "scaled"); //$NON-NLS-1$
         // //$NON-NLS-2$
@@ -115,10 +119,13 @@ public class IcePDFViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
-
+        synchronized (lock) {
+            lastContent = content;
+        }
         pdfController.closeDocument();
 
         if (content == null) {
+            pdfController.setToolBarVisible(false);
             return;
         }
 
@@ -131,29 +138,39 @@ public class IcePDFViewer extends Viewer {
         new Thread() {
             @Override
             public void run() {
+                synchronized (lock) {
+                    if (!content.equals(lastContent)) return;
+                    
+                    viewerPanel.setVisible(false);
 
-                pdfController.openDocument(content.getFile().getAbsolutePath());
+                    pdfController.openDocument(content.getFile().getAbsolutePath());
+                    pdfController.setToolBarVisible(isToolbarVisible());
 
-                if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
-                    pdfController.setPageFitMode(fitMode, true);
+                    if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
+                        pdfController.setPageFitMode(fitMode, true);
+                    }
+
+                    if (pdfController.isUtilityPaneVisible()) {
+                        pdfController.setUtilityPaneVisible(false);
+                    }
+
+                    viewerPanel.setVisible(true);
+                    viewerPanel.revalidate();
+
+                    //TODO:Remove before final commit, if revalidate works as expected
+                    // resize to force redraw
+                    //getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
+                    //delta *= -1;
+
+                    highlightText(highlightTerms);
                 }
-
-                if (pdfController.isUtilityPaneVisible()) {
-                    pdfController.setUtilityPaneVisible(false);
-                }
-
-                // resize to force redraw
-                getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
-                delta *= -1;
-
-                highlightText(highlightTerms);
-
             }
         }.start();
 
     }
 
-    private int delta = 1;
+    //TODO:Remove before final commit, if revalidate works as expected
+    //private int delta = 1;
     private ArrayList<Integer> hitPages;
 
     private void highlightText(Set<String> highlightTerms) {
@@ -211,4 +228,14 @@ public class IcePDFViewer extends Viewer {
 
     }
 
+    @Override
+    public void setToolbarVisible(boolean isVisible) {
+        super.setToolbarVisible(isVisible);
+        pdfController.setToolBarVisible(isVisible);
+    }
+
+    @Override
+    public int getToolbarSupported() {
+        return 1;
+    }
 }

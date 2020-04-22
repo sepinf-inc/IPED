@@ -138,7 +138,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         waitSleuthkitInit(item);
 
-        App.get().compositeViewer.loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+        App.get().getViewerController().loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
 
         if (listRelated) {
             // listRelatedItens();

@@ -64,6 +64,7 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     public ImageViewer(int initialFitMode) {
         super(new BorderLayout());
+        isToolbarVisible = true;
         imagePanel = new ImageViewPanel(initialFitMode);
         createToolBar();
         getPanel().add(imagePanel, BorderLayout.CENTER);
@@ -123,7 +124,7 @@ public class ImageViewer extends Viewer implements ActionListener {
                 IOUtil.closeQuietly(in);
             }
         }
-        toolBar.setVisible(image != null);
+        toolBar.setVisible(image != null && isToolbarVisible());
         updatePanel(image);
     }
 
@@ -170,11 +171,27 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void scrollToNextHit(boolean forward) {
     }
+    
+    @Override
+    public boolean getHitsSupported() {
+        return false;
+    }
+    
+    @Override
+    public void setToolbarVisible(boolean isVisible) {
+        super.setToolbarVisible(isVisible);
+        toolBar.setVisible(isVisible);
+    }
+
+    @Override
+    public int getToolbarSupported() {
+        return 1;
+    }
 
     private void createToolBar() {
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        ImageIcon iconSeparator = IconUtil.getIcon("separator", 24);
+        ImageIcon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
 
         toolBar.add(new JLabel(iconSeparator));
         createToolBarButton(actionRotLeft);
@@ -198,7 +215,7 @@ public class ImageViewer extends Viewer implements ActionListener {
                 }
             }
         });
-        ImageIcon icon = IconUtil.getIcon("bright", 12);
+        ImageIcon icon = IconUtil.getIcon("bright", resPath, 12);
         JPanel panelAux = new JPanel() {
             private static final long serialVersionUID = 8147197693022129080L;
 
@@ -220,7 +237,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     }
 
     protected JButton createToolBarButton(String action) {
-        JButton but = new JButton(IconUtil.getIcon(action, 24));
+        JButton but = new JButton(IconUtil.getIcon(action, resPath, 24));
         but.setActionCommand(action);
         but.setOpaque(false);
         toolBar.add(but);

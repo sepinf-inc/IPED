@@ -1,3 +1,6 @@
+//TODO: Remove before final commit
+
+/*
 package dpf.sp.gpinf.indexer.ui.fileViewer.control;
 
 import java.io.File;
@@ -35,14 +38,14 @@ import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
-
+*/
 /**
  * Controle da interface gráfica de visualização dos dados
  *
  * @author Marcelo Silva
  */
+/*
 public class ViewerControl implements IViewerControl {
-
     private static ViewerControl instance;
 
     private static Logger LOGGER = LoggerFactory.getLogger(ViewerControl.class);
@@ -205,5 +208,5 @@ public class ViewerControl implements IViewerControl {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated //$NON-NLS-1$
                                                                        // methods, choose Tools | Templates.
     }
-
 }
+*/

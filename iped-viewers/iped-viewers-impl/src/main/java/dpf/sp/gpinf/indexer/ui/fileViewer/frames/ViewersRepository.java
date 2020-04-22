@@ -12,6 +12,7 @@ import javax.swing.SwingUtilities;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
+//TODO: Perhaps renaming this class to MultiViewer (or CompositeViewer or something more meaningful) would be a good idea 
 public class ViewersRepository extends Viewer {
 
     private JPanel cardViewer = new JPanel(new CardLayout());
@@ -25,7 +26,7 @@ public class ViewersRepository extends Viewer {
 
     @Override
     public String getName() {
-        return Messages.getString("CompositeViewer.TabName"); //$NON-NLS-1$
+        return Messages.getString("ViewersRepository.TabName"); //$NON-NLS-1$
     }
 
     public void addViewer(final Viewer viewer) {
@@ -123,10 +124,48 @@ public class ViewersRepository extends Viewer {
     }
 
     @Override
+    public boolean getHitsSupported() {
+        if (currentViewer != null) {
+            return currentViewer.getHitsSupported();
+        }
+        return false;
+    }
+
+    @Override
+    public int getToolbarSupported() {
+        int ret = 0;
+        if (currentViewer != null) {
+            int val = currentViewer.getToolbarSupported();
+            if (val > ret) {
+                ret = val;
+            }
+        }
+        return ret;
+    }
+
+    @Override
+    public boolean isToolbarVisible() {
+        if (currentViewer != null) {
+            return currentViewer.isToolbarVisible();
+        }
+        return false;
+    }
+
+    @Override
+    public void setToolbarVisible(boolean isVisible) {
+        if (currentViewer != null) {
+            currentViewer.setToolbarVisible(isVisible);
+        }
+    }
+
+    @Override
     public void copyScreen() {
         if (currentViewer != null) {
             currentViewer.copyScreen();
         }
     }
-
+    
+    public Viewer getCurrentViewer() {
+        return currentViewer;
+    }
 }
