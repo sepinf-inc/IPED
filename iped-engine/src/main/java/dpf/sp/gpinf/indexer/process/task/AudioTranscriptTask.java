@@ -191,7 +191,8 @@ public class AudioTranscriptTask extends AbstractTask{
                 break;
             }
         }
-        if (!process) {
+        if (!process || evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || 
+                evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
             return;
         }
         
@@ -276,7 +277,8 @@ public class AudioTranscriptTask extends AbstractTask{
             LOGGER.debug("MS Transcript of {}: {}", evidence.getPath(), result.toString());
             
         } catch (Exception ex) {
-            LOGGER.error("Error transcribing " + evidence.getPath(), ex);
+            LOGGER.error("Error transcribing {} {}", evidence.getPath(), ex.toString());
+            LOGGER.debug("", ex);
             
         }finally {
             if(wavFile != null) {
