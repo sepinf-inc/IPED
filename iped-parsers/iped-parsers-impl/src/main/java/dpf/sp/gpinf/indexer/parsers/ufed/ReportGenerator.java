@@ -161,6 +161,7 @@ public class ReportGenerator {
         
         String transcription = message.getTranscription();
         if(transcription != null) {
+            out.print("<br>");
             out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
             String confidence = message.getTranscriptConfidence();
             if(confidence != null) {
