@@ -30,6 +30,7 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
@@ -94,6 +95,9 @@ public class AudioTranscriptTask extends AbstractTask{
         
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         String speechSubscriptionKey = args.getExtraParams().get(SUBSCRIPTION_KEY);
+        if(speechSubscriptionKey == null) {
+            throw new IPEDException("You must pass -X" + SUBSCRIPTION_KEY + "=XXX param to enable audio transcription.");
+        }
         
         config = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);
         
@@ -238,7 +242,7 @@ public class AudioTranscriptTask extends AbstractTask{
                     
                 }
                 else if (e.getResult().getReason() == ResultReason.NoMatch) {
-                    LOGGER.error("NOMATCH: Speech could not be recognized with {}", evidence.getPath());
+                    LOGGER.warn("NOMATCH: Speech could not be recognized with {}", evidence.getPath());
                 }
             });
             
