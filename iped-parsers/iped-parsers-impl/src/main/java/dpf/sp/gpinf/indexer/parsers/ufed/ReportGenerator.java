@@ -36,7 +36,7 @@ public class ReportGenerator {
         return currentMsg;
     }
 
-    public byte[] generateNextChatHtml(IItemBase c, List<Message> msgs) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
         if (lastChat != c) {
             lastChat = c;
             currentMsg = 0;
@@ -56,7 +56,7 @@ public class ReportGenerator {
 
         String lastDate = null;
         while (currentMsg < msgs.size()) {
-            Message m = msgs.get(currentMsg);
+            UfedMessage m = msgs.get(currentMsg);
             String thisDate = m.getTimeStamp() != null ? dateFormat.format(m.getTimeStamp())
                     : Messages.getString("ReportGenerator.UnknownDate"); //$NON-NLS-1$
             if (lastDate == null || !lastDate.equals(thisDate)) {
@@ -80,7 +80,7 @@ public class ReportGenerator {
         return bout.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, boolean chatDeleted) {
+    private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
         out.println("<div class=\"linha\">"); //$NON-NLS-1$
         String name;
         if (message.isFromMe()) {
@@ -158,6 +158,19 @@ public class ReportGenerator {
         }
         if (message.getMediaCaption() != null)
             out.println("<br>" + message.getMediaCaption()); //$NON-NLS-1$
+        
+        String transcription = message.getTranscription();
+        if(transcription != null) {
+            out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
+            String confidence = message.getTranscriptConfidence();
+            if(confidence != null) {
+                float score = Float.valueOf(confidence) * 100;
+                out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            out.println(": <i>"); //$NON-NLS-1$
+            out.println(transcription);
+            out.println("</i><br/>"); //$NON-NLS-1$
+        }
 
         if (message.getTimeStamp() != null) {
             out.println("<span class=\"time\">"); //$NON-NLS-1$
