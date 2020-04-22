@@ -2,11 +2,11 @@
 # You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
 
 # Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
-serviceRegion = westus
+serviceRegion = brazilsouth
 
 # Language model(s) to use when processing audios. You can set at most 2 separated by ;
 # Setting more than 1 model can result in wrong language detection.
-language = en-US
+language = pt-BR
 
 # Depending on your subscription, Microsoft limits the number of max concurrent requests
 maxRequests = 20
