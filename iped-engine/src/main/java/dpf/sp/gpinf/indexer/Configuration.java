@@ -127,7 +127,7 @@ public class Configuration {
             oos.close();
             byte[] bytes = Digest.getInstance("MD5").digest(baos.toByteArray());
             String hash = new String(Hex.encodeHex(bytes, false));
-            if(!"BD510D87881634974C3C9B23C1564165".equals(hash)) {
+            if(!"E4647E850CCD64B051836069DA1ABE4D".equals(hash)) {
                 System.err.println("You changed 'locale' in LocalConfig.txt but configured IPEDConfig.txt or conf/AdvancedConfig.txt in root folder! "
                         + "Please, restore those english config files to their defaults and set configuration in 'profiles/[lang]/default' folder!");
                 System.exit(1);
