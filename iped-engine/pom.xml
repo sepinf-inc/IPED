@@ -14,7 +14,20 @@
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     </properties>
     
+    <repositories>
+	    <repository>
+	      <id>maven-cognitiveservices-speech</id>
+	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
+	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
+	    </repository>
+    </repositories>
+    
     <dependencies>
+   	    <dependency>
+            <groupId>com.microsoft.cognitiveservices.speech</groupId>
+            <artifactId>client-sdk</artifactId>
+            <version>1.11.0</version>
+        </dependency>
         <dependency>
     	    <groupId>br.dpf</groupId>
     	    <artifactId>photodna-api</artifactId>

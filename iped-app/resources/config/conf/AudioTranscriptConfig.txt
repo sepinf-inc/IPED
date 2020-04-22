@@ -1,0 +1,18 @@
+# Audio transcript task config file. It uses Microsoft Azure service.
+# You must pass your subscription key using command line parameter -XazureSubscriptionKey=XXXXXXXX
+
+# Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
+serviceRegion = westus
+
+# Language model(s) to use when processing audios. You can set at most 2 separated by ;
+# Setting more than 1 model can result in wrong language detection.
+language = pt-BR; en-US
+
+# Depending on your subscription, Microsoft limits the number of max concurrent requests
+maxRequests = 20
+
+# Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
+convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le -ao pcm:fast:file=\"$OUTPUT\" "$INPUT"
+
+# Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
+mimesToProcess = audio

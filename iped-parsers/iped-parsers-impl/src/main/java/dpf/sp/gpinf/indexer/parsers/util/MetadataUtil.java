@@ -384,5 +384,17 @@ public class MetadataUtil {
 
         return false;
     }
+    
+    public static final Metadata clone(Metadata metadata) {
+    	Metadata clone = new Metadata();
+    	String[] keys = metadata.names();
+        for (String key : keys) {
+        	String[] values = metadata.getValues(key);
+        	for(String val : values) {
+        		clone.add(key, val);
+        	}
+        }
+        return clone;
+    }
 
 }
