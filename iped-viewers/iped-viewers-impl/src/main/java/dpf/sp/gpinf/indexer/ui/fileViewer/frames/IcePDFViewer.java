@@ -11,6 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.icepdf.core.pobjects.Catalog;
 import org.icepdf.core.pobjects.Document;
 import org.icepdf.core.search.DocumentSearchController;
 import org.icepdf.core.util.Library;
@@ -77,14 +78,30 @@ public class IcePDFViewer extends Viewer {
             public void openDocument(String pathname) {
                 if (pathname != null && pathname.length() > 0) {
                     try {
-                        if (document != null) {
-                            closeDocument();
-                        }
+                        closeDocument();
                         setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
                         document = new Document();
                         setupSecurityHandler(document, documentViewController.getSecurityCallback());
                         document.setFile(pathname);
                         commonNewDocumentHandling(pathname);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+            
+            public void closeDocument() {
+                try {
+                    if (document != null) {
+                        super.closeDocument();
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+            public void setToolBarVisible(boolean isVisible) {
+                if (document != null) {
+                    try {
+                        super.setToolBarVisible(isVisible);
                     } catch (Exception e) {
                     }
                 }
@@ -147,12 +164,9 @@ public class IcePDFViewer extends Viewer {
         
         lastContent = content;
         
-        //TODO: Perhaps this can be removed???
-        //      Right in the beginning of openDocument there is a closeDocument
-        //pdfController.closeDocument();
-
         if (content == null) {
-            pdfController.setToolBarVisible(false);
+            pdfController.closeDocument();
+            viewerPanel.setVisible(false);
             return;
         }
 
@@ -173,6 +187,12 @@ public class IcePDFViewer extends Viewer {
 
                     try {
                         pdfController.openDocument(content.getFile().getAbsolutePath());
+                        if (!content.equals(lastContent)) return;
+                        if (!isDocumentValid()) {
+                            labelMsg.setVisible(true);
+                            getPanel().revalidate();
+                            return;
+                        }
                         pdfController.setToolBarVisible(isToolbarVisible());
     
                         if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
@@ -204,6 +224,18 @@ public class IcePDFViewer extends Viewer {
 
     }
 
+    private boolean isDocumentValid() {
+        try {
+            Document document = pdfController.getDocument();
+            if (document == null) return false;
+            Catalog catalog = document.getCatalog();
+            if (catalog == null) return false;
+            return catalog.getPageTree() != null;
+        } catch (Exception e) {
+        }
+        return false;
+    }
+    
     //TODO:Remove before final commit, if revalidate works as expected
     //private int delta = 1;
     private ArrayList<Integer> hitPages;
@@ -270,10 +302,7 @@ public class IcePDFViewer extends Viewer {
     @Override
     public void setToolbarVisible(boolean isVisible) {
         super.setToolbarVisible(isVisible);
-        try {
-            pdfController.setToolBarVisible(isVisible);
-        } catch (Exception e) {
-        }
+        pdfController.setToolBarVisible(isVisible);
     }
 
     @Override
