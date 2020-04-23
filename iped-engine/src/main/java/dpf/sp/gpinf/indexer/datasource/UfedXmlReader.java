@@ -566,7 +566,7 @@ public class UfedXmlReader extends DataSourceReader {
                                 e.printStackTrace();
                             }
                         else
-                            item.getMetadata().add(meta, value);
+                            if(item != null) item.getMetadata().add(meta, value);
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
