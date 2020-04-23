@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.JLabel;
@@ -279,6 +280,7 @@ public class LibreOfficeViewer extends Viewer {
     private volatile File lastFile;
     private volatile String lastContentType;
     private volatile Set<String> lastHighlightTerms;
+    private AtomicInteger numTries = new AtomicInteger();
     // private volatile Thread loadingThread;
     private Thread edtMonitor;
 
@@ -297,11 +299,14 @@ public class LibreOfficeViewer extends Viewer {
         lastFile = file;
         lastContentType = contentType;
         lastHighlightTerms = highlightTerms;
+        numTries.set(0);
         doLoadFile(file, contentType, highlightTerms);
     }
 
     public void reloadLastFile() {
-        doLoadFile(lastFile, lastContentType, lastHighlightTerms);
+        if(numTries.getAndIncrement() == 0) {
+            doLoadFile(lastFile, lastContentType, lastHighlightTerms);
+        }
     }
 
     private void doLoadFile(File file, String contentType, Set<String> highlightTerms) {
@@ -378,8 +383,7 @@ public class LibreOfficeViewer extends Viewer {
                     loading = false;
 
                     LOGGER.info(e.toString());
-                    // System.out.println("exception!");
-                    // e.printStackTrace();
+                    LOGGER.debug("", e);
 
                     if (e.toString().contains("Document not found")) { //$NON-NLS-1$
                         noaPanel.setVisible(false);
@@ -388,6 +392,7 @@ public class LibreOfficeViewer extends Viewer {
                         synchronized (startLOLock) {
                             restartLO();
                         }
+                        reloadLastFile();
                     }
                 }
             }
