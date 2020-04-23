@@ -36,7 +36,7 @@ public class IcePDFViewer extends Viewer {
     volatile int viewMode = DocumentViewControllerImpl.ONE_COLUMN_VIEW;
 
     private final Object lock = new Object();
-    private IStreamSource lastContent;
+    private volatile IStreamSource lastContent;
     
     @Override
     public boolean isSupportedType(String contentType) {
@@ -119,9 +119,9 @@ public class IcePDFViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
-        synchronized (lock) {
-            lastContent = content;
-        }
+        
+        lastContent = content;
+        
         pdfController.closeDocument();
 
         if (content == null) {
@@ -162,7 +162,7 @@ public class IcePDFViewer extends Viewer {
                     //getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
                     //delta *= -1;
 
-                    highlightText(highlightTerms);
+                    highlightText(highlightTerms, content);
                 }
             }
         }.start();
@@ -173,7 +173,7 @@ public class IcePDFViewer extends Viewer {
     //private int delta = 1;
     private ArrayList<Integer> hitPages;
 
-    private void highlightText(Set<String> highlightTerms) {
+    private void highlightText(Set<String> highlightTerms, IStreamSource content) {
         try {
             DocumentSearchController search = pdfController.getDocumentSearchController();
             search.clearAllSearchHighlight();
@@ -193,6 +193,9 @@ public class IcePDFViewer extends Viewer {
             totalHits = 0;
             hitPages = new ArrayList<Integer>();
             for (int i = 0; i < pdfController.getDocument().getNumberOfPages(); i++) {
+                if(content != lastContent) {
+                    break;
+                }
                 int hits = search.searchHighlightPage(i);
                 if (hits > 0) {
                     totalHits++;
