@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,7 @@ public class ViewerController {
     private final ATextViewer textViewer;
     private final ViewersRepository viewersRepository;
     private final Map<Viewer, DefaultSingleCDockable> dockPerViewer = new HashMap<Viewer, DefaultSingleCDockable>();
+    private final Set<Viewer> updatedViewers = new HashSet<Viewer>();
     private LibreOfficeViewer officeViewer;
     private IStreamSource file;
     private IStreamSource viewFile;
@@ -166,7 +168,7 @@ public class ViewerController {
                     new Thread() {
                         public void run() {
                             officeViewer.constructLOFrame();
-                            officeViewer.reloadLastFile();
+                            officeViewer.reloadLastFile(true);
                         }
                     }.start();
                 }
@@ -194,6 +196,9 @@ public class ViewerController {
         this.contentType = contentType;
         this.viewType = null;
         this.highlightTerms = highlightTerms;
+        synchronized (updatedViewers) {
+            updatedViewers.clear();
+        }
         Viewer requested = null;
         if (file != null && !isFixed) {
             updateViewType();
@@ -257,6 +262,9 @@ public class ViewerController {
     }
 
     private void loadInViewer(Viewer viewer) {
+        synchronized (updatedViewers) {
+            if (!updatedViewers.add(viewer)) return;
+        }
         if (viewFile == null) {
             viewer.loadFile(null);
         } else {

@@ -303,7 +303,10 @@ public class LibreOfficeViewer extends Viewer {
         doLoadFile(file, contentType, highlightTerms);
     }
 
-    public void reloadLastFile() {
+    public void reloadLastFile(boolean reset) {
+        if (reset) {
+            numTries.set(0);
+        }
         if(numTries.getAndIncrement() == 0) {
             doLoadFile(lastFile, lastContentType, lastHighlightTerms);
         }
@@ -392,7 +395,7 @@ public class LibreOfficeViewer extends Viewer {
                         synchronized (startLOLock) {
                             restartLO();
                         }
-                        reloadLastFile();
+                        reloadLastFile(false);
                     }
                 }
             }
