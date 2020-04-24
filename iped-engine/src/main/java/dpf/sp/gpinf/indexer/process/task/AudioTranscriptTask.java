@@ -212,6 +212,8 @@ public class AudioTranscriptTask extends AbstractTask{
         
         AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig.fromLanguages(languages);
         
+        maxRequests.acquire();
+        
         try (SpeechRecognizer recognizer = new SpeechRecognizer(config, langConfig, audioInput)){
             
             Semaphore stopTranslationWithFileSemaphore = new Semaphore(0);
@@ -258,8 +260,6 @@ public class AudioTranscriptTask extends AbstractTask{
                 stopTranslationWithFileSemaphore.release();
             });
             
-            maxRequests.acquire();
-            
             // Starts continuous recognition. Uses StopContinuousRecognitionAsync() to stop recognition.
             recognizer.startContinuousRecognitionAsync().get();
             
@@ -268,8 +268,6 @@ public class AudioTranscriptTask extends AbstractTask{
             
             // Stops recognition.
             recognizer.stopContinuousRecognitionAsync().get();
-            
-            maxRequests.release();
             
             if(frags.get() == 0) {
                 frags.set(1);
@@ -284,6 +282,8 @@ public class AudioTranscriptTask extends AbstractTask{
             LOGGER.debug("", ex);
             
         }finally {
+            maxRequests.release();
+            
             if(wavFile != null) {
                 wavFile.delete();
             }
