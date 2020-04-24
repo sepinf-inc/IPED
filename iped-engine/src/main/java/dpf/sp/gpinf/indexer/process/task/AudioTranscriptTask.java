@@ -88,6 +88,9 @@ public class AudioTranscriptTask extends AbstractTask{
         if(enabled != null) {
             isEnabled = Boolean.valueOf(enabled.trim());
         }
+        if(!isEnabled) {
+            return;
+        }
         
         UTF8Properties props = new UTF8Properties();
         props.load(new File(confDir, CONF_FILE));
