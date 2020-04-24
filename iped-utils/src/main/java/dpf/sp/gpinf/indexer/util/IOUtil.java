@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
@@ -177,6 +179,17 @@ public class IOUtil {
             bos.write(buf, 0, len);
 
         return bos.toByteArray();
+    }
+    
+
+    private static Path tmpDir = null;
+    
+    public static boolean isTemporaryFile(File file) {
+        if (tmpDir == null) {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        }
+        Path filePath = Paths.get(file.getAbsolutePath()).getParent();
+        return tmpDir.compareTo(filePath) == 0;
     }
 
 }

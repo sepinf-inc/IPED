@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.tika.detect.Detector;
@@ -17,6 +18,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.sqlite.SQLiteConfig;
 
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
@@ -44,10 +46,14 @@ public class SQLiteContainerDetector implements Detector {
 
     private static byte[] header;
 
+    private static Properties sqliteConnectionProperties;
+
     static {
         try {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
-
+            SQLiteConfig config = new SQLiteConfig();
+            config.setReadOnly(true);
+            sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
         }
@@ -81,8 +87,8 @@ public class SQLiteContainerDetector implements Detector {
     }
 
     private MediaType detectSQLiteFormat(File file) {
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath()); //$NON-NLS-1$
-                Statement st = conn.createStatement();) {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath(), //$NON-NLS-1$
+                sqliteConnectionProperties); Statement st = conn.createStatement();) {
             Set<String> tableNames = new HashSet<String>();
             String sql = "SELECT name FROM sqlite_master WHERE type='table'"; //$NON-NLS-1$
             ResultSet rs = st.executeQuery(sql);
@@ -97,6 +103,12 @@ public class SQLiteContainerDetector implements Detector {
     }
 
     private MediaType detectTableNames(Set<String> tableNames) {
+
+        if (tableNames.contains("messagesv12") && //$NON-NLS-1$
+                tableNames.contains("profilecachev8") && //$NON-NLS-1$
+                ( tableNames.contains("conversationsv14") || tableNames.contains("conversationsv13") )&& //$NON-NLS-1$
+                tableNames.contains("internaldata")) //$NON-NLS-1$
+            return SkypeParser.SKYPE_MIME_V12;
 
         if (tableNames.contains("Messages") && //$NON-NLS-1$
                 tableNames.contains("Participants") && //$NON-NLS-1$

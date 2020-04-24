@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class SkypeContact {
 
-    int Id;
+    String Id;
     String skypeName;
     String pstnNumber;
     String fullName;
@@ -26,11 +26,11 @@ public class SkypeContact {
     Date lastOnlineDate;
     Date lastUsed;
 
-    public int getId() {
+    public String getId() {
         return Id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         Id = id;
     }
 
