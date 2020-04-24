@@ -8,11 +8,19 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -33,6 +41,7 @@ import com.sun.star.awt.XDevice;
 import com.sun.star.awt.XDisplayBitmap;
 import com.sun.star.awt.XGraphics;
 import com.sun.star.awt.XWindow;
+import com.sun.star.beans.Property;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XIndexAccess;
 import com.sun.star.drawing.XDrawPage;
@@ -47,6 +56,7 @@ import com.sun.star.table.XCell;
 import com.sun.star.table.XCellRange;
 import com.sun.star.text.XTextCursor;
 import com.sun.star.text.XTextRange;
+import com.sun.star.ui.XUIElement;
 import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 import com.sun.star.util.XProtectable;
@@ -128,7 +138,8 @@ public class LibreOfficeViewer extends Viewer {
     }
 
     public boolean isPresentation(String contentType) {
-        return contentType.startsWith("application/vnd.ms-powerpoint"); //$NON-NLS-1$
+        return contentType.startsWith("application/vnd.ms-powerpoint") //$NON-NLS-1$
+                || contentType.startsWith("application/vnd.openxmlformats-officedocument.presentationml"); //$NON-NLS-1$
     }
 
     public boolean isSpreadSheet(String contentType) {
@@ -262,7 +273,6 @@ public class LibreOfficeViewer extends Viewer {
                     } catch (DesktopException e1) {
                         e1.printStackTrace();
                     } catch (OfficeApplicationException e1) {
-                        // TODO Auto-generated catch block
                         e1.printStackTrace();
                     }
                 }
@@ -307,7 +317,7 @@ public class LibreOfficeViewer extends Viewer {
         if (reset) {
             numTries.set(0);
         }
-        if(numTries.getAndIncrement() == 0) {
+        if (numTries.getAndIncrement() == 0) {
             doLoadFile(lastFile, lastContentType, lastHighlightTerms);
         }
     }
@@ -358,7 +368,7 @@ public class LibreOfficeViewer extends Viewer {
                         officeFrame.getXFrame().getContainerWindow().setVisible(false);
                         officeFrame.getXFrame().getContainerWindow().setVisible(true);
                         noaPanel.revalidate();
-                        
+
                         //TODO:Remove before final commit, if revalidate works as expected
                         //noaPanel.setSize(noaPanel.getWidth() + delta, noaPanel.getHeight());
                         //delta *= -1;
@@ -494,8 +504,12 @@ public class LibreOfficeViewer extends Viewer {
     private volatile File tempFile = null;
 
     private void preventPPSPlay() {
-        if (lastFile.getName().toLowerCase().contains(".pps")) { //$NON-NLS-1$
+        String name = lastFile.getName().toLowerCase();
+        if (name.endsWith(".pps")) { //$NON-NLS-1$
             copyToTempFile(".ppt"); //$NON-NLS-1$
+        } else if (name.endsWith(".ppsx")) { //$NON-NLS-1$
+            copyToTempFile(".pptx");
+            convertToPPTX();
         }
     }
 
@@ -520,6 +534,44 @@ public class LibreOfficeViewer extends Viewer {
         }
     }
 
+    private void convertToPPTX() {
+        //Replaces the content type to convert from PPSX to PPTX, using fast (in-place) ZIP access
+        String s1 = "presentationml.slideshow";
+        String s2 = "presentationml.presentation";
+        FileSystem fs = null;
+        BufferedReader in = null;
+        BufferedWriter out = null;
+        try {
+            Path zipFilePath = lastFile.toPath();
+            fs = FileSystems.newFileSystem(zipFilePath, null);
+            Path source = fs.getPath("/[Content_Types].xml");
+            Path temp = fs.getPath("/tmp.xml");
+            Files.move(source, temp);
+            in = new BufferedReader(new InputStreamReader(Files.newInputStream(temp)));
+            out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(source)));
+            String line = null;
+            while ((line = in.readLine()) != null) {
+                int p = line.indexOf(s1);
+                if (p >= 0) {
+                    line = line.substring(0, p) + s2 + line.substring(p + s1.length());
+                }
+                out.write(line);
+                out.newLine();
+            }
+            in.close();
+            in = null;
+            out.close();
+            out = null;
+            Files.delete(temp);
+        } catch (Exception e) {
+            //e.printStackTrace();
+        } finally {
+            IOUtil.closeQuietly(in);
+            IOUtil.closeQuietly(out);
+            IOUtil.closeQuietly(fs);
+        }
+    }
+
     private void adjustLayout() {
         if (document != null) {
             try {
@@ -530,9 +582,11 @@ public class LibreOfficeViewer extends Viewer {
                     ((ITextDocument) document).zoom(DocumentZoomType.PAGE_WIDTH, (short) 100);
                 }
 
-                if (document instanceof IPresentationDocument) {
-                    ((IPresentationDocument) document).getPresentationSupplier().getPresentation().end();
-                }
+                //TODO: Remove? Perhaps this is not necessary anymore, after coverting PPSX to PPTX. 
+                //if (document instanceof IPresentationDocument) {
+                   //((IPresentationDocument) document).getPresentationSupplier().getPresentation().end();
+                //}
+                
                 //TODO:Remove before final commit, if internal focus solution works as expected. 
                 //releaseFocus();
             } catch (Exception e) {
