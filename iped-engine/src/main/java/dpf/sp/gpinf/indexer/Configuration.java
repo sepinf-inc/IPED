@@ -123,7 +123,7 @@ public class Configuration {
                 sb.append(e.getKey()).append(e.getValue());
             }
             String hash = DigestUtils.md5Hex(sb.toString());
-            if(!"41417f7b7b76134a9ae7bef4c00e3387".equals(hash)) { //$NON-NLS-1$
+            if(!"ebbe953df901fec10b89ae7fbd39b28f".equals(hash)) { //$NON-NLS-1$
                 System.err.println("You changed 'locale' in LocalConfig.txt but configured IPEDConfig.txt or conf/AdvancedConfig.txt in root folder! " //$NON-NLS-1$
                         + "Please, restore those english config files to their defaults and set configuration in 'profiles/[lang]/default' folder!"); //$NON-NLS-1$
                 System.exit(1);
