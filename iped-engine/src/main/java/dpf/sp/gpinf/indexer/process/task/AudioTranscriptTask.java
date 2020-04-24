@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.mime.MediaType;
@@ -208,85 +209,90 @@ public class AudioTranscriptTask extends AbstractTask{
             tmpFile = wavFile;
         }
         
-        AudioConfig audioInput = AudioConfig.fromWavFileInput(tmpFile.getAbsolutePath());
-        
-        AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig.fromLanguages(languages);
-        
-        maxRequests.acquire();
-        
-        try (SpeechRecognizer recognizer = new SpeechRecognizer(config, langConfig, audioInput)){
-            
-            Semaphore stopTranslationWithFileSemaphore = new Semaphore(0);
-            
-            StringBuilder result = new StringBuilder();
-            AtomicDouble score = new AtomicDouble();
-            AtomicInteger frags = new AtomicInteger();
-            
-            recognizer.recognizing.addEventListener((s, e) -> {
-                //System.out.println("RECOGNIZING: Text=" + e.getResult().getText());
-            });
-            
-            recognizer.recognized.addEventListener((s, e) -> {
-                if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
-                    if(frags.get() > 0) {
-                        result.append(' ');
-                    }
-                    result.append(e.getResult().getText());
-                    
-                    try {
-                        String details = e.getResult().getProperties().getProperty(PropertyId.SpeechServiceResponse_JsonResult);
-                        JSONObject json = (JSONObject) new JSONParser().parse(details);
-                        score.addAndGet((Double)((JSONObject)((JSONArray)json.get("NBest")).get(0)).get("Confidence"));
-                        frags.incrementAndGet();
+        int tries = 0;
+        AtomicBoolean ok = new AtomicBoolean();
+        while(!ok.get() && tries < 2) {
+            tries++;
+            ok.set(true);
+            AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig.fromLanguages(languages);
+            AudioConfig audioInput = AudioConfig.fromWavFileInput(tmpFile.getAbsolutePath());
+            maxRequests.acquire();
+            try (SpeechRecognizer recognizer = new SpeechRecognizer(config, langConfig, audioInput)){
+                
+                Semaphore stopTranslationWithFileSemaphore = new Semaphore(0);
+                
+                StringBuilder result = new StringBuilder();
+                AtomicDouble score = new AtomicDouble();
+                AtomicInteger frags = new AtomicInteger();
+                
+                recognizer.recognizing.addEventListener((s, e) -> {
+                    //System.out.println("RECOGNIZING: Text=" + e.getResult().getText());
+                });
+                
+                recognizer.recognized.addEventListener((s, e) -> {
+                    if (e.getResult().getReason() == ResultReason.RecognizedSpeech) {
+                        if(frags.get() > 0) {
+                            result.append(' ');
+                        }
+                        result.append(e.getResult().getText());
                         
-                    } catch (Exception e1) {
-                        e1.printStackTrace();
+                        try {
+                            String details = e.getResult().getProperties().getProperty(PropertyId.SpeechServiceResponse_JsonResult);
+                            JSONObject json = (JSONObject) new JSONParser().parse(details);
+                            score.addAndGet((Double)((JSONObject)((JSONArray)json.get("NBest")).get(0)).get("Confidence"));
+                            frags.incrementAndGet();
+                            
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        
                     }
-                    
+                    else if (e.getResult().getReason() == ResultReason.NoMatch) {
+                        ok.set(false);
+                        LOGGER.warn("NOMATCH: Speech could not be recognized with {}", evidence.getPath());
+                    }
+                });
+                
+                recognizer.canceled.addEventListener((s, e) -> {
+                    if (e.getReason() == CancellationReason.Error) {
+                        ok.set(false);
+                        LOGGER.error("Transcription of {} failed errorCode={} details={}", evidence.getPath(), e.getErrorCode(), e.getErrorDetails());
+                    }
+                    stopTranslationWithFileSemaphore.release();
+                });
+                
+                recognizer.sessionStopped.addEventListener((s, e) -> {
+                    stopTranslationWithFileSemaphore.release();
+                });
+                
+                // Starts continuous recognition. Uses StopContinuousRecognitionAsync() to stop recognition.
+                recognizer.startContinuousRecognitionAsync().get();
+                
+                // Waits for completion.
+                stopTranslationWithFileSemaphore.acquire();
+                
+                // Stops recognition.
+                recognizer.stopContinuousRecognitionAsync().get();
+                
+                if(frags.get() == 0) {
+                    frags.set(1);
                 }
-                else if (e.getResult().getReason() == ResultReason.NoMatch) {
-                    LOGGER.warn("NOMATCH: Speech could not be recognized with {}", evidence.getPath());
-                }
-            });
-            
-            recognizer.canceled.addEventListener((s, e) -> {
-                if (e.getReason() == CancellationReason.Error) {
-                    LOGGER.error("Transcription of {} failed errorCode={} details={}", evidence.getPath(), e.getErrorCode(), e.getErrorDetails());
-                }
-                stopTranslationWithFileSemaphore.release();
-            });
-            
-            recognizer.sessionStopped.addEventListener((s, e) -> {
-                stopTranslationWithFileSemaphore.release();
-            });
-            
-            // Starts continuous recognition. Uses StopContinuousRecognitionAsync() to stop recognition.
-            recognizer.startContinuousRecognitionAsync().get();
-            
-            // Waits for completion.
-            stopTranslationWithFileSemaphore.acquire();
-            
-            // Stops recognition.
-            recognizer.stopContinuousRecognitionAsync().get();
-            
-            if(frags.get() == 0) {
-                frags.set(1);
+                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(score.doubleValue() / frags.intValue()));
+                evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.toString());
+                
+                LOGGER.debug("MS Transcript of {}: {}", evidence.getPath(), result.toString());
+                
+            } catch (Exception ex) {
+                LOGGER.error("Error transcribing {} {}", evidence.getPath(), ex.toString());
+                LOGGER.warn("", ex);
+                
+            }finally {
+                maxRequests.release();
             }
-            evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(score.doubleValue() / frags.intValue()));
-            evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.toString());
-            
-            LOGGER.debug("MS Transcript of {}: {}", evidence.getPath(), result.toString());
-            
-        } catch (Exception ex) {
-            LOGGER.error("Error transcribing {} {}", evidence.getPath(), ex.toString());
-            LOGGER.debug("", ex);
-            
-        }finally {
-            maxRequests.release();
-            
-            if(wavFile != null) {
-                wavFile.delete();
-            }
+        }
+        
+        if(wavFile != null) {
+            wavFile.delete();
         }
         
     }
