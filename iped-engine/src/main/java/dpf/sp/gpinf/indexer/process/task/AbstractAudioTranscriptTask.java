@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,8 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     private static final String CONVERT_CMD_KEY = "convertCommand";
     
     private static final String TEST_FFMPEG = "ffmpeg -version";
+    
+    protected static final MediaType wav = MediaType.audio("vnd.wave");
     
     private static boolean ffmpegTested = false;
     
@@ -135,6 +138,7 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
         int exit = p.waitFor();
         if(exit != 0) {
             tmpFile.delete();
+            LOGGER.warn("Error converting to wav {}", evidence.getPath());
             return null;
         }
         return tmpFile;

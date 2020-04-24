@@ -34,7 +34,6 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
     //must be set in environment variable
 	private static final String CREDENTIAL_KEY = "GOOGLE_APPLICATION_CREDENTIALS";
 	
-    private static final MediaType wav = MediaType.audio("vnd.wave");
 	private static final MediaType mp3 = MediaType.audio("mpeg");
 	private static final MediaType ogg = MediaType.audio("vorbis");
 	private static final MediaType flac = MediaType.audio("x-flac");
@@ -72,7 +71,6 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
         }else {
             wavFile = super.getWavFile(evidence);
             if(wavFile == null) {
-                LOGGER.warn("Error converting to wav {}", evidence.getPath());
                 return;
             }
             tmpFile = wavFile;
