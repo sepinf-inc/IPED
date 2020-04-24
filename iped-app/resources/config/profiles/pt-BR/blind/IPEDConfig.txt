@@ -75,6 +75,10 @@ indexCorruptedFiles = true
 # Opções avançadas do OCR, como o caminho do Tesseract no Linux, podem ser alteradas em conf/AdvancedConfig.txt
 enableOCR = false
 
+# Habilita a transcrição de áudios. A implementação atual usa o Microsoft Azure Cognitive Services.
+# Ajuste a configuração em conf/AudioTranscriptConfig.txt e informe a chave na linha de comando via -XazureSubscriptionKey=KEY
+enableAudioTranscription = false
+
 # Adiciona e processa fileSlacks dos arquivos
 addFileSlacks = false
 

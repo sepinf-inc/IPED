@@ -76,6 +76,10 @@ indexCorruptedFiles = false
 # Advanced OCR options, such as the Tesseract path on Linux, can be modified in "conf/AdvancedConfig.txt"
 enableOCR = false
 
+# Enable audio transcription. Current implementation uses Microsoft Azure Service.
+# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
+enableAudioTranscription = false
+
 # Adds and processes files fileSlacks
 addFileSlacks = false
 
