@@ -2,6 +2,11 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -16,6 +21,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.Pragma;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import com.microsoft.cognitiveservices.speech.AutoDetectSourceLanguageConfig;
@@ -60,11 +68,21 @@ public class AudioTranscriptTask extends AbstractTask{
     
     private static final MediaType wav = MediaType.audio("vnd.wave");
     
+    private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
+    
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL);"; //$NON-NLS-1$
+    
+    private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
+    
+    private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
+    
     private static boolean ffmpegTested = false;
     
     private static boolean ffmpegDetected = false;
     
     private static Semaphore maxRequests;
+    
+    private Connection conn;
     
     private List<String> languages = new ArrayList<>();
     
@@ -126,6 +144,10 @@ public class AudioTranscriptTask extends AbstractTask{
             mimesToProcess.add(mime.trim());
         }
         
+        if(conn == null) {
+            createConnection();
+        }
+        
         //testFfmpeg();
     }
     
@@ -151,10 +173,62 @@ public class AudioTranscriptTask extends AbstractTask{
         }
     }
     
+    private void createConnection() {
+        File db = new File(output, TEXT_STORAGE);
+        db.getParentFile().mkdirs();
+        try {
+            SQLiteConfig config = new SQLiteConfig();
+            config.setSynchronous(SynchronousMode.OFF);
+            config.setBusyTimeout(3600000);
+            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+            
+            try(Statement stmt = conn.createStatement()){
+                stmt.executeUpdate(CREATE_TABLE);
+            }
+            
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private class TextAndScore{
+        String text;
+        double score;
+    }
+    
+    private TextAndScore getTextFromDb(String id) throws IOException {
+        try(PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)){
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()) {
+                TextAndScore result = new TextAndScore();
+                result.text = rs.getString(1);
+                result.score = rs.getDouble(2);
+                return result;
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+        return null;
+    }
+    
+    private void storeTextInDb(String id, String text, double score) throws IOException {
+        try(PreparedStatement ps = conn.prepareStatement(INSERT_DATA)){
+            ps.setString(1, id);
+            ps.setString(2, text);
+            ps.setDouble(3, score);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+    }
+    
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-        
+        if(conn != null) {
+            conn.close();
+            conn = null;
+        }
     }
     
     private File getWavFile(IItem evidence) throws IOException, InterruptedException {
@@ -196,7 +270,14 @@ public class AudioTranscriptTask extends AbstractTask{
             }
         }
         if (!process || evidence.getLength() == null || evidence.getLength() == 0 || !evidence.isToAddToCase() || 
-                evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+                evidence.getHash() == null || evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null) {
+            return;
+        }
+        
+        TextAndScore prevResult = getTextFromDb(evidence.getHash());
+        if(prevResult != null) {
+            evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
+            evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
             return;
         }
         
@@ -277,11 +358,11 @@ public class AudioTranscriptTask extends AbstractTask{
                 // Stops recognition.
                 recognizer.stopContinuousRecognitionAsync().get();
                 
-                if(frags.get() == 0) {
-                    frags.set(1);
-                }
-                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(score.doubleValue() / frags.intValue()));
+                Double finalScore = score.doubleValue() / (frags.intValue() != 0 ? frags.intValue() : 1);
+                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, finalScore.toString());
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.toString());
+                
+                storeTextInDb(evidence.getHash(), result.toString(), finalScore);
                 
                 LOGGER.debug("MS Transcript of {}: {}", evidence.getPath(), result.toString());
                 
