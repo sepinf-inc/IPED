@@ -22,6 +22,8 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
+import dpf.sp.gpinf.indexer.util.IPEDException;
+
 public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
     
     private static Logger LOGGER = LoggerFactory.getLogger(GoogleTranscriptTask.class);
@@ -44,7 +46,13 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
 	public void init(Properties confParams, File confDir) throws Exception {
 	    
 	    super.init(confParams, confDir);
-	    
+	    if(!isEnabled) {
+	        return;
+	    }
+	    String credential = System.getenv(CREDENTIAL_KEY);
+	    if(credential == null || credential.trim().isEmpty()) {
+	        throw new IPEDException("To use Google transcription, you must specify environment variable " + CREDENTIAL_KEY);
+	    }
 		speechClient = SpeechClient.create();
 	}
 
