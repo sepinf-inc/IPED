@@ -87,7 +87,7 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
         return supported;
     }
     
-    private void testFfmpeg() {
+    protected boolean isFfmpegOk() {
         if(!ffmpegTested) {
             try {
                 ProcessBuilder pb = new ProcessBuilder();
@@ -103,10 +103,11 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
                 e.printStackTrace();
             }
             if(!ffmpegDetected) {
-                LOGGER.error("Error testing ffmpeg, is it on path? Just wav files will be transcribed.");
+                LOGGER.error("Error testing ffmpeg, that could hurt transcription. Is it on path?");
             }
             ffmpegTested = true;
         }
+        return ffmpegDetected;
     }
     
     private void createConnection() {
