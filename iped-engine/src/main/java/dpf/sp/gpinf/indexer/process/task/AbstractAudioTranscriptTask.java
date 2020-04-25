@@ -45,7 +45,7 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     
     private String convertCmd;
     
-    private boolean isEnabled = false;
+    protected boolean isEnabled = false;
     
     @Override
     public boolean isEnabled() {

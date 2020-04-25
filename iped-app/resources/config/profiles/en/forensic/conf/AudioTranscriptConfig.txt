@@ -12,7 +12,7 @@ language = en-US
 maxRequests = 20
 
 # Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
-convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le -ao pcm:fast:file=\"$OUTPUT\" "$INPUT"
+convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le -af channels=1 -ao pcm:fast:file=\"$OUTPUT\" "$INPUT"
 
 # Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
 mimesToProcess = audio
