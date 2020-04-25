@@ -2,6 +2,11 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -10,6 +15,8 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -35,6 +42,14 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     
     protected static final MediaType wav = MediaType.audio("vnd.wave");
     
+    private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
+    
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL);"; //$NON-NLS-1$
+    
+    private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
+    
+    private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
+    
     private static boolean ffmpegTested = false;
     
     private static boolean ffmpegDetected = false;
@@ -45,7 +60,11 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     
     private String convertCmd;
     
+    private Connection conn;
+    
     protected boolean isEnabled = false;
+    
+    protected IItem evidence;
     
     @Override
     public boolean isEnabled() {
@@ -89,6 +108,56 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
             ffmpegTested = true;
         }
     }
+    
+    private void createConnection() {
+        File db = new File(output, TEXT_STORAGE);
+        db.getParentFile().mkdirs();
+        try {
+            SQLiteConfig config = new SQLiteConfig();
+            config.setSynchronous(SynchronousMode.OFF);
+            config.setBusyTimeout(3600000);
+            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+            
+            try(Statement stmt = conn.createStatement()){
+                stmt.executeUpdate(CREATE_TABLE);
+            }
+            
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    protected class TextAndScore{
+        String text;
+        double score;
+    }
+    
+    private TextAndScore getTextFromDb(String id) throws IOException {
+        try(PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)){
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if(rs.next()) {
+                TextAndScore result = new TextAndScore();
+                result.text = rs.getString(1);
+                result.score = rs.getDouble(2);
+                return result;
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+        return null;
+    }
+    
+    private void storeTextInDb(String id, String text, double score) throws IOException {
+        try(PreparedStatement ps = conn.prepareStatement(INSERT_DATA)){
+            ps.setString(1, id);
+            ps.setString(2, text);
+            ps.setDouble(3, score);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -96,6 +165,9 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
         String enabled = confParams.getProperty(ENABLE_KEY);
         if(enabled != null) {
             isEnabled = Boolean.valueOf(enabled.trim());
+        }
+        if(!isEnabled) {
+            return;
         }
         
         UTF8Properties props = new UTF8Properties();
@@ -112,6 +184,12 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
         for(String mime : mimes.split(";")) {
             mimesToProcess.add(mime.trim());
         }
+        
+        if(conn == null) {
+            createConnection();
+        }
+        
+        //testFfmpeg();
         
     }
     
@@ -146,11 +224,54 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-        
+        if(conn != null) {
+            conn.close();
+            conn = null;
+        }
     }
 
     @Override
-    protected abstract void process(IItem evidence) throws Exception;
+    protected void process(IItem evidence) throws Exception {
+        
+        if(!isToProcess(evidence)) {
+            return;
+        }
+        
+        TextAndScore prevResult = getTextFromDb(evidence.getHash());
+        if(prevResult != null) {
+            evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
+            evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
+            return;
+        }
+        
+        File tempWav = null, file;
+        if(evidence.getMediaType().equals(wav)) {
+            file = evidence.getTempFile();
+        }else {
+            tempWav = getWavFile(evidence);
+            if(tempWav == null) {
+                return;
+            }
+            file = tempWav;
+        }
+        
+        try {
+            this.evidence = evidence;
+            TextAndScore result = transcribeWav(file);
+            if(result != null) {
+                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
+                evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
+                storeTextInDb(evidence.getHash(), result.text, result.score);
+            }
+            
+        }finally {
+            if(tempWav != null) {
+                tempWav.delete();
+            }
+        }
+        
+    }
+    
+    protected abstract TextAndScore transcribeWav(File tmpFile) throws Exception;
     
 }

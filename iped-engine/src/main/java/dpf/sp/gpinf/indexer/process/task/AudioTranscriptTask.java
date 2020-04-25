@@ -1,30 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
-
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
-
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.tika.mime.MediaType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.Pragma;
-import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import com.google.common.util.concurrent.AtomicDouble;
 import com.microsoft.cognitiveservices.speech.AutoDetectSourceLanguageConfig;
@@ -40,8 +26,6 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import iped3.IItem;
-import iped3.util.ExtraProperties;
 
 public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
     
@@ -53,17 +37,7 @@ public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
     
     private static final String MAX_REQUESTS_KEY = "maxRequests";
     
-    private static final String TEXT_STORAGE = "text/transcriptions.db"; //$NON-NLS-1$
-    
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS transcriptions(id TEXT PRIMARY KEY, text TEXT, score REAL);"; //$NON-NLS-1$
-    
-    private static final String INSERT_DATA = "INSERT INTO transcriptions(id, text, score) VALUES(?,?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
-    
-    private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
-    
     private static Semaphore maxRequests;
-    
-    private Connection conn;
     
     private SpeechConfig config;
     
@@ -97,99 +71,19 @@ public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
             int max = Integer.valueOf(props.getProperty(MAX_REQUESTS_KEY).trim());
             maxRequests = new Semaphore(max);
         }
-        
-        if(conn == null) {
-            createConnection();
-        }
-        
-        //testFfmpeg();
-    }
-     
-    private void createConnection() {
-        File db = new File(output, TEXT_STORAGE);
-        db.getParentFile().mkdirs();
-        try {
-            SQLiteConfig config = new SQLiteConfig();
-            config.setSynchronous(SynchronousMode.OFF);
-            config.setBusyTimeout(3600000);
-            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
-            
-            try(Statement stmt = conn.createStatement()){
-                stmt.executeUpdate(CREATE_TABLE);
-            }
-            
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    private class TextAndScore{
-        String text;
-        double score;
-    }
-    
-    private TextAndScore getTextFromDb(String id) throws IOException {
-        try(PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)){
-            ps.setString(1, id);
-            ResultSet rs = ps.executeQuery();
-            if(rs.next()) {
-                TextAndScore result = new TextAndScore();
-                result.text = rs.getString(1);
-                result.score = rs.getDouble(2);
-                return result;
-            }
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
-        return null;
-    }
-    
-    private void storeTextInDb(String id, String text, double score) throws IOException {
-        try(PreparedStatement ps = conn.prepareStatement(INSERT_DATA)){
-            ps.setString(1, id);
-            ps.setString(2, text);
-            ps.setDouble(3, score);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
     }
     
     @Override
     public void finish() throws Exception {
-        if(conn != null) {
-            conn.close();
-            conn = null;
-        }
+        super.finish();
     }
     
     @Override
-    protected void process(IItem evidence) throws Exception {
-        
-        if(!isToProcess(evidence)) {
-            return;
-        }
-        
-        TextAndScore prevResult = getTextFromDb(evidence.getHash());
-        if(prevResult != null) {
-            evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(prevResult.score));
-            evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, prevResult.text);
-            return;
-        }
-        
-        File wavFile = null, tmpFile;
-        if(evidence.getMediaType().equals(wav)) {
-            tmpFile = evidence.getTempFile();
-        }else {
-            wavFile = getWavFile(evidence);
-            if(wavFile == null) {
-                return;
-            }
-            tmpFile = wavFile;
-        }
+    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
         
         int tries = 0;
         AtomicBoolean ok = new AtomicBoolean();
+        TextAndScore textAndScore = null;
         while(!ok.get() && tries < 2) {
             tries++;
             ok.set(true);
@@ -253,11 +147,9 @@ public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
                 // Stops recognition.
                 recognizer.stopContinuousRecognitionAsync().get();
                 
-                Double finalScore = score.doubleValue() / (frags.intValue() != 0 ? frags.intValue() : 1);
-                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, finalScore.toString());
-                evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.toString());
-                
-                storeTextInDb(evidence.getHash(), result.toString(), finalScore);
+                textAndScore = new TextAndScore();
+                textAndScore.text = result.toString();
+                textAndScore.score = score.doubleValue() / (frags.intValue() != 0 ? frags.intValue() : 1);
                 
                 LOGGER.debug("MS Transcript of {}: {}", evidence.getPath(), result.toString());
                 
@@ -270,9 +162,8 @@ public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
             }
         }
         
-        if(wavFile != null) {
-            wavFile.delete();
-        }
+        return textAndScore;
+
     }
     
 }

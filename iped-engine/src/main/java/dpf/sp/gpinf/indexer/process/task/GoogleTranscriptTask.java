@@ -3,7 +3,6 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -22,10 +21,6 @@ import com.google.cloud.speech.v1p1beta1.SpeechClient;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
-
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import iped3.IItem;
-import iped3.util.ExtraProperties;
 
 public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
     
@@ -55,27 +50,14 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
 
 	@Override
 	public void finish() throws Exception {
+	    super.finish();
 		speechClient.close();
 	}
 
 	@Override
-	protected void process(IItem evidence) throws Exception {
+	protected TextAndScore transcribeWav(File tmpFile) throws Exception {
 
-	    if(!isToProcess(evidence)) {
-            return;
-        }
-        
-        File wavFile = null, tmpFile;
-        if(evidence.getMediaType().equals(wav)) {
-            tmpFile = evidence.getTempFile();
-        }else {
-            wavFile = super.getWavFile(evidence);
-            if(wavFile == null) {
-                return;
-            }
-            tmpFile = wavFile;
-        }
-
+	    TextAndScore textAndScore = null;
 		try {
 			// The language of the supplied audio
 			String languageCode = languages.get(0);
@@ -141,20 +123,18 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
 			}
 			if(i == 0) i = 1;
 			
-			evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, text.toString());
-            evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, String.valueOf(confidence / i));
+			textAndScore = new TextAndScore();
+			textAndScore.text = text.toString();
+			textAndScore.score = confidence / i;
 			
 			LOGGER.debug("GG Transcript of {} : {}", evidence.getPath(), text.toString());
 
 		} catch (Exception e) {
 		    LOGGER.error("Failed to transcript {} : {}", evidence.getPath(), e);
 		    LOGGER.warn("", e);
-		    
-		}finally {
-		    if(wavFile != null) {
-                wavFile.delete();
-            }
 		}
+		
+		return textAndScore;
 
 	}
 
