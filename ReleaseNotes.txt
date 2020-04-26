@@ -1,3 +1,41 @@
+05/XX/2020: IPED-3.18
+News:
+#15 (IN PROGRESS) Graph analysis for communications (Filipe Simões and Luis Nassif)
+#62 Resume aborted or stopped processing: new options --continue & --restart (Luis Nassif)
+#85 (IN PROGRESS) Audio transcription: implementations with Azure and Google cloud, must set credentials (Luis Nassif)
+#26 Initial ElasticSearch indexing module, not accessed by java GUI for now (Luis Nassif)
+#25 Store small subitems, thumbs and ocr text in containers, speeding up case copying and deletion (Luis Nassif) 
+#29 Improved HexViewer with goto, search, charset selection, layout customization and more (Guilherme Dutra)
+#70 Regex validators for bitcoin cash, ethereum and riple criptocurrencies, now enabled by default (Fabio Pfeifer)
+#61 Parsers for torrent and resume.dat files (Fabio Pfeifer)
+#31 Parser for Windows 10 user activities timeline (Matheus Bichara)
+#14 Basic parser for SkypeV12 (Patrick Bernardina)
+#45 Improved Image/TiffViewer with rotation, size fit and brightness control (Wladimir Leite)
+#55 (IN PROGRESS) Refactoring to detach individual viewers (Wladimir Leite)
+#60 Viewer for Autocad DWG files (Alberto Magno)
+#60 Keyboard shortcuts for bookmarks (Alberto Magno and Luis Nassif)
+#60 Recursive subitem checking (Alberto Magno and Luis Nassif)
+#82 Links to open cached images embedded in old Skype chats (Luis Nassif)
+#64 Optimization for PST decoding up to 3x (Luis Nassif)
+#47 Optimization for bookmarking hash duplicates (Luis Nassif)
+#93 Avoid pop up error dialog for corrupted PDFs (Wladimir Leite)
+#58 GPX and KML files are now expanded in more profiles (Luis Nassif)
+#75 Embed html resources in chat html previews (Fabio Pfeifer)
+#44 Changed vcard parser to generate a html preview instead of subitems (Fabio Pfeifer)
+#53 Easier way to change the number of thumbnail columns in gallery (Wladimir Leite)
+Fixes:
+#69 Report creation from command line sometimes did not work (Luis Nassif)
+#51 On demand duplicate filter sometimes did not filter first duplicate (Luis Nassif)
+#46 GUI error when re-opening case while processing (Luis Nassif)
+#79 Columns added again and mixing content after updating GUI when analyzing case before processing ends (Luis Nassif)
+#92 PPSX presentations played automatically when viewed (Wladimir Leite)
+#86 Links in chat html previews not working for attachments with wrong extension (Luis Nassif)
+#87 Wal logs merged in main SQLite when stored in FS (Fabio Pfeifer)
+#83 Some cached image thumbs of old Skype versions not inserted in chats (Luis Nassif)
+#54 Row selection by typing in sorted column was not working (Wladimir Leite)
+#50 Export to CSV sometimes generates malformed CSV (Luis Nassif)
+
+
 03/18/2020: IPED-3.17.2
 Fixes:
 - Profile fastmode not working in v3.17 (#30)
