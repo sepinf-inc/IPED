@@ -41,7 +41,6 @@ import com.sun.star.awt.XDevice;
 import com.sun.star.awt.XDisplayBitmap;
 import com.sun.star.awt.XGraphics;
 import com.sun.star.awt.XWindow;
-import com.sun.star.beans.Property;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XIndexAccess;
 import com.sun.star.drawing.XDrawPage;
@@ -56,7 +55,6 @@ import com.sun.star.table.XCell;
 import com.sun.star.table.XCellRange;
 import com.sun.star.text.XTextCursor;
 import com.sun.star.text.XTextRange;
-import com.sun.star.ui.XUIElement;
 import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 import com.sun.star.util.XProtectable;
@@ -361,8 +359,13 @@ public class LibreOfficeViewer extends Viewer {
                             descriptor.setReadOnly(false);
                             copySpreadsheetToHighlight();
                         }
+                        IDocument prevDocument = document;
                         document = officeApplication.getDocumentService().loadDocument(officeFrame,
                                 lastFile.toURI().toURL().toString(), descriptor);
+                        if (document != null && document.equalsTo(prevDocument)) {
+                            LOGGER.info("Failed to load Office document.");
+                            cleanDocument(descriptor);
+                        }
                         adjustLayout();
 
                         officeFrame.getXFrame().getContainerWindow().setVisible(false);
@@ -374,15 +377,7 @@ public class LibreOfficeViewer extends Viewer {
                         //delta *= -1;
 
                     } else {
-                        boolean isVisible = noaPanel.isVisible();
-                        noaPanel.setVisible(false);
-                        if (isVisible) {
-                            document = officeApplication.getDocumentService().loadDocument(officeFrame,
-                                    blankDoc.getAbsolutePath(), descriptor);
-                            adjustLayout();
-                            noaPanel.revalidate();
-                        }
-
+                        cleanDocument(descriptor);
                     }
 
                     loading = false;
@@ -410,7 +405,21 @@ public class LibreOfficeViewer extends Viewer {
                 }
             }
         }.start();
-
+    
+    }
+    
+    private void cleanDocument(DocumentDescriptor descriptor) {
+        try {
+            boolean isVisible = noaPanel.isVisible();
+            noaPanel.setVisible(false);
+            if (isVisible) {
+                document = officeApplication.getDocumentService().loadDocument(officeFrame,
+                        blankDoc.getAbsolutePath(), descriptor);
+                adjustLayout();
+                noaPanel.revalidate();
+            }
+        } catch (Throwable e) {
+        }
     }
 
     private Thread monitorEventThreadBlocking() {
