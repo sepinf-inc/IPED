@@ -830,13 +830,37 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             DefaultSingleCDockable viewerDock = viewerDocks.get(i);
             viewerDock.addCDockableLocationListener(new CDockableLocationListener() {
                 public void changed(CDockableLocationEvent event) {
-                    if (event.isShowingChanged() && event.getNewShowing()) {
-                        if (viewerController != null) {
-                            viewerController.updateViewer(viewer, false);
+                    //TODO: Remove before final commit
+                    /*
+                    System.err.println();
+                    System.err.println("VIEWER:" + viewer.getName());
+                    System.err.println(event.getOldLocation());
+                    System.err.println(event.getOldShowing());
+                    System.err.println(event.getNewShowing());
+                    System.err.println(event.getNewLocation());
+                    System.err.println(event.isShowingChanged());
+                    System.err.println(event.isLocationChanged());
+                    */
+                    if (viewerController != null && event.getNewShowing()) {
+                        boolean validated = false;
+                        if (event.isLocationChanged() && event.getOldLocation() != null) {
+                            CLocation oldLocation = event.getOldLocation().getParent();
+                            CLocation newLocation = event.getNewLocation();
+                            if (newLocation != null) {
+                                newLocation = newLocation.getParent();
+                            }
+                            if ((oldLocation == null && newLocation != null) || (oldLocation != null && !oldLocation.equals(newLocation))) {
+                                validated = viewerController.validateViewer(viewer);
+                            }
                         }
+                        if (!validated && event.isShowingChanged()) {
+                            viewerController.updateViewer(viewer, false);
+                        } 
                     }
                 }
             });
+            //TODO: Remove before final commit
+            /*
             viewerDock.addCDockableStateListener(new CDockableStateListener() {
                 public void visibilityChanged(CDockable dockable) {
                 }
@@ -847,6 +871,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 }
             });
+            */
             
             CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getIcon("prev", resPath));
             CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getIcon("next", resPath));

@@ -161,7 +161,9 @@ public class ViewerController {
         }
     }
 
-    public void validateViewer(Viewer viewer) {
+    public boolean validateViewer(Viewer viewer) {
+        //TODO: Remove before final commit
+        //System.err.println("VALIDATE : " + viewer.getName());
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
                 if (officeViewer != null && viewersRepository.getCurrentViewer().equals(officeViewer)) {
@@ -171,9 +173,11 @@ public class ViewerController {
                             officeViewer.reloadLastFile(true);
                         }
                     }.start();
+                    return true;
                 }
             }
         }
+        return false;
     }
 
     private void checkInit() {
@@ -238,6 +242,8 @@ public class ViewerController {
     }
 
     public void updateViewer(Viewer viewer, boolean clean) {
+        //TODO: Remove before final commit
+        //System.err.println("UPDATE : " + viewer.getName() + " : " + clean);
         if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
             loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
