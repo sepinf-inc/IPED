@@ -498,6 +498,8 @@ public class IPEDReader extends DataSourceReader {
 
                     } else if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
                         evidence.setIdInDataSource(value.trim());
+                    }
+                    if(doc.get(IndexItem.SOURCE_PATH) != null) {
                         String relPath = doc.get(IndexItem.SOURCE_PATH);
                         Path absPath = Util.getResolvedFile(basePath, relPath).toPath();
                         SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
@@ -510,10 +512,10 @@ public class IPEDReader extends DataSourceReader {
                         }
                         evidence.setInputStreamFactory(sisf);
 
-                    } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX))
+                    } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
                         evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
                     
-                    else {
+                    } else {
                         MediaType type = evidence.getMediaType();
                         while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
                             if(type.equals(MediaTypes.METADATA_ENTRY)) {

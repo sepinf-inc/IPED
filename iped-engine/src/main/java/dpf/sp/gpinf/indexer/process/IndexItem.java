@@ -233,7 +233,8 @@ public class IndexItem extends BasicProps {
         if (value != null) {
             doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
-
+        }
+        if(evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourcePath() != null) {
             Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
             value = Util.getRelativePath(output, srcPath.toFile());
             doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
@@ -738,6 +739,8 @@ public class IndexItem extends BasicProps {
                 value = doc.get(IndexItem.ID_IN_SOURCE);
                 if (value != null && !value.isEmpty()) {
                     evidence.setIdInDataSource(value.trim());
+                }
+                if (doc.get(IndexItem.SOURCE_PATH) != null) {
                     String relPath = doc.get(IndexItem.SOURCE_PATH);
                     Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
                     SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);

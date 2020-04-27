@@ -144,7 +144,7 @@ public class UFEDChatParser extends AbstractParser {
                                 chatMetadata.add(meta, val);
                     }
 
-                    String chatName = chat.getName();
+                    String chatName = getChatName(chat);
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
@@ -162,6 +162,22 @@ public class UFEDChatParser extends AbstractParser {
 
         }
 
+    }
+    
+    private String getChatName(IItemBase item) {
+        String name = "Chat"; //$NON-NLS-1$
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+        if (source != null)
+            name += "_" + source; //$NON-NLS-1$
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+        if (parties != null && parties.length > 2) {
+            name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
+        } else if (parties != null && parties.length > 0) {
+            name += "_" + parties[0]; //$NON-NLS-1$
+            if (parties.length > 1)
+                name += "_" + parties[1]; //$NON-NLS-1$
+        }
+        return name;
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
