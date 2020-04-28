@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.process.task;
+package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,14 +19,16 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
 
-public abstract class AbstractAudioTranscriptTask extends AbstractTask{
+public abstract class AbstractTranscriptTask extends AbstractTask{
     
-    private static Logger LOGGER = LoggerFactory.getLogger(AbstractAudioTranscriptTask.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AbstractTranscriptTask.class);
     
     protected static final String ENABLE_KEY = "enableAudioTranscription";
     

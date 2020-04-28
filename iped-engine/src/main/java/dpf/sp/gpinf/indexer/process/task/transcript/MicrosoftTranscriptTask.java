@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.process.task;
+package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
 import java.util.Properties;
@@ -29,7 +29,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
-public class MicrosoftTranscriptTask extends AbstractAudioTranscriptTask{
+public class MicrosoftTranscriptTask extends AbstractTranscriptTask{
     
     private static Logger LOGGER = LoggerFactory.getLogger(MicrosoftTranscriptTask.class);
     

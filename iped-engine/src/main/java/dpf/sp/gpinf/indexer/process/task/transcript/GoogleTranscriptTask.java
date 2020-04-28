@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.process.task;
+package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -32,7 +32,7 @@ import com.google.protobuf.ByteString;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
-public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
+public class GoogleTranscriptTask extends AbstractTranscriptTask {
     
     private static Logger LOGGER = LoggerFactory.getLogger(GoogleTranscriptTask.class);
 
