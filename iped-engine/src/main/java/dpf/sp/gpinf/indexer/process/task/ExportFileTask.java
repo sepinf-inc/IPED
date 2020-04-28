@@ -628,6 +628,7 @@ public class ExportFileTask extends AbstractTask {
                 }
                 i++;
             }
+            storageCon.remove(output);
         }
     }
     
