@@ -568,7 +568,7 @@ public class ExportFileTask extends AbstractTask {
 		public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
 			try{
 				byte[] bytes = null;
-				if(conn == null) {
+				if(conn == null || conn.isClosed()) {
                     conn = getSQLiteStorageCon(getDataSourcePath().toFile());
                 }
 				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
