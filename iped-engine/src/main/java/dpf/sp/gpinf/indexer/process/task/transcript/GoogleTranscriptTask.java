@@ -61,6 +61,13 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 	    if(!isEnabled) {
 	        return;
 	    }
+	    
+	    try {
+            Class.forName("com.google.cloud.speech.v1p1beta1.SpeechClient");
+        }catch(ClassNotFoundException e) {
+            throw new IPEDException("Coud not found required class. Do you put google-cloud-speech.jar and its dependencies in plugin dir?");
+        }
+	    
 	    String credential = System.getenv(CREDENTIAL_KEY);
 	    if(credential == null || credential.trim().isEmpty()) {
 	        throw new IPEDException("To use Google transcription, you must specify environment variable " + CREDENTIAL_KEY);
@@ -75,6 +82,9 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
 	@Override
 	public void finish() throws Exception {
+	    if(!isEnabled) {
+            return;
+        }
 	    super.finish();
 		speechClient.close();
 	}

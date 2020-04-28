@@ -32,7 +32,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask{
     
     protected static final String ENABLE_KEY = "enableAudioTranscription";
     
-    protected static final String CONF_FILE = "AudioTranscriptConfig.txt";
+    static final String CONF_FILE = "AudioTranscriptConfig.txt";
     
     private static final String TIMEOUT_KEY = "timeout";
     
@@ -61,6 +61,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask{
     private static boolean ffmpegTested = false;
     
     private static boolean ffmpegDetected = false;
+    
+    protected UTF8Properties props = new UTF8Properties();
     
     protected List<String> languages = new ArrayList<>();
     
@@ -181,7 +183,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask{
             return;
         }
         
-        UTF8Properties props = new UTF8Properties();
         props.load(new File(confDir, CONF_FILE));
         
         String langs = props.getProperty(LANG_KEY);

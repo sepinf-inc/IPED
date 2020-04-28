@@ -27,7 +27,6 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class MicrosoftTranscriptTask extends AbstractTranscriptTask{
     
@@ -51,9 +50,6 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask{
         if(!isEnabled) {
             return;
         }
-        
-        UTF8Properties props = new UTF8Properties();
-        props.load(new File(confDir, CONF_FILE));
         
         String serviceRegion = props.getProperty(REGION_KEY).trim();
         
