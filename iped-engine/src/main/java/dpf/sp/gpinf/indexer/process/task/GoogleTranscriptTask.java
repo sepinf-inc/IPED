@@ -11,13 +11,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.TreeSet;
-
-import javax.swing.filechooser.FileFilter;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sqlite.core.DB;
 
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.cloud.speech.v1p1beta1.LongRunningRecognizeMetadata;
@@ -195,7 +193,7 @@ public class GoogleTranscriptTask extends AbstractAudioTranscriptTask {
 			OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> future =
 		            speechClient.longRunningRecognizeAsync(request);
 			
-			LongRunningRecognizeResponse response = future.get();
+			LongRunningRecognizeResponse response = future.get(MIN_TIMEOUT + (timeoutPerSec * tmpFile.length() / WAV_BYTES_PER_SEC), TimeUnit.SECONDS);
 
 			StringBuilder text = new StringBuilder();
 			float confidence = 0;

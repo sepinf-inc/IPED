@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.File;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -142,7 +144,11 @@ public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
                 recognizer.startContinuousRecognitionAsync().get();
                 
                 // Waits for completion.
-                stopTranslationWithFileSemaphore.acquire();
+                boolean acquired = stopTranslationWithFileSemaphore.tryAcquire(MIN_TIMEOUT + (timeoutPerSec * tmpFile.length() / WAV_BYTES_PER_SEC), TimeUnit.SECONDS);
+                if(!acquired) {
+                    ok.set(false);
+                    throw new TimeoutException("Timeout waiting for transcription.");
+                }
                 
                 // Stops recognition.
                 recognizer.stopContinuousRecognitionAsync().get();

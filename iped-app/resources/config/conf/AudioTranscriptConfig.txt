@@ -16,3 +16,6 @@ convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s1
 
 # Mime types or supertypes to process. If you want to add videos use ; as separator and update 'convertCommand'.
 mimesToProcess = audio
+
+# Max number of seconds to wait until each audio second is transcribed. A minimum of 10s is always wait.
+timeout = 3

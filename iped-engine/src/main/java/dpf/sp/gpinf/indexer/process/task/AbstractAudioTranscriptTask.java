@@ -32,6 +32,8 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     
     protected static final String CONF_FILE = "AudioTranscriptConfig.txt";
     
+    private static final String TIMEOUT_KEY = "timeout";
+    
     private static final String LANG_KEY = "language";
     
     private static final String MIMES_KEY = "mimesToProcess";
@@ -50,11 +52,17 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
     
     private static final String SELECT_EXACT = "SELECT text, score FROM transcriptions WHERE id=?;"; //$NON-NLS-1$
     
+    protected static final int MIN_TIMEOUT = 10;
+    
+    protected static final int WAV_BYTES_PER_SEC = 16000 * 2; // 16khz sample rate and 16bits per sample
+    
     private static boolean ffmpegTested = false;
     
     private static boolean ffmpegDetected = false;
     
     protected List<String> languages = new ArrayList<>();
+    
+    protected int timeoutPerSec;
     
     private List<String> mimesToProcess = new ArrayList<>();
     
@@ -185,6 +193,8 @@ public abstract class AbstractAudioTranscriptTask extends AbstractTask{
         for(String mime : mimes.split(";")) {
             mimesToProcess.add(mime.trim());
         }
+        
+        timeoutPerSec = Integer.valueOf(props.getProperty(TIMEOUT_KEY).trim());
         
         if(conn == null) {
             createConnection();
