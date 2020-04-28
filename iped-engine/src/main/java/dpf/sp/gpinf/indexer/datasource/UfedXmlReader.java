@@ -641,19 +641,21 @@ public class UfedXmlReader extends DataSourceReader {
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
                         String value = name == null || name.equals(identifier) ? identifier
                                 : identifier == null ? name : name + "(" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                        if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_FROM, value);
-                        else if ("To".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_TO, value);
-                        else if ("Cc".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_CC, value);
-                        else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
-                        else
-                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
+                        if (value != null) {
+                            if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_FROM, value);
+                            else if ("To".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_TO, value);
+                            else if ("Cc".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_CC, value);
+                            else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
+                            else
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
+                        }
 
                         String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner"); //$NON-NLS-1$
-                        if (Boolean.valueOf(isOwner) && parentItem.getMediaType().toString().contains("chat")) //$NON-NLS-1$
+                        if (value != null && Boolean.valueOf(isOwner) && parentItem.getMediaType().toString().contains("chat")) //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
 
                         if (Boolean.valueOf(isOwner) && "From".equals(role)) //$NON-NLS-1$
