@@ -29,9 +29,9 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
-public class AudioTranscriptTask extends AbstractAudioTranscriptTask{
+public class MicrosoftTranscriptTask extends AbstractAudioTranscriptTask{
     
-    private static Logger LOGGER = LoggerFactory.getLogger(AudioTranscriptTask.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(MicrosoftTranscriptTask.class);
     
     private static final String REGION_KEY = "serviceRegion";
     
