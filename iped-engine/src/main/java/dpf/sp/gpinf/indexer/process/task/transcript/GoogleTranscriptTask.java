@@ -39,6 +39,8 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     //must be set in environment variable
 	private static final String CREDENTIAL_KEY = "GOOGLE_APPLICATION_CREDENTIALS";
 	
+	private static final String REQUEST_INTERVAL_KEY = "requestIntervalMillis"; 
+	
 	private static final MediaType mp3 = MediaType.audio("mpeg");
 	private static final MediaType ogg = MediaType.audio("vorbis");
 	private static final MediaType flac = MediaType.audio("x-flac");
@@ -52,7 +54,12 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 	private static final int MAX_WAV_SIZE = 16000 * 2 * MAX_WAV_TIME;
 	private static final String SPLIT_CMD = "ffmpeg -i $INPUT -f segment -segment_time " + MAX_WAV_TIME + " -c copy $OUTPUT%03d.wav";
 	
+	private static Object lock = new Object();
+	private static long lastTime = 0;
+	
 	private SpeechClient speechClient;
+	
+	private int requestIntervalMillis = 0;
 
 	@Override
 	public void init(Properties confParams, File confDir) throws Exception {
@@ -72,6 +79,8 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 	    if(credential == null || credential.trim().isEmpty()) {
 	        throw new IPEDException("To use Google transcription, you must specify environment variable " + CREDENTIAL_KEY);
 	    }
+	    
+	    requestIntervalMillis = Integer.valueOf(props.getProperty(REQUEST_INTERVAL_KEY).trim());
 	    
 	    if(!super.isFfmpegOk()) {
 	        LOGGER.error("FFmpeg not detected, audios longer than 1min will not be transcribed!");
@@ -150,7 +159,17 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 	
 	
 	protected TextAndScore transcribeWavPart(File tmpFile) throws Exception {
-
+	    
+	    //google has request per time quota limits
+	    synchronized(lock) {
+	        long t = System.currentTimeMillis();
+	        long dif = t - lastTime;
+	        if(dif < requestIntervalMillis) {
+	            Thread.sleep(requestIntervalMillis - dif);
+	        }
+	        lastTime = System.currentTimeMillis();
+	    }
+	    
 	    TextAndScore textAndScore = null;
 		try {
 			// The language of the supplied audio

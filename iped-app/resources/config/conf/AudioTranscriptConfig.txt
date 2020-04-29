@@ -18,7 +18,10 @@ serviceRegion = westus
 language = en-US
 
 # Depending on your subscription, Microsoft limits the number of max concurrent requests
-maxRequests = 20
+maxConcurrentRequests = 20
+
+# Depending on your subscription, Google limits your request rate (per minute or per second).
+requestIntervalMillis = 67
 
 # Command to convert audios to wav before transcription. Do not change $INPUT or $OUTPUT params.
 convertCommand = mplayer -benchmark -vo null -vc null -srate 16000 -af format=s16le -af channels=1 -ao pcm:fast:file=\"$OUTPUT\" "$INPUT"

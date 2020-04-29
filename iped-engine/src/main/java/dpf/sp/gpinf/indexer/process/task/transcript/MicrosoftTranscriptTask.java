@@ -36,7 +36,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask{
     
     private static final String SUBSCRIPTION_KEY = "azureSubscriptionKey";
     
-    private static final String MAX_REQUESTS_KEY = "maxRequests";
+    private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
     
     private static Semaphore maxRequests;
     
