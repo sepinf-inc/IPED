@@ -106,6 +106,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
@@ -2905,13 +2906,10 @@ class HVPTextField extends JTextField {
 
 class ByteArraySeekData extends ByteArrayEditableData {
 
-    protected byte[] data = new byte[0];
-
-    private long len, rows;
+    private long len;
     private Map<Long, int[]> memoBytes = new HashMap<Long, int[]>();
     private byte[] readBuf = new byte[1 << 12];
     private LinkedList<Long> fifo = new LinkedList<Long>();
-    private boolean err;
     private static final int MAX_MEMO = 2000;
 
     private SeekableInputStream file;
@@ -2924,23 +2922,13 @@ class ByteArraySeekData extends ByteArrayEditableData {
         if (file != null && file.equals(this.file)) {
             return;
         }
-        if (this.file != null) {
-            try {
-                this.file.close();
-            } catch (IOException e) {
-            }
-            this.file = null;
-        }
+        
+        clear();
 
         this.file = file;
-        len = 0;
-        rows = 0;
         if (file != null) {
             len = file.size();
         }
-        err = false;
-        memoBytes.clear();
-
     }
 
     @Override
@@ -2984,14 +2972,13 @@ class ByteArraySeekData extends ByteArrayEditableData {
 
         } catch (Exception e) {
             e.printStackTrace();
-            err = true;
             this.clear();
             fireReadError();
             return -1;
         }
 
     }
-
+    
     void fireReadError() {
         // do nothing by default
     }
@@ -3034,8 +3021,10 @@ class ByteArraySeekData extends ByteArrayEditableData {
 
     @Override
     public void clear() {
-        data = new byte[0];
+        len = 0;
         memoBytes.clear();
+        IOUtil.closeQuietly(file);
+        file = null;
     }
 
 }
