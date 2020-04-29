@@ -120,22 +120,21 @@ public class MetadataViewer extends Viewer {
                     WebEngine webEngine = viewer.webEngine;
                     webEngine.load(null);
 
-                    if (!(content instanceof IItemBase))
-                        return;
-
-                    viewer.highlightTerms = terms;
-                    String preview = generatePreview((IItemBase) content, htmlViewers.indexOf(viewer));
-                    try {
-                        if (viewer.tmpFile == null) {
-                            viewer.tmpFile = File.createTempFile("metadata", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-                            viewer.tmpFile.deleteOnExit();
+                    if (content instanceof IItemBase) {
+                        viewer.highlightTerms = terms;
+                        String preview = generatePreview((IItemBase) content, htmlViewers.indexOf(viewer));
+                        try {
+                            if (viewer.tmpFile == null) {
+                                viewer.tmpFile = File.createTempFile("metadata", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+                                viewer.tmpFile.deleteOnExit();
+                            }
+                            Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), //$NON-NLS-1$
+                                    StandardOpenOption.TRUNCATE_EXISTING);
+                            webEngine.load(viewer.tmpFile.toURI().toURL().toString());
+    
+                        } catch (IOException e) {
+                            webEngine.loadContent(preview);
                         }
-                        Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), //$NON-NLS-1$
-                                StandardOpenOption.TRUNCATE_EXISTING);
-                        webEngine.load(viewer.tmpFile.toURI().toURL().toString());
-
-                    } catch (IOException e) {
-                        webEngine.loadContent(preview);
                     }
                 }
 
