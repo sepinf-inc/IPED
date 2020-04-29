@@ -166,6 +166,7 @@ public class IcePDFViewer extends Viewer {
         
         if (content == null) {
             pdfController.closeDocument();
+            labelMsg.setVisible(false);
             viewerPanel.setVisible(false);
             return;
         }
