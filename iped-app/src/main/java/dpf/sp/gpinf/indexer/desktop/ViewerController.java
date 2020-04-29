@@ -150,9 +150,7 @@ public class ViewerController {
     }
 
     public void clear() {
-        for (Viewer viewer : viewers) {
-            viewer.loadFile(null);
-        }
+        loadFile(null, null, null, null);
     }
 
     public void validateViewers() {
