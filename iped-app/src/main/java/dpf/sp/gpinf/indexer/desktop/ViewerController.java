@@ -113,7 +113,7 @@ public class ViewerController {
                         e.printStackTrace();
                     }
                 }
-                params.dialogBar.setVisible(false);
+                
                 synchronized (lock) {
                     init = true;
                     lock.notifyAll();
