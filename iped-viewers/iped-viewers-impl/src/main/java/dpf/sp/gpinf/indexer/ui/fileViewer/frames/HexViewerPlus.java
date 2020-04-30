@@ -465,6 +465,11 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dispose() {
 
     }
+    
+    @Override
+    public boolean getHitsSupported() {
+        return false;
+    }
 
     @Override
     public void loadFile(final IStreamSource content, Set<String> highlightTerms) {
