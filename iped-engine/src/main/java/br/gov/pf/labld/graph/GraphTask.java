@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -230,6 +232,7 @@ public class GraphTask extends AbstractTask {
         processMetadata(evidence);
         processContacts(evidence);
         processWifi(evidence);
+        processUserAccount(evidence);
         //processExtraAttributes(evidence, label, propertyName, identifier);
     }
 
@@ -251,9 +254,9 @@ public class GraphTask extends AbstractTask {
   
     private Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
     
-    private Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
+    private static Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
     
-    private Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
+    private static Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
     
     private static String[] contactMimes = {
             "application/x-vcard-html", 
@@ -271,6 +274,9 @@ public class GraphTask extends AbstractTask {
             if(contactMime.equals(mediaType))
                 return "contact";
         }
+        if(mediaType.equals("contact/x-skype-account") || mediaType.equals("application/x-ufed-user")) {
+            return "useraccount";
+        }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);
         if(ufedIdx > -1) {
             return mediaType.substring(ufedIdx + UfedXmlReader.UFED_MIME_PREFIX.length());
@@ -282,37 +288,51 @@ public class GraphTask extends AbstractTask {
         Label label;
         String propertyName;
         Object propertyValue;
+        Map<String, Object> props = new HashMap<>();
         
         NodeValues(Label label, String propertyName, Object propertyValue){
             this.label = label;
             this.propertyName = propertyName;
             this.propertyValue = propertyValue;
         }
+        
+        void addProp(String key, Object value) {
+            props.put(key, value);
+        }
     }
     
-    private NodeValues getPhoneNodeValues(String value) {
+    //PhoneNumberUtil is thread safe???
+    private SortedSet<String> getPhones(String value){
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-        PhoneNumber phoneNumber = null;
+        Set<PhoneNumber> phoneNumbers = new HashSet<>();
         Matcher whatsappMacher = whatsappPattern.matcher(value);
-        if(whatsappMacher.find()){
+        while(whatsappMacher.find()){
             String phone = whatsappMacher.group(1);
             try {
-                phoneNumber = phoneUtil.parse(phone, "BR");
+                phoneNumbers.add(phoneUtil.parse(phone, "BR"));
             } catch (NumberParseException e) {
                 e.printStackTrace();
             }
-        }else {
-            for(PhoneNumberMatch m : phoneUtil.findNumbers(value, "BR", Leniency.POSSIBLE, Integer.MAX_VALUE)) {
-                phoneNumber = m.number();
-            }
         }
-        if(phoneNumber != null) {
+        for(PhoneNumberMatch m : phoneUtil.findNumbers(value, "BR", Leniency.POSSIBLE, Integer.MAX_VALUE)) {
+            phoneNumbers.add(m.number());
+        }
+        SortedSet<String> result = new TreeSet<>();
+        for(PhoneNumber phoneNumber : phoneNumbers) {
             String phone = phoneUtil.format(phoneNumber, PhoneNumberFormat.INTERNATIONAL);
             Matcher matcher = oldBRPhonePattern.matcher(phone);
             if(matcher.matches()) {
                 phone = matcher.group(1) + "9" + matcher.group(2);
             }
-            return new NodeValues(DynLabel.label("TELEFONE"), "telefone", phone);
+            result.add(phone);
+        }
+        return result;
+    }
+    
+    private NodeValues getPhoneNodeValues(String value) {
+        Set<String> phones = getPhones(value);
+        if(!phones.isEmpty()) {
+            return new NodeValues(DynLabel.label("TELEFONE"), "telefone", phones.iterator().next());
         }
         System.out.println("invalid phone=" + value.trim());
         return null;
@@ -322,11 +342,19 @@ public class GraphTask extends AbstractTask {
         return new NodeValues(DynLabel.label("GENERIC"), "entity", value.trim().toLowerCase());
     }
     
+    private SortedSet<String> getEmails(String text){
+        SortedSet<String> result = new TreeSet<>();
+        Matcher matcher = emailPattern.matcher(text);
+        while(matcher.find()) {
+            result.add(matcher.group().toLowerCase());
+        }
+        return result;
+    }
+    
     private NodeValues getEmailNodeValues(String value) {
-        Matcher matcher = emailPattern.matcher(value);
-        if(matcher.find()) {
-            value = matcher.group().toLowerCase();
-            return new NodeValues(DynLabel.label("EMAIL"), "email", value);
+        Set<String> emails = getEmails(value);
+        if(!emails.isEmpty()) {
+            return new NodeValues(DynLabel.label("EMAIL"), "email", emails.iterator().next());
         }
         return null;
     }
@@ -369,6 +397,57 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                     nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
         }
+    }
+    
+    private void processUserAccount(IItem item) throws IOException {
+        
+        String relationType = getRelationType(item.getMediaType().toString());
+        if(!relationType.equals("useraccount")) {
+            return;
+        }
+        String itemText = item.getParsedTextCache();
+        SortedSet<String> emails = getEmails(itemText);
+        SortedSet<String> phones = getPhones(itemText);
+        String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
+        SortedSet<String> msisdnPhones = null;
+        if(msisdn != null) {
+            phones.addAll(msisdnPhones = getPhones(msisdn));
+        }else {
+            return;
+        }
+        Pattern namePattern = Pattern.compile(Pattern.quote(ExtraProperties.UFED_META_PREFIX + "Name:") + "(.+)");
+        Matcher nameMatcher = namePattern.matcher(itemText);
+        String name = null;
+        if(nameMatcher.find()) {
+            name = nameMatcher.group(1).trim();
+        }
+        
+        Pattern userPattern = Pattern.compile(Pattern.quote(ExtraProperties.UFED_META_PREFIX + "Username:") + "(.+)");
+        Matcher userMatcher = userPattern.matcher(itemText);
+        String user = null;
+        if(userMatcher.find()) {
+            user = userMatcher.group(1).trim();
+        }
+        
+        NodeValues nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", msisdnPhones.first());
+        nv1.addProp("telefone", phones);
+        nv1.addProp("email", emails);
+        if(name != null && !name.isEmpty()) {
+            nv1.addProp("name", name);
+        }
+        if(user != null && !user.isEmpty()) {
+            nv1.addProp("username", user);
+        }
+        
+        String uniqueId = graphFileWriter.writeMergeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
+        
+        for(String email : emails) {
+            graphFileWriter.writeNodeReplace(DynLabel.label("EMAIL"), "email", email, uniqueId);
+        }
+        for(String phone : phones) {
+            graphFileWriter.writeNodeReplace(DynLabel.label("TELEFONE"), "telefone", phone, uniqueId);
+        }
+        
     }
     
     private void processContacts(IItem item) throws IOException {
