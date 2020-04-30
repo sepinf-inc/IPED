@@ -124,11 +124,11 @@ public class ViewersRepository extends Viewer {
     }
 
     @Override
-    public boolean getHitsSupported() {
+    public int getHitsSupported() {
         if (currentViewer != null) {
             return currentViewer.getHitsSupported();
         }
-        return false;
+        return -1;
     }
 
     @Override

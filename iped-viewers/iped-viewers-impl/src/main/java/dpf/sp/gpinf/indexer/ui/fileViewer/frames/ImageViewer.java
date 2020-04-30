@@ -173,8 +173,8 @@ public class ImageViewer extends Viewer implements ActionListener {
     }
     
     @Override
-    public boolean getHitsSupported() {
-        return false;
+    public int getHitsSupported() {
+        return -1;
     }
     
     @Override

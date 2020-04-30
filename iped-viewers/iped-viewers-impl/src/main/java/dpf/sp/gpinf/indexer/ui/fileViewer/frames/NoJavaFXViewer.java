@@ -47,7 +47,7 @@ public class NoJavaFXViewer extends Viewer {
     }
 
     @Override
-    public boolean getHitsSupported() {
-        return false;
+    public int getHitsSupported() {
+        return -1;
     }
 }

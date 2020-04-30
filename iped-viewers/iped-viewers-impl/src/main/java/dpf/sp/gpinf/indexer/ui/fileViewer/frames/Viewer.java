@@ -106,10 +106,13 @@ public abstract class Viewer {
     abstract public void scrollToNextHit(boolean forward);
     
     /**
-     * May be overridden when hits navigation is not supported.  
-     */
-    public boolean getHitsSupported() {
-        return true;
+     * May be overridden when hits navigation is not supported.
+     * @return -1: no support 
+     *          0: default, has support, external control when there are hits 
+     *          1: has support, always enable as hits control is internal in the viewer  
+     */    
+    public int getHitsSupported() {
+        return 0;
     }
 
     /**

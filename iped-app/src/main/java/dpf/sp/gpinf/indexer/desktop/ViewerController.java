@@ -265,7 +265,8 @@ public class ViewerController {
             if (isInitialized()) loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
-                boolean hitsEnabled = viewFile != null && hasHits() && viewer.getHitsSupported();
+                boolean hitsEnabled = viewFile != null && 
+                        ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
                 ((CButton) dock.getAction("prevHit")).setEnabled(hitsEnabled);
                 ((CButton) dock.getAction("nextHit")).setEnabled(hitsEnabled);

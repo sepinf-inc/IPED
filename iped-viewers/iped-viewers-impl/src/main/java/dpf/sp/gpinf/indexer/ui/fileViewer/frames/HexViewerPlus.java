@@ -467,8 +467,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     }
     
     @Override
-    public boolean getHitsSupported() {
-        return false;
+    public int getHitsSupported() {
+        return 1;
     }
 
     @Override
