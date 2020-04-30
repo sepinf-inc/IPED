@@ -13,6 +13,8 @@ import javax.swing.SwingUtilities;
 
 import org.icepdf.core.pobjects.Catalog;
 import org.icepdf.core.pobjects.Document;
+import org.icepdf.core.pobjects.Page;
+import org.icepdf.core.pobjects.PageTree;
 import org.icepdf.core.search.DocumentSearchController;
 import org.icepdf.core.util.Library;
 import org.icepdf.ri.common.SwingController;
@@ -189,6 +191,7 @@ public class IcePDFViewer extends Viewer {
                     try {
                         pdfController.openDocument(content.getFile().getAbsolutePath());
                         if (!content.equals(lastContent)) return;
+
                         if (!isDocumentValid()) {
                             labelMsg.setVisible(true);
                             getPanel().revalidate();
@@ -231,7 +234,10 @@ public class IcePDFViewer extends Viewer {
             if (document == null) return false;
             Catalog catalog = document.getCatalog();
             if (catalog == null) return false;
-            return catalog.getPageTree() != null;
+            PageTree tree = catalog.getPageTree();
+            if (tree == null) return false;
+            Page page = tree.getPage(0);
+            return page != null;
         } catch (Exception e) {
         }
         return false;
