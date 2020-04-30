@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MediaType;
@@ -75,24 +76,26 @@ public class ViewerController {
         viewers.add(textViewer = new TextViewer(params));
         viewers.add(new MetadataViewer());
         viewers.add(viewersRepository = new ViewersRepository());
+        
+        boolean javaFX = new JarLoader().loadJavaFX();
+
+        //These are content-specific viewers (inside a single ViewersRepository)
+        viewersRepository.addViewer(new ImageViewer());
+        viewersRepository.addViewer(new CADViewer());
+        if (javaFX) {
+            viewersRepository.addViewer(new HtmlViewer());
+            viewersRepository.addViewer(new EmailViewer());
+            viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
+            viewersRepository.addViewer(new TikaHtmlViewer());
+        } else {
+            viewersRepository.addViewer(new NoJavaFXViewer());
+        }
+        viewersRepository.addViewer(new IcePDFViewer());
+        viewersRepository.addViewer(new TiffViewer());
 
         new Thread() {
             public void run() {
-                boolean javaFX = new JarLoader().loadJavaFX();
-
-                //These are content-specific viewers (inside a single ViewersRepository)
-                viewersRepository.addViewer(new ImageViewer());
-                viewersRepository.addViewer(new CADViewer());
-                if (javaFX) {
-                    viewersRepository.addViewer(new HtmlViewer());
-                    viewersRepository.addViewer(new EmailViewer());
-                    viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
-                    viewersRepository.addViewer(new TikaHtmlViewer());
-                } else {
-                    viewersRepository.addViewer(new NoJavaFXViewer());
-                }
-                viewersRepository.addViewer(new IcePDFViewer());
-                viewersRepository.addViewer(new TiffViewer());
+                
                 for (Viewer viewer : viewers) {
                     viewer.init();
                 }
@@ -103,9 +106,15 @@ public class ViewerController {
                 final String pathLO = loFinder.getLOPath();
                 if (pathLO != null) {
                     try {
-                        officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
-                        viewersRepository.addViewer(officeViewer);
+                        SwingUtilities.invokeAndWait(new Runnable() {
+                            @Override
+                            public void run() {
+                                officeViewer = new LibreOfficeViewer(params.codePath + "/../lib/nativeview", pathLO); //$NON-NLS-1$
+                                viewersRepository.addViewer(officeViewer);
+                            }
+                        });
                         officeViewer.init();
+                        
                     } catch (NotSupported32BitPlatformExcepion e) {
                         JOptionPane.showMessageDialog(null, Messages.getString("ViewerController.OfficeViewerUnSupported")); //$NON-NLS-1$
                         viewersRepository.removeViewer(officeViewer);
