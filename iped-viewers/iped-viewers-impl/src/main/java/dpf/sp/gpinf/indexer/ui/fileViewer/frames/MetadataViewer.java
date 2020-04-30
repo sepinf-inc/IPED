@@ -8,13 +8,12 @@ import java.nio.file.StandardOpenOption;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -22,6 +21,7 @@ import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Side;
@@ -89,6 +89,10 @@ public class MetadataViewer extends Viewer {
     public boolean isSupportedType(String contentType) {
         return true;
     }
+    
+    public boolean isFixed() {
+        return false;
+    }
 
     @Override
     public void init() {
@@ -100,7 +104,8 @@ public class MetadataViewer extends Viewer {
         collator.setStrength(Collator.PRIMARY);
     }
     
-    public void selectTab(int tabIdx) {
+    @SuppressWarnings("restriction")
+    private void selectTab(int tabIdx) {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
@@ -108,9 +113,25 @@ public class MetadataViewer extends Viewer {
             }
         });
     }
+    
+    public boolean isMetadataEntry(String contentType) {
+        MediaType type = MediaType.parse(contentType);
+        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
+            if (MediaTypes.METADATA_ENTRY.equals(type)) {
+                return true;
+            }
+            type = this.getParentType(type);
+        }
+        return false;
+    }
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> terms) {
+        loadFile(content, null, terms);
+    }
+    
+    @Override
+    public void loadFile(final IStreamSource content, String contentType, final Set<String> terms) {
 
         Platform.runLater(new Runnable() {
             @Override
@@ -136,6 +157,10 @@ public class MetadataViewer extends Viewer {
                             webEngine.loadContent(preview);
                         }
                     }
+                }
+                
+                if(!isFixed() && isMetadataEntry(contentType)) {
+                    selectTab(2);
                 }
 
             }

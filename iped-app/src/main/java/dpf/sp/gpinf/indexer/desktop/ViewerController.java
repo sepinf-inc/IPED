@@ -45,7 +45,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
-import iped3.util.MediaTypes;
 
 /**
  * Central controller for all viewers. 
@@ -74,7 +73,12 @@ public class ViewerController {
         //These viewers will have their own docking frame
         viewers.add(new HexViewerPlus(new HexSearcherImpl(), Configuration.getInstance().configPath));
         viewers.add(textViewer = new TextViewer(params));
-        viewers.add(new MetadataViewer());
+        viewers.add(new MetadataViewer() {
+            @Override
+            public boolean isFixed() {
+                return isFixed;
+            }
+        });
         viewers.add(viewersRepository = new ViewersRepository());
         
         boolean javaFX = new JarLoader().loadJavaFX();
@@ -322,13 +326,8 @@ public class ViewerController {
         for (Viewer viewer : viewers) {
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
-                    MediaType type = MediaType.parse(contentType);
-                    while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
-                        if (MediaTypes.METADATA_ENTRY.equals(type)) {
-                            result = viewer;
-                            break;
-                        }
-                        type = viewer.getParentType(type);
+                    if(((MetadataViewer) viewer).isMetadataEntry(contentType)) {
+                        result = viewer;
                     }
                 } else result = viewer;
             }
