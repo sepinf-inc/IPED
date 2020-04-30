@@ -18,9 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,12 +100,13 @@ public class MenuListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+    	LOGGER.debug("MenuListener Aktion Event Performed "+e.toString()+" "+e.getSource() );
         if (e.getSource() == menu.disposicao) {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
             App.get().refazLayout(true);
+            
         } else if (e.getSource() == menu.marcarSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -124,7 +128,18 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().atualizarGUISelection();
 
         }
-        if (e.getSource() == menu.lerSelecionados) {
+          
+		if (e.getSource() == menu.marcarRecursivamenteSelecionados) {
+        	KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
+        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
+        		kl.keyReleased(keyCTRL_R_Pressed);
+        	
+		} else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
+        	KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R,KeyEvent.CHAR_UNDEFINED);
+        	for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class))
+        		kl.keyReleased(keyCTRL_R_Pressed);
+		}
+		if (e.getSource() == menu.lerSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {

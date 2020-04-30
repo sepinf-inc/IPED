@@ -69,6 +69,7 @@ public class GalleryModel extends AbstractTableModel {
     private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
     private ExecutorService executor;
+    private GraphicsMagicConverter magickConverter;
 
     @Override
     public int getColumnCount() {
@@ -141,6 +142,7 @@ public class GalleryModel extends AbstractTableModel {
 
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
+            magickConverter = new GraphicsMagicConverter(executor);
         }
 
         executor.execute(new Runnable() {
@@ -165,8 +167,14 @@ public class GalleryModel extends AbstractTableModel {
                         LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
                     }
 
-                    if (doc.getBinaryValue(IndexItem.THUMB) != null)
-                        image = ImageIO.read(new ByteArrayInputStream(doc.getBinaryValue(IndexItem.THUMB).bytes));
+                    if (doc.getBinaryValue(IndexItem.THUMB) != null) {
+                        byte[] thumb = doc.getBinaryValue(IndexItem.THUMB).bytes;
+                        if(thumb.length > 0) {
+                            image = ImageIO.read(new ByteArrayInputStream(thumb));
+                        }else {
+                            image = errorImg;
+                        }
+                    }
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
@@ -223,7 +231,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     if (image == null && stream != null) {
-                        image = new GraphicsMagicConverter().getImage(stream, thumbSize);
+                        image = magickConverter.getImage(stream, thumbSize);
                     }
 
                     if (image == null || image == errorImg) {

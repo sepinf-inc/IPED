@@ -139,9 +139,13 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+            	String msg = e.getMessage();
+            	if(msg == null && e.getCause() != null) {
+            		msg = e.getCause().getMessage();
+            	}
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
-                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + e.getMessage(), //$NON-NLS-1$
+                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, //$NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
 
                 App.get().dialogBar.setVisible(false);
@@ -163,8 +167,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         }
 
         if (updateItems) {
-            App.get().appletListener.updateFileListing();
             ColumnsManager.getInstance().dispose();
+            App.get().appletListener.updateFileListing();
             App.get().dialogBar.setVisible(false);
         }
     }

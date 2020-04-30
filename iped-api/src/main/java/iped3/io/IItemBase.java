@@ -23,6 +23,11 @@ public interface IItemBase extends IStreamSource {
      *         FTK3+
      */
     public Integer getParentId();
+    
+    /**
+     * @return the subitem order into its parent, null if this is not a subitem.
+     */
+    public Integer getSubitemId();
 
     /**
      * @return nome do arquivo
@@ -145,6 +150,8 @@ public interface IItemBase extends IStreamSource {
     public Date getCreationDate();
 
     public Date getAccessDate();
+    
+    public Date getRecordDate();
 
     public Object getExtraAttribute(String key);
 

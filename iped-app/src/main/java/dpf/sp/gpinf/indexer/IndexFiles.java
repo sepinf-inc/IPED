@@ -61,6 +61,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     private static Logger LOGGER = null;
     
     String rootPath, configPath;
+    String profile, locale;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -150,9 +151,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         }
 
         configPath = rootPath;
-        String locale = getProfileLocale();
+        locale = getProfileLocale();
 
-        String profile = null;
+        profile = null;
 
         if (cmdLineParams.getProfile() != null) {
             profile = cmdLineParams.getProfile();
@@ -310,6 +311,10 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.info(Versao.APP_NAME);
 
             Configuration.getInstance().loadConfigurables(indexador.configPath);
+            
+            if(!indexador.locale.equals("en") && "default".equals(indexador.profile)) {
+                Configuration.getInstance().checkIfDefaultProfileWasChanged();
+            }
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();

@@ -12,7 +12,7 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
  */
 
 public class SkypeConversation {
-    int id;
+    String id;
     Date creationDate;
     Date lastActivity;
     String chatName;
@@ -28,11 +28,11 @@ public class SkypeConversation {
         this.participantes = participantes;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 

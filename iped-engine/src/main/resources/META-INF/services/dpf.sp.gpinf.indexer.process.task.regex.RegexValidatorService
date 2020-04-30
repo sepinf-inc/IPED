@@ -8,6 +8,9 @@ br.gov.pf.iped.regex.TituloEleitorRegexValidatorService
 br.gov.pf.iped.regex.CreditCardRegexValidatorService
 br.gov.pf.iped.regex.ScriptValidatorService
 br.gov.pf.iped.regex.BitcoinAddressValidatorService
+br.gov.pf.iped.regex.BCHAddressValidatorService
+br.gov.pf.iped.regex.EthereumAddressValidatorService
+br.gov.pf.iped.regex.RippleAddressValidatorService
 br.gov.pf.iped.regex.TelefoneRegexValidatorService
 br.gov.pf.iped.regex.PlacaRegexValidatorService
 br.gov.pf.iped.regex.IPLRegexValidatorService

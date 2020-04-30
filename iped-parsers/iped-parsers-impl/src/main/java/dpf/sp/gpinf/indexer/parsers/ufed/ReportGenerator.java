@@ -28,8 +28,6 @@ public class ReportGenerator {
     private Object lastChat;
     private int currentMsg = 0;
 
-    static final String RSRC_PATH = "../../../../indexador/htm/whatsapp/"; //$NON-NLS-1$
-
     public ReportGenerator(IItemSearcher searcher) {
         this.searcher = searcher;
     }
@@ -111,7 +109,7 @@ public class ReportGenerator {
                     }
                 }
             } else {
-                out.print(Util.convertEmojis(message.getData()) + "<br/>"); //$NON-NLS-1$
+                out.print(message.getData() + "<br/>"); //$NON-NLS-1$
             }
         }
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
@@ -136,20 +134,25 @@ public class ReportGenerator {
 
             } else if (message.getMediaMime() != null) {
                 if (message.getMediaMime().startsWith("audio")) { //$NON-NLS-1$
-                    out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                            + "img/audio.png\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
+                    out.println("<img src=\"" //$NON-NLS-1$
+                            + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
+                            + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().startsWith("video")) { //$NON-NLS-1$
-                    out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                            + "img/video.png\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                    out.println("<img src=\"" //$NON-NLS-1$
+                            + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
+                            + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().startsWith("image")) { //$NON-NLS-1$
-                    out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                            + "img/image.png\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                    out.println("<img src=\"" //$NON-NLS-1$
+                            + Util.getImageResourceAsEmbedded("img/image.png") //$NON-NLS-1$
+                            + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().contains("contact")) { //$NON-NLS-1$
-                    out.println("<img src=\"" + RSRC_PATH //$NON-NLS-1$
-                            + "img/contact.png\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                    out.println("<img src=\"" //$NON-NLS-1$
+                            + Util.getImageResourceAsEmbedded("img/contact.png") //$NON-NLS-1$
+                            + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
                 } else
-                    out.println("Attachment:<br><img src=\"" + RSRC_PATH //$NON-NLS-1$
-                            + "img/attach.png\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
+                    out.println("Attachment:<br><img src=\"" //$NON-NLS-1$
+                            + Util.getImageResourceAsEmbedded("img/attach.png") //$NON-NLS-1$
+                            + "\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
             }
             out.println("</a>"); //$NON-NLS-1$
         }
@@ -179,8 +182,10 @@ public class ReportGenerator {
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" + RSRC_PATH + "img/favicon.ico\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + "	<link rel=\"stylesheet\" type=\"text/css\" href=\"" + RSRC_PATH + "css/whatsapp.css\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")+ "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                + "<style>\n"
+                + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
+                + "\n</style>\n"
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n" //$NON-NLS-1$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$
@@ -189,7 +194,7 @@ public class ReportGenerator {
         if (avatar != null)
             out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
                     + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
-        out.println(Util.convertEmojis(chatName) + "</span>\n" //$NON-NLS-1$
+        out.println(chatName + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$
                 + "<br/><br/><br/>"); //$NON-NLS-1$

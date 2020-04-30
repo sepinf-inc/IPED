@@ -18,9 +18,13 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -30,8 +34,9 @@ public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados,
-            deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
+    JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, 
+    		marcarRecursivamenteSelecionados, desmarcarRecursivamenteSelecionados, 
+    		lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
@@ -47,13 +52,27 @@ public class MenuClass extends JPopupMenu {
 
         marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
         marcarSelecionados.addActionListener(menuListener);
+        marcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(marcarSelecionados);
 
-        desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
-        desmarcarSelecionados.addActionListener(menuListener);
-        this.add(desmarcarSelecionados);
+		
+		desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
+		desmarcarSelecionados.addActionListener(menuListener);
+		desmarcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
+ 		this.add(desmarcarSelecionados);
+		 
+        marcarRecursivamenteSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
+        marcarRecursivamenteSelecionados.addActionListener(menuListener);
+        marcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        this.add(marcarRecursivamenteSelecionados);
 
-        /*
+		
+	    desmarcarRecursivamenteSelecionados = new	  JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted"));	//$NON-NLS-1$
+		desmarcarRecursivamenteSelecionados.addActionListener(menuListener);
+		desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+		this.add(desmarcarRecursivamenteSelecionados);
+		         
+		  /*
          * lerSelecionados = new JMenuItem("Marcar selecionados como lido");
          * lerSelecionados.addActionListener(menuListener); this.add(lerSelecionados);
          * 
@@ -72,6 +91,7 @@ public class MenuClass extends JPopupMenu {
 
         gerenciarMarcadores = new JMenuItem(Messages.getString("MenuClass.ManageBookmarks")); //$NON-NLS-1$
         gerenciarMarcadores.addActionListener(menuListener);
+        gerenciarMarcadores.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
         this.add(gerenciarMarcadores);
 
         gerenciarFiltros = new JMenuItem(Messages.getString("MenuClass.ManageFilters")); //$NON-NLS-1$

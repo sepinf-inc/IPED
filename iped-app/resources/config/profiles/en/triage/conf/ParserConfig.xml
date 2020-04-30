@@ -106,6 +106,8 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.bittorrent.TorrentFileParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
 		<!--parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser-->
         <!--<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
@@ -129,6 +131,7 @@
 			<mime>application/x-edb</mime> <!-- Will be parsed by RawStringParser for better performance-->
 			<mime>application/x-sqlite3</mime> <!-- Will be parsed by RawStringParser for better performance-->
         </parser>
+        <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
 	
     </parsers>
 

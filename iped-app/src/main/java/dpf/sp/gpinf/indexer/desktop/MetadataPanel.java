@@ -264,9 +264,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private void updateProps() {
         updatingProps = true;
         props.removeAllItems();
-        String[] fields = ColumnsManager.getInstance().fieldGroups[groups.getSelectedIndex()];
-        for (String f : fields)
-            props.addItem(f);
+        int selIdx = groups.getSelectedIndex();
+        if(selIdx != -1) {
+        	String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
+            for (String f : fields)
+                props.addItem(f);
+        }
         updatingProps = false;
     }
 

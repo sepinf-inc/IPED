@@ -21,8 +21,11 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
@@ -44,8 +47,8 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
@@ -108,7 +111,29 @@ public class Configuration {
             logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
         }
     }
-
+    
+    public void checkIfDefaultProfileWasChanged() {
+        try {
+            UTF8Properties defaultProps = new UTF8Properties();
+            defaultProps.load(new File(appRoot + "/" + CONFIG_FILE)); //$NON-NLS-1$
+            defaultProps.load(new File(appRoot + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
+            TreeMap<Object, Object> map = new TreeMap<>(defaultProps);
+            StringBuilder sb = new StringBuilder();
+            for(Entry<Object, Object> e : map.entrySet()) {
+                sb.append(e.getKey()).append(e.getValue());
+            }
+            String hash = DigestUtils.md5Hex(sb.toString());
+            if(!"ebbe953df901fec10b89ae7fbd39b28f".equals(hash)) { //$NON-NLS-1$
+                System.err.println("You changed 'locale' in LocalConfig.txt but configured IPEDConfig.txt or conf/AdvancedConfig.txt in root folder! " //$NON-NLS-1$
+                        + "Please, restore those english config files to their defaults and set configuration in 'profiles/[lang]/default' folder!"); //$NON-NLS-1$
+                System.exit(1);
+            }
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * Configurações a partir do caminho informado.
      */

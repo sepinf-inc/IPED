@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.17-snapshot</version>
+        <version>3.18</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -105,12 +105,6 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.1-901-1.jdbc4</version>
-            <type>jar</type>
-        </dependency>
-        <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
             <version>${lucene.version}</version>
@@ -120,6 +114,17 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
             <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>7.6.1-shaded</version>
+        </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.1-901-1.jdbc4</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -199,6 +204,11 @@
             <artifactId>neo4j</artifactId>
             <version>3.4.10-shaded</version>
         </dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.64</version>
+		</dependency>
     </dependencies>
     
 </project>

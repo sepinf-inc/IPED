@@ -28,14 +28,6 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private synchronized void init() throws ZipException {
         if (zip == null) {
             zip = new ZipFile4j(this.dataSource.toFile());
-            /*
-             * File file = dataSource.toFile(); File part1 = new
-             * File(file.getAbsolutePath().substring(0,
-             * file.getAbsolutePath().lastIndexOf('.')) + ".z01");
-             * SequenceSeekableByteChannel ssbc = new
-             * SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()),
-             * Files.newByteChannel(dataSource)); zip = new ZipFile(ssbc);
-             */
         }
     }
 
@@ -50,6 +42,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             zae = zip.getFileHeader(path);
         } catch (ZipException e1) {
             throw new IOException(e1);
+        }
+        if(zae == null) {
+            return  new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
             if (zae.getUncompressedSize() <= MAX_MEM_BYTES) {

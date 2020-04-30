@@ -26,6 +26,7 @@ import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.util.DateUtil;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -72,7 +73,6 @@ public class UFEDChatParser extends AbstractParser {
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
             List<IItemBase> msgs = searcher.search(query);
 
-            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX"); //$NON-NLS-1$
             List<Message> messages = new ArrayList<>();
 
             for (IItemBase msg : msgs) {
@@ -81,13 +81,10 @@ public class UFEDChatParser extends AbstractParser {
                 m.setData(msg.getMetadata().get(ExtraProperties.MESSAGE_BODY));
                 m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
                 String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
-                if (str != null)
-                    try {
-                        Date date = df.parse(str);
-                        m.setTimeStamp(date);
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
+                if (str != null) {
+                    Date date = DateUtil.tryToParseDate(str);
+                    m.setTimeStamp(date);
+                }
                 if (!m.isFromMe()) {
                     m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
                     m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
@@ -144,7 +141,7 @@ public class UFEDChatParser extends AbstractParser {
                                 chatMetadata.add(meta, val);
                     }
 
-                    String chatName = chat.getName();
+                    String chatName = getChatName(chat);
                     if (frag > 0 || nextBytes != null)
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
@@ -162,6 +159,22 @@ public class UFEDChatParser extends AbstractParser {
 
         }
 
+    }
+    
+    private String getChatName(IItemBase item) {
+        String name = "Chat"; //$NON-NLS-1$
+        String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+        if (source != null)
+            name += "_" + source; //$NON-NLS-1$
+        String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
+        if (parties != null && parties.length > 2) {
+            name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
+        } else if (parties != null && parties.length > 0) {
+            name += "_" + parties[0]; //$NON-NLS-1$
+            if (parties.length > 1)
+                name += "_" + parties[1]; //$NON-NLS-1$
+        }
+        return name;
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {

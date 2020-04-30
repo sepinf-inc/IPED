@@ -160,6 +160,10 @@
     <mime-type type="application/x-chrome-downloads-registry">
         <sub-class-of type="application/x-browser-registry"/>
     </mime-type>
+    
+    <mime-type type="application/x-browser-registry">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
             
     <mime-type type="application/x-firefox-history">
         <sub-class-of type="text/html"/>
@@ -255,9 +259,14 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="application/sqlite-skype">     
+    <mime-type type="application/sqlite-skype">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="main*.db"/>
+    </mime-type>
+    
+    <mime-type type="application/sqlite-skype-v12">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="s4l-*.db"/>
     </mime-type>
     
     <mime-type type="contact/x-skype-account">     
@@ -308,6 +317,28 @@
         <glob pattern="Library1.dat" />
         <glob pattern="Library2.dat" />
     </mime-type>
+    
+    <mime-type type="application/x-bittorrent-resume-dat">
+        <_comment>BitTorrent Client Resume.dat file</_comment>
+        <sub-class-of type="application/x-p2p"/>
+        <magic priority="50">
+    		<match value="d10:.fileguard" type="string" offset="0"/>
+		</magic>
+        <glob pattern="resume.dat" />
+        <glob pattern="resume.dat.old" />
+        <glob pattern="resume.dat.new" />
+    </mime-type>
+    
+	<mime-type type="application/x-bittorrent">
+		<sub-class-of type="application/x-p2p"/>
+		<magic priority="50">
+    		<match value="d8:announce" type="string" offset="0"/>
+    		<match value="d4:info" type="string" offset="0"/>
+    		<match value="d10:created by" type="string" offset="0"/>
+    		<match value="d8:encoding" type="string" offset="0"/>
+		</magic>
+		<glob pattern="*.torrent"/>
+	</mime-type>
 
     <mime-type type="message/outlook-pst">
         <magic priority="70">
@@ -895,5 +926,15 @@
     <mime-type type="application/x-ufed-chat-preview">
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
+    
+    <mime-type type="application/x-win10-timeline">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="ActivitiesCache.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-win10-timeline-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
    
 </mime-info>
+

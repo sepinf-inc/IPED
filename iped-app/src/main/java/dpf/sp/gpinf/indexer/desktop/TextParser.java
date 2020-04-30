@@ -48,6 +48,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
@@ -202,7 +203,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     private ParseContext getTikaContext(IItem item) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-        ParseContext context = expander.getTikaContext();
+        ParseContext context = expander.getTikaContext((IPEDSource)appSearchParams.lastSelectedSource);
         expander.setExtractEmbedded(false);
         return context;
     }

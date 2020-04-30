@@ -7,7 +7,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.17-snapshot</version>
+        <version>3.18</version>
     </parent>
 
     <artifactId>iped-geo</artifactId>
@@ -18,8 +18,12 @@
             <name>Open Source Geospatial Foundation Repository</name>
             <url>http://download.osgeo.org/webdav/geotools/</url>
         </repository>
+        <repository>
+            <id>osgeo2</id>
+            <name>Open Source Geospatial Foundation Repository</name>
+            <url>https://repo.osgeo.org/repository/release/</url>
+        </repository>
     </repositories>
-
 
     <dependencies>
         <dependency>

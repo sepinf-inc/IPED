@@ -27,12 +27,15 @@ import java.awt.event.MouseListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import iped3.IItemId;
 
 public class GalleryListener implements ListSelectionListener, MouseListener, KeyListener {
 
     private GalleryCellEditor cellEditor;
-
+    private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
     @Override
     public void valueChanged(ListSelectionEvent e) {
 
@@ -100,48 +103,17 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     }
 
-    private boolean shiftDown = false, ctrlDown = false;
-
     @Override
     public void keyPressed(KeyEvent evt) {
-
-        if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
-            cellEditor.stopCellEditing();
-            int col = App.get().resultsTable.convertColumnIndexToView(1);
-            int firstRow = App.get().resultsTable.getSelectedRow();
-            boolean value = true;
-            if (firstRow != -1 && (Boolean) App.get().resultsTable.getValueAt(firstRow, col)) {
-                value = false;
-            }
-
-            MarcadoresController.get().setMultiSetting(true);
-
-            int[] selectedRows = App.get().resultsTable.getSelectedRows();
-            for (int i = 0; i < selectedRows.length; i++) {
-                if (i == selectedRows.length - 1)
-                    MarcadoresController.get().setMultiSetting(false);
-                App.get().resultsTable.setValueAt(value, selectedRows[i], col);
-            }
-
-        } else if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-            shiftDown = true;
-
-        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-            ctrlDown = true;
-        }
 
     }
 
     @Override
     public void keyReleased(KeyEvent evt) {
-
-        if (evt.getKeyCode() == KeyEvent.SHIFT_DOWN_MASK) {
-            shiftDown = false;
-
-        } else if (evt.getKeyCode() == KeyEvent.CTRL_DOWN_MASK) {
-            ctrlDown = false;
+        cellEditor.stopCellEditing();
+        for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class)) {
+            kl.keyReleased(evt);
         }
-
     }
 
     @Override

@@ -87,6 +87,12 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--append", description = "add data to be processed to an existent case")
     private boolean appendIndex;
+    
+    @Parameter(names = "--continue", description = "continue a stopped or aborted processing")
+    private boolean isContinue;
+    
+    @Parameter(names = "--restart", description = "discard last aborted processing and start from beginning")
+    private boolean restart;
 
     @Parameter(names = "--nogui", description = "do not open progress windows, text mode processing")
     private boolean nogui;
@@ -190,6 +196,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public boolean isAppendIndex() {
         return appendIndex;
+    }
+    
+    @Override
+    public boolean isContinue() {
+        return isContinue;
+    }
+    
+    @Override
+    public boolean isRestart() {
+        return restart;
     }
 
     @Override
