@@ -190,6 +190,12 @@ public class ViewerController {
             }
         }
     }
+    
+    private boolean isInitialized() {
+        synchronized(lock) {
+            return init;
+        }
+    }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
         checkInit();
@@ -243,7 +249,7 @@ public class ViewerController {
         //TODO: Remove before final commit
         //System.err.println("UPDATE : " + viewer.getName() + " : " + clean);
         if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
-            loadInViewer(viewer);
+            if (isInitialized()) loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
                 boolean hitsEnabled = viewFile != null && hasHits() && viewer.getHitsSupported();
@@ -260,7 +266,7 @@ public class ViewerController {
             }
         } else {
             if (clean) {
-                viewer.loadFile(null);
+                if (isInitialized()) viewer.loadFile(null);
             }
         }
     }
