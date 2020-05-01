@@ -16,7 +16,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
-import org.apache.tika.mime.MediaType;
 
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
@@ -227,6 +226,7 @@ public class ViewerController {
             if (!bestViewer.getPanel().isShowing()) {
                 DefaultSingleCDockable viewerDock = dockPerViewer.get(bestViewer);
                 if (viewerDock != null) {
+                    bestViewer.loadFile(null);
                     Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
                     viewerDock.toFront();
                     requested = bestViewer;
