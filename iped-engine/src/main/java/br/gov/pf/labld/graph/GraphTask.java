@@ -33,8 +33,10 @@ import br.gov.pf.labld.cases.IpedCase;
 import br.gov.pf.labld.cases.IpedCase.IpedDatasourceType;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -64,6 +66,15 @@ public class GraphTask extends AbstractTask {
       if (graphFileWriter == null) {
           graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH), "iped",
             configuration.getDefaultEntity());
+      }
+      
+      CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+      if(args.isAppendIndex()) {
+          File graphDbOutput = new File(output, GraphTask.DB_PATH);
+          if(graphDbOutput.exists()) {
+              //TODO test if LOAD CSV Cypher command is faster than rebuilding all database from scratch with bulk import tool
+              IOUtil.deleteDirectory(graphDbOutput, false);
+          }
       }
     }
   }

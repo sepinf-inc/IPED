@@ -647,7 +647,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     public static String join(Label... labels) {
-      return Arrays.stream(labels).map(l -> l.name()).sorted().collect(Collectors.joining("-"));
+      return Arrays.stream(labels).map(l -> l.name().replace(SEPARATOR, "-")).sorted().collect(Collectors.joining("-"));
     }
 
   }
