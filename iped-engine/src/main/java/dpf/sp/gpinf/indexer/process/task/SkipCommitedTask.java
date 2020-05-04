@@ -247,6 +247,12 @@ public class SkipCommitedTask extends AbstractTask{
         String rootPrefix = getRootPrefix(item.getPath());
         String oldUUID = rootNameToEvidenceUUID.get(rootPrefix);
         if(oldUUID != null) {
+            if(caseData.getCaseObject("MSISDN" + oldUUID) == null) {
+                synchronized(caseData) {
+                    String msisdn = (String) caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
+                    caseData.putCaseObject("MSISDN" + oldUUID, msisdn);
+                }
+            }
             item.getDataSource().setUUID(oldUUID);
         }
     }

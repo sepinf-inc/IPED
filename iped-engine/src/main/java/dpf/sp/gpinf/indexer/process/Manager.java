@@ -50,7 +50,6 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.gov.pf.labld.graph.GraphGenerator;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -450,6 +449,8 @@ public class Manager {
                     LOGGER.info("Commiting sqlite storages...");
                     ExportFileTask.commitStorage(output);
                     
+                    GraphTask.commit();
+                    
                     writer.commit();
                     long end = System.currentTimeMillis() / 1000;
                     LOGGER.info("Commit finished in " + (end - start) + "s");
@@ -531,22 +532,8 @@ public class Manager {
             new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
         }
         
-        if (GraphTask.isGraphGenerationEnabled(Configuration.getInstance().properties)) {
-            finishGraphGeneration();
-          }
-
     }
     
-    private void finishGraphGeneration() throws IOException {
-        File graphDbOutput = new File(output, GraphTask.DB_PATH);
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
-        File graphDbGenerated = new File(localConfig.getIndexerTemp(), GraphTask.GENERATED_PATH);
-
-        GraphGenerator graphGenerator = new GraphGenerator();
-        graphGenerator.generate(graphDbGenerated, graphDbOutput);
-      }
-
     private void updateImagePaths() {
         if (args.isPortable()) { // $NON-NLS-1$
             IPEDSource ipedCase = new IPEDSource(output.getParentFile());

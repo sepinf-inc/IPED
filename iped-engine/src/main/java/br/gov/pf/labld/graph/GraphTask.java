@@ -33,9 +33,6 @@ import br.gov.pf.labld.cases.IpedCase;
 import br.gov.pf.labld.cases.IpedCase.IpedDatasourceType;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import iped3.IItem;
@@ -65,15 +62,13 @@ public class GraphTask extends AbstractTask {
       configuration = loadConfiguration(confDir);
 
       if (graphFileWriter == null) {
-          LocalConfig ipedConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                  .iterator().next();
-          graphFileWriter = new GraphFileWriter(new File(ipedConfig.getIndexerTemp(), GENERATED_PATH), "iped",
+          graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH), "iped",
             configuration.getDefaultEntity());
       }
     }
   }
 
-  public static boolean isGraphGenerationEnabled(Properties confParams) {
+  private static boolean isGraphGenerationEnabled(Properties confParams) {
     boolean enabled = false;
     String value = confParams.getProperty(ENABLE_PARAM);
     if (value != null && !value.trim().isEmpty()) {
@@ -86,6 +81,19 @@ public class GraphTask extends AbstractTask {
     File file = new File(confDir, CONFIG_PATH);
     return GraphConfiguration.loadFrom(file);
   }
+  
+  public static void commit() throws IOException {
+      if(graphFileWriter != null) {
+          graphFileWriter.flush();
+      }
+  }
+  
+  private void finishGraphGeneration() throws IOException {
+      File graphDbOutput = new File(output, GraphTask.DB_PATH);
+      File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
+      GraphGenerator graphGenerator = new GraphGenerator();
+      graphGenerator.generate(graphDbGenerated, graphDbOutput);
+  }
 
   @Override
   public void finish() throws Exception {
@@ -94,6 +102,7 @@ public class GraphTask extends AbstractTask {
         if (graphFileWriter != null) {
           graphFileWriter.close();
         }
+        finishGraphGeneration();
       }
       graphFileWriter = null;
     }
