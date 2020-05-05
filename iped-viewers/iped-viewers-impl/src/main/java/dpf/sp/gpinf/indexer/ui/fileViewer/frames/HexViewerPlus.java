@@ -898,7 +898,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
             }
         });
 
-        fontComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>((String[]) fonts.toArray()));
+        fontComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(fonts.toArray(new String[0])));
         fontComboBox.setSelectedItem(getAndVerifyFontName(font, fonts));
         fontComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -3047,7 +3047,7 @@ class Hits {
 
 }
 
-class FilterComboBox extends JComboBox {
+class FilterComboBox extends JComboBox<String> {
 
     private List<String> entries;
 
@@ -3056,7 +3056,7 @@ class FilterComboBox extends JComboBox {
     }
 
     public FilterComboBox(List<String> entries) {
-        super(entries.toArray());
+        super(entries.toArray(new String[0]));
         this.entries = entries;
         this.setEditable(true);
 
@@ -3087,7 +3087,7 @@ class FilterComboBox extends JComboBox {
         }
 
         if (entriesFiltered.size() > 0) {
-            this.setModel(new DefaultComboBoxModel(entriesFiltered.toArray()));
+            this.setModel(new DefaultComboBoxModel<String>(entriesFiltered.toArray(new String[0])));
             this.setSelectedItem(enteredText);
             this.showPopup();
         } else {
