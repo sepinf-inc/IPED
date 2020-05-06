@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -116,7 +117,7 @@ public class GraphServiceImpl implements GraphService {
   }
 
   @Override
-  public void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener) {
+  public void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener, int maxNodes) {
     Transaction tx = null;
     try {
       tx = graphDB.beginTx();
@@ -127,14 +128,12 @@ public class GraphServiceImpl implements GraphService {
       Result result = graphDB.execute(
           "MATCH (n)-[r]-(m) WHERE ID(n) = $nodeId AND ANY(l IN LABELS(m) WHERE l IN $labels) RETURN m as node, r as edge",
           parameters);
-      boolean proceed = true;
-      while (result.hasNext() && proceed) {
-        Map<String, Object> next = result.next();
-        Node node = (Node) next.get("node");
-        proceed = listener.nodeFound(node);
-        Relationship edge = (Relationship) next.get("edge");
-        proceed = proceed && listener.edgeFound(edge);
+      if(maxNodes == -1) {
+          emitAllNeighbours(result, listener);
+      }else {
+          emitTopNeighbours(result, listener, maxNodes);
       }
+      
       tx.success();
     } finally {
       tx.close();
@@ -150,6 +149,37 @@ public class GraphServiceImpl implements GraphService {
       HashMap<String, Object> parameters = new HashMap<>(1);
       parameters.put("param", id);
       Result result = graphDB.execute("MATCH (n)-[r]-(m) WHERE ID(n) = $param RETURN m as node, r as edge", parameters);
+      emitAllNeighbours(result, listener);
+      
+      tx.success();
+    } finally {
+      tx.close();
+    }
+  }
+  
+  @Override
+  public void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId, NodeEdgeQueryListener listener, int maxNodes) {
+    Transaction tx = null;
+    try {
+      tx = graphDB.beginTx();
+
+      HashMap<String, Object> parameters = new HashMap<>(1);
+      parameters.put("nodeId", nodeId);
+      String query = "MATCH (n)-[r:$types]-(m) WHERE ID(n) = $nodeId RETURN m as node, r as edge";
+      query = query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
+      Result result = graphDB.execute(query, parameters);
+      if(maxNodes == -1) {
+          emitAllNeighbours(result, listener);
+      }else {
+          emitTopNeighbours(result, listener, maxNodes);
+      }
+      tx.success();
+    } finally {
+      tx.close();
+    }
+  }
+  
+  private void emitAllNeighbours(Result result, NodeEdgeQueryListener listener) {
       boolean proceed = true;
       while (result.hasNext() && proceed) {
         Map<String, Object> next = result.next();
@@ -158,10 +188,46 @@ public class GraphServiceImpl implements GraphService {
         Relationship edge = (Relationship) next.get("edge");
         proceed = proceed && listener.edgeFound(edge);
       }
-      tx.success();
-    } finally {
-      tx.close();
+  }
+  
+  private class NodeRels implements Comparable<NodeRels>{
+    Node node;
+    List<Relationship> rels;
+    
+    private NodeRels(Node node, List<Relationship> rels) {
+        this.node = node;
+        this.rels = rels;
     }
+
+    @Override
+    public int compareTo(NodeRels o) {
+        return Integer.compare(o.rels.size(), this.rels.size());
+    }
+  }
+  
+  private void emitTopNeighbours(Result result, NodeEdgeQueryListener listener, int top) {
+      HashMap<Long, NodeRels> edgeMap = new HashMap<>();
+      while (result.hasNext()) {
+        Map<String, Object> next = result.next();
+        Node node = (Node) next.get("node");
+        NodeRels nodeRels = edgeMap.get(node.getId());
+        if(nodeRels == null) {
+            nodeRels = new NodeRels(node, new ArrayList<>());
+            edgeMap.put(node.getId(), nodeRels);
+        }
+        Relationship edge = (Relationship) next.get("edge");
+        nodeRels.rels.add(edge);
+      }
+      List<NodeRels> list = new ArrayList<>(edgeMap.values());
+      Collections.sort(list);
+      int added = 0;
+      for(NodeRels nodeRels : list) {
+          listener.nodeFound(nodeRels.node);
+          for(Relationship edge : nodeRels.rels) {
+              listener.edgeFound(edge);
+          }
+          if(++added == top) break;
+      }
   }
 
   @Override
@@ -269,6 +335,34 @@ public class GraphServiceImpl implements GraphService {
           accum.put(label.toString(), cnt);
         }
       }
+      for (Entry<String, Integer> entry : accum.entrySet()) {
+        listener.connectionsFound(entry.getKey(), entry.getValue());
+      }
+      tx.success();
+    } finally {
+      tx.close();
+    }
+
+  }
+  
+  @Override
+  public void findRelationships(Long id, ConnectionQueryListener listener) {
+    Transaction tx = null;
+    try {
+      tx = graphDB.beginTx();
+
+      HashMap<String, Object> parameters = new HashMap<>(1);
+      parameters.put("param", id);
+      String query = "MATCH (n)-[r]-() WHERE ID(n) = $param RETURN r as edge";
+      Result result = graphDB.execute(query, parameters);
+
+      Map<String, Integer> accum = new HashMap<>();
+      while (result.hasNext()) {
+          Relationship edge = (Relationship) result.next().get("edge");
+          Integer i = accum.get(edge.getType().name());
+          if(i == null) i = 0;
+          accum.put(edge.getType().name(), ++i);
+        }
       for (Entry<String, Integer> entry : accum.entrySet()) {
         listener.connectionsFound(entry.getKey(), entry.getValue());
       }

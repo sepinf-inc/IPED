@@ -152,6 +152,8 @@ public class GraphSidePanel extends JPanel {
       results.clear();
 
       addResult(Messages.getString("GraphAnalysis.Type"), getLabels(node));
+      
+      addResult("id", node.getId());
 
       Map<String, Object> properties = node.getAllProperties();
       TreeSet<String> keys = new TreeSet<>(properties.keySet());

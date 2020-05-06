@@ -5,25 +5,29 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
@@ -43,17 +47,24 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
   private ExpandConfigurationTableModel dataModel;
 
   private JTable table;
+  
+  private JRadioButton nodes = new JRadioButton(new RadioAction());
+  private JRadioButton edges = new JRadioButton(new RadioAction());
+  private ButtonGroup radioGroup = new ButtonGroup();
+  
+  private JLabel topXLabel = new JLabel();
+  private JTextField topXNodes = new JTextField();
+  private JButton expandButton;
 
   public ExpandConfigurationDialog(JFrame frame, AppGraphAnalytics app) {
     super();
     this.app = app;
-    this.setLayout(new GridBagLayout());
     init(frame);
   }
 
   private void init(JFrame frame) {
     setTitle(Messages.getString("GraphAnalysis.ExpandConfiguration"));
-    setPreferredSize(new Dimension(300, 400));
+    setPreferredSize(new Dimension(350, 400));
 
     JButton cancelButton = new JButton(new CancelAction());
     cancelButton.setText(Messages.getString("GraphAnalysis.Cancel"));
@@ -65,34 +76,72 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
     this.table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
     this.table.addMouseListener(this);
     this.table.getColumnModel().getColumn(1).setMaxWidth(60);
+    
+    nodes.setText(Messages.getString("GraphAnalysis.Expand.Entities"));
+    edges.setText(Messages.getString("GraphAnalysis.Expand.Links"));
+    radioGroup.add(nodes);
+    radioGroup.add(edges);
+    edges.setSelected(true);
+    
+    topXLabel.setText(Messages.getString("GraphAnalysis.Expand.MaxNodes"));
+    topXNodes.setText("25");
+    
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridBagLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
     GridBagConstraints c = new GridBagConstraints();
-    c.insets = new Insets(5, 5, 5, 5);
+    c.insets = new Insets(1, 5, 1, 5);
     c.fill = GridBagConstraints.BOTH;
+    
+    c.weightx = 0.25;
+    c.weighty = 0.05;
+    c.gridwidth = 1;
+    c.gridx = 1;
+    c.gridy = 0;
+    panel.add(edges, c);
+    
+    c.gridx = 2;
+    c.gridy = 0;
+    panel.add(nodes, c);
+    
+    c.weightx = 0.75;
+    c.weighty = 0.05;
+    c.gridwidth = 3;
+    c.gridx = 0;
+    c.gridy = 1;
+    panel.add(topXLabel, c);
+    
+    c.weightx = 0.25;
+    c.gridwidth = 1;
+    c.gridx = 3;
+    c.gridy = 1;
+    panel.add(topXNodes, c);
 
     c.weightx = 1;
-    c.weighty = 0.95;
-    c.gridwidth = 2;
+    c.weighty = 0.85;
+    c.gridwidth = 4;
     c.gridx = 0;
-    c.gridy = 0;
+    c.gridy = 2;
 
-    add(new JScrollPane(table), c);
+    panel.add(new JScrollPane(table), c);
 
     c.fill = GridBagConstraints.HORIZONTAL;
 
-    c.gridwidth = 1;
+    c.gridwidth = 2;
     c.weightx = 0.5;
     c.weighty = 0.05;
     c.gridx = 0;
-    c.gridy = 1;
-    JButton expandButton = new JButton(new ExpandAction());
+    c.gridy = 3;
+    expandButton = new JButton(new ExpandAction());
     expandButton.setText(Messages.getString("GraphAnalysis.Expand"));
-    add(expandButton, c);
+    panel.add(expandButton, c);
 
-    c.gridx = 1;
-    c.gridy = 1;
-    add(cancelButton, c);
+    c.gridx = 2;
+    c.gridy = 3;
+    panel.add(cancelButton, c);
 
+    add(panel);
     pack();
     table.doLayout();
     setLocationRelativeTo(frame);
@@ -106,6 +155,15 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
     ExpandConfigurationDialog.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     new ExpandConfigurationWorker().execute();
   }
+  
+  private class RadioAction extends AbstractAction{
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        loadData();
+    }
+    
+  }
 
   private class ExpandAction extends AbstractAction {
 
@@ -114,12 +172,17 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
     @Override
     public void actionPerformed(ActionEvent e) {
       int[] rows = ExpandConfigurationDialog.this.table.getSelectedRows();
-      Set<String> labels = new HashSet<>(rows.length);
+      Set<String> labelsOrTypes = new HashSet<>(rows.length);
       for (int row : rows) {
         String label = (String) ExpandConfigurationDialog.this.table.getValueAt(row, 0);
-        labels.add(label);
+        labelsOrTypes.add(label);
       }
-      app.expandSelectedWithLabels(labels);
+      int maxNodes = -1;
+      try {
+          maxNodes = Integer.parseInt(topXNodes.getText().trim());
+      }catch(NumberFormatException ex) {}
+      
+      app.expandSelectedWithLabelsOrTypes(labelsOrTypes, edges.isSelected(), maxNodes);
       close();
     }
 
@@ -143,7 +206,11 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
       Long id = Long.parseLong(app.getContextMenuNodeId());
       dataModel.clear();
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      graphService.findConnections(id, this);
+      if(edges.isSelected()) {
+          graphService.findRelationships(id, this);
+      }else {
+          graphService.findConnections(id, this);
+      }
       return null;
     }
 
@@ -207,12 +274,8 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    Point point = e.getPoint();
-    int row = table.rowAtPoint(point);
-    if (e.getClickCount() == 2 && table.getSelectedRow() != -1 && row != -1) {
-      String label = (String) table.getValueAt(row, 0);
-      app.expandSelectedWithLabels(Arrays.asList(label));
-      close();
+    if(e.getClickCount() == 2) {
+      expandButton.doClick();    
     }
   }
 

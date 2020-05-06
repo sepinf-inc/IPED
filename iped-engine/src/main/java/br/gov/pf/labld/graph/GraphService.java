@@ -34,8 +34,12 @@ public interface GraphService {
   void search(String param, NodeQueryListener listener);
 
   void findConnections(Long id, ConnectionQueryListener listener);
+  
+  void findRelationships(Long id, ConnectionQueryListener listener);
 
-  void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener);
+  void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener, int maxNodes);
+  
+  void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId, NodeEdgeQueryListener listener, int maxNodes);
 
   List<Node> search(Label label, Map<String, Object> params);
 

@@ -206,9 +206,8 @@ public class AppGraphAnalytics extends JPanel {
     new ExpandNodeWorker(this.graphPane.getSelectedNodes()).execute();
   }
 
-  public void expandSelectedWithLabels(Collection<String> labels) {
-    new ExpandConfigurationNodeWorker(labels, Long.parseLong(this.getContextMenuNodeId())).execute();
-    ;
+  public void expandSelectedWithLabelsOrTypes(Collection<String> labelsOrTypes, boolean isEdge, int maxNodes) {
+    new ExpandConfigurationNodeWorker(labelsOrTypes, Long.parseLong(this.getContextMenuNodeId()), isEdge, maxNodes).execute();
   }
 
   public void removeSelected() {
@@ -430,13 +429,17 @@ public class AppGraphAnalytics extends JPanel {
 
   private class ExpandConfigurationNodeWorker extends ExpandNodeWorker {
 
-    private Collection<String> labels;
+    private Collection<String> labelsOrTypes;
     private Long nodeId;
+    private boolean isEdge;
+    private int maxNodes;
 
-    public ExpandConfigurationNodeWorker(Collection<String> labels, Long nodeId) {
+    public ExpandConfigurationNodeWorker(Collection<String> labelsOrTypes, Long nodeId, boolean isEdge, int maxNodes) {
       super(null);
-      this.labels = labels;
+      this.labelsOrTypes = labelsOrTypes;
       this.nodeId = nodeId;
+      this.isEdge = isEdge;
+      this.maxNodes = maxNodes;
     }
 
     @Override
@@ -448,7 +451,12 @@ public class AppGraphAnalytics extends JPanel {
       this.currentNode = graph.getNode(nodeId.toString());
 
       try {
-        graphService.getNeighboursWithLabels(labels, nodeId, this);
+        if(!isEdge) {
+            graphService.getNeighboursWithLabels(labelsOrTypes, nodeId, this, maxNodes);
+        }else {
+            graphService.getNeighboursWithRelationships(labelsOrTypes, nodeId, this, maxNodes);
+        }
+        
       } catch (Exception e) {
         AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
         throw new RuntimeException(e);
