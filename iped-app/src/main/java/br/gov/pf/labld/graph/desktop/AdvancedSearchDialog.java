@@ -15,9 +15,11 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -385,36 +387,51 @@ public class AdvancedSearchDialog extends JDialog {
       if (rowCount == 0) {
         return;
       }
-
-      List<Long> idEntities = new ArrayList<>(rowCount);
-      List<Long> idRelationships = new ArrayList<>(rowCount);
+      
+      HashSet<Long> idEntities = new HashSet<>(rowCount);
+      HashSet<Long> idRelationships = new HashSet<>(rowCount);
 
       for (int index = 0; index < rowCount; index++) {
-        Object value = dataModel.getValueAt(index, 0);
-        if (value instanceof Node) {
-          Node node = (Node) value;
-          idEntities.add(node.getId());
-        } else if (value instanceof Relationship) {
-          Relationship rel = (Relationship) value;
-          idRelationships.add(rel.getId());
-        } else if (value instanceof Path) {
-          Path path = (Path) value;
-          for (Node node : path.nodes()) {
-            idEntities.add(node.getId());
+          for (int col = 0; col < dataModel.getColumnCount(); col++) {
+              Object value = dataModel.getValueAt(index, col);
+              if (value instanceof Node) {
+                Node node = (Node) value;
+                idEntities.add(node.getId());
+              } else if (value instanceof Relationship) {
+                Relationship rel = (Relationship) value;
+                idEntities.add(rel.getStartNodeId());
+                idEntities.add(rel.getEndNodeId());
+                idRelationships.add(rel.getId());
+              } else if (value instanceof Path) {
+                Path path = (Path) value;
+                for (Node node : path.nodes()) {
+                  idEntities.add(node.getId());
+                }
+                for (Relationship rel : path.relationships()) {
+                  idRelationships.add(rel.getId());
+                }
+              }
           }
-          for (Relationship rel : path.relationships()) {
-            idRelationships.add(rel.getId());
-          }
-        }
       }
 
       if (!idEntities.isEmpty()) {
-        app.addNodesToGraph(idEntities);
+          AddNodeWorker nodeWorker = app.addNodesToGraph(idEntities);
+          new Thread() {
+              @Override
+              public void run() {
+                try {
+                    nodeWorker.get();
+                    app.addRelationshipsToGraph(idRelationships);
+                    
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+              }
+          }.start();
+      }else {
+          app.addRelationshipsToGraph(idRelationships);
       }
 
-      if (!idRelationships.isEmpty()) {
-        app.addRelationshipsToGraph(idRelationships);
-      }
     }
 
   }
@@ -459,14 +476,16 @@ public class AdvancedSearchDialog extends JDialog {
       int size = columns.size();
       Object[] result = new Object[size];
       Object value = null;
+      boolean enabled = false;
       for (int index = 0; index < size; index++) {
         value = resultMap.get(columns.get(index));
         result[index] = value;
+        if(!enabled) {
+            enabled = value instanceof Node || value instanceof Relationship || value instanceof Path;
+            addButton.setEnabled(enabled);
+        }
       }
       results.add(result);
-      if (size == 1) {
-        addButton.setEnabled(value instanceof Node || value instanceof Relationship || value instanceof Path);
-      }
     }
 
   }

@@ -169,10 +169,13 @@ public class AppGraphAnalytics extends JPanel {
     }
   }
 
-  public void addNodesToGraph(Collection<Long> ids) {
+  public AddNodeWorker addNodesToGraph(Collection<Long> ids) {
     if (!ids.isEmpty()) {
-      new AddNodeWorker(this, ids).execute();
+        AddNodeWorker worker = new AddNodeWorker(this, ids);
+        worker.execute();
+        return worker;    
     }
+    return null;
   }
 
   public void addRelationshipsToGraph(Collection<Long> ids) {
