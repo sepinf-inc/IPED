@@ -381,48 +381,44 @@ public class AppGraphAnalytics extends JPanel {
     return databaseLoaded;
   }
 
-  private class AddEvidenceFileWorker extends SwingWorker<Void, Node> implements NodeQueryListener {
+  private class AddEvidenceFileWorker extends ExpandNodeWorker {
 
     private String[] ids;
-    private Collection<String> added = new HashSet<>();
-    private Collection<Node> nodes = new HashSet<>();
     private int found = 0;
 
     public AddEvidenceFileWorker(String... ids) {
-      super();
+      super(null);
       this.ids = ids;
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected Void doInBackground() {
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-      graphService.getNodes(ids, this);
-      AppGraphAnalytics.this.graph.addNodes(nodes);
+      graphService.getEdges(ids, this);
+      AppGraphAnalytics.this.graph.addElements(newNodes, newEdges);
       return null;
     }
 
     @Override
-    public boolean nodeFound(org.neo4j.graphdb.Node neo4jNode) {
-      String nodeId = Long.toString(neo4jNode.getId());
+    public boolean edgeFound(Relationship relationship) {
       found++;
       AppGraphAnalytics.this.graphStatusBar.increaseProgress((int) ((found / this.ids.length) * 100));
-      if (!AppGraphAnalytics.this.graph.containsNode(nodeId)) {
-        Node node = AppGraphAnalytics.this.graphModel.convert(neo4jNode);
-        node.setX((int) (100 + Math.random() * 400));
-        node.setY((int) (100 + Math.random() * 400));
-        this.added.add(nodeId);
-        this.nodes.add(node);
-      }
-      return true;
+      super.nodeFound(relationship.getStartNode());
+      super.nodeFound(relationship.getEndNode());
+      return super.edgeFound(relationship);
+    }
+    
+    @Override
+    protected Point getPosition(Node newNode) {
+        return new Point((int)(100 + Math.random() * 400), (int)(100 + Math.random() * 400));
     }
 
     @Override
     protected void done() {
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Done"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(100);
-      AppGraphAnalytics.this.graphPane.selectNodes(this.added);
     }
 
   }
@@ -443,7 +439,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected Void doInBackground() {
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
@@ -483,7 +479,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected Void doInBackground() {
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
@@ -496,6 +492,10 @@ public class AppGraphAnalytics extends JPanel {
       AppGraphAnalytics.this.graph.addElements(newNodes, newEdges);
       return null;
     }
+    
+    protected Point getPosition(Node newNode) {
+        return AppGraphAnalytics.this.graphModel.calculateRelativePosition(this.currentNode, newNode, currentDegree);
+    }
 
     @Override
     public boolean nodeFound(org.neo4j.graphdb.Node neo4jNode) {
@@ -505,8 +505,7 @@ public class AppGraphAnalytics extends JPanel {
         currentDegree++;
         Node newNode = AppGraphAnalytics.this.graphModel.convert(neo4jNode);
         // AppGraphAnalytics.this.graph.addNode(newNode);
-        Point position = AppGraphAnalytics.this.graphModel.calculateRelativePosition(this.currentNode, newNode,
-            currentDegree);
+        Point position = getPosition(newNode);
         newNode.setX(position.x);
         newNode.setY(position.y);
         newNodes.add(newNode);
@@ -548,7 +547,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected Void doInBackground() {
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
@@ -601,7 +600,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() throws Exception {
+    protected Void doInBackground() {
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();

@@ -71,24 +71,23 @@ public class GraphServiceImpl implements GraphService {
   }
 
   @Override
-  public void getNodes(String[] ids, NodeQueryListener listener) {
+  public void getEdges(String[] ids, EdgeQueryListener listener) {
     Transaction tx = null;
     try {
       tx = graphDB.beginTx();
 
       HashMap<String, Object> parameters = new HashMap<>(1);
       parameters.put("param", ids);
-      Result result = graphDB.execute("MATCH (n) WHERE n.evidenceId IN $param RETURN n", parameters);
-
-      ResourceIterator<Node> resourceIterator = result.columnAs("n");
+      Result result = graphDB.execute("MATCH ()-[r]-() WHERE r.relId IN $param RETURN DISTINCT r as edge", parameters);
+      
       boolean proceed = true;
-      while (resourceIterator.hasNext() && proceed) {
-        Node node = resourceIterator.next();
-        proceed = listener.nodeFound(node);
+      while (result.hasNext() && proceed) {
+        Relationship edge = (Relationship) result.next().get("edge");
+        proceed = listener.edgeFound(edge);
       }
 
       tx.success();
-    } finally {
+    }finally {
       tx.close();
     }
   }

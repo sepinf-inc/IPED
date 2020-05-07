@@ -21,7 +21,7 @@ public interface GraphService {
 
   File getDbFile();
 
-  void getNodes(String[] ids, NodeQueryListener listener);
+  void getEdges(String[] ids, EdgeQueryListener listener);
 
   void getNodes(Collection<Long> ids, NodeQueryListener listener);
 

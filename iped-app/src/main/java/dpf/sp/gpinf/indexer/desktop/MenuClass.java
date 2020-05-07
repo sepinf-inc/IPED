@@ -204,20 +204,19 @@ public class MenuClass extends JPopupMenu {
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
         this.add(openViewfile);
-
+        
+        if (AppGraphAnalytics.isAppDbPresent()) {
+            this.addSeparator();
+            addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+            addToGraph.addActionListener(menuListener);
+            this.add(addToGraph);
+        }
+        
         this.addSeparator();
 
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$
         createReport.addActionListener(menuListener);
         this.add(createReport);
-        
-        this.addSeparator();
-
-        if (AppGraphAnalytics.isAppDbPresent()) {
-          addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-          addToGraph.addActionListener(menuListener);
-          this.add(addToGraph);
-        }
 
     }
 
