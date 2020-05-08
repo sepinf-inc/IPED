@@ -570,7 +570,7 @@
                             </archive>
                         </configuration>
                     </execution>
-                    <execution>
+                    <!--execution>
                         <id>create-gui-jar</id>
                         <goals>
                             <goal>jar</goal>
@@ -591,7 +591,7 @@
                                 </manifest>
                             </archive>
                         </configuration>
-                    </execution>
+                    </execution-->
                     <execution>
                         <id>create-search-jar</id>
                         <goals>

@@ -29,8 +29,6 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 import br.gov.pf.iped.regex.TelefoneRegexValidatorService;
-import br.gov.pf.labld.cases.IpedCase;
-import br.gov.pf.labld.cases.IpedCase.IpedDatasourceType;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
@@ -38,7 +36,6 @@ import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
-import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class GraphTask extends AbstractTask {
@@ -50,6 +47,20 @@ public class GraphTask extends AbstractTask {
   public static final String ENABLE_PARAM = "enableGraphGeneration";
 
   public static final String CONFIG_PATH = "GraphConfig.json";
+  
+  private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
+  
+  private static Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
+  
+  private static Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
+  
+  private static String[] contactMimes = {
+          "application/x-vcard-html", 
+          "application/windows-adress-book", 
+          "application/outlook-contact", 
+          "contact/x-skype-contact", 
+          "contact/x-whatsapp-contact", 
+          "application/x-ufed-contact"};
 
   private GraphConfiguration configuration;
 
@@ -118,6 +129,11 @@ public class GraphTask extends AbstractTask {
       graphFileWriter = null;
     }
   }
+  
+  @Override
+  public boolean isEnabled() {
+    return enabled;
+  }
 
   @Override
   public void process(IItem evidence) throws Exception {
@@ -129,124 +145,10 @@ public class GraphTask extends AbstractTask {
   }
 
   private void processEvidence(IItem evidence) throws IOException {
-    if (!isEnabled()) {
-      return;
-    }
-
-    IpedCase ipedCase = (IpedCase) caseData.getCaseObject(IpedCase.class.getName());
-    List<Integer> parentIds = evidence.getParentIds();
-
-    boolean isIpedCase = ipedCase != null;
-    boolean isDir = evidence.isDir();
-    boolean isCaseRoot = isIpedCase && parentIds.size() < 3;
-    boolean isGraphDatasource = false;
-
-    if (isDir && !isCaseRoot) {
-      return;
-    }
-
-    Map<String, Object> nodeProperties = new HashMap<>();
-
-    Object entityType = evidence.getExtraAttribute("X-EntityType");
-
-    List<Label> labels = new ArrayList<>(1);
-    Label label;
-    String propertyName = "evidenceId";
-    Object identifier = evidence.getId();
-    if (entityType != null) {
-      IpedDatasourceType type = IpedDatasourceType.valueOf(entityType.toString());
-
-      GraphEntity entity;
-      if (type == IpedDatasourceType.PERSON) {
-        entity = configuration.getEntity(configuration.getDefaultPersonEntity());
-      } else if (type == IpedDatasourceType.BUSINESS) {
-        entity = configuration.getEntity(configuration.getDefaultBusinessEntity());
-      } else if (type == IpedDatasourceType.GENERIC) {
-        entity = configuration.getEntity(configuration.getDefaultEntity());
-      } else {
-        throw new IllegalArgumentException("Unknown X-EntityType:" + entityType);
-      }
-
-      labels.add(DynLabel.label("DATASOURCE"));
-      isGraphDatasource = true;
-
-      nodeProperties.put("type", type.name());
-
-      Object entityProperty = evidence.getExtraAttribute("X-EntityProperty");
-      Object entityPropertyValue = evidence.getExtraAttribute("X-EntityPropertyValue");
-
-      label = DynLabel.label(entity.getLabel());
-      if (entityProperty != null) {
-        propertyName = entityProperty.toString();
-      } else {
-        propertyName = "evidenceId";
-      }
-
-      if (entityPropertyValue != null) {
-        identifier = entityPropertyValue.toString();
-      } else {
-        identifier = evidence.getId();
-      }
-
-      nodeProperties.put(propertyName, entityPropertyValue);
-    } else {
-      label = DynLabel.label(configuration.getDefaultEntity());
-      propertyName = "evidenceId";
-      identifier = evidence.getId();
-    }
-
-    nodeProperties.put("evidenceId", evidence.getId());
-    nodeProperties.put("name", evidence.getName());
-    nodeProperties.put("path", evidence.getPath());
-
-    Object category = evidence.getTempAttribute(BasicProps.CATEGORY);
-    if (category == null) {
-      if (!evidence.getCategorySet().isEmpty()) {
-        category = evidence.getCategorySet().iterator().next();
-      }
-    }
-
-    String categoryValue;
-    if (category != null) {
-      categoryValue = category.toString();
-    } else {
-      categoryValue = null;
-    }
-    nodeProperties.put("category", categoryValue);
-
-    String hash = evidence.getHash();
-    if (hash != null && !hash.isEmpty()) {
-      nodeProperties.put("hash", hash);
-    }
-
-    Object reader = evidence.getExtraAttribute("X-Reader");
-    if (reader != null && !reader.toString().isEmpty()) {
-      nodeProperties.put("source", reader.toString());
-    }
-
-    nodeProperties.put(propertyName, identifier);
-    /*
-    String nodeId = graphFileWriter.writeCreateNode(propertyName, identifier, nodeProperties, label,
-        labels.toArray(new Label[labels.size()]));
     
-    if (isGraphDatasource) {
-      graphFileWriter.writeNodeReplace(DynLabel.label(configuration.getDefaultEntity()), "evidenceId", evidence.getId(),
-          nodeId);
-    }
-    */
-    RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
-
-    if (isIpedCase && parentIds.size() > 2) {
-      // Cria vinculo da evidencia com a entrada do datasource se ipedCase.
-      Integer inputId = parentIds.get(2);
-      graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, identifier,
-          relationshipType);
-    } else if (isIpedCase && parentIds.size() == 2) {
-      // Cria vinculo da entrada com o datasource se ipedCase.
-      Integer datasourceId = parentIds.get(1);
-      graphFileWriter.writeCreateRelationship(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
-          datasourceId, label, propertyName, identifier, relationshipType);
-    }
+    //old item->node model and gui dependent code was moved to class below
+    //ItemNodeGenerator itemNodeGenerator = new ItemNodeGenerator(caseData, configuration, graphFileWriter);
+    //itemNodeGenerator.generateNodeForItem(evidence);
     
     if (includeEvidence(evidence)) {
         processMetadata(evidence);
@@ -271,20 +173,6 @@ public class GraphTask extends AbstractTask {
 
       return include;
     }
-  
-    private Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
-    
-    private static Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
-    
-    private static Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
-    
-    private static String[] contactMimes = {
-            "application/x-vcard-html", 
-            "application/windows-adress-book", 
-            "application/outlook-contact", 
-            "contact/x-skype-contact", 
-            "contact/x-whatsapp-contact", 
-            "application/x-ufed-contact"};
     
     private static String getRelationType(String mediaType) {
         if(mediaType.startsWith("message") || mediaType.equals("application/vnd.ms-outlook")) {
@@ -604,11 +492,6 @@ public class GraphTask extends AbstractTask {
           }
       }
     }
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return enabled;
   }
 
 }
