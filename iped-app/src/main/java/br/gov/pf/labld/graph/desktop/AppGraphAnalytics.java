@@ -196,13 +196,13 @@ public class AppGraphAnalytics extends JPanel {
     Node hoveredNode = getHoveredNode();
     if (hoveredNode != null) {
       long id = Long.parseLong(hoveredNode.getId());
-      new OpenEvidenceNodeWorker(this, id).execute();
+      new ShowEvidenceNodeWorker(this, id).execute();
     }
   }
 
   public void openEvidence(Node node) {
     long id = Long.parseLong(node.getId());
-    new OpenEvidenceNodeWorker(this, id).execute();
+    new ShowEvidenceNodeWorker(this, id).execute();
   }
 
   public void expandSelected() {

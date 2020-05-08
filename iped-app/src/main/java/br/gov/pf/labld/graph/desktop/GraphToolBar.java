@@ -64,7 +64,7 @@ public class GraphToolBar extends JToolBar implements GraphHistoryListener {
     this.addBtn(exportImageBtn);
 
     URL searchEntityUrl = this.getClass().getResource("magnifying-glass-2x.png");
-    JButton searchEntityBtn = createButton(new OpenSearchAction(app),
+    JButton searchEntityBtn = createButton(new OpenEntitySearchAction(app),
         Messages.getString("GraphAnalysis.SearchEntities"), searchEntityUrl);
     this.addBtn(searchEntityBtn);
 

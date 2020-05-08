@@ -12,13 +12,13 @@ import dpf.sp.gpinf.indexer.desktop.FileProcessor;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
-class OpenEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQueryListener {
+class ShowEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQueryListener {
 
   private final AppGraphAnalytics app;
   private Long id;
   private String evidenceId;
 
-  public OpenEvidenceNodeWorker(AppGraphAnalytics appGraphAnalytics, Long id) {
+  public ShowEvidenceNodeWorker(AppGraphAnalytics appGraphAnalytics, Long id) {
     super();
     app = appGraphAnalytics;
     this.id = id;

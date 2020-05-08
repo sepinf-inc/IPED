@@ -38,7 +38,7 @@ import br.gov.pf.labld.graph.NodeQueryListener;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
-public class GraphSearchDialog extends JDialog implements KeyListener, MouseListener {
+public class EntitySearchDialog extends JDialog implements KeyListener, MouseListener {
 
   private static final long serialVersionUID = -1298461480306818611L;
 
@@ -49,7 +49,7 @@ public class GraphSearchDialog extends JDialog implements KeyListener, MouseList
   private JTable table;
   private GraphSearchDataModel dataModel;
 
-  public GraphSearchDialog(AppGraphAnalytics app) {
+  public EntitySearchDialog(AppGraphAnalytics app) {
     super(App.get());
     this.app = app;
     this.setLayout(new GridBagLayout());
@@ -148,7 +148,7 @@ public class GraphSearchDialog extends JDialog implements KeyListener, MouseList
             Long id = node.getId();
             String type = node.getLabels().iterator().next().name();
             String property = entry.getKey();
-            GraphSearchDialog.this.dataModel.addResult(id, type, property, value.toString());
+            EntitySearchDialog.this.dataModel.addResult(id, type, property, value.toString());
           }
         }
       }
@@ -159,16 +159,16 @@ public class GraphSearchDialog extends JDialog implements KeyListener, MouseList
     @Override
     protected Void doInBackground() throws Exception {
       GraphService service = GraphServiceFactoryImpl.getInstance().getGraphService();
-      GraphSearchDialog.this.dataModel.clear();
+      EntitySearchDialog.this.dataModel.clear();
       service.search(text, this);
       return null;
     }
 
     @Override
     protected void done() {
-      GraphSearchDialog.this.dataModel.fireTableDataChanged();
-      GraphSearchDialog.this.table.doLayout();
-      GraphSearchDialog.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      EntitySearchDialog.this.dataModel.fireTableDataChanged();
+      EntitySearchDialog.this.table.doLayout();
+      EntitySearchDialog.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
   }
@@ -179,10 +179,10 @@ public class GraphSearchDialog extends JDialog implements KeyListener, MouseList
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      int[] rows = GraphSearchDialog.this.table.getSelectedRows();
+      int[] rows = EntitySearchDialog.this.table.getSelectedRows();
       Set<Long> ids = new HashSet<>(rows.length);
       for (int row : rows) {
-        Long id = (Long) GraphSearchDialog.this.table.getValueAt(row, 0);
+        Long id = (Long) EntitySearchDialog.this.table.getValueAt(row, 0);
         ids.add(id);
       }
       app.addNodesToGraph(ids);
@@ -268,8 +268,8 @@ public class GraphSearchDialog extends JDialog implements KeyListener, MouseList
   }
 
   private void search() {
-    String text = GraphSearchDialog.this.searchField.getText();
-    GraphSearchDialog.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    String text = EntitySearchDialog.this.searchField.getText();
+    EntitySearchDialog.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     new GraphSearchWorker(text).execute();
   }
 
