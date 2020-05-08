@@ -25,7 +25,7 @@ public interface GraphService {
 
   void getNodes(Collection<Long> ids, NodeQueryListener listener);
 
-  void getNeighbours(Long id, NodeEdgeQueryListener listener);
+  void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes);
 
   void getConnections(Set<Long> ids, EdgeQueryListener listener);
 
@@ -52,5 +52,7 @@ public interface GraphService {
   void advancedSearch(String string, FreeQueryListener listener);
 
   void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
+
+  Long getMoreConnectedNode();
 
 }

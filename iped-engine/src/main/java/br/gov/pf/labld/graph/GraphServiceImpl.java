@@ -69,6 +69,26 @@ public class GraphServiceImpl implements GraphService {
   public synchronized File getDbFile() {
     return dbFile;
   }
+  
+  @Override
+  public Long getMoreConnectedNode() {
+      Transaction tx = null;
+      Long id = null;
+      try {
+        tx = graphDB.beginTx();
+
+        Result result = graphDB.execute("MATCH (n)--() RETURN n, count(n) as cnt ORDER BY cnt DESC LIMIT 1");
+        if (result.hasNext()) {
+          Node node = (Node) result.next().get("n");
+          id = node.getId();
+        }
+        tx.success();
+        
+      }finally {
+        tx.close();
+      }
+      return id;
+  }
 
   @Override
   public void getEdges(String[] ids, EdgeQueryListener listener) {
@@ -140,7 +160,7 @@ public class GraphServiceImpl implements GraphService {
   }
 
   @Override
-  public void getNeighbours(Long id, NodeEdgeQueryListener listener) {
+  public void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes) {
     Transaction tx = null;
     try {
       tx = graphDB.beginTx();
@@ -148,7 +168,11 @@ public class GraphServiceImpl implements GraphService {
       HashMap<String, Object> parameters = new HashMap<>(1);
       parameters.put("param", id);
       Result result = graphDB.execute("MATCH (n)-[r]-(m) WHERE ID(n) = $param RETURN m as node, r as edge", parameters);
-      emitAllNeighbours(result, listener);
+      if(maxNodes == -1) {
+          emitAllNeighbours(result, listener);
+      }else {
+          emitTopNeighbours(result, listener, maxNodes);
+      }
       
       tx.success();
     } finally {

@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,7 +46,6 @@ import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
 import br.gov.pf.labld.graph.NodeEdgeQueryListener;
-import br.gov.pf.labld.graph.NodeQueryListener;
 import br.gov.pf.labld.graph.PathQueryListener;
 import br.gov.pf.labld.graph.desktop.renderers.CarNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.CompanyNodeRenderer;
@@ -378,10 +378,34 @@ public class AppGraphAnalytics extends JPanel {
 
   public void setDatabaseLoaded(boolean b) {
     this.databaseLoaded = true;
+    new ShowMoreConnectedNode().execute();
   }
 
   public boolean isDatabaseLoaded() {
     return databaseLoaded;
+  }
+  
+  private class ShowMoreConnectedNode extends SwingWorker<Void, Void>{
+    
+    private static final int MAX_NEIGHBOURS = 25;
+
+    @Override
+    protected Void doInBackground() {
+        try {
+            GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+            Long id = graphService.getMoreConnectedNode();
+            if(id != null) {
+                AddNodeWorker worker = new AddNodeWorker(AppGraphAnalytics.this, Collections.singleton(id));
+                worker.execute();
+                worker.get();
+                new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS).execute();
+            }
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+      
   }
 
   private class AddEvidenceFileWorker extends ExpandNodeWorker {
@@ -472,13 +496,19 @@ public class AppGraphAnalytics extends JPanel {
     private Collection<Node> nodes;
     Node currentNode;
     private int currentDegree = 0;
+    private int maxNeighbours;
 
     Collection<Node> newNodes = new HashSet<>();
     Collection<Edge> newEdges = new HashSet<>();
 
     public ExpandNodeWorker(Collection<Node> nodes) {
+        this(nodes, -1);
+    }
+
+    public ExpandNodeWorker(Collection<Node> nodes, int maxNeighbours) {
       super();
       this.nodes = nodes;
+      this.maxNeighbours = maxNeighbours;
     }
 
     @Override
@@ -489,7 +519,7 @@ public class AppGraphAnalytics extends JPanel {
 
       for (Node node : nodes) {
         this.currentNode = node;
-        graphService.getNeighbours(Long.parseLong(this.currentNode.getId()), this);
+        graphService.getNeighbours(Long.parseLong(this.currentNode.getId()), this, maxNeighbours);
       }
 
       AppGraphAnalytics.this.graph.addElements(newNodes, newEdges);

@@ -26,6 +26,10 @@ class AddNodeWorker extends SwingWorker<Void, Node> implements NodeQueryListener
     app = appGraphAnalytics;
     this.ids = ids;
   }
+  
+  public Collection<Node> getAddedNodes(){
+      return nodes;
+  }
 
   @Override
   public boolean nodeFound(org.neo4j.graphdb.Node neo4jNode) {
