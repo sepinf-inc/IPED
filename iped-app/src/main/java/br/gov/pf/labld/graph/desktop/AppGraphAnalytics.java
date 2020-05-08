@@ -897,7 +897,7 @@ public class AppGraphAnalytics extends JPanel {
 
   public void applyLayout(HistoryEnabledLayout layout) {
     this.graphPane.applyLayout(layout);
-    this.graphPane.repaint();
+    fitToScreen();
     this.sidePanel.getGraphPreviewPane().repaint();
   }
 
