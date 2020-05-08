@@ -223,17 +223,17 @@ public class GraphFileWriter implements Closeable, Flushable {
     return id;
   }
 
-  public String writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
+  public String writeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
       Map<String, Object> properties) throws IOException {
     String id = uniqueId(label, uniquePropertyName, uniquePropertyValue.toString());
     properties.put(uniquePropertyName, uniquePropertyValue);
-    writeMergeNode(id, label, properties);
+    writeNodeId(id, label, properties);
     return id;
   }
 
-  public String writeMergeNode(Label label, String uniquePropertyName, Object uniquePropertyValue) throws IOException {
+  public String writeNode(Label label, String uniquePropertyName, Object uniquePropertyValue) throws IOException {
     HashMap<String, Object> properties = new HashMap<>();
-    return writeMergeNode(label, uniquePropertyName, uniquePropertyValue, properties);
+    return writeNode(label, uniquePropertyName, uniquePropertyValue, properties);
   }
 
   public void writeRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
@@ -281,7 +281,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     writeRelationship(uniqueId1, label2, idProperty2, propertyValue2, relationshipType, Collections.emptyMap());
   }
 
-  public void writeMergeNode(String id, Label label, Map<String, Object> properties) throws IOException {
+  private void writeNodeId(String id, Label label, Map<String, Object> properties) throws IOException {
     Map<String, Object> record = new LinkedHashMap<>();
     record.put("nodeId", id);
     record.put("label", label.name());

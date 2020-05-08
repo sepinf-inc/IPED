@@ -288,7 +288,7 @@ public class GraphTask extends AbstractTask {
         String relationType = getRelationType(evidence.getMediaType().toString());
         NodeValues nv1 = getNodeValues(relationType, sender);
         
-        graphFileWriter.writeMergeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
@@ -301,7 +301,7 @@ public class GraphTask extends AbstractTask {
         
         for(String recipient : recipients){
             NodeValues nv2 = getNodeValues(relationType, recipient);
-            graphFileWriter.writeMergeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+            graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                     nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
         }
@@ -347,7 +347,7 @@ public class GraphTask extends AbstractTask {
             nv1.addProp("username", user);
         }
         
-        String uniqueId = graphFileWriter.writeMergeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
+        String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
         for(String email : emails) {
             graphFileWriter.writeNodeReplace(DynLabel.label("EMAIL"), "email", email, uniqueId);
@@ -368,7 +368,7 @@ public class GraphTask extends AbstractTask {
         String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
         NodeValues nv1 = getNodeValues(relationType, msisdn);
         
-        graphFileWriter.writeMergeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
@@ -376,7 +376,7 @@ public class GraphTask extends AbstractTask {
         
         NodeValues nv2 = getNodeValues(relationType, item.getParsedTextCache());
         
-        graphFileWriter.writeMergeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+        graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
         graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                 nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
     }
@@ -411,8 +411,8 @@ public class GraphTask extends AbstractTask {
         Map<String, Object> relProps = new HashMap<>();
         relProps.put("relId", item.getId());
         
-        graphFileWriter.writeMergeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
-        graphFileWriter.writeMergeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nodeProps);
+        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nodeProps);
         
         graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                 nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
@@ -479,10 +479,10 @@ public class GraphTask extends AbstractTask {
               }
               
               if (controlSet.add(id1)) {
-                  graphFileWriter.writeMergeNode(label, propertyName, propertyValue);  
+                  graphFileWriter.writeNode(label, propertyName, propertyValue);  
               }
               if (controlSet.add(id2)) {
-                  graphFileWriter.writeMergeNode(label2, propertyName2, propertyValue2);  
+                  graphFileWriter.writeNode(label2, propertyName2, propertyValue2);  
               }
               
               String ids = id1.compareTo(id2) <= 0 ? id1 + "-" + id2 : id2 + "-" + id1;
