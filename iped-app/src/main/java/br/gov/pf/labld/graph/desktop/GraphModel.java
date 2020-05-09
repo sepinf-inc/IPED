@@ -84,7 +84,7 @@ public class GraphModel {
     } else if (type.contains("EVIDENCIA")) {
       return new String[] { "name", "path", "hash" };
     } else if (type.contains("PESSOA_FISICA")) {
-      return new String[] { "cpf", "titulo_eleitor", "cnh", "pispasep", "name" };
+      return new String[] { "cpf", "titulo_eleitor", "cnh", "pispasep", "name", "telefone", "email"};
     } else if (type.contains("PESSOA_JURIDICA")) {
       return new String[] { "cnpj" };
     } else if (type.equals("PLACA")) {
@@ -120,7 +120,7 @@ public class GraphModel {
         // Nothing to do.
       }
     }
-    return getLabel(neo4jNode);
+    return neo4jNode.getPropertyKeys().iterator().next();
   }
 
   public Point calculateRelativePosition(Node source, Node newNode, int nodeDegree) {
