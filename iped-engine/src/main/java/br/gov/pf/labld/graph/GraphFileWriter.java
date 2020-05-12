@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -599,7 +600,13 @@ public class GraphFileWriter implements Closeable, Flushable {
     @Override
     public synchronized void flush() throws IOException {
       if(temp.exists()) {
-          out.write(new String(Files.readAllBytes(temp.toPath()), StandardCharsets.UTF_8));
+          try(Reader reader = Files.newBufferedReader(temp.toPath())){
+              char[] cbuf = new char[1 << 20];
+              int read = 0;
+              while((read = reader.read(cbuf)) != -1) {
+                  out.write(cbuf, 0, read);
+              }
+          }
           temp.delete();
       }
       out.write(sb.toString());
