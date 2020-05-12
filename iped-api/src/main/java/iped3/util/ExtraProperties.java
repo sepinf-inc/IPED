@@ -74,6 +74,14 @@ public class ExtraProperties {
     
     public static final String LOCAL_PATH = "localPath"; //$NON-NLS-1$
     
+    public static final String USER_PHONE = "phoneNumber"; //$NON-NLS-1$
+    
+    public static final String USER_NAME = "userName"; //$NON-NLS-1$
+    
+    public static final String USER_ACCOUNT = "userAccount"; //$NON-NLS-1$
+    
+    public static final String USER_EMAIL = "emailAddress"; //$NON-NLS-1$
+    
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
     
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$

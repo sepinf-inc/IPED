@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -49,7 +49,7 @@ public class GraphFileWriter implements Closeable, Flushable {
   private Map<String, CSVWriter> nodeWriters = new HashMap<>();
   private Map<String, CSVWriter> relationshipWriters = new HashMap<>();
 
-  private BufferedWriter replaceWriter = null;
+  private Map<String, String> replaces = new HashMap<>();
   private File replaceFile;
 
   private File root;
@@ -68,9 +68,10 @@ public class GraphFileWriter implements Closeable, Flushable {
   private void initReplaceWriter(File root) {
     try {
       replaceFile = new File(root, "replace.csv");
-      replaceWriter = new BufferedWriter(
-          new OutputStreamWriter(new FileOutputStream(replaceFile, replaceFile.exists()), Charset.forName("UTF-8")), 1 << 24);
-    } catch (FileNotFoundException e) {
+      if(replaceFile.exists()) {
+          replaces = loadReplaces();
+      }
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -223,10 +224,19 @@ public class GraphFileWriter implements Closeable, Flushable {
     return id;
   }
 
+  @SuppressWarnings("unchecked")
   public String writeNode(Label label, String uniquePropertyName, Object uniquePropertyValue,
       Map<String, Object> properties) throws IOException {
     String id = uniqueId(label, uniquePropertyName, uniquePropertyValue.toString());
-    properties.put(uniquePropertyName, uniquePropertyValue);
+    Object val = properties.get(uniquePropertyName);
+    if(val instanceof Collection) {
+        ((Collection<Object>) val).add(uniquePropertyValue);
+    }else {
+        if(val != null && !val.equals(uniquePropertyValue))
+            properties.put(uniquePropertyName, Arrays.asList(uniquePropertyValue, val));
+        else if(val == null)
+            properties.put(uniquePropertyName, uniquePropertyValue);
+    }
     writeNodeId(id, label, properties);
     return id;
   }
@@ -256,17 +266,25 @@ public class GraphFileWriter implements Closeable, Flushable {
     out.write(record);
 
   }
+  
+  private static String getLastReplace(Map<String, String> replaces, String id) {
+      String tmp, key = id;
+      while((tmp = replaces.get(key)) != null) {
+          key = tmp;
+      }
+      return key;
+  }
 
   public void writeNodeReplace(Label label, String propName, Object propId, String nodeId) throws IOException {
     String uniqueId1 = uniqueId(label, propName, propId.toString());
-    synchronized (replaceWriter) {
-      replaceWriter.write("\"");
-      replaceWriter.write(uniqueId1);
-      replaceWriter.write("\"");
-      replaceWriter.write(",");
-      replaceWriter.write("\"");
-      replaceWriter.write(nodeId);
-      replaceWriter.write("\"\r\n");
+    synchronized (replaces) {
+        if(!uniqueId1.equals(nodeId)) {
+            String key = getLastReplace(replaces, uniqueId1);
+            String replace = getLastReplace(replaces, nodeId);
+            if(!key.equals(replace)) {
+                replaces.put(key, replace);
+            }
+        }
     }
   }
 
@@ -297,41 +315,24 @@ public class GraphFileWriter implements Closeable, Flushable {
     return id;
   }
 
-  public void deduplicate() throws IOException {
-    deduplicate(nodeWriters.values());
-    deduplicate(relationshipWriters.values());
+  public void normalize() throws IOException {
+      normalize(nodeWriters.values());
+      normalize(relationshipWriters.values());
   }
 
-  private void deduplicate(Collection<CSVWriter> writers) throws IOException {
+  private void normalize(Collection<CSVWriter> writers) throws IOException {
     for (CSVWriter writer : writers) {
-      writer.deduplicate();
+      writer.normalize(replaces);
     }
   }
 
   @Override
   public void close() throws IOException {
-    if (replaceWriter != null) {
-      replaceWriter.close();
-    }
-
+    flushReplaceWriter();
     close(nodeWriters.values());
     close(relationshipWriters.values());
-    replace();
+    normalize();
     writeArgsFile();
-    deduplicate();
-  }
-
-  private void replace() throws IOException {
-    Map<String, String> replaces = loadReplaces();
-
-    if (!replaces.isEmpty()) {
-      for (CSVWriter writer : relationshipWriters.values()) {
-        writer.replace(replaces);
-      }
-      for (CSVWriter writer : nodeWriters.values()) {
-        writer.replace(replaces);
-      }
-    }
   }
 
   private Map<String, String> loadReplaces() throws IOException {
@@ -373,8 +374,16 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
   
   private void flushReplaceWriter() throws IOException {
-      if (replaceWriter != null) {
-          replaceWriter.flush();
+      synchronized(replaces) {
+          try(Writer replaceWriter = new BufferedWriter(
+                  new OutputStreamWriter(new FileOutputStream(replaceFile), Charset.forName("UTF-8")))){
+              for(Entry<String, String> entry : replaces.entrySet()) {
+                  replaceWriter.write(entry.getKey());
+                  replaceWriter.write(",");
+                  replaceWriter.write(entry.getValue());
+                  replaceWriter.write("\r\n");
+              }
+          }
           IOUtils.fsync(replaceFile, false);
       }
   }
@@ -435,8 +444,8 @@ public class GraphFileWriter implements Closeable, Flushable {
       while (iterator.hasNext()) {
         String field = iterator.next();
         Object value = record.get(field);
+        sb.append("\"");
         if (value != null) {
-          sb.append("\"");
           String strVal = null;
           if (value instanceof Collection) {
             Collection<Object> col = (Collection<Object>) value;
@@ -448,16 +457,25 @@ public class GraphFileWriter implements Closeable, Flushable {
           strVal = SLASH_PATTERN.matcher(strVal).replaceAll("\\\\\\\\\\\\\\\\");
           strVal = LINE_BREAK_PATTERN.matcher(strVal).replaceAll(" ");
           sb.append(strVal);
-          sb.append("\"");
         }
+        sb.append("\"");
         if (iterator.hasNext()) {
             sb.append(",");
         }
       }
       sb.append("\r\n");
     }
+    
+    public void normalize(Map<String, String> replaces) throws IOException {
+        if(isNodeWriter) {
+            normalizeNodes(replaces);
+        }else {
+            replaceRels(replaces);
+            deduplicateLines();
+        }
+    }
 
-    public void replace(Map<String, String> replaces) throws IOException {
+    public void replaceRels(Map<String, String> replaces) throws IOException {
       BufferedReader reader = null;
       BufferedWriter writer = null;
       File tmp = new File(output.getParentFile(), output.getName() + ".tmp");
@@ -466,23 +484,14 @@ public class GraphFileWriter implements Closeable, Flushable {
         reader = new BufferedReader(new InputStreamReader(new FileInputStream(output), Charset.forName("utf-8")));
         String line;
         while ((line = reader.readLine()) != null) {
-          int firstIdx = line.indexOf(",");
-          String id1 = line.substring(0, firstIdx).trim();
-          String id2 = line.substring(firstIdx + 1, line.indexOf(",", firstIdx + 1)).trim();
-          String tmpId = id1, newId = null, newId2 = null;
-          while((tmpId = replaces.get(tmpId)) != null) {
-              newId = tmpId;
-          }
+          int firstIdx = line.indexOf("\",\"");
+          String id1 = line.substring(1, firstIdx).trim();
+          String id2 = line.substring(firstIdx + 3, line.indexOf("\",\"", firstIdx + 3)).trim();
+          String newId = getLastReplace(replaces, id1);
           if (newId != null) {
-            if(isNodeWriter) {
-                continue;
-            }
             line = line.replaceFirst(id1, newId);
           }
-          tmpId = id2;
-          while((tmpId = replaces.get(tmpId)) != null) {
-              newId2 = tmpId;
-          }
+          String newId2 = getLastReplace(replaces, id2);
           if (newId2 != null) {
               line = line.replaceFirst(id2, newId2);
           }
@@ -516,23 +525,22 @@ public class GraphFileWriter implements Closeable, Flushable {
         }
     }
 
-    public void deduplicate() throws IOException {
-      if(!isNodeWriter) {
-          deduplicateLines();
-          return;
-      }
-      Map<String, String> uniques = new HashMap<>();
+    public void normalizeNodes(Map<String, String> replaces) throws IOException {
+      Map<String, String> uniques = new TreeMap<>();
+      Set<String> finalIds = new HashSet<>();
       try (BufferedReader reader = new BufferedReader(
           new InputStreamReader(new FileInputStream(output), Charset.forName("utf-8")))) {
         String line;
         while ((line = reader.readLine()) != null) {
-          String id = line.substring(0, line.indexOf(",")).trim();
-          String prevLine = uniques.get(id);
+          String id = line.substring(1, line.indexOf("\",\"")).trim();
+          String newId = getLastReplace(replaces, id);
+          if(id.equals(newId)) finalIds.add(id);
+          String prevLine = uniques.get(newId);
           if (prevLine == null) {
-              uniques.put(id, line);
+              uniques.put(newId, line);
           }else {
               TreeMap<Integer, Set<String>> map = new TreeMap<>();
-              String[][] valss = {line.split(","), prevLine.split(",")};
+              String[][] valss = {split(line, "\",\""), split(prevLine, "\",\"")};
               for(String[] vals : valss) {
                   for(int i = 0; i < vals.length; i++) {
                       Set<String> vs = map.get(i);
@@ -540,7 +548,8 @@ public class GraphFileWriter implements Closeable, Flushable {
                           vs = new HashSet<>();
                           map.put(i, vs);
                       }
-                      vs.addAll(Arrays.asList(vals[i].replaceAll("\"", "").split(";")));
+                      if(i == 0) vs.add(newId);
+                      else vs.addAll(Arrays.asList(vals[i].replaceAll("\"", "").split(";")));
                   }
               }
               StringBuilder sb = new StringBuilder();
@@ -552,19 +561,32 @@ public class GraphFileWriter implements Closeable, Flushable {
                   if(++i < map.size())
                       sb.append(",");
               }
-              uniques.put(id, sb.toString());
+              uniques.put(newId, sb.toString());
           }
         }
       }
 
       try (BufferedWriter writer = new BufferedWriter(
           new OutputStreamWriter(new FileOutputStream(output), Charset.forName("utf-8")))) {
-        for (String line : uniques.values()) {
-          writer.write(line);
-          writer.write("\r\n");
+        for (Entry<String, String> entry : uniques.entrySet()) {
+          if(finalIds.contains(entry.getKey())) {
+              writer.write(entry.getValue());
+              writer.write("\r\n");    
+          }
         }
       }
       
+    }
+    
+    private String[] split(String string, String pattern) {
+        ArrayList<String> strs = new ArrayList<>();
+        int idx = 0 - pattern.length(), i = 0;
+        while((i = string.indexOf(pattern, idx + pattern.length())) != -1) {
+            strs.add(string.substring(idx + pattern.length(), i));
+            idx = i;
+        }
+        strs.add(string.substring(idx + pattern.length()));
+        return strs.toArray(new String[strs.size()]);
     }
     
     private synchronized void writeToTemp() throws IOException {

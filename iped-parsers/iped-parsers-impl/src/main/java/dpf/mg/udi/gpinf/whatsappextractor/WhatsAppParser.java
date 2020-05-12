@@ -305,6 +305,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CONTACT.toString());
                     cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
+                    cMetadata.set(ExtraProperties.USER_NAME, c.getName());
+                    cMetadata.set(ExtraProperties.USER_PHONE, c.getId());
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         getAvatar(searcher, c);

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +33,7 @@ import br.gov.pf.iped.regex.TelefoneRegexValidatorService;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -120,13 +122,10 @@ public class GraphTask extends AbstractTask {
   @Override
   public void finish() throws Exception {
     if (graphFileWriter != null) {
-      synchronized (graphFileWriter) {
-        if (graphFileWriter != null) {
-          graphFileWriter.close();
-        }
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+        graphFileWriter.close();
         finishGraphGeneration();
-      }
-      graphFileWriter = null;
+        graphFileWriter = null;
     }
   }
   
@@ -151,7 +150,7 @@ public class GraphTask extends AbstractTask {
     //itemNodeGenerator.generateNodeForItem(evidence);
     
     if (includeEvidence(evidence)) {
-        processMetadata(evidence);
+        processCommunicationMetadata(evidence);
         processContacts(evidence);
         processWifi(evidence);
         processUserAccount(evidence);
@@ -267,7 +266,7 @@ public class GraphTask extends AbstractTask {
         return null;
     }
     
-    private NodeValues getNodeValues(String relationType, String value) {
+    private NodeValues getNodeValues(String value) {
         NodeValues nv1 = getPhoneNodeValues(value);
         if(nv1 == null) {
             nv1 = getEmailNodeValues(value);
@@ -278,7 +277,7 @@ public class GraphTask extends AbstractTask {
         return nv1;
     }
   
-    private void processMetadata(IItem evidence) throws IOException {
+    private void processCommunicationMetadata(IItem evidence) throws IOException {
         Metadata metadata = evidence.getMetadata();
         String sender = metadata.get(Message.MESSAGE_FROM);
         if(sender == null || sender.trim().isEmpty()) {
@@ -286,7 +285,7 @@ public class GraphTask extends AbstractTask {
         }
         
         String relationType = getRelationType(evidence.getMediaType().toString());
-        NodeValues nv1 = getNodeValues(relationType, sender);
+        NodeValues nv1 = getNodeValues(sender);
         
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         
@@ -300,7 +299,7 @@ public class GraphTask extends AbstractTask {
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_BCC)));
         
         for(String recipient : recipients){
-            NodeValues nv2 = getNodeValues(relationType, recipient);
+            NodeValues nv2 = getNodeValues(recipient);
             graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                     nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
@@ -313,32 +312,48 @@ public class GraphTask extends AbstractTask {
         if(!relationType.equals("useraccount")) {
             return;
         }
-        String itemText = item.getParsedTextCache();
-        SortedSet<String> emails = getEmails(itemText);
-        SortedSet<String> phones = getPhones(itemText);
+        
         String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
         SortedSet<String> msisdnPhones = null;
         if(msisdn != null) {
-            phones.addAll(msisdnPhones = getPhones(msisdn));
+            msisdnPhones = getPhones(msisdn);
+        }
+        writePersonNode(item, msisdnPhones);
+        
+    }
+        
+    private NodeValues writePersonNode(IItem item, SortedSet<String> msisdnPhones) throws IOException {
+        
+        String itemText = item.getParsedTextCache();
+        SortedSet<String> emails = getEmails(itemText);
+        
+        List<String> possiblePhones = new ArrayList<>();
+        possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "PhoneNumber")));
+        possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username")));
+        possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")));
+        possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.USER_PHONE)));
+        SortedSet<String> formattedPhones = getPhones(possiblePhones.toString());
+        if(msisdnPhones == null) msisdnPhones = Collections.emptySortedSet();
+        formattedPhones.addAll(msisdnPhones);
+        
+        String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
+        if(name == null) name = item.getMetadata().get(ExtraProperties.USER_NAME);
+        
+        String user = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
+        if(user == null) user = item.getMetadata().get(ExtraProperties.USER_ACCOUNT);
+        
+        NodeValues nv1;
+        if(!msisdnPhones.isEmpty()) {
+            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", msisdnPhones.first());
+        }else if(!formattedPhones.isEmpty()) {
+            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", formattedPhones.first());
+        }else if(!emails.isEmpty()) {
+            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "email", emails.first());
         }else {
-            return;
-        }
-        Pattern namePattern = Pattern.compile(Pattern.quote(ExtraProperties.UFED_META_PREFIX + "Name:") + "(.+)");
-        Matcher nameMatcher = namePattern.matcher(itemText);
-        String name = null;
-        if(nameMatcher.find()) {
-            name = nameMatcher.group(1).trim();
+            nv1 = new NodeValues(DynLabel.label("GENERIC"), "entity", item.getName());
         }
         
-        Pattern userPattern = Pattern.compile(Pattern.quote(ExtraProperties.UFED_META_PREFIX + "Username:") + "(.+)");
-        Matcher userMatcher = userPattern.matcher(itemText);
-        String user = null;
-        if(userMatcher.find()) {
-            user = userMatcher.group(1).trim();
-        }
-        
-        NodeValues nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", msisdnPhones.first());
-        nv1.addProp("telefone", phones);
+        nv1.addProp("telefone", formattedPhones);
         nv1.addProp("email", emails);
         if(name != null && !name.isEmpty()) {
             nv1.addProp("name", name);
@@ -350,12 +365,15 @@ public class GraphTask extends AbstractTask {
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
         for(String email : emails) {
+            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), "email", email, uniqueId);
             graphFileWriter.writeNodeReplace(DynLabel.label("EMAIL"), "email", email, uniqueId);
         }
-        for(String phone : phones) {
+        for(String phone : formattedPhones) {
+            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), "telefone", phone, uniqueId);
             graphFileWriter.writeNodeReplace(DynLabel.label("TELEFONE"), "telefone", phone, uniqueId);
         }
         
+        return nv1;
     }
     
     private void processContacts(IItem item) throws IOException {
@@ -366,7 +384,7 @@ public class GraphTask extends AbstractTask {
         }
         
         String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
-        NodeValues nv1 = getNodeValues(relationType, msisdn);
+        NodeValues nv1 = getNodeValues(msisdn);
         
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         
@@ -374,9 +392,10 @@ public class GraphTask extends AbstractTask {
         Map<String, Object> relProps = new HashMap<>();
         relProps.put("relId", item.getId());
         
-        NodeValues nv2 = getNodeValues(relationType, item.getParsedTextCache());
+        NodeValues nv2 = writePersonNode(item, null);
         
         graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+        
         graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                 nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
     }
@@ -388,7 +407,7 @@ public class GraphTask extends AbstractTask {
             return;
         }
         String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
-        NodeValues nv1 = getNodeValues(relationType, msisdn);
+        NodeValues nv1 = getNodeValues(msisdn);
         
         NodeValues nv2;
         Map<String, Object> nodeProps = new HashMap<>();

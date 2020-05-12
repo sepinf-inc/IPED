@@ -82,6 +82,10 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.TIKA_PARSER_USED);
         generalKeys.add(ExtraProperties.CARVEDBY_METADATA_NAME);
         generalKeys.add(ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName());
+        generalKeys.add(ExtraProperties.USER_ACCOUNT);
+        generalKeys.add(ExtraProperties.USER_EMAIL);
+        generalKeys.add(ExtraProperties.USER_NAME);
+        generalKeys.add(ExtraProperties.USER_PHONE);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
