@@ -152,8 +152,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        //TODO: Remove before final commit
-        //ViewerControl.getInstance().releaseLibreOfficeFocus();
     }
 
     @Override

@@ -591,32 +591,11 @@ public class LibreOfficeViewer extends Viewer {
                     ((ITextDocument) document).zoom(DocumentZoomType.PAGE_WIDTH, (short) 100);
                 }
 
-                //TODO: Remove? Perhaps this is not necessary anymore, after coverting PPSX to PPTX. 
-                //if (document instanceof IPresentationDocument) {
-                   //((IPresentationDocument) document).getPresentationSupplier().getPresentation().end();
-                //}
-                
-                //TODO:Remove before final commit, if internal focus solution works as expected. 
-                //releaseFocus();
             } catch (Exception e) {
                 // e.printStackTrace();
             }
         }
     }
-
-    //TODO:Remove before final commit, if internal focus solution works as expected. 
-    /*
-    public void setNoaPanelVisible(final boolean visible) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                noaPanel.setVisible(visible);
-                noaPanel.setSize(noaPanel.getWidth() + delta, noaPanel.getHeight());
-                delta *= -1;
-            }
-        });
-    }
-    */
 
     @Override
     public void dispose() {

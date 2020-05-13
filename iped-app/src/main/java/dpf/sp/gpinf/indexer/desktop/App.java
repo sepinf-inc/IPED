@@ -231,7 +231,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private App() {
         this.appSearchParams = new AppSearchParams();
         this.appSearchParams.mainFrame = (JFrame) this;
-        //TODO: Remove before final commit. //this.appSearchParams.viewerControl = ViewerControl.getInstance();
         this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
         this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
         this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
@@ -796,25 +795,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             viewerController.put(viewer, viewerDock);
         }
 
-        //TODO: Remove before final commit. 
-        /*
-        compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), //$NON-NLS-1$ //$NON-NLS-2$
-                compositeViewer);
-        compositeViewerDock.setTitleShown(false);
-        compositeViewerDock.addCDockableStateListener(new CDockableStateListener() {
-            @Override
-            public void extendedModeChanged(CDockable arg0, ExtendedMode mode) {
-                if (mode == ExtendedMode.EXTERNALIZED || mode == ExtendedMode.NORMALIZED)
-                    viewerControl.restartLibreOfficeFrame();
-            }
-        
-            @Override
-            public void visibilityChanged(CDockable arg0) {
-                // TODO Auto-generated method stub
-            }
-        });
-        */
-
         setDockablesColors();
     }
     
@@ -830,17 +810,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             DefaultSingleCDockable viewerDock = viewerDocks.get(i);
             viewerDock.addCDockableLocationListener(new CDockableLocationListener() {
                 public void changed(CDockableLocationEvent event) {
-                    //TODO: Remove before final commit
-                    /*
-                    System.err.println();
-                    System.err.println("VIEWER:" + viewer.getName());
-                    System.err.println(event.getOldLocation());
-                    System.err.println(event.getOldShowing());
-                    System.err.println(event.getNewShowing());
-                    System.err.println(event.getNewLocation());
-                    System.err.println(event.isShowingChanged());
-                    System.err.println(event.isLocationChanged());
-                    */
                     if (viewerController != null && event.getNewShowing()) {
                         boolean validated = false;
                         if (event.isLocationChanged() && event.getOldLocation() != null) {
@@ -859,19 +828,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 }
             });
-            //TODO: Remove before final commit
-            /*
-            viewerDock.addCDockableStateListener(new CDockableStateListener() {
-                public void visibilityChanged(CDockable dockable) {
-                }
-                
-                public void extendedModeChanged(CDockable dockable, ExtendedMode mode) {
-                    if (viewerController != null) {
-                        viewerController.validateViewer(viewer);
-                    }
-                }
-            });
-            */
             
             CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getIcon("prev", resPath));
             CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getIcon("next", resPath));
@@ -1207,8 +1163,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         setupViewerDocks();
         viewerController.validateViewers();
-        //TODO: Remove before final commit
-        //viewerController.refreshOfficeViewer();
     }
 
     public void alterarDisposicao() {

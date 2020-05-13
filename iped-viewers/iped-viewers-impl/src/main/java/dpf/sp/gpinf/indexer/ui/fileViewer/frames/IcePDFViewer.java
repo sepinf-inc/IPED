@@ -211,11 +211,6 @@ public class IcePDFViewer extends Viewer {
                         viewerPanel.revalidate();
                         getPanel().revalidate();
     
-                        //TODO:Remove before final commit, if revalidate works as expected
-                        // resize to force redraw
-                        //getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
-                        //delta *= -1;
-    
                         highlightText(highlightTerms, content);
                     } catch (Exception e) {
                         if (content == null || !content.equals(lastContent)) return;
@@ -243,8 +238,6 @@ public class IcePDFViewer extends Viewer {
         return false;
     }
     
-    //TODO:Remove before final commit, if revalidate works as expected
-    //private int delta = 1;
     private ArrayList<Integer> hitPages;
 
     private void highlightText(Set<String> highlightTerms, IStreamSource content) {
@@ -255,7 +248,6 @@ public class IcePDFViewer extends Viewer {
                 return;
             }
 
-            //TODO: Review this! In rare (random) cases it doesn't work. 
             // Workaround to rendering problem whith the first page with hits
             Thread.sleep(500);
 

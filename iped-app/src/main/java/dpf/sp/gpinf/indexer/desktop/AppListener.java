@@ -188,9 +188,6 @@ public class AppListener implements ActionListener, MouseListener {
     @Override
     public void mousePressed(MouseEvent evt) {
 
-        //TODO: Remove before final commit
-        //ViewerControl.getInstance().releaseLibreOfficeFocus();
-
         Object termo = App.get().termo.getSelectedItem();
         if (termo != null && termo.equals(App.SEARCH_TOOL_TIP)
                 && App.get().termo.isAncestorOf((Component) evt.getSource())) {
