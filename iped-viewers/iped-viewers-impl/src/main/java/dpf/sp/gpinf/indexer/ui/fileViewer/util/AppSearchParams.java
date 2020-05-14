@@ -22,9 +22,7 @@ import org.apache.lucene.search.Query;
  */
 public class AppSearchParams {
 
-    //TODO:Remove before final commit //public IViewerControl viewerControl;
     public JFrame mainFrame = null;
-    //TODO:Remove before final commit //public CompositeViewer compositeViewer = null;
     public JDialog dialogBar = null;
     public String codePath = null;
     public Analyzer analyzer = null;
@@ -32,12 +30,10 @@ public class AppSearchParams {
     public String HIGHLIGHT_START_TAG = null;
     public String HIGHLIGHT_END_TAG = null;
     public Object autoParser = null;
-    //TODO:Remove before final commit //public ATextViewer textViewer = null;
     public JTabbedPane tabbedHits = null;
     public HitsTable hitsTable = null;
     public JScrollPane subItemScroll;
     public JScrollPane parentItemScroll;
-    //TODO:Remove before final commit //public HitsTableModel hitsModel = new HitsTableModel(this);
     public int TEXT_BREAK_SIZE = -1;
     public int FRAG_SIZE = -1;
     public int MAX_LINES = -1;

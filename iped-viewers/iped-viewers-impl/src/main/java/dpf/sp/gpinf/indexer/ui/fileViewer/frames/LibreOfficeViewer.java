@@ -289,7 +289,6 @@ public class LibreOfficeViewer extends Viewer {
     private volatile String lastContentType;
     private volatile Set<String> lastHighlightTerms;
     private AtomicInteger numTries = new AtomicInteger();
-    // private volatile Thread loadingThread;
     private Thread edtMonitor;
 
     private Object startLOLock = new Object();
@@ -341,7 +340,6 @@ public class LibreOfficeViewer extends Viewer {
                 }
 
                 try {
-                    // loadingThread = this;
                     restartCalled = false;
                     DocumentDescriptor descriptor = DocumentDescriptor.DEFAULT;
                     descriptor.setReadOnly(true);
@@ -371,10 +369,6 @@ public class LibreOfficeViewer extends Viewer {
                         officeFrame.getXFrame().getContainerWindow().setVisible(false);
                         officeFrame.getXFrame().getContainerWindow().setVisible(true);
                         noaPanel.revalidate();
-
-                        //TODO:Remove before final commit, if revalidate works as expected
-                        //noaPanel.setSize(noaPanel.getWidth() + delta, noaPanel.getHeight());
-                        //delta *= -1;
 
                     } else {
                         cleanDocument(descriptor);
@@ -490,25 +484,6 @@ public class LibreOfficeViewer extends Viewer {
 
         LOGGER.info("LibreOffice restarted."); //$NON-NLS-1$
     }
-
-    //TODO:Remove before final commit, if revalidate works as expected
-    //private int delta = 1;
-
-    //TODO:Remove before final commit, if internal (only inside load method) 
-    //focus solution works as expected. 
-    /*
-    public void releaseFocus() {
-        if (officeFrame != null) {
-            try {
-                officeFrame.getXFrame().getContainerWindow().setVisible(false);
-                officeFrame.getXFrame().getContainerWindow().setVisible(true);
-                noaPanel.setSize(noaPanel.getWidth() + delta, noaPanel.getHeight());
-                delta *= -1;
-            } catch (Exception e) {
-            }
-        }
-    }
-    */
 
     private volatile File tempFile = null;
 
