@@ -7,12 +7,15 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 
@@ -39,6 +42,9 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import ezvcard.io.chain.ChainingHtmlWriter;
+import ezvcard.property.Address;
+import ezvcard.property.Email;
+import ezvcard.property.Organization;
 import ezvcard.property.Photo;
 import ezvcard.property.RawProperty;
 import ezvcard.property.StructuredName;
@@ -48,6 +54,7 @@ import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import iped3.util.ExtraProperties;
 
 public class VCardParser extends AbstractParser {
 
@@ -86,6 +93,10 @@ public class VCardParser extends AbstractParser {
         try {
             xhtml.startDocument();
             List<VCard> vcards = Ezvcard.parse(text).all();
+            
+            for(VCard vcard : vcards) {
+                extractMetadata(vcard, metadata);
+            }
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             try(PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8))){
@@ -117,6 +128,58 @@ public class VCardParser extends AbstractParser {
         } finally {
             xhtml.endDocument();
         }
+    }
+    
+    private void extractMetadata(VCard vcard, Metadata metadata) {
+        if(vcard.getFormattedName() != null) {
+            metadata.add(ExtraProperties.USER_NAME, vcard.getFormattedName().getValue());
+        }else if(vcard.getNickname() != null) {
+            metadata.add(ExtraProperties.USER_NAME, vcard.getNickname().getValues().toString());
+        }
+        if(vcard.getBirthday() != null) {
+            metadata.set(ExtraProperties.USER_BIRTH, vcard.getBirthday().getDate());
+        }else if(vcard.getAnniversary() != null) {
+            metadata.set(ExtraProperties.USER_BIRTH, vcard.getAnniversary().getDate());
+        }
+        
+        for(Telephone t : vcard.getTelephoneNumbers()) {
+            metadata.add(ExtraProperties.USER_PHONE, t.getText());
+        }
+        
+        for(Email e : vcard.getEmails()) {
+            metadata.add(ExtraProperties.USER_EMAIL, e.getValue());
+        } 
+        
+        for(Address a : vcard.getAddresses()) {
+            metadata.add(ExtraProperties.USER_ADDRESS, getAddressString(a));
+        } 
+        
+        for(Organization o : vcard.getOrganizations()) {
+            metadata.add(ExtraProperties.USER_ORGANIZATION, o.getValues().toString());
+        } 
+        
+        if(vcard.getNotes() != null) {
+            vcard.getNotes().stream().forEach(n -> metadata.add(ExtraProperties.USER_NOTES, n.getValue()));
+        }
+        if(vcard.getUrls() != null) {
+            vcard.getUrls().stream().forEach(n -> metadata.add(ExtraProperties.USER_URLS, n.getValue()));
+        }
+        if(vcard.getPhotos() != null && vcard.getPhotos().size() > 0) {
+            metadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(vcard.getPhotos().get(0).getData()));
+        }
+    }
+    
+    private String getAddressString(Address a) {
+        StringBuilder sb = new StringBuilder();
+        if(a.getLabel() != null) sb.append(a.getLabel()).append(": ");
+        if(a.getStreetAddressFull() != null) sb.append(a.getStreetAddressFull()).append(" ");
+        if(a.getExtendedAddressFull() != null) sb.append(a.getExtendedAddressFull()).append(" ");
+        if(a.getLocality() != null) sb.append(a.getLocality()).append(" ");
+        if(a.getRegion() != null) sb.append(a.getRegion()).append(" ");
+        if(a.getCountry() != null) sb.append(a.getCountry()).append(" ");
+        if(a.getPostalCode() != null) sb.append("ZIP ").append(a.getPostalCode()).append(" ");
+        if(a.getGeo() != null) sb.append(a.getGeo());
+        return sb.toString().trim();
     }
 
     public static void printHtmlFromString(PrintWriter out, String text) {

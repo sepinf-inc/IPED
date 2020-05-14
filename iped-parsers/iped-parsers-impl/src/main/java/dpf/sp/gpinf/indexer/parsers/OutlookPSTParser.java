@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -270,6 +271,18 @@ public class OutlookPSTParser extends AbstractParser {
             processAttachs(email, path + ">>" + email.getSubject(), parent); //$NON-NLS-1$
         }
     }
+    
+    private void fillMetadata(Metadata metadata, String prop, String... values) {
+        HashSet<String> set = new HashSet<>();
+        for(String val : values) {
+            if(val != null && !val.isEmpty()) {
+                set.add(val);
+            }
+        }
+        for(String val : set) {
+            metadata.add(prop, val);
+        }
+    }
 
     private void processPSTObject(PSTObject obj, String path, long parent) {
 
@@ -284,6 +297,17 @@ public class OutlookPSTParser extends AbstractParser {
                 if (suffix != null && !suffix.isEmpty())
                     objName += "-" + suffix; //$NON-NLS-1$
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_ACCOUNT, contact.getAccount());
+                metadata.add(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
+                fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(), contact.getMiddleName(), contact.getSurname(), contact.getNickname());
+                fillMetadata(metadata, ExtraProperties.USER_EMAIL, contact.getEmailAddress(), contact.getEmail1EmailAddress(), contact.getEmail2EmailAddress(), contact.getEmail3EmailAddress());
+                fillMetadata(metadata, ExtraProperties.USER_PHONE, contact.getPrimaryTelephoneNumber(), contact.getCompanyMainPhoneNumber(), contact.getRadioTelephoneNumber(), contact.getCarTelephoneNumber(),
+                        contact.getBusinessTelephoneNumber(), contact.getBusiness2TelephoneNumber(), contact.getMobileTelephoneNumber(), contact.getHomeTelephoneNumber(), contact.getOtherTelephoneNumber());
+                fillMetadata(metadata, ExtraProperties.USER_ADDRESS, contact.getHomeAddress(), contact.getWorkAddress(), contact.getPostalAddress(), contact.getOtherAddress());
+                metadata.set(ExtraProperties.USER_BIRTH, contact.getBirthday());
+                fillMetadata(metadata, ExtraProperties.USER_ORGANIZATION, contact.getCompanyName());
+                fillMetadata(metadata, ExtraProperties.USER_URLS, contact.getPersonalHomePage(), contact.getBusinessHomePage());
+                fillMetadata(metadata, ExtraProperties.USER_NOTES, contact.getNote(), contact.getComment());
             } else
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
 

@@ -80,7 +80,21 @@ public class ExtraProperties {
     
     public static final String USER_ACCOUNT = "userAccount"; //$NON-NLS-1$
     
+    public static final String USER_ACCOUNT_TYPE = "accountType"; //$NON-NLS-1$
+    
     public static final String USER_EMAIL = "emailAddress"; //$NON-NLS-1$
+    
+    public static final String USER_ADDRESS = "userAddress"; //$NON-NLS-1$
+    
+    public static final String USER_ORGANIZATION = "userOrganization"; //$NON-NLS-1$
+    
+    public static final String USER_NOTES = "userNotes"; //$NON-NLS-1$
+    
+    public static final String USER_URLS = "userUrls"; //$NON-NLS-1$
+    
+    public static final Property USER_BIRTH = Property.internalDate("userBirthday"); //$NON-NLS-1$
+    
+    public static final String USER_THUMB = "userPhoto"; //$NON-NLS-1$
     
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
     

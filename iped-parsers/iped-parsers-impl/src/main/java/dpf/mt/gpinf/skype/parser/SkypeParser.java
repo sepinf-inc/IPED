@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
 import java.sql.Connection;
@@ -104,19 +105,27 @@ public class SkypeParser extends AbstractParser {
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();
 
                 for (SkypeContact c : contatos) {
-                    Metadata chatMetadata = new Metadata();
-                    chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CONTACT_MIME_TYPE);
-                    chatMetadata.set(HttpHeaders.CONTENT_TYPE, CONTACT_MIME_TYPE);
+                    Metadata cMetadata = new Metadata();
+                    cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CONTACT_MIME_TYPE);
+                    cMetadata.set(HttpHeaders.CONTENT_TYPE, CONTACT_MIME_TYPE);
                     String name = c.getFullName();
                     if (name == null || name.trim().isEmpty())
                         name = c.getDisplayName();
                     if (name == null || name.trim().isEmpty())
                         name = c.getSkypeName();
-                    chatMetadata.set(TikaCoreProperties.TITLE, name);
+                    cMetadata.set(TikaCoreProperties.TITLE, name);
+                    cMetadata.set(ExtraProperties.USER_NAME, name);
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getSkypeName());
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                    cMetadata.set(ExtraProperties.USER_EMAIL, c.getEmail());
+                    cMetadata.set(ExtraProperties.USER_PHONE, c.getAssignedPhone());
+                    cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
+                    cMetadata.set(ExtraProperties.USER_ADDRESS, c.getCity());
+                    cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
 
-                    if (extractor.shouldParseEmbedded(chatMetadata)) {
+                    if (extractor.shouldParseEmbedded(cMetadata)) {
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(r.generateSkypeContactHtml(c));
-                        extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                        extractor.parseEmbedded(chatStream, handler, cMetadata, false);
                     }
                 }
 

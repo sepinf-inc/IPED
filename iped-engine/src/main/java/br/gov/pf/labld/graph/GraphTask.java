@@ -37,6 +37,7 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import ezvcard.property.Address;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
 
@@ -50,14 +51,14 @@ public class GraphTask extends AbstractTask {
 
   public static final String CONFIG_PATH = "GraphConfig.json";
   
+  //TODO externalize to config file
   private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
-  
   private static Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
-  
   private static Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
   
+  //TODO externalize to config file
   private static String[] contactMimes = {
-          "application/x-vcard-html", 
+          "text/x-vcard", 
           "application/windows-adress-book", 
           "application/outlook-contact", 
           "contact/x-skype-contact", 
@@ -154,7 +155,7 @@ public class GraphTask extends AbstractTask {
         processContacts(evidence);
         processWifi(evidence);
         processUserAccount(evidence);
-        //processExtraAttributes(evidence, label, propertyName, identifier);
+        //processExtraAttributes(evidence);
     }
 
   }
@@ -204,7 +205,12 @@ public class GraphTask extends AbstractTask {
         }
         
         void addProp(String key, Object value) {
-            props.put(key, value);
+            if(value != null && (!(value instanceof String)) || !((String)value).isEmpty()) {
+                if(value instanceof String[]) {
+                    value = new ArrayList<>(Arrays.asList((String[])value));
+                }
+                props.put(key, value);
+            }
         }
     }
     
@@ -336,11 +342,25 @@ public class GraphTask extends AbstractTask {
         if(msisdnPhones == null) msisdnPhones = Collections.emptySortedSet();
         formattedPhones.addAll(msisdnPhones);
         
-        String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name");
-        if(name == null) name = item.getMetadata().get(ExtraProperties.USER_NAME);
+        String[] name = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Name");
+        if(name.length == 0) name = item.getMetadata().getValues(ExtraProperties.USER_NAME);
         
-        String user = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Username");
-        if(user == null) user = item.getMetadata().get(ExtraProperties.USER_ACCOUNT);
+        String[] accounts = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username");
+        if(accounts.length == 0) accounts = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID");
+        if(accounts.length == 0) accounts = item.getMetadata().getValues(ExtraProperties.USER_ACCOUNT);
+        
+        String[] accountType = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "ServiceType");
+        if(accountType.length == 0) accountType = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Source");
+        if(accountType.length == 0) accountType = item.getMetadata().getValues(ExtraProperties.USER_ACCOUNT_TYPE);
+        
+        String[] org = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Organization");
+        if(org.length == 0) org = item.getMetadata().getValues(ExtraProperties.USER_ORGANIZATION);
+        
+        String[] address = item.getMetadata().getValues(ExtraProperties.USER_ADDRESS);
+        if(address.length == 0) address = new String[] {getUfedAddress(item.getMetadata())};
+        
+        String[] notes = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Notes");
+        if(notes.length == 0) notes = item.getMetadata().getValues(ExtraProperties.USER_NOTES);
         
         NodeValues nv1;
         if(!msisdnPhones.isEmpty()) {
@@ -349,18 +369,20 @@ public class GraphTask extends AbstractTask {
             nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", formattedPhones.first());
         }else if(!emails.isEmpty()) {
             nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "email", emails.first());
+        }else if(accounts.length != 0) {
+            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, accounts[0]);
         }else {
             nv1 = new NodeValues(DynLabel.label("GENERIC"), "entity", item.getName());
         }
         
         nv1.addProp("telefone", formattedPhones);
         nv1.addProp("email", emails);
-        if(name != null && !name.isEmpty()) {
-            nv1.addProp("name", name);
-        }
-        if(user != null && !user.isEmpty()) {
-            nv1.addProp("username", user);
-        }
+        nv1.addProp("name", name);
+        nv1.addProp(ExtraProperties.USER_ACCOUNT, accounts);
+        nv1.addProp(ExtraProperties.USER_ACCOUNT_TYPE, accountType);
+        nv1.addProp(ExtraProperties.USER_ORGANIZATION, org);
+        nv1.addProp(ExtraProperties.USER_ADDRESS, address);
+        nv1.addProp(ExtraProperties.USER_NOTES, notes);
         
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
@@ -372,8 +394,28 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), "telefone", phone, uniqueId);
             graphFileWriter.writeNodeReplace(DynLabel.label("TELEFONE"), "telefone", phone, uniqueId);
         }
+        for(String account : accounts) {
+            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, account, uniqueId);
+        }
         
         return nv1;
+    }
+    
+    private String getUfedAddress(Metadata a) {
+        StringBuilder sb = new StringBuilder();
+        String val = a.get(ExtraProperties.UFED_META_PREFIX + "Street1");
+        if(val != null) sb.append(val).append(" ");
+        val = a.get(ExtraProperties.UFED_META_PREFIX + "Street2"); 
+        if(val != null) sb.append(val).append(" ");
+        val = a.get(ExtraProperties.UFED_META_PREFIX + "City"); 
+        if(val != null) sb.append(val).append(" ");
+        val = a.get(ExtraProperties.UFED_META_PREFIX + "State"); 
+        if(val != null) sb.append(val).append(" ");
+        val = a.get(ExtraProperties.UFED_META_PREFIX + "Country"); 
+        if(val != null) sb.append(val).append(" ");
+        val = a.get(ExtraProperties.UFED_META_PREFIX + "PostalCode"); 
+        if(val != null) sb.append(val).append(" ");
+        return sb.toString().trim();
     }
     
     private void processContacts(IItem item) throws IOException {
@@ -384,6 +426,10 @@ public class GraphTask extends AbstractTask {
         }
         
         String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
+        if(msisdn == null) {
+            //TODO use some owner id
+            msisdn = "Evidence Owner";
+        }
         NodeValues nv1 = getNodeValues(msisdn);
         
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
@@ -438,7 +484,7 @@ public class GraphTask extends AbstractTask {
     }
     
     @SuppressWarnings("unchecked")
-    private void processExtraAttributes(IItem evidence, Label evidenceLabel, String evidenceProp, Object evidenceId)
+    private void processExtraAttributes(IItem evidence)
         throws IOException {
       Map<String, Object> extraAttributeMap = evidence.getExtraAttributeMap();
       if (extraAttributeMap != null) {

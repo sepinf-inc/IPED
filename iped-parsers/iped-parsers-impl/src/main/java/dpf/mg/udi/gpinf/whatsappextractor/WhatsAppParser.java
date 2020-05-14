@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -307,6 +308,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getId());
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId());
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+                    cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
+                    cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         getAvatar(searcher, c);
