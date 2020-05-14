@@ -98,7 +98,7 @@ public class LibreOfficeViewer extends Viewer {
 
     private static String userProfileBase = "$SYSUSERCONFIG/.indexador/libreoffice6/profile"; //$NON-NLS-1$
     private static String RESTART_MSG = Messages.getString("LibreOfficeViewer.RestartingViewer"); //$NON-NLS-1$
-    private static int XLS_LENGTH_TO_COPY = 1000000;
+    private static int XLS_LENGTH_TO_COPY = 20_000_000;
 
     @Override
     public boolean isSupportedType(String contentType) {
