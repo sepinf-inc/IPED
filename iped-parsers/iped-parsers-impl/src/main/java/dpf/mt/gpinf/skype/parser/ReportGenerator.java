@@ -213,7 +213,7 @@ public class ReportGenerator {
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.City") + NEW_COL + FormatUtil.format(c.getCity()) //$NON-NLS-1$
                 + CLOSE_ROW);
-        out.println(NEW_ROW + Messages.getString("SkypeReport.About") + NEW_COL + FormatUtil.format(c.getSobre()) //$NON-NLS-1$
+        out.println(NEW_ROW + Messages.getString("SkypeReport.About") + NEW_COL + FormatUtil.format(c.getAbout()) //$NON-NLS-1$
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.PstnNum") + NEW_COL + FormatUtil.format(c.getPstnNumber()) //$NON-NLS-1$
                 + CLOSE_ROW);

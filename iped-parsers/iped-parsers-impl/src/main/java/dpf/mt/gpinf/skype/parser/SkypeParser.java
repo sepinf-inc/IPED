@@ -121,7 +121,10 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getAssignedPhone());
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
                     cMetadata.set(ExtraProperties.USER_ADDRESS, c.getCity());
-                    cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                    cMetadata.set(ExtraProperties.USER_NOTES, c.getAbout());
+                    if(c.getAvatar() != null) {
+                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                    }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(r.generateSkypeContactHtml(c));
@@ -223,6 +226,21 @@ public class SkypeParser extends AbstractParser {
                     name = a.getSkypeName();
 
                 meta.set(TikaCoreProperties.TITLE, name);
+                meta.set(ExtraProperties.USER_NAME, name);
+                meta.set(ExtraProperties.USER_ACCOUNT, a.getSkypeName());
+                meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                meta.set(ExtraProperties.USER_EMAIL, a.getEmail());
+                meta.set(ExtraProperties.USER_BIRTH, a.getBirthday());
+                meta.set(ExtraProperties.USER_NOTES, a.getAbout());
+                if(a.getPhoneHome() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneHome());
+                if(a.getPhoneOffice() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneOffice());
+                if(a.getPhoneMobile() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneMobile());
+                if(a.getCity() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getCity());
+                if(a.getProvince() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getProvince());
+                if(a.getCountry() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getCountry());
+                if(a.getAvatar() != null) {
+                    meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(a.getAvatar()));
+                }
 
                 if (extractor.shouldParseEmbedded(meta)) {
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(
