@@ -559,7 +559,7 @@ public class LibpffPSTParser extends AbstractParser {
 
     private List<String> readAllLines(File file) {
         try {
-            String content = Util.decodeUnknowCharset(Files.readAllBytes(file.toPath()));
+            String content = Util.decodeMixedCharset(Files.readAllBytes(file.toPath()));
             String[] newLines = { "\r\n", "\n", "\r" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             for (String newLine : newLines) {
                 String[] lines = content.split(newLine);
