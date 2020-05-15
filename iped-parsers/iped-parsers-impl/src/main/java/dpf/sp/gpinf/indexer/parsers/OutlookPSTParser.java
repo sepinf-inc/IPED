@@ -48,7 +48,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -300,8 +299,8 @@ public class OutlookPSTParser extends AbstractParser {
                 if (suffix != null && !suffix.isEmpty())
                     objName += "-" + suffix; //$NON-NLS-1$
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
-                metadata.add(ExtraProperties.USER_ACCOUNT, contact.getAccount());
-                metadata.add(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
+                metadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
+                fillMetadata(metadata, ExtraProperties.USER_ACCOUNT, contact.getAccount());
                 fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(), contact.getMiddleName(), contact.getSurname(), contact.getNickname());
                 fillMetadata(metadata, ExtraProperties.USER_EMAIL, contact.getEmailAddress(), contact.getEmail1EmailAddress(), contact.getEmail2EmailAddress(), contact.getEmail3EmailAddress());
                 fillMetadata(metadata, ExtraProperties.USER_PHONE, contact.getPrimaryTelephoneNumber(), contact.getCompanyMainPhoneNumber(), contact.getRadioTelephoneNumber(), contact.getCarTelephoneNumber(),

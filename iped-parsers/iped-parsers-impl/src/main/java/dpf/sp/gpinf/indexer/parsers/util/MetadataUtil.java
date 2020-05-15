@@ -179,7 +179,7 @@ public class MetadataUtil {
             ArrayList<String> unique = new ArrayList<>();
             String prev = null;
             for (String val : values) {
-                if (!val.equals(prev))
+                if (!val.isEmpty() && !val.equals(prev))
                     unique.add(val);
                 prev = val;
             }
