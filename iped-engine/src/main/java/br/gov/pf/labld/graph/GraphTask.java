@@ -14,6 +14,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,8 @@ public class GraphTask extends AbstractTask {
   public static final String ENABLE_PARAM = "enableGraphGeneration";
 
   public static final String CONFIG_PATH = "GraphConfig.json";
+  
+  private Pattern ignoreEmailChars = Pattern.compile("[<>'\";]");
   
   //TODO externalize to config file
   private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
@@ -256,26 +259,63 @@ public class GraphTask extends AbstractTask {
     }
     
     private SortedSet<String> getEmails(String text){
+        return getEmails(text, true);
+    }
+    
+    private SortedSet<String> getEmails(String text, boolean toLowerCase){
         SortedSet<String> result = new TreeSet<>();
         Matcher matcher = emailPattern.matcher(text);
         while(matcher.find()) {
-            result.add(matcher.group().toLowerCase());
+            String email = matcher.group();
+            if(toLowerCase) email = email.toLowerCase();
+            result.add(email);
         }
         return result;
     }
     
     private NodeValues getEmailNodeValues(String value) {
-        Set<String> emails = getEmails(value);
+        Set<String> emails = getEmails(value, false);
         if(!emails.isEmpty()) {
-            return new NodeValues(DynLabel.label("EMAIL"), "email", emails.iterator().next());
+            NodeValues nv = new NodeValues(DynLabel.label("EMAIL"), "email", emails.iterator().next().toLowerCase());
+            for(String email : emails) {
+                value = value.replace(email, "");
+            }
+            String name = ignoreEmailChars.matcher(value).replaceAll(" ").trim();
+            if(!name.isEmpty()) {
+                nv.addProp("name", name);
+            }
+            return nv;
+        }
+        return null;
+    }
+    
+    private NodeValues getAccountNodeValues(String value, Metadata meta) {
+        String service = meta.get(ExtraProperties.UFED_META_PREFIX + "SourceApplication");
+        if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
+        if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
+        if(service == null) return null;
+        int idx = value.lastIndexOf('(');
+        if(idx != -1 && value.endsWith(")")) {
+            String account = value.substring(idx + 1, value.length() - 1);
+            String name = value.substring(0, idx);
+            NodeValues nv = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service));
+            if(!name.isEmpty()) nv.addProp("name", name);
+            return nv;
         }
         return null;
     }
     
     private NodeValues getNodeValues(String value) {
+        return getNodeValues(value, null);
+    }
+    
+    private NodeValues getNodeValues(String value, Metadata metadata) {
         NodeValues nv1 = getPhoneNodeValues(value);
         if(nv1 == null) {
             nv1 = getEmailNodeValues(value);
+        }
+        if(nv1 == null && metadata != null) {
+            nv1 = getAccountNodeValues(value, metadata);
         }
         if(nv1 == null) {
             nv1 = getGenericNodeValues(value);
@@ -291,9 +331,9 @@ public class GraphTask extends AbstractTask {
         }
         
         String relationType = getRelationType(evidence.getMediaType().toString());
-        NodeValues nv1 = getNodeValues(sender);
+        NodeValues nv1 = getNodeValues(sender, evidence.getMetadata());
         
-        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
@@ -305,8 +345,8 @@ public class GraphTask extends AbstractTask {
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_BCC)));
         
         for(String recipient : recipients){
-            NodeValues nv2 = getNodeValues(recipient);
-            graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+            NodeValues nv2 = getNodeValues(recipient, evidence.getMetadata());
+            graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nv2.props);
             graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                     nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
         }
@@ -330,8 +370,12 @@ public class GraphTask extends AbstractTask {
         
     private NodeValues writePersonNode(IItem item, SortedSet<String> msisdnPhones) throws IOException {
         
-        String itemText = item.getParsedTextCache();
-        SortedSet<String> emails = getEmails(itemText);
+        SortedSet<String> possibleEmails = new TreeSet<>();//getEmails(itemText);
+        possibleEmails.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "EmailAddress")));
+        possibleEmails.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username")));
+        possibleEmails.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")));
+        possibleEmails.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.USER_EMAIL)));
+        SortedSet<String> emails = getEmails(possibleEmails.toString());
         
         List<String> possiblePhones = new ArrayList<>();
         possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "PhoneNumber")));
@@ -369,8 +413,9 @@ public class GraphTask extends AbstractTask {
             nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", formattedPhones.first());
         }else if(!emails.isEmpty()) {
             nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "email", emails.first());
-        }else if(accounts.length != 0) {
-            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, accounts[0]);
+        }else if(accounts.length != 0 && accountType.length != 0) {
+            String account = getNonUUIDAccount(accounts);
+            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, accountType[0]));
         }else {
             nv1 = new NodeValues(DynLabel.label("GENERIC"), "entity", item.getName());
         }
@@ -395,10 +440,29 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.writeNodeReplace(DynLabel.label("TELEFONE"), "telefone", phone, uniqueId);
         }
         for(String account : accounts) {
-            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, account, uniqueId);
+            for(String service : accountType) {
+                graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service), uniqueId);
+            }
         }
         
         return nv1;
+    }
+    
+    private String getNonUUIDAccount(String[] accounts) {
+        String account = accounts[0];
+        for(String a : accounts) {
+            try {
+                UUID.fromString(a);
+            }catch(IllegalArgumentException e) {
+                account = a;
+                break;
+            }
+        }
+        return account;
+    }
+    
+    private String getServiceAccount(String account, String serviceType) {
+        return account + " (" + serviceType + ")";
     }
     
     private String getUfedAddress(Metadata a) {
