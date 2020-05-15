@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.EncryptedDocumentException;
@@ -46,6 +48,7 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -377,6 +380,25 @@ public class OutlookPSTParser extends AbstractParser {
             return o1.getName().compareTo(o2.getName());
         }
     }
+    
+    private static Pattern ignoreChars = Pattern.compile("[<>'\";]");//$NON-NLS-1$
+    
+    public static String formatNameAndAddress(String name, String address){
+        if(address == null)
+            address = ""; //$NON-NLS-1$
+        address = ignoreChars.matcher(address).replaceAll(" ").trim(); //$NON-NLS-1$
+        if(name == null)
+            return address;
+        name = ignoreChars.matcher(name).replaceAll(" ").trim();//$NON-NLS-1$
+        if(name.isEmpty())
+            return address;
+        if(address.isEmpty())
+            return name;
+        if (!name.contains(address)) {
+            name += " <" + address + ">"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return name;
+    }
 
     private String processEmail(PSTMessage email, String path, String parent) {
         String virtualId = "email-" + numEmails++; //$NON-NLS-1$
@@ -407,11 +429,11 @@ public class OutlookPSTParser extends AbstractParser {
             preview.append("<b>" + Messages.getString("OutlookPSTParser.Subject") + ": " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     + SimpleHTMLEncoder.htmlEncode(subject) + "</b><br>"); //$NON-NLS-1$
 
-            String value = email.getSenderName() + " " + email.getSenderEmailAddress(); //$NON-NLS-1$
-            if (!value.isEmpty()) {
-                metadata.set(Message.MESSAGE_FROM, value);
+            String from = formatNameAndAddress(email.getSenderName(), email.getSenderEmailAddress());
+            if (!from.isEmpty()) {
+                metadata.set(Message.MESSAGE_FROM, from);
                 preview.append("<b>" + Messages.getString("OutlookPSTParser.From") + ":</b> " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$
+                        + SimpleHTMLEncoder.htmlEncode(from) + "<br>"); //$NON-NLS-1$
             }
 
             Object[][] recipTypes = { { PSTRecipient.MAPI_TO, Messages.getString("OutlookPSTParser.To") }, //$NON-NLS-1$
@@ -419,22 +441,21 @@ public class OutlookPSTParser extends AbstractParser {
             String[] metaRecips = { Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC };
 
             for (int k = 0; k < recipTypes.length; k++) {
-                StringBuilder recipients = new StringBuilder();
+                List<String> recipients = new ArrayList<>();
                 for (int i = 0; i < email.getNumberOfRecipients(); i++) {
                     PSTRecipient recip = email.getRecipient(i);
                     if (recipTypes[k][0].equals(recip.getRecipientType())) {
-                        String recipName = recip.getDisplayName();
-                        String recipAddr = recip.getEmailAddress();
-                        if (!recipAddr.equals(recipName))
-                            recipName += " " + recipAddr; //$NON-NLS-1$
-
-                        recipients.append(recipName + "; "); //$NON-NLS-1$
+                        String recipName = formatNameAndAddress(recip.getDisplayName(), recip.getEmailAddress());
+                        if(!recipName.isEmpty()) {
+                            recipients.add(recipName); //$NON-NLS-1$
+                        }
                     }
                 }
-                if (recipients.length() > 0) {
-                    metadata.set(metaRecips[k], recipients.toString());
+                if (recipients.size() > 0) {
+                    String key = metaRecips[k];
+                    recipients.stream().forEach(r -> metadata.add(key, r));
                     preview.append("<b>" + recipTypes[k][1] + "</b> " //$NON-NLS-1$ //$NON-NLS-2$
-                            + SimpleHTMLEncoder.htmlEncode(recipients.toString()) + "<br>"); //$NON-NLS-1$
+                            + SimpleHTMLEncoder.htmlEncode(recipients.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
 
