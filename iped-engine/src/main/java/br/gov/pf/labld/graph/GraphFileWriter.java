@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -388,6 +390,16 @@ public class GraphFileWriter implements Closeable, Flushable {
           IOUtils.fsync(replaceFile, false);
       }
   }
+  
+  private static class IgnoreCaseComparator implements Comparator<String>{
+      
+      static IgnoreCaseComparator INSTANCE = new IgnoreCaseComparator();
+      
+      @Override
+      public int compare(String o1, String o2) {
+          return o1.compareToIgnoreCase(o2);
+      }
+  }
 
   private static class CSVWriter implements Closeable, Flushable {
       
@@ -546,7 +558,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                   for(int i = 0; i < vals.length; i++) {
                       Set<String> vs = map.get(i);
                       if(vs == null) {
-                          vs = new HashSet<>();
+                          vs = new TreeSet<>(IgnoreCaseComparator.INSTANCE);
                           map.put(i, vs);
                       }
                       if(i == 0) vs.add(newId);
