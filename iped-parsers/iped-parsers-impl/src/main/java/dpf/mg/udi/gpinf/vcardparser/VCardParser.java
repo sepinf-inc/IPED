@@ -131,11 +131,23 @@ public class VCardParser extends AbstractParser {
     }
     
     private void extractMetadata(VCard vcard, Metadata metadata) {
+        String name = null;
         if(vcard.getFormattedName() != null) {
-            metadata.add(ExtraProperties.USER_NAME, vcard.getFormattedName().getValue());
-        }else if(vcard.getNickname() != null) {
-            metadata.add(ExtraProperties.USER_NAME, vcard.getNickname().getValues().toString());
+            name = vcard.getFormattedName().getValue();
         }
+        if(name == null && vcard.getStructuredName() != null) {
+            ArrayList<String> names = new ArrayList<>();
+            names.add(vcard.getStructuredName().getGiven());
+            names.addAll(vcard.getStructuredName().getAdditionalNames());
+            names.add(vcard.getStructuredName().getFamily());
+            name = names.stream().filter(n -> n != null && !n.isEmpty()).collect(Collectors.joining(" "));
+        }
+        if(name == null && vcard.getNickname() != null) {
+            name = vcard.getNickname().getValues().toString();
+        }
+        if(name != null && !name.trim().isEmpty())
+            metadata.add(ExtraProperties.USER_NAME, name.trim());
+        
         if(vcard.getBirthday() != null) {
             metadata.set(ExtraProperties.USER_BIRTH, vcard.getBirthday().getDate());
         }else if(vcard.getAnniversary() != null) {
