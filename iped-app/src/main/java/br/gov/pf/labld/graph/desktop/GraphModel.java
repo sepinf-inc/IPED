@@ -35,14 +35,16 @@ public class GraphModel {
     node.setType(type);
     node.setLabel(getLabel(neo4jNode, fieldNames));
 
+    int dynSize = (int) (2 * Math.ceil(Math.log(neo4jNode.getDegree() + 1)));
+    
     if (type.contains("DATASOURCE")) {
-      node.setSize(30);
+      node.setSize(30 + dynSize);
       node.setColor(Color.RED);
     } else if (type.equals("CONTACT_GROUP")) {
-      node.setSize(25);
+      node.setSize(25 + dynSize);
       node.setColor(new Color(8, 160, 56));
     } else {
-      node.setSize(20);
+      node.setSize(20 + dynSize);
     }
 
     return node;
