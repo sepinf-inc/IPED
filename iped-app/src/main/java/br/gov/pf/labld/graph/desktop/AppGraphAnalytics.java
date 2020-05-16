@@ -214,6 +214,7 @@ public class AppGraphAnalytics extends JPanel {
   }
 
   public void removeSelected() {
+    FilterSelectedEdges.getInstance().unselecEdgesOfNodes(this.graphPane.getSelected());
     this.graphPane.removeSelectedNodes();
   }
 

@@ -3,6 +3,7 @@ package br.gov.pf.labld.graph.desktop;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.kharon.Edge;
@@ -41,7 +42,7 @@ public class FilterSelectedEdges {
             }
         }
         if(added) {
-            App.get().getAppListener().updateFileListing();
+            updateResults();
         }
     }
     
@@ -76,7 +77,7 @@ public class FilterSelectedEdges {
         }else {
             selectedEdges.add(edge);
         }
-        App.get().getAppListener().updateFileListing();
+        updateResults();
     }
     
     public void removeEdge(Edge edge) {
@@ -88,13 +89,31 @@ public class FilterSelectedEdges {
         }else {
             selectedEdges.remove(edge);
         }
+        updateResults();
+    }
+    
+    public void unselecEdgesOfNodes(Collection<String> nodeIds) {
+        Iterator<Edge> iter = selectedEdges.iterator();
+        boolean update = false;
+        while(iter.hasNext()) {
+            Edge edge = iter.next();
+            if(nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget())) {
+                iter.remove();
+                update = true;
+            }
+        }
+        if(update) updateResults();
+    }
+    
+    private void updateResults() {
+        App.get().setGraphDefaultColor(selectedEdges.isEmpty());
         App.get().getAppListener().updateFileListing();
     }
     
     public void clearSelection() {
         if(selectedEdges.size() > 0) {
             selectedEdges.clear();
-            App.get().getAppListener().updateFileListing();
+            updateResults();
         }
     }
     
