@@ -59,7 +59,10 @@ import iped3.util.ExtraProperties;
 public class VCardParser extends AbstractParser {
 
     private static final long serialVersionUID = -7436203736342471550L;
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.text("x-vcard")); //$NON-NLS-1$
+    
+    public static final MediaType VCARD_MIME = MediaType.text("x-vcard"); //$NON-NLS-1$
+    
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(VCARD_MIME);
     
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;

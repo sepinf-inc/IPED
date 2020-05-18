@@ -122,7 +122,7 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory) {
-        out.println("<div class=\"linha\">"); //$NON-NLS-1$
+        out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
@@ -274,7 +274,7 @@ public class ReportGenerator {
                             out.print(message.getData() + "<br/>"); //$NON-NLS-1$
                         }
                         break;
-                    case SHARED_LOCATION_MESSAGE:
+                    case SHARE_LOCATION_MESSAGE:
                         out.println("<i>" + Messages.getString("WhatsAppReport.SharedLocationMessage") + "</i><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -529,7 +529,7 @@ public class ReportGenerator {
         }
     }
 
-    private static String formatMMSS(int duration) {
+    public static String formatMMSS(int duration) {
         return String.format("%02d:%02d", duration / 60, duration % 60); //$NON-NLS-1$
     }
 

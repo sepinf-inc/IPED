@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -47,11 +49,13 @@ import org.apache.tika.parser.ParseContext;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -77,15 +81,23 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType CONTACTS_V2 = MediaType.application("x-whatsapp-contactsv2"); //$NON-NLS-1$
 
-    public static final MediaType WHATSAPP_CHAT = MediaType.parse("message/x-whatsapp-msg"); //$NON-NLS-1$
+    public static final MediaType WHATSAPP_CHAT = MediaType.parse("application/x-whatsapp-chat"); //$NON-NLS-1$
 
     public static final MediaType WHATSAPP_CONTACT = MediaType.parse("contact/x-whatsapp-contact"); //$NON-NLS-1$
+    
+    public static final MediaType WHATSAPP_MESSAGE = MediaType.parse("message/x-whatsapp-message"); //$NON-NLS-1$
+    
+    public static final MediaType WHATSAPP_ATTACHMENT = MediaType.parse("message/x-whatsapp-attachment"); //$NON-NLS-1$
+    
+    public static final MediaType WHATSAPP_CALL = MediaType.parse("message/x-whatsapp-call"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
     private SQLite3Parser sqliteParser = new SQLite3Parser();
+    
+    private boolean extractMessages = true;
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
@@ -94,6 +106,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
+    }
+    
+    @Field
+    public void setExtractMessages(boolean extractMessages) {
+        this.extractMessages = extractMessages;
     }
 
     @Override
@@ -137,6 +154,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 List<Chat> chatList = waExtractor.getChatList();
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
 
+                int chatVirtualId = 0;
                 for (Chat c : chatList) {
                     getAvatar(searcher, c.getRemote());
                     int frag = 0;
@@ -145,8 +163,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                     while (bytes != null) {
                         Metadata chatMetadata = new Metadata();
                         int nextMsg = reportGenerator.getNextMsgNum();
-                        storeLinkedHashes(c.getMessages().subList(firstMsg, nextMsg), chatMetadata, searcher);
-                        storeLocations(c.getMessages().subList(firstMsg, nextMsg), chatMetadata);
+                        
+                        List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg); 
+                        storeLinkedHashes(msgSubset, chatMetadata, searcher);
+                        storeLocations(msgSubset, chatMetadata);
 
                         firstMsg = nextMsg;
                         byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts);
@@ -154,12 +174,21 @@ public class WhatsAppParser extends SQLite3DBParser {
                         String chatName = c.getTitle();
                         if (frag > 0 || nextBytes != null)
                             chatName += "_" + frag++; //$NON-NLS-1$
+                        
                         chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                         chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
+                        chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                        if(extractMessages && msgSubset.size() > 0) {
+                            chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                        }
 
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                         extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                         bytes = nextBytes;
+                        
+                        if(extractMessages) {
+                            extractMessages(chatName, msgSubset, contacts, chatVirtualId++, handler, extractor);
+                        }
                     }
                 }
 
@@ -172,6 +201,80 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
 
+    }
+    
+    private void extractMessages(String chatName, List<Message> messages, WAContactsDirectory contacts, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+        int msgCount = 0;
+        for(dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
+            Metadata meta = new Metadata();
+            meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
+            meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
+            meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentVirtualId));
+            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getId()));
+            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+            meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
+            meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
+            meta.set(BasicProps.HASH, "");
+            
+            if(!m.isSystemMessage()) {
+                String remote = m.getRemoteResource();
+                if (remote != null) {
+                    WAContact contact = contacts.getContact(remote);
+                    remote = contact == null ? remote : contact.getName() + " (" + remote + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                }
+                if(m.isFromMe()) {
+                    //TODO change to owner phone
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, "phoneOwner");
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
+                }else {
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
+                    //TODO change to owner phone
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, "phoneOwner");
+                }
+            }
+            meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
+            meta.set(ExtraProperties.URL, m.getUrl());
+            
+            meta.set("mediaName", m.getMediaName());
+            meta.set("mediaMime", m.getMediaMime());
+            if(m.getMediaSize() != 0) {
+                meta.set("mediaSize", Long.toString(m.getMediaSize()));
+            }
+            if(m.getMediaHash() != null) {
+                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
+                meta.set(ExtraProperties.REFERENCED_FILE_QUERY, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
+            }
+            
+            //TODO store thumb in metadata?
+            
+            if(m.getMessageType() == MessageType.LOCATION_MESSAGE || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+            }
+            
+            if(m.getMessageStatus() != null) {
+                meta.set("messageStatus", m.getMessageStatus().toString());
+            }
+            
+            if(m.isCall()) {
+                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CALL.toString());
+                meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration()));
+            }
+            
+            if(meta.get(ExtraProperties.MESSAGE_BODY) == null) {
+                meta.set(ExtraProperties.MESSAGE_BODY, m.getMessageType().toString());
+            }
+            if(m.getMediaCaption() != null) {
+                meta.add(ExtraProperties.MESSAGE_BODY, m.getMediaCaption());
+            }
+            if(m.getVcards() != null && !m.getVcards().isEmpty()) {
+                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, VCardParser.VCARD_MIME.toString());
+                for (String vcard : m.getVcards()) {
+                    extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler, meta, false);
+                }
+            }else {
+                extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
+            }
+        }
     }
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata, IItemSearcher searcher) {
@@ -311,7 +414,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
-                    cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                    if(c.getAvatar() != null) {
+                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                    }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
                         getAvatar(searcher, c);

@@ -255,7 +255,7 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="message/x-whatsapp-msg">
+    <mime-type type="application/x-whatsapp-chat">
         <sub-class-of type="text/html"/>
     </mime-type>
     
@@ -935,6 +935,18 @@
     <mime-type type="application/x-win10-timeline-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
+    
+    <mime-type type="message/x-whatsapp-message">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-attachment">
+        <sub-class-of type="message/x-whatsapp-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-call">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type> 
    
 </mime-info>
 
