@@ -48,9 +48,11 @@ import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import iped3.IItem;
 import iped3.IItemId;
+import iped3.util.ExtraProperties;
 
 public class MenuListener implements ActionListener {
 
@@ -373,7 +375,22 @@ public class MenuListener implements ActionListener {
             }
             App.get().appGraphAnalytics.addEvidenceFilesToGraph(items);
         }
-
+        else if(e.getSource() == menu.navigateToParentChat) {
+            int selIdx = App.get().resultsTable.getSelectedRow();
+            IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+            int parentId = App.get().appCase.getAtomicSource(itemId.getSourceId()).getParentId(itemId.getId());
+            if(parentId != -1) {
+                String position = App.get().appCase.getItemByItemId(itemId).getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+                position = String.valueOf(Double.valueOf(position).intValue());
+                //TODO change viewer api to pass this
+                HtmlViewer.setPositionToScroll(position);
+                itemId = new ItemId(itemId.getSourceId(), parentId);
+                int luceneId = App.get().appCase.getLuceneId(itemId);
+                new FileProcessor(luceneId, false).execute();
+            }else {
+                JOptionPane.showMessageDialog(App.get(), Messages.getString("MenuListener.ChatNotFound")); //$NON-NLS-1$
+            }
+        }
     }
 
     public void exportFileTree(boolean onlyChecked, boolean toZip) {

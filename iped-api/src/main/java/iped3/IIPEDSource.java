@@ -56,6 +56,8 @@ public interface IIPEDSource extends Closeable {
     Set<String> getKeywords();
 
     int getLastId();
+    
+    int getParentId(int id);
 
     int getLuceneId(IItemId itemId);
 

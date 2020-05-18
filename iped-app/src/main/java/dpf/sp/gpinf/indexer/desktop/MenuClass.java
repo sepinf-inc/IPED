@@ -40,7 +40,7 @@ public class MenuClass extends JPopupMenu {
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout, addToGraph;
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat;
 
     MenuListener menuListener;
 
@@ -187,12 +187,20 @@ public class MenuClass extends JPopupMenu {
         aumentarGaleria = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
         aumentarGaleria.addActionListener(menuListener);
         this.add(aumentarGaleria);
+        
+        this.addSeparator();
 
         if (!App.get().appCase.isFTKReport()) {
             navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
             navigateToParent.addActionListener(menuListener);
             this.add(navigateToParent);
         }
+        
+        navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
+        navigateToParentChat.addActionListener(menuListener);
+        this.add(navigateToParentChat);
+        
+        this.addSeparator();
 
         similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
         similarDocs.addActionListener(menuListener);

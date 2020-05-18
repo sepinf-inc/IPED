@@ -75,6 +75,7 @@ import iped3.IItemId;
 import iped3.IVersionsMap;
 import iped3.search.IMarcadores;
 import iped3.search.IMultiMarcadores;
+import iped3.util.BasicProps;
 
 public class IPEDSource implements Closeable, IIPEDSource {
 
@@ -547,6 +548,20 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLuceneId(int id) {
         return docs[id];
+    }
+    
+    public int getParentId(int id) {
+        try {
+            Set<String> field = Collections.singleton(BasicProps.PARENTID);
+            Document doc = searcher.doc(getLuceneId(id), field);
+            String parent = doc.get(BasicProps.PARENTID);
+            if(parent != null && !parent.isEmpty()) {
+                return Integer.valueOf(parent);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public long getTextSize(int id) {
