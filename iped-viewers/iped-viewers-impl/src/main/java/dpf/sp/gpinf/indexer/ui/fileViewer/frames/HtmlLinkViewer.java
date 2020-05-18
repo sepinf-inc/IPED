@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 
 /**
  * Visualizador Html específico que abre links apontando para arquivos do caso,
@@ -31,11 +32,6 @@ public class HtmlLinkViewer extends HtmlViewer {
     public static final String UFED_HTML_REPORT_MIME = "application/x-ufed-html-report"; //$NON-NLS-1$
 
     private AttachmentSearcher attachSearcher;
-
-    public interface AttachmentSearcher {
-
-        abstract File getTmpFile(String luceneQuery);
-    }
 
     public HtmlLinkViewer(AttachmentSearcher attachSearcher) {
         this.attachSearcher = attachSearcher;
