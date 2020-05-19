@@ -114,6 +114,7 @@ public class ReportGenerator {
         }
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
+                out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + message.getMediaHash() + "\",this.checked) />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
                 String ext = ""; //$NON-NLS-1$
                 int extIdx = message.getMediaName().lastIndexOf('.');
@@ -186,6 +187,7 @@ public class ReportGenerator {
                 + "<style>\n"
                 + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
                 + "\n</style>\n"
+                + "<style>.check {vertical-align: top;}</style>"
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n" //$NON-NLS-1$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$

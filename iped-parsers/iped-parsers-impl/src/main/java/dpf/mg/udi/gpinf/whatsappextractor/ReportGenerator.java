@@ -323,6 +323,10 @@ public class ReportGenerator {
                         if (result != null && !result.isEmpty()) {
                             String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(result.get(0));
                             if (!exportPath.isEmpty()) {
+                                if(onclick != null) {
+                                    String onCheck = onclick.replaceFirst(".open", ".check").replace("\")", "\",this.checked)");
+                                    out.println("<input class=\"check\" type=\"checkbox\" onclick=" + onCheck + "/>");
+                                }
                                 out.println("<a "); //$NON-NLS-1$
                                 if (onclick != null)
                                     out.println("onclick=" + onclick); //$NON-NLS-1$
@@ -359,6 +363,7 @@ public class ReportGenerator {
                                     out.println("</video>"); //$NON-NLS-1$
                                 }
                             }
+                            
                         } else {
                             if (message.getMessageType() == AUDIO_MESSAGE) {
                                 out.println("<img src=\"" //$NON-NLS-1$
@@ -375,18 +380,16 @@ public class ReportGenerator {
                         break;
                     case IMAGE_MESSAGE:
                     case APP_MESSAGE:
-                        boolean inLink = false;
+                        String linkParam = null;
+                        String exportPath = null;
+                        String quote = "";
                         if (message.getMediaHash() != null) {
-                            out.println("<a onclick=app.open(\"sha-256:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
-                            inLink = true;
+                            linkParam = "\"sha-256:" + message.getMediaHash() + "\"";
                             result = dpf.sp.gpinf.indexer.parsers.util.Util
                                     .getItems("sha-256:" + message.getMediaHash(), searcher); //$NON-NLS-1$
                             if (result != null && !result.isEmpty()) {
-                                String exportPath = getReportExportPath(result.get(0), message.getMessageType());
-                                if (exportPath != null && !exportPath.isEmpty())
-                                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                exportPath = getReportExportPath(result.get(0), message.getMessageType());
                             }
-                            out.println(">"); //$NON-NLS-1$
                         } else if (message.getMediaName() != null && !message.getMediaName().isEmpty()) {
                             String mediaName = message.getMediaName();
                             if (mediaName.contains("/")) { //$NON-NLS-1$
@@ -396,16 +399,22 @@ public class ReportGenerator {
                                 mediaName = searcher.escapeQuery(mediaName);
                             String query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                                     + message.getMediaSize();
-                            out.println("<a onclick=\"app.open(" //$NON-NLS-1$
-                                    + SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"") + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                            inLink = true;
+                            linkParam = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            quote = "\"";
                             if (searcher != null)
                                 result = searcher.search(query);
                             if (result != null && !result.isEmpty()) {
-                                String exportPath = getReportExportPath(result.get(0), message.getMessageType());
-                                if (exportPath != null && !exportPath.isEmpty())
-                                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                exportPath = getReportExportPath(result.get(0), message.getMessageType());
                             }
+                        }
+                        if(linkParam != null) {
+                            out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check(" + linkParam + ",this.checked)" + quote + " />");
+                            out.println("<a onclick=" + quote + "app.open(" + linkParam + ")" + quote + " "); //$NON-NLS-1$ //$NON-NLS-2$
+                        }
+                        if(exportPath != null && !exportPath.isEmpty()) {
+                            out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                        }
+                        if(linkParam != null) {
                             out.println(">"); //$NON-NLS-1$
                         }
                         thumb = message.getThumbData();
@@ -428,7 +437,7 @@ public class ReportGenerator {
                                         + Util.getImageResourceAsEmbedded("img/attach.png") //$NON-NLS-1$
                                         + "\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
                         }
-                        if (inLink) {
+                        if (linkParam != null) {
                             out.println("</a>"); //$NON-NLS-1$
                         }
                         if (message.getMediaCaption() != null)
@@ -570,6 +579,7 @@ public class ReportGenerator {
                 + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
                 + "</script>\n" //$NON-NLS-1$
                 + VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
+                + "<style>.check {vertical-align: top;}</style>"
                 + "<body>\n" //$NON-NLS-1$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$
                 + "	<span class=\"left\">" //$NON-NLS-1$

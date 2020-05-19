@@ -189,13 +189,13 @@ public class HtmlViewer extends Viewer {
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
                     public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
+                        
+                        if (webEngine.isJavaScriptEnabled()) {
+                            JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
+                            window.setMember("app", fileOpenApp); //$NON-NLS-1$
+                        }
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
-
-                            if (webEngine.isJavaScriptEnabled()) {
-                                JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
-                                window.setMember("app", fileOpenApp); //$NON-NLS-1$
-                            }
 
                             if (file != null && !webEngine.getLocation().endsWith(file.getName()))
                                 return;

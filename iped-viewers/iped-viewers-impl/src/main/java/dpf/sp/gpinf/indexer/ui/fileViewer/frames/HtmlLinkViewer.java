@@ -75,6 +75,10 @@ public class HtmlLinkViewer extends HtmlViewer {
                 this.openFile(file);
             }
         }
+        
+        public void check(String luceneQuery, boolean checked) {
+            attachSearcher.checkItem(luceneQuery, checked);
+        }
 
     }
 

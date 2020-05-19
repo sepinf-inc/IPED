@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.MarcadoresController;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
@@ -41,6 +42,25 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         }
 
         return null;
+    }
+
+    @Override
+    public void checkItem(String luceneQuery, boolean checked) {
+        IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, luceneQuery);
+        try {
+            MultiSearchResult result = searcher.multiSearch();
+            if (result.getLength() == 0)
+                return;
+            for(IItemId item : result.getIterator()) {
+                App.get().appCase.getMultiMarcadores().setSelected(checked, item, App.get().appCase);
+            }
+            MarcadoresController.get().atualizarGUI();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        
     }
 
 }

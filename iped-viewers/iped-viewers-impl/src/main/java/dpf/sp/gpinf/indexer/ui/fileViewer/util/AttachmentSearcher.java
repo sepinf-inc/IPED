@@ -6,8 +6,10 @@ import iped3.IItem;
 
 public interface AttachmentSearcher {
     
-    abstract File getTmpFile(String luceneQuery);
+    File getTmpFile(String luceneQuery);
 
-    abstract IItem getItem(String luceneQuery);
+    IItem getItem(String luceneQuery);
+
+    void checkItem(String luceneQuery, boolean checked);
 
 }
