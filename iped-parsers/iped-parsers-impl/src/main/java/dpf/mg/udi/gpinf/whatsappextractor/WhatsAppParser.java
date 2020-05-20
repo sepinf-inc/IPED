@@ -90,6 +90,9 @@ public class WhatsAppParser extends SQLite3DBParser {
     public static final MediaType WHATSAPP_ATTACHMENT = MediaType.parse("message/x-whatsapp-attachment"); //$NON-NLS-1$
     
     public static final MediaType WHATSAPP_CALL = MediaType.parse("message/x-whatsapp-call"); //$NON-NLS-1$
+    
+    //ugly workaround to show message type before caption (values are shown in sort order)
+    private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2);
 
@@ -214,7 +217,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
-            meta.set(BasicProps.HASH, "");
             
             if(!m.isSystemMessage()) {
                 String remote = m.getRemoteResource();
@@ -261,7 +263,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             
             if(meta.get(ExtraProperties.MESSAGE_BODY) == null) {
-                meta.set(ExtraProperties.MESSAGE_BODY, m.getMessageType().toString());
+                meta.set(ExtraProperties.MESSAGE_BODY, MESSAGE_TYPE_PREFIX + m.getMessageType().toString());
             }
             if(m.getMediaCaption() != null) {
                 meta.add(ExtraProperties.MESSAGE_BODY, m.getMediaCaption());
@@ -272,6 +274,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler, meta, false);
                 }
             }else {
+                meta.set(BasicProps.HASH, "");
                 extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
             }
         }
