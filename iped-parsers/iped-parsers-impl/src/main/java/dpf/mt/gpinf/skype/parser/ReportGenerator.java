@@ -64,6 +64,7 @@ public class ReportGenerator {
                 + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } " //$NON-NLS-1$
                 + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } " //$NON-NLS-1$
                 + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }" //$NON-NLS-1$
+                + ".ck {vertical-align: top; }" //$NON-NLS-1$
                 + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} " //$NON-NLS-1$
                 + "</style>"); //$NON-NLS-1$
         out.println("</HEAD>"); //$NON-NLS-1$
@@ -117,7 +118,7 @@ public class ReportGenerator {
             // boolean destaque=(i%2)==0;
             boolean destaque = sm.isFromMe();// skypeName.equals(sm.getAutor());
 
-            out.println("<TR class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            out.println("<TR id=\"" + sm.getId() + "\" class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     + "<TD>" + sm.getId() + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getData()) + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getAutor()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -127,9 +128,10 @@ public class ReportGenerator {
                 try {
                     IItemBase item = sm.getAnexoUri().getCacheFile();
                     byte[] thumb = item.getThumb();
-                    String onclick = "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\") ";
+                    String query = BasicProps.HASH + ":" + item.getHash();
                     String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
-                    out.println("<a onclick=" + onclick); //$NON-NLS-1$
+                    out.println("<input class=\"ck\" type=\"checkbox\" onclick=app.check(\"" + query + "\",this.checked) />");
+                    out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
                     out.println(" href=\"" + exportPath + "\">");
                     if(thumb != null) {
                         out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
@@ -361,9 +363,10 @@ public class ReportGenerator {
         IItemBase item = c.getItem();
         if (item != null) {
             String query = c.getItemQuery();
-            out.println("<p>" + Messages.getString("SkypeReport.LikelyFile")); //$NON-NLS-1$ //$NON-NLS-2$
-            out.println("<a onclick=\"app.open(" //$NON-NLS-1$
-                    + SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"") + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            out.println("<p>" + Messages.getString("SkypeReport.LikelyFile") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+            String quotedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            out.println("<input class=\"ck\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\" />");
+            out.println("<a onclick=\"app.open(" + quotedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
             List<IItemBase> result = Util.getItems(query, searcher);
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));

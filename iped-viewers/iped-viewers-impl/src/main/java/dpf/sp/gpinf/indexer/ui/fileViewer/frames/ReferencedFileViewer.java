@@ -7,6 +7,7 @@ import java.util.Set;
 import org.apache.tika.Tika;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
+import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import iped3.IItem;
@@ -33,7 +34,8 @@ public class ReferencedFileViewer extends Viewer{
 
     @Override
     public boolean isSupportedType(String contentType) {
-        return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType);
+        return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType) ||
+                SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType);
     }
 
     @Override

@@ -278,7 +278,7 @@
     </mime-type>
     
     <mime-type type="message/x-skype-message">     
-        <sub-class-of type="text/html"/>
+        <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     
     <mime-type type="message/x-skype-filetransfer">     
@@ -947,6 +947,10 @@
     <mime-type type="message/x-whatsapp-call">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type> 
+    
+    <mime-type type="message/x-skype-attachment">
+        <sub-class-of type="message/x-skype-message"/>
+    </mime-type>
    
 </mime-info>
 

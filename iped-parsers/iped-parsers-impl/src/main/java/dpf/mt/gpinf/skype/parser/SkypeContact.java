@@ -57,6 +57,15 @@ public class SkypeContact {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+    
+    public String getBestName() {
+        String name = getFullName();
+        if (name == null || name.trim().isEmpty())
+            name = getDisplayName();
+        if (name == null || name.trim().isEmpty())
+            name = getSkypeName();
+        return name;
+    }
 
     public String getCity() {
         return city;

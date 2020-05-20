@@ -7,11 +7,15 @@ import java.io.InputStream;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.sql.Connection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -31,6 +35,7 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -68,10 +73,16 @@ public class SkypeParser extends AbstractParser {
     private static final String CONTACT_MIME_TYPE = "contact/x-skype-contact"; //$NON-NLS-1$
     private static final String ACCOUNT_MIME_TYPE = "contact/x-skype-account"; //$NON-NLS-1$
     private static final String MESSAGE_MIME_TYPE = "message/x-skype-message"; //$NON-NLS-1$
+    public static final String ATTACHMENT_MIME_TYPE = "message/x-skype-attachment"; //$NON-NLS-1$
     public static final String FILETRANSFER_MIME_TYPE = "message/x-skype-filetransfer"; //$NON-NLS-1$
     public static final String CONVERSATION_MIME_TYPE = "message/x-skype-conversation"; //$NON-NLS-1$
 
-    private boolean extractMessageItems = false;
+    private boolean extractMessages = true;
+    
+    @Field
+    public void setExtractMessages(boolean extractMessages) {
+        this.extractMessages = extractMessages;
+    }
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -103,16 +114,16 @@ public class SkypeParser extends AbstractParser {
                 ReportGenerator r = new ReportGenerator(handler, metadata, sqlite.getSkypeName());
 
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();
+                
+                HashMap<String, SkypeContact> contactMap = new HashMap<>();
 
                 for (SkypeContact c : contatos) {
+                    contactMap.put(c.getSkypeName(), c);
+                    
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CONTACT_MIME_TYPE);
                     cMetadata.set(HttpHeaders.CONTENT_TYPE, CONTACT_MIME_TYPE);
-                    String name = c.getFullName();
-                    if (name == null || name.trim().isEmpty())
-                        name = c.getDisplayName();
-                    if (name == null || name.trim().isEmpty())
-                        name = c.getSkypeName();
+                    String name = c.getBestName();
                     cMetadata.set(TikaCoreProperties.TITLE, name);
                     cMetadata.set(ExtraProperties.USER_NAME, name);
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getSkypeName());
@@ -154,6 +165,8 @@ public class SkypeParser extends AbstractParser {
                     chatMetadata.set(TikaCoreProperties.TITLE, conv.getTitle());
                     chatMetadata.set(TikaCoreProperties.CREATED, conv.getCreationDate());
                     chatMetadata.set(TikaCoreProperties.MODIFIED, conv.getLastActivity());
+                    chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, conv.getId());
+                    chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
 
                     storeSharedHashes(conv, chatMetadata);
 
@@ -163,23 +176,34 @@ public class SkypeParser extends AbstractParser {
                         extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                     }
 
+                    int msgNum = 0;
                     /* adiciona as mensagens */
-                    if (extractMessageItems)
+                    if (extractMessages)
                         for (SkypeMessage sm : conv.getMessages()) {
-                            chatMetadata = new Metadata();
-                            chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MESSAGE_MIME_TYPE);
-                            chatMetadata.set(HttpHeaders.CONTENT_TYPE, MESSAGE_MIME_TYPE);
-                            chatMetadata.set(TikaCoreProperties.TITLE, sm.getTitle());
-                            chatMetadata.set(TikaCoreProperties.CREATED, sm.getData());
+                            Metadata meta = new Metadata();
+                            meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MESSAGE_MIME_TYPE);
+                            meta.set(TikaCoreProperties.TITLE, conv.getTitle() + "_msg_" + msgNum++);
+                            meta.set(TikaCoreProperties.CREATED, sm.getData());
+                            meta.set(ExtraProperties.PARENT_VIRTUAL_ID, conv.getId());
+                            meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(sm.getId()));
+                            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                            meta.set(ExtraProperties.MESSAGE_DATE, sm.getData());
+                            meta.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, sm.getAutor()));
+                            meta.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, sm.getDestino()));
+                            meta.set(ExtraProperties.MESSAGE_BODY, sm.getConteudo());
+                            meta.set("messageStatus", String.valueOf(sm.getChatMessageStatus()));
+                            meta.set("sendingStatus", String.valueOf(sm.getSendingStatus()));
                             if (sm.getDataEdicao() != null) {
-                                chatMetadata.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
+                                meta.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
                             }
+                            if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
+                                IItemBase item = sm.getAnexoUri().getCacheFile();
+                                String referenceQuery = BasicProps.HASH + ":" + item.getHash();
+                                meta.set(ExtraProperties.REFERENCED_FILE_QUERY, referenceQuery); //$NON-NLS-1$
+                                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
+                            }    
 
-                            if (extractor.shouldParseEmbedded(chatMetadata)) {
-                                ByteArrayInputStream chatStream = new ByteArrayInputStream(
-                                        r.generateSkypeMessageHtml(sm));
-                                extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                            }
+                            extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
                         }
                 }
 
@@ -189,12 +213,26 @@ public class SkypeParser extends AbstractParser {
                     /* add file transfers */
                     Metadata tMetadata = new Metadata();
                     tMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, FILETRANSFER_MIME_TYPE);
-                    tMetadata.set(HttpHeaders.CONTENT_TYPE, FILETRANSFER_MIME_TYPE);
-                    tMetadata.set(TikaCoreProperties.TITLE,
-                            Messages.getString("SkypeParser.SkypeTransfer") + t.getFilename()); //$NON-NLS-1$
+                    String name = Messages.getString("SkypeParser.SkypeTransfer") + t.getFilename(); //$NON-NLS-1$
+                    tMetadata.set(TikaCoreProperties.TITLE, name);
+                    tMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, t.getConversation().getId());
+                    //TODO embed transfer in parent chat html
+                    //tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(t.getId()));
+                    tMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
                     tMetadata.set(TikaCoreProperties.CREATED, t.getStart());
                     tMetadata.set(TikaCoreProperties.MODIFIED, t.getFinish());
-
+                    tMetadata.set(ExtraProperties.MESSAGE_DATE, t.getStart());
+                    tMetadata.set(ExtraProperties.MESSAGE_BODY, name);
+                    tMetadata.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, t.getFrom()));
+                    if (t.getType() == 3 && t.getConversation().getParticipantes() != null) {
+                        for (Iterator iterator = t.getConversation().getParticipantes().iterator(); iterator.hasNext();) {
+                            String recip = (String) iterator.next();
+                            tMetadata.add(Metadata.MESSAGE_TO, formatSkypeName(contactMap, recip));
+                        }
+                    }else {
+                        tMetadata.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, t.getTo()));
+                    }
+                    
                     if (searcher != null) {
                         t.setItemQuery(getItemQuery(t, searcher));
                         t.setItem(getItem(t.getItemQuery(), searcher));
@@ -258,6 +296,15 @@ public class SkypeParser extends AbstractParser {
             tmp.dispose();
         }
 
+    }
+    
+    private String formatSkypeName(Map<String, SkypeContact> contactMap, String skypeName) {
+        SkypeContact contact = contactMap.get(skypeName);
+        if(contact != null) {
+            return contact.getBestName() + " (" + skypeName + ")";
+        }else {
+            return skypeName + " (" + skypeName + ")";
+        }
     }
 
     private void storeSharedHashes(SkypeConversation conv, Metadata metadata) {
