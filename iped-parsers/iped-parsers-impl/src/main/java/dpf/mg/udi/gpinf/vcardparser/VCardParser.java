@@ -127,7 +127,10 @@ public class VCardParser extends AbstractParser {
 
             parser.setContentHandler(new XHTMLDowngradeHandler(xhtml));
             
-            parser.parse(new InputSource(is));
+            InputSource source = new InputSource(is);
+            source.setEncoding(StandardCharsets.UTF_8.toString());
+            parser.parse(source);
+            
         } finally {
             xhtml.endDocument();
         }
