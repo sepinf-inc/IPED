@@ -370,7 +370,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     flushReplaceWriter();
   }
 
-  private void flush(Collection<? extends Flushable> flushables) throws IOException {
+  private synchronized void flush(Collection<? extends Flushable> flushables) throws IOException {
     for (Flushable out : flushables) {
       out.flush();
     }
